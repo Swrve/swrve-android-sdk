@@ -1,0 +1,10 @@
+.metadata
+local.properties
+findbugs-results.html
+packages/
+
+# Android Studio
+.idea
+.gradle
+build
+.iml

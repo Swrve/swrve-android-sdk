@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.swrve.sdk"
+    android:versionCode="2"
+    android:versionName="2.8">
+
+    <uses-sdk
+        android:minSdkVersion="10"
+        android:targetSdkVersion="10" />
+    <application />
+</manifest>
