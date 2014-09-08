@@ -12,6 +12,6 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 --><!-- From: file:/usr/local/google/buildbot/repo_clients/https___googleplex-android.googlesource.com_a_platform_manifest.git/ub-gcore-longhorn-release/vendor/unbundled_google/packages/OneUp/client/AndroidManifest.xml --><manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="5077000" android:versionName="5.0.77-000" package="com.google.android.gms">
-    <uses-sdk android:minSdkVersion="9"/>
+    <uses-sdk android:minSdkVersion="8"/>
     <application/>
 </manifest>
