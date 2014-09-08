@@ -22,11 +22,12 @@ In the SwrveSDK or SwrveGoogleSDK folder run the following command:
 Contributing
 ------------
 We would love to see your contributions! Follow these steps:
-1. [Fork] this repository.
+
+1. Fork this repository.
 2. Create a branch (`git checkout -b my_awesome_feature`)
 3. Commit your changes (`git commit -m "Awesome feature"`)
 4. Push to the branch (`git push origin my_awesome_feature`)
-5. Open a [Pull Request][1]
+5. Open a Pull Request.
 
 License
 -------
