@@ -92,7 +92,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static final String CAMPAIGN_CATEGORY = "CMCC";
+    protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final String EMPTY_STRING = "";
@@ -103,8 +103,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String APP_LAUNCH_ACTION = "/1/app_launch";
     protected static final String CLICK_THRU_ACTION = "/1/click_thru";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
-    protected static final String RESOURCES_CACHE_CATEGORY = "srcngt";
-    protected static final String RESOURCES_DIFF_CACHE_CATEGORY = "rsdfngt";
+    protected static final String RESOURCES_CACHE_CATEGORY = "srcngt2"; // Saved securely
+    protected static final String RESOURCES_DIFF_CACHE_CATEGORY = "rsdfngt2"; // Saved securely
     protected static final String SDK_PREFS_NAME = "swrve_prefs";
     protected static final String EMPTY_JSON_ARRAY = "[]";
     protected static final int SHUTDOWN_TIMEOUT_SECONDS = 5;
@@ -264,53 +264,25 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
         String newUserId = settings.getString("userId", null);
         if (SwrveHelper.isNullOrEmpty(newUserId)) {
-            String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
-            newUserId = SwrveHelper.md5(androidId);
-            // Blacklisted ANDROID_ID
-            if (SwrveHelper.isNullOrEmpty(newUserId) || (newUserId != null && newUserId.equals("94c24a0bc4fb8d342f0db892a5d39b4a"))) {
-                // Create a random UUID
-                newUserId = UUID.randomUUID().toString();
-            }
-
-            // Save new user id
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putString("userId", newUserId);
-            editor.commit();
+            // Create a random UUID
+            newUserId = UUID.randomUUID().toString();
         }
 
         return newUserId;
+    }
+
+    protected void saveUniqueUserId(Context context, String userId) {
+        SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
+        // Save new user id
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("userId", userId);
+        editor.commit();
     }
 
     protected void checkUserId(String userId) {
         if (userId != null && userId.matches("^.*\\..*@\\w+$")) {
             Log.w(LOG_TAG, "Please double-check your user id. It seems to be Object.toString(): " + userId);
         }
-    }
-
-    /**
-     * Send user identifiers to Swrve
-     */
-    protected void sendIdentifiers() {
-        Map<String, Object> parameters = new HashMap<String, Object>();
-        JSONObject identifiers = getIdentifiers();
-        parameters.put("identifiers", identifiers);
-        queueEvent("identifiers", parameters, null);
-    }
-
-    private JSONObject getIdentifiers() {
-        JSONObject identifiers = new JSONObject();
-
-        Context contextRef = context.get();
-        if (contextRef != null) {
-            String androidId = Secure.getString(contextRef.getContentResolver(), Secure.ANDROID_ID);
-
-            try {
-                identifiers.put("android_id", androidId);
-            } catch (JSONException e) {
-            }
-        }
-
-        return identifiers;
     }
 
     /**
@@ -1226,13 +1198,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Create a unique key for this user
      */
     public String getUniqueKey() {
-        Context contextRef = context.get();
-        String androidId = "";
-        if (contextRef != null) {
-            androidId = Secure.getString(contextRef.getContentResolver(), Secure.ANDROID_ID);
-        }
-
-        return this.userId + this.apiKey + androidId;
+        return this.userId + this.apiKey;
     }
 
     /**

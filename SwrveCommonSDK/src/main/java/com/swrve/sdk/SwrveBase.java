@@ -134,6 +134,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 userId = getUniqueUserId(resolvedContext);
             }
             checkUserId(userId);
+            saveUniqueUserId(resolvedContext, userId);
             Log.i(LOG_TAG, "Your user id is: " + userId);
 
             // Generate default urls for the given app id
@@ -165,7 +166,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Default link token to Android ID
             if (config.getLinkToken() == null) {
                 Log.i(LOG_TAG, "Generating link token");
-                String androidId = Secure.getString(resolvedContext.getContentResolver(), Secure.ANDROID_ID);
+                String androidId = "fake_id_to_be_removed_in_another_ticket";
                 this.linkToken = SwrveHelper.generateUUID(androidId).toString();
             } else {
                 this.linkToken = config.getLinkToken().toString();
@@ -209,7 +210,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Get device info
             getDeviceInfo(resolvedContext);
-            sendIdentifiers();
             queueDeviceInfoNow(true);
 
             // Talk initialization
