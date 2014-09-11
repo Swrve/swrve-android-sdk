@@ -922,13 +922,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    /**
+     * Ensures a new message cannot be shown until now + minDelayBetweenMessage
+     */
+    public void setMessageMinDelayThrottle()
+    {
+        Date now = getNow();
+        this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
+    }
+
     protected void _messageWasShownToUser(SwrveMessageFormat messageFormat) {
         if (messageFormat != null) {
-            // The message was shown. Take the current time so that we can
-            // throttle messages
-            // from being shown too quickly.
-            Date now = getNow();
-            this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
+            setMessageMinDelayThrottle();
             this.messagesLeftToShow = this.messagesLeftToShow - 1;
 
             // Update next for round robin
