@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Used internally to provide a multi-layer cache of events, click thrus and resource diffs.
+ * Used internally to provide a multi-layer cache of events and resource diffs.
  */
 public class MemoryCachedLocalStorage implements ILocalStorage {
     private ILocalStorage cache;
@@ -34,7 +34,6 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
 
     private Object eventLock = new Object();
     private Object cacheLock = new Object();
-    private Object clickThruLock = new Object();
 
     public MemoryCachedLocalStorage(ILocalStorage cache, ILocalStorage secondaryStorage) {
         this.cache = cache;
@@ -186,51 +185,6 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
         return getCacheEntryForUser(category, category);
     }
 
-    @Override
-    public void addClickThru(int targetGameId, String source) {
-        synchronized (clickThruLock) {
-            cache.addClickThru(targetGameId, source);
-        }
-    }
-
-    @Override
-    public void removeClickThrusById(long id) {
-        synchronized (clickThruLock) {
-            cache.removeClickThrusById(id);
-        }
-    }
-
-    @Override
-    public Map<Long, Entry<Integer, String>> getFirstNClickThrus(Integer n) {
-        synchronized (clickThruLock) {
-            return cache.getFirstNClickThrus(n);
-        }
-    }
-
-    public Map<ILocalStorage, Map<Long, Entry<Integer, String>>> getCombinedFirstNClickThrus(Integer n) {
-        synchronized (clickThruLock) {
-            Map<ILocalStorage, Map<Long, Entry<Integer, String>>> result = new HashMap<ILocalStorage, Map<Long, Entry<Integer, String>>>();
-            int eventCount = 0;
-            if (secondaryStorage != null) {
-                Map<Long, Entry<Integer, String>> events = secondaryStorage.getFirstNClickThrus(n);
-                eventCount = events.size();
-                if (eventCount > 0) {
-                    result.put(secondaryStorage, events);
-                }
-            }
-
-            if (n - eventCount > 0) {
-                Map<Long, Entry<Integer, String>> events = cache.getFirstNClickThrus(n - eventCount);
-                int remainingEventCount = events.size();
-                if (remainingEventCount > 0) {
-                    result.put(cache, events);
-                }
-            }
-
-            return result;
-        }
-    }
-
     public void flush() throws Exception {
         if (cache != secondaryStorage && cache instanceof IFlushableLocalStorage && secondaryStorage instanceof IFastInsertLocalStorage) {
             IFlushableLocalStorage flushableStorage = ((IFlushableLocalStorage) cache);
@@ -240,9 +194,6 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
             }
             synchronized (cacheLock) {
                 flushableStorage.flushCache(targetStorage);
-            }
-            synchronized (clickThruLock) {
-                flushableStorage.flushClickThrus(targetStorage);
             }
         }
     }
