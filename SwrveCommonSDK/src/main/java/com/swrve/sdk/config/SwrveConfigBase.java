@@ -48,11 +48,6 @@ public abstract class SwrveConfigBase {
     private int maxEventsPerFlush = 50;
 
     /**
-     * Maximum number of click-thrus to send per flush.
-     */
-    private int maxClickThrusPerFlush = 10;
-
-    /**
      * Maximum number of concurrent downloads.
      */
     private int maxConcurrentDownloads = 10;
@@ -69,21 +64,10 @@ public abstract class SwrveConfigBase {
     private URL defaultEventsUrl = null;
 
     /**
-     * Link end-point.
-     */
-    private URL linkUrl = null;
-    private URL defaultLinkUrl = null;
-
-    /**
      * Content end-point.
      */
     private URL contentUrl = null;
     private URL defaultContentUrl = null;
-
-    /**
-     * Link token (must be UUID).
-     */
-    private UUID linkToken;
 
     /**
      * Session timeout time.
@@ -243,21 +227,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the maxClickThrusPerFlush
-     */
-    public int getMaxClickThrusPerFlush() {
-        return maxClickThrusPerFlush;
-    }
-
-    /**
-     * @param maxClickThrusPerFlush the maxClickThrusPerFlush to set
-     */
-    public SwrveConfigBase setMaxClickThrusPerFlush(int maxClickThrusPerFlush) {
-        this.maxClickThrusPerFlush = maxClickThrusPerFlush;
-        return this;
-    }
-
-    /**
      * @return the db_name
      */
     public String getDbName() {
@@ -290,23 +259,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the linkUrl
-     */
-    public URL getLinkUrl() {
-        if (linkUrl == null)
-            return defaultLinkUrl;
-        return linkUrl;
-    }
-
-    /**
-     * @param linkUrl the linkUrl to set
-     */
-    public SwrveConfigBase setLinkUrl(URL linkUrl) {
-        this.linkUrl = linkUrl;
-        return this;
-    }
-
-    /**
      * @return the contentUrl
      */
     public URL getContentUrl() {
@@ -320,21 +272,6 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setContentUrl(URL contentUrl) {
         this.contentUrl = contentUrl;
-        return this;
-    }
-
-    /**
-     * @return the linkToken
-     */
-    public UUID getLinkToken() {
-        return linkToken;
-    }
-
-    /**
-     * @param linkToken the linkToken to set. Must be a valid UUID (e.g. 2fbe0704-1984-3b39-8b79-13075d01c120)
-     */
-    public SwrveConfigBase setLinkToken(UUID linkToken) {
-        this.linkToken = linkToken;
         return this;
     }
 
@@ -390,7 +327,6 @@ public abstract class SwrveConfigBase {
      */
     public void generateUrls(int appId) throws MalformedURLException {
         defaultEventsUrl = new URL("http://" + appId + ".api.swrve.com");
-        defaultLinkUrl = new URL("https://" + appId + ".link.swrve.com");
         defaultContentUrl = new URL("https://" + appId + ".content.swrve.com");
     }
 

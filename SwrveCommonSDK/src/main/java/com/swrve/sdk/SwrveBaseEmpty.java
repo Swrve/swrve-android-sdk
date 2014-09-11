@@ -156,10 +156,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void clickThru(int targetGameId, String source) {
-    }
-
-    @Override
     public void onPause() {
     }
 
