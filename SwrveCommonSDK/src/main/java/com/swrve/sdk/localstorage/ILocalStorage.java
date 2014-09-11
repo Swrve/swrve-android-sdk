@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Used internally to define a common storage for events, click thrus and other persistent data.
+ * Used internally to define a common storage for events and other persistent data.
  */
 public interface ILocalStorage {
     static final String SIGNATURE_SUFFIX = "_SGT";
@@ -41,13 +41,6 @@ public interface ILocalStorage {
     void setSecureCacheEntryForUser(String userId, String category, String rawData, String signature);
 
     Map<Entry<String, String>, String> getAllCacheEntries();
-
-    // Click thru storage methods
-    void addClickThru(int targetGameId, String source);
-
-    void removeClickThrusById(long id);
-
-    Map<Long, Entry<Integer, String>> getFirstNClickThrus(Integer n);
 
     void close();
 

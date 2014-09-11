@@ -34,7 +34,6 @@ public class MemoryLocalStorage implements ILocalStorage, IFlushableLocalStorage
     private static final int MAX_ELEMENTS = 2000;
     private List<StoredEvent> events = new ArrayList<StoredEvent>();
     private Map<String, StoredCacheEntry> serverCache = new HashMap<String, StoredCacheEntry>();
-    private List<StoredClickThru> clickThrus = new ArrayList<StoredClickThru>();
 
     @Override
     public synchronized void addEvent(String eventJSON) throws Exception {
@@ -122,39 +121,6 @@ public class MemoryLocalStorage implements ILocalStorage, IFlushableLocalStorage
     }
 
     @Override
-    public synchronized void addClickThru(int targetGameId, String source) {
-        if (clickThrus.size() < MAX_ELEMENTS) {
-            StoredClickThru clickThru = new StoredClickThru();
-            clickThru.targetGameId = targetGameId;
-            clickThru.source = source;
-            clickThrus.add(clickThru);
-        }
-    }
-
-    @Override
-    public synchronized void removeClickThrusById(long id) {
-        Iterator<StoredClickThru> iter = clickThrus.iterator();
-        while (iter.hasNext()) {
-            StoredClickThru clickThru = iter.next();
-            if (id == clickThru.id)
-                iter.remove();
-        }
-    }
-
-    @Override
-    public synchronized Map<Long, Entry<Integer, String>> getFirstNClickThrus(Integer n) {
-        Map<Long, Entry<Integer, String>> topClickThrus = new HashMap<Long, Entry<Integer, String>>();
-        int countLeft = n;
-        Iterator<StoredClickThru> iter = clickThrus.iterator();
-        while (iter.hasNext() && countLeft > 0) {
-            StoredClickThru clickThru = iter.next();
-            topClickThrus.put(clickThru.id, new SimpleEntry<Integer, String>(clickThru.targetGameId, clickThru.source));
-            countLeft--;
-        }
-        return topClickThrus;
-    }
-
-    @Override
     public synchronized Map<Entry<String, String>, String> getAllCacheEntries() {
         Map<Entry<String, String>, String> allCacheEntries = new HashMap<Entry<String, String>, String>();
         Iterator<String> itCache = serverCache.keySet().iterator();
@@ -195,19 +161,6 @@ public class MemoryLocalStorage implements ILocalStorage, IFlushableLocalStorage
     }
 
     @Override
-    public synchronized void flushClickThrus(IFastInsertLocalStorage externalStorage) {
-        // Exchange click thrus
-        Iterator<StoredClickThru> clickThruIter = clickThrus.iterator();
-        List<Entry<Integer, String>> clickThrusToFlush = new ArrayList<Entry<Integer, String>>();
-        while (clickThruIter.hasNext()) {
-            StoredClickThru clickThru = clickThruIter.next();
-            clickThrusToFlush.add(new SimpleEntry<Integer, String>(clickThru.targetGameId, clickThru.source));
-        }
-        externalStorage.addMultipleClickThrus(clickThrusToFlush);
-        clickThrus.clear();
-    }
-
-    @Override
     public void close() {
     }
 
@@ -215,7 +168,6 @@ public class MemoryLocalStorage implements ILocalStorage, IFlushableLocalStorage
     public void reset() {
         events.clear();
         serverCache.clear();
-        clickThrus.clear();
     }
 
     private static class StoredEvent {
@@ -232,16 +184,5 @@ public class MemoryLocalStorage implements ILocalStorage, IFlushableLocalStorage
         public String userId;
         public String category;
         public String rawData;
-    }
-
-    private static class StoredClickThru {
-        public static long clickThruCount = 0;
-        public long id;
-        public int targetGameId;
-        public String source;
-
-        public StoredClickThru() {
-            this.id = (clickThruCount++);
-        }
     }
 }
