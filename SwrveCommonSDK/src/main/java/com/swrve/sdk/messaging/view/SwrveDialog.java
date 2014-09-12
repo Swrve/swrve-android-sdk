@@ -67,6 +67,8 @@ public class SwrveDialog extends Dialog {
     @Override
     public void dismiss() {
         super.dismiss();
+        // Notify the campaign one of its messages was dismissed
+        message.getCampaign().messageDismissed();
         goneAway();
     }
 
