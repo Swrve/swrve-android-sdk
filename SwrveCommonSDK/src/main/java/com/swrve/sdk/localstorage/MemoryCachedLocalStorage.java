@@ -60,19 +60,28 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
     public String getCacheEntryForUser(String userId, String category) {
         synchronized (cacheLock) {
             String result = cache.getCacheEntryForUser(userId, category);
-            if (result == null && secondaryStorage != null)
+            if (result == null && secondaryStorage != null) {
                 result = secondaryStorage.getCacheEntryForUser(userId, category);
+            }
             return result;
         }
     }
 
     @Override
     public String getSecureCacheEntryForUser(String userId, String category, String uniqueKey) throws SecurityException {
-        String cachedContent = getCacheEntryForUser(userId, category);
+        String cachedContent = null;
+        String cachedSignature = null;
 
+        synchronized (cacheLock) {
+            cachedContent = cache.getCacheEntryForUser(userId, category);
+            cachedSignature = cache.getCacheEntryForUser(userId, category + SIGNATURE_SUFFIX);
+            if (SwrveHelper.isNullOrEmpty(cachedContent) && secondaryStorage != null) {
+                // Was not cached in memory, read from disk
+                cachedContent = secondaryStorage.getCacheEntryForUser(userId, category);
+                cachedSignature = secondaryStorage.getCacheEntryForUser(userId, category + SIGNATURE_SUFFIX);
+            }
+        }
         if (!SwrveHelper.isNullOrEmpty(cachedContent)) {
-            String cachedSignature = getCacheEntryForUser(userId, category + SIGNATURE_SUFFIX);
-
             try {
                 String computedSignature = SwrveHelper.createHMACWithMD5(cachedContent, uniqueKey);
 
