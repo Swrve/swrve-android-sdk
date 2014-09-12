@@ -134,7 +134,7 @@ public class SwrveMessageView extends RelativeLayout {
     }
 
     /**
-     * @param the dismiss animation.
+     * @param dismissAnimation dismiss animation.
      */
     public void setDismissAnimation(int dismissAnimation) {
         this.dismissAnimation = dismissAnimation;
