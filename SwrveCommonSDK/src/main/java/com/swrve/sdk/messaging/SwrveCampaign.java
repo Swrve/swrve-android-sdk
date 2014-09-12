@@ -483,7 +483,7 @@ public class SwrveCampaign {
     /**
      * Ensures a new message cannot be shown until now + minDelayBetweenMessage
      */
-    public void setMessageMinDelayThrottle()
+    private void setMessageMinDelayThrottle()
     {
         Date now = this.talkController.getNow();
         this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
@@ -508,5 +508,12 @@ public class SwrveCampaign {
         } else {
             Log.i(LOG_TAG, "Next message in campaign " + getId() + " is random");
         }
+    }
+
+    /**
+     * Notify that a message was dismissed.
+     */
+    public void messageDismissed() {
+        setMessageMinDelayThrottle();
     }
 }
