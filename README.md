@@ -1,3 +1,8 @@
+What is Swrve
+-------------
+Swrve is a single integrated platform delivering everything you need to drive mobile engagement and create valuable consumer relationships on mobile.
+This native Android SDK will enable your app to use all of these features.
+
 Getting started
 ---------------
 Have a look at the quick integration guide at https://dashboard.swrve.com/help/category/20127113
@@ -7,7 +12,7 @@ Requirements
 ### Android 2.3.3+
 The SDK supports Android 2.3.3+ but will handle older versions with a dummy SDK.
 
-### Gradle
+### Gradle (distributed with the SDK)
 Used to build the SDK and its dependencies.
 
 How to run the demo
