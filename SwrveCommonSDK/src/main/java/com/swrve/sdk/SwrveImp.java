@@ -758,6 +758,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         campaignsDownloaded.put(campaignId, campaignReason);
                     }
                 }
+            } else if (qaUser != null) {
+                qaUser.unbindToServices();
+                qaUser = null;
             }
 
             JSONArray jsonCampaigns = json.getJSONArray("campaigns");
