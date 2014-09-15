@@ -22,7 +22,5 @@ import java.util.Map.Entry;
 public interface IFastInsertLocalStorage {
     void addMultipleEvent(List<String> eventsJSON);
 
-    void addMultipleClickThrus(List<Entry<Integer, String>> clickThrus);
-
     void setMultipleCacheEntries(List<Entry<String, Entry<String, String>>> cacheEntries);
 }

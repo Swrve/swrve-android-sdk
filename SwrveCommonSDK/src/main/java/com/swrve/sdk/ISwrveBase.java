@@ -251,14 +251,9 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     void sendQueuedEvents();
 
     /**
-     * Flush events, click thrus and others to the device's disk.
+     * Flush events and others to the device's disk.
      */
     void flushToDisk();
-
-    /**
-     * Send click through for ad campaign tracking.
-     */
-    void clickThru(final int targetGameId, final String source);
 
     /**
      * Default SDK behavior for activity onPause(). Flush data to disk.

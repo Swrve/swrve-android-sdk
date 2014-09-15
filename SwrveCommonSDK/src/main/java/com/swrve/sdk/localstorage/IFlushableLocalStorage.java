@@ -20,6 +20,4 @@ public interface IFlushableLocalStorage {
     public void flushEvents(IFastInsertLocalStorage externalStorage);
 
     public void flushCache(IFastInsertLocalStorage externalStorage);
-
-    public void flushClickThrus(IFastInsertLocalStorage externalStorage);
 }

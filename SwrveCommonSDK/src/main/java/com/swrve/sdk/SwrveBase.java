@@ -163,15 +163,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
             }
 
-            // Default link token to Android ID
-            if (config.getLinkToken() == null) {
-                Log.i(LOG_TAG, "Generating link token");
-                String androidId = "fake_id_to_be_removed_in_another_ticket";
-                this.linkToken = SwrveHelper.generateUUID(androidId).toString();
-            } else {
-                this.linkToken = config.getLinkToken().toString();
-            }
-
             restClient = createRESTClient();
             cachedLocalStorage = createCachedLocalStorage();
             storageExecutor = createStorageExecutor();
@@ -201,12 +192,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Get install time
             installTime.set(getInstallTime());
             installTimeLatch.countDown();
-
-            Log.i(LOG_TAG, "Setting automatic Link IDs");
-            if (SwrveBase.this.userId != null) {
-                // Try and send queued events and app launch
-                appLaunchPendingState.setPending(true);
-            }
 
             // Get device info
             getDeviceInfo(resolvedContext);
@@ -463,12 +448,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         }
                     }
 
-                    // Send app launch if necessary
-                    trySendAppLaunch();
-
-                    // Send stored click thrus
-                    trySendClickThru();
-
                     taskCompleted();
                 }
             });
@@ -485,26 +464,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 } catch (Exception e) {
                     Log.e(LOG_TAG, "Flush to disk failed", e);
                 }
-                taskCompleted();
-            }
-        });
-    }
-
-    protected void _clickThru(final int targetGameId, final String source) {
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (clickThruPendingState) {
-                    clickThruPendingState.setPending(true);
-                }
-                cachedLocalStorage.addClickThru(targetGameId, source);
-                restClientExecutorExecute(new Runnable() {
-                    @Override
-                    public void run() {
-                        trySendClickThru();
-                        taskCompleted();
-                    }
-                });
                 taskCompleted();
             }
         });
@@ -684,7 +643,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                 if (config.isTalkEnabled()) {
                     // Talk only params
-                    params.put("link_token", linkToken);
                     params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
                     params.put("language", language);
                     params.put("app_store", config.getAppStore());
@@ -962,21 +920,20 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", clickEvent);
             queueEvent("event", parameters, payload);
         }
+    }
 
-        if (button.getActionType() == SwrveActionType.Install) {
-            Log.i(LOG_TAG, "Sending click_thru link event");
-            String clickSource = "Swrve.Message-" + button.getMessage().getId();
-            clickThru(button.getAppId(), clickSource);
-        }
+    /**
+     * Ensures a new message cannot be shown until now + minDelayBetweenMessage
+     */
+    public void setMessageMinDelayThrottle()
+    {
+        Date now = getNow();
+        this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
     }
 
     protected void _messageWasShownToUser(SwrveMessageFormat messageFormat) {
         if (messageFormat != null) {
-            // The message was shown. Take the current time so that we can
-            // throttle messages
-            // from being shown too quickly.
-            Date now = getNow();
-            this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
+            setMessageMinDelayThrottle();
             this.messagesLeftToShow = this.messagesLeftToShow - 1;
 
             // Update next for round robin
@@ -1173,14 +1130,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void flushToDisk() {
         try {
             _flushToDisk();
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    public void clickThru(final int targetGameId, final String source) {
-        try {
-            _clickThru(targetGameId, source);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
