@@ -89,16 +89,24 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         LinkedHashMap<Long, String> events = new LinkedHashMap<Long, String>();
 
         if (connectionOpen.get()) {
-            // Select all entries
-            Cursor cursor = database.query(TABLE_EVENTS_JSON, new String[]{COLUMN_ID, COLUMN_EVENT}, null, null, null, null, COLUMN_ID, n == null ? null : Integer.toString(n));
+            Cursor cursor = null;
+            try {
+                // Select all entries
+                cursor = database.query(TABLE_EVENTS_JSON, new String[]{COLUMN_ID, COLUMN_EVENT}, null, null, null, null, COLUMN_ID, n == null ? null : Integer.toString(n));
 
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                // Create event out of row data
-                events.put(cursor.getLong(0), cursor.getString(1));
-                cursor.moveToNext();
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    // Create event out of row data
+                    events.put(cursor.getLong(0), cursor.getString(1));
+                    cursor.moveToNext();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
             }
-            cursor.close();
         }
 
         return events;
@@ -133,15 +141,23 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         String resultJSON = null;
 
         if (connectionOpen.get()) {
-            Cursor cursor = database.query(TABLE_CACHE, new String[]{COLUMN_RAW_DATA}, COLUMN_USER_ID + "= \"" + userId + "\" AND " + COLUMN_CATEGORY + "= \"" + category + "\"", null, null, null, null, "1");
+            Cursor cursor = null;
+            try {
+                cursor = database.query(TABLE_CACHE, new String[]{COLUMN_RAW_DATA}, COLUMN_USER_ID + "= \"" + userId + "\" AND " + COLUMN_CATEGORY + "= \"" + category + "\"", null, null, null, null, "1");
 
-            cursor.moveToFirst();
-            if (!cursor.isAfterLast()) {
-                // Create event out of row data
-                resultJSON = cursor.getString(0);
-                cursor.moveToNext();
+                cursor.moveToFirst();
+                if (!cursor.isAfterLast()) {
+                    // Create event out of row data
+                    resultJSON = cursor.getString(0);
+                    cursor.moveToNext();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
             }
-            cursor.close();
         }
 
         return resultJSON;
@@ -177,15 +193,23 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         Map<Entry<String, String>, String> allCacheEntries = new HashMap<Entry<String, String>, String>();
 
         if (connectionOpen.get()) {
-            Cursor cursor = database.query(TABLE_CACHE, new String[]{COLUMN_USER_ID, COLUMN_CATEGORY, COLUMN_RAW_DATA}, null, null, null, null, null);
+            Cursor cursor = null;
+            try {
+                cursor = database.query(TABLE_CACHE, new String[]{COLUMN_USER_ID, COLUMN_CATEGORY, COLUMN_RAW_DATA}, null, null, null, null, null);
 
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                // Create event out of row data
-                allCacheEntries.put(new SimpleEntry<String, String>(cursor.getString(0), cursor.getString(1)), cursor.getString(2));
-                cursor.moveToNext();
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    // Create event out of row data
+                    allCacheEntries.put(new SimpleEntry<String, String>(cursor.getString(0), cursor.getString(1)), cursor.getString(2));
+                    cursor.moveToNext();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
             }
-            cursor.close();
         }
 
         return allCacheEntries;
@@ -197,8 +221,9 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         if (connectionOpen.get()) {
             String sql = "INSERT INTO " + TABLE_EVENTS_JSON + " (" + COLUMN_EVENT + ") VALUES (?)";
             database.beginTransaction();
+            SQLiteStatement stmt = null;
             try {
-                SQLiteStatement stmt = database.compileStatement(sql);
+                stmt = database.compileStatement(sql);
                 Iterator<String> eventsIt = eventsJSON.iterator();
                 while (eventsIt.hasNext()) {
                     stmt.bindString(1, eventsIt.next());
@@ -206,8 +231,10 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
                     stmt.clearBindings();
                 }
                 database.setTransactionSuccessful(); // Commit
-                stmt.close();
             } finally {
+                if (stmt != null) {
+                    stmt.close();
+                }
                 database.endTransaction();
             }
         }
