@@ -229,7 +229,7 @@ public class SwrveQAUser {
     }
 
     public void unbindToServices() {
-        // Remove the weak reference to the listener and those that are empty
+        // Remove the weak reference to the listener
         Iterator<WeakReference<SwrveQAUser>> iter = bindedObjects.iterator();
         while (iter.hasNext()) {
             SwrveQAUser sdkListener = iter.next().get();
