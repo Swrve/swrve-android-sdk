@@ -134,6 +134,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 userId = getUniqueUserId(resolvedContext);
             }
             checkUserId(userId);
+            saveUniqueUserId(resolvedContext, userId);
             Log.i(LOG_TAG, "Your user id is: " + userId);
 
             // Generate default urls for the given app id
@@ -194,7 +195,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Get device info
             getDeviceInfo(resolvedContext);
-            sendIdentifiers();
             queueDeviceInfoNow(true);
 
             // Talk initialization
