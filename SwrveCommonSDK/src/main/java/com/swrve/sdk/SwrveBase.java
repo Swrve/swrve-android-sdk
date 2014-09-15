@@ -241,6 +241,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             startCampaignsAndResourcesTimer();
             disableAutoShowAfterDelay();
 
+            sendCrashlyticsMetadata();
             afterInit();
 
             Log.i(LOG_TAG, "Init finished");
