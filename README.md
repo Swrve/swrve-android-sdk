@@ -31,4 +31,5 @@ We would love to see your contributions! Follow these steps:
 
 License
 -------
-?????
+Distributed under the [Apache 2.0 License](LICENSE).
+google-play-services_lib copyright (C) 2012 The Android Open Source Project. Licensed under the Apache License.
