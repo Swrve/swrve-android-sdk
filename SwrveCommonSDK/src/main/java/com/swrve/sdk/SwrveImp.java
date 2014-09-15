@@ -189,6 +189,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected float device_dpi;
     protected float android_device_xdpi;
     protected float android_device_ydpi;
+    protected int previousOrientation;
     protected SwrveQAUser qaUser;
 
     public SwrveImp() {
@@ -971,6 +972,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
+    protected void saveCurrentOrientation(Context ctx) {
+        try {
+            if (ctx != null) {
+                final Display display = ((WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+                previousOrientation = display.getRotation();
+            }
+        } catch(Exception exp) {
+            Log.e(LOG_TAG, "Could not obtain device orientation", exp);
+        }
+    }
+
     protected SwrveOrientation getDeviceOrientation() {
         Context ctx = context.get();
         if (ctx != null) {
@@ -1280,7 +1292,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 if (dialog == null || !dialog.isShowing()) {
                     SwrveOrientation deviceOrientation = getDeviceOrientation();
                     Log.d(LOG_TAG, "Trying to show dialog with orientation " + deviceOrientation);
-                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
+                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, previousOrientation, installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
                     SwrveDialog newDialog = new SwrveDialog(activity, message, swrveMessageView, R.style.SwrveDialogTheme);
                     newDialog.setOnDismissListener(new OnDismissListener() {
                         @Override
@@ -1294,6 +1306,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                             }
                         }
                     });
+                    saveCurrentOrientation(activity);
 
                     // Check if the customer wants to manage the dialog themselves
                     if (dialogListener != null) {
