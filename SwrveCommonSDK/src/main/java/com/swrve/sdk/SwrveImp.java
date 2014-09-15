@@ -278,6 +278,20 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
+    protected void sendCrashlyticsMetadata() {
+        try {
+            Class c = Class.forName("com.crashlytics.android.Crashlytics");
+            if (c != null) {
+                Method m = c.getMethod("setString", new Class[]{ String.class, String.class });
+                if (m != null) {
+                    m.invoke(null, "Swrve_version", version);
+                }
+            }
+        } catch(Exception exp) {
+            Log.e(LOG_TAG, "Could not set Crashlytics metadata", exp);
+        }
+    }
+
     /**
      * Internal function to add a Swrve.iap event to the event queue.
      */
