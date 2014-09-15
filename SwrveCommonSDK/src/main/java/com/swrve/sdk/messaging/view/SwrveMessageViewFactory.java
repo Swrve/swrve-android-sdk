@@ -15,6 +15,9 @@ package com.swrve.sdk.messaging.view;
 
 import android.content.Context;
 import android.util.Log;
+import android.view.Display;
+import android.view.Surface;
+import android.view.WindowManager;
 
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -50,6 +53,7 @@ public class SwrveMessageViewFactory {
      * @param message               message to be rendered.
      * @param orientation           orientation of the format to be rendered. It can also be Both
      *                              to select any format available in the message.
+     * @param previousOrientation   previous orientation of the device.
      * @param installButtonListener install button listener to process clicks on the view
      * @param customButtonListener  custom button listener to process clicks on the view
      * @param firstTime             indicates if it is the first time the message is displayed.
@@ -59,7 +63,7 @@ public class SwrveMessageViewFactory {
      * orientation then the result will be null.
      * @throws SwrveMessageViewBuildException
      */
-    public SwrveMessageView buildLayout(Context context, SwrveMessage message, SwrveOrientation orientation, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, boolean firstTime, int minSampleSize) throws SwrveMessageViewBuildException {
+    public SwrveMessageView buildLayout(Context context, SwrveMessage message, SwrveOrientation orientation, int previousOrientation, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, boolean firstTime, int minSampleSize) throws SwrveMessageViewBuildException {
         try {
             boolean hasToRotate = false;
             if (message != null && message.getFormats().size() > 0) {
@@ -73,7 +77,24 @@ public class SwrveMessageViewFactory {
                 }
 
                 if (format != null) {
-                    return new SwrveMessageView(context, message, format, installButtonListener, customButtonListener, firstTime, hasToRotate, minSampleSize);
+                    int rotation = (hasToRotate)? -90 : 0;
+                    if (hasToRotate) {
+                        // Determine to what angle it has to rotate
+                        try {
+                            final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+                            int currentOrientation = display.getRotation();
+                            if (previousOrientation != currentOrientation) {
+                                if ((previousOrientation == Surface.ROTATION_90 && currentOrientation == Surface.ROTATION_0) || (previousOrientation == Surface.ROTATION_270 && currentOrientation == Surface.ROTATION_180)) {
+                                    rotation = 90;
+                                }
+                            }
+                        } catch (Exception exp) {
+                            Log.e(LOG_TAG, "Could not obtain device orientation", exp);
+                        }
+                    }
+
+
+                    return new SwrveMessageView(context, message, format, installButtonListener, customButtonListener, firstTime, rotation, minSampleSize);
                 }
             }
         } catch (SwrveMessageViewBuildException e) {

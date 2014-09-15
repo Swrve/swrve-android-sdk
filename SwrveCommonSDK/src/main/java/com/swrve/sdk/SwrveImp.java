@@ -92,7 +92,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static final String CAMPAIGN_CATEGORY = "CMCC";
+    protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 4;
@@ -100,8 +100,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
-    protected static final String RESOURCES_CACHE_CATEGORY = "srcngt";
-    protected static final String RESOURCES_DIFF_CACHE_CATEGORY = "rsdfngt";
+    protected static final String RESOURCES_CACHE_CATEGORY = "srcngt2"; // Saved securely
+    protected static final String RESOURCES_DIFF_CACHE_CATEGORY = "rsdfngt2"; // Saved securely
     protected static final String SDK_PREFS_NAME = "swrve_prefs";
     protected static final String EMPTY_JSON_ARRAY = "[]";
     protected static final int SHUTDOWN_TIMEOUT_SECONDS = 5;
@@ -189,6 +189,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected float device_dpi;
     protected float android_device_xdpi;
     protected float android_device_ydpi;
+    protected int previousOrientation;
     protected SwrveQAUser qaUser;
 
     public SwrveImp() {
@@ -256,53 +257,25 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
         String newUserId = settings.getString("userId", null);
         if (SwrveHelper.isNullOrEmpty(newUserId)) {
-            String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
-            newUserId = SwrveHelper.md5(androidId);
-            // Blacklisted ANDROID_ID
-            if (SwrveHelper.isNullOrEmpty(newUserId) || (newUserId != null && newUserId.equals("94c24a0bc4fb8d342f0db892a5d39b4a"))) {
-                // Create a random UUID
-                newUserId = UUID.randomUUID().toString();
-            }
-
-            // Save new user id
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putString("userId", newUserId);
-            editor.commit();
+            // Create a random UUID
+            newUserId = UUID.randomUUID().toString();
         }
 
         return newUserId;
+    }
+
+    protected void saveUniqueUserId(Context context, String userId) {
+        SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
+        // Save new user id
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("userId", userId);
+        editor.commit();
     }
 
     protected void checkUserId(String userId) {
         if (userId != null && userId.matches("^.*\\..*@\\w+$")) {
             Log.w(LOG_TAG, "Please double-check your user id. It seems to be Object.toString(): " + userId);
         }
-    }
-
-    /**
-     * Send user identifiers to Swrve
-     */
-    protected void sendIdentifiers() {
-        Map<String, Object> parameters = new HashMap<String, Object>();
-        JSONObject identifiers = getIdentifiers();
-        parameters.put("identifiers", identifiers);
-        queueEvent("identifiers", parameters, null);
-    }
-
-    private JSONObject getIdentifiers() {
-        JSONObject identifiers = new JSONObject();
-
-        Context contextRef = context.get();
-        if (contextRef != null) {
-            String androidId = Secure.getString(contextRef.getContentResolver(), Secure.ANDROID_ID);
-
-            try {
-                identifiers.put("android_id", androidId);
-            } catch (JSONException e) {
-            }
-        }
-
-        return identifiers;
     }
 
     protected void sendCrashlyticsMetadata() {
@@ -772,6 +745,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         campaignsDownloaded.put(campaignId, campaignReason);
                     }
                 }
+            } else if (qaUser != null) {
+                qaUser.unbindToServices();
+                qaUser = null;
             }
 
             JSONArray jsonCampaigns = json.getJSONArray("campaigns");
@@ -1010,6 +986,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
+    protected void saveCurrentOrientation(Context ctx) {
+        try {
+            if (ctx != null) {
+                final Display display = ((WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+                previousOrientation = display.getRotation();
+            }
+        } catch(Exception exp) {
+            Log.e(LOG_TAG, "Could not obtain device orientation", exp);
+        }
+    }
+
     protected SwrveOrientation getDeviceOrientation() {
         Context ctx = context.get();
         if (ctx != null) {
@@ -1066,13 +1053,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Create a unique key for this user
      */
     public String getUniqueKey() {
-        Context contextRef = context.get();
-        String androidId = "";
-        if (contextRef != null) {
-            androidId = Secure.getString(contextRef.getContentResolver(), Secure.ANDROID_ID);
-        }
-
-        return this.userId + this.apiKey + androidId;
+        return this.userId + this.apiKey;
     }
 
     /**
@@ -1325,7 +1306,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 if (dialog == null || !dialog.isShowing()) {
                     SwrveOrientation deviceOrientation = getDeviceOrientation();
                     Log.d(LOG_TAG, "Trying to show dialog with orientation " + deviceOrientation);
-                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
+                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, previousOrientation, installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
                     SwrveDialog newDialog = new SwrveDialog(activity, message, swrveMessageView, R.style.SwrveDialogTheme);
                     newDialog.setOnDismissListener(new OnDismissListener() {
                         @Override
@@ -1339,6 +1320,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                             }
                         }
                     });
+                    saveCurrentOrientation(activity);
 
                     // Check if the customer wants to manage the dialog themselves
                     if (dialogListener != null) {

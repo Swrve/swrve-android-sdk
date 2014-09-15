@@ -76,28 +76,29 @@ public class SwrveMessageView extends RelativeLayout {
         super(context, attrs, defStyle);
     }
 
-    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, boolean firstTime, boolean flip, int minSampleSize) throws SwrveMessageViewBuildException {
-        this(context, message, format, null, null, firstTime, flip, minSampleSize);
+    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, boolean firstTime, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
+        this(context, message, format, null, null, firstTime, rotation, minSampleSize);
     }
 
-    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, boolean firstTime, boolean flip, int minSampleSize) throws SwrveMessageViewBuildException {
+    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, boolean firstTime, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
         super(context);
         this.message = message;
         this.format = format;
         this.firstTime = firstTime;
-        initializeLayout(context, message, format, installButtonListener, customButtonListener, flip, minSampleSize);
+        initializeLayout(context, message, format, installButtonListener, customButtonListener, rotation, minSampleSize);
     }
 
-    protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, boolean flip, int minSampleSize) throws SwrveMessageViewBuildException {
+    protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
         innerMessageView = new SwrveInnerMessageView(context, this, message, format, installButtonListener, customButtonListener, minSampleSize);
         setBackgroundColor(Color.BLACK);
         setGravity(Gravity.CENTER);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         addView(innerMessageView);
+        setClipChildren(false);
 
-        if (flip) {
+        if (rotation != 0) {
             // Flip internal message so that it can still fit in the screen
-            RotateAnimation rotate = new RotateAnimation(0, -90, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            RotateAnimation rotate = new RotateAnimation(0, rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             rotate.setFillAfter(true);
             innerMessageView.startAnimation(rotate);
         }
