@@ -193,6 +193,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
                         public void onClick(View buttonView) {
                             try {
                                 message.getMessageController().buttonWasPressedByUser(button);
+                                message.getCampaign().messageDismissed();
                                 dismiss();
 
                                 if (button.getActionType() == SwrveActionType.Install) {

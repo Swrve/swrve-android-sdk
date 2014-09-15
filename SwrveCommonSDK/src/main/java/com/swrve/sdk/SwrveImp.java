@@ -95,13 +95,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
-    protected static final String EMPTY_STRING = "";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 4;
     protected static final String TEMPLATE_VERSION = "1";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
-    protected static final String APP_LAUNCH_ACTION = "/1/app_launch";
-    protected static final String CLICK_THRU_ACTION = "/1/click_thru";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
     protected static final String RESOURCES_CACHE_CATEGORY = "srcngt2"; // Saved securely
     protected static final String RESOURCES_DIFF_CACHE_CATEGORY = "rsdfngt2"; // Saved securely
@@ -144,7 +141,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected String apiKey;
     protected String userId;
     protected String sessionToken;
-    protected String linkToken;
     protected String language;
     protected C config;
     protected ISwrveEventListener eventListener;
@@ -157,8 +153,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected String userInstallTime;
     protected String lastProcessedMessage;
     protected AtomicInteger bindCounter;
-    protected PendingState appLaunchPendingState;
-    protected PendingState clickThruPendingState;
     protected AtomicLong installTime;
     protected CountDownLatch installTimeLatch;
     protected long newSessionInterval;
@@ -198,8 +192,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected SwrveQAUser qaUser;
 
     public SwrveImp() {
-        appLaunchPendingState = new PendingState(false, false);
-        clickThruPendingState = new PendingState(false, false);
         installTime = new AtomicLong();
         installTimeLatch = new CountDownLatch(1);
         destroyed = false;
@@ -410,34 +402,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void notifySentAppLaunch() {
-        synchronized (appLaunchPendingState) {
-            appLaunchPendingState.setPending(false);
-            appLaunchPendingState.setSending(false);
-        }
-    }
-
-    protected void notifySentAppLaunchError() {
-        synchronized (appLaunchPendingState) {
-            appLaunchPendingState.setPending(true);
-            appLaunchPendingState.setSending(false);
-        }
-    }
-
-    protected void notifySentClickThru() {
-        synchronized (clickThruPendingState) {
-            clickThruPendingState.setPending(false);
-            clickThruPendingState.setSending(false);
-        }
-    }
-
-    protected void notifySentClickThruError() {
-        synchronized (clickThruPendingState) {
-            clickThruPendingState.setPending(true);
-            clickThruPendingState.setSending(false);
-        }
-    }
-
     protected long getInstallTime() {
         long installTime = (new Date()).getTime();
         try {
@@ -508,144 +472,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             public void onException(Exception exp) {
             }
         });
-    }
-
-    protected void trySendAppLaunch() {
-        if (userId != null) {
-            try {
-                boolean sendAppLaunch = false;
-                synchronized (appLaunchPendingState) {
-                    sendAppLaunch = (appLaunchPendingState.isPending() && !appLaunchPendingState.isSending());
-                    if (sendAppLaunch) {
-                        appLaunchPendingState.setSending(true);
-                    }
-                }
-                if (sendAppLaunch) {
-                    Log.i(LOG_TAG, "Sending app launch");
-                    restClientExecutorExecute(new Runnable() {
-                        @Override
-                        public void run() {
-                            Map<String, String> params = new HashMap<String, String>();
-                            params.put("api_key", apiKey);
-                            params.put("user", userId);
-                            params.put("app_version", appVersion);
-                            params.put("link_token", linkToken);
-                            try {
-                                restClient.get(config.getLinkUrl() + APP_LAUNCH_ACTION, params, new IRESTResponseListener() {
-                                    @Override
-                                    public void onResponse(RESTResponse response) {
-                                        if (response.responseCode == HttpStatus.SC_OK) {
-                                            Log.i(LOG_TAG, "App launch succesfully sent");
-                                        }
-                                        if (SwrveHelper.doNotResendResponseCode(response.responseCode)) {
-                                            Log.e(LOG_TAG, "App launch error. Scheduled resend");
-                                            notifySentAppLaunchError();
-                                        } else {
-                                            // The data was successfully sent or
-                                            // there was not a network error, do
-                                            // not send it again
-                                            notifySentAppLaunch();
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onException(Exception exp) {
-                                        notifySentAppLaunchError();
-                                    }
-                                });
-                                appLaunchPendingState.setSending(false);
-                            } catch (Exception exp) {
-                                notifySentAppLaunchError();
-                            }
-
-                            taskCompleted();
-                        }
-                    });
-                }
-            } catch (Exception exp) {
-                Log.e(LOG_TAG, "Could not send app launch", exp);
-            }
-        }
-    }
-
-    protected void trySendClickThru() {
-        if (userId != null) {
-            try {
-                boolean sendClickThru = false;
-                synchronized (clickThruPendingState) {
-                    sendClickThru = (clickThruPendingState.isPending() && !clickThruPendingState.isSending());
-                    if (sendClickThru) {
-                        clickThruPendingState.setSending(true);
-                    }
-                }
-                if (sendClickThru) {
-                    final Map<ILocalStorage, Map<Long, Entry<Integer, String>>> combinedClickThrus = cachedLocalStorage.getCombinedFirstNClickThrus(config.getMaxClickThrusPerFlush());
-                    if (!combinedClickThrus.isEmpty()) {
-                        Log.i(LOG_TAG, "Sending click thru");
-                        restClientExecutorExecute(new Runnable() {
-                            @Override
-                            public void run() {
-                                sendClickThruImp(combinedClickThrus);
-                                taskCompleted();
-                            }
-                        });
-                    }
-                }
-            } catch (Exception exp) {
-                Log.e(LOG_TAG, "Could not send click thru", exp);
-            }
-        }
-    }
-
-    private void sendClickThruImp(Map<ILocalStorage, Map<Long, Entry<Integer, String>>> combinedClickThrus) {
-        Iterator<ILocalStorage> storageIt = combinedClickThrus.keySet().iterator();
-        while (storageIt.hasNext()) {
-            final ILocalStorage storage = storageIt.next();
-            Map<Long, Entry<Integer, String>> clickThrus = combinedClickThrus.get(storage);
-            Iterator<Long> clickThruIt = clickThrus.keySet().iterator();
-            while (clickThruIt.hasNext()) {
-                final Long clickThruId = clickThruIt.next();
-                final Entry<Integer, String> clickThru = clickThrus.get(clickThruId);
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("api_key", apiKey);
-                params.put("user", userId);
-                params.put("link_token", linkToken);
-                params.put("destination", clickThru.getKey().toString());
-                params.put("source", clickThru.getValue());
-                try {
-                    restClient.get(config.getLinkUrl() + CLICK_THRU_ACTION, params, new IRESTResponseListener() {
-                        @Override
-                        public void onResponse(RESTResponse response) {
-                            if (response.responseCode == HttpStatus.SC_OK) {
-                                Log.i(LOG_TAG, "Click thru succesfully sent");
-                            }
-                            if (SwrveHelper.doNotResendResponseCode(response.responseCode)) {
-                                Log.e(LOG_TAG, "Click thru error. Scheduled resend");
-                                notifySentClickThruError();
-                            } else {
-                                // The data was successfully sent or there was not a network error
-                                // do not send it again
-                                notifySentClickThru();
-                                storage.removeClickThrusById(clickThruId);
-                                Map<String, String> payload = new HashMap<String, String>();
-                                payload.put("destination", clickThru.getKey().toString());
-                                payload.put("source", clickThru.getValue());
-                                Map<String, Object> parameters = new HashMap<String, Object>();
-                                parameters.put("name", "Swrve.Messages.click_thru");
-                                queueEvent("event", parameters, payload);
-                            }
-                        }
-
-                        @Override
-                        public void onException(Exception exp) {
-                            notifySentClickThruError();
-                        }
-                    });
-                    clickThruPendingState.setSending(false);
-                } catch (Exception exp) {
-                }
-            }
-        }
     }
 
     protected boolean restClientExecutorExecute(Runnable runnable) {

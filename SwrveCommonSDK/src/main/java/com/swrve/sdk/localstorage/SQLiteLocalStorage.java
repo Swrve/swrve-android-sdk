@@ -55,10 +55,6 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
     public static final String COLUMN_CATEGORY = "category";
     public static final String COLUMN_RAW_DATA = "raw_data";
 
-    // Click thru table
-    public static final String TABLE_CLICK_THRUS = "click_thrus";
-    public static final String COLUMN_TARGET_APP_ID = "target_game_id";
-    public static final String COLUMN_SOURCE = "source";
     private SQLiteDatabase database;
     private SwrveSQLiteOpenHelper dbHelper;
     private AtomicBoolean connectionOpen;
@@ -173,47 +169,7 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         if (connectionOpen.get()) {
             database.delete(TABLE_EVENTS_JSON, null, null);
             database.delete(TABLE_CACHE, null, null);
-            database.delete(TABLE_CLICK_THRUS, null, null);
         }
-    }
-
-    @Override
-    public void addClickThru(int targetGameId, String source) {
-        if (connectionOpen.get()) {
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_TARGET_APP_ID, targetGameId);
-            values.put(COLUMN_SOURCE, source);
-            database.insertOrThrow(TABLE_CLICK_THRUS, null, values);
-        }
-    }
-
-    @Override
-    public void removeClickThrusById(long id) {
-        if (connectionOpen.get()) {
-            List<String> values = new ArrayList<String>(1);
-            values.add(Long.toString(id));
-            database.delete(TABLE_CLICK_THRUS, COLUMN_ID + " IN (" + TextUtils.join(",  ", values) + ")", null);
-        }
-    }
-
-    @Override
-    public Map<Long, Entry<Integer, String>> getFirstNClickThrus(Integer n) {
-        Map<Long, Entry<Integer, String>> click_thrus = new HashMap<Long, Entry<Integer, String>>();
-
-        if (connectionOpen.get()) {
-            // Select all entries
-            Cursor cursor = database.query(TABLE_CLICK_THRUS, new String[]{COLUMN_ID, COLUMN_TARGET_APP_ID, COLUMN_SOURCE}, null, null, null, null, COLUMN_ID, n == null ? null : Integer.toString(n));
-
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                // Create event out of row data
-                click_thrus.put(cursor.getLong(0), new SimpleEntry<Integer, String>(cursor.getInt(1), cursor.getString(2)));
-                cursor.moveToNext();
-            }
-            cursor.close();
-        }
-
-        return click_thrus;
     }
 
     @Override
@@ -246,29 +202,6 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
                 Iterator<String> eventsIt = eventsJSON.iterator();
                 while (eventsIt.hasNext()) {
                     stmt.bindString(1, eventsIt.next());
-                    stmt.execute();
-                    stmt.clearBindings();
-                }
-                database.setTransactionSuccessful(); // Commit
-                stmt.close();
-            } finally {
-                database.endTransaction();
-            }
-        }
-    }
-
-    @Override
-    public void addMultipleClickThrus(List<Entry<Integer, String>> clickThrus) throws SQLException {
-        if (connectionOpen.get()) {
-            String sql = "INSERT INTO " + TABLE_CLICK_THRUS + " (" + COLUMN_TARGET_APP_ID + ", " + COLUMN_SOURCE + ") VALUES (?, ?)";
-            database.beginTransaction();
-            try {
-                SQLiteStatement stmt = database.compileStatement(sql);
-                Iterator<Entry<Integer, String>> clickThruIt = clickThrus.iterator();
-                while (clickThruIt.hasNext()) {
-                    Entry<Integer, String> clickThru = clickThruIt.next();
-                    stmt.bindDouble(1, clickThru.getKey());
-                    stmt.bindString(2, clickThru.getValue());
                     stmt.execute();
                     stmt.clearBindings();
                 }
@@ -321,8 +254,6 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
             db.execSQL("CREATE TABLE " + TABLE_EVENTS_JSON + " (" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_EVENT + " TEXT NOT NULL);");
 
             db.execSQL("CREATE TABLE " + TABLE_CACHE + " (" + COLUMN_USER_ID + " TEXT NOT NULL, " + COLUMN_CATEGORY + " TEXT NOT NULL, " + COLUMN_RAW_DATA + " TEXT NOT NULL, " + "PRIMARY KEY (" + COLUMN_USER_ID + "," + COLUMN_CATEGORY + "));");
-
-            db.execSQL("CREATE TABLE " + TABLE_CLICK_THRUS + " (" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_TARGET_APP_ID + " INTEGER NOT NULL, " + COLUMN_SOURCE + " TEXT NOT NULL);");
         }
 
         @Override

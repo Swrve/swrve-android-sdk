@@ -481,6 +481,16 @@ public class SwrveCampaign {
     }
 
     /**
+     * Ensures a new message cannot be shown until now + minDelayBetweenMessage
+     */
+    private void setMessageMinDelayThrottle()
+    {
+        Date now = this.talkController.getNow();
+        this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
+        this.talkController.setMessageMinDelayThrottle();
+    }
+
+    /**
      * Notify that a message was shown to the user.
      *
      * @param messageFormat SwrveMessageFormat shown to the user.
@@ -488,11 +498,7 @@ public class SwrveCampaign {
     public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
         incrementImpressions();
 
-        // The message was shown.
-        // Take the current time so that we can throttle messages
-        // from being shown too quickly.
-        Date now = this.talkController.getNow();
-        this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
+        setMessageMinDelayThrottle();
 
         // Set next message to be shown
         if (!isRandomOrder()) {
@@ -502,5 +508,12 @@ public class SwrveCampaign {
         } else {
             Log.i(LOG_TAG, "Next message in campaign " + getId() + " is random");
         }
+    }
+
+    /**
+     * Notify that a message was dismissed.
+     */
+    public void messageDismissed() {
+        setMessageMinDelayThrottle();
     }
 }
