@@ -527,6 +527,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Remove the binding to the current activity, if any
             this.activityContext = null;
 
+            // Remove reference to previous message
+            this.messageDisplayed = null;
+
             // Remove QA user from push notification listener
             if (qaUser != null) {
                 qaUser.unbindToServices();
