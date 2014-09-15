@@ -106,7 +106,7 @@
                 android:layout_marginLeft="25dp"
                 android:layout_marginRight="25dp"
                 android:onClick="btnShowTalkMessage"
-                android:text="Show message for Swrve.user_purchase"
+                android:text="Show message for Swrve.Demo.OfferMessage"
                 android:textColor="#0000ff" />
         </LinearLayout>
     </LinearLayout>
