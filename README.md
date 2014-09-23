@@ -37,5 +37,5 @@ We would love to see your contributions! Follow these steps:
 License
 -------
 © Copyright Swrve Mobile Inc or its licensors. Distributed under the [Apache 2.0 License](LICENSE).  
-Google Play Services Library Copyright © 2012 The Android Open Source Project. Licensed under the Apache License.  
-Gradle Copyright 2007-2011 the original author or authors. Licensed under the Apache 2.0 License.
+Google Play Services Library Copyright © 2012 The Android Open Source Project. Licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0).  
+Gradle Copyright 2007-2011 the original author or authors. Licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0).
