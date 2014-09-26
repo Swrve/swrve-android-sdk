@@ -49,12 +49,14 @@ public abstract class SwrveConfigBase {
      */
     private URL eventsUrl = null;
     private URL defaultEventsUrl = null;
+    private boolean useHttpsForEventsUrl = false;
 
     /**
      * Content end-point.
      */
     private URL contentUrl = null;
     private URL defaultContentUrl = null;
+    private boolean useHttpsForContentUrl = false;
 
     /**
      * Session timeout time.
@@ -246,6 +248,21 @@ public abstract class SwrveConfigBase {
     }
 
     /**
+     * @return the useHttpsForEventsUrl
+     */
+    public boolean getUseHttpsForEventsUrl() {
+        return useHttpsForEventsUrl;
+    }
+
+    /**
+     * @param useHttpsForEventsUrl the useHttpsForEventsUrl to set
+     */
+    public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
+        this.useHttpsForEventsUrl = useHttpsForEventsUrl;
+        return this;
+    }
+
+    /**
      * @return the contentUrl
      */
     public URL getContentUrl() {
@@ -259,6 +276,21 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setContentUrl(URL contentUrl) {
         this.contentUrl = contentUrl;
+        return this;
+    }
+
+    /**
+     * @return the useHttpsForContentUrl
+     */
+    public boolean getUseHttpsForContentUrl() {
+        return useHttpsForContentUrl;
+    }
+
+    /**
+     * @param useHttpsForContentUrl the useHttpsForContentUrl to set
+     */
+    public SwrveConfigBase setUseHttpsForContentUrl(boolean useHttpsForContentUrl) {
+        this.useHttpsForContentUrl = useHttpsForContentUrl;
         return this;
     }
 
@@ -313,8 +345,8 @@ public abstract class SwrveConfigBase {
      * @throws MalformedURLException
      */
     public void generateUrls(int appId) throws MalformedURLException {
-        defaultEventsUrl = new URL("http://" + appId + ".api.swrve.com");
-        defaultContentUrl = new URL("https://" + appId + ".content.swrve.com");
+        defaultEventsUrl = new URL((useHttpsForEventsUrl? "https" : "http") + "://" + appId + ".api.swrve.com");
+        defaultContentUrl = new URL((useHttpsForContentUrl? "https" : "http") + "://" + appId + ".content.swrve.com");
     }
 
     /**
