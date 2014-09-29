@@ -116,7 +116,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Wether campaigns and resources will automatically be downloaded.
+     * @return Whether campaigns and resources will automatically be downloaded.
      */
     public boolean isAutoDownloadCampaingsAndResources() {
         return this.autoDownloadCampaignsAndResources;
@@ -268,7 +268,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Wether to use HTTPS for events.
+     * @return Whether to use HTTPS for events.
      */
     public boolean getUseHttpsForEventsUrl() {
         return useHttpsForEventsUrl;
@@ -277,7 +277,7 @@ public abstract class SwrveConfigBase {
     /**
      * Enable HTTPS for event requests.
      *
-     * @param useHttpsForEventsUrl Wether to use HTTPS for api.swrve.com.
+     * @param useHttpsForEventsUrl Whether to use HTTPS for api.swrve.com.
      */
     public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
         this.useHttpsForEventsUrl = useHttpsForEventsUrl;
@@ -306,7 +306,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Wether to use HTTPS for resources and in-app campagins.
+     * @return Whether to use HTTPS for resources and in-app campagins.
      */
     public boolean getUseHttpsForContentUrl() {
         return useHttpsForContentUrl;
@@ -315,7 +315,7 @@ public abstract class SwrveConfigBase {
     /**
      * Enable HTTPS for resources and in-app campaign requests.
      *
-     * @param useHttpsForContentUrl Wether to use HTTPS for content.swrve.com.
+     * @param useHttpsForContentUrl Whether to use HTTPS for content.swrve.com.
      */
     public SwrveConfigBase setUseHttpsForContentUrl(boolean useHttpsForContentUrl) {
         this.useHttpsForContentUrl = useHttpsForContentUrl;
@@ -407,7 +407,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Wether in-app messages are enabled.
+     * @return Whether in-app messages are enabled.
      */
     public boolean isTalkEnabled() {
         return this.talkEnabled;
@@ -460,7 +460,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Wether the SDK will send events onResume.
+     * @return Whether the SDK will send events onResume.
      */
     public boolean isSendQueuedEventsOnResume() {
         return sendQueuedEventsOnResume;
