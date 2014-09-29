@@ -69,7 +69,7 @@ public abstract class SwrveConfigBase {
     private String appVersion;
 
     /**
-     * Target app store.
+     * App Store where the app will be distributed.
      */
     private String appStore = SwrveAppStore.Google;
 
@@ -116,14 +116,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the autoDownloadCampaignsAndResources
+     * @return Wether campaigns and resources will automatically be downloaded.
      */
     public boolean isAutoDownloadCampaingsAndResources() {
         return this.autoDownloadCampaignsAndResources;
     }
 
     /**
-     * @param autoDownload enable auto downloading of campaigns and resources
+     * Download resources and in-app campaigns automatically.
+     *
+     * @param autoDownload Automatically download campaigns and resources.
      */
     public SwrveConfigBase setAutoDownloadCampaignsAndResources(boolean autoDownload) {
         this.autoDownloadCampaignsAndResources = autoDownload;
@@ -131,14 +133,14 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the orientation
+     * @return Orientation supported by the application.
      */
     public SwrveOrientation getOrientation() {
         return orientation;
     }
 
     /**
-     * @param orientation the orientation to set
+     * @param orientation Orientation supported by the application.
      */
     public SwrveConfigBase setOrientation(SwrveOrientation orientation) {
         this.orientation = orientation;
@@ -146,7 +148,10 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @param locale the locale to set
+     * Set the locale of the app. If left empty the
+     * default locale is used.
+     *
+     * @param locale Locale of the app.
      */
     public SwrveConfigBase setLanguage(Locale locale) {
         this.language = SwrveHelper.toLanguageTag(locale);
@@ -154,14 +159,17 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the language
+     * @return Language of the app.
      */
     public String getLanguage() {
         return language;
     }
 
     /**
-     * @param language the language to set
+     * Set the language of the app. If left empty the
+     * default locale is used.
+     *
+     * @param language Language of the app.
      * @deprecated Use {@link #setLanguage(Locale)} instead.
      */
     @Deprecated
@@ -171,14 +179,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the maxSqliteDbSize
+     * @return Maximum byte size of the internal SQLite database.
      */
     public long getMaxSqliteDbSize() {
         return maxSqliteDbSize;
     }
 
     /**
-     * @param maxSqliteDbSize the maxSqliteDbSize to set
+     * Set the maximum byte size of the internal SQLite database.
+     *
+     * @param maxSqliteDbSize Maximum size in bytes.
      */
     public SwrveConfigBase setMaxSqliteDbSize(long maxSqliteDbSize) {
         this.maxSqliteDbSize = maxSqliteDbSize;
@@ -186,14 +196,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the maxEventsPerFlush
+     * @return Maximum number of events per batch.
      */
     public int getMaxEventsPerFlush() {
         return maxEventsPerFlush;
     }
 
     /**
-     * @param maxEventsPerFlush the maxEventsPerFlush to set
+     * Set the maximum number of events per batch to the event server.
+     *
+     * @param maxEventsPerFlush Maximum number of events per batch.
      */
     public SwrveConfigBase setMaxEventsPerFlush(int maxEventsPerFlush) {
         this.maxEventsPerFlush = maxEventsPerFlush;
@@ -201,14 +213,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the maxConcurrentDownloads
+     * @return Maximum number of concurrent asset downloads.
      */
     public int getMaxConcurrentDownloads() {
         return maxConcurrentDownloads;
     }
 
     /**
-     * @param maxConcurrentDownloads the maxConcurrentDownloads to set
+     * Set the maximum number of concurrent asset downloads.
+     *
+     * @param maxConcurrentDownloads Maximum number of concurrent asset downloads.
      */
     public SwrveConfigBase setMaxConcurrentDownloads(int maxConcurrentDownloads) {
         this.maxConcurrentDownloads = maxConcurrentDownloads;
@@ -216,14 +230,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the db_name
+     * @return Name of the internal SQLite database.
      */
     public String getDbName() {
         return dbName;
     }
 
     /**
-     * @param dbName the dbName to set
+     * Override the name of the internal SQLite database.
+     *
+     * @param dbName Name of the internal SQLite database.
      */
     public SwrveConfigBase setDbName(String dbName) {
         this.dbName = dbName;
@@ -231,7 +247,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the eventsUrl
+     * @return Location of the event server.
      */
     public URL getEventsUrl() {
         if (eventsUrl == null)
@@ -240,7 +256,11 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @param eventsUrl the eventsUrl to set
+     * Set to override the default location of the server to which Swrve will send analytics events.
+     * If your company has a special API end-point enabled, then you should specify it here.
+     * You should only need to change this value if you are working with Swrve support on a specific support issue.
+     *
+     * @param eventsUrl Custom location of the event server.
      */
     public SwrveConfigBase setEventsUrl(URL eventsUrl) {
         this.eventsUrl = eventsUrl;
@@ -248,14 +268,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the useHttpsForEventsUrl
+     * @return Wether to use HTTPS for events.
      */
     public boolean getUseHttpsForEventsUrl() {
         return useHttpsForEventsUrl;
     }
 
     /**
-     * @param useHttpsForEventsUrl the useHttpsForEventsUrl to set
+     * Enable HTTPS for event requests.
+     *
+     * @param useHttpsForEventsUrl Wether to use HTTPS for api.swrve.com.
      */
     public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
         this.useHttpsForEventsUrl = useHttpsForEventsUrl;
@@ -263,7 +285,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the contentUrl
+     * @return Location of the content server.
      */
     public URL getContentUrl() {
         if (contentUrl == null)
@@ -272,7 +294,11 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @param contentUrl the contentUrl to set
+     * Set to override the default location of the server used to obtain resources and in-app campaigns.
+     * If your company has a special API end-point enabled, then you should specify it here.
+     * You should only need to change this value if you are working with Swrve support on a specific support issue.
+     *
+     * @param contentUrl Custom location of the content server.
      */
     public SwrveConfigBase setContentUrl(URL contentUrl) {
         this.contentUrl = contentUrl;
@@ -280,14 +306,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the useHttpsForContentUrl
+     * @return Wether to use HTTPS for resources and in-app campagins.
      */
     public boolean getUseHttpsForContentUrl() {
         return useHttpsForContentUrl;
     }
 
     /**
-     * @param useHttpsForContentUrl the useHttpsForContentUrl to set
+     * Enable HTTPS for resources and in-app campaign requests.
+     *
+     * @param useHttpsForContentUrl Wether to use HTTPS for content.swrve.com.
      */
     public SwrveConfigBase setUseHttpsForContentUrl(boolean useHttpsForContentUrl) {
         this.useHttpsForContentUrl = useHttpsForContentUrl;
@@ -295,14 +323,17 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the appVersion
+     * @return App version.
      */
     public String getAppVersion() {
         return appVersion;
     }
 
     /**
-     * @param appVersion the appVersion to set
+     * Set the app version. If left empty PackageInfo.versionName
+     * will be used.
+     *
+     * @param appVersion Version of the app.
      */
     public SwrveConfigBase setAppVersion(String appVersion) {
         this.appVersion = appVersion;
@@ -310,14 +341,17 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the newSessionInterval
+     * @return Session timeout time in milliseconds.
      */
     public long getNewSessionInterval() {
         return newSessionInterval;
     }
 
     /**
-     * @param newSessionInterval the newSessionInterval to set
+     * Set the session timeout time.
+     * User activity after this time will be considered a new session.
+     *
+     * @param newSessionInterval session timeout in milliseconds.
      */
     public SwrveConfigBase setNewSessionInterval(long newSessionInterval) {
         this.newSessionInterval = newSessionInterval;
@@ -325,14 +359,16 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return the appStore
+     * @return the App Store where the app will be distributed.
      */
     public String getAppStore() {
         return appStore;
     }
 
     /**
-     * @param appStore the appStore to set
+     * Set the App Store where the app will be distributed.
+     *
+     * @param appStore App Store where the app will be distributed.
      */
     public SwrveConfigBase setAppStore(String appStore) {
         this.appStore = appStore;
@@ -345,19 +381,25 @@ public abstract class SwrveConfigBase {
      * @throws MalformedURLException
      */
     public void generateUrls(int appId) throws MalformedURLException {
-        defaultEventsUrl = new URL((useHttpsForEventsUrl? "https" : "http") + "://" + appId + ".api.swrve.com");
-        defaultContentUrl = new URL((useHttpsForContentUrl? "https" : "http") + "://" + appId + ".content.swrve.com");
+        defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + ".api.swrve.com");
+        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + ".content.swrve.com");
+    }
+
+    private static String getSchema(boolean https) {
+        return https? "https" : "http";
     }
 
     /**
-     * @return the user id
+     * @return Custom unique user id.
      */
     public String getUserId() {
         return this.userId;
     }
 
     /**
-     * @param userId the user id to set
+     * Set a custom unique user id.
+     *
+     * @param userId Custom unique user id.
      */
     public SwrveConfigBase setUserId(String userId) {
         this.userId = userId;
@@ -365,14 +407,14 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return if talk is enabled
+     * @return Wether in-app messages are enabled.
      */
     public boolean isTalkEnabled() {
         return this.talkEnabled;
     }
 
     /**
-     * @param enabled activate/deactivate talk
+     * @param Enabled in-app messages.
      */
     public SwrveConfigBase setTalkEnabled(boolean enabled) {
         this.talkEnabled = enabled;
@@ -418,14 +460,14 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return if the sdk will send events onResume
+     * @return Wether the SDK will send events onResume.
      */
     public boolean isSendQueuedEventsOnResume() {
         return sendQueuedEventsOnResume;
     }
 
     /**
-     * Automatically send events onResume
+     * Automatically send events onResume.
      *
      * @param sendQueuedEventsOnResume
      */
