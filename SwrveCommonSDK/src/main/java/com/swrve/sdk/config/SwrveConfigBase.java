@@ -148,8 +148,8 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Set the locale of the app. If left empty the
-     * default locale is used.
+     * Set the locale of the app. If empty or null then
+     * the default locale is used.
      *
      * @param locale Locale of the app.
      */
@@ -166,8 +166,8 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Set the language of the app. If left empty the
-     * default locale is used.
+     * Set the language of the app. If empty or null then
+     * the default locale is used.
      *
      * @param language Language of the app.
      * @deprecated Use {@link #setLanguage(Locale)} instead.
@@ -330,7 +330,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Set the app version. If left empty PackageInfo.versionName
+     * Set the app version. If empty or null then PackageInfo.versionName
      * will be used.
      *
      * @param appVersion Version of the app.
