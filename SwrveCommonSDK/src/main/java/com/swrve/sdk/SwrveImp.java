@@ -222,22 +222,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return this.context.get();
     }
 
-    protected Context resolveContext(Context context) {
-        // Obtain the activity context if possible
-        Context ctx = null;
-        Activity activityContext = null;
-        if (context instanceof Activity) {
-            activityContext = (Activity) context;
-            // Attach to the activity and application context
-            ctx = context.getApplicationContext();
-            this.activityContext = new WeakReference<Activity>(activityContext);
-        } else {
-            ctx = context;
-        }
-        this.context = new WeakReference<Context>(ctx);
-        return ctx;
-    }
-
     protected String getUniqueUserId(Context context) {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
         String newUserId = settings.getString("userId", null);
@@ -1241,32 +1225,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 Log.e(LOG_TAG, "Unable to insert into local storage", se);
             }
             taskCompleted();
-        }
-    }
-
-    protected class PendingState {
-        public boolean pending;
-        public boolean sending;
-
-        public PendingState(boolean pending, boolean sending) {
-            this.pending = pending;
-            this.sending = sending;
-        }
-
-        public boolean isPending() {
-            return pending;
-        }
-
-        public void setPending(boolean pending) {
-            this.pending = pending;
-        }
-
-        public boolean isSending() {
-            return sending;
-        }
-
-        public void setSending(boolean sending) {
-            this.sending = sending;
         }
     }
 
