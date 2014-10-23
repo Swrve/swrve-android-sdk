@@ -3,6 +3,9 @@ package com.swrve.sdk.device;
 import android.content.Context;
 import android.telephony.TelephonyManager;
 
+/**
+ * Used internally to obtain carrier information.
+ */
 public class AndroidTelephonyManagerWrapper implements ITelephonyManager {
     private final TelephonyManager manager;
 
