@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -15,6 +16,8 @@ import android.view.WindowManager;
 
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
+import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
@@ -104,6 +107,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_SDK_VERSION = "swrve.sdk_version";
     protected static final String SWRVE_APP_STORE = "swrve.app_store";
     protected static final String SWRVE_INSTALL_DATE = "swrve.install_date";
+    protected static final String SWRVE_SIM_OPERATOR_NAME = "swrve.sim_operator.name";
+    protected static final String SWRVE_SIM_OPERATOR_ISO_COUNTRY = "swrve.sim_operator.iso_country_code";
+    protected static final String SWRVE_SIM_OPERATOR_CODE = "swrve.sim_operator.code";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
     protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
@@ -174,6 +180,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected float device_dpi;
     protected float android_device_xdpi;
     protected float android_device_ydpi;
+    protected String sim_operator_name;
+    protected String sim_operator_iso_country_code;
+    protected String sim_operator_code;
+
     protected int previousOrientation;
     protected SwrveQAUser qaUser;
 
@@ -523,9 +533,19 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             this.device_dpi = metrics.densityDpi;
             this.android_device_xdpi = xdpi;
             this.android_device_ydpi = ydpi;
+
+            // Carrier details
+            ITelephonyManager tmanager = getTelephonyManager(context);
+            this.sim_operator_name = tmanager.getSimOperatorName();
+            this.sim_operator_iso_country_code = tmanager.getSimCountryIso();
+            this.sim_operator_code = tmanager.getSimOperator();
         } catch (Exception exp) {
             Log.e(LOG_TAG, "Get device screen info failed", exp);
         }
+    }
+
+    protected ITelephonyManager getTelephonyManager(Context context) {
+        return new AndroidTelephonyManagerWrapper(context);
     }
 
     protected void findCacheFolder(Context context) {

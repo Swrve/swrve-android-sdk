@@ -587,6 +587,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 deviceInfo.put(SWRVE_DEVICE_DPI, metrics.densityDpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, xdpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, ydpi);
+                // Carrier info
+                if (!SwrveHelper.isNullOrEmpty(sim_operator_name)) {
+                    deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, sim_operator_name);
+                }
+                if (!SwrveHelper.isNullOrEmpty(sim_operator_iso_country_code)) {
+                    deviceInfo.put(SWRVE_SIM_OPERATOR_ISO_COUNTRY, sim_operator_iso_country_code);
+                }
+                if (!SwrveHelper.isNullOrEmpty(sim_operator_code)) {
+                    deviceInfo.put(SWRVE_SIM_OPERATOR_CODE, sim_operator_code);
+                }
             } catch (Exception exp) {
                 Log.e(LOG_TAG, "Get device screen info failed", exp);
             }
