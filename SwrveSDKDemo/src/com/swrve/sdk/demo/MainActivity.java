@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
 
         try {
             // Initialize SDK
-            swrve = SwrveInstance.getInstance().init(this, appId, apiKey);
+            swrve = SwrveInstance.getInstance().initOrBind(this, appId, apiKey);
         } catch (IllegalArgumentException exp) {
             Log.e(LOG_TAG, "Could not initialize the Swrve SDK", exp);
         }
