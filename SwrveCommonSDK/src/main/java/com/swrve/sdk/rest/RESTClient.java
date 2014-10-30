@@ -12,6 +12,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +45,7 @@ public class RESTClient implements IRESTClient {
 
         DoneHandlerInputStream wrapperIn = null;
         try {
-            URL url = new URL(endpoint);
+            URL url = createEncodedURL(endpoint);
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setReadTimeout(TIMEOUT_MS);
             urlConnection.setConnectTimeout(TIMEOUT_MS);
@@ -129,7 +131,7 @@ public class RESTClient implements IRESTClient {
         DoneHandlerInputStream wrapperIn = null;
         try {
             byte[] bytes = encodedBody.getBytes("UTF-8");
-            URL url = new URL(endpoint);
+            URL url = createEncodedURL(endpoint);
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setReadTimeout(TIMEOUT_MS);
             urlConnection.setConnectTimeout(TIMEOUT_MS);
@@ -215,6 +217,15 @@ public class RESTClient implements IRESTClient {
     private String getUrlWithoutPathOrQuery(String url) throws MalformedURLException {
         URL fullUrl = new URL(url);
         return String.format("%s://%s", fullUrl.getProtocol(), fullUrl.getAuthority());
+    }
+
+    /*
+     * Take any un-encoded url string and turn it into a URI, thus encoding it, and then turn it back into a URL object.
+     */
+    private URL createEncodedURL(String endPoint) throws URISyntaxException, MalformedURLException {
+        URL url = new URL(endPoint);
+        URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
+        return uri.toURL();
     }
 
     /*
