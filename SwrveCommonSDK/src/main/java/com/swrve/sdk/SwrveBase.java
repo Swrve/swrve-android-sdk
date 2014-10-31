@@ -512,6 +512,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             initialisedTime = null;
 
             removeCurrentDialog();
+
+            // Close the dashboard socket
+            if (this.sherifComponent != null) {
+                this.sherifComponent.close();
+            }
+
             // Remove the binding to the current activity, if any
             this.activityContext = null;
 

@@ -38,6 +38,7 @@ import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTClient;
 import com.swrve.sdk.rest.RESTResponse;
+import com.swrve.sdk.uiabtesting.SherifComponent;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -186,6 +187,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
     protected int previousOrientation;
     protected SwrveQAUser qaUser;
+
+    protected SherifComponent sherifComponent;
 
     public SwrveImp() {
         installTime = new AtomicLong();
@@ -734,9 +737,26 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         campaignsDownloaded.put(campaignId, campaignReason);
                     }
                 }
-            } else if (qaUser != null) {
-                qaUser.unbindToServices();
-                qaUser = null;
+
+                // if (jsonQa.has("ui_abtesting")) {
+                //Activity currentActivity = getActivityContext();
+                //if (currentActivity != null) {
+                //    sherifComponent = new SherifComponent(jsonQa, currentActivity);
+                //}
+            } else {
+                if (qaUser != null) {
+                    qaUser.unbindToServices();
+                    qaUser = null;
+                }
+
+                if (sherifComponent != null) {
+                    sherifComponent.close();
+                    sherifComponent = null;
+                }
+            }
+
+            if (sherifComponent == null) {
+                sherifComponent = new SherifComponent(null, getActivityContext());
             }
 
             JSONArray jsonCampaigns = json.getJSONArray("campaigns");
