@@ -1167,10 +1167,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     swrve.refreshCampaignsAndResources();
                 }
             }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
-        } else {
-            swrve.refreshCampaignsAndResources();
         }
-
     }
 
     /**
