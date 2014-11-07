@@ -1,21 +1,5 @@
 package com.swrve.sdk.uiabtesting;
 
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -26,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
 
 import com.koushikdutta.async.ByteBufferList;
 import com.koushikdutta.async.DataEmitter;
@@ -35,25 +18,41 @@ import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class SherifComponent {
 
     private static final String LOG_TAG = "SHERIFF";
 
-	protected Activity activity;
-	protected WebSocket webSocket;
-	protected Timer timer;
-	
-	protected String previousSupportedTypes;
-	protected int statusBarHeight;
-	private Map<Class, JSONObject> viewAttributes = new HashMap<Class, JSONObject>();
+    protected Activity activity;
+    protected WebSocket webSocket;
+    protected Timer timer;
 
-	public SherifComponent(JSONObject jsonQa, Activity activity) {
-		this.activity = activity;
+    protected String previousSupportedTypes;
+    protected int statusBarHeight;
+    private Map<Class, JSONObject> viewAttributes = new HashMap<Class, JSONObject>();
+
+    public SherifComponent(JSONObject jsonQa, Activity activity) {
+        this.activity = activity;
         startUIABTesting();
-	}
+    }
 
-	private void startUIABTesting() {
-        AsyncHttpClient.getDefaultInstance().websocket("ws://192.168.1.130:9000/deviceSocket", null, new AsyncHttpClient.WebSocketConnectCallback() {
+    private void startUIABTesting() {
+        AsyncHttpClient.getDefaultInstance().websocket("ws://192.168.1.51:9000/deviceSocket", null, new AsyncHttpClient.WebSocketConnectCallback() {
             @Override
             public void onCompleted(Exception e, final WebSocket webSocket) {
                 SherifComponent.this.webSocket = webSocket;
@@ -88,16 +87,16 @@ public class SherifComponent {
                 });
             }
         });
-		
-		// start timer
-		timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask() {
+
+        // start timer
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-            	sendScreenshot();
+                sendScreenshot();
             }
         }, 0, 5000);
-	}
+    }
 
     private void processMessage(String message) {
         try {
@@ -108,15 +107,15 @@ public class SherifComponent {
                 // Extract x and y
                 String msgData = message.substring(commandSelect.length());
                 String data[] = msgData.split(",");
-                int x = (int)(Float.parseFloat(data[0]));
-                int y = (int)(Float.parseFloat(data[1]) + statusBarHeight);
+                int x = (int) (Float.parseFloat(data[0]));
+                int y = (int) (Float.parseFloat(data[1]) + statusBarHeight);
                 String supportedTypesRaw = data[2];
                 if (previousSupportedTypes != null && !previousSupportedTypes.equals(supportedTypesRaw)) {
                     viewAttributes.clear();
                 }
 
                 Set<Class> supportedTypes = new HashSet<Class>();
-                for(String type : supportedTypesRaw.split("#")) {
+                for (String type : supportedTypesRaw.split("#")) {
                     try {
                         supportedTypes.add(getClassForName(type));
                     } catch (ClassNotFoundException e) {
@@ -124,11 +123,11 @@ public class SherifComponent {
                     }
                 }
                 View v = findViewIn(x, y);
-                String event = "#view:";
+                String event = "";
                 if (v != null) {
                     event += describeView(v, supportedTypes);
                 }
-                webSocket.send(event.getBytes());
+                sendCommand("view", event);
             } else if (message.startsWith(commandSet)) {
                 String msgData = message.substring(commandSet.length());
                 String data[] = msgData.split(",");
@@ -148,12 +147,16 @@ public class SherifComponent {
                     });
                 }
             }
-        } catch(Exception exp) {
+        } catch (Exception exp) {
             exp.printStackTrace();
         }
     }
-	
-	private static Class getClassForName(String name) throws ClassNotFoundException {
+
+    private void sendCommand(String command, String content) {
+        webSocket.send(("#" + command + ":" + content).getBytes());
+    }
+
+    private static Class getClassForName(String name) throws ClassNotFoundException {
         if (name.equals("byte")) return byte.class;
         if (name.equals("short")) return short.class;
         if (name.equals("int")) return int.class;
@@ -165,28 +168,27 @@ public class SherifComponent {
         if (name.equals("void")) return void.class;
 
         return Class.forName(name);
-	}
+    }
 
     private void setViewAttribute(View v, String attribute, String attributeType, String attributeValue) {
         // Hack for colors
-        if (attribute.equals("BackgroundColor")) {
+        if (attribute.equalsIgnoreCase("BackgroundColor")) {
             if(attributeValue.equalsIgnoreCase("black")) {
-                v.setBackgroundColor(v.getContext().getResources().getColor(Color.BLACK));
+                v.setBackgroundColor(Color.BLACK);
             }
 
             if(attributeValue.equalsIgnoreCase("red")) {
-                v.setBackgroundColor(v.getContext().getResources().getColor(Color.RED));
+                v.setBackgroundColor(Color.RED);
             }
 
             if(attributeValue.equalsIgnoreCase("gray")) {
-                v.setBackgroundColor(v.getContext().getResources().getColor(Color.GRAY));
+                v.setBackgroundColor(Color.GRAY);
             }
 
             sendScreenshot();return;
         }
 
         try {
-            boolean processed = false;
             boolean executed = false;
             Class viewClass = v.getClass();
             String methodName = "set" + attribute;
@@ -209,20 +211,19 @@ public class SherifComponent {
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
                 }
-                processed = true;
             }
 
             if (executed) {
                 sendScreenshot();
             }
-        }catch (Exception exp) {
+        } catch (Exception exp) {
             exp.printStackTrace();
         }
     }
 
     private Object convertToType(String attributeValue, Class c) {
         if (c.isAssignableFrom(int.class)) {
-            return (int)Integer.parseInt(attributeValue);
+            return (int) Integer.parseInt(attributeValue);
         } else if (c.isAssignableFrom(String.class)) {
             return attributeValue;
         }
@@ -237,24 +238,22 @@ public class SherifComponent {
             description.put("class", viewClass.getName());
 
             // Get view attributes
-            JSONObject attributes = null;
+            JSONObject attributes;
             if (viewAttributes.containsKey(viewClass)) {
                 attributes = viewAttributes.get(viewClass);
             } else {
                 // Generate view attributes
                 attributes = new JSONObject();
                 Method[] methods = viewClass.getMethods();
-                for(int i = 0; i< methods.length; i++) {
+                for (int i = 0; i < methods.length; i++) {
                     Method method = methods[i];
                     Class[] paramTypes = method.getParameterTypes();
                     if (method.getName().startsWith("set") && paramTypes.length == 1) {
                         String attributeName = method.getName().substring(3);
                         Class paramType = paramTypes[0];
 
-                        boolean supported = false;
-                        for(Class c : supportedTypes) {
+                        for (Class c : supportedTypes) {
                             if (paramType.isAssignableFrom(c)) {
-                                supported = true;
                                 JSONObject attDetails = new JSONObject();
                                 attDetails.put("type", paramType.getName());
                                 attributes.put(attributeName, attDetails);
@@ -267,7 +266,7 @@ public class SherifComponent {
 
             // Get values
             Iterator<String> itKey = attributes.keys();
-            while(itKey.hasNext()) {
+            while (itKey.hasNext()) {
                 String attributeName = itKey.next();
                 try {
                     Method method = viewClass.getMethod("get" + attributeName, null);
@@ -278,7 +277,7 @@ public class SherifComponent {
                             attDetails.put("value", ret.toString());
                         }
                     }
-                } catch(Exception exp) {
+                } catch (Exception exp) {
                     exp.printStackTrace();
                 }
             }
@@ -302,8 +301,9 @@ public class SherifComponent {
     }
 
     private ViewGroup getRoot() {
-        return (ViewGroup)activity.getWindow().getDecorView().findViewById(android.R.id.content);
+        return (ViewGroup) activity.getWindow().getDecorView().findViewById(android.R.id.content);
     }
+
     private View findViewIn(int x, int y) {
         return findViewIn(getRoot(), x, y);
     }
@@ -313,12 +313,12 @@ public class SherifComponent {
 
         // First children
         View result = null;
-        int child = vg.getChildCount();
-        for(int i = 0; i < child && (result == null); i++) {
+        int childCount = vg.getChildCount();
+        for (int i = 0; i < childCount && (result == null); i++) {
             View children = vg.getChildAt(i);
             generateViewId(children);
             if (children instanceof ViewGroup) {
-                result = findViewIn((ViewGroup)children, x, y);
+                result = findViewIn((ViewGroup) children, x, y);
             } else {
                 if (viewIsIn(children, x, y)) {
                     result = children;
@@ -334,11 +334,43 @@ public class SherifComponent {
         return result;
     }
 
+    private JSONArray constructHierarchy(JSONArray obj) throws JSONException {
+        return constructHierarchy(getRoot(), obj);
+    }
+
+    private JSONArray constructHierarchy(View view, JSONArray arrayResult) throws JSONException {
+        int[] pos = new int[2];
+        view.getLocationInWindow(pos);
+        int vx = pos[0];
+        int vy = pos[1];
+        JSONObject jsonView = new JSONObject();
+        jsonView.put("x", vx);
+        jsonView.put("y", vy - statusBarHeight);
+        jsonView.put("w", view.getWidth());
+        jsonView.put("h", view.getHeight());
+        jsonView.put("name", view.getId());
+        jsonView.put("class", view.getClass().getName());
+        arrayResult.put(jsonView);
+
+        if (view instanceof ViewGroup) {
+            JSONArray childrenJson = new JSONArray();
+            ViewGroup vg = (ViewGroup)view;
+            int childCount = vg.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                constructHierarchy(vg.getChildAt(i), childrenJson);
+            }
+            jsonView.put("children", childrenJson);
+        }
+
+        return arrayResult;
+    }
+
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
+
     private void generateViewId(View v) {
         if (v.getId() < 0) {
             if (Build.VERSION.SDK_INT < 17) {
-                for (;;) {
+                for (; ; ) {
                     final int result = sNextGeneratedId.get();
                     int newValue = result + 1;
                     if (newValue > 0x00FFFFFF)
@@ -384,37 +416,47 @@ public class SherifComponent {
 
         return false;
     }
-	
-	private void sendScreenshot() {
-		new Thread(new Runnable() {
+
+    private void sendScreenshot() {
+        new Thread(new Runnable() {
             public void run() {
-            	try {
-	            	getYOffset();
-					View content = activity.getWindow().getDecorView();
-					content.setDrawingCacheEnabled(true);
-				    Bitmap originalScreen = content.getDrawingCache();
-				    
-				    if (originalScreen != null) {
-					    int y = statusBarHeight;
-					    Bitmap finalBitmap = Bitmap.createBitmap(originalScreen, 0, y, originalScreen.getWidth(), originalScreen.getHeight() - y);
-					    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();  
-					    finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-					    byte[] byteArray = byteArrayOutputStream .toByteArray();
+                // Send view hierarchy
+                try {
+                    JSONArray list = new JSONArray();
+                    constructHierarchy(list);
+                    sendCommand("list", list.toString());
+                } catch (Exception exp) {
+                    exp.printStackTrace();
+                }
+
+                // Send bitmap
+                try {
+                    getYOffset();
+                    View content = activity.getWindow().getDecorView();
+                    content.setDrawingCacheEnabled(true);
+                    Bitmap originalScreen = content.getDrawingCache();
+
+                    if (originalScreen != null) {
+                        int y = statusBarHeight;
+                        Bitmap finalBitmap = Bitmap.createBitmap(originalScreen, 0, y, originalScreen.getWidth(), originalScreen.getHeight() - y);
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                        byte[] byteArray = byteArrayOutputStream.toByteArray();
                         if (webSocket != null) {
                             webSocket.send(byteArray);
                         }
-				    }
-			    } catch(Exception exp) {
-			    	exp.printStackTrace();
-			    }
+                    }
+                } catch (Exception exp) {
+                    exp.printStackTrace();
+                }
             }
-		}).start();
-	}
+        }).start();
+    }
 
-	public void close() {
-		timer.cancel();
+    public void close() {
+        timer.cancel();
         if (webSocket != null) {
             webSocket.close();
         }
-	}
+    }
 }
