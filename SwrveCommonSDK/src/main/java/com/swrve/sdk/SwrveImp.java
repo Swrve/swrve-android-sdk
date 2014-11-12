@@ -1154,7 +1154,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.sendQueuedEvents();
             eventsWereSent = false;
-            scheduleRefreshCampaignsAndResources(swrve, Executors.newSingleThreadScheduledExecutor(), campaignsAndResourcesFlushRefreshDelay.longValue());
+            swrve.refreshCampaignsAndResources();
         }
     }
 
@@ -1172,15 +1172,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             campaignsAndResourcesExecutor.shutdown();
         }
 
-        // For session start, execute immediately and in one second. For iap, execute in 5 seconds.
+        // For session start, execute immediately.
         if (sessionStart) {
             swrve.refreshCampaignsAndResources();
-            scheduleRefreshCampaignsAndResources(swrve, Executors.newSingleThreadScheduledExecutor(), 1000l); // TODO the 1 second param needs to be softcoded
-        } else {
-            scheduleRefreshCampaignsAndResources(swrve, Executors.newSingleThreadScheduledExecutor(), campaignsAndResourcesFlushRefreshDelay.longValue());
         }
 
-        // Start repeating timer to begin checking if campaigns/resources needs updating in one interval's time
+        // Start repeating timer to begin checking if campaigns/resources needs updating. It starts after a delay.
         campaignsAndResourcesExecutor = new ScheduledThreadPoolExecutor(1);
         campaignsAndResourcesExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         campaignsAndResourcesExecutor.scheduleWithFixedDelay(new Runnable() {
@@ -1188,16 +1185,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             public void run() {
                 checkForCampaignAndResourcesUpdates();
             }
-        }, campaignsAndResourcesFlushFrequency.longValue(), campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
-    }
-
-    private void scheduleRefreshCampaignsAndResources(final SwrveBase<T, C> swrve, final ScheduledExecutorService timedService, final long delay) {
-        timedService.schedule(new Runnable() {
-            @Override
-            public void run() {
-                swrve.refreshCampaignsAndResources();
-            }
-        }, delay, TimeUnit.MILLISECONDS);
+        }, campaignsAndResourcesFlushRefreshDelay.longValue(), campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
     }
 
     public Set<String> getAssetsOnDisk() {
