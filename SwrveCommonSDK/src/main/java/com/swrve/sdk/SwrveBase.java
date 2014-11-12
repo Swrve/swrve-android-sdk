@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.Build;
-import android.provider.Settings.Secure;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -225,7 +224,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             campaignsAndResourcesFlushRefreshDelay = settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
             campaignsAndResourcesLastETag = settings.getString("campaigns_and_resources_etag", null);
 
-            startCampaignsAndResourcesTimer();
+            startCampaignsAndResourcesTimer(true);
             disableAutoShowAfterDelay();
 
             sendCrashlyticsMetadata();
@@ -475,7 +474,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _onResume() {
         Log.i(LOG_TAG, "onResume");
-        startCampaignsAndResourcesTimer();
+        startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
 
         queueDeviceInfoNow(false);
@@ -631,6 +630,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             campaignsAndResourcesLastRefreshed = now;
         }
 
+        campaignsAndResourcesRefreshCounter++;
         restClientExecutorExecute(new Runnable() {
             @Override
             public void run() {
