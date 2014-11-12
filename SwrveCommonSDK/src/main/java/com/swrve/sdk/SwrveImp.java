@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -164,6 +163,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected Integer campaignsAndResourcesFlushRefreshDelay;
     protected String campaignsAndResourcesLastETag;
     protected Date campaignsAndResourcesLastRefreshed;
+    protected long campaignsAndResourcesRefreshCounter;
     protected boolean campaignsAndResourcesInitialized = false;
     protected boolean eventsWereSent = false;
     protected String cdnRoot = "http://content-cdn.swrve.com/messaging/message_image/";
@@ -295,7 +295,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             queueEvent("iap", parameters, null);
 
             if (config.isAutoDownloadCampaingsAndResources()) {
-                checkForCampaignAndResourcesUpdates(false);
+                startCampaignsAndResourcesTimer(false);
             }
         }
     }
@@ -1144,67 +1144,60 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
     /**
      * Check if any events need sending, then after flush delay reload campaigns and resources
-     * This function should be called periodically, and additionally immediately after an IAP event
+     * This function should be called periodically.
      */
-    protected void checkForCampaignAndResourcesUpdates(boolean calledFromTimer) {
-        final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-
-        // If this function got called outside the timer schedule, restart the timer
-        if (!calledFromTimer) {
-            startCampaignsAndResourcesTimer();
-        }
-
+    protected void checkForCampaignAndResourcesUpdates() {
         // If there are any events to be sent, or if any events were sent since last refresh
         // send events queued, wait campaignsAndResourcesFlushRefreshDelay for events to reach servers and refresh
         final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
         if (!combinedEvents.isEmpty() || eventsWereSent) {
+            final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.sendQueuedEvents();
             eventsWereSent = false;
-            ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
-            timedService.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    swrve.refreshCampaignsAndResources();
-                }
-            }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
+            scheduleRefreshCampaignsAndResources(swrve, Executors.newSingleThreadScheduledExecutor(), campaignsAndResourcesFlushRefreshDelay.longValue());
         }
     }
 
     /**
-     * Set up timer for checking for campaign and resources updates
+     * Set up timer for checking for campaign and resources updates. Called when session begins and after IAP.
      */
-    protected void startCampaignsAndResourcesTimer() {
+    protected void startCampaignsAndResourcesTimer(boolean sessionStart) {
         if (!config.isAutoDownloadCampaingsAndResources()) {
             return;
         }
 
         final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-        swrve.refreshCampaignsAndResources();
-
-        // If there is an existing executor, shut it down
-        // This will finish any tasks in progress, but not execute any tasks currently scheduled or accept new tasks
+        // If there is an existing executor, shut it down. This will finish any tasks in progress, but not execute any tasks currently scheduled or accept new tasks
         if (campaignsAndResourcesExecutor != null) {
             campaignsAndResourcesExecutor.shutdown();
         }
 
-        // Start repeating timer
+        // For session start, execute immediately and in one second. For iap, execute in 5 seconds.
+        if (sessionStart) {
+            swrve.refreshCampaignsAndResources();
+            scheduleRefreshCampaignsAndResources(swrve, Executors.newSingleThreadScheduledExecutor(), 1000l); // TODO the 1 second param needs to be softcoded
+        } else {
+            scheduleRefreshCampaignsAndResources(swrve, Executors.newSingleThreadScheduledExecutor(), campaignsAndResourcesFlushRefreshDelay.longValue());
+        }
+
+        // Start repeating timer to begin checking if campaigns/resources needs updating in one interval's time
         campaignsAndResourcesExecutor = new ScheduledThreadPoolExecutor(1);
         campaignsAndResourcesExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         campaignsAndResourcesExecutor.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-                checkForCampaignAndResourcesUpdates(true);
+                checkForCampaignAndResourcesUpdates();
             }
-        }, 0, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
+        }, campaignsAndResourcesFlushFrequency.longValue(), campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
+    }
 
-        // Call refresh once after refresh delay to ensure campaigns are reloaded after initial events have been sent
-        ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
+    private void scheduleRefreshCampaignsAndResources(final SwrveBase<T, C> swrve, final ScheduledExecutorService timedService, final long delay) {
         timedService.schedule(new Runnable() {
             @Override
             public void run() {
                 swrve.refreshCampaignsAndResources();
             }
-        }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
+        }, delay, TimeUnit.MILLISECONDS);
     }
 
     public Set<String> getAssetsOnDisk() {
