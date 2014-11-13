@@ -163,7 +163,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected Integer campaignsAndResourcesFlushRefreshDelay;
     protected String campaignsAndResourcesLastETag;
     protected Date campaignsAndResourcesLastRefreshed;
-    protected long campaignsAndResourcesRefreshCounter;
     protected boolean campaignsAndResourcesInitialized = false;
     protected boolean eventsWereSent = false;
     protected String cdnRoot = "http://content-cdn.swrve.com/messaging/message_image/";
