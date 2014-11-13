@@ -630,7 +630,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             campaignsAndResourcesLastRefreshed = now;
         }
 
-        campaignsAndResourcesRefreshCounter++;
         restClientExecutorExecute(new Runnable() {
             @Override
             public void run() {
