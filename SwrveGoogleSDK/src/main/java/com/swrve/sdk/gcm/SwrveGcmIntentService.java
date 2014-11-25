@@ -7,11 +7,13 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -29,9 +31,10 @@ public class SwrveGcmIntentService extends IntentService {
     private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
     private static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
     private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
+    public static final String NOTIFICATION_ID_KEY = "notificationId";
 
-    public static int tempNotificationId = 1;
-    public static int tempPendingIntentId = 1;
+    private int notificationId = 1;
+    private SharedPreferences settings;
 
     private boolean failedInitialisation = false;
 
@@ -69,6 +72,9 @@ public class SwrveGcmIntentService extends IntentService {
         if (activityClass == null || SwrveHelper.isNullOrEmpty(notificationTitle)) {
             readConfigFromMetadata();
         }
+        // Read latest push id
+        settings = PreferenceManager.getDefaultSharedPreferences(this);
+        notificationId = settings.getInt(NOTIFICATION_ID_KEY, 0);
     }
 
     private void readConfigFromMetadata() {
@@ -187,6 +193,8 @@ public class SwrveGcmIntentService extends IntentService {
                 final NotificationManager mNotificationManager = (NotificationManager)
                         this.getSystemService(Context.NOTIFICATION_SERVICE);
 
+                // Create new internal id for the notification
+                settings.edit().putInt(NOTIFICATION_ID_KEY, notificationId++).commit();
                 final PendingIntent contentIntent = createPendingIntent(msg);
                 if (contentIntent != null) {
                     final Notification notification = createNotification(msg, contentIntent);
@@ -217,7 +225,6 @@ public class SwrveGcmIntentService extends IntentService {
      * @return the notification id so that it can be dismissed by other UI elements
      */
     public int showNotification(NotificationManager notificationManager, Notification notification) {
-        int notificationId = tempNotificationId++;
         notificationManager.notify(notificationId, notification);
         return notificationId;
     }
@@ -290,7 +297,7 @@ public class SwrveGcmIntentService extends IntentService {
         // Add notification to bundle
         Intent intent = createIntent(msg);
         if (intent != null) {
-            return PendingIntent.getActivity(this, tempPendingIntentId++, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return null;
