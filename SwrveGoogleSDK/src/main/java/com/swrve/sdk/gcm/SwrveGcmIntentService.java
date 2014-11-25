@@ -31,6 +31,7 @@ public class SwrveGcmIntentService extends IntentService {
     private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
 
     public static int tempNotificationId = 1;
+    public static int tempPendingIntentId = 1;
 
     private boolean failedInitialisation = false;
 
@@ -289,7 +290,7 @@ public class SwrveGcmIntentService extends IntentService {
         // Add notification to bundle
         Intent intent = createIntent(msg);
         if (intent != null) {
-            return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return PendingIntent.getActivity(this, tempPendingIntentId++, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return null;
