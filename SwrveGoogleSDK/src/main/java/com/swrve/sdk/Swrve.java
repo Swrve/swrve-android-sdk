@@ -12,6 +12,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
+import com.swrve.sdk.gcm.SwrveGCMNotification;
 import com.swrve.sdk.gcm.SwrveGcmBroadcastReceiver;
 
 import org.json.JSONException;
@@ -26,6 +27,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String SWRVE_GCM_TOKEN = "swrve.gcm_token";
 
     protected String registrationId;
+    protected String lastPushMessageProcessed;
     protected ISwrvePushNotificationListener pushNotificationListener;
 
     protected Swrve() {
@@ -246,14 +248,14 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
-                Bundle msg = extras.getBundle("notification");
-                if (msg != null && config.isPushEnabled()) {
+                Bundle msg = extras.getBundle(SwrveGCMNotification.GCM_BUNDLE);
+                if (msg != null && config!=null && config.isPushEnabled()) {
                     // Obtain push id
                     Object rawId = msg.get("_p");
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     // Only process once the message if possible
-                    if (!SwrveHelper.isNullOrEmpty(msgId) && (lastProcessedMessage == null || !lastProcessedMessage.equals(msgId))) {
-                        lastProcessedMessage = msgId;
+                    if (!SwrveHelper.isNullOrEmpty(msgId) && (lastPushMessageProcessed == null || !lastPushMessageProcessed.equals(msgId))) {
+                        lastPushMessageProcessed = msgId;
                         event("Swrve.Messages.Push-" + msgId + ".engaged", null);
                         // Call custom listener
                         if (pushNotificationListener != null) {

@@ -13,15 +13,7 @@ import com.swrve.sdk.SwrveHelper;
  */
 public class SwrveGcmBroadcastReceiver extends WakefulBroadcastReceiver {
     private static String workaroundRegistrationId;
-    private Class<?> intentServiceClass;
-
-    public SwrveGcmBroadcastReceiver() {
-        this(SwrveGcmIntentService.class);
-    }
-
-    public SwrveGcmBroadcastReceiver(Class<?> intentServiceClass) {
-        this.intentServiceClass = intentServiceClass;
-    }
+    private Class<?> intentServiceClass = SwrveGcmIntentService.class;
 
     public static String getWorkaroundRegistrationId() {
         return workaroundRegistrationId;
@@ -33,18 +25,17 @@ public class SwrveGcmBroadcastReceiver extends WakefulBroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent != null) {
-            final String registrationId = intent.getStringExtra("registration_id");
-            if (!SwrveHelper.isNullOrEmpty(registrationId)) {
-                // We got a registration id!
-                workaroundRegistrationId = registrationId;
-            }
-
-            ComponentName comp = new ComponentName(context.getPackageName(),
-                    intentServiceClass.getName());
-            // Start the service, keeping the device awake while it is launching.
-            startWakefulService(context, (intent.setComponent(comp)));
+        final String registrationId = intent.getStringExtra("registration_id");
+        if (!SwrveHelper.isNullOrEmpty(registrationId)) {
+            // We got a registration id!
+            workaroundRegistrationId = registrationId;
         }
-        setResultCode(Activity.RESULT_OK);
+
+        ComponentName comp = new ComponentName(context.getPackageName(), intentServiceClass.getName());
+        startWakefulService(context, (intent.setComponent(comp)));
+
+        if (!intent.hasExtra(SwrveGcmNotification.GCM_BUNDLE)) {
+            setResultCode(Activity.RESULT_OK); // set result code for GCM ordered broadcast only.
+        }
     }
 }

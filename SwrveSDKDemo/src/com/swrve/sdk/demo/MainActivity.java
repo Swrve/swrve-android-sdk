@@ -2,7 +2,6 @@ package com.swrve.sdk.demo;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -28,16 +27,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Configure SDK
-        int appId = YOUR_APP_ID;
-        String apiKey = YOUR_API_KEY;
-
-        try {
-            // Initialize SDK
-            swrve = SwrveInstance.getInstance().init(this, appId, apiKey);
-        } catch (IllegalArgumentException exp) {
-            Log.e(LOG_TAG, "Could not initialize the Swrve SDK", exp);
-        }
+        swrve = SwrveInstance.getInstance();
     }
 
     public void btnSendEvent(View v) {

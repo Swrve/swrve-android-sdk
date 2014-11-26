@@ -141,7 +141,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ISwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
     protected String userInstallTime;
-    protected String lastProcessedMessage;
     protected AtomicInteger bindCounter;
     protected AtomicLong installTime;
     protected CountDownLatch installTimeLatch;

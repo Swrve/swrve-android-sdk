@@ -7,8 +7,6 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +15,7 @@ import android.util.Log;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveInstance;
 import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Iterator;
@@ -25,140 +24,64 @@ import java.util.Iterator;
  * Used internally to process push notifications inside for your app.
  */
 public class SwrveGcmIntentService extends IntentService {
-    private static final String TAG = "SwrveGcmIntentService";
-    private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
-    private static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
-    private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
+    protected static final String TAG = "SwrveGcmIntentService";
 
     public static int tempNotificationId = 1;
 
-    private boolean failedInitialisation = false;
-
-    private Class<?> activityClass;
-    private int iconDrawableId;
-    private String notificationTitle;
+    private SwrveGCMNotification swrveGCMNotification;
 
     public SwrveGcmIntentService() {
         super("SwrveGcmIntentService");
     }
 
-    public SwrveGcmIntentService(Class<?> activityClass, int iconDrawableId, String notificationTitle) {
-        super("SwrveGcmIntentService");
-        init(activityClass, iconDrawableId, notificationTitle);
-    }
-
-    private void init(Class<?> activityClass, int iconDrawableId, String notificationTitle) {
-        try {
-            this.activityClass = activityClass;
-            this.iconDrawableId = iconDrawableId;
-            this.notificationTitle = notificationTitle;
-        } catch (Exception exp) {
-            // Stop the service as there was an initialization error
-            failedInitialisation = true;
-            exp.printStackTrace();
-            this.stopSelf();
-        }
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        // Try to read config from metadata
-        if (activityClass == null || SwrveHelper.isNullOrEmpty(notificationTitle)) {
-            readConfigFromMetadata();
-        }
-    }
-
-    private void readConfigFromMetadata() {
-        try {
-            // Read config from the apps metadata
-            ApplicationInfo app = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-            Bundle metaData = app.metaData;
-            if (metaData == null) {
-                throw new RuntimeException("No SWRVE metadata specified in AndroidManifest.xml");
-            }
-
-            int pushIconId = metaData.getInt(SWRVE_PUSH_ICON_METADATA, -1);
-            if (pushIconId < 0) {
-                // No icon specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_ICON_METADATA + " specified in AndroidManifest.xml");
-            }
-
-            Class<?> pushActivityClass = null;
-            String pushActivity = metaData.getString(SWRVE_PUSH_ACTIVITY_METADATA);
-            if (SwrveHelper.isNullOrEmpty(pushActivity)) {
-                // No activity specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_ACTIVITY_METADATA + " specified in AndroidManifest.xml");
-            } else {
-                // Check that the Activity exists and can be found
-                pushActivityClass = getClassForActivityClassName(pushActivity);
-                if (pushActivityClass == null) {
-                    throw new RuntimeException("The Activity with name " + pushActivity + " could not be found");
-                }
-            }
-
-            String pushTitle = metaData.getString(SWRVE_PUSH_TITLE_METADATA);
-            if (SwrveHelper.isNullOrEmpty(pushTitle)) {
-                // No activity specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_TITLE_METADATA + " specified in AndroidManifest.xml");
-            }
-
-            init(pushActivityClass, pushIconId, pushTitle);
-        } catch (Exception exp) {
-            // Stop the service as there was an initialization error
-            failedInitialisation = true;
-            exp.printStackTrace();
-            this.stopSelf();
-        }
-    }
-
-    private Class<?> getClassForActivityClassName(String className) {
-        if (!SwrveHelper.isNullOrEmpty(className)) {
-            if (className.startsWith(".")) {
-                // Append application package as it starts with .
-                className = getApplication().getPackageName() + className;
-                int h = 5;
-            }
-            try {
-                return Class.forName(className);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return null;
-    }
-
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (!failedInitialisation) {
-            Bundle extras = intent.getExtras();
-            GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
-            // The getMessageType() intent parameter must be the intent you received
-            // in your BroadcastReceiver.
-            String messageType = gcm.getMessageType(intent);
-
-            if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
-                /*
-	             * Filter messages based on message type. Since it is likely that GCM
-	             * will be extended in the future with new message types, just ignore
-	             * any message types you're not interested in, or that you don't
-	             * recognize.
-	             */
-                if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                    Log.e(TAG, "Send error: " + extras.toString());
-                } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                    Log.e(TAG, "Deleted messages on server: " + extras.toString());
-                    // If it's a regular GCM message, do some work.
-                } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-                    // Process notification.
-                    processRemoteNotification(extras);
-                    Log.i(TAG, "Received notification: " + extras.toString());
+        try {
+            swrveGCMNotification = SwrveGCMNotification.getInstance(this);
+            if (swrveGCMNotification != null) {
+                if (intent.hasExtra(SwrveGCMNotification.GCM_BUNDLE)) {
+                    processGCMEngaged(swrveGCMNotification.activityClass, intent);
+                } else {
+                    processInitialGCM(intent);
                 }
             }
-            // Release the wake lock provided by the WakefulBroadcastReceiver.
-            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent);
+        } finally {
+            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent); // Always release the wake lock provided by the WakefulBroadcastReceiver.
+        }
+    }
+
+    private void processGCMEngaged(Class<?> activityClass, Intent intent) {
+        Intent activityIntent = new Intent(this, activityClass);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activityIntent.putExtras(intent); // pass on the gcm details to possibly generate an engaged event
+        startActivity(activityIntent);
+
+        SwrveInstance.getInstance().processIntent(intent); // try generating the engaged event now.
+    }
+
+    private void processInitialGCM(Intent intent)
+    {
+        Bundle extras = intent.getExtras();
+        GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
+        // The getMessageType() intent parameter must be the intent you received in your BroadcastReceiver.
+        String messageType = gcm.getMessageType(intent);
+        if (!extras.isEmpty()) {  // has effect of un-parcelling Bundle
+            /*
+             * Filter messages based on message type. Since it is likely that GCM
+             * will be extended in the future with new message types, just ignore
+             * any message types you're not interested in, or that you don't
+             * recognize.
+             */
+            if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
+                Log.e(TAG, "Send error: " + extras.toString());
+            } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
+                Log.e(TAG, "Deleted messages on server: " + extras.toString());
+                // If it's a regular GCM message, do some work.
+            } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
+                // Process notification.
+                processRemoteNotification(extras);
+                Log.i(TAG, "Received notification: " + extras.toString());
+            }
         }
     }
 
@@ -233,10 +156,10 @@ public class SwrveGcmIntentService extends IntentService {
 
         // Build notification
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(iconDrawableId)
-                .setContentTitle(notificationTitle)
+                .setSmallIcon(swrveGCMNotification.iconDrawableId)
+                .setContentTitle(swrveGCMNotification.notificationTitle)
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(msgText))
+                .bigText(msgText))
                 .setContentText(msgText)
                 .setAutoCancel(true);
 
@@ -269,14 +192,13 @@ public class SwrveGcmIntentService extends IntentService {
             mBuilder.setContentIntent(contentIntent);
             return mBuilder.build();
         }
-
         return null;
     }
 
     /**
      * Override this function to change what the notification will do
      * once clicked by the user.
-     *
+     * <p/>
      * Note: sending the Bundle in an extra parameter
      * "notification" is essential so that the Swrve SDK
      * can be notified that the app was opened from the
@@ -289,7 +211,7 @@ public class SwrveGcmIntentService extends IntentService {
         // Add notification to bundle
         Intent intent = createIntent(msg);
         if (intent != null) {
-            return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return null;
@@ -298,7 +220,7 @@ public class SwrveGcmIntentService extends IntentService {
     /**
      * Override this function to change what the notification will do
      * once clicked by the user.
-     *
+     * <p/>
      * Note: sending the Bundle in an extra parameter
      * "notification" is essential so that the Swrve SDK
      * can be notified that the app was opened from the
@@ -309,9 +231,9 @@ public class SwrveGcmIntentService extends IntentService {
      */
     public Intent createIntent(Bundle msg) {
         Intent intent = null;
-        if (activityClass != null) {
-            intent = new Intent(this, activityClass);
-            intent.putExtra("notification", msg);
+        if (swrveGCMNotification.activityClass != null) {
+            intent = new Intent(this, SwrveGcmBroadcastReceiver.class);
+            intent.putExtra(SwrveGCMNotification.GCM_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;
