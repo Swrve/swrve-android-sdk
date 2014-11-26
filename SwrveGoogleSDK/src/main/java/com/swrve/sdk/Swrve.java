@@ -12,7 +12,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
-import com.swrve.sdk.gcm.SwrveGCMNotification;
+import com.swrve.sdk.gcm.SwrveGcmNotification;
 import com.swrve.sdk.gcm.SwrveGcmBroadcastReceiver;
 
 import org.json.JSONException;
@@ -248,7 +248,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
-                Bundle msg = extras.getBundle(SwrveGCMNotification.GCM_BUNDLE);
+                Bundle msg = extras.getBundle(SwrveGcmNotification.GCM_BUNDLE);
                 if (msg != null && config!=null && config.isPushEnabled()) {
                     // Obtain push id
                     Object rawId = msg.get("_p");

@@ -8,7 +8,7 @@ import android.util.Log;
 
 import com.swrve.sdk.SwrveHelper;
 
-public class SwrveGCMNotification {
+public class SwrveGcmNotification {
 
     public static final String GCM_BUNDLE = "notification";
 
@@ -16,27 +16,27 @@ public class SwrveGCMNotification {
     private static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
     private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
 
-    private static SwrveGCMNotification instance;
+    private static SwrveGcmNotification instance;
 
     protected final Class<?> activityClass;
     protected final int iconDrawableId;
     protected final String notificationTitle;
 
-    private SwrveGCMNotification(Class<?> activityClass, int iconDrawableId, String notificationTitle) {
+    private SwrveGcmNotification(Class<?> activityClass, int iconDrawableId, String notificationTitle) {
         this.activityClass = activityClass;
         this.iconDrawableId = iconDrawableId;
         this.notificationTitle = notificationTitle;
     }
 
-    protected static SwrveGCMNotification getInstance(Context context) {
+    protected static SwrveGcmNotification getInstance(Context context) {
         if (instance == null) {
             instance = createNotificationFromMetaData(context);
         }
         return instance;
     }
 
-    protected static SwrveGCMNotification createNotificationFromMetaData(Context context) {
-        SwrveGCMNotification swrveGCMNotification = null;
+    protected static SwrveGcmNotification createNotificationFromMetaData(Context context) {
+        SwrveGcmNotification swrveGcmNotification = null;
         try {
             ApplicationInfo app = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
             Bundle metaData = app.metaData;
@@ -69,12 +69,12 @@ public class SwrveGCMNotification {
                 throw new RuntimeException("No " + SWRVE_PUSH_TITLE_METADATA + " specified in AndroidManifest.xml");
             }
 
-            swrveGCMNotification = new SwrveGCMNotification(pushActivityClass, pushIconId, pushTitle);
+            swrveGcmNotification = new SwrveGcmNotification(pushActivityClass, pushIconId, pushTitle);
 
         } catch (Exception ex) {
             Log.e(SwrveGcmIntentService.TAG, "Error creating push notification from metadata", ex);
         }
-        return swrveGCMNotification;
+        return swrveGcmNotification;
     }
 
     private static Class<?> getClassForActivityClassName(Context context, String className) throws ClassNotFoundException {

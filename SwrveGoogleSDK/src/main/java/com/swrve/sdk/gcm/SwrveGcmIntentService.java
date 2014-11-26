@@ -18,6 +18,7 @@ import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveInstance;
 import com.swrve.sdk.qa.SwrveQAUser;
 
+import java.util.Date;
 import java.util.Iterator;
 
 /**
@@ -26,9 +27,7 @@ import java.util.Iterator;
 public class SwrveGcmIntentService extends IntentService {
     protected static final String TAG = "SwrveGcmIntentService";
 
-    public static int tempNotificationId = 1;
-
-    private SwrveGCMNotification swrveGCMNotification;
+    private SwrveGcmNotification swrveGcmNotification;
 
     public SwrveGcmIntentService() {
         super("SwrveGcmIntentService");
@@ -37,10 +36,10 @@ public class SwrveGcmIntentService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            swrveGCMNotification = SwrveGCMNotification.getInstance(this);
-            if (swrveGCMNotification != null) {
-                if (intent.hasExtra(SwrveGCMNotification.GCM_BUNDLE)) {
-                    processGCMEngaged(swrveGCMNotification.activityClass, intent);
+            swrveGcmNotification = SwrveGcmNotification.getInstance(this);
+            if (swrveGcmNotification != null) {
+                if (intent.hasExtra(SwrveGcmNotification.GCM_BUNDLE)) {
+                    processGCMEngaged(swrveGcmNotification.activityClass, intent);
                 } else {
                     processInitialGCM(intent);
                 }
@@ -51,9 +50,13 @@ public class SwrveGcmIntentService extends IntentService {
     }
 
     private void processGCMEngaged(Class<?> activityClass, Intent intent) {
+        Bundle extras = intent.getExtras();
+        if (!extras.isEmpty() && !intent.getBundleExtra(SwrveGcmNotification.GCM_BUNDLE).isEmpty()) {  // has effect of un-parcelling Bundle
+            Log.d(TAG, "Starting activity " + activityClass.toString() + " with:" + intent.getBundleExtra(SwrveGcmNotification.GCM_BUNDLE));
+        }
         Intent activityIntent = new Intent(this, activityClass);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        activityIntent.putExtras(intent); // pass on the gcm details to possibly generate an engaged event
+        activityIntent.putExtras(intent);
         startActivity(activityIntent);
 
         SwrveInstance.getInstance().processIntent(intent); // try generating the engaged event now.
@@ -78,9 +81,9 @@ public class SwrveGcmIntentService extends IntentService {
                 Log.e(TAG, "Deleted messages on server: " + extras.toString());
                 // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
+                Log.i(TAG, "Received GCM notification: " + extras.toString());
                 // Process notification.
                 processRemoteNotification(extras);
-                Log.i(TAG, "Received notification: " + extras.toString());
             }
         }
     }
@@ -139,7 +142,7 @@ public class SwrveGcmIntentService extends IntentService {
      * @return the notification id so that it can be dismissed by other UI elements
      */
     public int showNotification(NotificationManager notificationManager, Notification notification) {
-        int notificationId = tempNotificationId++;
+        int notificationId = (int)new Date().getTime();
         notificationManager.notify(notificationId, notification);
         return notificationId;
     }
@@ -156,8 +159,8 @@ public class SwrveGcmIntentService extends IntentService {
 
         // Build notification
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(swrveGCMNotification.iconDrawableId)
-                .setContentTitle(swrveGCMNotification.notificationTitle)
+                .setSmallIcon(swrveGcmNotification.iconDrawableId)
+                .setContentTitle(swrveGcmNotification.notificationTitle)
                 .setStyle(new NotificationCompat.BigTextStyle()
                 .bigText(msgText))
                 .setContentText(msgText)
@@ -186,6 +189,7 @@ public class SwrveGcmIntentService extends IntentService {
      */
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         String msgText = msg.getString("text");
+        // Log.d(TAG, "Notification:" + msgText + " _p=" + msg.getString("_p"));
         if (!SwrveHelper.isNullOrEmpty(msgText)) {
             // Build notification
             NotificationCompat.Builder mBuilder = createNotificationBuilder(msgText, msg);
@@ -211,7 +215,7 @@ public class SwrveGcmIntentService extends IntentService {
         // Add notification to bundle
         Intent intent = createIntent(msg);
         if (intent != null) {
-            return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return PendingIntent.getBroadcast(this, (int)new Date().getTime(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return null;
@@ -231,9 +235,9 @@ public class SwrveGcmIntentService extends IntentService {
      */
     public Intent createIntent(Bundle msg) {
         Intent intent = null;
-        if (swrveGCMNotification.activityClass != null) {
+        if (swrveGcmNotification.activityClass != null) {
             intent = new Intent(this, SwrveGcmBroadcastReceiver.class);
-            intent.putExtra(SwrveGCMNotification.GCM_BUNDLE, msg);
+            intent.putExtra(SwrveGcmNotification.GCM_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;

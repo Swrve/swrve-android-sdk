@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        swrve = SwrveInstance.getInstance();
+        swrve = SwrveInstance.getInstance(); // init Swrve at the Application level. See DemoApplication.
     }
 
     public void btnSendEvent(View v) {
