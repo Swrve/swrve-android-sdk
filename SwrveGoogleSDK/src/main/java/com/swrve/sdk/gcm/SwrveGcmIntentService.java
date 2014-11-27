@@ -189,7 +189,7 @@ public class SwrveGcmIntentService extends IntentService {
      */
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         String msgText = msg.getString("text");
-        // Log.d(TAG, "Notification:" + msgText + " _p=" + msg.getString("_p"));
+        Log.d(TAG, "Notification:" + msgText + " _p=" + msg.getString("_p"));
         if (!SwrveHelper.isNullOrEmpty(msgText)) {
             // Build notification
             NotificationCompat.Builder mBuilder = createNotificationBuilder(msgText, msg);
