@@ -62,7 +62,7 @@ public class SwrveGcmIntentService extends IntentService {
                 }
             }
         } finally {
-            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent); // Always release the wake lock provided by the WakefulBroadcastReceiver.
+            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent); // Always release the wake lock provided by the WakefulBroadcastReceiver. 
         }
     }
 
