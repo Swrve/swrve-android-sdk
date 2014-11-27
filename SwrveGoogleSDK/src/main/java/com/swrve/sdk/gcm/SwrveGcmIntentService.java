@@ -21,6 +21,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.qa.SwrveQAUser;
 
+import java.util.Date;
 import java.util.Iterator;
 
 /**
@@ -31,10 +32,6 @@ public class SwrveGcmIntentService extends IntentService {
     private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
     private static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
     private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
-    public static final String NOTIFICATION_ID_KEY = "notificationId";
-
-    private int notificationId = 1;
-    private SharedPreferences settings;
 
     private boolean failedInitialisation = false;
 
@@ -72,9 +69,6 @@ public class SwrveGcmIntentService extends IntentService {
         if (activityClass == null || SwrveHelper.isNullOrEmpty(notificationTitle)) {
             readConfigFromMetadata();
         }
-        // Read latest push id
-        settings = PreferenceManager.getDefaultSharedPreferences(this);
-        notificationId = settings.getInt(NOTIFICATION_ID_KEY, 0);
     }
 
     private void readConfigFromMetadata() {
@@ -192,9 +186,6 @@ public class SwrveGcmIntentService extends IntentService {
                 // Put the message into a notification and post it.
                 final NotificationManager mNotificationManager = (NotificationManager)
                         this.getSystemService(Context.NOTIFICATION_SERVICE);
-
-                // Create new internal id for the notification
-                settings.edit().putInt(NOTIFICATION_ID_KEY, notificationId++).commit();
                 final PendingIntent contentIntent = createPendingIntent(msg);
                 if (contentIntent != null) {
                     final Notification notification = createNotification(msg, contentIntent);
@@ -225,6 +216,7 @@ public class SwrveGcmIntentService extends IntentService {
      * @return the notification id so that it can be dismissed by other UI elements
      */
     public int showNotification(NotificationManager notificationManager, Notification notification) {
+        int notificationId = (int)(new Date().getTime() % Integer.MAX_VALUE);
         notificationManager.notify(notificationId, notification);
         return notificationId;
     }
@@ -297,6 +289,7 @@ public class SwrveGcmIntentService extends IntentService {
         // Add notification to bundle
         Intent intent = createIntent(msg);
         if (intent != null) {
+            int notificationId = (int)(new Date().getTime() % Integer.MAX_VALUE);
             return PendingIntent.getActivity(this, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
