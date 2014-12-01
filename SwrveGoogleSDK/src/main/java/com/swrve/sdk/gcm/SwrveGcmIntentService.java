@@ -8,22 +8,29 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+
 /**
  * Used internally to process push notifications inside for your app.
  */
-public class SwrveGcmIntentService extends IntentService {
+public class SwrveGcmIntentService extends IntentService implements ISwrveGcmService {
 
     public SwrveGcmIntentService() {
         super("SwrveGcmIntentService");
     }
 
-    private SwrveGcmHandler handler;
+    protected ISwrveGcmHandler handler;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        handler = new SwrveGcmHandler(getApplicationContext(), this);
+    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            handler = new SwrveGcmHandler(this);
-            handler.onHandleIntent(intent);
+            handler.onHandleIntent(intent, GoogleCloudMessaging.getInstance(this));
         } finally {
             SwrveGcmBroadcastReceiver.completeWakefulIntent(intent); // Always release the wake lock provided by the WakefulBroadcastReceiver.
         }
@@ -34,6 +41,7 @@ public class SwrveGcmIntentService extends IntentService {
      *
      * @param msg
      */
+    @Override
     public void processNotification(final Bundle msg) {
         handler.processNotification(msg);
     }
@@ -43,6 +51,7 @@ public class SwrveGcmIntentService extends IntentService {
      *
      * @return true when you want to display notifications
      */
+    @Override
     public boolean mustShowNotification() {
         return handler.mustShowNotification();
     }
@@ -54,6 +63,7 @@ public class SwrveGcmIntentService extends IntentService {
      * @param notification
      * @return the notification id so that it can be dismissed by other UI elements
      */
+    @Override
     public int showNotification(NotificationManager notificationManager, Notification notification) {
         return handler.showNotification(notificationManager, notification);
     }
@@ -65,6 +75,7 @@ public class SwrveGcmIntentService extends IntentService {
      * @param msg
      * @return
      */
+    @Override
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         return handler.createNotificationBuilder(msgText, msg);
     }
@@ -76,6 +87,7 @@ public class SwrveGcmIntentService extends IntentService {
      * @param contentIntent
      * @return
      */
+    @Override
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         return handler.createNotification(msg, contentIntent);
     }
@@ -92,6 +104,7 @@ public class SwrveGcmIntentService extends IntentService {
      * @param msg
      * @return
      */
+    @Override
     public PendingIntent createPendingIntent(Bundle msg) {
         return handler.createPendingIntent(msg);
     }
@@ -108,6 +121,7 @@ public class SwrveGcmIntentService extends IntentService {
      * @param msg
      * @return
      */
+    @Override
     public Intent createIntent(Bundle msg) {
         return handler.createIntent(msg);
     }

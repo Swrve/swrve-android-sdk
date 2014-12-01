@@ -18,42 +18,45 @@ import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Iterator;
 
-public class SwrveGcmHandler {
+public class SwrveGcmHandler implements ISwrveGcmHandler {
 
-    protected static final String TAG = "SwrveGcmIntentService";
+    protected static final String TAG = "SwrveGcm";
     private static int tempNotificationId = 1;
 
     private Context context;
+    private ISwrveGcmService swrveGcmService;
 
-    protected SwrveGcmHandler (Context context) {
+    protected SwrveGcmHandler (Context context, ISwrveGcmService swrveGcmService) {
         this.context = context;
+        this.swrveGcmService = swrveGcmService;
     }
 
-    protected boolean onHandleIntent(Intent intent) {
+    @Override
+    public boolean onHandleIntent(Intent intent, GoogleCloudMessaging gcm) {
         boolean gcmHandled = false;
-        Bundle extras = intent.getExtras();
-        GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(context);
-        // The getMessageType() intent parameter must be the intent you received
-        // in your BroadcastReceiver.
-        String messageType = gcm.getMessageType(intent);
+        if(intent !=null) {
+            Bundle extras = intent.getExtras();
+            if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
+                // The getMessageType() intent parameter must be the intent you received in your BroadcastReceiver.
+                String messageType = gcm.getMessageType(intent);
 
-        if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
-            /*
-             * Filter messages based on message type. Since it is likely that GCM
-             * will be extended in the future with new message types, just ignore
-             * any message types you're not interested in, or that you don't
-             * recognize.
-             */
-            if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                Log.e(TAG, "Send error: " + extras.toString());
-            } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                Log.e(TAG, "Deleted messages on server: " + extras.toString());
-                // If it's a regular GCM message, do some work.
-            } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-                // Process notification.
-                processRemoteNotification(extras);
-                Log.i(TAG, "Received notification: " + extras.toString());
-                gcmHandled = true;
+                /*
+                 * Filter messages based on message type. Since it is likely that GCM
+                 * will be extended in the future with new message types, just ignore
+                 * any message types you're not interested in, or that you don't
+                 * recognize.
+                 */
+                if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
+                    Log.e(TAG, "Send error: " + extras.toString());
+                } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
+                    Log.e(TAG, "Deleted messages on server: " + extras.toString());
+                    // If it's a regular GCM message, do some work.
+                } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
+                    // Process notification.
+                    processRemoteNotification(extras);
+                    Log.i(TAG, "Received notification: " + extras.toString());
+                    gcmHandled = true;
+                }
             }
         }
         return gcmHandled;
@@ -68,21 +71,22 @@ public class SwrveGcmHandler {
         }
 
         // Process notification
-        processNotification(msg);
+        swrveGcmService.processNotification(msg);
     }
 
-    protected void processNotification(final Bundle msg) {
-        if (mustShowNotification()) {
+    @Override
+    public void processNotification(final Bundle msg) {
+        if (swrveGcmService.mustShowNotification()) {
             try {
                 // Put the message into a notification and post it.
                 final NotificationManager mNotificationManager = (NotificationManager)
                         context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-                final PendingIntent contentIntent = createPendingIntent(msg);
+                final PendingIntent contentIntent = swrveGcmService.createPendingIntent(msg);
                 if (contentIntent != null) {
-                    final Notification notification = createNotification(msg, contentIntent);
+                    final Notification notification = swrveGcmService.createNotification(msg, contentIntent);
                     if (notification != null) {
-                        showNotification(mNotificationManager, notification);
+                        swrveGcmService.showNotification(mNotificationManager, notification);
                     }
                 }
             } catch (Exception ex) {
@@ -91,17 +95,20 @@ public class SwrveGcmHandler {
         }
     }
 
-    protected boolean mustShowNotification() {
+    @Override
+    public boolean mustShowNotification() {
         return true;
     }
 
-    protected int showNotification(NotificationManager notificationManager, Notification notification) {
+    @Override
+    public int showNotification(NotificationManager notificationManager, Notification notification) {
         int notificationId = tempNotificationId++;
         notificationManager.notify(notificationId, notification);
         return notificationId;
     }
 
-    protected NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
+    @Override
+    public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         String msgSound = msg.getString("sound");
 
         // Build notification
@@ -127,11 +134,12 @@ public class SwrveGcmHandler {
         return mBuilder;
     }
 
-    protected Notification createNotification(Bundle msg, PendingIntent contentIntent) {
+    @Override
+    public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         String msgText = msg.getString("text");
         if (!SwrveHelper.isNullOrEmpty(msgText)) {
             // Build notification
-            NotificationCompat.Builder mBuilder = createNotificationBuilder(msgText, msg);
+            NotificationCompat.Builder mBuilder =  swrveGcmService.createNotificationBuilder(msgText, msg);
             mBuilder.setContentIntent(contentIntent);
             return mBuilder.build();
         }
@@ -139,9 +147,10 @@ public class SwrveGcmHandler {
         return null;
     }
 
-    protected PendingIntent createPendingIntent(Bundle msg) {
+    @Override
+    public PendingIntent createPendingIntent(Bundle msg) {
         // Add notification to bundle
-        Intent intent = createIntent( msg);
+        Intent intent = swrveGcmService.createIntent( msg);
         if (intent != null) {
             return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
@@ -149,7 +158,8 @@ public class SwrveGcmHandler {
         return null;
     }
 
-    protected Intent createIntent(Bundle msg) {
+    @Override
+    public Intent createIntent(Bundle msg) {
         Intent intent = null;
         if (SwrveGcmNotification.getInstance(context).activityClass != null) {
             intent = new Intent(context, SwrveGcmNotification.getInstance(context).activityClass);
