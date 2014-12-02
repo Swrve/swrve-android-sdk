@@ -227,6 +227,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             startCampaignsAndResourcesTimer(true);
             disableAutoShowAfterDelay();
 
+            String referrer = settings.getString(SWRVE_REFERRER_ID, null);
+            if (referrer != null && referrer.length() > 0) {
+                Log.i(LOG_TAG, "Got referrer, sending userUpdate:" +referrer);
+                HashMap<String, String> attributes = new HashMap<String, String>();
+                attributes.put(SWRVE_REFERRER_ID, referrer);
+                userUpdate(attributes);
+                settings.edit().remove(SWRVE_REFERRER_ID).commit();
+            }
+
             sendCrashlyticsMetadata();
             afterInit();
 
