@@ -18,7 +18,7 @@ public class SwrveInstallReferrerReceiver extends BroadcastReceiver {
         String referrer = intent.getStringExtra("referrer");
         Log.i(SwrveImp.LOG_TAG, "Received referrer:" + referrer);
 
-        if (referrer != null) {
+        if (!SwrveHelper.isNullOrEmpty(referrer)) {
             String decodedReferrer = "";
             try {
                 decodedReferrer = URLDecoder.decode(referrer, "UTF-8");
