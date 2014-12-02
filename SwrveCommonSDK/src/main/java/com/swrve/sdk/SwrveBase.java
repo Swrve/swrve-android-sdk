@@ -228,7 +228,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             disableAutoShowAfterDelay();
 
             String referrer = settings.getString(SWRVE_REFERRER_ID, null);
-            if (referrer != null && referrer.length() > 0) {
+            if (!SwrveHelper.isNullOrEmpty(referrer)) {
                 Log.i(LOG_TAG, "Got referrer, sending userUpdate:" +referrer);
                 HashMap<String, String> attributes = new HashMap<String, String>();
                 attributes.put(SWRVE_REFERRER_ID, referrer);
