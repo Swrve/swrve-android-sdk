@@ -499,8 +499,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
         generateNewSessionInterval();
 
-        if (getActivityContext() != null && getActivityContext().getIntent() != null && getActivityContext().getIntent().getData() != null) {
-            Uri uri = getActivityContext().getIntent().getData();
+        Activity activity = getActivityContext();
+        if (activity != null && activity.getIntent() != null && activity.getIntent().getData() != null) {
+            Uri uri = activity.getIntent().getData();
             String referrer = uri.getQueryParameter(REFERRER);
             if (!SwrveHelper.isNullOrEmpty(referrer)) {
                 Map<String, String> attributes = new HashMap<String, String>();
