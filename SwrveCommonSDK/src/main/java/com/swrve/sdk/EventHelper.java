@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
+import com.swrve.sdk.localstorage.IEntryStorage;
+import com.swrve.sdk.localstorage.MemoryCachedEventLocalStorage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,24 +17,24 @@ import java.util.Random;
 final class EventHelper {
     private static final Object BATCH_API_VERSION = "2";
 
-    private synchronized static short getDeviceId(MemoryCachedLocalStorage storage) {
-        String id = storage.getSharedCacheEntry("device_id");
-        if (id == null || id.length() <= 0) {
+    private synchronized static short getDeviceId(IEntryStorage storage) {
+        String id = storage.getGlobalString("device_id", null);
+        if (SwrveHelper.isNullOrEmpty(id)) {
             short deviceId = (short) new Random().nextInt(Short.MAX_VALUE);
-            storage.setAndFlushSharedEntry("device_id", Short.toString(deviceId));
+            storage.putGlobalString("device_id", Short.toString(deviceId));
             return deviceId;
         } else {
             return Short.parseShort(id);
         }
     }
 
-    private synchronized static int getNextSequenceNumber(MemoryCachedLocalStorage storage) {
-        String id = storage.getSharedCacheEntry("seqnum");
+    private synchronized static int getNextSequenceNumber(IEntryStorage storage) {
+        String id = storage.getGlobalString("seqnum", null);
         int seqnum = 1;
-        if (id != null && id.length() > 0) {
+        if (!SwrveHelper.isNullOrEmpty(id)) {
             seqnum = Integer.parseInt(id) + 1;
         }
-        storage.setAndFlushSharedEntry("seqnum", Integer.toString(seqnum));
+        storage.putGlobalString("seqnum", Integer.toString(seqnum));
         return seqnum;
     }
 
@@ -42,7 +43,7 @@ final class EventHelper {
      * the batch API to inform Swrve of these events.
      */
     public static String eventAsJSON(String type, Map<String, Object> parameters,
-                                     Map<String, String> payload, MemoryCachedLocalStorage storage) throws JSONException {
+                                     Map<String, String> payload, IEntryStorage storage) throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put("type", type);
         obj.put("time", System.currentTimeMillis());
@@ -65,7 +66,7 @@ final class EventHelper {
      * these events.
      */
     public static String eventsAsBatch(String userId, String appVersion,
-                                       String sessionToken, LinkedHashMap<Long, String> events, MemoryCachedLocalStorage storage)
+                                       String sessionToken, LinkedHashMap<Long, String> events, IEntryStorage storage)
             throws JSONException {
         JSONObject batch = new JSONObject();
         batch.put("user", userId);
@@ -98,7 +99,6 @@ final class EventHelper {
      */
     public static String getEventName(String eventType, Map<String, Object> eventParameters) {
         String eventName = "";
-
         if (eventType.equals("session_start")) {
             eventName = "Swrve.session.start";
         } else if (eventType.equals("session_end")) {

@@ -347,7 +347,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
      * your implementation of the message renderer to update the campaign
      * information and send the appropriate data to Swrve.
      *
-     * @param message message that was shown to the user for the first time in this
+     * @param messageFormat message that was shown to the user for the first time in this
      *                session.
      */
     void messageWasShownToUser(SwrveMessageFormat messageFormat);
@@ -384,43 +384,37 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     /**
      * Get the custom listener to process Talk message install button clicks
-     *
-     * @param buttonListener
      */
     ISwrveInstallButtonListener getInstallButtonListener();
 
     /**
      * Set the custom listener to process Talk message install button clicks
      *
-     * @param buttonListener
+     * @param installButtonListener
      */
     void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener);
 
     /**
      * Get the custom listener to process Talk message custom button clicks
-     *
-     * @param buttonListener
      */
     ISwrveCustomButtonListener getCustomButtonListener();
 
     /**
      * Set the custom listener to process Talk message custom button clicks
      *
-     * @param buttonListener
+     * @param customButtonListener
      */
     void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener);
 
     /**
      * Get the custom dialog listener for Talk message dialogs
-     *
-     * @param buttonListener
      */
     ISwrveDialogListener getDialogListener();
 
     /**
      * Set the custom dialog listener for Talk message dialogs
      *
-     * @param buttonListener
+     * @param dialogListener
      */
     void setDialogListener(ISwrveDialogListener dialogListener);
 

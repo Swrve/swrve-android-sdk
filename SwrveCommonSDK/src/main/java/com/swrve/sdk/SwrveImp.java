@@ -17,10 +17,12 @@ import com.swrve.sdk.common.R;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
-import com.swrve.sdk.localstorage.ILocalStorage;
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
-import com.swrve.sdk.localstorage.MemoryLocalStorage;
-import com.swrve.sdk.localstorage.SQLiteLocalStorage;
+import com.swrve.sdk.localstorage.IEntryStorage;
+import com.swrve.sdk.localstorage.IEventLocalStorage;
+import com.swrve.sdk.localstorage.MemoryCachedEventLocalStorage;
+import com.swrve.sdk.localstorage.MemoryEventLocalStorage;
+import com.swrve.sdk.localstorage.SQLiteEventLocalStorage;
+import com.swrve.sdk.localstorage.SharedPreferencesEntryStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -80,17 +82,20 @@ import java.util.concurrent.atomic.AtomicLong;
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
     protected static String version = "3.3.1";
-    protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
-    protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
-    protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 4;
     protected static final String TEMPLATE_VERSION = "1";
+    protected static final String SDK_PREFS_NAME = "swrve_prefs"; // Use userEntryStorage
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
+    protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
+    protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings"; // saved securely
     protected static final String RESOURCES_CACHE_CATEGORY = "srcngt2"; // Saved securely
     protected static final String RESOURCES_DIFF_CACHE_CATEGORY = "rsdfngt2"; // Saved securely
-    protected static final String SDK_PREFS_NAME = "swrve_prefs";
+    protected static final String USER_ID_CATEGORY = "userId";
+    protected static final String CAMPAIGNS_RESOURCES_ETAG_CATEGORY = "campaigns_and_resources_etag";
+    protected static final String CAMPAIGN_RESOURES_FLUSH_FREQUENCY_CATEGORY = "swrve_cr_flush_frequency";
+    protected static final String CAMPAIGN_RESOURES_FLUSH_DELAY_CATEGORY = "swrve_cr_flush_delay";
     protected static final String EMPTY_JSON_ARRAY = "[]";
     protected static final int SHUTDOWN_TIMEOUT_SECONDS = 5;
     protected static final String SWRVE_DEVICE_NAME = "swrve.device_name";
@@ -148,7 +153,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected long newSessionInterval;
     protected long lastSessionTick;
     protected boolean destroyed;
-    protected MemoryCachedLocalStorage cachedLocalStorage;
+    protected MemoryCachedEventLocalStorage cachedLocalStorage;
+    protected IEntryStorage userEntryStorage;
     protected IRESTClient restClient;
     protected ExecutorService storageExecutor;
     protected ExecutorService restClientExecutor;
@@ -231,23 +237,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return this.context.get();
     }
 
-    protected String getUniqueUserId(Context context) {
-        SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
-        String newUserId = settings.getString("userId", null);
+    protected String getUniqueUserId() {
+        String newUserId = userEntryStorage.getGlobalString(USER_ID_CATEGORY, null);
         if (SwrveHelper.isNullOrEmpty(newUserId)) {
-            // Create a random UUID
+            // Create a random UUID user id
             newUserId = UUID.randomUUID().toString();
         }
 
         return newUserId;
     }
 
-    protected void saveUniqueUserId(Context context, String userId) {
-        SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
-        // Save new user id
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putString("userId", userId);
-        editor.commit();
+    protected void saveUniqueUserId(String userId) {
+        userEntryStorage.putGlobalString(USER_ID_CATEGORY, userId);
     }
 
     protected void checkUserId(String userId) {
@@ -266,7 +267,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
             }
         } catch(Exception exp) {
-            Log.e(LOG_TAG, "Could not set Crashlytics metadata", exp);
+            Log.i(LOG_TAG, "Could not set Crashlytics metadata");
         }
     }
 
@@ -326,23 +327,27 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
     protected void openLocalStorageConnection() {
         try {
-            ILocalStorage newlocalStorage = createLocalStorage();
+            IEventLocalStorage newlocalStorage = createLocalStorage();
             cachedLocalStorage.setSecondaryStorage(newlocalStorage);
         } catch (Exception exp) {
             Log.e(LOG_TAG, "Error opening database", exp);
         }
     }
 
-    protected ILocalStorage createLocalStorage() {
-        return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
+    protected IEventLocalStorage createLocalStorage() {
+        return new SQLiteEventLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
     }
 
     protected IRESTClient createRESTClient() {
         return new RESTClient();
     }
 
-    protected MemoryCachedLocalStorage createCachedLocalStorage() {
-        return new MemoryCachedLocalStorage(new MemoryLocalStorage(), null);
+    protected MemoryCachedEventLocalStorage createCachedLocalStorage() {
+        return new MemoryCachedEventLocalStorage(new MemoryEventLocalStorage(), null);
+    }
+
+    protected IEntryStorage createUserEntryStorage(String userId, String uniqueKey, SharedPreferences sharedPreferences) {
+        return new SharedPreferencesEntryStorage(userId, uniqueKey, sharedPreferences);
     }
 
     protected ExecutorService createStorageExecutor() {
@@ -403,8 +408,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (!SwrveHelper.isNullOrEmpty(installTimeRaw)) {
                 installTime = Long.parseLong(installTimeRaw);
             } else {
-                // Save to memory and secondary storage
-                cachedLocalStorage.setAndFlushSharedEntry(INSTALL_TIME_CATEGORY, String.valueOf(installTime));
+                userEntryStorage.putGlobalString(INSTALL_TIME_CATEGORY, String.valueOf(installTime));
+                // TODO DB: Must look at db TOO!!
             }
         } catch (Exception exp) {
             Log.e(LOG_TAG, "Could not get or save install time", exp);
@@ -414,7 +419,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected String getSavedInstallTime() {
-        return cachedLocalStorage.getSharedCacheEntry(INSTALL_TIME_CATEGORY);
+        return userEntryStorage.getGlobalString(INSTALL_TIME_CATEGORY, null);
     }
 
     protected long getOrWaitForInstallTime() {
@@ -577,13 +582,21 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return now.before(showMessagesAfterDelay);
     }
 
+    protected void saveUserResourcesInCache(final String resourcesContent) {
+        storageExecutorExecute(new Runnable() {
+            @Override
+            public void run() {
+                userEntryStorage.putUserSecureString(RESOURCES_CACHE_CATEGORY, resourcesContent);
+                taskCompleted();
+            }
+        });
+    }
+
     protected void saveCampaignsInCache(final String campaignContent) {
         storageExecutorExecute(new Runnable() {
             @Override
             public void run() {
-                MemoryCachedLocalStorage cachedStorage = cachedLocalStorage;
-                cachedStorage.setAndFlushSecureSharedEntryForUser(userId, CAMPAIGN_CATEGORY, campaignContent, getUniqueKey());
-                Log.i(LOG_TAG, "Saved campaigns in cache.");
+                userEntryStorage.putUserSecureString(CAMPAIGN_CATEGORY, campaignContent);
                 taskCompleted();
             }
         });
@@ -758,8 +771,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             // Load existing campaign settings
             JSONObject jsonSettings = new JSONObject();
             if (qaUser == null || !qaUser.isResetDevice()) {
-                // Load campaign data
-                String serializedSettings = cachedLocalStorage.getCacheEntryForUser(userId, CAMPAIGN_SETTINGS_CATEGORY);
+                String serializedSettings = userEntryStorage.getUserSecureString(CAMPAIGN_SETTINGS_CATEGORY, null);
                 if (!SwrveHelper.isNullOrEmpty(serializedSettings)) {
                     jsonSettings = new JSONObject(serializedSettings);
                 }
@@ -895,24 +907,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected void saveCampaignSettings() {
         try {
             // Save campaign state
-            JSONObject jsonSettings = new JSONObject();
+            final JSONObject jsonSettings = new JSONObject();
             Iterator<SwrveCampaign> itCampaign = campaigns.iterator();
             while (itCampaign.hasNext()) {
                 SwrveCampaign campaign = itCampaign.next();
                 jsonSettings.put(Integer.toString(campaign.getId()), campaign.createSettings());
             }
-
-            final String serializedSettings = jsonSettings.toString();
             // Write to cache
             storageExecutorExecute(new Runnable() {
                 @Override
                 public void run() {
-                    MemoryCachedLocalStorage cachedStorage = cachedLocalStorage;
-                    cachedStorage.setCacheEntryForUser(userId, CAMPAIGN_SETTINGS_CATEGORY, serializedSettings);
-                    if (cachedStorage.getSecondaryStorage() != null) {
-                        cachedStorage.getSecondaryStorage().setCacheEntryForUser(userId, CAMPAIGN_SETTINGS_CATEGORY, serializedSettings);
-                    }
-                    Log.i(LOG_TAG, "Saved campaigns in cache");
+                    final String serializedSettings = jsonSettings.toString();
+                    userEntryStorage.putUserSecureString(CAMPAIGN_SETTINGS_CATEGORY, serializedSettings);
                     taskCompleted();
                 }
             });
@@ -1050,10 +1056,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      */
     protected void invalidateETag() {
         campaignsAndResourcesLastETag = null;
-        SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
-        SharedPreferences.Editor settingsEditor = settings.edit();
-        settingsEditor.remove("campaigns_and_resources_etag");
-        settingsEditor.commit();
+        userEntryStorage.removeUserString("campaigns_and_resources_etag");
     }
 
     /**
@@ -1065,7 +1068,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
         // Read cached resources
         try {
-            cachedResources = cachedLocalStorage.getSecureCacheEntryForUser(userId, RESOURCES_CACHE_CATEGORY, getUniqueKey());
+            cachedResources = userEntryStorage.getUserSecureString(RESOURCES_CACHE_CATEGORY, null);
         } catch (SecurityException e) {
             invalidateETag();
             Log.i(LOG_TAG, "Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
@@ -1074,7 +1077,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             queueEvent("event", parameters, null);
         }
 
-        if (cachedResources != null) {
+        if (!SwrveHelper.isNullOrEmpty(cachedResources)) {
             try {
                 JSONArray resourceJson = new JSONArray(cachedResources);
                 this.resourceManager.setResourcesFromJSON(resourceJson);
@@ -1093,8 +1096,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         campaigns = new ArrayList<SwrveCampaign>();
 
         try {
-            String campaignsFromCache = cachedLocalStorage.getSecureCacheEntryForUser(userId, CAMPAIGN_CATEGORY, getUniqueKey());
-            if (campaignsFromCache != null) {
+            String campaignsFromCache = userEntryStorage.getUserSecureString(CAMPAIGN_CATEGORY, null);
+            if (!SwrveHelper.isNullOrEmpty(campaignsFromCache)) {
                 JSONObject campaignsJson = new JSONObject(campaignsFromCache);
                 updateCampaigns(campaignsJson);
                 Log.i(LOG_TAG, "Loaded campaigns from cache.");
@@ -1148,7 +1151,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected void checkForCampaignAndResourcesUpdates() {
         // If there are any events to be sent, or if any events were sent since last refresh
         // send events queued, wait campaignsAndResourcesFlushRefreshDelay for events to reach servers and refresh
-        final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
+        final LinkedHashMap<IEventLocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
         if (!combinedEvents.isEmpty() || eventsWereSent) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.sendQueuedEvents();
@@ -1211,7 +1214,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         @Override
         public void run() {
             try {
-                String eventString = EventHelper.eventAsJSON(eventType, parameters, payload, cachedLocalStorage);
+                String eventString = EventHelper.eventAsJSON(eventType, parameters, payload, userEntryStorage);
                 parameters = null;
                 payload = null;
                 cachedLocalStorage.addEvent(eventString);
