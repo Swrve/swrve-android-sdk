@@ -3,7 +3,6 @@ package com.swrve.sdk;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -14,7 +13,7 @@ import android.view.WindowManager;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
-import com.swrve.sdk.localstorage.ILocalStorage;
+import com.swrve.sdk.localstorage.IEventLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -54,19 +53,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C> {
 
-    protected static String _getVersion() {
-        return version;
-    }
-
-    public static String getVersion() {
-        try {
-            return _getVersion();
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-        return null;
-    }
-
     public T init(final Context context, final int appId, final String apiKey) throws IllegalArgumentException {
         return init(context, appId, apiKey, defaultConfig());
     }
@@ -90,6 +76,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // First time it is initialized
             return init(context, appId, apiKey, config);
         }
+        // Second time initOrBind is called, bind to new context
         bindToContext(context);
         afterBind();
         showPreviousMessage();
@@ -98,6 +85,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @SuppressWarnings("unchecked")
     public T init(final Context context, final int appId, final String apiKey, final C config) throws IllegalArgumentException {
+        this.appId = appId;
+        this.apiKey = apiKey;
+        this.config = config;
+
         // Initialization checks
         if (context == null) {
             SwrveHelper.logAndThrowException("Context not specified");
@@ -109,64 +100,57 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Save initialization time
             initialisedTime = getNow();
             initialised = true;
-            this.lastSessionTick = getSessionTime();
-            this.appId = appId;
-            this.apiKey = apiKey;
-            this.userId = config.getUserId();
             final Context resolvedContext = bindToContext(context);
-
+            restClient = createRESTClient();
+            cachedLocalStorage = createCachedLocalStorage();
+            userEntryStorage = createUserEntryStorage(userId, getUniqueKey(), resolvedContext.getSharedPreferences(SDK_PREFS_NAME, 0));
+            storageExecutor = createStorageExecutor();
+            restClientExecutor = createRESTClientExecutor();
+            lastSessionTick = getSessionTime();
+            userId = config.getUserId();
             // Default user id to Android ID
             if (SwrveHelper.isNullOrEmpty(userId)) {
-                userId = getUniqueUserId(resolvedContext);
+                userId = getUniqueUserId();
             }
             checkUserId(userId);
-            saveUniqueUserId(resolvedContext, userId);
+            saveUniqueUserId(userId);
             Log.i(LOG_TAG, "Your user id is: " + userId);
 
             // Generate default urls for the given app id
             config.generateUrls(appId);
-
             if (SwrveHelper.isNullOrEmpty(config.getLanguage())) {
-                this.language = SwrveHelper.toLanguageTag(Locale.getDefault());
+                language = SwrveHelper.toLanguageTag(Locale.getDefault());
             } else {
-                this.language = config.getLanguage();
+                language = config.getLanguage();
             }
-            this.config = config;
-            this.appVersion = config.getAppVersion();
-            this.newSessionInterval = config.getNewSessionInterval();
+            appVersion = config.getAppVersion();
+            newSessionInterval = config.getNewSessionInterval();
 
             // Generate session token
-            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId);
+            sessionToken = SwrveHelper.generateSessionToken(apiKey, appId, userId);
 
             // Default app version to android app version
             if (SwrveHelper.isNullOrEmpty(this.appVersion)) {
-                Log.i(LOG_TAG, "Getting app version automatically");
                 try {
                     PackageInfo pInfo = resolvedContext.getPackageManager().getPackageInfo(resolvedContext.getPackageName(), 0);
                     this.appVersion = pInfo.versionName;
                 } catch (Exception exp) {
-                    Log.e(LOG_TAG, "Get app version failed", exp);
+                    Log.e(LOG_TAG, "Get app version failed, please specify the app version manually", exp);
                 }
             }
-
-            restClient = createRESTClient();
-            cachedLocalStorage = createCachedLocalStorage();
-            storageExecutor = createStorageExecutor();
-            restClientExecutor = createRESTClientExecutor();
-
             appStoreURLs = new SparseArray<String>();
-
             // Find cache folder
             findCacheFolder(resolvedContext);
-
             beforeSendDeviceInfo(resolvedContext);
-            // Open access to local storage
-            openLocalStorageConnection();
             // Initialize resources from cache
             initResources();
             // Send session start
             queueSessionStart();
             generateNewSessionInterval();
+            // Get device info
+            getDeviceInfo(resolvedContext);
+            queueDeviceInfoNow(true);
+
             // If user is first installed
             String savedInstallTime = getSavedInstallTime();
             if (SwrveHelper.isNullOrEmpty(savedInstallTime)) {
@@ -178,10 +162,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Get install time
             installTime.set(getInstallTime());
             installTimeLatch.countDown();
-
-            // Get device info
-            getDeviceInfo(resolvedContext);
-            queueDeviceInfoNow(true);
 
             // Talk initialization
             if (config.isTalkEnabled()) {
@@ -219,16 +199,25 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
-            SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
-            campaignsAndResourcesFlushFrequency = settings.getInt("swrve_cr_flush_frequency", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
-            campaignsAndResourcesFlushRefreshDelay = settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
-            campaignsAndResourcesLastETag = settings.getString("campaigns_and_resources_etag", null);
-
+            campaignsAndResourcesFlushFrequency = userEntryStorage.getUserInt(CAMPAIGN_RESOURES_FLUSH_FREQUENCY_CATEGORY, SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
+            campaignsAndResourcesFlushRefreshDelay = userEntryStorage.getUserInt(CAMPAIGN_RESOURES_FLUSH_DELAY_CATEGORY, SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
+            campaignsAndResourcesLastETag = userEntryStorage.getUserString(CAMPAIGNS_RESOURCES_ETAG_CATEGORY, null);
             startCampaignsAndResourcesTimer(true);
             disableAutoShowAfterDelay();
 
             sendCrashlyticsMetadata();
             afterInit();
+
+            // Open SQL connection in a background thread
+            storageExecutorExecute(new Runnable() {
+                @Override
+                public void run() {
+                    openLocalStorageConnection();
+                    // TODO: Read installed time from DB if was not present in new storage!
+                    //return cachedLocalStorage.getSharedCacheEntry(INSTALL_TIME_CATEGORY); TODO
+                    taskCompleted();
+                }
+            });
 
             Log.i(LOG_TAG, "Init finished");
         } catch (Exception exp) {
@@ -321,7 +310,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         // Read cached resources
         try {
-            cachedResources = cachedLocalStorage.getSecureCacheEntryForUser(userId, RESOURCES_CACHE_CATEGORY, getUniqueKey());
+            cachedResources = userEntryStorage.getUserSecureString(RESOURCES_CACHE_CATEGORY, null);
         } catch (SecurityException e) {
             Log.i(LOG_TAG, "Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -330,7 +319,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             listener.onUserResourcesError(e);
         }
 
-        if (cachedResources != null) {
+        if (!SwrveHelper.isNullOrEmpty(cachedResources)) {
             try {
                 // Parse raw response
                 JSONArray jsonResources = new JSONArray(cachedResources);
@@ -365,7 +354,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("joined", String.valueOf(getOrWaitForInstallTime()));
                     try {
                         Log.i(LOG_TAG, "Contacting AB Test server " + config.getContentUrl());
-                        restClient.get(config.getContentUrl() + USER_RESOURCES_DIFF_ACTION, params, new RESTCacheResponseListener(swrveReference, cachedLocalStorage, userId, RESOURCES_DIFF_CACHE_CATEGORY, EMPTY_JSON_ARRAY) {
+                        restClient.get(config.getContentUrl() + USER_RESOURCES_DIFF_ACTION, params, new RESTCacheResponseListener(swrveReference, userEntryStorage, RESOURCES_DIFF_CACHE_CATEGORY, EMPTY_JSON_ARRAY) {
                             @Override
                             public void onResponseCached(int responseCode, String responseBody) {
                                 Log.i(LOG_TAG, "Got AB Test response code " + responseCode);
@@ -403,26 +392,26 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 @Override
                 public void run() {
                     // Get batch of events and send them
-                    final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
+                    final LinkedHashMap<IEventLocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
                     final LinkedHashMap<Long, String> events = new LinkedHashMap<Long, String>();
                     if (!combinedEvents.isEmpty()) {
                         Log.i(LOG_TAG, "Sending queued events");
                         try {
                             // Combine all events
-                            Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
+                            Iterator<IEventLocalStorage> storageIt = combinedEvents.keySet().iterator();
                             while (storageIt.hasNext()) {
                                 events.putAll(combinedEvents.get(storageIt.next()));
                             }
                             Log.i(LOG_TAG, "Sending " + events.size() + " events to Swrve");
                             eventsWereSent = true;
-                            String data = com.swrve.sdk.EventHelper.eventsAsBatch(userId, appVersion, sessionToken, events, cachedLocalStorage);
+                            String data = com.swrve.sdk.EventHelper.eventsAsBatch(userId, appVersion, sessionToken, events, userEntryStorage);
                             postBatchRequest(config, data, new IPostBatchRequestListener() {
                                 public void onResponse(boolean shouldDelete) {
                                     if (shouldDelete) {
                                         // Remove events from where they came from
-                                        Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
+                                        Iterator<IEventLocalStorage> storageIt = combinedEvents.keySet().iterator();
                                         while (storageIt.hasNext()) {
-                                            ILocalStorage storage = storageIt.next();
+                                            IEventLocalStorage storage = storageIt.next();
                                             storage.removeEventsById(combinedEvents.get(storage).keySet());
                                         }
                                     } else {
@@ -669,13 +658,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         public void onResponse(RESTResponse response) {
                             // Response received from server
                             if (response.responseCode == HttpStatus.SC_OK) {
-                                SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
-                                SharedPreferences.Editor settingsEditor = settings.edit();
-
                                 String etagHeader = response.getHeaderValue("ETag");
                                 if (!SwrveHelper.isNullOrEmpty(etagHeader)) {
                                     campaignsAndResourcesLastETag = etagHeader;
-                                    settingsEditor.putString("campaigns_and_resources_etag", campaignsAndResourcesLastETag);
+                                    userEntryStorage.putUserString(CAMPAIGNS_RESOURCES_ETAG_CATEGORY, campaignsAndResourcesLastETag);
                                 }
 
                                 try {
@@ -685,7 +671,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         Integer flushFrequency = resourceDict.getInt("flush_frequency");
                                         if (flushFrequency != null) {
                                             campaignsAndResourcesFlushFrequency = flushFrequency;
-                                            settingsEditor.putInt("swrve_cr_flush_frequency", campaignsAndResourcesFlushFrequency);
+                                            userEntryStorage.putUserInt(CAMPAIGN_RESOURES_FLUSH_FREQUENCY_CATEGORY, campaignsAndResourcesFlushFrequency);
                                         }
                                     }
 
@@ -693,7 +679,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         Integer flushDelay = resourceDict.getInt("flush_refresh_delay");
                                         if (flushDelay != null) {
                                             campaignsAndResourcesFlushRefreshDelay = flushDelay;
-                                            settingsEditor.putInt("swrve_cr_flush_delay", campaignsAndResourcesFlushRefreshDelay);
+                                            userEntryStorage.putUserInt(CAMPAIGN_RESOURES_FLUSH_DELAY_CATEGORY, campaignsAndResourcesFlushRefreshDelay);
                                         }
                                     }
 
@@ -726,9 +712,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         // Update resource manager
                                         JSONArray resourceJson = resourceDict.getJSONArray("user_resources");
                                         resourceManager.setResourcesFromJSON(resourceJson);
-
-                                        // Write to cache
-                                        cachedLocalStorage.setAndFlushSecureSharedEntryForUser(userId, RESOURCES_CACHE_CATEGORY, resourceJson.toString(), getUniqueKey());
+                                        saveUserResourcesInCache(resourceJson.toString());
 
                                         // Call resource listener
                                         if (campaignsAndResourcesInitialized) {
@@ -738,8 +722,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 } catch (JSONException e) {
                                     Log.e(LOG_TAG, "Could not parse JSON for campaigns and resources", e);
                                 }
-
-                                settingsEditor.commit();
                             }
 
                             this.firstRefreshFinished();
@@ -1389,6 +1371,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public C getConfig() {
         try {
             return _getConfig();
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    protected static String _getVersion() {
+        return version;
+    }
+
+    public static String getVersion() {
+        try {
+            return _getVersion();
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }

@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Used internally to provide a persistent storage of data on the device.
  */
-public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorage {
+public class SQLiteEventLocalStorage implements IEventLocalStorage, IFastInsertLocalStorage {
 
     // Database
     public static final int SWRVE_DB_VERSION = 1;
@@ -36,7 +36,7 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_EVENT = "event";
 
-    // Cache table
+    // Cache table (deprecated, used only to load install time)
     public static final String TABLE_CACHE = "server_cache";
     public static final String COLUMN_USER_ID = "user_id";
     public static final String COLUMN_CATEGORY = "category";
@@ -46,7 +46,7 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
     private SwrveSQLiteOpenHelper dbHelper;
     private AtomicBoolean connectionOpen;
 
-    public SQLiteLocalStorage(Context context, String dbName, long maxDbSize) {
+    public SQLiteEventLocalStorage(Context context, String dbName, long maxDbSize) {
         this.dbHelper = new SwrveSQLiteOpenHelper(context, dbName);
         this.database = dbHelper.getWritableDatabase();
         this.database.setMaximumSize(maxDbSize);
@@ -99,21 +99,6 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         return events;
     }
 
-    @Override
-    public void setCacheEntryForUser(String userId, String category, String rawData) {
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_USER_ID, userId);
-        values.put(COLUMN_CATEGORY, category);
-        values.put(COLUMN_RAW_DATA, rawData);
-        insertOrUpdate(TABLE_CACHE, values, COLUMN_USER_ID + "= ? AND " + COLUMN_CATEGORY + "= ?", new String[]{userId, category});
-    }
-
-    @Override
-    public void setSecureCacheEntryForUser(String userId, String category, String rawData, String signature) {
-        setCacheEntryForUser(userId, category, rawData);
-        setCacheEntryForUser(userId, category + SIGNATURE_SUFFIX, signature);
-    }
-
     private void insertOrUpdate(String table, ContentValues values, String whereClause, String[] whereArgs) {
         if (connectionOpen.get()) {
             int affectedRows = database.update(table, values, whereClause, whereArgs);
@@ -123,7 +108,6 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         }
     }
 
-    @Override
     public String getCacheEntryForUser(String userId, String category) {
         String resultJSON = null;
 
@@ -150,56 +134,12 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         return resultJSON;
     }
 
-    @Override
-    public String getSecureCacheEntryForUser(String userId, String category, String uniqueKey) throws SecurityException {
-        String cachedContent = getCacheEntryForUser(userId, category);
-        String cachedSignature = getCacheEntryForUser(userId, category + SIGNATURE_SUFFIX);
-        try {
-            String computedSignature = SwrveHelper.createHMACWithMD5(cachedContent, uniqueKey);
-
-            if (SwrveHelper.isNullOrEmpty(computedSignature) || SwrveHelper.isNullOrEmpty(cachedSignature) || !cachedSignature.equals(computedSignature)) {
-                throw new SecurityException("Signature validation failed");
-            }
-        } catch (NoSuchAlgorithmException e) {
-        } catch (InvalidKeyException e) {
-        }
-
-        return cachedContent;
-    }
-
     public void reset() {
         // Clean database
         if (connectionOpen.get()) {
             database.delete(TABLE_EVENTS_JSON, null, null);
             database.delete(TABLE_CACHE, null, null);
         }
-    }
-
-    @Override
-    public Map<Entry<String, String>, String> getAllCacheEntries() {
-        Map<Entry<String, String>, String> allCacheEntries = new HashMap<Entry<String, String>, String>();
-
-        if (connectionOpen.get()) {
-            Cursor cursor = null;
-            try {
-                cursor = database.query(TABLE_CACHE, new String[]{COLUMN_USER_ID, COLUMN_CATEGORY, COLUMN_RAW_DATA}, null, null, null, null, null);
-
-                cursor.moveToFirst();
-                while (!cursor.isAfterLast()) {
-                    // Create event out of row data
-                    allCacheEntries.put(new SimpleEntry<String, String>(cursor.getString(0), cursor.getString(1)), cursor.getString(2));
-                    cursor.moveToNext();
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-        }
-
-        return allCacheEntries;
     }
 
     // Fast flush
@@ -222,29 +162,6 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
                 if (stmt != null) {
                     stmt.close();
                 }
-                database.endTransaction();
-            }
-        }
-    }
-
-    @Override
-    public void setMultipleCacheEntries(List<Entry<String, Entry<String, String>>> cacheEntries) throws SQLException {
-        if (connectionOpen.get()) {
-            database.beginTransaction();
-            try {
-                Iterator<Entry<String, Entry<String, String>>> cacheIt = cacheEntries.iterator();
-                ContentValues values = new ContentValues();
-                while (cacheIt.hasNext()) {
-                    Entry<String, Entry<String, String>> cacheEntry = cacheIt.next();
-                    String userId = cacheEntry.getKey();
-                    String category = cacheEntry.getValue().getKey();
-                    values.put(COLUMN_USER_ID, userId);
-                    values.put(COLUMN_CATEGORY, category);
-                    values.put(COLUMN_RAW_DATA, cacheEntry.getValue().getValue());
-                    insertOrUpdate(TABLE_CACHE, values, COLUMN_USER_ID + "= ? AND " + COLUMN_CATEGORY + "= ?", new String[]{userId, category});
-                }
-                database.setTransactionSuccessful(); // Commit
-            } finally {
                 database.endTransaction();
             }
         }

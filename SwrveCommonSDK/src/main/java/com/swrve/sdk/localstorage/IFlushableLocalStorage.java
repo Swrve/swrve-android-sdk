@@ -5,6 +5,4 @@ package com.swrve.sdk.localstorage;
  */
 public interface IFlushableLocalStorage {
     public void flushEvents(IFastInsertLocalStorage externalStorage);
-
-    public void flushCache(IFastInsertLocalStorage externalStorage);
 }
