@@ -266,7 +266,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
             }
         } catch(Exception exp) {
-            Log.e(LOG_TAG, "Could not set Crashlytics metadata", exp);
+            Log.i(LOG_TAG, "Could not set Crashlytics metadata");
         }
     }
 
@@ -503,10 +503,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         lastSessionTick = getSessionTime() + newSessionInterval;
     }
 
-    protected void taskCompleted() {
-        // Do nothing
-    }
-
     protected void getDeviceInfo(Context context) {
         try {
             Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -577,14 +573,20 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return now.before(showMessagesAfterDelay);
     }
 
-    protected void saveCampaignsInCache(final String campaignContent) {
+    protected void saveCampaignsInCache(final JSONObject campaignContent) {
         storageExecutorExecute(new Runnable() {
             @Override
             public void run() {
-                MemoryCachedLocalStorage cachedStorage = cachedLocalStorage;
-                cachedStorage.setAndFlushSecureSharedEntryForUser(userId, CAMPAIGN_CATEGORY, campaignContent, getUniqueKey());
-                Log.i(LOG_TAG, "Saved campaigns in cache.");
-                taskCompleted();
+                cachedLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CAMPAIGN_CATEGORY, campaignContent.toString(), getUniqueKey());
+            }
+        });
+    }
+
+    protected void saveResourcesInCache(final JSONArray resourcesContent) {
+        storageExecutorExecute(new Runnable() {
+            @Override
+            public void run() {
+                cachedLocalStorage.setAndFlushSecureSharedEntryForUser(userId, RESOURCES_CACHE_CATEGORY, resourcesContent.toString(), getUniqueKey());
             }
         });
     }
@@ -646,7 +648,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     @SuppressLint("UseSparseArrays")
-    protected void loadCampaignsFromJSON(JSONObject json) {
+    protected void loadCampaignsFromJSON(JSONObject json, JSONObject settings) {
         if (json == null) {
             Log.i(LOG_TAG, "NULL JSON for campaigns, aborting load.");
             return;
@@ -749,19 +751,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 newCampaignIds.add(campaignData.getInt("id"));
             }
 
+            // Also serialize the campaign settings
+            JSONObject jsonSettings = (settings == null)? new JSONObject() : settings;
+            boolean saveCampaignSettings = (qaUser == null || !qaUser.isResetDevice());
             for (int i = campaigns.size() - 1; i >= 0; i--) {
-                if (!newCampaignIds.contains(campaigns.get(i).getId())) {
+                SwrveCampaign campaign = campaigns.get(i);
+                if (!newCampaignIds.contains(campaign.getId())) {
                     campaigns.remove(i);
-                }
-            }
-
-            // Load existing campaign settings
-            JSONObject jsonSettings = new JSONObject();
-            if (qaUser == null || !qaUser.isResetDevice()) {
-                // Load campaign data
-                String serializedSettings = cachedLocalStorage.getCacheEntryForUser(userId, CAMPAIGN_SETTINGS_CATEGORY);
-                if (!SwrveHelper.isNullOrEmpty(serializedSettings)) {
-                    jsonSettings = new JSONObject(serializedSettings);
+                } else if (saveCampaignSettings) {
+                    jsonSettings.put(Integer.toString(campaign.getId()), campaign.createSettings());
                 }
             }
 
@@ -827,7 +825,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
                 assetsCurrentlyDownloading = false;
                 autoShowMessages();
-                taskCompleted();
             }
         }));
     }
@@ -913,7 +910,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         cachedStorage.getSecondaryStorage().setCacheEntryForUser(userId, CAMPAIGN_SETTINGS_CATEGORY, serializedSettings);
                     }
                     Log.i(LOG_TAG, "Saved campaigns in cache");
-                    taskCompleted();
                 }
             });
         } catch (JSONException exp) {
@@ -1016,23 +1012,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         storageExecutorExecute(new Runnable() {
             @Override
             public void run() {
-                Log.i(LOG_TAG, "Queueing device info");
-                // Automatic user update
-
                 userUpdate(swrve.getDeviceInfo());
-
-                // Send event after it has been queued
+                // Send event after it has been queued, trigger from the storage executor
+                // to wait for all events. Will be executed on the rest thread.
                 if (sendNow) {
-                    restClientExecutorExecute(new Runnable() {
+                    storageExecutorExecute(new Runnable() {
                         @Override
                         public void run() {
                             Log.i(LOG_TAG, "Sending device info");
                             swrve.sendQueuedEvents();
-                            taskCompleted();
                         }
                     });
                 }
-                taskCompleted();
             }
         });
     }
@@ -1094,9 +1085,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
         try {
             String campaignsFromCache = cachedLocalStorage.getSecureCacheEntryForUser(userId, CAMPAIGN_CATEGORY, getUniqueKey());
-            if (campaignsFromCache != null) {
+            if (!SwrveHelper.isNullOrEmpty(campaignsFromCache)) {
                 JSONObject campaignsJson = new JSONObject(campaignsFromCache);
-                updateCampaigns(campaignsJson);
+                // Load campaign settings
+                String campaignSettingsFromCache = cachedLocalStorage.getCacheEntryForUser(userId, CAMPAIGN_SETTINGS_CATEGORY);
+                JSONObject campaignSettingsJson = null;
+                if (!SwrveHelper.isNullOrEmpty(campaignSettingsFromCache)) {
+                    campaignSettingsJson = new JSONObject(campaignSettingsFromCache);
+                }
+                updateCampaigns(campaignsJson, campaignSettingsJson);
                 Log.i(LOG_TAG, "Loaded campaigns from cache.");
             } else {
                 invalidateETag();
@@ -1116,8 +1113,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     /**
      * Update campaigns with given JSON
      */
-    protected void updateCampaigns(JSONObject campaignJSON) {
-        loadCampaignsFromJSON(campaignJSON);
+    protected void updateCampaigns(JSONObject campaignJSON, JSONObject campaignSettingsJSON) {
+        loadCampaignsFromJSON(campaignJSON, campaignSettingsJSON);
     }
 
     /**
@@ -1221,7 +1218,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             } catch (Exception se) {
                 Log.e(LOG_TAG, "Unable to insert into local storage", se);
             }
-            taskCompleted();
         }
     }
 
