@@ -1051,7 +1051,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Initialize Resource Manager with cache content
      */
     protected void initResources() {
-        this.resourceManager = new SwrveResourceManager();
         String cachedResources = null;
 
         // Read cached resources
