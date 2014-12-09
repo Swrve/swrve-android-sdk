@@ -515,6 +515,6 @@ public abstract class SwrveConfigBase {
      * @param loadOnUIThread
      */
     public void setLoadCachedCampaignsAndResourcesOnUIThread(boolean loadOnUIThread) {
-        this.loadCachedCampaignsAndResourcesOnUIThread = loadCachedCampaignsAndResourcesOnUIThread;
+        this.loadCachedCampaignsAndResourcesOnUIThread = loadOnUIThread;
     }
 }

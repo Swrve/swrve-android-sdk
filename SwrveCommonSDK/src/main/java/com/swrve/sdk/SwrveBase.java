@@ -163,6 +163,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Open access to local storage
             openLocalStorageConnection();
 
+            this.resourceManager = new SwrveResourceManager();
             if (preloadRandC) {
                 // Initialize resources from cache
                 initResources();
