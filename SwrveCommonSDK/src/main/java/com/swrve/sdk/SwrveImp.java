@@ -32,7 +32,7 @@ import com.swrve.sdk.messaging.view.SwrveDialog;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 import com.swrve.sdk.messaging.view.SwrveMessageViewFactory;
 import com.swrve.sdk.qa.SwrveQAUser;
-import com.swrve.sdk.rest.DoneHandlerInputStream;
+import com.swrve.sdk.rest.SwrveFilterInputStream;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTClient;
@@ -843,7 +843,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         InputStream inputStream = null;
         try {
             URLConnection openConnection = new URL(url).openConnection();
-            inputStream = new DoneHandlerInputStream(openConnection.getInputStream());
+            inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             byte[] buffer = new byte[2048];
             int bytesRead;
