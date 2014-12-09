@@ -7,8 +7,6 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,114 +23,20 @@ import java.util.Iterator;
  * Used internally to process push notifications inside for your app.
  */
 public class SwrveGcmIntentService extends IntentService {
-    private static final String TAG = "SwrveGcmIntentService";
-    private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
-    private static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
-    private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
+    protected static final String TAG = "SwrveGcmIntentService";
+
+    private SwrveGcmNotification swrveGcmNotification;
 
     public static int tempNotificationId = 1;
-
-    private boolean failedInitialisation = false;
-
-    private Class<?> activityClass;
-    private int iconDrawableId;
-    private String notificationTitle;
 
     public SwrveGcmIntentService() {
         super("SwrveGcmIntentService");
     }
 
-    public SwrveGcmIntentService(Class<?> activityClass, int iconDrawableId, String notificationTitle) {
-        super("SwrveGcmIntentService");
-        init(activityClass, iconDrawableId, notificationTitle);
-    }
-
-    private void init(Class<?> activityClass, int iconDrawableId, String notificationTitle) {
-        try {
-            this.activityClass = activityClass;
-            this.iconDrawableId = iconDrawableId;
-            this.notificationTitle = notificationTitle;
-        } catch (Exception exp) {
-            // Stop the service as there was an initialization error
-            failedInitialisation = true;
-            exp.printStackTrace();
-            this.stopSelf();
-        }
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        // Try to read config from metadata
-        if (activityClass == null || SwrveHelper.isNullOrEmpty(notificationTitle)) {
-            readConfigFromMetadata();
-        }
-    }
-
-    private void readConfigFromMetadata() {
-        try {
-            // Read config from the apps metadata
-            ApplicationInfo app = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-            Bundle metaData = app.metaData;
-            if (metaData == null) {
-                throw new RuntimeException("No SWRVE metadata specified in AndroidManifest.xml");
-            }
-
-            int pushIconId = metaData.getInt(SWRVE_PUSH_ICON_METADATA, -1);
-            if (pushIconId < 0) {
-                // No icon specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_ICON_METADATA + " specified in AndroidManifest.xml");
-            }
-
-            Class<?> pushActivityClass = null;
-            String pushActivity = metaData.getString(SWRVE_PUSH_ACTIVITY_METADATA);
-            if (SwrveHelper.isNullOrEmpty(pushActivity)) {
-                // No activity specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_ACTIVITY_METADATA + " specified in AndroidManifest.xml");
-            } else {
-                // Check that the Activity exists and can be found
-                pushActivityClass = getClassForActivityClassName(pushActivity);
-                if (pushActivityClass == null) {
-                    throw new RuntimeException("The Activity with name " + pushActivity + " could not be found");
-                }
-            }
-
-            String pushTitle = metaData.getString(SWRVE_PUSH_TITLE_METADATA);
-            if (SwrveHelper.isNullOrEmpty(pushTitle)) {
-                // No activity specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_TITLE_METADATA + " specified in AndroidManifest.xml");
-            }
-
-            init(pushActivityClass, pushIconId, pushTitle);
-        } catch (Exception exp) {
-            // Stop the service as there was an initialization error
-            failedInitialisation = true;
-            exp.printStackTrace();
-            this.stopSelf();
-        }
-    }
-
-    private Class<?> getClassForActivityClassName(String className) {
-        if (!SwrveHelper.isNullOrEmpty(className)) {
-            if (className.startsWith(".")) {
-                // Append application package as it starts with .
-                className = getApplication().getPackageName() + className;
-                int h = 5;
-            }
-            try {
-                return Class.forName(className);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return null;
-    }
-
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (!failedInitialisation) {
+        try {
+            swrveGcmNotification = SwrveGcmNotification.getInstance(this);
             Bundle extras = intent.getExtras();
             GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
             // The getMessageType() intent parameter must be the intent you received
@@ -157,8 +61,8 @@ public class SwrveGcmIntentService extends IntentService {
                     Log.i(TAG, "Received notification: " + extras.toString());
                 }
             }
-            // Release the wake lock provided by the WakefulBroadcastReceiver.
-            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent);
+        } finally {
+            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent); // Always release the wake lock provided by the WakefulBroadcastReceiver. 
         }
     }
 
@@ -233,10 +137,10 @@ public class SwrveGcmIntentService extends IntentService {
 
         // Build notification
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(iconDrawableId)
-                .setContentTitle(notificationTitle)
+                .setSmallIcon(swrveGcmNotification.iconDrawableId)
+                .setContentTitle(swrveGcmNotification.notificationTitle)
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(msgText))
+                .bigText(msgText))
                 .setContentText(msgText)
                 .setAutoCancel(true);
 
@@ -309,9 +213,9 @@ public class SwrveGcmIntentService extends IntentService {
      */
     public Intent createIntent(Bundle msg) {
         Intent intent = null;
-        if (activityClass != null) {
-            intent = new Intent(this, activityClass);
-            intent.putExtra("notification", msg);
+        if (swrveGcmNotification.activityClass != null) {
+            intent = new Intent(this, swrveGcmNotification.activityClass);
+            intent.putExtra(SwrveGcmNotification.GCM_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;

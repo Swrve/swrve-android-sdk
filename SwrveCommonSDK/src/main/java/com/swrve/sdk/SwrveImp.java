@@ -32,7 +32,7 @@ import com.swrve.sdk.messaging.view.SwrveDialog;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 import com.swrve.sdk.messaging.view.SwrveMessageViewFactory;
 import com.swrve.sdk.qa.SwrveQAUser;
-import com.swrve.sdk.rest.DoneHandlerInputStream;
+import com.swrve.sdk.rest.SwrveFilterInputStream;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTClient;
@@ -110,6 +110,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_SIM_OPERATOR_NAME = "swrve.sim_operator.name";
     protected static final String SWRVE_SIM_OPERATOR_ISO_COUNTRY = "swrve.sim_operator.iso_country_code";
     protected static final String SWRVE_SIM_OPERATOR_CODE = "swrve.sim_operator.code";
+    protected static final String REFERRER = "referrer";
+    protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
     protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
@@ -838,7 +840,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         InputStream inputStream = null;
         try {
             URLConnection openConnection = new URL(url).openConnection();
-            inputStream = new DoneHandlerInputStream(openConnection.getInputStream());
+            inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             byte[] buffer = new byte[2048];
             int bytesRead;

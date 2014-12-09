@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -183,6 +184,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Get install time
             installTime.set(getInstallTime());
             installTimeLatch.countDown();
+
+            // Android referrer information
+            String referrer = settings.getString(SWRVE_REFERRER_ID, null);
+            if (!SwrveHelper.isNullOrEmpty(referrer)) {
+                Map<String, String> attributes = new HashMap<String, String>();
+                attributes.put(SWRVE_REFERRER_ID, referrer);
+                Log.i(LOG_TAG, "Received install referrer, so sending userUpdate:" + attributes);
+                userUpdate(attributes);
+                settings.edit().remove(SWRVE_REFERRER_ID).commit();
+            }
 
             // Get device info
             getDeviceInfo(resolvedContext);
@@ -500,6 +511,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         }
         generateNewSessionInterval();
+
+        Activity activity = getActivityContext();
+        if (activity != null && activity.getIntent() != null && activity.getIntent().getData() != null) {
+            Uri uri = activity.getIntent().getData();
+            String referrer = uri.getQueryParameter(REFERRER);
+            if (!SwrveHelper.isNullOrEmpty(referrer)) {
+                Map<String, String> attributes = new HashMap<String, String>();
+                attributes.put(SWRVE_REFERRER_ID, referrer);
+                Log.i(LOG_TAG, "Received referrer, so sending userUpdate:" + attributes);
+                userUpdate(attributes);
+            }
+        }
     }
 
     protected void _onLowMemory() {
