@@ -43,7 +43,7 @@ public class RESTClient implements IRESTClient {
         long connectTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
         boolean isTimeout = false;
 
-        DoneHandlerInputStream wrapperIn = null;
+        InputStream wrapperIn = null;
         try {
             URL url = createEncodedURL(endpoint);
             urlConnection = (HttpURLConnection) url.openConnection();
@@ -77,7 +77,7 @@ public class RESTClient implements IRESTClient {
             } else {
                 in = new BufferedInputStream(errorStream);
             }
-            wrapperIn = new DoneHandlerInputStream(in);
+            wrapperIn = new SwrveFilterInputStream(in);
             responseBody = SwrveHelper.readStringFromInputStream(wrapperIn);
 
             responseBodyTime = milisecondsFrom(start);
@@ -128,7 +128,7 @@ public class RESTClient implements IRESTClient {
         long connectTime = 0, requestBodyTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
         boolean isTimeout = false;
 
-        DoneHandlerInputStream wrapperIn = null;
+        InputStream wrapperIn = null;
         try {
             byte[] bytes = encodedBody.getBytes("UTF-8");
             URL url = createEncodedURL(endpoint);
@@ -164,7 +164,7 @@ public class RESTClient implements IRESTClient {
             } else {
                 in = new BufferedInputStream(errorStream);
             }
-            wrapperIn = new DoneHandlerInputStream(in);
+            wrapperIn = new SwrveFilterInputStream(in);
             responseBody = SwrveHelper.readStringFromInputStream(wrapperIn);
 
             responseBodyTime = milisecondsFrom(start);

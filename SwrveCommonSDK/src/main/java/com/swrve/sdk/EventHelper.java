@@ -30,7 +30,7 @@ final class EventHelper {
     private synchronized static int getNextSequenceNumber(MemoryCachedLocalStorage storage) {
         String id = storage.getSharedCacheEntry("seqnum");
         int seqnum = 1;
-        if (id != null && id.length() > 0) {
+        if (!SwrveHelper.isNullOrEmpty(id)) {
             seqnum = Integer.parseInt(id) + 1;
         }
         storage.setAndFlushSharedEntry("seqnum", Integer.toString(seqnum));

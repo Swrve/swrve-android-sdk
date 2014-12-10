@@ -110,6 +110,11 @@ public abstract class SwrveConfigBase {
     private long autoShowMessagesMaxDelay = 5000;
 
     /**
+     * Will load the campaign and resources cache on the UI thread.
+     */
+    private boolean loadCachedCampaignsAndResourcesOnUIThread = true;
+
+    /**
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
@@ -414,7 +419,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @param Enabled in-app messages.
+     * @param enabled Enabled in-app messages.
      */
     public SwrveConfigBase setTalkEnabled(boolean enabled) {
         this.talkEnabled = enabled;
@@ -491,5 +496,25 @@ public abstract class SwrveConfigBase {
      */
     public void setAutoShowMessagesMaxDelay(long autoShowMessagesMaxDelay) {
         this.autoShowMessagesMaxDelay = autoShowMessagesMaxDelay;
+    }
+
+    /**
+     * Load campaigns and resources cache on the UI thread. Allows to get user resources and
+     * campaigns on the early start.
+     *
+     * @return Whether the SDK will load this data on the UI thread.
+     */
+    public boolean isLoadCachedCampaignsAndResourcesOnUIThread() {
+        return loadCachedCampaignsAndResourcesOnUIThread;
+    }
+
+    /**
+     * Load campaigns and resources cache on the UI thread. Allows to get user resources and
+     * campaigns on the early start.
+     *
+     * @param loadOnUIThread
+     */
+    public void setLoadCachedCampaignsAndResourcesOnUIThread(boolean loadOnUIThread) {
+        this.loadCachedCampaignsAndResourcesOnUIThread = loadOnUIThread;
     }
 }

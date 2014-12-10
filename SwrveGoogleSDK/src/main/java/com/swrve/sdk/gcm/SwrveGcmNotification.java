@@ -10,6 +10,8 @@ import com.swrve.sdk.SwrveHelper;
 
 public class SwrveGcmNotification {
 
+    private static final String TAG = "SwrveGcm";
+
     public static final String GCM_BUNDLE = "notification";
 
     private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
@@ -72,7 +74,7 @@ public class SwrveGcmNotification {
             swrveGcmNotification = new SwrveGcmNotification(pushActivityClass, pushIconId, pushTitle);
 
         } catch (Exception ex) {
-            Log.e(SwrveGcmIntentService.TAG, "Error creating push notification from metadata", ex);
+            Log.e(TAG, "Error creating push notification from metadata", ex);
         }
         return swrveGcmNotification;
     }
