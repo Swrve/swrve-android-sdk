@@ -27,6 +27,13 @@
         </activity>
         <activity
             android:name="com.swrve.sdk.demo.AnotherActivity"/>
+        <receiver
+            android:name="com.swrve.sdk.SwrveInstallReferrerReceiver"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.android.vending.INSTALL_REFERRER" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
