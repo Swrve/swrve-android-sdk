@@ -101,10 +101,9 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     }
 
     @Override
-    public int showNotification(NotificationManager notificationManager, Notification notification) {
-        int notificationId = tempNotificationId++;
-        notificationManager.notify(notificationId, notification);
-        return notificationId;
+    public int showNotification(NotificationManager notificationManager, Notification notification, int id) {
+        notificationManager.notify(id, notification);
+        return id;
     }
 
     @Override
@@ -148,11 +147,11 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     }
 
     @Override
-    public PendingIntent createPendingIntent(Bundle msg) {
+    public PendingIntent createPendingIntent(Bundle msg, int id) {
         // Add notification to bundle
         Intent intent = swrveGcmService.createIntent( msg);
         if (intent != null) {
-            return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return PendingIntent.getActivity(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return null;

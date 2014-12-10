@@ -16,13 +16,13 @@ interface ISwrveGcmHandler {
 
     boolean mustShowNotification();
 
-    int showNotification(NotificationManager notificationManager, Notification notification);
+    int showNotification(NotificationManager notificationManager, Notification notification, int id);
 
     NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg);
 
     Notification createNotification(Bundle msg, PendingIntent contentIntent);
 
-    PendingIntent createPendingIntent(Bundle msg);
+    PendingIntent createPendingIntent(Bundle msg, int id);
 
     Intent createIntent(Bundle msg);
 }
