@@ -65,7 +65,20 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      */
     @Override
     public int showNotification(NotificationManager notificationManager, Notification notification) {
-        return handler.showNotification(notificationManager, notification);
+        return handler.showNotification(notificationManager, notification, generateNotificationId(notification));
+    }
+
+    /**
+     * Generate the id for the new notification.
+     *
+     * Defaults to the current milliseconds to have unique notifications.
+     * 
+     * @param notification notification data
+     * @return id for the notification to be displayed
+     */
+    @Override
+    public int generateNotificationId(Notification notification) {
+        return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 
     /**
@@ -101,12 +114,26 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      * can be notified that the app was opened from the
      * notification.
      *
-     * @param msg
-     * @return
+     * @param msg push message payload
+     * @return pending intent
      */
     @Override
     public PendingIntent createPendingIntent(Bundle msg) {
-        return handler.createPendingIntent(msg);
+        return handler.createPendingIntent(msg, generateBundleId(msg));
+    }
+
+    /**
+     * Generate the id for the pending intent associated with
+     * the given push payload.
+     *
+     * Defaults to the current milliseconds to have unique pending intents.
+     * 
+     * @param msg push message payload
+     * @return id for the pending intent
+     */
+    @Override
+    public int generatePendingIntentId(Bundle msg) {
+        return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 
     /**

@@ -15,11 +15,15 @@ public interface ISwrveGcmService {
 
     int showNotification(NotificationManager notificationManager, Notification notification);
 
+    int generateNotificationId(Notification notification);
+
     NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg);
 
     Notification createNotification(Bundle msg, PendingIntent contentIntent);
 
     PendingIntent createPendingIntent(Bundle msg);
+
+    int generatePendingIntentId(Bundle msg);
 
     Intent createIntent(Bundle msg);
 }
