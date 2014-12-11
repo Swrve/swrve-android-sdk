@@ -10,6 +10,8 @@ import android.support.v4.app.NotificationCompat;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
+import java.util.Date;
+
 /**
  * Used internally to process push notifications inside for your app.
  */
@@ -119,7 +121,7 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      */
     @Override
     public PendingIntent createPendingIntent(Bundle msg) {
-        return handler.createPendingIntent(msg, generateBundleId(msg));
+        return handler.createPendingIntent(msg, generatePendingIntentId(msg));
     }
 
     /**
