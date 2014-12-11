@@ -186,6 +186,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             installTimeLatch.countDown();
 
             // Android referrer information
+            SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
             String referrer = settings.getString(SWRVE_REFERRER_ID, null);
             if (!SwrveHelper.isNullOrEmpty(referrer)) {
                 Map<String, String> attributes = new HashMap<String, String>();
@@ -234,7 +235,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
-            SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
             campaignsAndResourcesFlushFrequency = settings.getInt("swrve_cr_flush_frequency", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
             campaignsAndResourcesFlushRefreshDelay = settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
             campaignsAndResourcesLastETag = settings.getString("campaigns_and_resources_etag", null);
