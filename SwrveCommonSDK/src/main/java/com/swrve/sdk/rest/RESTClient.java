@@ -323,4 +323,10 @@ public class RESTClient implements IRESTClient {
         }
         return urlConnection;
     }
+
+    public static void cleanMetrics() {
+        synchronized (metrics) {
+            metrics.clear();
+        }
+    }
 }
