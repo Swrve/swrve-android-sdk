@@ -10,7 +10,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
-        <service android:name="io.converser.android.ConverserQueueService" />
 
         <receiver
             android:name="io.converser.android.NetworkStatusReceiver"
