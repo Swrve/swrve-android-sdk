@@ -263,32 +263,6 @@ class ConverserApi {
         return null;
     }
 
-    public boolean deleteFromInbox(String inboxref) throws ApiException {
-        try {
-
-            URL url = new URL(baseUrl + "/inbox/" + inboxref);
-            HttpURLConnection connection = buildConnection(url);
-
-            connection.setDoInput(true);
-            connection.setRequestMethod("DELETE");
-
-            if (connection.getResponseCode() >= 200 && connection.getResponseCode() <= 299) {
-                return true;
-            } else {
-                Log.e(Constants.LOGTAG, "Non OK status : " + connection.getResponseCode());
-                return false;
-            }
-
-        } catch (MalformedURLException e) {
-            Log.e(Constants.LOGTAG, e.getClass().toString() + " :: " + e.getMessage());
-        } catch (IOException e) {
-            Log.e(Constants.LOGTAG, e.getClass().toString() + " :: " + e.getMessage());
-            throw new ApiException(e);
-        }
-
-        return false;
-    }
-
     public ConversationDetail sendConversationReply(String ref, ConversationReply conversationReply) throws ApiException {
 
         try {
