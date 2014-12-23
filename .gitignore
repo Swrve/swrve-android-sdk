@@ -7,4 +7,4 @@ packages/
 .idea
 .gradle
 build
-.iml
+*.iml
