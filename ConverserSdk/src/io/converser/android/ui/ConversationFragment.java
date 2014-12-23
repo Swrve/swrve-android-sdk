@@ -42,7 +42,6 @@ import io.converser.android.model.InputBase;
 import io.converser.android.model.MultiValueInput;
 import io.converser.android.model.MultiValueLongInput;
 import io.converser.android.model.NPSInput;
-import io.converser.android.model.TalkbackContent;
 import io.converser.android.model.TextInput;
 
 /**
@@ -344,24 +343,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                     contentLayout.addView(iv);
 
-                } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_TALKBACK)) {
-                    TalkbackContent tbContent = (TalkbackContent) modelContent;
-
-                    ViewGroup cell = null;
-
-                    if (tbContent.getRole().equalsIgnoreCase("operator")) {
-                        cell = (ViewGroup) layoutInf.inflate(R.layout.cio__talkback_operator_cell, contentLayout, false);
-                    } else {
-                        cell = (ViewGroup) layoutInf.inflate(R.layout.cio__talkback_subscriber_cell, contentLayout, false);
-                    }
-
-                    android.widget.TextView msg = (android.widget.TextView) cell.findViewById(R.id.cio__talkbackMessage);
-                    android.widget.TextView timestamp = (android.widget.TextView) cell.findViewById(R.id.cio__talkbackTimestamp);
-
-                    msg.setText(tbContent.getValue());
-                    timestamp.setText(sdf.format(tbContent.getDate()));
-
-                    contentLayout.addView(cell);
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     LayoutParams tvLP;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {

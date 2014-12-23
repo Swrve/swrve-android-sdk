@@ -11,22 +11,6 @@ public class ConversationReply {
         data = new HashMap<String, Object>();
     }
 
-    /**
-     * Convenience method for manually created TalkBack conversation screens that aren't generating a ConversationReply object dynamically. This will create the right structure for a single 'text' response to a 'reply' control.
-     *
-     * @param message
-     * @return
-     */
-    public static ConversationReply createTalkbackReply(String message) {
-        ConversationReply reply = new ConversationReply();
-
-        reply.control = "reply";
-        reply.data.put("text", message);
-
-
-        return reply;
-    }
-
     public String getControl() {
         return control;
     }
