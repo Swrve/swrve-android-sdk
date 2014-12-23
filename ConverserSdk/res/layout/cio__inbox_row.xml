@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="?conversationListRowStyle"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="6dp">
+
+
+    <ImageView
+        android:id="@+id/cio__ivConversationRowIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/cio__acc_message_icon" />
+
+    <TextView
+        android:id="@+id/cio__tvConversationRowHeader"
+        style="?conversationListRowHeaderStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="6dp"
+        android:layout_toRightOf="@+id/cio__ivConversationRowIcon" />
+
+    <TextView
+        android:id="@+id/cio__tvConversationRowDate"
+        style="?conversationListRowDateStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/cio__tvConversationRowHeader"
+        android:layout_below="@+id/cio__tvConversationRowHeader"
+        android:layout_marginLeft="6dp"
+        android:text="" />
+
+</RelativeLayout>

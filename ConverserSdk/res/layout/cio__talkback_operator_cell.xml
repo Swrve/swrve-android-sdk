@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/cio__talkbackMessage"
+        style="?conversationTalkbackOperatorStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:layout_marginLeft="?conversationTalkbackOperatorMarginLeft"
+        android:layout_marginRight="?conversationTalkbackOperatorMarginRight"
+        android:layout_marginTop="?conversationTalkbackOperatorMarginTop" />
+
+    <TextView
+        android:id="@+id/cio__talkbackTimestamp"
+        style="?conversationTalkbackTimeStampStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp" />
+
+</LinearLayout>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:fillViewport="false">
+
+        <LinearLayout
+            android:id="@+id/cio__feedback_content"
+            style="?conversationContentStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/cio__tvFeedbackHeader"
+                style="?conversationTextContentDefaultStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cio__feedBackTitle"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:id="@+id/cio__tvFeedbackMessage"
+                style="?conversationTextContentDefaultStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cio__feedBackMessage" />
+
+            <io.converser.android.ui.ReactionInputControl
+                android:id="@+id/cio__feedback_input"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="6dp"></io.converser.android.ui.ReactionInputControl>
+
+            <Spinner
+                android:id="@+id/cio__spinnerFeedbackArea"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/cio__tvFeedbackTextPrompt"
+                style="?conversationTextContentDefaultStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cio__feedBackTextPrompt" />
+
+            <EditText
+                android:id="@+id/cio__etFeedbackText"
+                style="?conversationInputTextBoxDefaultStyle"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:hint="@string/cio__feedbackTextHint"
+                android:inputType="textMultiLine"
+                android:lines="4"></EditText>
+        </LinearLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        style="?conversationControlTrayStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0">
+
+        <Button
+            android:id="@+id/cio__btnFeedbackDone"
+            style="?conversationControlButtonStyle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="6dp"
+            android:text="@string/cio__buttonLabelDone" />
+
+    </LinearLayout>
+
+</LinearLayout>
