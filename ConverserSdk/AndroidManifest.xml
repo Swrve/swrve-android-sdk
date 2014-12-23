@@ -12,9 +12,6 @@
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Converser"></activity>
         <activity
-            android:name=".ui.FeedbackActivity"
-            android:theme="@style/Theme.Converser"></activity>
-        <activity
             android:name="io.converser.android.ui.ConversationListActivity"
             android:theme="@style/Theme.Converser"></activity>
     </application>
