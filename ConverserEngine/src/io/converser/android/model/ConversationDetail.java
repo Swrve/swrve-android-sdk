@@ -66,21 +66,6 @@ public class ConversationDetail {
         this.controls = controls;
     }
 
-    public ArrayList<TalkbackContent> getTalkbacks() {
-
-        ArrayList<TalkbackContent> items = new ArrayList<TalkbackContent>();
-
-        if (getContent() != null) {
-            for (int i = 0; i < getContent().size(); i++) {
-                if (getContent().get(i) instanceof TalkbackContent) {
-                    items.add((TalkbackContent) getContent().get(i));
-                }
-            }
-        }
-
-        return items;
-    }
-
     public Boolean hasContentAndControls() {
         // If the conversation is missing controls and content, it cannot be rendered.
         return (!getControls().isEmpty() && !getContent().isEmpty());

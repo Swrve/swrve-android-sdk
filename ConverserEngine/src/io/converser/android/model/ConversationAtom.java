@@ -7,7 +7,6 @@ public abstract class ConversationAtom {
     public static final String TYPE_CONTENT_IMAGE = "image";
     public static final String TYPE_CONTENT_VIDEO = "video";
     public static final String TYPE_CONTENT_AUDIO = "audio";
-    public static final String TYPE_CONTENT_TALKBACK = "talkback";
 
     public static final String TYPE_CONTROL_DATESAVER = "date-saver";
     public static final String TYPE_CONTROL_DATECHOICE = "date-choice";

@@ -19,7 +19,6 @@ import io.converser.android.model.MultiValueLongInput;
 import io.converser.android.model.NPSInput;
 import io.converser.android.model.ReactionInput;
 import io.converser.android.model.SliderInput;
-import io.converser.android.model.TalkbackContent;
 import io.converser.android.model.TextInput;
 
 public class ConversationAtomDeserialiser implements JsonDeserializer<ConversationAtom> {
@@ -40,9 +39,7 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
             String caType = obj.get("type").getAsString();
             String caTag = (obj.has("tag") ? obj.get("tag").getAsString() : null);
 
-            if (caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_TALKBACK)) {
-                return jdcontext.deserialize(obj, TalkbackContent.class);
-            } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_AUDIO)
+           if (caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_AUDIO)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_TEXT)
