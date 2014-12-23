@@ -16,7 +16,6 @@ import io.converser.android.model.ConversationDetail;
 import io.converser.android.model.ConversationItem;
 import io.converser.android.model.ConversationReply;
 import io.converser.android.model.Conversations;
-import io.converser.android.model.OptInOutRequest;
 import io.converser.android.model.SubscribeRequest;
 import io.converser.android.model.SubscribeRequest.Device;
 
@@ -141,45 +140,6 @@ public class ConverserEngine {
                 }
 
 
-            }
-        });
-    }
-
-    public void sendOptInOutRequest(boolean optIn) {
-        // Engine prequisites first
-        final OptInOutRequest req = new OptInOutRequest(false);
-        req.setChoice(optIn);
-
-        // Api call from here
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-                    api.sendOptInOutRequest(req);
-
-                } catch (ApiException e) {
-                    Log.e(Constants.LOGTAG,
-                            "API Error, could not send opt out request", e);
-                }
-            }
-        });
-    }
-
-    public void sendOptInOutRequest(final OptInOutRequest req) {
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-                    api.sendOptInOutRequest(req);
-
-                } catch (ApiException e) {
-                    Log.e(Constants.LOGTAG,
-                            "API Error, could not send opt out request", e);
-                }
             }
         });
     }

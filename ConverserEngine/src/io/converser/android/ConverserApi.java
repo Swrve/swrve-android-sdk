@@ -30,7 +30,6 @@ import io.converser.android.model.ConversationAtom;
 import io.converser.android.model.ConversationDetail;
 import io.converser.android.model.ConversationReply;
 import io.converser.android.model.Conversations;
-import io.converser.android.model.OptInOutRequest;
 import io.converser.android.model.SubscribeRequest;
 
 /**
@@ -152,64 +151,6 @@ class ConverserApi {
         }
 
         return null;
-    }
-
-    public String sendOptInOutRequest(OptInOutRequest request) throws ApiException {
-        HttpURLConnection connection = null;
-        JsonObject jsonPostData = new JsonObject();
-        try {
-            URL url = new URL(baseUrl + "/optout");
-
-            boolean choice = request.getChoice();
-
-            connection = buildConnection(url, true);
-            // WARN: it is very important that the above build connection sets
-            // includes the device tokens
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-
-            jsonPostData.addProperty("all", choice);
-
-            if (BuildConfig.DEBUG) {
-                Log.d(Constants.LOGTAG, "Sending Json -> " + jsonPostData);
-            }
-
-            OutputStream os = connection.getOutputStream();
-            os.write(jsonPostData.toString().getBytes("UTF-8"));
-            os.flush();
-            os.close();
-
-            InputStream in = connection.getInputStream();
-            if (connection.getResponseCode() >= 200 && connection.getResponseCode() <= 299) {
-                String responseData = StreamHelper.convertStreamToString(in).trim();
-
-                if (BuildConfig.DEBUG) {
-                    Log.d(Constants.LOGTAG, "Received <-" + responseData + "->");
-                }
-                return responseData;
-            } else {
-                throw new ApiException(connection);
-            }
-
-        } catch (MalformedURLException e) {
-            Log.e(Constants.LOGTAG, "Error talking to the api", e);
-        } catch (IOException e) {
-            if (connection != null) {
-                try {
-                    Log.e(Constants.LOGTAG, connection.getResponseCode() + ":" + connection.getResponseMessage());
-                    throw new ApiException(connection.getResponseCode(), connection.getResponseMessage());
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            } else {
-                Log.e(Constants.LOGTAG, "Error talking to the api", e);
-                throw new ApiException(e);
-            }
-        }
-
-        return null;
-
     }
 
     public Conversations getConversations() throws ApiException {
