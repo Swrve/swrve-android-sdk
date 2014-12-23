@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.converser.android"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="8" />
+
+    <application>
+        <activity
+            android:name=".ui.ConversationActivity"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.Converser"></activity>
+        <activity
+            android:name=".ui.FeedbackActivity"
+            android:theme="@style/Theme.Converser"></activity>
+        <activity
+            android:name="io.converser.android.ui.ConversationListActivity"
+            android:theme="@style/Theme.Converser"></activity>
+    </application>
+
+</manifest>

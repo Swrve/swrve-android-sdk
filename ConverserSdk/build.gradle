@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion '21.1.2'
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 21
+    }
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            res.srcDirs = ['res']
+        }
+    }
+    lintOptions {
+        abortOnError false
+    }
+    productFlavors {
+    }
+}
+
+repositories {
+    maven { url 'http://android-maven.converser.io'}
+}
+
+dependencies {
+    compile('io.converser.android:converser-engine:1.7.0')
+    compile 'com.android.support:support-v4:21.0.3'
+    compile fileTree(dir: 'libs', include: '*.jar')
+}

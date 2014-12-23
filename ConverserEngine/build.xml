@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="ConverserEngine" default="help">
+
+    <property file="local.properties" />
+
+    <property file="ant.properties" />
+
+    <loadproperties srcFile="project.properties" />
+
+    <!-- quick check on sdk.dir -->
+    <!-- NOTE: Sdk dir is the android sdk. NOT the converser SDK -->
+
+    <fail
+        message="sdk.dir is missing. Make sure to generate local.properties using &apos;android update project&apos; or to inject it through an env var"
+        unless="sdk.dir" />
+
+    <import file="custom_rules.xml" optional="true" />
+
+    <import file="${sdk.dir}/tools/ant/build.xml" />
+
+    <target name="jar" depends="release">
+        <jar basedir="bin/classes" destfile="${ant.project.name}.jar" excludes="**/engine/R*.class"
+            includes="**/*.class">
+            <zipfileset includes="**/*.java **/*.class" src="libs/tape-1.1.0.jar" />
+
+            <zipfileset includes="**/*.java **/*.class" src="libs/ciogson-2.2.jar" />
+        </jar>
+
+    </target>
+
+</project>

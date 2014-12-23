@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.BaseConverser" parent="@android:style/Theme"></style>
+
+    <style name="Theme.Converser" parent="@style/Theme.BaseConverser">
+
+        <item name="android:windowBackground">@drawable/cio__layer_0_background</item>
+
+
+        <item name="conversationControlTrayStyle">@style/cio__button_tray</item>
+        <item name="conversationControlTrayTopMargin">5dp</item>
+
+        <item name="conversationControlButtonStyle">@style/cio__control_button</item>
+
+        <item name="conversationControlFirstButtonStyle">@style/cio__first_button</item>
+        <item name="conversationControlSecondButtonStyle">@style/cio__second_button</item>
+        <item name="conversationControlThirdButtonStyle">@style/cio__third_button</item>
+
+        <item name="conversationContentStyle">@style/cio__conversation_content_box</item>
+        <item name="conversationContentDescriptionStyle">@style/cio__description_item</item>
+
+        <item name="conversationInputTextBoxDefaultStyle">@style/cio__edit_box</item>
+
+        <item name="conversationTextContentDefaultStyle">@style/cio__content_textview</item>
+        <item name="conversationTextContentDefaultBoldStyle">@style/cio__content_bold_textview
+        </item>
+
+
+        <item name="conversationTalkbackOperatorStyle">@style/cio__talkback_style_op</item>
+        <item name="conversationTalkbackSubscriberStyle">@style/cio__talkback_style_sub</item>
+        <item name="conversationTalkbackTimeStampStyle">@style/cio__talkback_timestamp</item>
+
+        <item name="conversationTalkbackOperatorMarginLeft">@dimen/cio__talkbackOperatorMarginLeft
+        </item>
+        <item name="conversationTalkbackOperatorMarginRight">
+            @dimen/cio__talkbackOperatorMarginRight
+        </item>
+        <item name="conversationTalkbackOperatorMarginTop">@dimen/cio__talkbackOperatorMarginTop
+        </item>
+
+        <item name="conversationTalkbackSubscriberMarginLeft">
+            @dimen/cio__talkbackSubscriberMarginLeft
+        </item>
+        <item name="conversationTalkbackSubscriberMarginRight">
+            @dimen/cio__talkbackSubscriberMarginRight
+        </item>
+        <item name="conversationTalkbackSubscriberMarginTop">
+            @dimen/cio__talkbackSubscriberMarginTop
+        </item>
+
+        <item name="controlLayoutMargin">10dp</item>
+
+        <item name="conversationListViewStyle">@style/cio__inbox_list</item>
+        <item name="conversationListRowStyle">@style/cio__inbox_row</item>
+
+        <item name="conversationListDecorIcon">@drawable/converser_icon</item>
+        <item name="conversationListRowHeaderStyle">@style/cio__inbox_row_header</item>
+        <item name="conversationListRowDateStyle">@style/cio__inbox_row_date</item>
+
+        <item name="conversationListHelpTextStyle">@style/cio__list_help_text</item>
+
+        <item name="conversationInputMultiValueItemStyle">@style/cio__mv_item</item>
+
+        <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item
+        </item>
+    </style>
+
+    <style name="Theme.Converser.NoTitleBar">
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+</resources>

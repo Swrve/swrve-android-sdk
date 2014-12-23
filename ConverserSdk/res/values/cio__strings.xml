@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="cio__feedBackTitle"><h1>How do you feel?</h1></string>
+    <string name="cio__feedBackMessage">We\'re looking for feedback on this app and what you think of it. Please let us know.</string>
+    <string name="cio__feedBackTextPrompt">Would you like to add an extra comment?</string>
+    <string name="cio__feedbackTextHint">Enter your comments here</string>
+    <string name="cio__buttonLabelDone">Done</string>
+    <string name="cio__listHelpText">Tap and hold a conversation for more options</string>
+    <string name="cio__error_retrieving_data">Error retrieving data.</string>
+    <string name="cio__no_conversations">No conversations at this time</string>
+    <string name="cio__npNotLikely">Not Likely</string>
+    <string name="cio__npInBetween">Maybe</string>
+    <string name="cio__npLikely">Likely</string>
+    <string name="cio__acc_message_icon">message icon</string>
+    <string name="cio__acc_level_0">level 0</string>
+    <string name="cio__acc_level_1">level 1</string>
+    <string name="cio__acc_level_2">level 2</string>
+    <string name="cio__acc_level_3">level 3</string>
+    <string name="cio__acc_level_4">level 4</string>
+    <string name="cio__acc_level_5">level 5</string>
+    <string name="cio__acc_level_6">level 6</string>
+    <string name="cio__acc_level_7">level 7</string>
+    <string name="cio__acc_level_8">level 8</string>
+    <string name="cio__acc_level_9">level 9</string>
+    <string name="cio__acc_level_10">level 10</string>
+    <string name="cio__btn_ok">OK</string>
+    <string name="cio__refreshing">Refreshing</string>
+    <string name="cio__inbox">Inbox</string>
+    <string name="cio__weekend_warning">Please choose a day between Monday to Friday</string>
+    <string name="cio__is_image_rounded">true</string>
+
+</resources>

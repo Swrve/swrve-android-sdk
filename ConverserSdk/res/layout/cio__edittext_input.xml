@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.converser.android.ui.EditTextControl xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/cio__editTextDesc"
+        style="?conversationContentDescriptionStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:gravity="left" />
+
+    <EditText
+        android:id="@+id/cio__editText"
+        style="?conversationInputTextBoxDefaultStyle"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text" />
+
+</io.converser.android.ui.EditTextControl>
