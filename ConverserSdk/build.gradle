@@ -22,12 +22,8 @@ android {
     }
 }
 
-repositories {
-    maven { url 'http://android-maven.converser.io'}
-}
-
 dependencies {
-    compile('io.converser.android:converser-engine:1.7.0')
+    compile project(':ConverserEngine')
     compile 'com.android.support:support-v4:21.0.3'
     compile fileTree(dir: 'libs', include: '*.jar')
 }
