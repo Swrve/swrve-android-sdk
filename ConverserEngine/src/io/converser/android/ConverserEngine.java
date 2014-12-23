@@ -17,10 +17,8 @@ import io.converser.android.model.ConversationItem;
 import io.converser.android.model.ConversationReply;
 import io.converser.android.model.Conversations;
 import io.converser.android.model.OptInOutRequest;
-import io.converser.android.model.Qualifications;
 import io.converser.android.model.SubscribeRequest;
 import io.converser.android.model.SubscribeRequest.Device;
-import io.converser.android.model.UpdateQualificationRequest;
 
 public class ConverserEngine {
     private static ConverserContext myContext = new ConverserContext();
@@ -289,95 +287,6 @@ public class ConverserEngine {
                 }
 
             }
-        });
-    }
-
-    /**
-     * Update qualifications by adding and removing via updateRequest object.
-     *
-     * @param updateRequest
-     * @param callback
-     */
-    public void updateQualifications(final UpdateQualificationRequest updateRequest, final ConverserEngine.Callback<Qualifications> callback) {
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-                    Qualifications quals = api.sendData("/qualifications", updateRequest, Qualifications.class);
-
-                    //If we got this far without an exception, we can consider it a success
-                    MAINHANDLER.post(new CallbackSuccessRunner<Qualifications>(callback, quals));
-                } catch (ApiException apiex) {
-                    MAINHANDLER.post(new CallbackErrorRunner(callback, apiex.getErrorText()));
-                }
-            }
-        });
-    }
-
-    public void getQualifications(final ConverserEngine.Callback<Qualifications> callback) {
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-                    Qualifications quals = api.getData("/qualifications", null, Qualifications.class);
-
-                    //If we got this far without an exception, we can consider it a success
-                    MAINHANDLER.post(new CallbackSuccessRunner<Qualifications>(callback, quals));
-                } catch (ApiException apiex) {
-                    MAINHANDLER.post(new CallbackErrorRunner(callback, apiex.getErrorText()));
-                }
-            }
-        });
-    }
-
-    /**
-     * Send an arbitary data block to converser. The server must know what to do with it.
-     * the object will be serialized before transmission
-     * <p/>
-     * If you dont want anything back, use Void  for K
-     *
-     * @param data
-     * @param callback
-     * @param classOfK , to help with serialization, need a class of k
-     */
-    public <K extends Object> void sendData(final String path, final Object data, final ConverserEngine.Callback<K> callback, final Class<K> classOfK) {
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-
-                    K response = api.sendData(path, data, classOfK);
-
-                	/* no null == fail, as maybe there's no response expected */
-                    MAINHANDLER.post(new CallbackSuccessRunner<K>(callback, response));
-                } catch (ApiException apiex) {
-                    MAINHANDLER.post(new CallbackErrorRunner(callback, apiex.getErrorText()));
-                }
-            }
-        });
-    }
-
-    public <K extends Object> void getData(final String path, final String optQueryString, final ConverserEngine.Callback<K> callback, final Class<K> classOfK) {
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-
-                    K response = api.getData(path, optQueryString, classOfK);
-                    MAINHANDLER.post(new CallbackSuccessRunner<K>(callback, response));
-                } catch (ApiException apiex) {
-                    MAINHANDLER.post(new CallbackErrorRunner(callback, apiex.getErrorText()));
-                }
-            }
-
         });
     }
 
