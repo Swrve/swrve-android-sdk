@@ -162,39 +162,10 @@ public class ConverserEngine {
 
                         Iterator<ConversationItem> iterator = convs.getItems().iterator();
 
-                        while (iterator.hasNext()) {
-                            ConversationItem item = iterator.next();
-                            if (item.getStatus().equalsIgnoreCase("expired")) {
-                                try {
-                                    api.deleteFromInbox(item.getRef());
-                                    iterator.remove();
-                                } catch (Exception ex) {
-                                    Log.e(Constants.LOGTAG, "Error deleting item from inbox ", ex);
-                                }
-                            }
-                        }
-
                         MAINHANDLER.post(new CallbackSuccessRunner<Conversations>(callback, convs));
                     } else {
                         MAINHANDLER.post(new CallbackErrorRunner(callback, "Error"));
                     }
-                } catch (ApiException apiex) {
-                    MAINHANDLER.post(new CallbackErrorRunner(callback, apiex.getErrorText()));
-                }
-
-            }
-        });
-    }
-
-    public void deleteConversationFromInbox(final String inboxref, final ConverserEngine.Callback<Boolean> callback) {
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-                    boolean res = api.deleteFromInbox(inboxref);
-                    MAINHANDLER.post(new CallbackSuccessRunner<Boolean>(callback, res));
                 } catch (ApiException apiex) {
                     MAINHANDLER.post(new CallbackErrorRunner(callback, apiex.getErrorText()));
                 }
@@ -303,7 +274,6 @@ public class ConverserEngine {
      * Runs a callback via Runnable interface. Useful in conjunction with a handler to make the callback happen
      * on a different thread
      *
-     * @param <T>
      * @author Jason Connery
      */
     private static class CallbackErrorRunner implements Runnable {
