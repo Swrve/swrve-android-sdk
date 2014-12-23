@@ -8,8 +8,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.squareup.tape.FileObjectQueue;
-
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,7 +16,6 @@ import io.converser.android.model.ConversationDetail;
 import io.converser.android.model.ConversationItem;
 import io.converser.android.model.ConversationReply;
 import io.converser.android.model.Conversations;
-import io.converser.android.model.FeedbackRequest;
 import io.converser.android.model.OptInOutRequest;
 import io.converser.android.model.Qualifications;
 import io.converser.android.model.SubscribeRequest;
@@ -51,16 +48,11 @@ public class ConverserEngine {
 
     public static void init(Context context, String apiKey) {
         myContext.apiKey = apiKey;
-
-        ConverserQueueFactory.init(context);
     }
 
     public static void init(Context context, String apiKey, String endpoint) {
         myContext.apiKey = apiKey;
         myContext.apiEndpoint = endpoint;
-
-
-        ConverserQueueFactory.init(context);
     }
 
     /**
@@ -190,39 +182,6 @@ public class ConverserEngine {
                     Log.e(Constants.LOGTAG,
                             "API Error, could not send opt out request", e);
                 }
-            }
-        });
-    }
-
-    /**
-     * Send Feedback. Also, see the queueFeedback method for a more reliable alternative
-     *
-     * @param reaction
-     * @param area
-     * @param text
-     * @param callback
-     */
-    public void sendFeedback(int reaction, String area, String text, final ConverserEngine.Callback<Boolean> callback) {
-
-        final FeedbackRequest fr = new FeedbackRequest(reaction, area, text);
-
-        operationsService.execute(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-                    boolean res = api.sendFeedback(fr);
-
-                    if (res) {
-                        MAINHANDLER.post(new CallbackSuccessRunner<Boolean>(callback, res));
-                    } else {
-                        MAINHANDLER.post(new CallbackErrorRunner(callback, "Error"));
-                    }
-                } catch (ApiException apiex) {
-                    MAINHANDLER.post(new CallbackErrorRunner(callback, apiex.getErrorText()));
-                }
-
             }
         });
     }
@@ -420,18 +379,6 @@ public class ConverserEngine {
             }
 
         });
-    }
-
-    public void queueFeedback(Context context, int reaction, String area, String comment) {
-        Queueable x = new Queueable(myContext.apiEndpoint, myContext.apiKey, this, myContext.deviceId);
-        x.setFeedbackRequest(new FeedbackRequest(reaction, area, comment));
-
-        FileObjectQueue<Queueable> queue = ConverserQueueFactory.getQueue(context);
-
-        if (queue != null) {
-            queue.add(x);
-        }
-
     }
 
     /**
