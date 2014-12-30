@@ -48,7 +48,8 @@ android.libraryVariants.all { variant ->
 }
 
 dependencies {
-    compile project(':google-play-services_lib')
     compile project(':SwrveCommonSDK')
+    compile project(':ConverserSdk')
+    compile 'com.google.android.gms:play-services:6.+'
     compile 'com.android.support:support-v4:21.0.3'
 }
