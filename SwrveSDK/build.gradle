@@ -45,6 +45,5 @@ android.libraryVariants.all { variant ->
 
 dependencies {
     compile project(':SwrveCommonSDK')
-    compile project(':ConverserSdk')
     compile 'com.android.support:support-v4:21.0.3'
 }

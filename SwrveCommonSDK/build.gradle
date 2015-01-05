@@ -34,5 +34,6 @@ android {
 }
 
 dependencies {
+    compile project(':ConverserSdk')
     compile 'com.android.support:support-v4:21.0.3'
 }
