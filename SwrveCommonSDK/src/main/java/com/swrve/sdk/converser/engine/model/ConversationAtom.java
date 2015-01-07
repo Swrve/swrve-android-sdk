@@ -32,11 +32,13 @@ public abstract class ConversationAtom {
 
     protected String tag;
     protected String type;
+    protected String target;
 
-    public static ConversationAtom create(String tag, String type) {
+    public static ConversationAtom create(String tag, String type, String target) {
         BareConversationAtom bca = new BareConversationAtom();
         bca.tag = tag;
         bca.type = type;
+        bca.target = target;
 
         return bca;
     }
@@ -44,6 +46,11 @@ public abstract class ConversationAtom {
     public String getTag() {
         return tag;
     }
+
+    public String getTarget() {
+        return target;
+    }
+
 
     public String getType() {
         return type;
