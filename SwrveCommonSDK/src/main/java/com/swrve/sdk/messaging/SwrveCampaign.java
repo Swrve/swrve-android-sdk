@@ -44,6 +44,8 @@ public class SwrveCampaign {
     protected Date endDate;
     // List of messages contained in the campaign
     protected List<SwrveMessage> messages;
+    // List of conversations contained in the campaign
+    protected List<SwrveConversation> conversations;
     // List of triggers for the campaign
     protected Set<String> triggers;
     // Indicates if the campaign serves messages randomly or using round robin
@@ -67,6 +69,7 @@ public class SwrveCampaign {
 
     public SwrveCampaign() {
         this.messages = new ArrayList<SwrveMessage>();
+        this.conversations = new ArrayList<SwrveConversation>();
         this.triggers = new HashSet<String>();
     }
 
@@ -125,7 +128,15 @@ public class SwrveCampaign {
                 addMessage(message);
             }
         }
+
+        JSONArray jsonConversations  = campaignData.getJSONArray("conversations");
+        for (int k = 0; k < jsonConversations.length(); k++) {
+            JSONObject conversationData = jsonConversations.getJSONObject(k);
+            SwrveConversation conversation = createConversation(controller, this, conversationData);
+            addConversation(conversation);
+        }
     }
+
 
     /**
      * @return the campaign id.
@@ -156,6 +167,22 @@ public class SwrveCampaign {
     protected void addMessage(SwrveMessage message) {
         this.messages.add(message);
     }
+
+    /**
+     * @return the campaign conversations.
+     */
+    public List<SwrveConversation> getConversations() {
+        return conversations;
+    }
+
+    protected void setConversations(List<SwrveConversation> conversations) {
+        this.conversations = conversations;
+    }
+
+    protected void addConversation(SwrveConversation conversation) {
+        this.conversations.add(conversation);
+    }
+
 
     /**
      * @return the next message to show.
@@ -242,8 +269,20 @@ public class SwrveCampaign {
      * @return true if the campaign has this event as a trigger
      */
     public boolean hasMessageForEvent(String eventName) {
+        // TODO: STM QUESTION. So does this mean that only triggers which are lowercase can trigger be counted as events?
         String lowerCaseEvent = eventName.toLowerCase(Locale.US);
         return triggers != null && triggers.contains(lowerCaseEvent);
+    }
+
+    /**
+     * Check if the campaign contains messages for the given event.
+     *
+     * @param eventName
+     * @return true if the campaign has this event as a trigger
+     */
+    public boolean hasConversationForEvent(String eventName) {
+        // TODO: STM since triggers are shared across conversations and messages, this is a proxy method to hasMessagesForEvent. Is this OK?
+        return hasMessageForEvent(eventName);
     }
 
     /**
@@ -313,6 +352,62 @@ public class SwrveCampaign {
         Log.i(LOG_TAG, event + " matches a trigger in " + id);
 
         return getNextMessage(messagesCount, campaignReasons);
+    }
+
+    /**
+     * Search for a message related to the given trigger event at the given
+     * time. This function will return null if too many messages were dismissed,
+     * the campaign start is in the future, the campaign end is in the past or
+     * the given event is not contained in the trigger set.
+     *
+     * @param event           trigger event
+     * @param now             device time
+     * @param campaignReasons will contain the reason the campaign returned no message
+     * @return SwrveMessage message setup to the given trigger or null
+     * otherwise.
+     */
+    public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
+        int conversationsCount = conversations.size();
+        // TODO: STM This method must match the getMessageForEvent
+        if (!hasConversationForEvent(event)) {
+            Log.i(LOG_TAG, "There is no trigger in " + id + " that matches " + event);
+            return null;
+        }
+
+        if (conversationsCount == 0) {
+            logAndAddReason(campaignReasons, "No conversations in campaign " + id);
+            return null;
+        }
+
+        if (startDate.after(now)) {
+            logAndAddReason(campaignReasons, "Campaign " + id + " has not started yet");
+            return null;
+        }
+
+        if (endDate.before(now)) {
+            logAndAddReason(campaignReasons, "Campaign " + id + " has finished");
+            return null;
+        }
+
+        if (impressions >= maxImpressions) {
+            logAndAddReason(campaignReasons, "{Campaign throttle limit} Campaign " + id + " has been shown " + maxImpressions + " times already");
+            return null;
+        }
+
+        // Ignore delay after launch throttle limit for auto show messages
+        if (!event.equalsIgnoreCase(talkController.getAutoShowEventTrigger()) && isTooSoonToShowMessageAfterLaunch(now)) {
+            logAndAddReason(campaignReasons, "{Campaign throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
+            return null;
+        }
+
+        if (isTooSoonToShowMessageAfterDelay(now)) {
+            logAndAddReason(campaignReasons, "{Campaign throttle limit} Too soon after last message. Wait until " + timestampFormat.format(showMessagesAfterDelay));
+            return null;
+        }
+
+        Log.i(LOG_TAG, event + " matches a trigger in " + id);
+
+        return getNextConversation(conversationsCount, campaignReasons);
     }
 
     protected boolean isTooSoonToShowMessageAfterLaunch(Date now) {
@@ -391,6 +486,33 @@ public class SwrveCampaign {
 
     protected SwrveMessage createMessage(SwrveBase<?, ?> controller, SwrveCampaign swrveCampaign, JSONObject messageData) throws JSONException {
         return new SwrveMessage(controller, swrveCampaign, messageData);
+    }
+
+    protected SwrveConversation getNextConversation(int conversationsCount, Map<Integer, String> campaignReasons) {
+        if (randomOrder) {
+            List<SwrveConversation> randomConversations = new ArrayList<SwrveConversation>(conversations);
+            Collections.shuffle(randomConversations);
+            Iterator<SwrveConversation> itRandom = randomConversations.iterator();
+            while (itRandom.hasNext()) {
+                SwrveConversation msg = itRandom.next();
+                if (msg.isDownloaded()) {
+                    return msg;
+                }
+            }
+        } else if (next < conversationsCount) {
+            SwrveConversation msg = conversations.get(next);
+            if (msg.isDownloaded()) {
+                return conversations.get(next);
+            }
+        }
+
+        logAndAddReason(campaignReasons, "Campaign " + this.getId() + " hasn't finished downloading.");
+        return null;
+    }
+
+
+    protected SwrveConversation createConversation(SwrveBase<?, ?> controller, SwrveCampaign swrveCampaign, JSONObject conversationData) throws JSONException {
+        return new SwrveConversation(controller, swrveCampaign, conversationData);
     }
 
     protected void assignCampaignTriggers(SwrveCampaign campaign, JSONObject campaignData) throws JSONException {
