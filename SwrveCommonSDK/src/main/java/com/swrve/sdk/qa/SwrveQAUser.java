@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.messaging.SwrveConversation;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -125,6 +126,11 @@ public class SwrveQAUser {
         } catch (Exception exp) {
             Log.e(LOG_TAG, "QA request talk session failed", exp);
         }
+    }
+
+
+    public void trigger(String event, SwrveConversation conversationShown, Map<Integer, String> campaignReasons, Map<Integer, Integer> campaignConversations) {
+        // TODO: STM This method stubbed out for now until I understand the purpose of triggereing QA users and whether its relevant for conversations
     }
 
     public void trigger(String event, SwrveMessage messageShown, Map<Integer, String> campaignReasons, Map<Integer, Integer> campaignMessages) {

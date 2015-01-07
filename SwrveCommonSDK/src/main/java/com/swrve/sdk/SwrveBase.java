@@ -16,6 +16,7 @@ import android.view.WindowManager;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
+import com.swrve.sdk.messaging.ISwrveConversationListener;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -23,6 +24,7 @@ import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveConversation;
 import com.swrve.sdk.messaging.SwrveEventListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
@@ -94,6 +96,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         bindToContext(context);
         afterBind();
         showPreviousMessage();
+        showPreviousConversation();
         return (T) this;
     }
 
@@ -230,8 +233,27 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     });
                 }
 
+                // Add custom conversation listener
+                if (conversationListener == null) {
+                    setConversationListener(new ISwrveConversationListener() {
+                        public void onMessage(final SwrveConversation conversation, boolean firstTime) {
+                            if (SwrveBase.this.activityContext != null) {
+                                final Activity activity = SwrveBase.this.activityContext.get();
+                                if (activity == null) {
+                                    Log.e(LOG_TAG, "Can't display a conversation with a non-Activity context");
+                                    return;
+                                }
+                                // Run code on the UI thread
+                                // TODO: STM This is the portion of code which is responsible for calling the ConverserSDK with a particular conversation. This guy is the main entry point into the UI of the ConverserSDK
+                                activity.runOnUiThread(new DisplayConversationRunnable(SwrveBase.this, activity, conversation, firstTime));
+                            }
+                        }
+                    });
+                }
+
                 // Show any previous message after rotation
                 showPreviousMessage();
+                showPreviousConversation();
             }
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
@@ -809,6 +831,123 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @SuppressLint("UseSparseArrays")
+    protected SwrveConversation _getConversationForEvent(String event, SwrveOrientation orientation){
+        SwrveConversation result = null;
+        SwrveCampaign campaign = null;
+
+        Date now = getNow();
+        Map<Integer, String> campaignReasons = null;
+        Map<Integer, Integer> campaignMessages = null;
+
+        if (campaigns != null) {
+            //TODO: STM this entire section is verbose and duplicated from _getMessageForEvent. Could be trimmed down
+            if (campaigns.size() == 0) {
+                noMessagesWereShown(event, "No campaigns available");
+                return null;
+            }
+
+            // TODO: STM, do we keep the autoshow 'too soon' check for conversations
+            // Ignore delay after launch throttle limit for auto show messages
+//            if (!event.equalsIgnoreCase(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(now)) {
+//                noMessagesWereShown(event, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
+//                return null;
+//            }
+
+            if (isTooSoonToShowMessageAfterDelay(now)) {
+                noMessagesWereShown(event, "{App throttle limit} Too soon after last message. Wait until " + timestampFormat.format(showMessagesAfterDelay));
+                return null;
+            }
+
+            if (hasShowTooManyMessagesAlready()) {
+                noMessagesWereShown(event, "{App Throttle limit} Too many messages shown");
+                return null;
+            }
+
+            if (qaUser != null) {
+                campaignReasons = new HashMap<Integer, String>();
+                campaignMessages = new HashMap<Integer, Integer>();
+            }
+
+            synchronized (campaigns) {
+                List<SwrveConversation> availableConversations = new ArrayList<SwrveConversation>();
+                // Select messages with higher priority
+                int minPriority = Integer.MAX_VALUE;
+                List<SwrveConversation> candidateConversations = new ArrayList<SwrveConversation>();
+                Iterator<SwrveCampaign> itCampaign = campaigns.iterator();
+                while (itCampaign.hasNext()) {
+                    SwrveCampaign nextCampaign = itCampaign.next();
+                    SwrveConversation nextConversation = nextCampaign.getConversationForEvent(event, now, campaignReasons);
+                    if (nextConversation != null) {
+                        // Add to list of returned messages
+                        availableConversations.add(nextConversation);
+                        // Check if it is a candidate to be shown
+                        if (nextConversation.getPriority() <= minPriority) {
+                            minPriority = nextConversation.getPriority();
+                            if (nextConversation.getPriority() < minPriority) {
+                                candidateConversations.clear();
+                            }
+                            candidateConversations.add(nextConversation);
+                        }
+                    }
+                }
+
+                // Select randomly from the highest messages
+                Collections.shuffle(candidateConversations);
+                Iterator<SwrveConversation> itCandidateConversation = candidateConversations.iterator();
+                while (campaign == null && itCandidateConversation.hasNext()) {
+                    SwrveConversation candidateConversation = itCandidateConversation.next();
+                    // Check that the conversation supports the current orientation
+                    // TODO STM: Since Conversations support both orientations, maybe it would be better to remove this?
+                    if (candidateConversation.supportsOrientation(orientation)) {
+                        result = candidateConversation;
+                        campaign = candidateConversation.getCampaign();
+                    } else {
+                        if (qaUser != null) {
+                            int campaignId = candidateConversation.getCampaign().getId();
+                            campaignMessages.put(campaignId, candidateConversation.getId());
+                            campaignReasons.put(campaignId, "Conversation didn't support the given orientation: " + orientation);
+                        }
+                    }
+                }
+
+                if (qaUser != null && campaign != null && result != null) {
+                    // A message was chosen, set the reason for the others
+                    Iterator<SwrveConversation> itOtherConversation = availableConversations.iterator();
+                    while (itOtherConversation.hasNext()) {
+                        SwrveConversation otherMessage = itOtherConversation.next();
+                        if (otherMessage != result) {
+                            int otherCampaignId = otherMessage.getCampaign().getId();
+                            if (!campaignMessages.containsKey(otherCampaignId)) {
+                                campaignMessages.put(otherCampaignId, otherMessage.getId());
+                                campaignReasons.put(otherCampaignId, "Campaign " + campaign.getId() + " was selected for display ahead of this campaign");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // If QA enabled, send message selection information
+        if (qaUser != null) {
+            qaUser.trigger(event, result, campaignReasons, campaignMessages);
+        }
+
+        if (result == null) {
+            Log.w(LOG_TAG, "Not showing message: no candidate messages for " + event);
+        } else {
+            // Notify message has been returned
+            Map<String, String> payload = new HashMap<String, String>();
+            payload.put("id", String.valueOf(result.getId()));
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            // TODO: STM Ensure that the namespace Swrve.Conversations.conversation_returned is the correct namespace and everything is OK with that
+            parameters.put("name", "Swrve.Conversations.conversation_returned");
+            queueEvent("event", parameters, payload);
+        }
+
+        return result;
+    }
+
+    @SuppressLint("UseSparseArrays")
     protected SwrveMessage _getMessageForEvent(String event, SwrveOrientation orientation) {
         SwrveMessage result = null;
         SwrveCampaign campaign = null;
@@ -998,11 +1137,21 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _setMessageListener(ISwrveMessageListener messageListener) {
         this.messageListener = messageListener;
         if (messageListener != null) {
-            eventListener = new SwrveEventListener(this, messageListener);
+            eventListener = new SwrveEventListener(this, messageListener, conversationListener);
         } else {
             eventListener = null;
         }
     }
+
+    protected void _setConversationListener(ISwrveConversationListener listener) {
+        this.conversationListener = listener;
+        if (conversationListener != null) {
+            eventListener = new SwrveEventListener(this, messageListener, conversationListener);
+        } else {
+            eventListener = null;
+        }
+    }
+
 
     protected void _setResourcesListener(ISwrveResourcesListener resourcesListener) {
         this.resourcesListener = resourcesListener;
@@ -1296,6 +1445,24 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    public SwrveConversation getConversationForEvent(String event) {
+        try {
+            return getConversationForEvent(event, SwrveOrientation.Both);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    public SwrveConversation getConversationForEvent(String event, SwrveOrientation orientation) {
+        try {
+            return _getConversationForEvent(event, orientation);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
     public void buttonWasPressedByUser(SwrveButton button) {
         try {
             _buttonWasPressedByUser(button);
@@ -1337,6 +1504,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
+
+    public void setConversationListener(ISwrveConversationListener listener) {
+        try {
+            _setConversationListener(listener);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
 
     public void setResourcesListener(ISwrveResourcesListener resourcesListener) {
         try {
