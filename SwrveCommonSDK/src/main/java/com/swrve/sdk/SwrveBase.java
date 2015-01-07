@@ -24,7 +24,7 @@ import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaign;
-import com.swrve.sdk.messaging.SwrveConversation;
+import com.swrve.sdk.converser.SwrveConversation;
 import com.swrve.sdk.messaging.SwrveEventListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
