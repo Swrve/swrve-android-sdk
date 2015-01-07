@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -12,6 +13,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -21,11 +23,13 @@ import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
+import com.swrve.sdk.messaging.ISwrveConversationListener;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveConversation;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.view.SwrveDialog;
@@ -74,12 +78,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.converser.android.ui.ConversationActivity;
+
 /**
  * Internal base class implementation of the Swrve SDK.
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "3.3.1-converser-beta";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
@@ -116,6 +121,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
     protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
     protected static final String LOG_TAG = "SwrveSDK";
+    protected static String version = "3.3.1-converser-beta";
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 150;
     protected static long DEFAULT_MAX_SHOWS = 99999;
     protected static int DEFAULT_MIN_DELAY = 55;
@@ -137,6 +143,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected C config;
     protected ISwrveEventListener eventListener;
     protected ISwrveMessageListener messageListener;
+    protected ISwrveConversationListener conversationListener;
     protected ISwrveInstallButtonListener installButtonListener;
     protected ISwrveCustomButtonListener customButtonListener;
     protected ISwrveDialogListener dialogListener;
@@ -213,6 +220,22 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
+    protected void showPreviousConversation() {
+        if (config.isTalkEnabled()) {
+            Log.i(LOG_TAG, "Talk is enabled but we're not showing any previous conversations");
+            // TODO: STM Does this apply to conversations? given that rotation is preserved and we may not want to resume conversations after long periods of inactivity
+                        // Re-launch message that was displayed before
+            //            if (conversationDisplayed != null && conversationListener != null) {
+            //                long currentTime = getNow().getTime();
+            //                if (currentTime < (lastConversationDestroyed + MESSAGE_REAPPEAR_TIMEOUT)) {
+            //                    messageDisplayed.setMessageController((SwrveBase<?, ?>) this);
+            //                    messageListener.onMessage(messageDisplayed, false);
+            //                }
+            //                messageDisplayed = null;
+            //            }
+        }
+    }
+
     protected void queueSessionStart() {
         queueEvent("session_start", null, null);
     }
@@ -262,12 +285,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         try {
             Class c = Class.forName("com.crashlytics.android.Crashlytics");
             if (c != null) {
-                Method m = c.getMethod("setString", new Class[]{ String.class, String.class });
+                Method m = c.getMethod("setString", new Class[]{String.class, String.class});
                 if (m != null) {
                     m.invoke(null, "Swrve_version", version);
                 }
             }
-        } catch(Exception exp) {
+        } catch (Exception exp) {
             Log.i(LOG_TAG, "Could not set Crashlytics metadata");
         }
     }
@@ -605,9 +628,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             return;
         }
 
+        // TODO: STM In the event that there are messages and conversations for an event, how should the SDK behave.
         for (final SwrveCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-            if (campaign.hasMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+            if (campaign.hasConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
@@ -616,10 +640,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                                 @Override
                                 public void run() {
                                     try {
-                                        if (messageListener != null) {
-                                            SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
-                                            if (message != null && message.supportsOrientation(getDeviceOrientation())) {
-                                                messageListener.onMessage(message, true);
+                                        if (conversationListener != null) {
+                                            SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+                                            if (conversation != null && conversation.supportsOrientation(getDeviceOrientation())) {
+                                                conversationListener.onMessage(conversation, true);
+                                                // STM TODO: This piece for disable autoShowMessages doesn't make sense from the Conversations perspective. Check to see if it makes sense to keep this.
                                                 autoShowMessagesEnabled = false;
                                             }
                                         }
@@ -631,8 +656,33 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         }
                     }
                 }
-                break;
             }
+//            if (campaign.hasMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+//                synchronized (this) {
+//                    if (autoShowMessagesEnabled && activityContext != null) {
+//                        Activity activity = activityContext.get();
+//                        if (activity != null) {
+//                            activity.runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    try {
+//                                        if (messageListener != null) {
+//                                            SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+//                                            if (message != null && message.supportsOrientation(getDeviceOrientation())) {
+//                                                messageListener.onMessage(message, true);
+//                                                autoShowMessagesEnabled = false;
+//                                            }
+//                                        }
+//                                    } catch (Exception exp) {
+//                                        Log.e(LOG_TAG, "Could not launch campaign automatically");
+//                                    }
+//                                }
+//                            });
+//                        }
+//                    }
+//                }
+//                break;
+//            }
         }
     }
 
@@ -754,7 +804,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             }
 
             // Also serialize the campaign settings
-            JSONObject jsonSettings = (settings == null)? new JSONObject() : settings;
+            JSONObject jsonSettings = (settings == null) ? new JSONObject() : settings;
             boolean saveCampaignSettings = (qaUser == null || !qaUser.isResetDevice());
             for (int i = campaigns.size() - 1; i >= 0; i--) {
                 SwrveCampaign campaign = campaigns.get(i);
@@ -978,7 +1028,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 final Display display = ((WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
                 previousOrientation = display.getRotation();
             }
-        } catch(Exception exp) {
+        } catch (Exception exp) {
             Log.e(LOG_TAG, "Could not obtain device orientation", exp);
         }
     }
@@ -1115,7 +1165,29 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Update campaigns with given JSON
      */
     protected void updateCampaigns(JSONObject campaignJSON, JSONObject campaignSettingsJSON) {
-        loadCampaignsFromJSON(campaignJSON, campaignSettingsJSON);
+        // TODO: STM This is a stub where Shane Moore (me) has put fake data for campaigns which have conversations.
+        JSONObject newCampaign = developmentReplaceCampaignJsonWithStub(campaignJSON);
+        loadCampaignsFromJSON(newCampaign, campaignSettingsJSON);
+    }
+
+    private JSONObject developmentReplaceCampaignJsonWithStub(JSONObject obj) {
+        JSONObject newData = obj;
+        // TODO: STM This method used to stub conversation data into a campaign object. Not quite doing that yet, instead its just totally replacing the campaign object with a custom one
+        try {
+            String conversations_json = "[{\"id\":15430,\"name\":\"Test Swrve Conversation\",\"description\":\"A description given by the user in teh web app to help them identify the purpose or intent of the conversation\",\"title\":\"Title of the conversation read by the mobile device user so they know what the subject of the conversation is\",\"subtitle\":\"same as title but in more detail\",\"rules\":{\"delay_first_message\":0,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":0},\"states\":[{\"name\":\"1420209194152-1Button\",\"title\":\"Random Title\",\"theme\":\"\",\"content\":[{\"value\":\"<div style=\\\"text-align=> center; font-size=> 12pt; text-shadow=> rgb(255, 255, 255) 0px -1px 0px; position=> relative;\\\" class=\\\"editable cke_editable cke_editable_inline cke_contents_ltr cke_focus cke_show_borders\\\" contenteditable=\\\"false\\\" id=\\\"textedit-1420209195768-fragment\\\" tabindex=\\\"0\\\" spellcheck=\\\"false\\\" role=\\\"textbox\\\" aria-label=\\\"Rich Text Editor, textedit-1420209195768-fragment\\\" title=\\\"Rich Text Editor, textedit-1420209195768-fragment\\\" aria-describedby=\\\"cke_40\\\">Text 1</div>\",\"type\":\"html-fragment\",\"tag\":\"1420209195768-fragment\"},{\"value\":\"<div style=\\\"text-align=> center; font-size=> 12pt; text-shadow=> rgb(255, 255, 255) 0px -1px 0px; position=> relative;\\\" class=\\\"editable cke_editable cke_editable_inline cke_contents_ltr cke_focus cke_show_borders\\\" contenteditable=\\\"false\\\" id=\\\"textedit-1420209208540-fragment\\\" tabindex=\\\"0\\\" spellcheck=\\\"false\\\" role=\\\"textbox\\\" aria-label=\\\"Rich Text Editor, textedit-1420209208540-fragment\\\" title=\\\"Rich Text Editor, textedit-1420209208540-fragment\\\" aria-describedby=\\\"cke_75\\\"><h1>Large Text</h1></div>\",\"type\":\"html-fragment\",\"tag\":\"1420209208540-fragment\"},{\"value\":\"https=>//converser-development.s3.amazonaws.com/uploads/images/customer-5d1fe4b7-2859-4198-ba9f-ddc408e74196/4213095f-f4e5-45a2-a057-7d7ff4d74817-try_your_best.gif\",\"type\":\"image\",\"tag\":\"1420209227816-fragment\"},{\"value\":\"https=>//converser-development.s3.amazonaws.com/uploads/images/customer-5d1fe4b7-2859-4198-ba9f-ddc408e74196/85f306a9-14fc-491a-930a-44a6a27b2757-wallsaremelting.jpg\",\"type\":\"image\",\"tag\":\"1420209240661-fragment\"},{\"type\":\"text-input\",\"lines\":1,\"description\":\"Enter you're e-mail here\",\"kbd\":\"email\",\"tag\":\"1420209269750-fragment\"}],\"controls\":[{\"tag\":\"1420209194152-Button\",\"description\":\"Done\",\"target\":\"1420209294907-index\"}]},{\"name\":\"1420209294907-index\",\"title\":\"End Page\",\"theme\":\"\",\"finish_page\":true,\"content\":[{\"tag\":\"1420209294907-hdr\",\"value\":\"<div class=\\\"editable cke_editable cke_editable_inline cke_contents_ltr cke_focus cke_show_borders\\\" style=\\\"text-align=> center; font-family=> 'Helvetica Neue', Helvetica, sans-serif; font-size=> 1.375em; text-shadow=> rgb(255, 255, 255) 0px -1px 0px; position=> relative;\\\" contenteditable=\\\"false\\\" id=\\\"textedit-1420209294907-hdr\\\" tabindex=\\\"0\\\" spellcheck=\\\"false\\\" role=\\\"textbox\\\" aria-label=\\\"Rich Text Editor, textedit-1420209294907-hdr\\\" title=\\\"Rich Text Editor, textedit-1420209294907-hdr\\\" aria-describedby=\\\"cke_124\\\">Let's Finish</div>\",\"type\":\"html-fragment\"},{\"tag\":\"1420209294907-photo2\",\"value\":\"https=>//s3-eu-west-1.amazonaws.com/converser-public-assets/placeholder.gif\",\"type\":\"image\"},{\"tag\":\"1420209294907-msg\",\"value\":\"<div class='editable' style=\\\"text-align=>center; font-family=> 'Helvetica Neue', Helvetica, sans-serif; font-size=> 1em; text-shadow=> 0 -1px 0 #fff\\\">A thank you message to the customer. Click text to edit.</div>\",\"type\":\"html-fragment\"}]}]}]";
+            JSONArray conversations = new JSONArray(conversations_json);
+            JSONArray campaigns = obj.getJSONArray("campaigns");
+            JSONArray newCampaigns = new JSONArray();
+            for (int i = 0; i < campaigns.length(); i++) {
+                JSONObject campaign = campaigns.getJSONObject(i);
+                campaign.put("conversations", conversations);
+                newCampaigns.put(i, campaign);
+            }
+            newData.put("campaigns", newCampaigns);
+        } catch (Exception e) {
+            Log.e(getClass().toString(), "Could not add stubbed conversations json to campaign :: ", e);
+        }
+        return newData;
     }
 
     /**
@@ -1221,6 +1293,29 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             }
         }
     }
+
+    protected class DisplayConversationRunnable implements Runnable {
+        private SwrveBase<?, ?> sdk;
+        private Activity activity;
+        private SwrveConversation conversation;
+        private boolean firstTime;
+
+        public DisplayConversationRunnable(SwrveBase<?, ?> sdk, Activity activity, SwrveConversation conversation, boolean firstTime) {
+            this.sdk = sdk;
+            this.activity = activity;
+            this.conversation = conversation;
+            this.firstTime = firstTime;
+        }
+
+        public void run() {
+            // Show the conversation inside an Activity/Fragment/Dialog
+            Toast.makeText(activity, "Testing the DisplayConversationRunnable", Toast.LENGTH_LONG).show();
+            Intent openAct = new Intent(activity, ConversationActivity.class);
+            openAct.putExtra(ConversationActivity.EXTRA_CONVERSATION_REF, conversation.getId());
+            activity.startActivity(openAct);
+        }
+    }
+
 
     protected class DisplayMessageRunnable implements Runnable {
         private SwrveBase<?, ?> sdk;
