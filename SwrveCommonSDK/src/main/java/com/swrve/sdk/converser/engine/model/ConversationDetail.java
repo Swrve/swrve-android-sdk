@@ -9,6 +9,8 @@ import java.util.ArrayList;
 
 public class ConversationDetail {
 
+
+    private String tag;
     private String name;
     private String title;
     private String subtitle;
@@ -24,6 +26,10 @@ public class ConversationDetail {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean hasName(String tag){
+        return getName().equalsIgnoreCase(tag);
     }
 
     public String getTitle() {
