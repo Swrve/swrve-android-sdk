@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.converser.SwrveConversation;
 
 import org.json.JSONArray;
 import org.json.JSONException;
