@@ -37,6 +37,7 @@ import com.swrve.sdk.converser.engine.model.MultiValueInput;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput;
 import com.swrve.sdk.converser.engine.model.NPSInput;
 import com.swrve.sdk.converser.engine.model.TextInput;
+import com.swrve.sdk.converser.SwrveConversation;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,105 +47,50 @@ import java.util.HashMap;
 
 
 /**
- * (will eventually) display a conversation content, input, and choices as well as handling
+ * (will eventually) display a conversationDetail content, input, and choices as well as handling
  *
  * @author Jason Connery
  */
 public class ConversationFragment extends Fragment implements OnClickListener {
 
     private static final String ARG_CONVERSATION_REF = "io.converser.conversationRef";
+    private static final String LOG_TAG = "ConversationFragment";
 
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
-    private String conversationRef;
-    private ConversationDetail conversation;
 
+    private ConversationDetail conversationDetail;
+    private SwrveConversation swrveConversation;
     private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
 
-    private ConverserEngine converserEngine;
 
-    private ProgressDialog progressDialog;
-
-    public static ConversationFragment create(String ref) {
+    public static ConversationFragment create(SwrveConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
-
-        Bundle arguments = new Bundle();
-        arguments.putString(ARG_CONVERSATION_REF, ref);
-        f.setArguments(arguments);
+        // TODO: STM Beware of On resumes and other state held things.
+        f.swrveConversation = swrveConversation;
         return f;
     }
 
     @Override
     public void onPause() {
-        converserEngine.cancelOperations();
-        converserEngine = null;
+        // TODO: STM save the conversations position so it can be resumed at a later date.
         super.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        // TODO: STM Beware of On resumes and other state held things. This may need to pick up where it leaves off in a conversation at a later time
+        // TODO: STM This onResume only respects getting the first page of the conversation, not where it left off.
 
-        if (converserEngine == null) {
-            converserEngine = new ConverserEngine(getActivity().getApplicationContext());
-
-        }
-
-        if (getArguments().containsKey(ARG_CONVERSATION_REF)) {
-            conversationRef = getArguments().getString(ARG_CONVERSATION_REF);
-
-            progressDialog = new ProgressDialog(getActivity());
-            progressDialog.setMessage(getActivity().getString(R.string.cio__refreshing));
-            progressDialog.show();
-
-            converserEngine.getConversationDetail(conversationRef, new ConverserEngine.Callback<ConversationDetail>() {
-                @Override
-                public void onSuccess(final ConversationDetail response) {
-                    if (isDetached() || getActivity() == null) {
-                        return;
-                    }
-
-                    getActivity().runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            displayConversation(response);
-
-                            if (progressDialog != null) {
-                                try {
-                                    progressDialog.dismiss();
-                                } finally {
-                                }
-                            }
-                        }
-
-                    });
-                }
-
-                @Override
-                public void onError(String error) {
-                    Log.i("Conversation Fragment", "Error getting the next piece of conversation");
-                    if (isDetached() || getActivity() == null) {
-                        return;
-                    }
-
-                    if (progressDialog != null) {
-                        try {
-                            progressDialog.dismiss();
-                        } finally {
-                        }
-                    }
-                }
-            });
-        }
+        conversationDetail = swrveConversation.getfirstPage();
+        displayConversation(conversationDetail);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         return inflater.inflate(R.layout.cio__conversation_fragment, container, false);
-
     }
 
     @Override
@@ -153,17 +99,17 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     }
 
-    public void displayConversation(ConversationDetail result) {
+    public void displayConversation(ConversationDetail conversationDetail) {
         LayoutInflater layoutInf = getLayoutInflater(null);
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM");
-        this.conversation = result;
+        this.conversationDetail = conversationDetail;
         if (inputs.size() > 0) {
             inputs.clear();
         }
 
         Activity activity = getActivity();
 
-        activity.setTitle(result.getTitle());
+        activity.setTitle(conversationDetail.getTitle());
 
         root = (ViewGroup) getView();
 
@@ -209,7 +155,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         int buttonCount = 0;
 
-        if (result.getControls().size() == 0) {
+        if (conversationDetail.getControls().size() == 0) {
 
             Button ctrlButton = new Button(activity, null, (buttonCount == 0 ? R.attr.conversationControlSecondButtonStyle : R.attr.conversationControlSecondButtonStyle));// (buttonCount
             // ==
@@ -234,14 +180,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             ctrlButton.setLayoutParams(buttonLP);
             controlLayout.addView(ctrlButton);
             ctrlButton.setOnClickListener(new DoneButtonListener());
-
         }
 
-        for (int i = 0; i < result.getControls().size(); i++) {
-            ConversationAtom atom = result.getControls().get(i);
+        for (int i = 0; i < conversationDetail.getControls().size(); i++) {
+            ConversationAtom atom = conversationDetail.getControls().get(i);
 
             boolean isFirst = (i == 0);
-            boolean isLast = (i == result.getControls().size() - 1);
+            boolean isLast = (i == conversationDetail.getControls().size() - 1);
 
             if (atom instanceof ButtonControl) {
                 // Fucked up use case
@@ -249,7 +194,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 // based on the number of controls.
                 // EG if there is one button, make it green. If there are 2
                 // buttons, make the first red, and the second green
-                int numControls = result.getControls().size();
+                int numControls = conversationDetail.getControls().size();
 
                 ButtonControl ctrl = (ButtonControl) atom;
                 Button ctrlButton = null;
@@ -331,7 +276,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         }
 
-        for (ConversationAtom content : result.getContent()) {
+        for (ConversationAtom content : conversationDetail.getContent()) {
             if (content instanceof Content) {
 
                 Content modelContent = (Content) content;
@@ -444,14 +389,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 }
             }
         }
-
         root.requestFocus();
-
     }
 
     @Override
     public void onClick(View v) {
-
+        // TODO: STM This onclick also has to respect the ConverserContent and send swrve events via that channel
         if (v instanceof ConverserControl) {
             // Ok, lets do this....
             if (v instanceof DatePickerButton) {
@@ -462,12 +405,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                         Calendar targetTime = new GregorianCalendar(year, monthOfYear, dayOfMonth);
+                        // TODO: STM Update this to send a SwrveEvent after the DateDialog has been filled in.
                         ConversationReply reply = new ConversationReply();
                         reply.getData().put(dpModel.getTag(), targetTime);
                         sendReply(dpModel, reply);
                     }
                 }, rightNow.get(Calendar.YEAR) - 1900, rightNow.get(Calendar.MONTH), rightNow.get(Calendar.DAY_OF_MONTH));
-
                 dpd.show();
             } else if (v instanceof Button) {
                 ConversationReply reply = new ConversationReply();
@@ -477,6 +420,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     CustomBehaviours customBehaviours = new CustomBehaviours(this.getActivity(), this.getActivity().getApplicationContext());
                     ControlActions actions = ((ConverserControl) v).getModel().getActions();
                     if (actions.isCall()) {
+                        sendSwrveEvent("Swrve.Conversations.call");
                         sendReply(model, reply);
                         customBehaviours.openDialer(actions.getCallUri(), this.getActivity());
                     } else if (actions.isVisit()) {
@@ -488,8 +432,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                         if (Boolean.parseBoolean(ext) == true) {
                             sendReply(model, reply);
+                            sendSwrveEvent("Swrve.Conversations.link");
                             customBehaviours.openIntentWebView(uri, this.getActivity(), referrer);
                         } else if (Boolean.parseBoolean(ext) == false) {
+                            sendSwrveEvent("Swrve.Conversations.link");
                             customBehaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
                         } else {
 
@@ -499,12 +445,18 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     // Send a simple reply
                     sendReply(model, reply);
                 }
-
-            } else {
-
-            }
-
+           } else {
+           }
         }
+    }
+
+    private void sendSwrveEvent(String eventName){
+        //  TODO: STM whats the best way to hook back into the controller/swrveConversation and send events
+        Log.i(LOG_TAG, "Sending Event " + eventName);
+        swrveConversation.getConversationController().event(eventName);
+    }
+
+    private void queueSwrveEvent(String eventName, HashMap<String, Object> payload){
 
     }
 
@@ -531,47 +483,32 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         if (validationErrors.size() > 0) {
             ValidationDialog vd = ValidationDialog.create("Please fill out all of the items on this page before continuing");
             vd.show(getFragmentManager(), "validation_dialog");
-
             return;
         }
 
         // For all the inputs , get their data
-
         for (ConverserInput inputView : inputs) {
             inputView.onReplyDataRequired(reply.getData());
         }
 
-        converserEngine.replyToConversation(conversationRef, reply, new ConverserEngine.Callback<ConversationDetail>() {
-
-            @Override
-            public void onSuccess(final ConversationDetail response) {
-                getActivity().runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (response != null) {
-                            displayConversation(response);
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String error) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-
-                    }
-                });
-            }
-        });
+        ConversationDetail nextPage = swrveConversation.getPageForControl(control);
+        if(nextPage != null)
+        {
+            sendSwrveEvent("Swrve.Conversations.page");
+            displayConversation(nextPage);
+        }else
+        {
+            Log.e(LOG_TAG, "No more pages in this conversation. This is not normal and the conversation will end prematurely");
+            sendSwrveEvent("Swrve.Conversations.error");
+            getActivity().finish();
+        }
     }
 
     private class DoneButtonListener implements OnClickListener {
         @Override
         public void onClick(View v) {
             Activity act = getActivity();
+            sendSwrveEvent("Swrve.Conversation.done");
             act.finish();
         }
     }

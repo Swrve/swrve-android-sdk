@@ -1,11 +1,11 @@
 package com.swrve.sdk.messaging;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.swrve.sdk.ISwrveEventListener;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.converser.SwrveConversation;
 
 import java.lang.ref.WeakReference;
 
