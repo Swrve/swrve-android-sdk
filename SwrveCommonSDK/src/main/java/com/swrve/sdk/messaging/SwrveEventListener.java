@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.swrve.sdk.ISwrveEventListener;
 import com.swrve.sdk.SwrveBase;
@@ -15,15 +16,17 @@ public class SwrveEventListener implements ISwrveEventListener {
 
     private WeakReference<SwrveBase<?, ?>> talk;
     private ISwrveMessageListener messageListener;
+    private ISwrveConversationListener conversationListener;
 
-    public SwrveEventListener(SwrveBase<?, ?> talk, ISwrveMessageListener messageListener) {
+    public SwrveEventListener(SwrveBase<?, ?> talk, ISwrveMessageListener messageListener, ISwrveConversationListener conversationListener) {
         this.talk = new WeakReference<SwrveBase<?, ?>>(talk);
         this.messageListener = messageListener;
+        this.conversationListener = conversationListener;
     }
 
     @Override
     public void onEvent(String eventName) {
-        if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
+        if (conversationListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
             SwrveBase<?, ?> talkRef = talk.get();
             if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
                 SwrveOrientation deviceOrientation = SwrveOrientation.Both;
@@ -31,11 +34,26 @@ public class SwrveEventListener implements ISwrveEventListener {
                 if (ctx != null) {
                     deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
                 }
-                SwrveMessage message = talkRef.getMessageForEvent(eventName, deviceOrientation);
-                if (message != null) {
-                    messageListener.onMessage(message, true);
+                SwrveConversation conversation = talkRef.getConversationForEvent(eventName, deviceOrientation);
+                if (conversation != null) {
+                    conversationListener.onMessage(conversation, true);
                 }
             }
         }
+        // TODO: STM have removed the message listener temporarily to focus exclusively on messages
+//        if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
+//            SwrveBase<?, ?> talkRef = talk.get();
+//            if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
+//                SwrveOrientation deviceOrientation = SwrveOrientation.Both;
+//                Context ctx = talkRef.getContext();
+//                if (ctx != null) {
+//                    deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
+//                }
+//                SwrveMessage message = talkRef.getMessageForEvent(eventName, deviceOrientation);
+//                if (message != null) {
+//                    messageListener.onMessage(message, true);
+//                }
+//            }
+//        }
     }
 }
