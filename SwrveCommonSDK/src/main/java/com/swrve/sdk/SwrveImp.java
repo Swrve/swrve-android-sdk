@@ -78,7 +78,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.converser.android.ui.ConversationActivity;
+import com.swrve.sdk.converser.ui.ConversationActivity;
 
 /**
  * Internal base class implementation of the Swrve SDK.

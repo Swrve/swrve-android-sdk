@@ -27,6 +27,9 @@ android {
         // by a similar customization.
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')
+        main {
+            res.srcDirs = ['res']
+        }
     }
     lintOptions {
         abortOnError true
@@ -34,6 +37,7 @@ android {
 }
 
 dependencies {
-    compile project(':ConverserSdk')
+    compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'com.squareup:tape:1.1.0'
     compile 'com.android.support:support-v4:21.0.3'
 }

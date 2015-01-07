@@ -9,7 +9,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 
-import io.converser.android.engine.model.ConversationDetail;
+import com.swrve.sdk.converser.engine.model.ConversationDetail;
 
 /**
  * Created by shanemoore on 06/01/2015.
