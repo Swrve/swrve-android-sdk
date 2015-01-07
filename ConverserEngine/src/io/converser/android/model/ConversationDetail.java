@@ -1,6 +1,12 @@
 package io.converser.android.model;
 
+import com.google.ciogson.Gson;
+
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+
+import io.converser.android.GsonHelper;
 
 public class ConversationDetail {
 
@@ -8,11 +14,10 @@ public class ConversationDetail {
     private String title;
     private String subtitle;
     private String description;
-    private String conversationName;
+    private String theme;
 
     private ArrayList<ConversationAtom> content;
     private ArrayList<ConversationAtom> controls;
-
 
     public String getName() {
         return name;
@@ -69,6 +74,16 @@ public class ConversationDetail {
     public Boolean hasContentAndControls() {
         // If the conversation is missing controls and content, it cannot be rendered.
         return (!getControls().isEmpty() && !getContent().isEmpty());
+    }
+
+
+    public ConversationDetail fromJSON(String json){
+        Gson gson = GsonHelper.getConfiguredGson();
+        return gson.fromJson(json, ConversationDetail.class);
+    }
+
+    public ConversationDetail fromJson(JSONObject json){
+        return fromJSON(json.toString());
     }
 
 }
