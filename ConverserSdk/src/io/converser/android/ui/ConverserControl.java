@@ -1,6 +1,6 @@
 package io.converser.android.ui;
 
-import io.converser.android.model.ControlBase;
+import io.converser.android.engine.model.ControlBase;
 
 public interface ConverserControl {
 

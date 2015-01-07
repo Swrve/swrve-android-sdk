@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 
-import io.converser.android.model.ConversationItem;
+import io.converser.android.engine.model.ConversationItem;
 
 public class ConversationListActivity extends FragmentActivity implements ConversationListFragment.OnConversationClickedListener {
 

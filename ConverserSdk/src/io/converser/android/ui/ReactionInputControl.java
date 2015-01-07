@@ -12,7 +12,7 @@ import android.widget.LinearLayout;
 import java.util.Map;
 
 import io.converser.android.R;
-import io.converser.android.model.ReactionInput;
+import io.converser.android.engine.model.ReactionInput;
 
 /**
  * A custom compound control to capture reactions , on a scale of 1-5

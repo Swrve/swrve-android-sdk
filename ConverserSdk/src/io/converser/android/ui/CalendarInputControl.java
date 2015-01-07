@@ -16,9 +16,9 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Map;
 
-import io.converser.android.ConverserOptions;
+import io.converser.android.engine.ConverserOptions;
 import io.converser.android.R;
-import io.converser.android.model.CalendarInput;
+import io.converser.android.engine.model.CalendarInput;
 
 public class CalendarInputControl extends LinearLayout implements ConverserInput {
 

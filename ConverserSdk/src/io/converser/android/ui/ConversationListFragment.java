@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -14,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
@@ -22,12 +20,10 @@ import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 
-import io.converser.android.BuildConfig;
-import io.converser.android.Constants;
-import io.converser.android.ConverserEngine;
+import io.converser.android.engine.ConverserEngine;
 import io.converser.android.R;
-import io.converser.android.model.ConversationItem;
-import io.converser.android.model.Conversations;
+import io.converser.android.engine.model.ConversationItem;
+import io.converser.android.engine.model.Conversations;
 
 public class ConversationListFragment extends Fragment implements OnItemClickListener {
 

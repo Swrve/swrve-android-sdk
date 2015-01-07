@@ -11,8 +11,8 @@ import android.widget.TextView;
 import java.util.Map;
 
 import io.converser.android.R;
-import io.converser.android.model.MultiValueInput;
-import io.converser.android.model.MultiValueInput.MultiValueItem;
+import io.converser.android.engine.model.MultiValueInput;
+import io.converser.android.engine.model.MultiValueInput.MultiValueItem;
 
 public class MultiValueInputControl extends LinearLayout implements ConverserInput, OnCheckedChangeListener {
 

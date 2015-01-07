@@ -25,24 +25,24 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 
-import io.converser.android.ConverserEngine;
+import io.converser.android.engine.ConverserEngine;
 import io.converser.android.R;
-import io.converser.android.custom.CustomBehaviours;
-import io.converser.android.model.ButtonControl;
-import io.converser.android.model.CalendarInput;
-import io.converser.android.model.Content;
-import io.converser.android.model.ControlActions;
-import io.converser.android.model.ControlBase;
-import io.converser.android.model.ConversationAtom;
-import io.converser.android.model.ConversationDetail;
-import io.converser.android.model.ConversationReply;
-import io.converser.android.model.DateChoice;
-import io.converser.android.model.DateSaver;
-import io.converser.android.model.InputBase;
-import io.converser.android.model.MultiValueInput;
-import io.converser.android.model.MultiValueLongInput;
-import io.converser.android.model.NPSInput;
-import io.converser.android.model.TextInput;
+import io.converser.android.engine.CustomBehaviours;
+import io.converser.android.engine.model.ButtonControl;
+import io.converser.android.engine.model.CalendarInput;
+import io.converser.android.engine.model.Content;
+import io.converser.android.engine.model.ControlActions;
+import io.converser.android.engine.model.ControlBase;
+import io.converser.android.engine.model.ConversationAtom;
+import io.converser.android.engine.model.ConversationDetail;
+import io.converser.android.engine.model.ConversationReply;
+import io.converser.android.engine.model.DateChoice;
+import io.converser.android.engine.model.DateSaver;
+import io.converser.android.engine.model.InputBase;
+import io.converser.android.engine.model.MultiValueInput;
+import io.converser.android.engine.model.MultiValueLongInput;
+import io.converser.android.engine.model.NPSInput;
+import io.converser.android.engine.model.TextInput;
 
 /**
  * (will eventually) display a conversation content, input, and choices as well as handling

@@ -2,8 +2,8 @@ package io.converser.android.ui;
 
 import android.content.Context;
 
-import io.converser.android.model.Content;
-import io.converser.android.model.ConversationAtom;
+import io.converser.android.engine.model.Content;
+import io.converser.android.engine.model.ConversationAtom;
 
 public class ImageView extends android.widget.ImageView implements ConverserContent {
 
