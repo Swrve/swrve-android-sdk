@@ -3,8 +3,8 @@ package io.converser.android.ui;
 import android.content.Context;
 import android.webkit.WebView;
 
-import io.converser.android.model.Content;
-import io.converser.android.model.ConversationAtom;
+import io.converser.android.engine.model.Content;
+import io.converser.android.engine.model.ConversationAtom;
 
 public class HtmlSnippetView extends WebView implements ConverserContent {
 

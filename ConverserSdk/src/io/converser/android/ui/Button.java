@@ -2,7 +2,7 @@ package io.converser.android.ui;
 
 import android.content.Context;
 
-import io.converser.android.model.ButtonControl;
+import io.converser.android.engine.model.ButtonControl;
 
 public class Button extends android.widget.Button implements ConverserControl {
 

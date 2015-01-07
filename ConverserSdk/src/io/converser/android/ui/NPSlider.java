@@ -14,7 +14,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import java.util.Map;
 
 import io.converser.android.R;
-import io.converser.android.model.NPSInput;
+import io.converser.android.engine.model.NPSInput;
 
 public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, ConverserInput {
 

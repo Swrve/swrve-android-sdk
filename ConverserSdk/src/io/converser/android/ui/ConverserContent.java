@@ -1,6 +1,6 @@
 package io.converser.android.ui;
 
-import io.converser.android.model.ConversationAtom;
+import io.converser.android.engine.model.ConversationAtom;
 
 public interface ConverserContent {
 

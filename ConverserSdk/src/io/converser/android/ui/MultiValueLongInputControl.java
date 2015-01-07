@@ -15,8 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.converser.android.R;
-import io.converser.android.model.MultiValueLongInput;
-import io.converser.android.model.MultiValueLongInput.Item;
+import io.converser.android.engine.model.MultiValueLongInput;
+import io.converser.android.engine.model.MultiValueLongInput.Item;
 
 public class MultiValueLongInputControl extends LinearLayout implements ConverserInput {
 

@@ -10,8 +10,8 @@ import android.webkit.WebSettings.RenderPriority;
 import android.webkit.WebView;
 import android.widget.Toast;
 
-import io.converser.android.model.Content;
-import io.converser.android.model.ConversationAtom;
+import io.converser.android.engine.model.Content;
+import io.converser.android.engine.model.ConversationAtom;
 
 public class HtmlVideoView extends WebView implements ConverserContent {
 

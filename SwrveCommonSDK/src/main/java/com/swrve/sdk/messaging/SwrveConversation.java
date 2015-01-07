@@ -1,7 +1,5 @@
 package com.swrve.sdk.messaging;
 
-import android.util.Log;
-
 import com.swrve.sdk.SwrveBase;
 
 import org.json.JSONArray;
@@ -9,10 +7,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-import io.converser.android.model.ConversationDetail;
+import io.converser.android.engine.model.ConversationDetail;
 
 /**
  * Created by shanemoore on 06/01/2015.

@@ -3,7 +3,7 @@ package io.converser.android.ui;
 import android.content.Context;
 import android.widget.Button;
 
-import io.converser.android.model.DateChoice;
+import io.converser.android.engine.model.DateChoice;
 
 public class DatePickerButton extends Button implements ConverserControl {
 

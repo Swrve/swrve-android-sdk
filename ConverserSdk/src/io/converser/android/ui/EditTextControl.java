@@ -11,7 +11,7 @@ import android.widget.TextView;
 import java.util.Map;
 
 import io.converser.android.R;
-import io.converser.android.model.TextInput;
+import io.converser.android.engine.model.TextInput;
 
 
 public class EditTextControl extends LinearLayout implements ConverserInput {
