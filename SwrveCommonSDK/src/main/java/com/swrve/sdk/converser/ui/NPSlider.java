@@ -13,6 +13,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.engine.model.NPSInput;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
 import java.util.Map;
 
@@ -26,6 +27,7 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
     private LinearLayout display;
     private SeekBar seekbar;
     private NPSInput model;
+    private OnContentChangedListener onContentChangedListener;
 
     public NPSlider(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -129,6 +131,10 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
                 }
             }
         }
+
+        if(onContentChangedListener != null){
+            onContentChangedListener.onContentChanged();
+        }
     }
 
     @Override
@@ -141,24 +147,25 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
 
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
-
         dataMap.put(model.getTag(), seekbar.getProgress());
     }
 
     @Override
     public String validate() {
-
         if (model.isOptional()) {
             return null;
         }
-
         return null;
     }
 
     public void setModel(NPSInput content) {
         this.model = content;
-
     }
+
+    public void setOnContentChangedListener(OnContentChangedListener l) {
+        onContentChangedListener = l;
+    }
+
 
     public class DisplayClickListener implements OnClickListener {
 
