@@ -8,7 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.swrve.sdk.converser.engine.model.ConversationDetail;
+import com.swrve.sdk.converser.engine.model.ConversationPage;
 import com.swrve.sdk.converser.engine.model.ConversationItem;
 import com.swrve.sdk.converser.engine.model.ConversationReply;
 import com.swrve.sdk.converser.engine.model.Conversations;
@@ -175,7 +175,7 @@ public class ConverserEngine {
         });
     }
 
-    public void getConversationDetail(final String ref, final ConverserEngine.Callback<ConversationDetail> callback) {
+    public void getConversationDetail(final String ref, final ConverserEngine.Callback<ConversationPage> callback) {
 
         operationsService.execute(new Runnable() {
 
@@ -183,10 +183,10 @@ public class ConverserEngine {
             public void run() {
 
                 try {
-                    ConversationDetail conv = api.getConversationDetail(ref);
+                    ConversationPage conv = api.getConversationDetail(ref);
 
                     if (conv != null) {
-                        MAINHANDLER.post(new CallbackSuccessRunner<ConversationDetail>(callback, conv));
+                        MAINHANDLER.post(new CallbackSuccessRunner<ConversationPage>(callback, conv));
                     } else {
                         MAINHANDLER.post(new CallbackErrorRunner(callback, "Error"));
                     }
@@ -199,7 +199,7 @@ public class ConverserEngine {
         });
     }
 
-    public void replyToConversation(final String ref, final ConversationReply reply, final ConverserEngine.Callback<ConversationDetail> callback) {
+    public void replyToConversation(final String ref, final ConversationReply reply, final ConverserEngine.Callback<ConversationPage> callback) {
 
         operationsService.execute(new Runnable() {
 
@@ -207,10 +207,10 @@ public class ConverserEngine {
             public void run() {
 
                 try {
-                    ConversationDetail conv = api.sendConversationReply(ref, reply);
+                    ConversationPage conv = api.sendConversationReply(ref, reply);
 
                     if (conv != null) {
-                        MAINHANDLER.post(new CallbackSuccessRunner<ConversationDetail>(callback, conv));
+                        MAINHANDLER.post(new CallbackSuccessRunner<ConversationPage>(callback, conv));
                     } else {
                         MAINHANDLER.post(new CallbackErrorRunner(callback, "Error"));
                     }

@@ -3,7 +3,6 @@ package com.swrve.sdk.converser.ui;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
-import android.app.ProgressDialog;
 import android.content.res.TypedArray;
 import android.net.Uri;
 import android.os.Build;
@@ -20,7 +19,6 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.common.R;
-import com.swrve.sdk.converser.engine.ConverserEngine;
 import com.swrve.sdk.converser.engine.CustomBehaviours;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
 import com.swrve.sdk.converser.engine.model.CalendarInput;
@@ -28,7 +26,7 @@ import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ControlActions;
 import com.swrve.sdk.converser.engine.model.ControlBase;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
-import com.swrve.sdk.converser.engine.model.ConversationDetail;
+import com.swrve.sdk.converser.engine.model.ConversationPage;
 import com.swrve.sdk.converser.engine.model.ConversationReply;
 import com.swrve.sdk.converser.engine.model.DateChoice;
 import com.swrve.sdk.converser.engine.model.DateSaver;
@@ -47,7 +45,7 @@ import java.util.HashMap;
 
 
 /**
- * (will eventually) display a conversationDetail content, input, and choices as well as handling
+ * (will eventually) display a conversationPage content, input, and choices as well as handling
  *
  * @author Jason Connery
  */
@@ -60,7 +58,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
 
-    private ConversationDetail conversationDetail;
+    private ConversationPage conversationPage;
     private SwrveConversation swrveConversation;
     private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
 
@@ -84,8 +82,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         // TODO: STM Beware of On resumes and other state held things. This may need to pick up where it leaves off in a conversation at a later time
         // TODO: STM This onResume only respects getting the first page of the conversation, not where it left off.
 
-        conversationDetail = swrveConversation.getfirstPage();
-        displayConversation(conversationDetail);
+        conversationPage = swrveConversation.getfirstPage();
+        displayConversation(conversationPage);
     }
 
     @Override
@@ -99,17 +97,17 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     }
 
-    public void displayConversation(ConversationDetail conversationDetail) {
+    public void displayConversation(ConversationPage conversationPage) {
         LayoutInflater layoutInf = getLayoutInflater(null);
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM");
-        this.conversationDetail = conversationDetail;
+        this.conversationPage = conversationPage;
         if (inputs.size() > 0) {
             inputs.clear();
         }
 
         Activity activity = getActivity();
 
-        activity.setTitle(conversationDetail.getTitle());
+        activity.setTitle(conversationPage.getTitle());
 
         root = (ViewGroup) getView();
 
@@ -155,7 +153,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         int buttonCount = 0;
 
-        if (conversationDetail.getControls().size() == 0) {
+        if (conversationPage.getControls().size() == 0) {
 
             Button ctrlButton = new Button(activity, null, (buttonCount == 0 ? R.attr.conversationControlSecondButtonStyle : R.attr.conversationControlSecondButtonStyle));// (buttonCount
             // ==
@@ -182,11 +180,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             ctrlButton.setOnClickListener(new DoneButtonListener());
         }
 
-        for (int i = 0; i < conversationDetail.getControls().size(); i++) {
-            ConversationAtom atom = conversationDetail.getControls().get(i);
+        for (int i = 0; i < conversationPage.getControls().size(); i++) {
+            ConversationAtom atom = conversationPage.getControls().get(i);
 
             boolean isFirst = (i == 0);
-            boolean isLast = (i == conversationDetail.getControls().size() - 1);
+            boolean isLast = (i == conversationPage.getControls().size() - 1);
 
             if (atom instanceof ButtonControl) {
                 // Fucked up use case
@@ -194,7 +192,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 // based on the number of controls.
                 // EG if there is one button, make it green. If there are 2
                 // buttons, make the first red, and the second green
-                int numControls = conversationDetail.getControls().size();
+                int numControls = conversationPage.getControls().size();
 
                 ButtonControl ctrl = (ButtonControl) atom;
                 Button ctrlButton = null;
@@ -276,7 +274,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         }
 
-        for (ConversationAtom content : conversationDetail.getContent()) {
+        for (ConversationAtom content : conversationPage.getContent()) {
             if (content instanceof Content) {
 
                 Content modelContent = (Content) content;
@@ -491,7 +489,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             inputView.onReplyDataRequired(reply.getData());
         }
 
-        ConversationDetail nextPage = swrveConversation.getPageForControl(control);
+        ConversationPage nextPage = swrveConversation.getPageForControl(control);
         if(nextPage != null)
         {
             sendSwrveEvent("Swrve.Conversations.page");

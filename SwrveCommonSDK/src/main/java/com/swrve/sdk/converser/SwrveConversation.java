@@ -2,7 +2,6 @@ package com.swrve.sdk.converser;
 
 import android.util.Log;
 
-import com.google.ciogson.Gson;
 import com.swrve.sdk.SwrveBase;
 
 import org.json.JSONArray;
@@ -13,7 +12,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import com.swrve.sdk.converser.engine.model.ControlBase;
-import com.swrve.sdk.converser.engine.model.ConversationDetail;
+import com.swrve.sdk.converser.engine.model.ConversationPage;
 import com.swrve.sdk.messaging.SwrveCampaign;
 
 /**
@@ -34,7 +33,7 @@ public class SwrveConversation {
     // The subtitle to the subject
     protected String subtitle;
     // Each of the conversations pages
-    protected ArrayList<ConversationDetail> pages;
+    protected ArrayList<ConversationPage> pages;
 
     // Priority of the message
     protected int priority = 9999;
@@ -80,11 +79,11 @@ public class SwrveConversation {
 
 
         JSONArray states = conversationData.getJSONArray("states");
-        ArrayList<ConversationDetail> pages = new ArrayList<ConversationDetail>();
+        ArrayList<ConversationPage> pages = new ArrayList<ConversationPage>();
 
         for (int i = 0; i < states.length(); i++) {
             JSONObject o = states.getJSONObject(i);
-            ConversationDetail page = new ConversationDetail().fromJson(o);
+            ConversationPage page = new ConversationPage().fromJson(o);
             pages.add(page);
         }
         setPages(pages);
@@ -107,19 +106,19 @@ public class SwrveConversation {
     }
 
     /**
-     * @return the first ConversationDetail (Page)
+     * @return the first ConversationPage (Page)
      */
-    public ConversationDetail getfirstPage(){
+    public ConversationPage getfirstPage(){
         return pages.get(0);
     }
 
     /**
-     * @return the ConversationDetail (Page) for a specific control (Button) which was pressed
+     * @return the ConversationPage (Page) for a specific control (Button) which was pressed
      */
-    public ConversationDetail getPageForControl(ControlBase control)
+    public ConversationPage getPageForControl(ControlBase control)
     {
-        ConversationDetail targetPage = null;
-        for (ConversationDetail page : pages){
+        ConversationPage targetPage = null;
+        for (ConversationPage page : pages){
             if(page.hasName(control.getTarget())){
                 targetPage = page;
                 break;
@@ -220,11 +219,11 @@ public class SwrveConversation {
     /**
      * @return the related pages in the conversation.
      */
-    public ArrayList<ConversationDetail> getPages() {
+    public ArrayList<ConversationPage> getPages() {
         return pages;
     }
 
-    public void setPages(ArrayList<ConversationDetail> pages) {
+    public void setPages(ArrayList<ConversationPage> pages) {
         this.pages = pages;
     }
 
