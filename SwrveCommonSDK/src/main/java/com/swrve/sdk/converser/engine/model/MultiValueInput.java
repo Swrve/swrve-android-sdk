@@ -36,7 +36,5 @@ public class MultiValueInput extends InputBase {
         public String getValue() {
             return value;
         }
-
-
     }
 }

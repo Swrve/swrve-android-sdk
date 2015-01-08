@@ -9,6 +9,7 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.MultiValueInput;
 
 import java.util.Map;
@@ -19,14 +20,13 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
 
     private MultiValueInput model;
     private int selectedIndex = -1; //default to none selected
+    private OnContentChangedListener onContentChangedListener;
 
 
     public MultiValueInputControl(Context context, AttributeSet attrs, MultiValueInput model) {
-
         super(context, attrs);
         this.model = model;
         setOrientation(VERTICAL);
-
         setupViews();
     }
 
@@ -81,9 +81,12 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
         return null;
     }
 
+    public void setOnContentChangedListener(OnContentChangedListener l){
+        onContentChangedListener = l;
+    }
+
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
         int index = (Integer) buttonView.getTag(R.string.cio__indexTag);
 
         if (selectedIndex > -1 && selectedIndex != index) {
@@ -101,7 +104,8 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
         } else {
             selectedIndex = index;
         }
-
+        if (onContentChangedListener !=null) {
+            onContentChangedListener.onContentChanged();
+        }
     }
-
 }

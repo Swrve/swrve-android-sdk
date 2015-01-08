@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
@@ -14,6 +15,7 @@ import android.widget.LinearLayout;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.engine.ConverserOptions;
 import com.swrve.sdk.converser.engine.model.CalendarInput;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -26,6 +28,7 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
     private CalendarInput model;
     private GregorianCalendar selectedDate;
+    private OnContentChangedListener onContentChangedListener;
 
     public CalendarInputControl(Context context) {
         super(context);
@@ -38,7 +41,6 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
     public CalendarInputControl(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
-
 
     @Override
     protected void onFinishInflate() {
@@ -80,7 +82,6 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
 
                 }, year, month, day);
 
-
                 if (Build.VERSION.SDK_INT >= 11) {
                     dpd.getDatePicker().setCalendarViewShown(false);
                     dpd.getDatePicker().setSpinnersShown(true);
@@ -97,6 +98,16 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
                     }
 
                 }
+
+                dpd.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        if(onContentChangedListener !=null){
+                            onContentChangedListener.onContentChanged();
+                        }
+                    }
+                });
+
                 dpd.show();
             }
         });
@@ -115,6 +126,10 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
     public void setModel(CalendarInput model) {
         this.model = model;
         init();
+    }
+
+    public void setOnContentChangedListener(OnContentChangedListener l) {
+        onContentChangedListener = l;
     }
 
     @Override

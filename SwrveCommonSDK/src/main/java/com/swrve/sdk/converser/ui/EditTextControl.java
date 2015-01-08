@@ -1,7 +1,9 @@
 package com.swrve.sdk.converser.ui;
 
 import android.content.Context;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.widget.EditText;
@@ -9,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.TextInput;
 
 import java.util.Map;
@@ -18,9 +21,9 @@ import java.util.Map;
 public class EditTextControl extends LinearLayout implements ConverserInput {
 
     private TextInput model;
-
     private TextView descriptionTextView;
     private EditText editText;
+    private OnContentChangedListener onContentChangedListener;
 
     public EditTextControl(Context context) {
         super(context);
@@ -49,9 +52,12 @@ public class EditTextControl extends LinearLayout implements ConverserInput {
         init();
     }
 
+    public void setOnContentChangedListener(OnContentChangedListener l)
+    {
+        onContentChangedListener = l;
+    }
 
     private void init() {
-
         descriptionTextView.setText(model.getDescription());
         editText.setHint(model.getPlaceholder());
 
@@ -80,25 +86,39 @@ public class EditTextControl extends LinearLayout implements ConverserInput {
         } else {
             lp.height = LayoutParams.WRAP_CONTENT;
         }
-
         lp.gravity = Gravity.TOP;
         editText.setLayoutParams(lp);
         editText.setGravity(Gravity.TOP);
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(onContentChangedListener != null){
+                    onContentChangedListener.onContentChanged();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
     }
 
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
-
         String myData = editText.getText().toString().trim();
         String myTag = model.getTag();
 
         dataMap.put(myTag, myData);
-
     }
 
     @Override
     public String validate() {
-
         if (model.isOptional()) {
             return null;
         }

@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput.Item;
 
@@ -22,6 +23,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
 
     private MultiValueLongInput model;
     private HashMap<String, String> responses = new HashMap<String, String>();
+    private OnContentChangedListener onContentChangedListener; // TODO: STM This is a bit hacky since MVLIC don't have their own extendable listeners. Basically at some point when the usual listener gets called, this guy will getNotified
 
     public MultiValueLongInputControl(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -77,7 +79,6 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
 
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
-
         dataMap.put(model.getTag(), responses);
     }
 
@@ -100,8 +101,17 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
         return new MILongItemListener(i, item);
     }
 
-    private class MILongItemListener implements OnItemSelectedListener {
+    public void setOnContentChangedListener(OnContentChangedListener l){
+        onContentChangedListener = l;
+    }
 
+    static class MILongItemInteractionListener{
+        public void onChangingInteraction(){
+
+        }
+    }
+
+    private class MILongItemListener implements OnItemSelectedListener {
         private int index;
         private Item item;
 
@@ -113,7 +123,6 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
         @Override
         public void onItemSelected(AdapterView<?> adapterView, View view, int position,
                                    long id) {
-
             if (position == 0) {
                 //This is the please select option. Ignore
                 responses.remove(item.getTitle());
@@ -121,11 +130,13 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
             } else {
                 responses.put(item.getTitle(), item.getOptions().get(position));
             }
+            if(onContentChangedListener != null){
+                onContentChangedListener.onContentChanged();
+            }
         }
 
         @Override
         public void onNothingSelected(AdapterView<?> arg0) {
-
             responses.remove(item.getTitle());
         }
     }
