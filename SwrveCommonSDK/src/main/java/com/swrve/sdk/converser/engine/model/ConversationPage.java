@@ -20,6 +20,7 @@ public class ConversationPage {
     private ArrayList<ConversationAtom> content;
     private ArrayList<ConversationAtom> controls;
 
+    // Note that name is actually TAG in the template.
     public String getName() {
         return name;
     }
