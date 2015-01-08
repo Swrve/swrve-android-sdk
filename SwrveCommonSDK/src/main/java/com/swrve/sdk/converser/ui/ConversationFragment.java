@@ -1,8 +1,6 @@
 package com.swrve.sdk.converser.ui;
 
 import android.app.Activity;
-import android.app.DatePickerDialog;
-import android.app.DatePickerDialog.OnDateSetListener;
 import android.content.res.TypedArray;
 import android.net.Uri;
 import android.os.Build;
@@ -10,24 +8,27 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.DatePicker;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
+import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.engine.CustomBehaviours;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
 import com.swrve.sdk.converser.engine.model.CalendarInput;
 import com.swrve.sdk.converser.engine.model.Content;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.ControlActions;
 import com.swrve.sdk.converser.engine.model.ControlBase;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
 import com.swrve.sdk.converser.engine.model.ConversationPage;
 import com.swrve.sdk.converser.engine.model.ConversationReply;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.converser.engine.model.DateChoice;
 import com.swrve.sdk.converser.engine.model.DateSaver;
 import com.swrve.sdk.converser.engine.model.InputBase;
@@ -39,34 +40,45 @@ import com.swrve.sdk.converser.SwrveConversation;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Map;
 
 
 /**
- * (will eventually) display a conversationPage content, input, and choices as well as handling
+ * (will eventually) display a page content, input, and choices as well as handling
  *
  * @author Jason Connery
  */
 public class ConversationFragment extends Fragment implements OnClickListener {
+    public static final String SWRVE_EVENT_NAVIGATION_START = "Swrve.Conversation.start";
+    public static final String SWRVE_EVENT_NAVIGATION_DONE = "Swrve.Conversation.done";
+    public static final String SWRVE_EVENT_NAVIGATION_ERROR = "Swrve.Conversations.error";
+    public static final String SWRVE_EVENT_NAVIGATION_PAGE = "Swrve.Conversations.page";
+    public static final String SWRVE_EVENT_NAVIGATION_CANCEL = "Swrve.Conversations.cancel";
+    public static final String SWRVE_EVENT_ACTION_LINK = "Swrve.Conversations.link";
+    public static final String SWRVE_EVENT_ACTION_CALL = "Swrve.Conversations.call";
 
     private static final String ARG_CONVERSATION_REF = "io.converser.conversationRef";
+
+
     private static final String LOG_TAG = "ConversationFragment";
 
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
 
-    private ConversationPage conversationPage;
     private SwrveConversation swrveConversation;
+    private ConversationPage page;
+    private SwrveBase controller;
     private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
+    private HashMap<String, Map<String, Object>> userData = new HashMap<>();
 
 
     public static ConversationFragment create(SwrveConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
-        // TODO: STM Beware of On resumes and other state held things.
+        // TODO: STM Beware of OnResumes and other state held things.
         f.swrveConversation = swrveConversation;
+        f.controller = swrveConversation.getConversationController();
         return f;
     }
 
@@ -81,9 +93,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         super.onResume();
         // TODO: STM Beware of On resumes and other state held things. This may need to pick up where it leaves off in a conversation at a later time
         // TODO: STM This onResume only respects getting the first page of the conversation, not where it left off.
-
-        conversationPage = swrveConversation.getfirstPage();
-        displayConversation(conversationPage);
+        openFirstPage();
     }
 
     @Override
@@ -94,13 +104,18 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
     }
 
-    public void displayConversation(ConversationPage conversationPage) {
+    public void openFirstPage() {
+        page = swrveConversation.getfirstPage();
+        sendStartNavigationEvent();
+        openConversationOnPage(page);
+    }
+
+    public void openConversationOnPage(ConversationPage conversationPage) {
         LayoutInflater layoutInf = getLayoutInflater(null);
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM");
-        this.conversationPage = conversationPage;
+        this.page = conversationPage;
         if (inputs.size() > 0) {
             inputs.clear();
         }
@@ -276,17 +291,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         for (ConversationAtom content : conversationPage.getContent()) {
             if (content instanceof Content) {
-
                 Content modelContent = (Content) content;
-
                 if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     ImageView iv = new ImageView(activity, modelContent);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
                     iv.setPadding(12, 12, 12, 12);
-
                     contentLayout.addView(iv);
-
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     LayoutParams tvLP;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -301,7 +312,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
-
                     contentLayout.addView(view);
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                     LayoutParams tvLP;
@@ -317,6 +327,16 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
 
+                    // Let the eventListener know that something has happened to the video
+                    final HtmlVideoView cloneView = view;
+                    view.setOnTouchListener(new View.OnTouchListener() {
+                        @Override
+                        public boolean onTouch(View v, MotionEvent event) {
+                            // TODO: STM Due the fact that we render video in HTML, its very difficult to detect when a video has started/stopped  playing. For now all we can say is that the video was touched. Note that on click listeners behave strange with WebViews
+                            stashVideoViewed(cloneView);
+                            return false;
+                        }
+                    });
                     contentLayout.addView(view);
                 } else {
                     TextView tv = new TextView(activity, modelContent, R.attr.conversationTextContentDefaultStyle);
@@ -334,15 +354,24 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             } else if (content instanceof InputBase) {
                 if (content instanceof TextInput) {
                     // Do stuff for text
-                    TextInput inputModel = (TextInput) content;
+                    final TextInput inputModel = (TextInput) content;
 
                     EditTextControl etc = (EditTextControl) getLayoutInflater(null).inflate(R.layout.cio__edittext_input, contentLayout, false);
                     etc.setModel(inputModel);
 
+                    // Store the result of the content for processing later
+                    final EditTextControl etcCloneReference = etc;
+                    etc.setOnContentChangedListener(new OnContentChangedListener() {
+                        @Override
+                        public void onContentChanged() {
+                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                        }
+                    });
+
                     contentLayout.addView(etc);
                     inputs.add(etc);
                 } else if (content instanceof MultiValueInput) {
-                    MultiValueInputControl input = new MultiValueInputControl(activity, null, (MultiValueInput) content);
+                    final MultiValueInputControl input = new MultiValueInputControl(activity, null, (MultiValueInput) content);
 
                     LayoutParams lp;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -354,6 +383,17 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     lp.height = LayoutParams.WRAP_CONTENT;
 
                     input.setLayoutParams(lp);
+
+                    // Store the result of the content for processing later
+                    input.setOnContentChangedListener(new OnContentChangedListener() {
+                        @Override
+                        public void onContentChanged() {
+                            ConverserInputResult result = new ConverserInputResult();
+                            input.onReplyDataRequired(result);
+                            stashMultiChoiceInputData(result);
+                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                        }
+                    });
 
                     contentLayout.addView(input);
                     inputs.add(input);
@@ -370,17 +410,35 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     lp.height = LayoutParams.WRAP_CONTENT;
 
                     input.setLayoutParams(lp);
+                    input.setOnContentChangedListener(new OnContentChangedListener() {
+                        @Override
+                        public void onContentChanged() {
+                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                        }
+                    });
 
                     contentLayout.addView(input);
                     inputs.add(input);
                 } else if (content instanceof NPSInput) {
                     NPSlider slider = (NPSlider) getLayoutInflater(null).inflate(R.layout.cio__npslider, contentLayout, false);
                     slider.setModel((NPSInput) content);
+                    slider.setOnContentChangedListener(new OnContentChangedListener() {
+                        @Override
+                        public void onContentChanged() {
+                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                        }
+                    });
                     contentLayout.addView(slider);
                     inputs.add(slider);
                 } else if (content instanceof CalendarInput) {
                     CalendarInputControl cic = (CalendarInputControl) getLayoutInflater(null).inflate(R.layout.cio__calendar_input, contentLayout, false);
                     cic.setModel((CalendarInput) content);
+                    cic.setOnContentChangedListener(new OnContentChangedListener() {
+                        @Override
+                        public void onContentChanged() {
+                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                        }
+                    });
 
                     contentLayout.addView(cic);
                     inputs.add(cic);
@@ -395,22 +453,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         // TODO: STM This onclick also has to respect the ConverserContent and send swrve events via that channel
         if (v instanceof ConverserControl) {
             // Ok, lets do this....
-            if (v instanceof DatePickerButton) {
-                final DateChoice dpModel = ((DatePickerButton) v).getModel();
-                Calendar rightNow = Calendar.getInstance();
-                DatePickerDialog dpd = new DatePickerDialog(getActivity(), new OnDateSetListener() {
 
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        Calendar targetTime = new GregorianCalendar(year, monthOfYear, dayOfMonth);
-                        // TODO: STM Update this to send a SwrveEvent after the DateDialog has been filled in.
-                        ConversationReply reply = new ConversationReply();
-                        reply.getData().put(dpModel.getTag(), targetTime);
-                        sendReply(dpModel, reply);
-                    }
-                }, rightNow.get(Calendar.YEAR) - 1900, rightNow.get(Calendar.MONTH), rightNow.get(Calendar.DAY_OF_MONTH));
-                dpd.show();
-            } else if (v instanceof Button) {
+            // When a control is clicked, a navigation event or action event occurs. We then send all the queued SwrveEvents which have been queued for this page
+            commitUserInputsToEvents();
+
+            if (v instanceof Button) {
                 ConversationReply reply = new ConversationReply();
                 Button convButton = (Button) v;
                 ButtonControl model = convButton.getModel();
@@ -418,8 +465,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     CustomBehaviours customBehaviours = new CustomBehaviours(this.getActivity(), this.getActivity().getApplicationContext());
                     ControlActions actions = ((ConverserControl) v).getModel().getActions();
                     if (actions.isCall()) {
-                        sendSwrveEvent("Swrve.Conversations.call");
                         sendReply(model, reply);
+                        sendCallActionEvent();
                         customBehaviours.openDialer(actions.getCallUri(), this.getActivity());
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
@@ -430,32 +477,31 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                         if (Boolean.parseBoolean(ext) == true) {
                             sendReply(model, reply);
-                            sendSwrveEvent("Swrve.Conversations.link");
+                            sendLinkActionEvent();
                             customBehaviours.openIntentWebView(uri, this.getActivity(), referrer);
                         } else if (Boolean.parseBoolean(ext) == false) {
-                            sendSwrveEvent("Swrve.Conversations.link");
+                            sendLinkActionEvent();
                             customBehaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
                         } else {
 
                         }
                     }
                 } else {
-                    // Send a simple reply
+                    // There are no actions associated with Button. Send a normal reply
                     sendReply(model, reply);
                 }
-           } else {
-           }
+            } else {
+                // Unknown button type was clicked
+            }
         }
     }
 
-    private void sendSwrveEvent(String eventName){
+    /**
+     * Go through each of the recorded interactions the user has with the page and queue them as events
+     */
+    private void commitUserInputsToEvents() {
         //  TODO: STM whats the best way to hook back into the controller/swrveConversation and send events
-        Log.i(LOG_TAG, "Sending Event " + eventName);
-        swrveConversation.getConversationController().event(eventName);
-    }
-
-    private void queueSwrveEvent(String eventName, HashMap<String, Object> payload){
-
+        Log.i(LOG_TAG, "Sending all conversation events for page: " + page.getName());
     }
 
     /**
@@ -490,24 +536,118 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         ConversationPage nextPage = swrveConversation.getPageForControl(control);
-        if(nextPage != null)
-        {
-            sendSwrveEvent("Swrve.Conversations.page");
-            displayConversation(nextPage);
-        }else
-        {
+        if (nextPage != null) {
+            sendTransitionPageEvent();
+            openConversationOnPage(nextPage);
+        } else {
             Log.e(LOG_TAG, "No more pages in this conversation. This is not normal and the conversation will end prematurely");
-            sendSwrveEvent("Swrve.Conversations.error");
+            sendErrorNavigationEvent(null, null);
             getActivity().finish();
         }
+    }
+
+    public void onBackPressed() {
+        sendCancelNavigationEvent(null);
+        commitUserInputsToEvents();
     }
 
     private class DoneButtonListener implements OnClickListener {
         @Override
         public void onClick(View v) {
             Activity act = getActivity();
-            sendSwrveEvent("Swrve.Conversation.done");
+            sendDoneNavigationEvent();
+            commitUserInputsToEvents();
             act.finish();
+        }
+    }
+
+    // Events
+    private void sendStartNavigationEvent() {
+        if (controller != null) {
+            controller.conversationWasStartedByUser(swrveConversation);
+        }
+    }
+
+    private void sendDoneNavigationEvent() {
+        if (controller != null) {
+            controller.conversationWasFinishedByUser(swrveConversation, null);
+        }
+    }
+
+    private void sendErrorNavigationEvent(ConversationReply reply, Exception e) {
+        if (controller != null) {
+            controller.conversationEncounteredError(swrveConversation, null);
+        }
+    }
+
+    private void sendCancelNavigationEvent(ConversationReply reply) {
+        if (controller != null) {
+            controller.conversationWasCancelledByUser(swrveConversation, reply);
+        }
+    }
+
+    private void sendTransitionPageEvent() {
+        if (controller != null) {
+
+        }
+    }
+
+    private void sendLinkActionEvent() {
+        if (controller != null) {
+
+        }
+    }
+
+
+    private void sendCallActionEvent() {
+        if (controller != null) {
+
+        }
+    }
+
+    // For each of the content portions we store data about them which is then committed at a later point
+    private void stashVideoViewed(HtmlVideoView v) {
+        if (controller != null) {
+            // TODO: Is there any data we can record about clicked video views?
+            ConversationAtom content = v.getModel();
+            String key = content.getTag();
+            userData.put(key, null);
+        }
+    }
+
+    private void stashMultiChoiceInputData(ConverserInputResult data) {
+        if (controller != null) {
+            Log.i("SHANEDEBUG", data.toString());
+        }
+    }
+
+    private void stashMultiChoiceLongInputData(ConverserInputResult data) {
+        if (controller != null) {
+
+        }
+    }
+
+    private void stashRatingInputData(ConverserInputResult data) {
+        if (controller != null) {
+            // TODO: STM Not yet implemented since we don't have a rating view
+        }
+    }
+
+    private void stashCalendarInputData(ConverserInputResult data) {
+        if (controller != null) {
+            Log.i("SHANEDEBUG", data.toString());
+        }
+    }
+
+    private void stashNPSInputData(ConverserInputResult data) {
+        if (controller != null) {
+            Log.i("SHANEDEBUG", data.toString());
+        }
+    }
+
+    private void stashEditTextControlInputData(ConverserInputResult data) {
+        if (controller != null) {
+            Log.i("SHANEDEBUG", data.toString());
         }
     }
 }

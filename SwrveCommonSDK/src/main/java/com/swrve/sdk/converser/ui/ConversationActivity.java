@@ -13,6 +13,7 @@ import com.swrve.sdk.converser.SwrveConversation;
  * @author Jason Connery
  */
 public class ConversationActivity extends FragmentActivity {
+    private static final String LOG_TAG = "ConversationActivity";
     /* TODO: STM : This is a complete hack to get things running. It will work but is by now means a good practice.
     The way ConversationActivities work is they accept a bundled conversation blob or reference and then use that to display the conversation.
     User interaction is recorded via a ConversationEngine or API. This will not work 100% with the SwrveConversations since they have multiple objects,
@@ -30,6 +31,7 @@ public class ConversationActivity extends FragmentActivity {
 
     public static SwrveConversation globalConversation;
     private SwrveConversation localConversation;
+    private ConversationFragment conversationFragment;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,8 +41,8 @@ public class ConversationActivity extends FragmentActivity {
         try {
             if (localConversation != null) {
                 FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                ConversationFragment frag = ConversationFragment.create(localConversation);
-                ft.replace(android.R.id.content, frag, "conversation");
+                conversationFragment = ConversationFragment.create(localConversation);
+                ft.replace(android.R.id.content, conversationFragment, "conversation");
                 ft.commit();
             } else {
                 Log.e("ConversationActivity", "Could not render ConversationActivity. No SwrveConversation was detected");
@@ -52,4 +54,13 @@ public class ConversationActivity extends FragmentActivity {
         }
     }
 
+    @Override
+    public void onBackPressed(){
+        try {
+            conversationFragment.onBackPressed();
+        }catch(NullPointerException ne){
+            Log.e(LOG_TAG, "Could not call the ConversationFragments onBackPressed()", ne);
+        }
+        super.onBackPressed();
+    }
 }
