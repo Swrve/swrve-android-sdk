@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class ConversationDetail {
+public class ConversationPage {
 
 
     private String tag;
@@ -82,12 +82,12 @@ public class ConversationDetail {
     }
 
 
-    public ConversationDetail fromJSON(String json){
+    public ConversationPage fromJSON(String json){
         Gson gson = GsonHelper.getConfiguredGson();
-        return gson.fromJson(json, ConversationDetail.class);
+        return gson.fromJson(json, ConversationPage.class);
     }
 
-    public ConversationDetail fromJson(JSONObject json){
+    public ConversationPage fromJson(JSONObject json){
         return fromJSON(json.toString());
     }
 

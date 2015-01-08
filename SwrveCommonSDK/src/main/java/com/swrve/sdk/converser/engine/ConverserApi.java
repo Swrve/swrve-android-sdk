@@ -8,7 +8,7 @@ import com.google.ciogson.JsonParseException;
 import com.google.ciogson.JsonSyntaxException;
 import com.swrve.sdk.common.BuildConfig;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
-import com.swrve.sdk.converser.engine.model.ConversationDetail;
+import com.swrve.sdk.converser.engine.model.ConversationPage;
 import com.swrve.sdk.converser.engine.model.ConversationReply;
 import com.swrve.sdk.converser.engine.model.Conversations;
 import com.swrve.sdk.converser.engine.model.SubscribeRequest;
@@ -189,7 +189,7 @@ class ConverserApi {
         return null;
     }
 
-    public ConversationDetail getConversationDetail(String ref) throws ApiException {
+    public ConversationPage getConversationDetail(String ref) throws ApiException {
         try {
 
             URL url = new URL(baseUrl + "/conversation/" + ref);
@@ -203,7 +203,7 @@ class ConverserApi {
                 if (rCode == 204) {
                     // No content to be expected
                     // The conversation has most likely finished or is no longer available. Create an empty conversation detail to pass up to the Engine
-                    ConversationDetail finishedConversationDetails = new ConversationDetail();
+                    ConversationPage finishedConversationDetails = new ConversationPage();
                     finishedConversationDetails.setName("");
                     finishedConversationDetails.setTitle("");
                     finishedConversationDetails.setSubtitle("");
@@ -222,7 +222,7 @@ class ConverserApi {
                     String tag;
                     String msg;
                     try {
-                        ConversationDetail cd = gson.fromJson(responseData, ConversationDetail.class);
+                        ConversationPage cd = gson.fromJson(responseData, ConversationPage.class);
                         return cd;
 
                     } catch (JsonSyntaxException ex) {
@@ -257,7 +257,7 @@ class ConverserApi {
         return null;
     }
 
-    public ConversationDetail sendConversationReply(String ref, ConversationReply conversationReply) throws ApiException {
+    public ConversationPage sendConversationReply(String ref, ConversationReply conversationReply) throws ApiException {
 
         try {
 
@@ -276,7 +276,7 @@ class ConverserApi {
                 if (rCode == 204) {
                     // No content to be expected
                     // The conversation has most likely finished or is no longer available. Create an empty conversation detail to pass up to the Engine
-                    ConversationDetail finishedConversationDetails = new ConversationDetail();
+                    ConversationPage finishedConversationDetails = new ConversationPage();
                     finishedConversationDetails.setName("");
                     finishedConversationDetails.setTitle("");
                     finishedConversationDetails.setSubtitle("");
@@ -295,7 +295,7 @@ class ConverserApi {
 
                     try {
 
-                        ConversationDetail cd = gson.fromJson(responseData, ConversationDetail.class);
+                        ConversationPage cd = gson.fromJson(responseData, ConversationPage.class);
                         return cd;
 
                     } catch (JsonSyntaxException ex) {
