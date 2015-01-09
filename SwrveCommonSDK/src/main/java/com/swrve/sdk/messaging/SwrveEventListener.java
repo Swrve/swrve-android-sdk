@@ -5,6 +5,7 @@ import android.content.Context;
 import com.swrve.sdk.ISwrveEventListener;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.converser.ISwrveConversationListener;
 import com.swrve.sdk.converser.SwrveConversation;
 
 import java.lang.ref.WeakReference;
