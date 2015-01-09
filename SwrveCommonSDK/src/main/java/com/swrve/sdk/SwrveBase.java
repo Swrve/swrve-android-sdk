@@ -14,9 +14,11 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.converser.engine.model.ConversationReply;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
-import com.swrve.sdk.messaging.ISwrveConversationListener;
+import com.swrve.sdk.converser.ISwrveConversationListener;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -1126,6 +1128,149 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    protected void _conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            String baseEvent = "Swrve.Conversations." + conversation.getId() + ".";
+
+            /* Structure of userInteractions
+                 {
+                   "<page-id>-<content-id>" =>
+                       {
+                           'type' => "video/nps/play/text etc...",
+                           'result' => "either a string or a HashMap as a string"
+                       }
+                 }
+            */
+
+            for (ConverserInputResult userInteraction : userInteractions){
+                Map<String, String> payload = new HashMap<String, String>();
+                Map<String, Object> parameters = new HashMap<String, Object>();
+
+                String viewEvent = baseEvent + userInteraction.getType();
+                parameters.put("name", viewEvent);
+                payload.put("result", userInteraction.getResultAsString());
+                queueEvent("event", parameters, payload);
+            }
+            saveCampaignSettings();
+        }
+    }
+
+    protected void _conversationCallWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            if (campaign != null) {
+                // TODO: STM Does this make sense in the context of conversations?
+                // campaign.conversationWasShownToUser(messageFormat);
+            }
+
+            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".call";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("page", pageTag);
+            payload.put("control", controlTag);
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
+    protected void _conversationLinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".link";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("page", pageTag);
+            payload.put("control", controlTag);
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
+    protected void _conversationWasStartedByUser(SwrveConversation conversation) {
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            if (campaign != null) {
+                // TODO: STM Does this make sense in the context of conversations?
+                // campaign.conversationWasShownToUser(messageFormat);
+            }
+
+            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".start";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
+    protected void _conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".done";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("page", endPageTag); //The final page the user ended on
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
+    protected void _conversationWasCancelledByUser(SwrveConversation conversation, String currentPageTag) {
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".cancel";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("page", currentPageTag); //The current page the user is on when they cancelled
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
+
+    protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".page";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("to", toPageTag); // The page the user ended on
+            payload.put("from", fromPageTag); // The page the user came on
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
+    protected void _conversationEncounteredError(SwrveConversation conversation, String currentPageTag,  Exception e) {
+        if (conversation != null) {
+            SwrveCampaign campaign = conversation.getCampaign();
+            // TODO: In the event of an exception passed in. Do we want to report it somewhere?
+            String viewEvent = "Swrve.Conversations.error";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("page", currentPageTag);
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
+
+
+
     protected String _getAppStoreURLForApp(int appId) {
         return appStoreURLs.get(appId);
     }
@@ -1474,6 +1619,70 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
         try {
             _messageWasShownToUser(messageFormat);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    public void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
+        try {
+            _conversationEventsCommitedByUser(conversation, userInteractions);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    public void conversationLinkActionCalledByUser(SwrveConversation conversation, String controlTag){
+        try {
+//            _conversationLinkWasAccessedByUser(conversation, controlTag);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    public void conversationCallActionCalledByUser(SwrveConversation conversation, String controlTag){
+        try {
+//            _conversationCallWasAccessedByUser(conversation, controlTag);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    public void conversationWasStartedByUser(SwrveConversation conversation) {
+        try {
+            _conversationWasStartedByUser(conversation);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
+        try {
+            _conversationWasFinishedByUser(conversation, endPageTag);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    public void conversationEncounteredError(SwrveConversation conversation, String currentPageTag, Exception e) {
+        try {
+            _conversationEncounteredError(conversation, currentPageTag, e);
+        } catch (Exception e2) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e2);
+        }
+    }
+
+    public void conversationWasCancelledByUser(SwrveConversation conversation, String finalPageTag) {
+        try {
+            _conversationWasCancelledByUser(conversation, finalPageTag);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    public void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
+        try {
+            _conversationTransitionedToOtherPage(conversation, fromPageTag, toPageTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }

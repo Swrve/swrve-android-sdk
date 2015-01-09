@@ -42,6 +42,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -71,7 +72,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ConversationPage page;
     private SwrveBase controller;
     private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
-    private HashMap<String, Map<String, Object>> userData = new HashMap<>();
+    private HashMap<String, ConverserInputResult> userInteractionData = new HashMap<>();
 
 
     public static ConversationFragment create(SwrveConversation swrveConversation) {
@@ -329,11 +330,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                     // Let the eventListener know that something has happened to the video
                     final HtmlVideoView cloneView = view;
+                    final String tag = content.getTag();
                     view.setOnTouchListener(new View.OnTouchListener() {
                         @Override
                         public boolean onTouch(View v, MotionEvent event) {
                             // TODO: STM Due the fact that we render video in HTML, its very difficult to detect when a video has started/stopped  playing. For now all we can say is that the video was touched. Note that on click listeners behave strange with WebViews
-                            stashVideoViewed(cloneView);
+                            stashVideoViewed(page.getName(), tag, cloneView);
                             return false;
                         }
                     });
@@ -354,24 +356,27 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             } else if (content instanceof InputBase) {
                 if (content instanceof TextInput) {
                     // Do stuff for text
-                    final TextInput inputModel = (TextInput) content;
+                    TextInput inputModel = (TextInput) content;
 
                     EditTextControl etc = (EditTextControl) getLayoutInflater(null).inflate(R.layout.cio__edittext_input, contentLayout, false);
                     etc.setModel(inputModel);
 
                     // Store the result of the content for processing later
-                    final EditTextControl etcCloneReference = etc;
+                    final EditTextControl etcReference = etc;
+                    final String tag = content.getTag();
                     etc.setOnContentChangedListener(new OnContentChangedListener() {
                         @Override
                         public void onContentChanged() {
-                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                            HashMap<String, Object> result = new HashMap<String, Object>();
+                            etcReference.onReplyDataRequired(result);
+                            stashEditTextControlInputData(page.getName(), tag, result);
                         }
                     });
 
                     contentLayout.addView(etc);
                     inputs.add(etc);
                 } else if (content instanceof MultiValueInput) {
-                    final MultiValueInputControl input = new MultiValueInputControl(activity, null, (MultiValueInput) content);
+                    MultiValueInputControl input = new MultiValueInputControl(activity, null, (MultiValueInput) content);
 
                     LayoutParams lp;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -384,14 +389,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                     input.setLayoutParams(lp);
 
+                    final MultiValueInputControl mvicReference = input;
+                    final String tag = content.getTag();
                     // Store the result of the content for processing later
                     input.setOnContentChangedListener(new OnContentChangedListener() {
                         @Override
                         public void onContentChanged() {
-                            ConverserInputResult result = new ConverserInputResult();
-                            input.onReplyDataRequired(result);
-                            stashMultiChoiceInputData(result);
-                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                            HashMap<String, Object> result = new HashMap<String, Object>();
+                            mvicReference.onReplyDataRequired(result);
+                            stashMultiChoiceInputData(page.getName(), tag, result);
                         }
                     });
 
@@ -399,7 +405,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
                     MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
-
                     LayoutParams lp;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         lp = new LayoutParams(controlLp);
@@ -410,10 +415,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     lp.height = LayoutParams.WRAP_CONTENT;
 
                     input.setLayoutParams(lp);
+                    final MultiValueLongInputControl mviclReference = input;
+                    final String tag = content.getTag();
                     input.setOnContentChangedListener(new OnContentChangedListener() {
                         @Override
                         public void onContentChanged() {
-                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                            HashMap<String, Object> result = new HashMap<String, Object>();
+                            mviclReference.onReplyDataRequired(result);
+                            stashMultiChoiceLongInputData(page.getName(), tag, result);
                         }
                     });
 
@@ -422,10 +431,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 } else if (content instanceof NPSInput) {
                     NPSlider slider = (NPSlider) getLayoutInflater(null).inflate(R.layout.cio__npslider, contentLayout, false);
                     slider.setModel((NPSInput) content);
+                    final NPSlider sliderReference = slider;
+                    final String tag = content.getTag();
                     slider.setOnContentChangedListener(new OnContentChangedListener() {
                         @Override
                         public void onContentChanged() {
-                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                            HashMap<String, Object> result = new HashMap<String, Object>();
+                            sliderReference.onReplyDataRequired(result);
+                            stashNPSInputData(page.getName(), tag, result);
                         }
                     });
                     contentLayout.addView(slider);
@@ -433,10 +446,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 } else if (content instanceof CalendarInput) {
                     CalendarInputControl cic = (CalendarInputControl) getLayoutInflater(null).inflate(R.layout.cio__calendar_input, contentLayout, false);
                     cic.setModel((CalendarInput) content);
+                    final CalendarInputControl cicReference = cic;
                     cic.setOnContentChangedListener(new OnContentChangedListener() {
                         @Override
                         public void onContentChanged() {
-                            Log.i("SHANEDEBUG", "CONTENT CHANGED");
+                            HashMap<String, Object> result = new HashMap<String, Object>();
+                            cicReference.onReplyDataRequired(result);
+                            stashCalendarInputData(page.getName(), cicReference.getModel().getTag(), result);
                         }
                     });
 
@@ -466,7 +482,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     ControlActions actions = ((ConverserControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
-                        sendCallActionEvent();
+                        sendCallActionEvent(model);
                         customBehaviours.openDialer(actions.getCallUri(), this.getActivity());
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
@@ -477,10 +493,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                         if (Boolean.parseBoolean(ext) == true) {
                             sendReply(model, reply);
-                            sendLinkActionEvent();
+                            sendLinkActionEvent(model);
                             customBehaviours.openIntentWebView(uri, this.getActivity(), referrer);
                         } else if (Boolean.parseBoolean(ext) == false) {
-                            sendLinkActionEvent();
+                            sendLinkActionEvent(model);
                             customBehaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
                         } else {
 
@@ -500,8 +516,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      * Go through each of the recorded interactions the user has with the page and queue them as events
      */
     private void commitUserInputsToEvents() {
-        //  TODO: STM whats the best way to hook back into the controller/swrveConversation and send events
-        Log.i(LOG_TAG, "Sending all conversation events for page: " + page.getName());
+        Log.i(LOG_TAG, "Commiting all stashed events");
+        String currentPage = page.getName();
+        ArrayList<ConverserInputResult> userInputEvents = new ArrayList<>();
+        for(String k : userInteractionData.keySet()) {
+            ConverserInputResult r = userInteractionData.get(k);
+            userInputEvents.add(r);
+        }
+        controller.conversationEventsCommitedByUser(swrveConversation, userInputEvents);
     }
 
     /**
@@ -537,11 +559,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         ConversationPage nextPage = swrveConversation.getPageForControl(control);
         if (nextPage != null) {
-            sendTransitionPageEvent();
+            sendTransitionPageEvent(control.getTag(), control.getTarget());
             openConversationOnPage(nextPage);
         } else {
             Log.e(LOG_TAG, "No more pages in this conversation. This is not normal and the conversation will end prematurely");
-            sendErrorNavigationEvent(null, null);
+            sendErrorNavigationEvent(page.getName(), null); // No exception. We just couldn't find a page
             getActivity().finish();
         }
     }
@@ -555,7 +577,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         @Override
         public void onClick(View v) {
             Activity act = getActivity();
-            sendDoneNavigationEvent();
+            // TODO: STM How can we get hold of the current page from here?
+            sendDoneNavigationEvent("");
             commitUserInputsToEvents();
             act.finish();
         }
@@ -568,86 +591,110 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void sendDoneNavigationEvent() {
+    private void sendDoneNavigationEvent(String endPageTag) {
         if (controller != null) {
-            controller.conversationWasFinishedByUser(swrveConversation, null);
+            controller.conversationWasFinishedByUser(swrveConversation, endPageTag);
         }
     }
 
-    private void sendErrorNavigationEvent(ConversationReply reply, Exception e) {
+    private void sendCancelNavigationEvent(String currentPageTag) {
         if (controller != null) {
-            controller.conversationEncounteredError(swrveConversation, null);
+            controller.conversationWasCancelledByUser(swrveConversation, currentPageTag);
         }
     }
 
-    private void sendCancelNavigationEvent(ConversationReply reply) {
+    private void sendErrorNavigationEvent(String currentPageTag, Exception e) {
         if (controller != null) {
-            controller.conversationWasCancelledByUser(swrveConversation, reply);
+            controller.conversationEncounteredError(swrveConversation, currentPageTag, e);
         }
     }
 
-    private void sendTransitionPageEvent() {
+    private void sendTransitionPageEvent(String currentPageTag, String targetPageTag) {
         if (controller != null) {
-
+            controller.conversationTransitionedToOtherPage(swrveConversation, currentPageTag, targetPageTag);
         }
     }
 
-    private void sendLinkActionEvent() {
+    private void sendLinkActionEvent(ConversationAtom control) {
         if (controller != null) {
-
+            controller.conversationLinkActionCalledByUser(swrveConversation, control.getTag());
         }
     }
 
 
-    private void sendCallActionEvent() {
+    private void sendCallActionEvent(ConversationAtom control) {
         if (controller != null) {
-
+            controller.conversationCallActionCalledByUser(swrveConversation, control.getTag());
         }
     }
 
     // For each of the content portions we store data about them which is then committed at a later point
-    private void stashVideoViewed(HtmlVideoView v) {
-        if (controller != null) {
-            // TODO: Is there any data we can record about clicked video views?
-            ConversationAtom content = v.getModel();
-            String key = content.getTag();
-            userData.put(key, null);
+    private void stashVideoViewed(String pageTag, String fragmentTag, HtmlVideoView v) {
+        // TODO: Is there any data we can record about clicked video views?
+        String key = pageTag + "-" + fragmentTag;
+        String type = "play";
+        ConverserInputResult result = new ConverserInputResult();
+        result.type = type;
+        result.result = "";
+        userInteractionData.put(key, result);
+    }
+
+    private void stashMultiChoiceInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
+        String key = pageTag + "-" + fragmentTag;
+        String type = "choice";
+        for (String k : data.keySet()) {
+            ConverserInputResult result = new ConverserInputResult();
+            result.type = type;
+            result.result = data.get(k);
+            userInteractionData.put(key, result);
         }
     }
 
-    private void stashMultiChoiceInputData(ConverserInputResult data) {
-        if (controller != null) {
-            Log.i("SHANEDEBUG", data.toString());
+    private void stashMultiChoiceLongInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
+        String key = pageTag + "-" + fragmentTag;
+        String type = "multi-choice";
+        for (String k : data.keySet()) {
+            ConverserInputResult result = new ConverserInputResult();
+            result.type = type;
+            result.result = data.get(k);
+            userInteractionData.put(key, result);
         }
     }
 
-    private void stashMultiChoiceLongInputData(ConverserInputResult data) {
-        if (controller != null) {
+    private void stashEditTextControlInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
+        String key = pageTag + "-" + fragmentTag;
+        String type = "text";
+        for (String k : data.keySet()) {
+            ConverserInputResult result = new ConverserInputResult();
+            result.type = type;
+            result.result = data.get(k);
+            userInteractionData.put(key, result);
+        }
+    }
 
+    private void stashCalendarInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
+        String key = pageTag + "-" + fragmentTag;
+        String type = "calendar";
+        for (String k : data.keySet()) {
+            ConverserInputResult result = new ConverserInputResult();
+            result.type = type;
+            result.result = data.get(k);
+            userInteractionData.put(key, result);
+        }
+    }
+
+    private void stashNPSInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
+        String key = pageTag + "-" + fragmentTag;
+        String type = "nps";
+        for (String k : data.keySet()) {
+            ConverserInputResult result = new ConverserInputResult();
+            result.type = type;
+            result.result = data.get(k);
+            userInteractionData.put(key, result);
         }
     }
 
     private void stashRatingInputData(ConverserInputResult data) {
-        if (controller != null) {
-            // TODO: STM Not yet implemented since we don't have a rating view
-        }
-    }
-
-    private void stashCalendarInputData(ConverserInputResult data) {
-        if (controller != null) {
-            Log.i("SHANEDEBUG", data.toString());
-        }
-    }
-
-    private void stashNPSInputData(ConverserInputResult data) {
-        if (controller != null) {
-            Log.i("SHANEDEBUG", data.toString());
-        }
-    }
-
-    private void stashEditTextControlInputData(ConverserInputResult data) {
-        if (controller != null) {
-            Log.i("SHANEDEBUG", data.toString());
-        }
+        // TODO: STM Not yet implemented since we don't have a rating view yet
     }
 }
