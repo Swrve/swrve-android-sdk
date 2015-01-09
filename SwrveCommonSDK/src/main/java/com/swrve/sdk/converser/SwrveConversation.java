@@ -60,7 +60,16 @@ public class SwrveConversation {
     public SwrveConversation(SwrveBase<?, ?> controller, SwrveCampaign campaign, JSONObject conversationData) throws JSONException {
         this(controller, campaign);
 
-        setId(conversationData.getInt("id"));
+        try{
+            setId(conversationData.getInt("id"));
+        }catch(Exception e){
+            try{
+                setId(Integer.valueOf(conversationData.getString("id")));
+            }catch(Exception c){
+
+            }
+        }
+
         setName(conversationData.getString("name"));
         setDescription(conversationData.getString("description"));
 
