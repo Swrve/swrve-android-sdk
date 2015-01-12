@@ -941,7 +941,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, String> payload = new HashMap<String, String>();
             payload.put("id", String.valueOf(result.getId()));
             Map<String, Object> parameters = new HashMap<String, Object>();
-            // TODO: STM Ensure that the namespace Swrve.Conversations.conversation_returned is the correct namespace and everything is OK with that
             parameters.put("name", "Swrve.Conversations.conversation_returned");
             queueEvent("event", parameters, payload);
         }
