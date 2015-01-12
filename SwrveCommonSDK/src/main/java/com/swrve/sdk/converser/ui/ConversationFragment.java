@@ -51,17 +51,6 @@ import java.util.Set;
  * @author Jason Connery
  */
 public class ConversationFragment extends Fragment implements OnClickListener {
-    public static final String SWRVE_EVENT_NAVIGATION_START = "Swrve.Conversation.start";
-    public static final String SWRVE_EVENT_NAVIGATION_DONE = "Swrve.Conversation.done";
-    public static final String SWRVE_EVENT_NAVIGATION_ERROR = "Swrve.Conversations.error";
-    public static final String SWRVE_EVENT_NAVIGATION_PAGE = "Swrve.Conversations.page";
-    public static final String SWRVE_EVENT_NAVIGATION_CANCEL = "Swrve.Conversations.cancel";
-    public static final String SWRVE_EVENT_ACTION_LINK = "Swrve.Conversations.link";
-    public static final String SWRVE_EVENT_ACTION_CALL = "Swrve.Conversations.call";
-
-    private static final String ARG_CONVERSATION_REF = "io.converser.conversationRef";
-
-
     private static final String LOG_TAG = "ConversationFragment";
 
     private ViewGroup root;
