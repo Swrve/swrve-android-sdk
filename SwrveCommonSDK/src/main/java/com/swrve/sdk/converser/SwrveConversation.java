@@ -102,7 +102,7 @@ public class SwrveConversation {
      * @return Does the conversation support this orientation
      */
     public boolean supportsOrientation(Object o) {
-        // TODO: STM Since conversations in the ConverserSDK work in both orientations, this should always return true. Is this OK?
+        // Conversations always support both orientations
         return true;
     }
 
@@ -110,7 +110,7 @@ public class SwrveConversation {
      * @return has the conversation been downloaded fully yet
      */
     public boolean isDownloaded() {
-        // TODO: Are conversations always downloaded at this point in time or do they have to go the same route as messages?
+        // TODO: update this to check and see if the conversation has had all its assets downloaded.
         return true;
     }
 

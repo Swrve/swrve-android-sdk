@@ -245,8 +245,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     Log.e(LOG_TAG, "Can't display a conversation with a non-Activity context");
                                     return;
                                 }
-                                // Run code on the UI thread
-                                // TODO: STM This is the portion of code which is responsible for calling the ConverserSDK with a particular conversation. This guy is the main entry point into the UI of the ConverserSDK
+                                // Run Conversation code on the UI thread
                                 activity.runOnUiThread(new DisplayConversationRunnable(SwrveBase.this, activity, conversation, firstTime));
                             }
                         }
@@ -899,7 +898,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 while (campaign == null && itCandidateConversation.hasNext()) {
                     SwrveConversation candidateConversation = itCandidateConversation.next();
                     // Check that the conversation supports the current orientation
-                    // TODO STM: Since Conversations support both orientations, maybe it would be better to remove this?
                     if (candidateConversation.supportsOrientation(orientation)) {
                         result = candidateConversation;
                         campaign = candidateConversation.getCampaign();
@@ -1129,7 +1127,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
             String baseEvent = "Swrve.Conversations." + conversation.getId() + ".";
 
             /* Structure of userInteractions
@@ -1157,12 +1154,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationCallWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
-            if (campaign != null) {
-                // TODO: STM Does this make sense in the context of conversations?
-                // campaign.conversationWasShownToUser(messageFormat);
-            }
-
             String viewEvent = "Swrve.Conversations." + conversation.getId() + ".call";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
@@ -1177,7 +1168,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationLinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
             String viewEvent = "Swrve.Conversations." + conversation.getId() + ".link";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
@@ -1194,8 +1184,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (conversation != null) {
             SwrveCampaign campaign = conversation.getCampaign();
             if (campaign != null) {
-                // TODO: STM Does this make sense in the context of conversations?
-                // campaign.conversationWasShownToUser(messageFormat);
+                campaign.conversationWasShownToUser(conversation);
             }
 
             String viewEvent = "Swrve.Conversations." + conversation.getId() + ".start";
@@ -1210,7 +1199,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
             String viewEvent = "Swrve.Conversations." + conversation.getId() + ".done";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
@@ -1224,7 +1212,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationWasCancelledByUser(SwrveConversation conversation, String currentPageTag) {
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
             String viewEvent = "Swrve.Conversations." + conversation.getId() + ".cancel";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
@@ -1239,7 +1226,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
             String viewEvent = "Swrve.Conversations." + conversation.getId() + ".page";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
@@ -1254,10 +1240,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationEncounteredError(SwrveConversation conversation, String currentPageTag,  Exception e) {
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
-            // TODO: In the event of an exception passed in. Do we want to report it somewhere?
             String viewEvent = "Swrve.Conversations.error";
-            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            if (e!=null){
+                Log.e(LOG_TAG, "Sending error conversation event: " + viewEvent, e);
+            }else{
+                Log.e(LOG_TAG, "Sending error conversations event: (No Exception) " + viewEvent);
+            }
+
+            Log.i(LOG_TAG, "Sending error conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
@@ -1266,9 +1256,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             saveCampaignSettings();
         }
     }
-
-
-
 
     protected String _getAppStoreURLForApp(int appId) {
         return appStoreURLs.get(appId);

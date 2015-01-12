@@ -270,7 +270,6 @@ public class SwrveCampaign {
      * @return true if the campaign has this event as a trigger
      */
     public boolean hasMessageForEvent(String eventName) {
-        // TODO: STM QUESTION. So does this mean that only triggers which are lowercase can trigger be counted as events?
         String lowerCaseEvent = eventName.toLowerCase(Locale.US);
         return triggers != null && triggers.contains(lowerCaseEvent);
     }
@@ -369,7 +368,6 @@ public class SwrveCampaign {
      */
     public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
         int conversationsCount = conversations.size();
-        // TODO: STM This method must match the getMessageForEvent
         if (!hasConversationForEvent(event)) {
             Log.i(LOG_TAG, "There is no trigger in " + id + " that matches " + event);
             return null;
@@ -619,6 +617,18 @@ public class SwrveCampaign {
             Log.i(LOG_TAG, "Next message in campaign " + getId() + " is random");
         }
     }
+
+    /**
+     * Notify that a message was shown to the user.
+     *
+     * @param swrveConversation SwrveConversation shown to the user.
+     */
+    public void conversationWasShownToUser(SwrveConversation swrveConversation) {
+        // Set next message to be shown
+        // TODO: Implement so that conversations can be marked as shown and the round robin selection will behave similar to messageWasShowToUser()
+    }
+
+
 
     /**
      * Notify that a message was dismissed.

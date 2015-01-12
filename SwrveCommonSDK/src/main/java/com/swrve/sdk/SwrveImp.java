@@ -653,8 +653,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                                             SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
                                             if (conversation != null && conversation.supportsOrientation(getDeviceOrientation())) {
                                                 conversationListener.onMessage(conversation, true);
-                                                // STM TODO: This piece for disable autoShowMessages doesn't make sense from the Conversations perspective. Check to see if it makes sense to keep this.
-                                                autoShowMessagesEnabled = false;
                                             }
                                         }
                                     } catch (Exception exp) {
