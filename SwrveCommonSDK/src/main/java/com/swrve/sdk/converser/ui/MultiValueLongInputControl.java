@@ -23,7 +23,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
 
     private MultiValueLongInput model;
     private HashMap<String, String> responses = new HashMap<String, String>();
-    private OnContentChangedListener onContentChangedListener; // TODO: STM This is a bit hacky since MVLIC don't have their own extendable listeners. Basically at some point when the usual listener gets called, this guy will getNotified
+    private OnContentChangedListener onContentChangedListener;
 
     public MultiValueLongInputControl(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
