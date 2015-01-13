@@ -1617,17 +1617,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationLinkActionCalledByUser(SwrveConversation conversation, String controlTag){
+    public void conversationLinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
         try {
-//            _conversationLinkWasAccessedByUser(conversation, controlTag);
+            _conversationLinkWasAccessedByUser(conversation, fromPageTag, toActionTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
-    public void conversationCallActionCalledByUser(SwrveConversation conversation, String controlTag){
+    public void conversationCallActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
         try {
-//            _conversationCallWasAccessedByUser(conversation, controlTag);
+            _conversationCallWasAccessedByUser(conversation, fromPageTag, toActionTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
