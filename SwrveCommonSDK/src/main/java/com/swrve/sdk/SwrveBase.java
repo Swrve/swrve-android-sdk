@@ -1127,7 +1127,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
         if (conversation != null) {
-            String baseEvent = "Swrve.Conversations." + conversation.getId() + ".";
+            String baseEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".";
 
             /* Structure of userInteractions
                  {
@@ -1154,7 +1154,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationCallWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
-            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".call";
+            String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".call";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1168,7 +1168,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationLinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
-            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".link";
+            String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() +".link";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1187,7 +1187,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 campaign.conversationWasShownToUser(conversation);
             }
 
-            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".start";
+            String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".start";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1199,7 +1199,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
         if (conversation != null) {
-            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".done";
+            String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".done";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1212,7 +1212,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationWasCancelledByUser(SwrveConversation conversation, String currentPageTag) {
         if (conversation != null) {
-            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".cancel";
+            String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".cancel";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1226,7 +1226,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
         if (conversation != null) {
-            String viewEvent = "Swrve.Conversations." + conversation.getId() + ".page";
+            String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".page";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1240,7 +1240,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationEncounteredError(SwrveConversation conversation, String currentPageTag,  Exception e) {
         if (conversation != null) {
-            String viewEvent = "Swrve.Conversations.error";
+            String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".error";
             if (e!=null){
                 Log.e(LOG_TAG, "Sending error conversation event: " + viewEvent, e);
             }else{
