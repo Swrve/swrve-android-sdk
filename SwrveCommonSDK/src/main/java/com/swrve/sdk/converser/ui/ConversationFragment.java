@@ -469,7 +469,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     ControlActions actions = ((ConverserControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
-                        sendCallActionEvent(model);
+                        sendCallActionEvent(page.getName(), model);
                         behaviours.openDialer(actions.getCallUri(), this.getActivity());
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
@@ -480,10 +480,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                         if (Boolean.parseBoolean(ext) == true) {
                             sendReply(model, reply);
-                            sendLinkActionEvent(model);
+                            sendLinkActionEvent(page.getName(), model);
                             behaviours.openIntentWebView(uri, this.getActivity(), referrer);
                         } else if (Boolean.parseBoolean(ext) == false) {
-                            sendLinkActionEvent(model);
+                            sendLinkActionEvent(page.getName(), model);
                             behaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
                         } else {
 
@@ -545,10 +545,18 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         ConversationPage nextPage = swrveConversation.getPageForControl(control);
+
         if (nextPage != null) {
             sendTransitionPageEvent(control.getTag(), control.getTarget());
             openConversationOnPage(nextPage);
-        } else {
+        }
+        // If the button is an action event then it will leave the conversations
+        else if(control.hasActions()){
+            Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
+            sendDoneNavigationEvent(page.getName());
+            getActivity().finish();
+        }
+        else {
             Log.e(LOG_TAG, "No more pages in this conversation. This is not normal and the conversation will end prematurely");
             sendErrorNavigationEvent(page.getName(), null); // No exception. We just couldn't find a page
             getActivity().finish();
@@ -556,7 +564,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     public void onBackPressed() {
-        sendCancelNavigationEvent(null);
+        sendCancelNavigationEvent(page.getName());
         commitUserInputsToEvents();
     }
 
@@ -602,16 +610,16 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void sendLinkActionEvent(ConversationAtom control) {
+    private void sendLinkActionEvent(String currentPageTag, ConversationAtom control) {
         if (controller != null) {
-            controller.conversationLinkActionCalledByUser(swrveConversation, control.getTag());
+            controller.conversationLinkActionCalledByUser(swrveConversation, currentPageTag ,control.getTag());
         }
     }
 
 
-    private void sendCallActionEvent(ConversationAtom control) {
+    private void sendCallActionEvent(String currentPageTag, ConversationAtom control) {
         if (controller != null) {
-            controller.conversationCallActionCalledByUser(swrveConversation, control.getTag());
+            controller.conversationCallActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
         }
     }
 

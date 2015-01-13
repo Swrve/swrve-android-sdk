@@ -97,7 +97,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         bindToContext(context);
         afterBind();
         showPreviousMessage();
-        showPreviousConversation();
         return (T) this;
     }
 
@@ -253,7 +252,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                 // Show any previous message after rotation
                 showPreviousMessage();
-                showPreviousConversation();
             }
 
             // Retrieve values for resource/campaigns flush frequencies and ETag

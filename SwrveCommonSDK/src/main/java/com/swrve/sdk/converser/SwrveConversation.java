@@ -109,7 +109,7 @@ public class SwrveConversation {
      * @return has the conversation been downloaded fully yet
      */
     public boolean isDownloaded() {
-        // TODO: update this to check and see if the conversation has had all its assets downloaded.
+        // Conversations always have their assets ready. This is because they are fetched during display of the conversation and not pre loaded. This should change in the future so that assets are predownloaded and cached
         return true;
     }
 
