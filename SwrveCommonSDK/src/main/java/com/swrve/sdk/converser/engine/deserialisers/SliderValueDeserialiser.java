@@ -5,11 +5,10 @@ import com.google.ciogson.JsonDeserializer;
 import com.google.ciogson.JsonElement;
 import com.google.ciogson.JsonObject;
 import com.google.ciogson.JsonParseException;
+import com.swrve.sdk.converser.engine.model.SliderInput.SliderValue;
 
 import java.lang.reflect.Type;
 import java.util.Map;
-
-import com.swrve.sdk.converser.engine.model.SliderInput.SliderValue;
 
 /**
  * A Deserializer for SliderValue types

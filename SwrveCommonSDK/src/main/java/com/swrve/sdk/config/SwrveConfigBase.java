@@ -8,7 +8,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Locale;
-import java.util.UUID;
 
 /**
  * Configuration for the Swrve SDK.

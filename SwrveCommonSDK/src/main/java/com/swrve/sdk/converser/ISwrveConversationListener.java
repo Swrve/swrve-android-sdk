@@ -1,7 +1,5 @@
 package com.swrve.sdk.converser;
 
-import com.swrve.sdk.converser.SwrveConversation;
-
 /**
  * Implement this interface to handle the rendering of in-app conversations
  * completely from your app. You will have to render and manage these

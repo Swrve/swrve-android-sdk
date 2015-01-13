@@ -3,6 +3,9 @@ package com.swrve.sdk.converser;
 import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.converser.engine.model.ControlBase;
+import com.swrve.sdk.converser.engine.model.ConversationPage;
+import com.swrve.sdk.messaging.SwrveCampaign;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -10,10 +13,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-
-import com.swrve.sdk.converser.engine.model.ControlBase;
-import com.swrve.sdk.converser.engine.model.ConversationPage;
-import com.swrve.sdk.messaging.SwrveCampaign;
 
 /**
  * Created by shanemoore on 06/01/2015.
