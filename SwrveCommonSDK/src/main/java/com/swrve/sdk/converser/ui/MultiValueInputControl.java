@@ -9,12 +9,11 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.swrve.sdk.common.R;
-import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.MultiValueInput;
+import com.swrve.sdk.converser.engine.model.MultiValueInput.MultiValueItem;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
 import java.util.Map;
-
-import com.swrve.sdk.converser.engine.model.MultiValueInput.MultiValueItem;
 
 public class MultiValueInputControl extends LinearLayout implements ConverserInput, OnCheckedChangeListener {
 

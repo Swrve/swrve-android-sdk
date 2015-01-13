@@ -18,11 +18,11 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.SwrveConversation;
 import com.swrve.sdk.converser.engine.ActionBehaviours;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
 import com.swrve.sdk.converser.engine.model.CalendarInput;
 import com.swrve.sdk.converser.engine.model.Content;
-import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.ControlActions;
 import com.swrve.sdk.converser.engine.model.ControlBase;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
@@ -35,8 +35,8 @@ import com.swrve.sdk.converser.engine.model.InputBase;
 import com.swrve.sdk.converser.engine.model.MultiValueInput;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput;
 import com.swrve.sdk.converser.engine.model.NPSInput;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.TextInput;
-import com.swrve.sdk.converser.SwrveConversation;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

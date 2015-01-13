@@ -1,7 +1,6 @@
 package com.swrve.sdk.messaging.view;
 
 import android.content.Context;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 

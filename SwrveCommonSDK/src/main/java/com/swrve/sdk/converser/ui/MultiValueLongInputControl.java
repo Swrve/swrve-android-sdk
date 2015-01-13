@@ -12,9 +12,9 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 
 import com.swrve.sdk.common.R;
-import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput.Item;
+import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
 import java.util.HashMap;
 import java.util.Map;
