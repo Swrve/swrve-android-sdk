@@ -8,6 +8,7 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.os.StrictMode;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -43,15 +44,23 @@ import com.swrve.sdk.rest.RESTClient;
 import com.swrve.sdk.rest.RESTResponse;
 import com.swrve.sdk.rest.SwrveFilterInputStream;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -216,22 +225,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
                 messageDisplayed = null;
             }
-        }
-    }
-
-    protected void showPreviousConversation() {
-        if (config.isTalkEnabled()) {
-            Log.i(LOG_TAG, "Talk is enabled but we're not showing any previous conversations");
-            // TODO: STM Does this apply to conversations? given that rotation is preserved and we may not want to resume conversations after long periods of inactivity
-                        // Re-launch message that was displayed before
-            //            if (conversationDisplayed != null && conversationListener != null) {
-            //                long currentTime = getNow().getTime();
-            //                if (currentTime < (lastConversationDestroyed + MESSAGE_REAPPEAR_TIMEOUT)) {
-            //                    messageDisplayed.setMessageController((SwrveBase<?, ?>) this);
-            //                    messageListener.onMessage(messageDisplayed, false);
-            //                }
-            //                messageDisplayed = null;
-            //            }
         }
     }
 
@@ -627,7 +620,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             return;
         }
 
-        // TODO: STM In the event that there are messages and conversations for an event, how should the SDK behave.
         for (final SwrveCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             if (campaign.hasConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
@@ -654,32 +646,33 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     }
                 }
             }
-//            if (campaign.hasMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
-//                synchronized (this) {
-//                    if (autoShowMessagesEnabled && activityContext != null) {
-//                        Activity activity = activityContext.get();
-//                        if (activity != null) {
-//                            activity.runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    try {
-//                                        if (messageListener != null) {
-//                                            SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
-//                                            if (message != null && message.supportsOrientation(getDeviceOrientation())) {
-//                                                messageListener.onMessage(message, true);
-//                                                autoShowMessagesEnabled = false;
-//                                            }
-//                                        }
-//                                    } catch (Exception exp) {
-//                                        Log.e(LOG_TAG, "Could not launch campaign automatically");
-//                                    }
-//                                }
-//                            });
-//                        }
-//                    }
-//                }
-//                break;
-//            }
+
+            if (campaign.hasMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+                synchronized (this) {
+                    if (autoShowMessagesEnabled && activityContext != null) {
+                        Activity activity = activityContext.get();
+                        if (activity != null) {
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        if (messageListener != null) {
+                                            SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+                                            if (message != null && message.supportsOrientation(getDeviceOrientation())) {
+                                                messageListener.onMessage(message, true);
+                                                autoShowMessagesEnabled = false;
+                                            }
+                                        }
+                                    } catch (Exception exp) {
+                                        Log.e(LOG_TAG, "Could not launch campaign automatically");
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+                break;
+            }
         }
     }
 
@@ -1175,34 +1168,34 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             String conversations_json;
             conversations_json = "[" + stubbed_conversation_json + "]";
 
-//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-//            StrictMode.setThreadPolicy(policy);
-//            String address = "http://partnersapi.converser.io/swrve/conversations/single"; // Pull down the latest available conversation for the swrve app.
-//            String swrveApiKey = "06c0bf52-d8a5-43de-a155-0aaeadae4daf";
-//            StringBuilder builder = new StringBuilder();
-//            HttpClient client = new DefaultHttpClient();
-//            HttpGet httpGet = new HttpGet(address);
-//            httpGet.addHeader("X_CONVERSER_APP_ID", swrveApiKey);
-//            HttpResponse response = client.execute(httpGet);
-//            StatusLine statusLine = response.getStatusLine();
-//            int statusCode = statusLine.getStatusCode();
-//            if(statusCode == 200){
-//                HttpEntity entity = response.getEntity();
-//                InputStream content = entity.getContent();
-//                BufferedReader reader = new BufferedReader(new InputStreamReader(content));
-//                String line;
-//                while((line = reader.readLine()) != null){
-//                    builder.append(line);
-//                }
-//            }
-//            String remote_conversation_json = builder.toString();
-//            if (remote_conversation_json != null){
-//                Log.i("developmentReplaceCampaignJsonWithStub", "Successfully Stubbed conversation with remote JSON");
-//                conversations_json = remote_conversation_json;
-//            }else{
-//                Log.w("developmentReplaceCampaignJsonWithStub", "Could not stub with remote JSON");
-//            }
-
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+            String address = "http://partnersapi.converser.io/swrve/conversations/single"; // Pull down the latest available conversation for the swrve app. Alternatively, hit the /all endpoint to get multiple conversations
+            String swrveApiKey = "06c0bf52-d8a5-43de-a155-0aaeadae4daf";
+            StringBuilder builder = new StringBuilder();
+            HttpClient client = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(address);
+            httpGet.addHeader("X_CONVERSER_APP_ID", swrveApiKey);
+            HttpResponse response = client.execute(httpGet);
+            StatusLine statusLine = response.getStatusLine();
+            int statusCode = statusLine.getStatusCode();
+            if(statusCode == 200){
+                HttpEntity entity = response.getEntity();
+                InputStream content = entity.getContent();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(content));
+                String line;
+                while((line = reader.readLine()) != null){
+                    builder.append(line);
+                }
+            }
+            String remote_conversation_json = builder.toString();
+            if (remote_conversation_json != null){
+                Log.i("developmentReplaceCampaignJsonWithStub", "Successfully Stubbed conversation with remote JSON");
+                conversations_json = remote_conversation_json;
+            }else{
+                Log.w("developmentReplaceCampaignJsonWithStub", "Could not stub with remote JSON");
+            }
+//
             // Now grab those conversations and stub the current set of campaigns
             JSONArray conversations = new JSONArray(conversations_json);
             JSONArray campaigns = originalJsonCampaignObject.getJSONArray("campaigns");

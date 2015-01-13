@@ -41,20 +41,20 @@ public class SwrveEventListener implements ISwrveEventListener {
                 }
             }
         }
-        // TODO: STM have removed the message listener temporarily to focus exclusively on messages
-//        if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
-//            SwrveBase<?, ?> talkRef = talk.get();
-//            if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
-//                SwrveOrientation deviceOrientation = SwrveOrientation.Both;
-//                Context ctx = talkRef.getContext();
-//                if (ctx != null) {
-//                    deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
-//                }
-//                SwrveMessage message = talkRef.getMessageForEvent(eventName, deviceOrientation);
-//                if (message != null) {
-//                    messageListener.onMessage(message, true);
-//                }
-//            }
-//        }
+
+        if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
+            SwrveBase<?, ?> talkRef = talk.get();
+            if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
+                SwrveOrientation deviceOrientation = SwrveOrientation.Both;
+                Context ctx = talkRef.getContext();
+                if (ctx != null) {
+                    deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
+                }
+                SwrveMessage message = talkRef.getMessageForEvent(eventName, deviceOrientation);
+                if (message != null) {
+                    messageListener.onMessage(message, true);
+                }
+            }
+        }
     }
 }

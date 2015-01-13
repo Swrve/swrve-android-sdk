@@ -281,7 +281,7 @@ public class SwrveCampaign {
      * @return true if the campaign has this event as a trigger
      */
     public boolean hasConversationForEvent(String eventName) {
-        // TODO: STM since triggers are shared across conversations and messages, this is a proxy method to hasMessagesForEvent. Is this OK?
+        // Since triggers are shared across conversations and messages, this is a proxy method to hasMessagesForEvent. Until such a time as Conversations differ in how they are triggered by events
         return hasMessageForEvent(eventName);
     }
 
