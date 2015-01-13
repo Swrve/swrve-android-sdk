@@ -44,7 +44,7 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             rb.setLayoutParams(lp);
 
-            rb.setText(model.getValues().get(i).getName());
+            rb.setText(model.getValues().get(i).getValue());
 
             rb.setChecked(i == selectedIndex);
 
@@ -62,7 +62,7 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
 
         if (selectedIndex > -1) {
             MultiValueItem mv = model.getValues().get(selectedIndex);
-            dataMap.put(model.getTag(), mv.getValue());
+            dataMap.put(model.getTag(), mv.getName());
         }
     }
 
