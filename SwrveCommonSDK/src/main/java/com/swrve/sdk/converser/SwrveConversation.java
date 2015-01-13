@@ -66,7 +66,7 @@ public class SwrveConversation {
             try{
                 setId(Integer.valueOf(conversationData.getString("id")));
             }catch(Exception c){
-
+                Log.e(LOG_TAG, "Could not cast String into ID");
             }
         }
 
