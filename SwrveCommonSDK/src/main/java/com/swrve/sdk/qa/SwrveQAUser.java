@@ -130,7 +130,46 @@ public class SwrveQAUser {
 
 
     public void trigger(String event, SwrveConversation conversationShown, Map<Integer, String> campaignReasons, Map<Integer, Integer> campaignConversations) {
-        // TODO: STM This method stubbed out for now until I understand the purpose of triggereing QA users and whether its relevant for conversations
+        try {
+            if (canMakeTriggerRequest()) {
+                String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/trigger";
+                JSONObject triggerJson = new JSONObject();
+                triggerJson.put("trigger_name", event);
+                triggerJson.put("displayed", (conversationShown != null));
+                triggerJson.put("reason", (conversationShown == null) ? "The loaded campaigns returned no conversation" : "");
+
+                // Add campaigns that were not displayed
+                JSONArray campaignsJson = new JSONArray();
+                Iterator<Integer> campaignIt = campaignReasons.keySet().iterator();
+                while (campaignIt.hasNext()) {
+                    int campaignId = campaignIt.next();
+                    String reason = campaignReasons.get(campaignId);
+                    Integer conversationId = campaignConversations.get(campaignId);
+
+                    JSONObject campaignInfo = new JSONObject();
+                    campaignInfo.put("id", campaignId);
+                    campaignInfo.put("displayed", false);
+                    campaignInfo.put("conversation_id", (conversationId == null) ? -1 : conversationId);
+                    campaignInfo.put("reason", (reason == null) ? "" : reason);
+                    campaignsJson.put(campaignInfo);
+                }
+
+                // Add campaign that was shown, if available
+                if (conversationShown != null) {
+                    JSONObject campaignInfo = new JSONObject();
+                    campaignInfo.put("id", conversationShown.getCampaign().getId());
+                    campaignInfo.put("displayed", true);
+                    campaignInfo.put("conversation_id", conversationShown.getId());
+                    campaignInfo.put("reason", "");
+                    campaignsJson.put(campaignInfo);
+                }
+                triggerJson.put("campaigns", campaignsJson);
+
+                makeRequest(endpoint, triggerJson);
+            }
+        } catch (Exception exp) {
+            Log.e(LOG_TAG, "QA request talk session failed", exp);
+        }
     }
 
     public void trigger(String event, SwrveMessage messageShown, Map<Integer, String> campaignReasons, Map<Integer, Integer> campaignMessages) {
