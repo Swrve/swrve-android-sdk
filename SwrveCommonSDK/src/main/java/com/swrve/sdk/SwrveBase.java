@@ -846,12 +846,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 return null;
             }
 
-            // TODO: STM, do we keep the autoshow 'too soon' check for conversations
-            // Ignore delay after launch throttle limit for auto show messages
-//            if (!event.equalsIgnoreCase(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(now)) {
-//                noMessagesWereShown(event, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
-//                return null;
-//            }
+            if (!event.equalsIgnoreCase(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(now)) {
+                noMessagesWereShown(event, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
+                return null;
+            }
 
             if (isTooSoonToShowMessageAfterDelay(now)) {
                 noMessagesWereShown(event, "{App throttle limit} Too soon after last message. Wait until " + timestampFormat.format(showMessagesAfterDelay));
