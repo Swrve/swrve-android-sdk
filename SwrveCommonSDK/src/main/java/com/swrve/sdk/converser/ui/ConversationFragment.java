@@ -18,7 +18,7 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.common.R;
-import com.swrve.sdk.converser.engine.CustomBehaviours;
+import com.swrve.sdk.converser.engine.ActionBehaviours;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
 import com.swrve.sdk.converser.engine.model.CalendarInput;
 import com.swrve.sdk.converser.engine.model.Content;
@@ -41,8 +41,6 @@ import com.swrve.sdk.converser.SwrveConversation;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -467,12 +465,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 Button convButton = (Button) v;
                 ButtonControl model = convButton.getModel();
                 if (((ConverserControl) v).getModel().hasActions()) {
-                    CustomBehaviours customBehaviours = new CustomBehaviours(this.getActivity(), this.getActivity().getApplicationContext());
+                    ActionBehaviours behaviours = new ActionBehaviours(this.getActivity(), this.getActivity().getApplicationContext()) { };
                     ControlActions actions = ((ConverserControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
                         sendCallActionEvent(model);
-                        customBehaviours.openDialer(actions.getCallUri(), this.getActivity());
+                        behaviours.openDialer(actions.getCallUri(), this.getActivity());
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
                         String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
@@ -483,10 +481,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         if (Boolean.parseBoolean(ext) == true) {
                             sendReply(model, reply);
                             sendLinkActionEvent(model);
-                            customBehaviours.openIntentWebView(uri, this.getActivity(), referrer);
+                            behaviours.openIntentWebView(uri, this.getActivity(), referrer);
                         } else if (Boolean.parseBoolean(ext) == false) {
                             sendLinkActionEvent(model);
-                            customBehaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
+                            behaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
                         } else {
 
                         }

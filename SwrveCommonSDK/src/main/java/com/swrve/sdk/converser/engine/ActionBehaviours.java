@@ -14,11 +14,12 @@ import android.webkit.WebViewClient;
 
 import java.util.HashMap;
 
-public abstract class DefaultBehaviours {
+public abstract class ActionBehaviours {
+    private final String LOG_TAG = "Default Action Behaviors";
     Activity activity;
     Context context;
 
-    public DefaultBehaviours(Activity a, Context c) {
+    public ActionBehaviours(Activity a, Context c) {
         this.activity = a;
         this.context = c;
 

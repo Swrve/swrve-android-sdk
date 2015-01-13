@@ -1185,33 +1185,33 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             String conversations_json;
             conversations_json = "[" + stubbed_conversation_json + "]";
 
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-            String address = "http://partnersapi.converser.io/swrve/conversations/single"; // Pull down the latest available conversation for the swrve app.
-            String swrveApiKey = "06c0bf52-d8a5-43de-a155-0aaeadae4daf";
-            StringBuilder builder = new StringBuilder();
-            HttpClient client = new DefaultHttpClient();
-            HttpGet httpGet = new HttpGet(address);
-            httpGet.addHeader("X_CONVERSER_APP_ID", swrveApiKey);
-            HttpResponse response = client.execute(httpGet);
-            StatusLine statusLine = response.getStatusLine();
-            int statusCode = statusLine.getStatusCode();
-            if(statusCode == 200){
-                HttpEntity entity = response.getEntity();
-                InputStream content = entity.getContent();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(content));
-                String line;
-                while((line = reader.readLine()) != null){
-                    builder.append(line);
-                }
-            }
-            String remote_conversation_json = builder.toString();
-            if (remote_conversation_json != null){
-                Log.i("developmentReplaceCampaignJsonWithStub", "Successfully Stubbed conversation with remote JSON");
-                conversations_json = remote_conversation_json;
-            }else{
-                Log.w("developmentReplaceCampaignJsonWithStub", "Could not stub with remote JSON");
-            }
+//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+//            StrictMode.setThreadPolicy(policy);
+//            String address = "http://partnersapi.converser.io/swrve/conversations/single"; // Pull down the latest available conversation for the swrve app.
+//            String swrveApiKey = "06c0bf52-d8a5-43de-a155-0aaeadae4daf";
+//            StringBuilder builder = new StringBuilder();
+//            HttpClient client = new DefaultHttpClient();
+//            HttpGet httpGet = new HttpGet(address);
+//            httpGet.addHeader("X_CONVERSER_APP_ID", swrveApiKey);
+//            HttpResponse response = client.execute(httpGet);
+//            StatusLine statusLine = response.getStatusLine();
+//            int statusCode = statusLine.getStatusCode();
+//            if(statusCode == 200){
+//                HttpEntity entity = response.getEntity();
+//                InputStream content = entity.getContent();
+//                BufferedReader reader = new BufferedReader(new InputStreamReader(content));
+//                String line;
+//                while((line = reader.readLine()) != null){
+//                    builder.append(line);
+//                }
+//            }
+//            String remote_conversation_json = builder.toString();
+//            if (remote_conversation_json != null){
+//                Log.i("developmentReplaceCampaignJsonWithStub", "Successfully Stubbed conversation with remote JSON");
+//                conversations_json = remote_conversation_json;
+//            }else{
+//                Log.w("developmentReplaceCampaignJsonWithStub", "Could not stub with remote JSON");
+//            }
 
             // Now grab those conversations and stub the current set of campaigns
             JSONArray conversations = new JSONArray(conversations_json);
