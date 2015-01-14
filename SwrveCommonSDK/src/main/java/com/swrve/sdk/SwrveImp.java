@@ -1151,7 +1151,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.sendQueuedEvents();
             eventsWereSent = false;
-            swrve.refreshCampaignsAndResources();
+            ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
+            timedService.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    swrve.refreshCampaignsAndResources();
+                }
+            }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -1174,7 +1180,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             swrve.refreshCampaignsAndResources();
         }
 
-        // Start repeating timer to begin checking if campaigns/resources needs updating. It starts after a delay.
+        // Start repeating timer to begin checking if campaigns/resources needs updating. It starts straight away.
+        eventsWereSent = true;
         campaignsAndResourcesExecutor = new ScheduledThreadPoolExecutor(1);
         campaignsAndResourcesExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         campaignsAndResourcesExecutor.scheduleWithFixedDelay(new Runnable() {
@@ -1182,7 +1189,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             public void run() {
                 checkForCampaignAndResourcesUpdates();
             }
-        }, campaignsAndResourcesFlushRefreshDelay.longValue(), campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
+        }, 0l, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
     }
 
     public Set<String> getAssetsOnDisk() {
