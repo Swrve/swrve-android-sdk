@@ -116,8 +116,23 @@ public class SwrveConversation {
     /**
      * @return the first ConversationPage (Page)
      */
-    public ConversationPage getfirstPage(){
+    public ConversationPage getFirstPage(){
         return pages.get(0);
+    }
+
+    /**
+     * @return the ConversationPage (Page) for a specific control (Button) which was pressed
+     */
+    public ConversationPage getPageByname(String name)
+    {
+        ConversationPage targetPage = null;
+        for (ConversationPage page : pages){
+            if(page.hasName(name)){
+                targetPage = page;
+                break;
+            }
+        }
+        return targetPage;
     }
 
     /**
@@ -125,14 +140,7 @@ public class SwrveConversation {
      */
     public ConversationPage getPageForControl(ControlBase control)
     {
-        ConversationPage targetPage = null;
-        for (ConversationPage page : pages){
-            if(page.hasName(control.getTarget())){
-                targetPage = page;
-                break;
-            }
-        }
-        return targetPage;
+        return getPageByname(control.getTarget());
     }
 
     /**
