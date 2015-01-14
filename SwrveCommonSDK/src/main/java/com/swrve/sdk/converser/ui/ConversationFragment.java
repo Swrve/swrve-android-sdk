@@ -50,6 +50,9 @@ import java.util.HashMap;
  */
 public class ConversationFragment extends Fragment implements OnClickListener {
     private static final String LOG_TAG = "ConversationFragment";
+    private static final String CURRENT_CONVERSATION_KEY = "current_conversation";
+    private static final String CURRENT_PAGE_NAME_KEY = "current_page";
+    private static final String USER_INPUT_KEY = "user_inputs";
 
     private ViewGroup root;
     private LinearLayout contentLayout;
@@ -71,17 +74,37 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     @Override
-    public void onPause() {
-        // TODO: STM save the conversations position so it can be resumed at a later date.
-        super.onPause();
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState == null) {
+            page = swrveConversation.getFirstPage();
+            sendStartNavigationEvent();
+        } else {
+            userInteractionData = (HashMap<String, ConverserInputResult>) savedInstanceState.getSerializable(USER_INPUT_KEY);
+            if (swrveConversation != null){
+                page = swrveConversation.getPageByname(savedInstanceState.getString(CURRENT_PAGE_NAME_KEY).toString());
+            }else{
+                Log.w(LOG_TAG, "Could not find swrveConversation while restoring state.");
+            }
+
+            if (page == null){
+                page = swrveConversation.getFirstPage();
+            }
+            else{
+                // User has been on this page already, load the page they were last on.
+                openConversationOnPage(page);
+            }
+        }
     }
 
     @Override
-    public void onResume() {
+    public void onResume(){
         super.onResume();
-        // TODO: STM Beware of On resumes and other state held things. This may need to pick up where it leaves off in a conversation at a later time
-        // TODO: STM This onResume only respects getting the first page of the conversation, not where it left off.
-        openFirstPage();
+        openConversationOnPage(page);
+
+        if(userInteractionData != null){
+            // TODO: Go through each of the users saved interactions and fill in the data to the view
+        }
     }
 
     @Override
@@ -94,11 +117,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         super.onActivityCreated(savedInstanceState);
     }
 
-    public void openFirstPage() {
-        page = swrveConversation.getfirstPage();
-        sendStartNavigationEvent();
-        openConversationOnPage(page);
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putSerializable(USER_INPUT_KEY, userInteractionData);
+        outState.putString(CURRENT_PAGE_NAME_KEY, page.getName());
+        // TODO: We can't save the conversation as a serialised object unless the class can be serialized.
+        outState.putSerializable(CURRENT_CONVERSATION_KEY, swrveConversation);
+        super.onSaveInstanceState(outState);
     }
+
 
     public void openConversationOnPage(ConversationPage conversationPage) {
         LayoutInflater layoutInf = getLayoutInflater(null);
