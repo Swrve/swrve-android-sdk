@@ -2,11 +2,11 @@ package com.swrve.sdk.converser.engine.deserialisers;
 
 import android.util.Log;
 
-import com.google.ciogson.JsonDeserializationContext;
-import com.google.ciogson.JsonDeserializer;
-import com.google.ciogson.JsonElement;
-import com.google.ciogson.JsonObject;
-import com.google.ciogson.JsonParseException;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.swrve.sdk.converser.engine.model.ControlActions;
 
 import java.lang.reflect.Type;

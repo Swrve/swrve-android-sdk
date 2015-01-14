@@ -1,6 +1,6 @@
 package com.swrve.sdk.converser.engine.model;
 
-import com.google.ciogson.Gson;
+import com.google.gson.Gson;
 import com.swrve.sdk.converser.engine.GsonHelper;
 
 import org.json.JSONObject;
