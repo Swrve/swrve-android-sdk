@@ -38,6 +38,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.squareup:tape:1.1.0'
     compile 'com.android.support:support-v4:21.0.3'
 }
