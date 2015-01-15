@@ -1,5 +1,6 @@
 package com.swrve.sdk.converser.ui;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -29,6 +30,7 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
     private NPSInput model;
     private OnContentChangedListener onContentChangedListener;
 
+    @SuppressLint("NewApi")
     public NPSlider(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
