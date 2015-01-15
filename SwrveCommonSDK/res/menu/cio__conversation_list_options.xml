@@ -2,7 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/cio__mi_refresh"
-        android:icon="@drawable/cio__ic_menu_refresh"
         android:showAsAction="ifRoom"
         android:title="Refresh" />
 
