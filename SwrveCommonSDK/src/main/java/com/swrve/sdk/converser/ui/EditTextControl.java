@@ -1,5 +1,6 @@
 package com.swrve.sdk.converser.ui;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.text.Editable;
 import android.text.InputType;
@@ -33,6 +34,7 @@ public class EditTextControl extends LinearLayout implements ConverserInput {
         super(context, attrs);
     }
 
+    @SuppressLint("NewApi")
     public EditTextControl(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }

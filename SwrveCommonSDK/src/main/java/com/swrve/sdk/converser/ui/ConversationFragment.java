@@ -1,5 +1,6 @@
 package com.swrve.sdk.converser.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.res.TypedArray;
 import android.net.Uri;
@@ -100,6 +101,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         openConversationOnPage(page);
     }
 
+    @SuppressLint("NewApi")
     public void openConversationOnPage(ConversationPage conversationPage) {
         LayoutInflater layoutInf = getLayoutInflater(null);
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM");

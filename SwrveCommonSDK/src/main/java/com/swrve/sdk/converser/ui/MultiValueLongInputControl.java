@@ -1,5 +1,6 @@
 package com.swrve.sdk.converser.ui;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -25,6 +26,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
     private HashMap<String, String> responses = new HashMap<String, String>();
     private OnContentChangedListener onContentChangedListener;
 
+    @SuppressLint("NewApi")
     public MultiValueLongInputControl(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
