@@ -386,7 +386,7 @@ public abstract class SwrveConfigBase {
      */
     public void generateUrls(int appId) throws MalformedURLException {
         defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + ".converser-api.swrve.com");
-        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + "converser-content.swrve.com");
+        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + ".converser-content.swrve.com");
     }
 
     private static String getSchema(boolean https) {

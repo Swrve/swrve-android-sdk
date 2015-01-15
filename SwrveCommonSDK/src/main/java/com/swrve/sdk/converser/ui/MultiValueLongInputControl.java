@@ -65,7 +65,9 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
             //a 'Header' type option to make people choose one
-            adapter.insert("Please Select", 0);
+            String pleaseSelect = "Please Select";
+            adapter.remove(pleaseSelect); // On rotation, the adapter can sometimes hold onto older items. To fix this, we attempt to remove the item if it exists alright.
+            adapter.insert(pleaseSelect, 0);
             selector.setAdapter(adapter);
 
             selector.setOnItemSelectedListener(control.createListener(i, item));
