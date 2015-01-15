@@ -28,17 +28,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Configure SDK
-//        int appId = "YOUR_APP_ID";
-        int appId = 123;
-        String apiKey = "YOUR_API_KEY";
-
-        try {
-            // Initialize SDK
-            swrve = SwrveInstance.getInstance().initOrBind(this, appId, apiKey);
-        } catch (IllegalArgumentException exp) {
-            Log.e(LOG_TAG, "Could not initialize the Swrve SDK", exp);
-        }
+        swrve = SwrveInstance.getInstance();
     }
 
     public void btnSendEvent(View v) {
