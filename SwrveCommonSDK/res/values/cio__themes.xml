@@ -54,7 +54,6 @@
         <item name="conversationListViewStyle">@style/cio__inbox_list</item>
         <item name="conversationListRowStyle">@style/cio__inbox_row</item>
 
-        <item name="conversationListDecorIcon">@drawable/converser_icon</item>
         <item name="conversationListRowHeaderStyle">@style/cio__inbox_row_header</item>
         <item name="conversationListRowDateStyle">@style/cio__inbox_row_date</item>
 
