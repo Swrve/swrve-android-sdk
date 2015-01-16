@@ -3,6 +3,8 @@ package com.swrve.sdk.converser.ui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -284,6 +286,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 Content modelContent = (Content) content;
                 if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     ImageView iv = new ImageView(activity, modelContent);
+                    String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
+                    Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+                    iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
                     iv.setPadding(12, 12, 12, 12);

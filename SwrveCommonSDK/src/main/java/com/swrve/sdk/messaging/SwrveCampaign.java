@@ -5,6 +5,9 @@ import android.util.Log;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.converser.SwrveConversation;
+import com.swrve.sdk.converser.engine.model.Content;
+import com.swrve.sdk.converser.engine.model.ConversationAtom;
+import com.swrve.sdk.converser.engine.model.ConversationPage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -136,6 +139,16 @@ public class SwrveCampaign {
                 JSONObject conversationData = jsonConversations.getJSONObject(k);
                 SwrveConversation conversation = createConversation(controller, this, conversationData);
                 addConversation(conversation);
+
+                // Add assets to queue
+                for (ConversationPage conversationPage : conversation.getPages()) {
+                    for (ConversationAtom conversationAtom : conversationPage.getContent()) {
+                        if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
+                            Content modelContent = (Content) conversationAtom;
+                            assetsQueue.add(modelContent.getValue());
+                        }
+                    }
+                }
             }
         }
     }

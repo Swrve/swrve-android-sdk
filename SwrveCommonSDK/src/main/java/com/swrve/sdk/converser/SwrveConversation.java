@@ -3,7 +3,10 @@ package com.swrve.sdk.converser;
 import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ControlBase;
+import com.swrve.sdk.converser.engine.model.ConversationAtom;
 import com.swrve.sdk.converser.engine.model.ConversationPage;
 import com.swrve.sdk.messaging.SwrveCampaign;
 
@@ -13,6 +16,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * Created by shanemoore on 06/01/2015.
@@ -105,11 +109,29 @@ public class SwrveConversation {
         return true;
     }
 
+    protected boolean assetInCache(String asset) {
+        Set<String> assetsOnDisk = conversationController.getAssetsOnDisk();
+        return SwrveHelper.isNullOrEmpty(asset) || assetsOnDisk.contains(asset);
+    }
+
     /**
      * @return has the conversation been downloaded fully yet
      */
     public boolean isDownloaded() {
-        // Conversations always have their assets ready. This is because they are fetched during display of the conversation and not pre loaded. This should change in the future so that assets are predownloaded and cached
+        if(this.pages !=null) {
+            for (ConversationPage conversationPage : pages) {
+                for (ConversationAtom conversationAtom : conversationPage.getContent()) {
+                    if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
+                        Content modelContent = (Content) conversationAtom;
+                        if (!this.assetInCache(modelContent.getValue())) {
+                            Log.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
         return true;
     }
 
