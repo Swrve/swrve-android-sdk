@@ -130,11 +130,13 @@ public class SwrveCampaign {
             }
         }
 
-        JSONArray jsonConversations  = campaignData.getJSONArray("conversations");
-        for (int k = 0; k < jsonConversations.length(); k++) {
-            JSONObject conversationData = jsonConversations.getJSONObject(k);
-            SwrveConversation conversation = createConversation(controller, this, conversationData);
-            addConversation(conversation);
+        if(campaignData.has("conversations")) {
+            JSONArray jsonConversations = campaignData.getJSONArray("conversations");
+            for (int k = 0; k < jsonConversations.length(); k++) {
+                JSONObject conversationData = jsonConversations.getJSONObject(k);
+                SwrveConversation conversation = createConversation(controller, this, conversationData);
+                addConversation(conversation);
+            }
         }
     }
 
