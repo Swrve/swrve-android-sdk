@@ -622,6 +622,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
         for (final SwrveCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
+
             if (campaign.hasConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
@@ -1164,38 +1165,38 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         JSONObject newData = originalJsonCampaignObject;
         // TODO: STM This method used to stub conversation data into a campaign object. Not quite doing that yet, instead its just totally replacing the campaign object with a custom one
         try {
-            String stubbed_conversation_json = "{\"name\":\"lots o stuff\",\"description\":\"\",\"states\":[{\"name\":\"1420718742539-1Button\",\"title\":\"New page\",\"theme\":\"\",\"content\":[{\"value\":\"<div style=\\\"text-align: center; font-size: 12pt; text-shadow: 0 -1px 0 #fff\\\" class='editable'>Your text</div>\",\"type\":\"html-fragment\",\"tag\":\"1420718744758-fragment\"},{\"type\":\"multi-value-input\",\"description\":\"Question text here...\",\"values\":[{\"option_0\":\"Option 1\"},{\"option_1\":\"Option 2\"},{\"option_2\":\"Option 3\"}],\"tag\":\"1420718746542-fragment\"},{\"type\":\"multi-value-long-input\",\"description\":\"Question text here...\",\"values\":[{\"title\":\"Set 1\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\",\"Choice 4\",\"Choice 5\"]},{\"title\":\"Set 2\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\",\"Choice 4\"]},{\"title\":\"Set 3\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\"]}],\"tag\":\"1420718748367-fragment\"},{\"type\":\"text-input\",\"lines\":5,\"description\":\"Description of your text field...\",\"kbd\":\"text\",\"tag\":\"1420718749963-fragment\"},{\"type\":\"nps-input\",\"tag\":\"1420718751831-fragment\"},{\"value\":\"https://s3-eu-west-1.amazonaws.com/converser-public-assets/placeholder.gif\",\"type\":\"image\",\"tag\":\"1420718753530-fragment\"}],\"controls\":[{\"tag\":\"1420718742539-Button\",\"description\":\"Done\",\"target\":\"1420718760118-index\"}]},{\"name\":\"1420718760118-index\",\"title\":\"Thank you\",\"theme\":\"\",\"finish_page\":true,\"content\":[{\"tag\":\"1420718760118-hdr\",\"value\":\"<div class='editable' style=\\\"text-align:center; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 1.375em; text-shadow: 0 -1px 0 #fff\\\">Let's Finish</div>\",\"type\":\"html-fragment\"},{\"tag\":\"1420718760118-photo2\",\"value\":\"https://s3-eu-west-1.amazonaws.com/converser-public-assets/placeholder.gif\",\"type\":\"image\"},{\"tag\":\"1420718760118-msg\",\"value\":\"<div class='editable' style=\\\"text-align:center; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 1em; text-shadow: 0 -1px 0 #fff\\\">A thank you message to the customer. Click text to edit.</div>\",\"type\":\"html-fragment\"}]}],\"id\":\"1245463426243\"}";
+            String stubbed_conversation_json = "{\"name\":\"lots o stuff\",\"description\":\"\",\"states\":[{\"name\":\"1420718742539-1Button\",\"title\":\"New page\",\"theme\":\"\",\"content\":[{\"value\":\"<div style=\\\"text-align: center; font-size: 12pt; text-shadow: 0 -1px 0 #fff\\\" class='editable'>Your text</div>\",\"type\":\"html-fragment\",\"tag\":\"1420718744758-fragment\"},{\"type\":\"multi-value-input\",\"description\":\"Question text here...\",\"values\":[{\"option_0\":\"Option 1\"},{\"option_1\":\"Option 2\"},{\"option_2\":\"Option 3\"}],\"tag\":\"1420718746542-fragment\"},{\"type\":\"multi-value-long-input\",\"description\":\"Question text here...\",\"values\":[{\"title\":\"Set 1\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\",\"Choice 4\",\"Choice 5\"]},{\"title\":\"Set 2\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\",\"Choice 4\"]},{\"title\":\"Set 3\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\"]}],\"tag\":\"1420718748367-fragment\"},{\"type\":\"text-input\",\"lines\":5,\"description\":\"Description of your text field...\",\"kbd\":\"text\",\"tag\":\"1420718749963-fragment\"},{\"type\":\"nps-input\",\"tag\":\"1420718751831-fragment\"},{\"value\":\"e017e9509e7d271d4255c0951585555f603a2522\",\"type\":\"image\",\"tag\":\"1420718753530-fragment\"}],\"controls\":[{\"tag\":\"1420718742539-Button\",\"description\":\"Done\",\"target\":\"1420718760118-index\"}]},{\"name\":\"1420718760118-index\",\"title\":\"Thank you\",\"theme\":\"\",\"finish_page\":true,\"content\":[{\"tag\":\"1420718760118-hdr\",\"value\":\"<div class='editable' style=\\\"text-align:center; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 1.375em; text-shadow: 0 -1px 0 #fff\\\">Let's Finish</div>\",\"type\":\"html-fragment\"},{\"tag\":\"1420718760118-photo2\",\"value\":\"e017e9509e7d271d4255c0951585555f603a2522\",\"type\":\"image\"},{\"tag\":\"1420718760118-msg\",\"value\":\"<div class='editable' style=\\\"text-align:center; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 1em; text-shadow: 0 -1px 0 #fff\\\">A thank you message to the customer. Click text to edit.</div>\",\"type\":\"html-fragment\"}]}],\"id\":\"1245463426243\"}";
             String conversations_json;
             conversations_json = "[" + stubbed_conversation_json + "]";
-
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-            String address = "http://partnersapi.converser.io/swrve/conversations/single"; // Pull down the latest available conversation for the swrve app. Alternatively, hit the /all endpoint to get multiple conversations
-            String swrveApiKey = "06c0bf52-d8a5-43de-a155-0aaeadae4daf";
-            StringBuilder builder = new StringBuilder();
-            HttpClient client = new DefaultHttpClient();
-            HttpGet httpGet = new HttpGet(address);
-            httpGet.addHeader("X_CONVERSER_APP_ID", swrveApiKey);
-            HttpResponse response = client.execute(httpGet);
-            StatusLine statusLine = response.getStatusLine();
-            int statusCode = statusLine.getStatusCode();
-            if(statusCode == 200){
-                HttpEntity entity = response.getEntity();
-                InputStream content = entity.getContent();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(content));
-                String line;
-                while((line = reader.readLine()) != null){
-                    builder.append(line);
-                }
-            }
-            String remote_conversation_json = builder.toString();
-            if (remote_conversation_json != null){
-                Log.i("developmentReplaceCampaignJsonWithStub", "Successfully Stubbed conversation with remote JSON");
-                conversations_json = remote_conversation_json;
-            }else{
-                Log.w("developmentReplaceCampaignJsonWithStub", "Could not stub with remote JSON");
-            }
 //
+//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+//            StrictMode.setThreadPolicy(policy);
+//            String address = "http://partnersapi.converser.io/swrve/conversations/single"; // Pull down the latest available conversation for the swrve app. Alternatively, hit the /all endpoint to get multiple conversations
+//            String swrveApiKey = "06c0bf52-d8a5-43de-a155-0aaeadae4daf";
+//            StringBuilder builder = new StringBuilder();
+//            HttpClient client = new DefaultHttpClient();
+//            HttpGet httpGet = new HttpGet(address);
+//            httpGet.addHeader("X_CONVERSER_APP_ID", swrveApiKey);
+//            HttpResponse response = client.execute(httpGet);
+//            StatusLine statusLine = response.getStatusLine();
+//            int statusCode = statusLine.getStatusCode();
+//            if(statusCode == 200){
+//                HttpEntity entity = response.getEntity();
+//                InputStream content = entity.getContent();
+//                BufferedReader reader = new BufferedReader(new InputStreamReader(content));
+//                String line;
+//                while((line = reader.readLine()) != null){
+//                    builder.append(line);
+//                }
+//            }
+//            String remote_conversation_json = builder.toString();
+//            if (remote_conversation_json != null){
+//                Log.i("developmentReplaceCampaignJsonWithStub", "Successfully Stubbed conversation with remote JSON");
+//                conversations_json = remote_conversation_json;
+//            }else{
+//                Log.w("developmentReplaceCampaignJsonWithStub", "Could not stub with remote JSON");
+//            }
+
             // Now grab those conversations and stub the current set of campaigns
             JSONArray conversations = new JSONArray(conversations_json);
             JSONArray campaigns = originalJsonCampaignObject.getJSONArray("campaigns");
