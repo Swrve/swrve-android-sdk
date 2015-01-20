@@ -182,7 +182,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected Date campaignsAndResourcesLastRefreshed;
     protected boolean campaignsAndResourcesInitialized = false;
     protected boolean eventsWereSent = false;
-    protected String cdnRoot = "http://converser-content.swrve.com/messaging/message_image/";
+    protected String cdnRoot = "http://content-cdn.swrve.com/messaging/message_image/";
     protected boolean initialised = false;
     protected boolean mustCleanInstance;
     protected Date initialisedTime;
