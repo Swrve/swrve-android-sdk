@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-
     <style name="cio__control_button" parent="@android:style/Widget.Button">
         <item name="android:background">@drawable/cio__green_button_bg</item>
         <item name="android:padding">8dp</item>
@@ -131,5 +130,4 @@
         <item name="android:typeface">sans</item>
         <item name="android:textColor">#FF333333</item>
     </style>
-
 </resources>

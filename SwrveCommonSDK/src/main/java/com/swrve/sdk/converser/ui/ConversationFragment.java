@@ -53,7 +53,6 @@ import java.util.HashMap;
  */
 public class ConversationFragment extends Fragment implements OnClickListener {
     private static final String LOG_TAG = "ConversationFragment";
-
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
@@ -107,15 +106,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     @SuppressLint("NewApi")
     public void openConversationOnPage(ConversationPage conversationPage) {
-        LayoutInflater layoutInf = getLayoutInflater(null);
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM");
         this.page = conversationPage;
         if (inputs.size() > 0) {
             inputs.clear();
         }
 
         Activity activity = getActivity();
-
         activity.setTitle(conversationPage.getTitle());
 
         root = (ViewGroup) getView();
@@ -141,6 +137,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         } else {
             controlLp = new LayoutParams(root.getLayoutParams().width, root.getLayoutParams().height);
         }
+        controlLp.height = LayoutParams.WRAP_CONTENT;
+        controlLp.weight = 0;
+
 
         LayoutParams contentLp;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -149,28 +148,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             contentLp = new LayoutParams(root.getLayoutParams().width, root.getLayoutParams().height);
 
         }
-
-        controlLp.height = LayoutParams.WRAP_CONTENT;
-        controlLp.weight = 0;
-
         contentLp.weight = 1;
 
-        TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[]
-                {R.attr.controlLayoutMargin});
-
+        TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[] {R.attr.controlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
 
         int buttonCount = 0;
 
         if (conversationPage.getControls().size() == 0) {
-
             Button ctrlButton = new Button(activity, null, (buttonCount == 0 ? R.attr.conversationControlSecondButtonStyle : R.attr.conversationControlSecondButtonStyle));// (buttonCount
-            // ==
-            // 1
-            // ?
-            // R.attr.conversationControlFirstButtonStyle
-            // :
-            // R.attr.conversationControlSecondButtonStyle)));
             ctrlButton.setText("Done");
             LayoutParams buttonLP;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -280,7 +266,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             } else if (atom instanceof DateSaver) {
 
             }
-
         }
 
         for (ConversationAtom content : conversationPage.getContent()) {

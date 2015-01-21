@@ -5,6 +5,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 
+import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.SwrveConversation;
 
 /**
@@ -36,13 +37,13 @@ public class ConversationActivity extends FragmentActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.cio__conversation_activity);
         this.localConversation = globalConversation;
-
         try {
             if (localConversation != null) {
                 FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
                 conversationFragment = ConversationFragment.create(localConversation);
-                ft.replace(android.R.id.content, conversationFragment, "conversation");
+                ft.replace(R.id.cio__fragment, conversationFragment, "conversation");
                 ft.commit();
             } else {
                 Log.e("ConversationActivity", "Could not render ConversationActivity. No SwrveConversation was detected");

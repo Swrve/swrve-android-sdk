@@ -4,8 +4,13 @@
     <style name="Theme.BaseConverser" parent="@android:style/Theme"></style>
 
     <style name="Theme.Converser" parent="@style/Theme.BaseConverser">
-
-        <item name="android:windowBackground">@drawable/cio__layer_0_background</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <!--Enabling floating causes all sorts of strange artifacts such as match_parent behaving like wrap_content for heights-->
+        <item name="android:backgroundDimEnabled">true</item>
 
 
         <item name="conversationControlTrayStyle">@style/cio__button_tray</item>
@@ -23,31 +28,20 @@
         <item name="conversationInputTextBoxDefaultStyle">@style/cio__edit_box</item>
 
         <item name="conversationTextContentDefaultStyle">@style/cio__content_textview</item>
-        <item name="conversationTextContentDefaultBoldStyle">@style/cio__content_bold_textview
-        </item>
+        <item name="conversationTextContentDefaultBoldStyle">@style/cio__content_bold_textview</item>
 
 
         <item name="conversationTalkbackOperatorStyle">@style/cio__talkback_style_op</item>
         <item name="conversationTalkbackSubscriberStyle">@style/cio__talkback_style_sub</item>
         <item name="conversationTalkbackTimeStampStyle">@style/cio__talkback_timestamp</item>
 
-        <item name="conversationTalkbackOperatorMarginLeft">@dimen/cio__talkbackOperatorMarginLeft
-        </item>
-        <item name="conversationTalkbackOperatorMarginRight">
-            @dimen/cio__talkbackOperatorMarginRight
-        </item>
-        <item name="conversationTalkbackOperatorMarginTop">@dimen/cio__talkbackOperatorMarginTop
-        </item>
+        <item name="conversationTalkbackOperatorMarginLeft">@dimen/cio__talkbackOperatorMarginLeft</item>
+        <item name="conversationTalkbackOperatorMarginRight">@dimen/cio__talkbackOperatorMarginRight</item>
+        <item name="conversationTalkbackOperatorMarginTop">@dimen/cio__talkbackOperatorMarginTop</item>
 
-        <item name="conversationTalkbackSubscriberMarginLeft">
-            @dimen/cio__talkbackSubscriberMarginLeft
-        </item>
-        <item name="conversationTalkbackSubscriberMarginRight">
-            @dimen/cio__talkbackSubscriberMarginRight
-        </item>
-        <item name="conversationTalkbackSubscriberMarginTop">
-            @dimen/cio__talkbackSubscriberMarginTop
-        </item>
+        <item name="conversationTalkbackSubscriberMarginLeft">@dimen/cio__talkbackSubscriberMarginLeft</item>
+        <item name="conversationTalkbackSubscriberMarginRight">@dimen/cio__talkbackSubscriberMarginRight</item>
+        <item name="conversationTalkbackSubscriberMarginTop">@dimen/cio__talkbackSubscriberMarginTop</item>
 
         <item name="controlLayoutMargin">10dp</item>
 
@@ -61,8 +55,7 @@
 
         <item name="conversationInputMultiValueItemStyle">@style/cio__mv_item</item>
 
-        <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item
-        </item>
+        <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item</item>
     </style>
 
     <style name="Theme.Converser.NoTitleBar">
