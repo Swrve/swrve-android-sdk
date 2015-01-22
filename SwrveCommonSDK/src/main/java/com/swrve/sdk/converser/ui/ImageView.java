@@ -6,11 +6,10 @@ import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
 
 public class ImageView extends android.widget.ImageView implements ConverserContent {
-
-    private Content model;
+    private final Content model;
 
     public ImageView(Context context, Content model) {
-        super(context);
+        super(context); this.model = model;
     }
 
     @Override

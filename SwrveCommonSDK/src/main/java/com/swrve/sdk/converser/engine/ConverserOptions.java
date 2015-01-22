@@ -1,19 +1,10 @@
 package com.swrve.sdk.converser.engine;
 
-/**
- * Some varied options for the internal SDK to use. Things that are not theme related.
- * <p/>
- * Suggest setting in application instance onCreate()
- *
- * @author Jason Connery
- */
 public class ConverserOptions {
-
     private static ConverserOptions _instance;
     private boolean allowedPickWeekends = true;
 
     private ConverserOptions() {
-
     }
 
     public synchronized static ConverserOptions getInstance() {

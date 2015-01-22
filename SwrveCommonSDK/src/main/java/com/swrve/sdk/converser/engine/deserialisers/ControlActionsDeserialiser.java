@@ -61,5 +61,4 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
             return null;
         }
     }
-
 }

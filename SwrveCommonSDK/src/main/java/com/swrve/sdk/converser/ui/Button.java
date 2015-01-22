@@ -5,7 +5,6 @@ import android.content.Context;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
 
 public class Button extends android.widget.Button implements ConverserControl {
-
     private ButtonControl model;
 
     public Button(Context context, ButtonControl model, int defStyle) {
@@ -21,5 +20,4 @@ public class Button extends android.widget.Button implements ConverserControl {
     public ButtonControl getModel() {
         return model;
     }
-
 }

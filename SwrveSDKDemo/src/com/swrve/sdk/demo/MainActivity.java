@@ -102,7 +102,10 @@ public class MainActivity extends Activity {
 
     public void btnShowTalkMessage(View v) {
         // Swrve Talk - Trigger message for Swrve.Demo.OfferMessage
-        SwrveInstance.getInstance().event("Swrve.Demo.OfferMessage");
+        //SwrveInstance.getInstance().event("Swrve.Demo.OfferMessage");
+        SwrveInstance.getInstance().event("Swrve.Messages.showAtSessionStart");
+        // TODO.Converser: Using this trigger to emulate show at session start
+        // Look at session start not working for some reason (debuggin?)
     }
 
     public void btnSendQueuedEvents(View v) {

@@ -1,7 +1,6 @@
 package com.swrve.sdk.converser.engine.model;
 
 public class Content extends ConversationAtom {
-
     protected String value;
     protected String height;
 
@@ -16,5 +15,4 @@ public class Content extends ConversationAtom {
             return height;
         }
     }
-
 }
