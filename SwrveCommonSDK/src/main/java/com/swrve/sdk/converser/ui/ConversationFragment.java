@@ -45,12 +45,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-
-/**
- * (will eventually) display a page content, input, and choices as well as handling
- *
- * @author Jason Connery
- */
 public class ConversationFragment extends Fragment implements OnClickListener {
     private static final String LOG_TAG = "ConversationFragment";
 
@@ -65,7 +59,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
     private HashMap<String, ConverserInputResult> userInteractionData = new HashMap<>();
     private boolean userInputValid = false;
-
 
     public static ConversationFragment create(SwrveConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
@@ -100,7 +93,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     public void openFirstPage() {
-        page = swrveConversation.getfirstPage();
+        page = swrveConversation.getFirstPage();
         sendStartNavigationEvent();
         openConversationOnPage(page);
     }
@@ -115,11 +108,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         Activity activity = getActivity();
-
         activity.setTitle(conversationPage.getTitle());
 
         root = (ViewGroup) getView();
-
         if (root == null) {
             return;
         }
@@ -151,8 +142,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         controlLp.height = LayoutParams.WRAP_CONTENT;
-        controlLp.weight = 0;
-
         contentLp.weight = 1;
 
         TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[]
@@ -161,7 +150,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
 
         int buttonCount = 0;
-
         if (conversationPage.getControls().size() == 0) {
 
             Button ctrlButton = new Button(activity, null, (buttonCount == 0 ? R.attr.conversationControlSecondButtonStyle : R.attr.conversationControlSecondButtonStyle));// (buttonCount
@@ -331,7 +319,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         @Override
                         public boolean onTouch(View v, MotionEvent event) {
                             // TODO: STM Due the fact that we render video in HTML, its very difficult to detect when a video has started/stopped  playing. For now all we can say is that the video was touched. Note that on click listeners behave strange with WebViews
-                            stashVideoViewed(page.getName(), tag, cloneView);
+                            stashVideoViewed(page.getTag(), tag, cloneView);
                             return false;
                         }
                     });
@@ -365,7 +353,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         public void onContentChanged() {
                             HashMap<String, Object> result = new HashMap<String, Object>();
                             etcReference.onReplyDataRequired(result);
-                            stashEditTextControlInputData(page.getName(), tag, result);
+                            stashEditTextControlInputData(page.getTag(), tag, result);
                         }
                     });
 
@@ -393,7 +381,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         public void onContentChanged() {
                             HashMap<String, Object> result = new HashMap<String, Object>();
                             mvicReference.onReplyDataRequired(result);
-                            stashMultiChoiceInputData(page.getName(), tag, result);
+                            stashMultiChoiceInputData(page.getTag(), tag, result);
                         }
                     });
 
@@ -418,7 +406,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         public void onContentChanged() {
                             HashMap<String, Object> result = new HashMap<String, Object>();
                             mviclReference.onReplyDataRequired(result);
-                            stashMultiChoiceLongInputData(page.getName(), tag, result);
+                            stashMultiChoiceLongInputData(page.getTag(), tag, result);
                         }
                     });
 
@@ -434,7 +422,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         public void onContentChanged() {
                             HashMap<String, Object> result = new HashMap<String, Object>();
                             sliderReference.onReplyDataRequired(result);
-                            stashNPSInputData(page.getName(), tag, result);
+                            stashNPSInputData(page.getTag(), tag, result);
                         }
                     });
                     contentLayout.addView(slider);
@@ -448,7 +436,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         public void onContentChanged() {
                             HashMap<String, Object> result = new HashMap<String, Object>();
                             cicReference.onReplyDataRequired(result);
-                            stashCalendarInputData(page.getName(), cicReference.getModel().getTag(), result);
+                            stashCalendarInputData(page.getTag(), cicReference.getModel().getTag(), result);
                         }
                     });
 
@@ -478,7 +466,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     ControlActions actions = ((ConverserControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
-                        sendCallActionEvent(page.getName(), model);
+                        sendCallActionEvent(page.getTag(), model);
                         behaviours.openDialer(actions.getCallUri(), this.getActivity());
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
@@ -489,11 +477,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                         if (Boolean.parseBoolean(ext) == true) {
                             sendReply(model, reply);
-                            sendLinkActionEvent(page.getName(), model);
+                            sendLinkActionEvent(page.getTag(), model);
                             behaviours.openIntentWebView(uri, this.getActivity(), referrer);
                         } else if (Boolean.parseBoolean(ext) == false) {
                             enforceValidations();
-                            sendLinkActionEvent(page.getName(), model);
+                            sendLinkActionEvent(page.getTag(), model);
                             behaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
                         } else {
 
@@ -514,7 +502,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      */
     private void commitUserInputsToEvents() {
         Log.i(LOG_TAG, "Commiting all stashed events");
-        String currentPage = page.getName();
+        String currentPage = page.getTag();
         ArrayList<ConverserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
             ConverserInputResult r = userInteractionData.get(k);
@@ -552,20 +540,20 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         else if (control.hasActions()) {
             Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             if (isOkToProceed()) {
-                sendDoneNavigationEvent(page.getName());
+                sendDoneNavigationEvent(page.getTag());
                 getActivity().finish();
             }
         } else {
             Log.e(LOG_TAG, "No more pages in this conversation. This is not normal and the conversation will end prematurely");
             if (isOkToProceed()) {
-                sendErrorNavigationEvent(page.getName(), null); // No exception. We just couldn't find a page
+                sendErrorNavigationEvent(page.getTag(), null); // No exception. We just couldn't find a page
                 getActivity().finish();
             }
         }
     }
 
     public void onBackPressed() {
-        sendCancelNavigationEvent(page.getName());
+        sendCancelNavigationEvent(page.getTag());
         commitUserInputsToEvents();
     }
 
@@ -597,7 +585,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             enforceValidations();
             if (isOkToProceed()) {
                 Activity act = getActivity();
-                sendDoneNavigationEvent(page.getName());
+                sendDoneNavigationEvent(page.getTag());
                 commitUserInputsToEvents();
                 act.finish();
             }
@@ -716,9 +704,5 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.result = data.get(k);
             userInteractionData.put(key, result);
         }
-    }
-
-    private void stashRatingInputData(ConverserInputResult data) {
-        // TODO: STM Not yet implemented since we don't have a rating view yet
     }
 }

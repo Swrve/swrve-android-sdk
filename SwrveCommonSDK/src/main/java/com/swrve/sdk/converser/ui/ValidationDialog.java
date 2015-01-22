@@ -11,7 +11,6 @@ import com.swrve.sdk.common.R;
 
 
 public class ValidationDialog extends DialogFragment implements OnClickListener {
-
     private static final String ARGS_MESSAGE = "io.converser.message";
 
     public static ValidationDialog create(String message) {
@@ -22,7 +21,6 @@ public class ValidationDialog extends DialogFragment implements OnClickListener 
         frag.setArguments(args);
         return frag;
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -38,10 +36,6 @@ public class ValidationDialog extends DialogFragment implements OnClickListener 
 
     @Override
     public void onClick(View v) {
-
         dismiss();
-
     }
-
-
 }

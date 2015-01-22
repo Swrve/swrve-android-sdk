@@ -3,7 +3,6 @@ package com.swrve.sdk.converser.engine.model;
 import java.util.ArrayList;
 
 public class MultiValueInput extends InputBase {
-
     private String description;
     private ArrayList<MultiValueItem> values;
 
@@ -11,13 +10,11 @@ public class MultiValueInput extends InputBase {
         return values;
     }
 
-
     public String getDescription() {
         return description;
     }
 
     public static class MultiValueItem {
-
         private String name;
         private String value;
 
@@ -26,7 +23,6 @@ public class MultiValueInput extends InputBase {
 
             this.name = name;
             this.value = value;
-
         }
 
         public String getName() {

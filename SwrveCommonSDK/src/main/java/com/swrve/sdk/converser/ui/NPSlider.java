@@ -20,7 +20,6 @@ import java.util.Map;
 
 
 public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, ConverserInput {
-
     private static final int NOTLIKELY_LEVEL = 2;
     private static final int INBETWEEN_LEVEL = 9;
 
@@ -33,17 +32,14 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
     @SuppressLint("NewApi")
     public NPSlider(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
     }
 
     public NPSlider(Context context) {
         super(context);
-
     }
 
     public NPSlider(Context context, AttributeSet attrs) {
         super(context, attrs);
-
     }
 
     @Override
@@ -72,7 +68,6 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
         // EG the NPS is at progress level 5 but the text says not likely. The NPS needs to detect a change in its variables in order to update the text
         seekbar.setProgress(6);
         seekbar.setProgress(5);
-
     }
 
     private WindowManager getWindowManager(Context context) {
@@ -81,7 +76,6 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
         if (progress < NOTLIKELY_LEVEL) {
             label.setText(R.string.cio__npNotLikely);
         } else if (progress < INBETWEEN_LEVEL) {
@@ -134,7 +128,7 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
             }
         }
 
-        if(onContentChangedListener != null){
+        if (onContentChangedListener != null) {
             onContentChangedListener.onContentChanged();
         }
     }
@@ -168,9 +162,7 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
         onContentChangedListener = l;
     }
 
-
     public class DisplayClickListener implements OnClickListener {
-
         private int index;
 
         public DisplayClickListener(int i) {
@@ -181,7 +173,5 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
         public void onClick(View v) {
             seekbar.setProgress(index);
         }
-
     }
-
 }

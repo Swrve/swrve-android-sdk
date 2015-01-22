@@ -24,7 +24,6 @@ import java.util.Map;
 
 
 public class CalendarInputControl extends LinearLayout implements ConverserInput {
-
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
     private CalendarInput model;
     private GregorianCalendar selectedDate;
@@ -48,15 +47,12 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
         super.onFinishInflate();
 
         final android.widget.Button calButton = (android.widget.Button) findViewById(R.id.cio__calControlButton);
-
         calButton.setOnClickListener(new OnClickListener() {
 
             @SuppressLint("NewApi")
             @Override
             public void onClick(View v) {
-
                 Calendar c = selectedDate;
-
                 if (c == null) {
                     c = new GregorianCalendar();
                 }
@@ -65,19 +61,15 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
                 int month = c.get(Calendar.MONTH);
                 int day = c.get(Calendar.DAY_OF_MONTH);
 
-
                 // Create a new instance of DatePickerDialog and return it
                 DatePickerDialog dpd = new DatePickerDialog(getContext(), new OnDateSetListener() {
 
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear,
                                           int dayOfMonth) {
-
                         selectedDate = new GregorianCalendar(year, monthOfYear, dayOfMonth);
                         calButton.setText(sdf.format(selectedDate.getTime()));
-
                         validateDate();
-
                     }
 
 
@@ -86,8 +78,6 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
                 if (Build.VERSION.SDK_INT >= 11) {
                     dpd.getDatePicker().setCalendarViewShown(false);
                     dpd.getDatePicker().setSpinnersShown(true);
-
-
                     dpd.getDatePicker().setMinDate(c.getTime().getTime());
 
                     if (model.getStart() != null) {
@@ -97,13 +87,12 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
                     if (model.getEnd() != null) {
                         dpd.getDatePicker().setMaxDate(model.getEnd().getTime());
                     }
-
                 }
 
                 dpd.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
-                        if(onContentChangedListener !=null){
+                        if (onContentChangedListener != null) {
                             onContentChangedListener.onContentChanged();
                         }
                     }
@@ -138,18 +127,13 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
         if (model != null && selectedDate != null) {
             dataMap.put(model.getTag(), sdf.format(selectedDate.getTime()));
         }
-
     }
 
     private void validateDate() {
-
         Calendar c = new GregorianCalendar();
-
-
         int year = c.get(Calendar.YEAR);
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DAY_OF_MONTH);
-
         GregorianCalendar today = new GregorianCalendar(year, month, day);
 
         String msg = null;
@@ -172,7 +156,6 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
         }
 
         //Ok, some weird rules now, weekends?
-
         if (!ConverserOptions.getInstance().isAllowedPickWeekends()) {
             int dow = selectedDate.get(Calendar.DAY_OF_WEEK);
             if (dow == Calendar.SATURDAY || dow == Calendar.SUNDAY) {
@@ -181,7 +164,6 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
         }
 
         if (msg != null) {
-
             selectedDate = today;
             final AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
             adb.setMessage(msg);
@@ -199,7 +181,6 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
 
     @Override
     public String validate() {
-
         if (model.isOptional()) {
             return null;
         }
@@ -209,12 +190,9 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
         }
 
         Calendar c = new GregorianCalendar();
-
-
         int year = c.get(Calendar.YEAR);
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DAY_OF_MONTH);
-
         GregorianCalendar today = new GregorianCalendar(year, month, day);
 
         if (model.getStart() != null) {
@@ -236,7 +214,6 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
         }
 
         //Ok, some weird rules now, weekends?
-
         if (!ConverserOptions.getInstance().isAllowedPickWeekends()) {
             int dow = selectedDate.get(Calendar.DAY_OF_WEEK);
             if (dow == Calendar.SATURDAY || dow == Calendar.SUNDAY) {
@@ -246,5 +223,4 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
 
         return null;
     }
-
 }

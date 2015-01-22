@@ -18,9 +18,7 @@ import com.swrve.sdk.converser.engine.model.TextInput;
 import java.util.Map;
 
 
-
 public class EditTextControl extends LinearLayout implements ConverserInput {
-
     private TextInput model;
     private TextView descriptionTextView;
     private EditText editText;
@@ -54,8 +52,7 @@ public class EditTextControl extends LinearLayout implements ConverserInput {
         init();
     }
 
-    public void setOnContentChangedListener(OnContentChangedListener l)
-    {
+    public void setOnContentChangedListener(OnContentChangedListener l) {
         onContentChangedListener = l;
     }
 
@@ -99,7 +96,7 @@ public class EditTextControl extends LinearLayout implements ConverserInput {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(onContentChangedListener != null){
+                if (onContentChangedListener != null) {
                     onContentChangedListener.onContentChanged();
                 }
             }
@@ -115,7 +112,6 @@ public class EditTextControl extends LinearLayout implements ConverserInput {
     public void onReplyDataRequired(Map<String, Object> dataMap) {
         String myData = editText.getText().toString().trim();
         String myTag = model.getTag();
-
         dataMap.put(myTag, myData);
     }
 

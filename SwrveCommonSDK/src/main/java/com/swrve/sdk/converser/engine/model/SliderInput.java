@@ -3,19 +3,15 @@ package com.swrve.sdk.converser.engine.model;
 import java.util.ArrayList;
 
 public class SliderInput extends InputBase {
-
     protected ArrayList<SliderValue> values;
 
     public ArrayList<SliderValue> getValues() {
         return values;
     }
 
-
     public static class SliderValue {
-
         private String label;
         private int value;
-
 
         public SliderValue(String label, int value) {
             super();
@@ -30,7 +26,5 @@ public class SliderInput extends InputBase {
         public int getValue() {
             return value;
         }
-
-
     }
 }

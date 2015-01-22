@@ -5,21 +5,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class CalendarInput extends InputBase {
-
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
     private String description;
-    private boolean range = false;
     private String start;
     private String end;
 
     public String getDescription() {
         return description;
     }
-
-    public boolean isRange() {
-        return range;
-    }
-
 
     public Date getStart() {
         if (start == null) {

@@ -30,14 +30,9 @@ public class SwrveEventListener implements ISwrveEventListener {
         if (conversationListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
             SwrveBase<?, ?> talkRef = talk.get();
             if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
-                SwrveOrientation deviceOrientation = SwrveOrientation.Both;
-                Context ctx = talkRef.getContext();
-                if (ctx != null) {
-                    deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
-                }
-                SwrveConversation conversation = talkRef.getConversationForEvent(eventName, deviceOrientation);
+                SwrveConversation conversation = talkRef.getConversationForEvent(eventName);
                 if (conversation != null) {
-                    conversationListener.onMessage(conversation, true);
+                    conversationListener.onMessage(conversation);
                 }
             }
         }

@@ -16,11 +16,9 @@ import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import java.util.Map;
 
 public class MultiValueInputControl extends LinearLayout implements ConverserInput, OnCheckedChangeListener {
-
     private MultiValueInput model;
     private int selectedIndex = -1; //default to none selected
     private OnContentChangedListener onContentChangedListener;
-
 
     public MultiValueInputControl(Context context, AttributeSet attrs, MultiValueInput model) {
         super(context, attrs);
@@ -30,7 +28,6 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
     }
 
     private void setupViews() {
-
         removeAllViews();
         LayoutParams lbllp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         TextView descLbl = new TextView(getContext(), null, R.attr.conversationInputMultiValueDescriptionStyle);
@@ -39,27 +36,21 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
         addView(descLbl);
 
         for (int i = 0; i < model.getValues().size(); i++) {
-
             RadioButton rb = new RadioButton(getContext(), null, R.attr.conversationInputMultiValueItemStyle);
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             rb.setLayoutParams(lp);
-
             rb.setText(model.getValues().get(i).getValue());
-
             rb.setChecked(i == selectedIndex);
-
             if (!isInEditMode()) {
                 rb.setTag(R.string.cio__indexTag, i);
             }
             this.addView(rb);
-
             rb.setOnCheckedChangeListener(this);
         }
     }
 
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
-
         if (selectedIndex > -1) {
             MultiValueItem mv = model.getValues().get(selectedIndex);
             dataMap.put(model.getTag(), mv.getName());
@@ -68,7 +59,6 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
 
     @Override
     public String validate() {
-
         if (model.isOptional()) {
             return null;
         }
@@ -80,7 +70,7 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
         return null;
     }
 
-    public void setOnContentChangedListener(OnContentChangedListener l){
+    public void setOnContentChangedListener(OnContentChangedListener l) {
         onContentChangedListener = l;
     }
 
@@ -90,7 +80,6 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
 
         if (selectedIndex > -1 && selectedIndex != index) {
             RadioButton oldChecked = (RadioButton) getChildAt(selectedIndex + 1);
-
             if (oldChecked.isChecked()) {
                 oldChecked.setOnCheckedChangeListener(null); //not want to repeat myself
                 oldChecked.setChecked(false);
@@ -103,7 +92,7 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
         } else {
             selectedIndex = index;
         }
-        if (onContentChangedListener !=null) {
+        if (onContentChangedListener != null) {
             onContentChangedListener.onContentChanged();
         }
     }
