@@ -71,28 +71,28 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    public T init(final Context context, final int appId, final String apiKey) throws IllegalArgumentException {
-        return init(context, appId, apiKey, defaultConfig());
+    public T init(final Context context) throws IllegalArgumentException {
+        return init(context, defaultConfig());
     }
 
-    public T init(final Context context, final int appId, final String apiKey, final String userId, final C config) throws IllegalArgumentException {
+    public T init(final Context context, final String userId, final C config) throws IllegalArgumentException {
         config.setUserId(userId);
-        return init(context, appId, apiKey, config);
+        return init(context, config);
     }
 
-    public T initOrBind(final Context context, final int appId, final String apiKey) throws IllegalArgumentException {
-        return initOrBind(context, appId, apiKey, defaultConfig());
+    public T initOrBind(final Context context) throws IllegalArgumentException {
+        return initOrBind(context, defaultConfig());
     }
 
     @SuppressWarnings("unchecked")
-    public T initOrBind(final Context context, final int appId, final String apiKey, final C config) throws IllegalArgumentException {
+    public T initOrBind(final Context context, final C config) throws IllegalArgumentException {
         if (destroyed) {
             destroyed = initialised = false;
             bindCounter.set(0);
         }
         if (!initialised) {
             // First time it is initialized
-            return init(context, appId, apiKey, config);
+            return init(context, config);
         }
         bindToContext(context);
         afterBind();
@@ -101,7 +101,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @SuppressWarnings("unchecked")
-    public T init(final Context context, final int appId, final String apiKey, final C config) throws IllegalArgumentException {
+    public T init(final Context context, final C config) throws IllegalArgumentException {
         // Initialization checks
         if (context == null) {
             SwrveHelper.logAndThrowException("Context not specified");
@@ -114,8 +114,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             initialisedTime = getNow();
             initialised = true;
             this.lastSessionTick = getSessionTime();
-            this.appId = appId;
-            this.apiKey = apiKey;
             this.userId = config.getUserId();
             final Context resolvedContext = bindToContext(context);
             final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();

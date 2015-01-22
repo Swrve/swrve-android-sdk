@@ -18,6 +18,8 @@ import com.swrve.sdk.gcm.SwrveGcmNotification;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Main implementation of the Google Swrve SDK. You can obtain an instance of this class using the SwrveFactory or
  * SwrveInstance that creates a singleton Swrve object.
@@ -29,7 +31,16 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected String registrationId;
     protected ISwrvePushNotificationListener pushNotificationListener;
 
-    protected Swrve() {
+    protected Swrve(Context context, int appId, String apiKey) {
+        super();
+        if (context instanceof Activity) {
+            this.context = new WeakReference<Context>(context.getApplicationContext());
+            this.activityContext = new WeakReference<Activity>((Activity) context);
+        } else {
+            this.context = new WeakReference<Context>(context);
+        }
+        this.appId = appId;
+        this.apiKey = apiKey;
     }
 
     @Override
