@@ -18,9 +18,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * Created by shanemoore on 06/01/2015.
- */
 public class SwrveConversation {
     private final String LOG_TAG = "SwrveConversation";
     // Swrve SDK reference
@@ -29,17 +26,8 @@ public class SwrveConversation {
     protected int id;
     // Customer defined name of the conversation as it appears in the web app
     protected String name;
-    // Customer defined name of the conversation as it appears in the web app
-    protected String description;
-    // The subject of the conversation as it appears in the inbox
-    protected String title;
-    // The subtitle to the subject
-    protected String subtitle;
     // Each of the conversations pages
     protected ArrayList<ConversationPage> pages;
-
-    // Priority of the message
-    protected int priority = 9999;
     // Parent in-app campaign
     protected SwrveCampaign campaign;
     // Location of the images and button resources
@@ -63,50 +51,27 @@ public class SwrveConversation {
     public SwrveConversation(SwrveBase<?, ?> controller, SwrveCampaign campaign, JSONObject conversationData) throws JSONException {
         this(controller, campaign);
 
-        try{
+        try {
             setId(conversationData.getInt("id"));
-        }catch(Exception e){
-            try{
+        } catch (Exception e) {
+            try {
                 setId(Integer.valueOf(conversationData.getString("id")));
-            }catch(Exception c){
+            } catch (Exception c) {
                 Log.e(LOG_TAG, "Could not cast String into ID");
             }
         }
 
-        setName(conversationData.getString("name"));
-        setDescription(conversationData.getString("description"));
+        setName(conversationData.optString("name", "TODO: MUST FIX THIS!!!")); //TODO.Converser: Response must have name
 
-        try{
-            setTitle(conversationData.getString("title"));
-        }catch(JSONException je){
-            Log.w(LOG_TAG, "Could not get title for conversation", je);
-            setTitle("");
-        }
-        try{
-            setSubtitle(conversationData.getString("subtitle"));
-        }catch(JSONException je){
-            Log.w(LOG_TAG, "Could not get subtitle for conversation", je);
-            setSubtitle("");
-        }
-
-
-        JSONArray states = conversationData.getJSONArray("states");
+        JSONArray pagesJson = conversationData.getJSONArray("pages");
         ArrayList<ConversationPage> pages = new ArrayList<ConversationPage>();
 
-        for (int i = 0; i < states.length(); i++) {
-            JSONObject o = states.getJSONObject(i);
+        for (int i = 0; i < pagesJson.length(); i++) {
+            JSONObject o = pagesJson.getJSONObject(i);
             ConversationPage page = new ConversationPage().fromJson(o);
             pages.add(page);
         }
         setPages(pages);
-    }
-
-    /**
-     * @return Does the conversation support this orientation
-     */
-    public boolean supportsOrientation(Object o) {
-        // Conversations always support both orientations
-        return true;
     }
 
     protected boolean assetInCache(String asset) {
@@ -118,7 +83,7 @@ public class SwrveConversation {
      * @return has the conversation been downloaded fully yet
      */
     public boolean isDownloaded() {
-        if(this.pages !=null) {
+        if (this.pages != null) {
             for (ConversationPage conversationPage : pages) {
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
                     if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
@@ -138,18 +103,17 @@ public class SwrveConversation {
     /**
      * @return the first ConversationPage (Page)
      */
-    public ConversationPage getfirstPage(){
+    public ConversationPage getFirstPage() {
         return pages.get(0);
     }
 
     /**
      * @return the ConversationPage (Page) for a specific control (Button) which was pressed
      */
-    public ConversationPage getPageForControl(ControlBase control)
-    {
+    public ConversationPage getPageForControl(ControlBase control) {
         ConversationPage targetPage = null;
-        for (ConversationPage page : pages){
-            if(page.hasName(control.getTarget())){
+        for (ConversationPage page : pages) {
+            if (page.hasTag(control.getTarget())) {
                 targetPage = page;
                 break;
             }
@@ -180,17 +144,6 @@ public class SwrveConversation {
     }
 
     /**
-     * @return the message priority.
-     */
-    public int getPriority() {
-        return priority;
-    }
-
-    public void setPriority(int priority) {
-        this.priority = priority;
-    }
-
-    /**
      * @return the directory where resources will be saved.
      */
     public File getCacheDir() {
@@ -213,40 +166,6 @@ public class SwrveConversation {
     }
 
     /**
-     * @return the related description.
-     */
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return the related title.
-     */
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    /**
-     * @return the related subtitle.
-     */
-    public String getSubtitle() {
-        return subtitle;
-    }
-
-    public void setSubtitle(String subtitle) {
-        this.subtitle = subtitle;
-    }
-
-    /**
      * @return the related pages in the conversation.
      */
     public ArrayList<ConversationPage> getPages() {
@@ -256,7 +175,6 @@ public class SwrveConversation {
     public void setPages(ArrayList<ConversationPage> pages) {
         this.pages = pages;
     }
-
 
     /**
      * @return the SwrveTalk instance that manages the Conversation.
@@ -276,6 +194,4 @@ public class SwrveConversation {
             setCacheDir(conversationController.getCacheDir());
         }
     }
-
-
 }

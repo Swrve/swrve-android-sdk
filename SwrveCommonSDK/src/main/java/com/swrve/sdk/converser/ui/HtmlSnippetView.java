@@ -7,7 +7,6 @@ import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
 
 public class HtmlSnippetView extends WebView implements ConverserContent {
-
     private Content model;
 
     public HtmlSnippetView(Context context, Content model) {
@@ -16,6 +15,7 @@ public class HtmlSnippetView extends WebView implements ConverserContent {
     }
 
     protected void init(Content model) {
+        this.model = model;
         this.getSettings().setLoadsImagesAutomatically(true);
         this.loadDataWithBaseURL("fake://fake", model.getValue(), "text/html", "UTF-8", null);
     }
@@ -24,5 +24,4 @@ public class HtmlSnippetView extends WebView implements ConverserContent {
     public ConversationAtom getModel() {
         return model;
     }
-
 }

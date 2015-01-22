@@ -13,14 +13,14 @@ import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
 
 public class HtmlVideoView extends WebView implements ConverserContent {
-
     public static final String PLAYER_VIDEO_VIMEO = "vimeo";
     public static final String PLAYER_VIDEO_YOUTUBE = "youtube";
-    String url;
-    int height;
-    String player;
-    String errorHtml; // This is a link to the video to be displayed in case the video is not visible to the customers
-    String videoHtml; // This is the final output. This will be the tags and information that is rendered in the application
+    private String url;
+    private int height;
+    // This is a link to the video to be displayed in case the video is not visible to the customers
+    private String errorHtml;
+    // This is the final output. This will be the tags and information that is rendered in the application
+    private String videoHtml;
     private Content model;
 
     public HtmlVideoView(Context context, Content model) {
@@ -29,6 +29,7 @@ public class HtmlVideoView extends WebView implements ConverserContent {
     }
 
     protected void init(Content model) {
+        this.model = model;
         url = model.getValue();
         height = Integer.parseInt(model.getHeight());
         if (height == 0) {
@@ -46,10 +47,8 @@ public class HtmlVideoView extends WebView implements ConverserContent {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = "<p>Sorry, The video URL does not exist. The video cannot be played.</p> ";
         } else if (url.toLowerCase().contains(PLAYER_VIDEO_VIMEO)) {
-            player = PLAYER_VIDEO_VIMEO;
             videoHtml = "<iframe width='100%' height='" + height + "' src=" + url + " frameborder='0' webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>" + errorHtml;
         } else if (url.toLowerCase().contains(PLAYER_VIDEO_YOUTUBE)) {
-            player = PLAYER_VIDEO_YOUTUBE;
             videoHtml = "<iframe width='100%' height='" + height + "' src=" + url + " frameborder='0' allowFullScreen></iframe>" + errorHtml;
         } else {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
@@ -62,13 +61,6 @@ public class HtmlVideoView extends WebView implements ConverserContent {
         this.getSettings().setLoadsImagesAutomatically(true);
         this.getSettings().setPluginState(PluginState.ON);
         this.getSettings().setPluginState(PluginState.ON);
-
-        this.setWebChromeClient(new WebChromeClient() {
-            public void onProgressChanged(WebView view, int progress) {
-                // If we ever decide to use a loaded for the webview or video loading
-            }
-        });
-        // this.loadData(genericStyle, "text/html", "UTF-8");
         this.loadDataWithBaseURL("fake://fake", videoHtml, "text/html", "UTF-8", null);
 
     }
@@ -79,7 +71,8 @@ public class HtmlVideoView extends WebView implements ConverserContent {
             Log.i("HTMLVideoView", "Stopping the Video!");
             this.stopLoading();
             this.freeMemory();
-            this.loadData("<p></p>", "text/html", "utf8"); // Load some blank data into the webview
+            // Load some blank data into the webview
+            this.loadData("<p></p>", "text/html", "utf8");
         }
     }
 
@@ -87,5 +80,4 @@ public class HtmlVideoView extends WebView implements ConverserContent {
     public ConversationAtom getModel() {
         return model;
     }
-
 }

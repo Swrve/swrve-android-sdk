@@ -1,7 +1,6 @@
 package com.swrve.sdk.converser.engine.model;
 
 public class TextInput extends InputBase {
-
     public static final String KEYBOARD_URL = "url";
     public static final String KEYBOARD_EMAIL = "email";
     public static final String KEYBOARD_PHONE = "phone";

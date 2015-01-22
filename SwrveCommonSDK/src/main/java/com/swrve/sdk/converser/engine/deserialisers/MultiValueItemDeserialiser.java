@@ -13,8 +13,7 @@ import java.util.Map;
 public class MultiValueItemDeserialiser implements JsonDeserializer<MultiValueItem> {
 
     @Override
-    public MultiValueItem deserialize(JsonElement element, Type arg1, JsonDeserializationContext arg2) throws JsonParseException {
-
+    public MultiValueItem deserialize(JsonElement element, Type type, JsonDeserializationContext jdContext) throws JsonParseException {
         if (element.isJsonObject()) {
             JsonObject obj = element.getAsJsonObject();
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
@@ -29,5 +28,4 @@ public class MultiValueItemDeserialiser implements JsonDeserializer<MultiValueIt
             return null;
         }
     }
-
 }

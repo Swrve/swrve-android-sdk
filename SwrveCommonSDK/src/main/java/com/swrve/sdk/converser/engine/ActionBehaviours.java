@@ -15,14 +15,12 @@ import android.webkit.WebViewClient;
 import java.util.HashMap;
 
 public abstract class ActionBehaviours {
-    private final String LOG_TAG = "Default Action Behaviors";
-    Activity activity;
-    Context context;
+    private Activity activity;
+    private Context context;
 
     public ActionBehaviours(Activity a, Context c) {
         this.activity = a;
         this.context = c;
-
     }
 
     public void openDialer(Uri telUri, Activity activity) {
@@ -60,9 +58,5 @@ public abstract class ActionBehaviours {
         bundle.putString("referrer", referrer);
         visitWebpage.putExtra(Browser.EXTRA_HEADERS, bundle);
         activity.startActivity(visitWebpage);
-    }
-
-    public void openExternalWebView(Uri uri) {
-
     }
 }

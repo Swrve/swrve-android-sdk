@@ -72,9 +72,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
             adapter.insert(pleaseSelect, 0);
             selector.setAdapter(adapter);
 
-            selector.setOnItemSelectedListener(control.createListener(i, item));
-
-
+            selector.setOnItemSelectedListener(control.createListener(item));
             control.addView(row);
         }
 
@@ -98,29 +96,20 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
         } else {
             return null;
         }
-
     }
 
-    private MILongItemListener createListener(int i, Item item) {
-        return new MILongItemListener(i, item);
+    private MILongItemListener createListener(Item item) {
+        return new MILongItemListener(item);
     }
 
-    public void setOnContentChangedListener(OnContentChangedListener l){
+    public void setOnContentChangedListener(OnContentChangedListener l) {
         onContentChangedListener = l;
     }
 
-    static class MILongItemInteractionListener{
-        public void onChangingInteraction(){
-
-        }
-    }
-
     private class MILongItemListener implements OnItemSelectedListener {
-        private int index;
         private Item item;
 
-        public MILongItemListener(int index, Item item) {
-            this.index = index;
+        public MILongItemListener(Item item) {
             this.item = item;
         }
 
@@ -128,13 +117,13 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
         public void onItemSelected(AdapterView<?> adapterView, View view, int position,
                                    long id) {
             if (position == 0) {
-                //This is the please select option. Ignore
+                // This is the please select option. Ignore
                 responses.remove(item.getTitle());
                 return;
             } else {
                 responses.put(item.getTitle(), item.getOptions().get(position));
             }
-            if(onContentChangedListener != null){
+            if (onContentChangedListener != null) {
                 onContentChangedListener.onContentChanged();
             }
         }

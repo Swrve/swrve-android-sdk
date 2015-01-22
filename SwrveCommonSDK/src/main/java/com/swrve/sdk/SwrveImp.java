@@ -5,22 +5,18 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.os.StrictMode;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.converser.ISwrveConversationListener;
 import com.swrve.sdk.converser.SwrveConversation;
-import com.swrve.sdk.converser.ui.ConversationActivity;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.ILocalStorage;
@@ -44,23 +40,15 @@ import com.swrve.sdk.rest.RESTClient;
 import com.swrve.sdk.rest.RESTResponse;
 import com.swrve.sdk.rest.SwrveFilterInputStream;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -96,7 +84,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
-    protected static final int CAMPAIGN_ENDPOINT_VERSION = 4;
+    protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
     protected static final String TEMPLATE_VERSION = "1";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -623,7 +611,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         for (final SwrveCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
 
-            if (campaign.hasConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+            if (campaign.hasMessageOrConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
@@ -634,8 +622,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                                     try {
                                         if (conversationListener != null) {
                                             SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
-                                            if (conversation != null && conversation.supportsOrientation(getDeviceOrientation())) {
-                                                conversationListener.onMessage(conversation, true);
+                                            if (conversation != null) {
+                                                conversationListener.onMessage(conversation);
                                             }
                                         }
                                     } catch (Exception exp) {
@@ -648,7 +636,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
             }
 
-            if (campaign.hasMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+            if (campaign.hasMessageOrConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
@@ -1156,61 +1144,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Update campaigns with given JSON
      */
     protected void updateCampaigns(JSONObject campaignJSON, JSONObject campaignSettingsJSON) {
-        // TODO: STM This is a stub where Shane Moore (me) has put fake data for campaigns which have conversations.
-        JSONObject newCampaign = developmentReplaceCampaignJsonWithStub(campaignJSON);
-        loadCampaignsFromJSON(newCampaign, campaignSettingsJSON);
-    }
-
-    private JSONObject developmentReplaceCampaignJsonWithStub(JSONObject originalJsonCampaignObject) {
-        JSONObject newData = originalJsonCampaignObject;
-        // TODO: STM This method used to stub conversation data into a campaign object. Not quite doing that yet, instead its just totally replacing the campaign object with a custom one
-        try {
-            String stubbed_conversation_json = "{\"name\":\"lots o stuff\",\"description\":\"\",\"states\":[{\"name\":\"1420718742539-1Button\",\"title\":\"New page\",\"theme\":\"\",\"content\":[{\"value\":\"<div style=\\\"text-align: center; font-size: 12pt; text-shadow: 0 -1px 0 #fff\\\" class='editable'>Your text</div>\",\"type\":\"html-fragment\",\"tag\":\"1420718744758-fragment\"},{\"type\":\"multi-value-input\",\"description\":\"Question text here...\",\"values\":[{\"option_0\":\"Option 1\"},{\"option_1\":\"Option 2\"},{\"option_2\":\"Option 3\"}],\"tag\":\"1420718746542-fragment\"},{\"type\":\"multi-value-long-input\",\"description\":\"Question text here...\",\"values\":[{\"title\":\"Set 1\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\",\"Choice 4\",\"Choice 5\"]},{\"title\":\"Set 2\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\",\"Choice 4\"]},{\"title\":\"Set 3\",\"options\":[\"Choice 1\",\"Choice 2\",\"Choice 3\"]}],\"tag\":\"1420718748367-fragment\"},{\"type\":\"text-input\",\"lines\":5,\"description\":\"Description of your text field...\",\"kbd\":\"text\",\"tag\":\"1420718749963-fragment\"},{\"type\":\"nps-input\",\"tag\":\"1420718751831-fragment\"},{\"value\":\"e017e9509e7d271d4255c0951585555f603a2522\",\"type\":\"image\",\"tag\":\"1420718753530-fragment\"}],\"controls\":[{\"tag\":\"1420718742539-Button\",\"description\":\"Done\",\"target\":\"1420718760118-index\"}]},{\"name\":\"1420718760118-index\",\"title\":\"Thank you\",\"theme\":\"\",\"finish_page\":true,\"content\":[{\"tag\":\"1420718760118-hdr\",\"value\":\"<div class='editable' style=\\\"text-align:center; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 1.375em; text-shadow: 0 -1px 0 #fff\\\">Let's Finish</div>\",\"type\":\"html-fragment\"},{\"tag\":\"1420718760118-photo2\",\"value\":\"e017e9509e7d271d4255c0951585555f603a2522\",\"type\":\"image\"},{\"tag\":\"1420718760118-msg\",\"value\":\"<div class='editable' style=\\\"text-align:center; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 1em; text-shadow: 0 -1px 0 #fff\\\">A thank you message to the customer. Click text to edit.</div>\",\"type\":\"html-fragment\"}]}],\"id\":\"1245463426243\"}";
-            String conversations_json;
-            conversations_json = "[" + stubbed_conversation_json + "]";
-//
-//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-//            StrictMode.setThreadPolicy(policy);
-//            String address = "http://partnersapi.converser.io/swrve/conversations/single"; // Pull down the latest available conversation for the swrve app. Alternatively, hit the /all endpoint to get multiple conversations
-//            String swrveApiKey = "06c0bf52-d8a5-43de-a155-0aaeadae4daf";
-//            StringBuilder builder = new StringBuilder();
-//            HttpClient client = new DefaultHttpClient();
-//            HttpGet httpGet = new HttpGet(address);
-//            httpGet.addHeader("X_CONVERSER_APP_ID", swrveApiKey);
-//            HttpResponse response = client.execute(httpGet);
-//            StatusLine statusLine = response.getStatusLine();
-//            int statusCode = statusLine.getStatusCode();
-//            if(statusCode == 200){
-//                HttpEntity entity = response.getEntity();
-//                InputStream content = entity.getContent();
-//                BufferedReader reader = new BufferedReader(new InputStreamReader(content));
-//                String line;
-//                while((line = reader.readLine()) != null){
-//                    builder.append(line);
-//                }
-//            }
-//            String remote_conversation_json = builder.toString();
-//            if (remote_conversation_json != null){
-//                Log.i("developmentReplaceCampaignJsonWithStub", "Successfully Stubbed conversation with remote JSON");
-//                conversations_json = remote_conversation_json;
-//            }else{
-//                Log.w("developmentReplaceCampaignJsonWithStub", "Could not stub with remote JSON");
-//            }
-
-            // Now grab those conversations and stub the current set of campaigns
-            JSONArray conversations = new JSONArray(conversations_json);
-            JSONArray campaigns = originalJsonCampaignObject.getJSONArray("campaigns");
-            JSONArray newCampaigns = new JSONArray();
-            for (int i = 0; i < campaigns.length(); i++) {
-                JSONObject campaign = campaigns.getJSONObject(i);
-                campaign.put("conversations", conversations);
-                newCampaigns.put(i, campaign);
-            }
-            newData.put("campaigns", newCampaigns);
-        } catch (Exception e) {
-            Log.e(getClass().toString(), "Could not add stubbed conversations json to campaign :: ", e);
-        }
-        return newData;
+        loadCampaignsFromJSON(campaignJSON, campaignSettingsJSON);
     }
 
     /**
@@ -1316,29 +1250,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             }
         }
     }
-
-    protected class DisplayConversationRunnable implements Runnable {
-        private SwrveBase<?, ?> sdk;
-        private Activity activity;
-        private SwrveConversation conversation;
-        private boolean firstTime;
-
-        public DisplayConversationRunnable(SwrveBase<?, ?> sdk, Activity activity, SwrveConversation conversation, boolean firstTime) {
-            this.sdk = sdk;
-            this.activity = activity;
-            this.conversation = conversation;
-            this.firstTime = firstTime;
-        }
-
-        public void run() {
-            // Show the conversation inside an Activity/Fragment/Dialog
-            Toast.makeText(activity, "Testing the DisplayConversationRunnable", Toast.LENGTH_LONG).show();
-            Intent openAct = new Intent(activity, ConversationActivity.class);
-            ConversationActivity.globalConversation = this.conversation;
-            activity.startActivity(openAct);
-        }
-    }
-
 
     protected class DisplayMessageRunnable implements Runnable {
         private SwrveBase<?, ?> sdk;
