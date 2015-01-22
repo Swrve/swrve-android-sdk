@@ -8,7 +8,6 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.os.StrictMode;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -44,23 +43,15 @@ import com.swrve.sdk.rest.RESTClient;
 import com.swrve.sdk.rest.RESTResponse;
 import com.swrve.sdk.rest.SwrveFilterInputStream;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -203,7 +194,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected int previousOrientation;
     protected SwrveQAUser qaUser;
 
-    public SwrveImp() {
+    protected SwrveImp() {
         installTime = new AtomicLong();
         installTimeLatch = new CountDownLatch(1);
         destroyed = false;

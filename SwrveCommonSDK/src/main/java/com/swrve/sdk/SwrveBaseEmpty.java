@@ -26,33 +26,39 @@ import java.util.Map;
  */
 public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<T, C> {
 
-    private WeakReference<Context> context;
+    protected WeakReference<Context> context;
+    protected String apiKey;
+
     private C config;
     private ISwrveCustomButtonListener customButtonListener;
     private ISwrveInstallButtonListener installButtonListener;
     private ISwrveDialogListener dialogListener;
     private String language = "en-US";
-    private String apiKey;
     private String userId;
     private File cacheDir;
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public T init(Context context, int appId, String apiKey) throws IllegalArgumentException {
-        return init(context, appId, apiKey, (C) new SwrveConfigBaseImp());
-    }
-
-    @Override
-    public T init(Context context, int appId, String apiKey, String userId, C config) throws IllegalArgumentException {
-        config.setUserId(userId);
-        return init(context, appId, apiKey, config);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public T init(Context context, int appId, String apiKey, C config) throws IllegalArgumentException {
-        this.context = new WeakReference<Context>(context);
+    protected SwrveBaseEmpty(Context context, String apiKey) {
+        super();
+        this.context = new WeakReference<Context>(context.getApplicationContext());
         this.apiKey = apiKey;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T init(Context context) throws IllegalArgumentException {
+        return init(context, (C) new SwrveConfigBaseImp());
+    }
+
+    @Override
+    public T init(Context context, String userId, C config) throws IllegalArgumentException {
+        config.setUserId(userId);
+        return init(context, config);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T init(Context context, C config) throws IllegalArgumentException {
+        this.context = new WeakReference<Context>(context);
         this.config = config;
         this.language = config.getLanguage();
         this.userId = config.getUserId();
@@ -66,13 +72,13 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @SuppressWarnings("unchecked")
     @Override
-    public T initOrBind(Context context, int appId, String apiKey) throws IllegalArgumentException {
-        return initOrBind(context, appId, apiKey, (C) new SwrveConfigBaseImp());
+    public T initOrBind(Context context) throws IllegalArgumentException {
+        return initOrBind(context, (C) new SwrveConfigBaseImp());
     }
 
     @Override
-    public T initOrBind(Context context, int appId, String apiKey, C config) throws IllegalArgumentException {
-        return init(context, appId, apiKey, config);
+    public T initOrBind(Context context, C config) throws IllegalArgumentException {
+        return init(context, config);
     }
 
     @Override
