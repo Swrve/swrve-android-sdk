@@ -9,9 +9,7 @@ public interface ISwrveConversationListener {
     /**
      * This method is invoked when a conversation should be shown in your app.
      *
-     * @param conversation   coonversation to be shown.
-     * @param firstTime indicates if this message was already showing and the app
-     *                  rotated.
+     * @param conversation conversation to be shown.
      */
-    void onMessage(SwrveConversation conversation, boolean firstTime);
+    void onMessage(SwrveConversation conversation);
 }

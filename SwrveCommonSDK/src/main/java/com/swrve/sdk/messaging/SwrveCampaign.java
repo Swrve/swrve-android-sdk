@@ -36,7 +36,6 @@ public class SwrveCampaign {
     protected static int DEFAULT_MAX_IMPRESSIONS = 99999;
     protected static int DEFAULT_MIN_DELAY_BETWEEN_MSGS = 60;
     // Random number generator
-    protected static Random rnd = new Random();
     protected final SimpleDateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss ZZZZ", Locale.US);
     // Identifies the campaign
     protected int id;
@@ -101,52 +100,51 @@ public class SwrveCampaign {
         assignCampaignRules(this, campaignData);
         assignCampaignDates(this, campaignData);
 
-        JSONArray jsonMessages = campaignData.getJSONArray("messages");
-        for (int k = 0, t = jsonMessages.length(); k < t; k++) {
-            JSONObject messageData = jsonMessages.getJSONObject(k);
-            SwrveMessage message = createMessage(controller, this, messageData);
+        if (campaignData.has("messages")) {
+            JSONArray jsonMessages = campaignData.getJSONArray("messages");
+            for (int k = 0, t = jsonMessages.length(); k < t; k++) {
+                JSONObject messageData = jsonMessages.getJSONObject(k);
+                SwrveMessage message = createMessage(controller, this, messageData);
 
-            // If the message has some format
-            if (message.getFormats().size() > 0) {
-                // Add assets to queue
-                if (assetsQueue != null) {
-                    for (SwrveMessageFormat format : message.getFormats()) {
-                        // Add all images to the download queue
-                        for (SwrveButton button : format.getButtons()) {
-                            if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
-                                assetsQueue.add(button.getImage());
+                // If the message has some format
+                if (message.getFormats().size() > 0) {
+                    // Add assets to queue
+                    if (assetsQueue != null) {
+                        for (SwrveMessageFormat format : message.getFormats()) {
+                            // Add all images to the download queue
+                            for (SwrveButton button : format.getButtons()) {
+                                if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
+                                    assetsQueue.add(button.getImage());
+                                }
                             }
-                        }
 
-                        for (SwrveImage image : format.getImages()) {
-                            if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
-                                assetsQueue.add(image.getFile());
+                            for (SwrveImage image : format.getImages()) {
+                                if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
+                                    assetsQueue.add(image.getFile());
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            // Only add message if it has any format
-            if (message.getFormats().size() > 0) {
-                addMessage(message);
+                // Only add message if it has any format
+                if (message.getFormats().size() > 0) {
+                    addMessage(message);
+                }
             }
         }
 
-        if(campaignData.has("conversations")) {
-            JSONArray jsonConversations = campaignData.getJSONArray("conversations");
-            for (int k = 0; k < jsonConversations.length(); k++) {
-                JSONObject conversationData = jsonConversations.getJSONObject(k);
-                SwrveConversation conversation = createConversation(controller, this, conversationData);
-                addConversation(conversation);
+        if(campaignData.has("conversation")) {
+            JSONObject conversationData = campaignData.getJSONObject("conversation");
+            SwrveConversation conversation = createConversation(controller, this, conversationData);
+            addConversation(conversation);
 
-                // Add assets to queue
-                for (ConversationPage conversationPage : conversation.getPages()) {
-                    for (ConversationAtom conversationAtom : conversationPage.getContent()) {
-                        if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                            Content modelContent = (Content) conversationAtom;
-                            assetsQueue.add(modelContent.getValue());
-                        }
+            // Add assets to queue
+            for (ConversationPage conversationPage : conversation.getPages()) {
+                for (ConversationAtom conversationAtom : conversationPage.getContent()) {
+                    if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
+                        Content modelContent = (Content) conversationAtom;
+                        assetsQueue.add(modelContent.getValue());
                     }
                 }
             }
@@ -198,7 +196,6 @@ public class SwrveCampaign {
     protected void addConversation(SwrveConversation conversation) {
         this.conversations.add(conversation);
     }
-
 
     /**
      * @return the next message to show.
@@ -284,20 +281,9 @@ public class SwrveCampaign {
      * @param eventName
      * @return true if the campaign has this event as a trigger
      */
-    public boolean hasMessageForEvent(String eventName) {
+    public boolean hasMessageOrConversationForEvent(String eventName) {
         String lowerCaseEvent = eventName.toLowerCase(Locale.US);
         return triggers != null && triggers.contains(lowerCaseEvent);
-    }
-
-    /**
-     * Check if the campaign contains messages for the given event.
-     *
-     * @param eventName
-     * @return true if the campaign has this event as a trigger
-     */
-    public boolean hasConversationForEvent(String eventName) {
-        // Since triggers are shared across conversations and messages, this is a proxy method to hasMessagesForEvent. Until such a time as Conversations differ in how they are triggered by events
-        return hasMessageForEvent(eventName);
     }
 
     /**
@@ -328,7 +314,7 @@ public class SwrveCampaign {
     public SwrveMessage getMessageForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
         int messagesCount = messages.size();
 
-        if (!hasMessageForEvent(event)) {
+        if (!hasMessageOrConversationForEvent(event)) {
             Log.i(LOG_TAG, "There is no trigger in " + id + " that matches " + event);
             return null;
         }
@@ -383,7 +369,7 @@ public class SwrveCampaign {
      */
     public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
         int conversationsCount = conversations.size();
-        if (!hasConversationForEvent(event)) {
+        if (!hasMessageOrConversationForEvent(event)) {
             Log.i(LOG_TAG, "There is no trigger in " + id + " that matches " + event);
             return null;
         }

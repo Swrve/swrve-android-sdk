@@ -7,11 +7,6 @@ import android.util.Log;
 
 import com.swrve.sdk.converser.SwrveConversation;
 
-/**
- * (will eventually) display a conversation content, input, and choices as well as handling
- *
- * @author Jason Connery
- */
 public class ConversationActivity extends FragmentActivity {
     private static final String LOG_TAG = "ConversationActivity";
     /* TODO: STM : This is a complete hack to get things running. It will work but is by now means a good practice.
@@ -55,10 +50,10 @@ public class ConversationActivity extends FragmentActivity {
     }
 
     @Override
-    public void onBackPressed(){
+    public void onBackPressed() {
         try {
             conversationFragment.onBackPressed();
-        }catch(NullPointerException ne){
+        } catch (NullPointerException ne) {
             Log.e(LOG_TAG, "Could not call the ConversationFragments onBackPressed()", ne);
         }
         super.onBackPressed();

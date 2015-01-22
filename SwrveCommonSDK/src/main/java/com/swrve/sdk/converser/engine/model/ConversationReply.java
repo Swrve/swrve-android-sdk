@@ -3,7 +3,6 @@ package com.swrve.sdk.converser.engine.model;
 import java.util.HashMap;
 
 public class ConversationReply {
-
     private String control;
     private HashMap<String, Object> data;
 

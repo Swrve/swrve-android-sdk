@@ -3,7 +3,6 @@ package com.swrve.sdk.converser.ui;
 import java.util.Map;
 
 public interface ConverserInput {
-
     public void onReplyDataRequired(Map<String, Object> dataMap);
 
     /**

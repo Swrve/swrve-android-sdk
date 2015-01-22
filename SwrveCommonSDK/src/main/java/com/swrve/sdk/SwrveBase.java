@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
@@ -17,6 +18,7 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.converser.ISwrveConversationListener;
 import com.swrve.sdk.converser.SwrveConversation;
 import com.swrve.sdk.converser.engine.model.ConverserInputResult;
+import com.swrve.sdk.converser.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
@@ -236,15 +238,20 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 // Add custom conversation listener
                 if (conversationListener == null) {
                     setConversationListener(new ISwrveConversationListener() {
-                        public void onMessage(final SwrveConversation conversation, boolean firstTime) {
-                            if (SwrveBase.this.activityContext != null) {
-                                final Activity activity = SwrveBase.this.activityContext.get();
-                                if (activity == null) {
-                                    Log.e(LOG_TAG, "Can't display a conversation with a non-Activity context");
+                        public void onMessage(final SwrveConversation conversation) {
+                            if (SwrveBase.this.context != null) {
+                                final Context ctx = SwrveBase.this.context.get();
+                                if (ctx == null) {
+                                    Log.e(LOG_TAG, "Can't display a conversation without a context");
                                     return;
                                 }
-                                // Run Conversation code on the UI thread
-                                activity.runOnUiThread(new DisplayConversationRunnable(SwrveBase.this, activity, conversation, firstTime));
+
+                                Intent intent = new Intent(ctx, ConversationActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                //intent.putExtra("conversation", conversation);
+                                // TODO.Converser: We should probably fix this
+                                ConversationActivity.globalConversation = conversation;
+                                ctx.startActivity(intent);
                             }
                         }
                     });
@@ -734,18 +741,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 }
 
                                 try {
-                                    JSONObject resourceDict = new JSONObject(response.responseBody);
+                                    JSONObject responseJson = new JSONObject(response.responseBody);
 
-                                    if (resourceDict.has("flush_frequency")) {
-                                        Integer flushFrequency = resourceDict.getInt("flush_frequency");
+                                    if (responseJson.has("flush_frequency")) {
+                                        Integer flushFrequency = responseJson.getInt("flush_frequency");
                                         if (flushFrequency != null) {
                                             campaignsAndResourcesFlushFrequency = flushFrequency;
                                             settingsEditor.putInt("swrve_cr_flush_frequency", campaignsAndResourcesFlushFrequency);
                                         }
                                     }
 
-                                    if (resourceDict.has("flush_refresh_delay")) {
-                                        Integer flushDelay = resourceDict.getInt("flush_refresh_delay");
+                                    if (responseJson.has("flush_refresh_delay")) {
+                                        Integer flushDelay = responseJson.getInt("flush_refresh_delay");
                                         if (flushDelay != null) {
                                             campaignsAndResourcesFlushRefreshDelay = flushDelay;
                                             settingsEditor.putInt("swrve_cr_flush_delay", campaignsAndResourcesFlushRefreshDelay);
@@ -753,8 +760,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     }
 
                                     if (config.isTalkEnabled()) {
-                                        if (resourceDict.has("campaigns")) {
-                                            JSONObject campaignJson = resourceDict.getJSONObject("campaigns");
+                                        if (responseJson.has("campaigns")) {
+                                            JSONObject campaignJson = responseJson.getJSONObject("campaigns");
                                             updateCampaigns(campaignJson, null);
                                             saveCampaignsInCache(campaignJson);
                                             autoShowMessages();
@@ -776,9 +783,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         }
                                     }
 
-                                    if (resourceDict.has("user_resources")) {
+                                    if (responseJson.has("user_resources")) {
                                         // Update resource manager
-                                        JSONArray resourceJson = resourceDict.getJSONArray("user_resources");
+                                        JSONArray resourceJson = responseJson.getJSONArray("user_resources");
                                         resourceManager.setResourcesFromJSON(resourceJson);
                                         saveResourcesInCache(resourceJson);
 
@@ -829,7 +836,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @SuppressLint("UseSparseArrays")
-    protected SwrveConversation _getConversationForEvent(String event, SwrveOrientation orientation){
+    protected SwrveConversation _getConversationForEvent(String event) {
         SwrveConversation result = null;
         SwrveCampaign campaign = null;
 
@@ -866,9 +873,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             synchronized (campaigns) {
                 List<SwrveConversation> availableConversations = new ArrayList<SwrveConversation>();
-                // Select messages with higher priority
-                int minPriority = Integer.MAX_VALUE;
-                List<SwrveConversation> candidateConversations = new ArrayList<SwrveConversation>();
                 Iterator<SwrveCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
                     SwrveCampaign nextCampaign = itCampaign.next();
@@ -876,35 +880,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     if (nextConversation != null) {
                         // Add to list of returned messages
                         availableConversations.add(nextConversation);
-                        // Check if it is a candidate to be shown
-                        if (nextConversation.getPriority() <= minPriority) {
-                            minPriority = nextConversation.getPriority();
-                            if (nextConversation.getPriority() < minPriority) {
-                                candidateConversations.clear();
-                            }
-                            candidateConversations.add(nextConversation);
-                        }
                     }
                 }
-
-                // Select randomly from the highest messages
-                Collections.shuffle(candidateConversations);
-                Iterator<SwrveConversation> itCandidateConversation = candidateConversations.iterator();
-                while (campaign == null && itCandidateConversation.hasNext()) {
-                    SwrveConversation candidateConversation = itCandidateConversation.next();
-                    // Check that the conversation supports the current orientation
-                    if (candidateConversation.supportsOrientation(orientation)) {
-                        result = candidateConversation;
-                        campaign = candidateConversation.getCampaign();
-                    } else {
-                        if (qaUser != null) {
-                            int campaignId = candidateConversation.getCampaign().getId();
-                            campaignMessages.put(campaignId, candidateConversation.getId());
-                            campaignReasons.put(campaignId, "Conversation didn't support the given orientation: " + orientation);
-                        }
-                    }
+                if (availableConversations.size() > 0) {
+                    // Select randomly
+                    Collections.shuffle(availableConversations);
+                    result = availableConversations.get(0);
                 }
-
                 if (qaUser != null && campaign != null && result != null) {
                     // A message was chosen, set the reason for the others
                     Iterator<SwrveConversation> itOtherConversation = availableConversations.iterator();
@@ -1573,16 +1555,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     public SwrveConversation getConversationForEvent(String event) {
         try {
-            return getConversationForEvent(event, SwrveOrientation.Both);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-        return null;
-    }
-
-    public SwrveConversation getConversationForEvent(String event, SwrveOrientation orientation) {
-        try {
-            return _getConversationForEvent(event, orientation);
+            return _getConversationForEvent(event);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
