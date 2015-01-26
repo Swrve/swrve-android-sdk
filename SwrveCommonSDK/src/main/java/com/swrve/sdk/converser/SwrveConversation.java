@@ -34,9 +34,9 @@ public class SwrveConversation implements Serializable {
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveConversation(SwrveBase<?, ?> conversationController, SwrveConversationCampaign campaign) {
+    public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign) {
         setCampaign(campaign);
-        setConversationController(conversationController);
+        setConversationController(controller);
     }
 
     /**
@@ -72,6 +72,13 @@ public class SwrveConversation implements Serializable {
             pages.add(ConversationPage.fromJson(o));
         }
         setPages(pages);
+    }
+
+    private void setConversationController(SwrveBase<?, ?> conversationController) {
+        this.conversationController = conversationController;
+        if (conversationController != null) {
+            setCacheDir(conversationController.getCacheDir());
+        }
     }
 
     protected boolean assetInCache(String asset) {
@@ -174,24 +181,5 @@ public class SwrveConversation implements Serializable {
 
     public void setPages(ArrayList<ConversationPage> pages) {
         this.pages = pages;
-    }
-
-    /**
-     * @return the SwrveTalk instance that manages the Conversation.
-     */
-    public SwrveBase<?, ?> getConversationController() {
-        return conversationController;
-    }
-
-    /**
-     * Set the Swrve SDK instance that will respond to the controller.
-     *
-     * @param conversationController
-     */
-    public void setConversationController(SwrveBase<?, ?> conversationController) {
-        this.conversationController = conversationController;
-        if (conversationController != null) {
-            setCacheDir(conversationController.getCacheDir());
-        }
     }
 }

@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.converser.SwrveConversation;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -16,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
@@ -112,4 +115,20 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     Context getContext();
 
     C getConfig();
+
+    void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions);
+
+    void conversationLinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag);
+
+    void conversationCallActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag);
+
+    void conversationWasStartedByUser(SwrveConversation conversation);
+
+    void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag);
+
+    void conversationEncounteredError(SwrveConversation conversation, String currentPageTag, Exception e);
+
+    void conversationWasCancelledByUser(SwrveConversation conversation, String finalPageTag);
+
+    void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag);
 }
