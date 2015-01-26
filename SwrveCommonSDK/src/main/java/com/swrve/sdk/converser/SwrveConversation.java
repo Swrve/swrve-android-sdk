@@ -8,20 +8,21 @@ import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ControlBase;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
 import com.swrve.sdk.converser.engine.model.ConversationPage;
-import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveConversationCampaign;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Set;
 
-public class SwrveConversation {
+public class SwrveConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
     // Swrve SDK reference
-    protected SwrveBase<?, ?> conversationController;
+    protected transient SwrveBase<?, ?> conversationController;
     // Identifies the message in a campaign
     protected int id;
     // Customer defined name of the conversation as it appears in the web app
@@ -29,11 +30,11 @@ public class SwrveConversation {
     // Each of the conversations pages
     protected ArrayList<ConversationPage> pages;
     // Parent in-app campaign
-    protected SwrveCampaign campaign;
+    protected transient SwrveConversationCampaign campaign;
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveConversation(SwrveBase<?, ?> conversationController, SwrveCampaign campaign) {
+    public SwrveConversation(SwrveBase<?, ?> conversationController, SwrveConversationCampaign campaign) {
         setCampaign(campaign);
         setConversationController(conversationController);
     }
@@ -48,7 +49,7 @@ public class SwrveConversation {
      * Loaded SwrveConversation.
      * @throws JSONException
      */
-    public SwrveConversation(SwrveBase<?, ?> controller, SwrveCampaign campaign, JSONObject conversationData) throws JSONException {
+    public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
         this(controller, campaign);
 
         try {
@@ -68,8 +69,7 @@ public class SwrveConversation {
 
         for (int i = 0; i < pagesJson.length(); i++) {
             JSONObject o = pagesJson.getJSONObject(i);
-            ConversationPage page = new ConversationPage().fromJson(o);
-            pages.add(page);
+            pages.add(ConversationPage.fromJson(o));
         }
         setPages(pages);
     }
@@ -157,11 +157,11 @@ public class SwrveConversation {
     /**
      * @return the related campaign.
      */
-    public SwrveCampaign getCampaign() {
+    public SwrveConversationCampaign getCampaign() {
         return campaign;
     }
 
-    protected void setCampaign(SwrveCampaign campaign) {
+    protected void setCampaign(SwrveConversationCampaign campaign) {
         this.campaign = campaign;
     }
 

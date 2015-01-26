@@ -26,8 +26,10 @@ import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEventListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
@@ -230,9 +232,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                                 Intent intent = new Intent(ctx, ConversationActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                //intent.putExtra("conversation", conversation);
-                                // TODO.Converser: We should probably fix this
-                                ConversationActivity.globalConversation = conversation;
+                                intent.putExtra("conversation", conversation);
                                 ctx.startActivity(intent);
                             }
                         }
@@ -815,6 +815,31 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return getMessageForEvent(event, SwrveOrientation.Both);
     }
 
+    private boolean checkCampaignRules(int elementCount, String elementName, String event, Date now) {
+        if (elementCount == 0) {
+            noMessagesWereShown(event, "No " + elementName + "s available");
+            return false;
+        }
+
+        if (!event.equalsIgnoreCase(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(now)) {
+            noMessagesWereShown(event, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
+            return false;
+        }
+
+        if (isTooSoonToShowMessageAfterDelay(now)) {
+            noMessagesWereShown(event, "{App throttle limit} Too soon after last " + elementName + ". Wait until " + timestampFormat.format(showMessagesAfterDelay));
+            return false;
+        }
+
+        if (hasShowTooManyMessagesAlready()) {
+            noMessagesWereShown(event, "{App Throttle limit} Too many " + elementName + "s shown");
+            return false;
+        }
+
+        return true;
+    }
+
+
     @SuppressLint("UseSparseArrays")
     protected SwrveConversation _getConversationForEvent(String event) {
         SwrveConversation result = null;
@@ -825,41 +850,24 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<Integer, Integer> campaignMessages = null;
 
         if (campaigns != null) {
-            //TODO: STM this entire section is verbose and duplicated from _getMessageForEvent. Could be trimmed down
-            if (campaigns.size() == 0) {
-                noMessagesWereShown(event, "No campaigns available");
+            if (!checkCampaignRules(campaigns.size(), "conversation", event, now)) {
                 return null;
             }
-
-            if (!event.equalsIgnoreCase(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(now)) {
-                noMessagesWereShown(event, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
-                return null;
-            }
-
-            if (isTooSoonToShowMessageAfterDelay(now)) {
-                noMessagesWereShown(event, "{App throttle limit} Too soon after last message. Wait until " + timestampFormat.format(showMessagesAfterDelay));
-                return null;
-            }
-
-            if (hasShowTooManyMessagesAlready()) {
-                noMessagesWereShown(event, "{App Throttle limit} Too many messages shown");
-                return null;
-            }
-
             if (qaUser != null) {
                 campaignReasons = new HashMap<Integer, String>();
                 campaignMessages = new HashMap<Integer, Integer>();
             }
-
             synchronized (campaigns) {
                 List<SwrveConversation> availableConversations = new ArrayList<SwrveConversation>();
-                Iterator<SwrveCampaign> itCampaign = campaigns.iterator();
+                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
-                    SwrveCampaign nextCampaign = itCampaign.next();
-                    SwrveConversation nextConversation = nextCampaign.getConversationForEvent(event, now, campaignReasons);
-                    if (nextConversation != null) {
-                        // Add to list of returned messages
-                        availableConversations.add(nextConversation);
+                    SwrveBaseCampaign nextCampaign = itCampaign.next();
+                    if (nextCampaign instanceof SwrveConversationCampaign) {
+                        SwrveConversation nextConversation = ((SwrveConversationCampaign)nextCampaign).getConversationForEvent(event, now, campaignReasons);
+                        if (nextConversation != null) {
+                            // Add to list of returned messages
+                            availableConversations.add(nextConversation);
+                        }
                     }
                 }
                 if (availableConversations.size() > 0) {
@@ -913,51 +921,34 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<Integer, Integer> campaignMessages = null;
 
         if (campaigns != null) {
-            if (campaigns.size() == 0) {
-                noMessagesWereShown(event, "No campaigns available");
+            if (!checkCampaignRules(campaigns.size(), "message", event, now)) {
                 return null;
             }
-
-            // Ignore delay after launch throttle limit for auto show messages
-            if (!event.equalsIgnoreCase(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(now)) {
-                noMessagesWereShown(event, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
-                return null;
-            }
-
-            if (isTooSoonToShowMessageAfterDelay(now)) {
-                noMessagesWereShown(event, "{App throttle limit} Too soon after last message. Wait until " + timestampFormat.format(showMessagesAfterDelay));
-                return null;
-            }
-
-            if (hasShowTooManyMessagesAlready()) {
-                noMessagesWereShown(event, "{App Throttle limit} Too many messages shown");
-                return null;
-            }
-
             if (qaUser != null) {
                 campaignReasons = new HashMap<Integer, String>();
                 campaignMessages = new HashMap<Integer, Integer>();
             }
-
             synchronized (campaigns) {
                 List<SwrveMessage> availableMessages = new ArrayList<SwrveMessage>();
                 // Select messages with higher priority
                 int minPriority = Integer.MAX_VALUE;
                 List<SwrveMessage> candidateMessages = new ArrayList<SwrveMessage>();
-                Iterator<SwrveCampaign> itCampaign = campaigns.iterator();
+                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
-                    SwrveCampaign nextCampaign = itCampaign.next();
-                    SwrveMessage nextMessage = nextCampaign.getMessageForEvent(event, now, campaignReasons);
-                    if (nextMessage != null) {
-                        // Add to list of returned messages
-                        availableMessages.add(nextMessage);
-                        // Check if it is a candidate to be shown
-                        if (nextMessage.getPriority() <= minPriority) {
-                            minPriority = nextMessage.getPriority();
-                            if (nextMessage.getPriority() < minPriority) {
-                                candidateMessages.clear();
+                    SwrveBaseCampaign nextCampaign = itCampaign.next();
+                    if (nextCampaign instanceof SwrveCampaign) {
+                        SwrveMessage nextMessage = ((SwrveCampaign)nextCampaign).getMessageForEvent(event, now, campaignReasons);
+                        if (nextMessage != null) {
+                            // Add to list of returned messages
+                            availableMessages.add(nextMessage);
+                            // Check if it is a candidate to be shown
+                            if (nextMessage.getPriority() <= minPriority) {
+                                minPriority = nextMessage.getPriority();
+                                if (nextMessage.getPriority() < minPriority) {
+                                    candidateMessages.clear();
+                                }
+                                candidateMessages.add(nextMessage);
                             }
-                            candidateMessages.add(nextMessage);
                         }
                     }
                 }
@@ -1021,10 +1012,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         if (campaigns != null && campaigns.size() > 0) {
             synchronized (campaigns) {
-                Iterator<SwrveCampaign> itCampaign = campaigns.iterator();
+                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext() && result == null) {
-                    SwrveCampaign campaign = itCampaign.next();
-                    result = campaign.getMessageForId(messageId);
+                    SwrveBaseCampaign campaign = itCampaign.next();
+                    if (campaign instanceof SwrveCampaign) {
+                        result = ((SwrveCampaign)campaign).getMessageForId(messageId);
+                    }
                 }
             }
         }
@@ -1066,7 +1059,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveMessage message = messageFormat.getMessage();
             SwrveCampaign campaign = message.getCampaign();
             if (campaign != null) {
-                campaign.messageWasShownToUser(messageFormat);
+                campaign.messageWasShownToUser();
             }
 
             String viewEvent = "Swrve.Messages.Message-" + message.getId() + ".impression";
@@ -1139,9 +1132,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationWasStartedByUser(SwrveConversation conversation) {
         if (conversation != null) {
-            SwrveCampaign campaign = conversation.getCampaign();
+            SwrveConversationCampaign campaign = conversation.getCampaign();
             if (campaign != null) {
-                campaign.conversationWasShownToUser(conversation);
+                campaign.conversationWasShownToUser();
             }
 
             String viewEvent = "Swrve.Conversations.Conversation-" + conversation.getId() + ".start";

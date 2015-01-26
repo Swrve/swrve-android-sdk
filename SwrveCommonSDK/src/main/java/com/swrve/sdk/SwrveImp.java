@@ -27,7 +27,9 @@ import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.view.SwrveDialog;
@@ -159,7 +161,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ExecutorService restClientExecutor;
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
-    protected List<SwrveCampaign> campaigns;
+    protected List<SwrveBaseCampaign> campaigns;
     protected Set<String> assetsOnDisk;
     protected boolean assetsCurrentlyDownloading;
     protected SparseArray<String> appStoreURLs;
@@ -608,10 +610,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             return;
         }
 
-        for (final SwrveCampaign campaign : campaigns) {
+        for (final SwrveBaseCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
 
-            if (campaign.hasMessageOrConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+            if (campaign.hasElementForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
@@ -636,7 +638,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
             }
 
-            if (campaign.hasMessageOrConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+            if (campaign.hasElementForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
@@ -786,7 +788,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             JSONObject jsonSettings = (settings == null) ? new JSONObject() : settings;
             boolean saveCampaignSettings = (qaUser == null || !qaUser.isResetDevice());
             for (int i = campaigns.size() - 1; i >= 0; i--) {
-                SwrveCampaign campaign = campaigns.get(i);
+                SwrveBaseCampaign campaign = campaigns.get(i);
                 if (!newCampaignIds.contains(campaign.getId())) {
                     campaigns.remove(i);
                 } else if (saveCampaignSettings) {
@@ -794,13 +796,19 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
             }
 
-            List<SwrveCampaign> newCampaigns = new ArrayList<SwrveCampaign>();
+            List<SwrveBaseCampaign> newCampaigns = new ArrayList<SwrveBaseCampaign>();
             Set<String> assetsQueue = new HashSet<String>();
             for (int i = 0, j = jsonCampaigns.length(); i < j; i++) {
                 JSONObject campaignData = jsonCampaigns.getJSONObject(i);
                 // Load campaign and get assets to be loaded
                 Set<String> campaignAssetsQueue = new HashSet<String>();
-                SwrveCampaign campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
+
+                SwrveBaseCampaign campaign;
+                if (campaignData.has("conversation")) {
+                    campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
+                } else {
+                    campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
+                }
                 assetsQueue.addAll(campaignAssetsQueue);
 
                 // Check if we need to reset the device for QA, otherwise load campaign settings into downloaded campaign
@@ -833,7 +841,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             downloadAssets(assetsQueue);
 
             // Update current list of campaigns with new ones
-            campaigns = new ArrayList<SwrveCampaign>(newCampaigns);
+            campaigns = new ArrayList<SwrveBaseCampaign>(newCampaigns);
         } catch (JSONException exp) {
             Log.e(LOG_TAG, "Error parsing campaign JSON", exp);
         }
@@ -862,6 +870,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
     protected SwrveCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
         return new SwrveCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
+    }
+
+    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
     }
 
     protected boolean downloadAssetSynchronously(final String assetPath) {
@@ -924,9 +936,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         try {
             // Save campaign state
             JSONObject jsonSettings = new JSONObject();
-            Iterator<SwrveCampaign> itCampaign = campaigns.iterator();
+            Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
             while (itCampaign.hasNext()) {
-                SwrveCampaign campaign = itCampaign.next();
+                SwrveBaseCampaign campaign = itCampaign.next();
                 jsonSettings.put(Integer.toString(campaign.getId()), campaign.createSettings());
             }
 
@@ -1111,7 +1123,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Initialize campaigns with cache content
      */
     protected void initCampaigns() {
-        campaigns = new ArrayList<SwrveCampaign>();
+        campaigns = new ArrayList<SwrveBaseCampaign>();
 
         try {
             String campaignsFromCache = cachedLocalStorage.getSecureCacheEntryForUser(userId, CAMPAIGN_CATEGORY, getUniqueKey());

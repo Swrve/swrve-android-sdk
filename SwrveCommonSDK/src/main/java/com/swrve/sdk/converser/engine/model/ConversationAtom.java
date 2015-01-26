@@ -1,6 +1,8 @@
 package com.swrve.sdk.converser.engine.model;
 
-public abstract class ConversationAtom {
+import java.io.Serializable;
+
+public abstract class ConversationAtom implements Serializable {
     public static final String TYPE_CONTENT_TEXT = "text";
     public static final String TYPE_CONTENT_HTML = "html-fragment";
     public static final String TYPE_CONTENT_IMAGE = "image";

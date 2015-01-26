@@ -1,8 +1,9 @@
 package com.swrve.sdk.converser.engine.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class MultiValueInput extends InputBase {
+public class MultiValueInput extends InputBase implements Serializable {
     private String description;
     private ArrayList<MultiValueItem> values;
 
@@ -14,13 +15,11 @@ public class MultiValueInput extends InputBase {
         return description;
     }
 
-    public static class MultiValueItem {
+    public static class MultiValueItem implements Serializable  {
         private String name;
         private String value;
 
         public MultiValueItem(String name, String value) {
-            super();
-
             this.name = name;
             this.value = value;
         }

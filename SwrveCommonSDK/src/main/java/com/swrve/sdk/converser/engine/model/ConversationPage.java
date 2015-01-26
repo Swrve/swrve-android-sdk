@@ -1,13 +1,17 @@
 package com.swrve.sdk.converser.engine.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.Gson;
 import com.swrve.sdk.converser.engine.GsonHelper;
 
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class ConversationPage {
+public class ConversationPage implements Serializable {
     private String tag;
     private String title;
 
@@ -43,20 +47,18 @@ public class ConversationPage {
     }
 
     public ArrayList<ConversationAtom> getControls() {
-
         if (controls == null) {
             controls = new ArrayList<ConversationAtom>();
         }
         return controls;
     }
 
-    public ConversationPage fromJSON(String json) {
+    public static ConversationPage fromJSON(String json) {
         Gson gson = GsonHelper.getConfiguredGson();
         return gson.fromJson(json, ConversationPage.class);
     }
 
-    public ConversationPage fromJson(JSONObject json) {
+    public static ConversationPage fromJson(JSONObject json) {
         return fromJSON(json.toString());
     }
-
 }
