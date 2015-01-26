@@ -6,8 +6,7 @@ import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 
 /**
- * Swrve Google SDK interface. You can obtain an instance of this class using the SwrveFactory or
- * SwrveInstance that creates a singleton Swrve object.
+ * Swrve Google SDK interface.
  */
 public interface ISwrve extends ISwrveBase<ISwrve, SwrveConfig> {
 

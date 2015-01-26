@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -19,62 +20,18 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * SwrveSDK interface. You can obtain an instance of this class using the SwrveFactory or
- * SwrveInstance that creates a singleton Swrve object.
- */
 public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     /**
      * Create a new Swrve object. Typically this function is called in your main
      * activity's onCreate function.
      *
-     * @param context your activity or application context
+     * @param activity your activity or application context
      * @throws IllegalArgumentException
      */
-    T init(final Context context) throws IllegalArgumentException;
+    T onCreate(Activity activity) throws IllegalArgumentException;
 
-    /**
-     * Create a new Swrve object. Typically this function is called in your main
-     * activity's onCreate function.
-     *
-     * @param context your activity or application context
-     * @param userId  your unique user id for the application
-     * @param config  your SwrveConfig options
-     * @throws IllegalArgumentException
-     */
-    T init(final Context context, final String userId, final C config) throws IllegalArgumentException;
-
-    /**
-     * Create a new Swrve object. Typically this function is called in your main
-     * activity's onCreate function.
-     *
-     * @param context your activity or application context
-     * @param config  your SwrveConfig options
-     * @throws IllegalArgumentException
-     */
-    T init(final Context context, final C config) throws IllegalArgumentException;
-
-
-    /**
-     * Create or bind to a Swrve object. Typically this function is called in your main
-     * activity's onCreate function.
-     *
-     * @param context your activity or application context
-     * @throws IllegalArgumentException
-     */
-    T initOrBind(final Context context) throws IllegalArgumentException;
-
-    /**
-     * Create or bind to a Swrve object. Typically this function is called in your main
-     * activity's onCreate function.
-     *
-     * @param context your activity or application context
-     * @param config  your SwrveConfig options
-     * @throws IllegalArgumentException
-     */
-    T initOrBind(final Context context, final C config) throws IllegalArgumentException;
-
+    T onCreateOrBind(Activity activity) throws IllegalArgumentException;
 
     /**
      * Add a Swrve.session.start event to the event queue. This event should

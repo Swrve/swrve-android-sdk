@@ -21,8 +21,7 @@ import org.json.JSONObject;
 import java.lang.ref.WeakReference;
 
 /**
- * Main implementation of the Google Swrve SDK. You can obtain an instance of this class using the SwrveFactory or
- * SwrveInstance that creates a singleton Swrve object.
+ * Main implementation of the Google Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String REGISTRATION_ID_CATEGORY = "RegistrationId";
@@ -31,7 +30,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected String registrationId;
     protected ISwrvePushNotificationListener pushNotificationListener;
 
-    protected Swrve(Context context, int appId, String apiKey) {
+    protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super();
         if (context instanceof Activity) {
             this.context = new WeakReference<Context>(context.getApplicationContext());
@@ -41,6 +40,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
         this.appId = appId;
         this.apiKey = apiKey;
+        this.config = config;
     }
 
     @Override
@@ -82,11 +82,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (!SwrveHelper.isNullOrEmpty(registrationId)) {
             deviceInfo.put(SWRVE_GCM_TOKEN, registrationId);
         }
-    }
-
-    @Override
-    protected SwrveConfig defaultConfig() {
-        return new SwrveConfig();
     }
 
     public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
