@@ -5,9 +5,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
-import com.swrve.sdk.ISwrve;
 import com.swrve.sdk.SwrveIAPRewards;
-import com.swrve.sdk.SwrveInstance;
+import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.UIThreadSwrveUserResourcesDiffListener;
 import com.swrve.sdk.UIThreadSwrveUserResourcesListener;
 import com.swrve.sdk.runnable.UIThreadSwrveResourcesDiffRunnable;
@@ -26,30 +25,30 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SwrveInstance.getInstance().initOrBind(this);
+        SwrveSDK.onCreate(this);
     }
 
     public void btnSendEvent(View v) {
         // Queue custom event
         HashMap<String, String> payloads = new HashMap<String, String>();
         payloads.put("level", "" + (new Random().nextInt(2000)));
-        SwrveInstance.getInstance().event("TUTORIAL.END", payloads);
+        SwrveSDK.event("TUTORIAL.END", payloads);
     }
 
     public void btnPurchase(View v) {
         // Queue purchase event
-        SwrveInstance.getInstance().purchase("BANANA_PACK", "gold", 120, 99);
+        SwrveSDK.purchase("BANANA_PACK", "gold", 120, 99);
     }
 
     public void btnCurrencyGiven(View v) {
         // Queue currency given event
-        SwrveInstance.getInstance().currencyGiven("gold", 999999);
+        SwrveSDK.currencyGiven("gold", 999999);
     }
 
     public void btnIap(View v) {
         // Queue IAP event
         SwrveIAPRewards rewards = new SwrveIAPRewards("gold", 200);
-        SwrveInstance.getInstance().iap(1, "CURRENCY_PACK", 9.99, "USD", rewards);
+        SwrveSDK.iap(1, "CURRENCY_PACK", 9.99, "USD", rewards);
     }
 
     public void btnUserUpdate(View v) {
@@ -57,12 +56,12 @@ public class MainActivity extends Activity {
         Map<String, String> attributes = new HashMap<String, String>();
         attributes.put("level", "12");
         attributes.put("coins", "999");
-        SwrveInstance.getInstance().userUpdate(attributes);
+        SwrveSDK.userUpdate(attributes);
     }
 
     public void btnGetResources(View v) {
         // Get resources
-        SwrveInstance.getInstance().getUserResources(new UIThreadSwrveUserResourcesListener(MainActivity.this, new UIThreadSwrveResourcesRunnable() {
+        SwrveSDK.getUserResources(new UIThreadSwrveUserResourcesListener(MainActivity.this, new UIThreadSwrveResourcesRunnable() {
             @Override
             public void onUserResourcesSuccess(Map<String, Map<String, String>> resources, String resourcesAsJSON) {
                 if (appAvailable) {
@@ -82,7 +81,7 @@ public class MainActivity extends Activity {
 
     public void btnGetResourcesDiffs(View v) {
         // Get AB test resources diffs
-        SwrveInstance.getInstance().getUserResourcesDiff(new UIThreadSwrveUserResourcesDiffListener(MainActivity.this, new UIThreadSwrveResourcesDiffRunnable() {
+        SwrveSDK.getUserResourcesDiff(new UIThreadSwrveUserResourcesDiffListener(MainActivity.this, new UIThreadSwrveResourcesDiffRunnable() {
             @Override
             public void onUserResourcesDiffSuccess(Map<String, Map<String, String>> oldResourcesValues, Map<String, Map<String, String>> newResourcesValues, String resourcesAsJSON) {
                 if (appAvailable) {
@@ -102,15 +101,15 @@ public class MainActivity extends Activity {
 
     public void btnShowTalkMessage(View v) {
         // Swrve Talk - Trigger message for Swrve.Demo.OfferMessage
-        //SwrveInstance.getInstance().event("Swrve.Demo.OfferMessage");
-        SwrveInstance.getInstance().event("Swrve.Messages.showAtSessionStart");
+        //SwrveSDK.event("Swrve.Demo.OfferMessage");
+        SwrveSDK.event("Swrve.Messages.showAtSessionStart");
         // TODO.Converser: Using this trigger to emulate show at session start
         // Look at session start not working for some reason (debuggin?)
     }
 
     public void btnSendQueuedEvents(View v) {
         // Send data to Swrve
-        SwrveInstance.getInstance().sendQueuedEvents();
+        SwrveSDK.sendQueuedEvents();
     }
 
     @Override
@@ -118,7 +117,7 @@ public class MainActivity extends Activity {
         super.onResume();
         // Notify the SDK of activity resume.
         appAvailable = true;
-        SwrveInstance.getInstance().onResume();
+        SwrveSDK.onResume();
     }
 
     @Override
@@ -126,7 +125,7 @@ public class MainActivity extends Activity {
         super.onPause();
         // Notify the SDK of activity pause.
         appAvailable = false;
-        SwrveInstance.getInstance().onPause();
+        SwrveSDK.onPause();
     }
 
     @Override
@@ -134,6 +133,6 @@ public class MainActivity extends Activity {
         super.onDestroy();
         // Notify the SDK of activity destroy.
         appAvailable = false;
-        SwrveInstance.getInstance().onDestroy();
+        SwrveSDK.onDestroy();
     }
 }

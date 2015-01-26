@@ -11,12 +11,11 @@ import org.json.JSONObject;
 import java.lang.ref.WeakReference;
 
 /**
- * Main object used to implement the Swrve SDK.  You can obtain an instance of this class using the SwrveFactory or
- * SwrveInstance that creates a singleton Swrve object.
+ * Main object used to implement the Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
-    protected Swrve(Context context, int appId, String apiKey) {
+    protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super();
         if (context instanceof Activity) {
             this.context = new WeakReference<Context>(context.getApplicationContext());
@@ -26,11 +25,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
         this.appId = appId;
         this.apiKey = apiKey;
-    }
-
-    @Override
-    protected SwrveConfig defaultConfig() {
-        return new SwrveConfig();
+        this.config = config;
     }
 
     @Override

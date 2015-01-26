@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -41,44 +42,26 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
         super();
         this.context = new WeakReference<Context>(context.getApplicationContext());
         this.apiKey = apiKey;
+        this.config = (C) new SwrveConfigBaseImp();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public T init(Context context) throws IllegalArgumentException {
-        return init(context, (C) new SwrveConfigBaseImp());
-    }
-
-    @Override
-    public T init(Context context, String userId, C config) throws IllegalArgumentException {
-        config.setUserId(userId);
-        return init(context, config);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public T init(Context context, C config) throws IllegalArgumentException {
-        this.context = new WeakReference<Context>(context);
-        this.config = config;
+    public T onCreate(Activity activity) throws IllegalArgumentException {
+        this.context = new WeakReference<Context>(activity);
         this.language = config.getLanguage();
         this.userId = config.getUserId();
         cacheDir = config.getCacheDir();
         if (cacheDir == null) {
-            cacheDir = context.getCacheDir();
+            cacheDir = activity.getCacheDir();
         }
 
         return (T) this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public T initOrBind(Context context) throws IllegalArgumentException {
-        return initOrBind(context, (C) new SwrveConfigBaseImp());
-    }
-
-    @Override
-    public T initOrBind(Context context, C config) throws IllegalArgumentException {
-        return init(context, config);
+    public T onCreateOrBind(Activity activity) throws IllegalArgumentException {
+        return onCreate(activity);
     }
 
     @Override

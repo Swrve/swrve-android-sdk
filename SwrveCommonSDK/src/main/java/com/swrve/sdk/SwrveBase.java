@@ -73,42 +73,27 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    public T init(final Context context) throws IllegalArgumentException {
-        return init(context, defaultConfig());
-    }
-
-    public T init(final Context context, final String userId, final C config) throws IllegalArgumentException {
-        config.setUserId(userId);
-        return init(context, config);
-    }
-
-    public T initOrBind(final Context context) throws IllegalArgumentException {
-        return initOrBind(context, defaultConfig());
-    }
-
     @SuppressWarnings("unchecked")
-    public T initOrBind(final Context context, final C config) throws IllegalArgumentException {
+    public T onCreateOrBind(final Activity activity) throws IllegalArgumentException {
         if (destroyed) {
             destroyed = initialised = false;
             bindCounter.set(0);
         }
         if (!initialised) {
             // First time it is initialized
-            return init(context, config);
+            return onCreate(activity);
         }
-        bindToContext(context);
+        bindToContext(activity);
         afterBind();
         showPreviousMessage();
         return (T) this;
     }
 
     @SuppressWarnings("unchecked")
-    public T init(final Context context, final C config) throws IllegalArgumentException {
+    public T onCreate(final Activity activity) throws IllegalArgumentException {
         // Initialization checks
-        if (context == null) {
-            SwrveHelper.logAndThrowException("Context not specified");
-        } else if (SwrveHelper.isNullOrEmpty(apiKey)) {
-            SwrveHelper.logAndThrowException("Api key not specified");
+        if (activity == null) {
+            SwrveHelper.logAndThrowException("Activity not specified");
         }
 
         try {
@@ -117,7 +102,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             initialised = true;
             this.lastSessionTick = getSessionTime();
             this.userId = config.getUserId();
-            final Context resolvedContext = bindToContext(context);
+            final Context resolvedContext = bindToContext(activity);
             final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();
 
             // Default user id to Android ID
@@ -136,7 +121,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             } else {
                 this.language = config.getLanguage();
             }
-            this.config = config;
             this.appVersion = config.getAppVersion();
             this.newSessionInterval = config.getNewSessionInterval();
 
@@ -189,7 +173,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             installTimeLatch.countDown();
 
             // Android referrer information
-            SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
+            SharedPreferences settings = activity.getSharedPreferences(SDK_PREFS_NAME, 0);
             String referrer = settings.getString(SWRVE_REFERRER_ID, null);
             if (!SwrveHelper.isNullOrEmpty(referrer)) {
                 Map<String, String> attributes = new HashMap<String, String>();
@@ -297,8 +281,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected abstract void afterBind();
 
     protected abstract void extraDeviceInfo(JSONObject deviceInfo) throws JSONException;
-
-    protected abstract C defaultConfig();
 
     protected void _sessionStart() {
         queueSessionStart();
