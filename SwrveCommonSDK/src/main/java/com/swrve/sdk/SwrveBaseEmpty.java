@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.converser.SwrveConversation;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -17,6 +19,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -226,6 +229,38 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public C getConfig() {
         return config;
+    }
+
+    @Override
+    public void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions) {
+    }
+
+    @Override
+    public void conversationLinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag) {
+    }
+
+    @Override
+    public void conversationCallActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag) {
+    }
+
+    @Override
+    public void conversationWasStartedByUser(SwrveConversation conversation) {
+    }
+
+    @Override
+    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
+    }
+
+    @Override
+    public void conversationEncounteredError(SwrveConversation conversation, String currentPageTag, Exception e) {
+    }
+
+    @Override
+    public void conversationWasCancelledByUser(SwrveConversation conversation, String finalPageTag) {
+    }
+
+    @Override
+    public void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
     }
 
     @Override
