@@ -7,8 +7,6 @@ import com.swrve.sdk.config.SwrveConfig;
 
 public class SwrveSDK extends SwrveSDKBase{
 
-    // TODO DOM review all javadoc comments here
-
     /**
      * Create a single Swrve SDK instance.
      * @param context your activity or application context
@@ -45,6 +43,11 @@ public class SwrveSDK extends SwrveSDKBase{
     }
 
 
+    /**
+     * Returns the Swrve configuration that was used to initialize the SDK.
+     *
+     * @return configuration used to context the SDK
+     */
     public static SwrveConfig getConfig() {
         checkInstanceCreated();
         return (SwrveConfig)instance.getConfig();
