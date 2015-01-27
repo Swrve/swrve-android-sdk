@@ -38,16 +38,6 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Typically this function is called in your main activity's onCreate function.
-     *
-     * @param activity your activity
-     */
-    public static void onCreateOrBind(final Activity activity) {
-        checkInstanceCreated();
-        instance.onCreate(activity);
-    }
-
-    /**
      * Add a Swrve.session.start event to the event queue. This event should typically be added in
      * your main activity's onStart method.
      */

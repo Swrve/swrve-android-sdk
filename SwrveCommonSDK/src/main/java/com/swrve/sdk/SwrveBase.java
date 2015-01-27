@@ -76,14 +76,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @SuppressWarnings("unchecked")
-    public T onCreateOrBind(final Activity activity) throws IllegalArgumentException {
+    public T onCreate(final Activity activity) throws IllegalArgumentException {
         if (destroyed) {
             destroyed = initialised = false;
             bindCounter.set(0);
         }
         if (!initialised) {
             // First time it is initialized
-            return onCreate(activity);
+            return init(activity);
         }
         bindToContext(activity);
         afterBind();
@@ -91,8 +91,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return (T) this;
     }
 
-    @SuppressWarnings("unchecked")
-    public T onCreate(final Activity activity) throws IllegalArgumentException {
+    //@SuppressWarnings("unchecked")
+    protected T init(final Activity activity) throws IllegalArgumentException {
         // Initialization checks
         if (activity == null) {
             SwrveHelper.logAndThrowException("Activity not specified");
