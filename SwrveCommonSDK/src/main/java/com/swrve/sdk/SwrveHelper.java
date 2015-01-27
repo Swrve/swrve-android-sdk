@@ -106,10 +106,6 @@ public final class SwrveHelper {
         }
     }
 
-    public static UUID generateUUID(String value) {
-        return UUID.nameUUIDFromBytes(md5(value).getBytes());
-    }
-
     /*
      * Convert from JSONObject to Map.
      */
@@ -149,10 +145,6 @@ public final class SwrveHelper {
 
     public static boolean successResponseCode(int responseCode) {
         return (responseCode >= 200 && responseCode < 300);
-    }
-
-    public static boolean doNotResendResponseCode(int responseCode) {
-        return (responseCode == HttpStatus.SC_BAD_REQUEST || responseCode == HttpStatus.SC_UNAUTHORIZED || responseCode == HttpStatus.SC_FORBIDDEN || responseCode == HttpStatus.SC_GONE);
     }
 
     public static void logAndThrowException(String reason) throws IllegalArgumentException {

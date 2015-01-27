@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.ISwrveBase;
+import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.SwrveConversation;
@@ -56,7 +57,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
     private ConversationPage page;
-    private ISwrveBase controller;
+    private SwrveBase controller;
     private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
     private HashMap<String, ConverserInputResult> userInteractionData = new HashMap<>();
     private boolean userInputValid = false;
@@ -65,7 +66,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         ConversationFragment f = new ConversationFragment();
         // TODO: STM Beware of OnResumes and other state held things.
         f.swrveConversation = swrveConversation;
-        f.controller = SwrveSDKBase.getInstance();
+        f.controller = (SwrveBase)SwrveSDKBase.getInstance();
         return f;
     }
 
