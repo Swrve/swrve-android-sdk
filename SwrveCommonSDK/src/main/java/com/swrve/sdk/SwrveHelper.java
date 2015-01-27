@@ -3,7 +3,6 @@ package com.swrve.sdk;
 import android.util.Base64;
 import android.util.Log;
 
-import org.apache.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,7 +22,6 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -179,5 +177,10 @@ public final class SwrveHelper {
 
         byte[] signature = hmac.doFinal(source.getBytes());
         return Base64.encodeToString(signature, Base64.DEFAULT);
+    }
+
+    public static boolean sdkAvailable() {
+        // Returns true if current SDK is higher or equal than 2.3.3 (API 10)
+        return (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.GINGERBREAD_MR1);
     }
 }

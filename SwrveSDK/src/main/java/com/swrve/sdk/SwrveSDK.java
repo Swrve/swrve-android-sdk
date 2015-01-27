@@ -33,7 +33,7 @@ public class SwrveSDK extends SwrveSDKBase{
             SwrveHelper.logAndThrowException("Api key not specified");
         }
 
-        if (!sdkAvailable()) {
+        if (!SwrveHelper.sdkAvailable()) {
             return new SwrveEmpty(context, apiKey);
         }
         if (instance == null) {
