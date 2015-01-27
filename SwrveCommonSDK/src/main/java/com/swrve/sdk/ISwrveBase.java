@@ -115,20 +115,4 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     Context getContext();
 
     C getConfig();
-
-    void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions);
-
-    void conversationLinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag);
-
-    void conversationCallActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag);
-
-    void conversationWasStartedByUser(SwrveConversation conversation);
-
-    void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag);
-
-    void conversationEncounteredError(SwrveConversation conversation, String currentPageTag, Exception e);
-
-    void conversationWasCancelledByUser(SwrveConversation conversation, String finalPageTag);
-
-    void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag);
 }

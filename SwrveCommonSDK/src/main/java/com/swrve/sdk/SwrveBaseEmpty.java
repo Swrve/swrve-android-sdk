@@ -232,38 +232,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions) {
-    }
-
-    @Override
-    public void conversationLinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag) {
-    }
-
-    @Override
-    public void conversationCallActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag) {
-    }
-
-    @Override
-    public void conversationWasStartedByUser(SwrveConversation conversation) {
-    }
-
-    @Override
-    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
-    }
-
-    @Override
-    public void conversationEncounteredError(SwrveConversation conversation, String currentPageTag, Exception e) {
-    }
-
-    @Override
-    public void conversationWasCancelledByUser(SwrveConversation conversation, String finalPageTag) {
-    }
-
-    @Override
-    public void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
-    }
-
-    @Override
     public ISwrveCustomButtonListener getCustomButtonListener() {
         return this.customButtonListener;
     }
