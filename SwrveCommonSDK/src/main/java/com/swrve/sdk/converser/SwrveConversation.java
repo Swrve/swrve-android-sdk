@@ -62,7 +62,7 @@ public class SwrveConversation implements Serializable {
             }
         }
 
-        setName(conversationData.optString("name", "TODO: MUST FIX THIS!!!")); //TODO.Converser: Response must have name
+        setName(conversationData.getString("name"));
 
         JSONArray pagesJson = conversationData.getJSONArray("pages");
         ArrayList<ConversationPage> pages = new ArrayList<ConversationPage>();
