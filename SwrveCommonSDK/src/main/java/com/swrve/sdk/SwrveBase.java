@@ -1079,9 +1079,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
+    protected void _queueConversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
         if (conversation != null) {
-            String baseEvent = getEventForConversation(conversation)  + ".";
+            String baseEvent = getEventForConversation(conversation)  + ".content.s";
 
             /* Structure of userInteractions
                  {
@@ -1100,6 +1100,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 String viewEvent = baseEvent + userInteraction.getType();
                 parameters.put("name", viewEvent);
                 payload.put("result", userInteraction.getResultAsString());
+                payload.put("page", userInteraction.getPageTag());
                 queueEvent("event", parameters, payload);
             }
             saveCampaignSettings();
@@ -1566,7 +1567,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     public void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
         try {
-            _conversationEventsCommitedByUser(conversation, userInteractions);
+            _queueConversationEventsCommitedByUser(conversation, userInteractions);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
