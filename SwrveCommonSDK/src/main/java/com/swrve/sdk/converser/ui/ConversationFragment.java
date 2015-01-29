@@ -96,7 +96,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     public void openFirstPage() {
         page = swrveConversation.getFirstPage();
-        sendStartNavigationEvent();
+        sendStartNavigationEvent(page.getTag());
         openConversationOnPage(page);
     }
 
@@ -534,7 +534,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         if (nextPage != null) {
             if (isOkToProceed()) {
-                sendTransitionPageEvent(control.getTag(), control.getTarget());
+                sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
                 openConversationOnPage(nextPage);
             }
         }
@@ -599,9 +599,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     // Events
-    private void sendStartNavigationEvent() {
+    private void sendStartNavigationEvent(String startPageTag) {
         if (controller != null) {
-            controller.conversationWasStartedByUser(swrveConversation);
+            controller.conversationWasStartedByUser(swrveConversation, startPageTag);
         }
     }
 
@@ -623,9 +623,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void sendTransitionPageEvent(String currentPageTag, String targetPageTag) {
+    private void sendTransitionPageEvent(String currentPageTag, String targetPageTag, String controlTag) {
         if (controller != null) {
-            controller.conversationTransitionedToOtherPage(swrveConversation, currentPageTag, targetPageTag);
+            controller.conversationTransitionedToOtherPage(swrveConversation, currentPageTag, targetPageTag, controlTag);
         }
     }
 
