@@ -1113,6 +1113,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
+            payload.put("event", "call");
             payload.put("page", pageTag);
             payload.put("control", controlTag);
             queueEvent("event", parameters, payload);
@@ -1122,11 +1123,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationLinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + conversation.getId();
+            String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".link";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
+            payload.put("event", "link");
             payload.put("page", pageTag);
             payload.put("control", controlTag);
             queueEvent("event", parameters, payload);
@@ -1146,6 +1148,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
+            payload.put("event", "start");
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1158,6 +1161,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
+            payload.put("event", "done");
             payload.put("page", endPageTag); //The final page the user ended on
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
@@ -1171,6 +1175,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
+            payload.put("event", "cancel");
             payload.put("page", currentPageTag); //The current page the user is on when they cancelled
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
@@ -1185,6 +1190,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
+            payload.put("event", "page");
             payload.put("to", toPageTag); // The page the user ended on
             payload.put("from", fromPageTag); // The page the user came on
             queueEvent("event", parameters, payload);
@@ -1205,6 +1211,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
+            payload.put("event", "error");
             payload.put("page", currentPageTag);
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
