@@ -1184,7 +1184,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
 
-    protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
+    protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
         if (conversation != null) {
             String viewEvent =getEventForConversation(conversation) + ".page";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1192,8 +1192,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
             payload.put("event", "page");
+            payload.put("control", controlTag);
             payload.put("to", toPageTag); // The page the user ended on
-            payload.put("from", fromPageTag); // The page the user came on
+            payload.put("page", fromPageTag); // The page the user came on
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1619,9 +1620,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag) {
+    public void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
         try {
-            _conversationTransitionedToOtherPage(conversation, fromPageTag, toPageTag);
+            _conversationTransitionedToOtherPage(conversation, fromPageTag, toPageTag, controlTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
