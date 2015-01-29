@@ -62,7 +62,7 @@ public class SwrveConversation implements Serializable {
             }
         }
 
-        setName(conversationData.getString("name"));
+        setName(conversationData.getString("id"));
 
         JSONArray pagesJson = conversationData.getJSONArray("pages");
         ArrayList<ConversationPage> pages = new ArrayList<ConversationPage>();
