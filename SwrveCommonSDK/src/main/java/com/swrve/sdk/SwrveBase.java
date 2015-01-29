@@ -1136,7 +1136,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationWasStartedByUser(SwrveConversation conversation) {
+    protected void _conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
         if (conversation != null) {
             SwrveConversationCampaign campaign = conversation.getCampaign();
             if (campaign != null) {
@@ -1149,6 +1149,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
             payload.put("event", "start");
+            payload.put("page", pageTag);
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1586,9 +1587,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationWasStartedByUser(SwrveConversation conversation) {
+    public void conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
         try {
-            _conversationWasStartedByUser(conversation);
+            _conversationWasStartedByUser(conversation, pageTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
