@@ -12,8 +12,8 @@ import java.net.URL;
 public class DemoApplication extends Application {
 
     private static final String LOG_TAG = "SwrveDemo";
-    private static int YOUR_APP_ID = 572;
-    private static String YOUR_API_KEY = "gUnFFH3jFS3U8dFaN5MB";
+    private static int YOUR_APP_ID = 123;
+    private static String YOUR_API_KEY = "abc";
 
     @Override
     public void onCreate() {
