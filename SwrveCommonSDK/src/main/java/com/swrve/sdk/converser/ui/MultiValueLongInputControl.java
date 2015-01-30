@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput.Item;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
@@ -75,13 +76,23 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
             selector.setOnItemSelectedListener(control.createListener(item));
             control.addView(row);
         }
-
         return control;
     }
 
+
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
-        dataMap.put(model.getTag(), responses);
+        for(String key: responses.keySet())
+        {
+            String response = responses.get(key);
+            // Answer ID and Answer text are the same for both
+            ChoiceInputResponse r = new ChoiceInputResponse();
+            r.setQuestionID(key);
+            r.setFragmentTag(model.getTag());
+            r.setAnswerID(response);
+            r.setAnswerText(response);
+            dataMap.put(model.getTag() + "-" + key, r);
+        }
     }
 
     @Override

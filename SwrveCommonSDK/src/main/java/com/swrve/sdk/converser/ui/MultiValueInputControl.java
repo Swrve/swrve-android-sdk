@@ -9,6 +9,7 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.MultiValueInput;
 import com.swrve.sdk.converser.engine.model.MultiValueInput.MultiValueItem;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
@@ -53,7 +54,12 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
     public void onReplyDataRequired(Map<String, Object> dataMap) {
         if (selectedIndex > -1) {
             MultiValueItem mv = model.getValues().get(selectedIndex);
-            dataMap.put(model.getTag(), mv.getName());
+            ChoiceInputResponse r = new ChoiceInputResponse();
+            r.setQuestionID(mv.getName());
+            r.setFragmentTag(model.getTag());
+            r.setAnswerID(mv.getName());
+            r.setAnswerText(mv.getValue());
+            dataMap.put(model.getTag(), r);
         }
     }
 

@@ -14,12 +14,17 @@ import java.util.ArrayList;
 public class ConversationPage implements Serializable {
     private String tag;
     private String title;
+    private String name;
 
     private ArrayList<ConversationAtom> content;
     private ArrayList<ConversationAtom> controls;
 
     public String getTag() {
-        return tag;
+        if (tag!=null){
+            return tag;
+        }else{
+            return name;
+        }
     }
 
     public void setTag(String tag) {

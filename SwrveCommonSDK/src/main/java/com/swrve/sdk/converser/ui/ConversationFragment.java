@@ -19,7 +19,6 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
-import com.swrve.sdk.ISwrveBase;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.common.R;
@@ -27,6 +26,7 @@ import com.swrve.sdk.converser.SwrveConversation;
 import com.swrve.sdk.converser.engine.ActionBehaviours;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
 import com.swrve.sdk.converser.engine.model.CalendarInput;
+import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ControlActions;
 import com.swrve.sdk.converser.engine.model.ControlBase;
@@ -504,7 +504,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      */
     private void commitUserInputsToEvents() {
         Log.i(LOG_TAG, "Commiting all stashed events");
-        String currentPage = page.getTag();
         ArrayList<ConverserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
             ConverserInputResult r = userInteractionData.get(k);
@@ -668,8 +667,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         String key = pageTag + "-" + fragmentTag;
         String type = ConverserInputResult.TYPE_MULTI_CHOICE;
         for (String k : data.keySet()) {
+            ChoiceInputResponse userChoice = (ChoiceInputResponse) data.get(k);
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
+            result.conversationId = Integer.toString(swrveConversation.getId());
+            result.fragmentTag = userChoice.getFragmentTag();
+            result.pageTag = pageTag;
             result.result = data.get(k);
             userInteractionData.put(key, result);
         }
@@ -692,6 +695,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
+            result.pageTag = pageTag;
+            result.fragmentTag = fragmentTag;
             result.result = data.get(k);
             userInteractionData.put(key, result);
         }
