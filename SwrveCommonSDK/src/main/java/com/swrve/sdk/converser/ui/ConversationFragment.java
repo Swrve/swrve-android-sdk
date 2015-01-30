@@ -66,7 +66,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         ConversationFragment f = new ConversationFragment();
         // TODO: STM Beware of OnResumes and other state held things.
         f.swrveConversation = swrveConversation;
-        f.controller = (SwrveBase)SwrveSDKBase.getInstance();
+        f.controller = (SwrveBase) SwrveSDKBase.getInstance();
         return f;
     }
 
@@ -646,7 +646,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private void stashVideoViewed(String pageTag, String fragmentTag, HtmlVideoView v) {
         // TODO: Is there any data we can record about clicked video views?
         String key = pageTag + "-" + fragmentTag;
-        String type = "play";
+        String type = ConverserInputResult.TYPE_VIDEO_PLAY;
         ConverserInputResult result = new ConverserInputResult();
         result.type = type;
         result.result = "";
@@ -655,7 +655,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     private void stashMultiChoiceInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
-        String type = "choice";
+        String type = ConverserInputResult.TYPE_SINGLE_CHOICE;
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
@@ -666,7 +666,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     private void stashMultiChoiceLongInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
-        String type = "multi-choice";
+        String type = ConverserInputResult.TYPE_MULTI_CHOICE;
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
@@ -677,7 +677,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     private void stashEditTextControlInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
-        String type = "text";
+        String type = ConverserInputResult.TYPE_TEXT;
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
@@ -688,7 +688,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     private void stashCalendarInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
-        String type = "calendar";
+        String type = ConverserInputResult.TYPE_CALENDAR;
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
@@ -699,7 +699,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     private void stashNPSInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
-        String type = "nps";
+        String type = ConverserInputResult.TYPE_NPS;
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
