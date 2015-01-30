@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.converser.ISwrveConversationListener;
 import com.swrve.sdk.converser.SwrveConversation;
+import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.converser.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
@@ -1081,7 +1082,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _queueConversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
         if (conversation != null) {
-            String baseEvent = getEventForConversation(conversation)  + ".content.s";
+            String baseEvent = getEventForConversation(conversation)  + ".page.";
 
             /* Structure of userInteractions
                  {
@@ -1096,11 +1097,35 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             for (ConverserInputResult userInteraction : userInteractions){
                 Map<String, String> payload = new HashMap<String, String>();
                 Map<String, Object> parameters = new HashMap<String, Object>();
-
                 String viewEvent = baseEvent + userInteraction.getType();
                 parameters.put("name", viewEvent);
-                payload.put("result", userInteraction.getResultAsString());
                 payload.put("page", userInteraction.getPageTag());
+                payload.put("conversation", userInteraction.getConversationId());
+                payload.put("event", "page");
+
+                if (userInteraction.isTextInput()){
+                    payload.put("fragment", userInteraction.getFragmentTag());
+                    payload.put("result", userInteraction.getResultAsString());
+                }else if(userInteraction.isCalendar()){
+                    payload.put("fragment", userInteraction.getFragmentTag());
+                    payload.put("result", userInteraction.getResultAsString());
+                }else if(userInteraction.isNps()){
+                    payload.put("fragment", userInteraction.getFragmentTag());
+                    payload.put("result", userInteraction.getResultAsString());
+                }else if(userInteraction.isSingleChoice()){
+                    payload.put("fragment", userInteraction.getFragmentTag());
+                    ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
+                    payload.put("set", response.getQuestionID());
+                    payload.put("result", response.getAnswerID());
+                }else if(userInteraction.isMultiChoice()){
+                    payload.put("fragment", userInteraction.getFragmentTag());
+                    ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
+                    payload.put("set", response.getQuestionID());
+                    payload.put("result", response.getAnswerID());
+                }else{
+                    Log.e(LOG_TAG, "Unknown Event occurred");
+                }
+
                 queueEvent("event", parameters, payload);
             }
             saveCampaignSettings();
@@ -1187,12 +1212,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
         if (conversation != null) {
-            String viewEvent =getEventForConversation(conversation) + ".page";
+            String viewEvent =getEventForConversation(conversation) + ".navigation";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
-            payload.put("event", "page");
+            payload.put("event", "navigation");
             payload.put("control", controlTag);
             payload.put("to", toPageTag); // The page the user ended on
             payload.put("page", fromPageTag); // The page the user came on
