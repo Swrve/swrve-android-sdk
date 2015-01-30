@@ -7,8 +7,7 @@ public class ConverserInputResult {
     public static final String TYPE_SINGLE_CHOICE = "choice";
     public static final String TYPE_VIDEO_PLAY = "play";
     public static final String TYPE_NPS = "nps";
-    public String pageTag;
-    public String type;
+    public String type, conversationId,  pageTag, fragmentTag;
     public Object result;
 
     public String getType() {
@@ -21,6 +20,18 @@ public class ConverserInputResult {
 
     public String getResultAsString() {
         return result.toString();
+    }
+
+    public Object getResult() {
+        return result;
+    }
+
+    public String getFragmentTag() {
+        return fragmentTag;
+    }
+
+    public String getConversationId() {
+        return conversationId;
     }
 
     public boolean isMultiChoice() {
