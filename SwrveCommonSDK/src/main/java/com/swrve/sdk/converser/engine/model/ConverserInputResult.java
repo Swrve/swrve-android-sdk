@@ -1,6 +1,12 @@
 package com.swrve.sdk.converser.engine.model;
 
 public class ConverserInputResult {
+    public static final String TYPE_TEXT = "text";
+    public static final String TYPE_CALENDAR = "calendar";
+    public static final String TYPE_MULTI_CHOICE = "multi-choice";
+    public static final String TYPE_SINGLE_CHOICE = "choice";
+    public static final String TYPE_VIDEO_PLAY = "play";
+    public static final String TYPE_NPS = "nps";
     public String pageTag;
     public String type;
     public Object result;
@@ -13,8 +19,28 @@ public class ConverserInputResult {
         return pageTag;
     }
 
-
     public String getResultAsString() {
         return result.toString();
     }
+
+    public boolean isMultiChoice() {
+        return type.equalsIgnoreCase(TYPE_MULTI_CHOICE);
+    }
+
+    public boolean isSingleChoice() {
+        return type.equalsIgnoreCase(TYPE_SINGLE_CHOICE);
+    }
+
+    public boolean isTextInput() {
+        return type.equalsIgnoreCase(TYPE_TEXT);
+    }
+
+    public boolean isNps() {
+        return type.equalsIgnoreCase(TYPE_NPS);
+    }
+
+    public boolean isCalendar() {
+        return type.equalsIgnoreCase(TYPE_CALENDAR);
+    }
+
 }
