@@ -1,6 +1,6 @@
-machine:
-  environment:
-    ANDROID_HOME: /usr/local/android-sdk-linux
+#machine:
+#  environment:
+#    ANDROID_HOME: /usr/local/android-sdk-linux
 #test:
 #  override: 
 #   - gradle build
