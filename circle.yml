@@ -3,5 +3,5 @@ machine:
     ANDROID_HOME: /usr/local/android-sdk-linux
 test:
   override: 
-   - ./gradlew build
+   - gradle build
 
