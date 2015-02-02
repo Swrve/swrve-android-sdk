@@ -1102,6 +1102,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 payload.put("page", userInteraction.getPageTag());
                 payload.put("conversation", userInteraction.getConversationId());
                 payload.put("event", "page");
+                payload.put("type", userInteraction.type);
 
                 if (userInteraction.isTextInput()){
                     payload.put("fragment", userInteraction.getFragmentTag());
@@ -1115,11 +1116,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }else if(userInteraction.isSingleChoice()){
                     payload.put("fragment", userInteraction.getFragmentTag());
                     ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
+                    payload.put("fragment", userInteraction.getFragmentTag());
                     payload.put("set", response.getQuestionID());
                     payload.put("result", response.getAnswerID());
                 }else if(userInteraction.isMultiChoice()){
-                    payload.put("fragment", userInteraction.getFragmentTag());
                     ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
+                    payload.put("fragment", userInteraction.getFragmentTag());
                     payload.put("set", response.getQuestionID());
                     payload.put("result", response.getAnswerID());
                 }else{
@@ -1142,6 +1144,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("event", "call");
             payload.put("page", pageTag);
             payload.put("control", controlTag);
+            payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1157,6 +1160,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("event", "link");
             payload.put("page", pageTag);
             payload.put("control", controlTag);
+            payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1176,6 +1180,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", viewEvent);
             payload.put("event", "start");
             payload.put("page", pageTag);
+            payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1190,6 +1195,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", viewEvent);
             payload.put("event", "done");
             payload.put("page", endPageTag); //The final page the user ended on
+            payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1204,6 +1210,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", viewEvent);
             payload.put("event", "cancel");
             payload.put("page", currentPageTag); //The current page the user is on when they cancelled
+            payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
@@ -1221,6 +1228,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("control", controlTag);
             payload.put("to", toPageTag); // The page the user ended on
             payload.put("page", fromPageTag); // The page the user came on
+            payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }
