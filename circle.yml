@@ -6,7 +6,7 @@ dependencies:
     - echo y | android update sdk --no-ui --all --filter "build-tools-19.1.0"
   override: 
    - ./gradlew dependencies
-#test:
-#  override: 
-#   - gradle build
+test:
+  override: 
+   - ./gradlew test
 
