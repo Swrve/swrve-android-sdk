@@ -447,6 +447,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 }
             }
         }
+        sendPageImpressionEvent(page.getTag());
         root.requestFocus();
     }
 
@@ -598,6 +599,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     // Events
+    private void sendPageImpressionEvent(String pageTag) {
+        if (controller != null) {
+            controller.conversationPageWasViewedByUser(swrveConversation, pageTag);
+        }
+    }
+
     private void sendStartNavigationEvent(String startPageTag) {
         if (controller != null) {
             controller.conversationWasStartedByUser(swrveConversation, startPageTag);

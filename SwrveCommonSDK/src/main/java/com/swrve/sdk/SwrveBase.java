@@ -1166,6 +1166,26 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    protected void _conversationPageWasViewedByUser(SwrveConversation conversation, String pageTag) {
+        if (conversation != null) {
+            SwrveConversationCampaign campaign = conversation.getCampaign();
+            if (campaign != null) {
+                campaign.conversationWasShownToUser();
+            }
+
+            String viewEvent = getEventForConversation(conversation) + ".impression";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("event", "impression");
+            payload.put("page", pageTag);
+            payload.put("conversation", Integer.toString(conversation.getId()));
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
     protected void _conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
         if (conversation != null) {
             SwrveConversationCampaign campaign = conversation.getCampaign();
@@ -1621,6 +1641,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
+    public void conversationPageWasViewedByUser(SwrveConversation conversation, String pageTag) {
+        try {
+            _conversationPageWasViewedByUser(conversation, pageTag);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
 
     public void conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
         try {
