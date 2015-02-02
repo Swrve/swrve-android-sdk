@@ -1,6 +1,9 @@
-#machine:
-#  environment:
-#    ANDROID_HOME: /usr/local/android-sdk-linux
+machine:
+  environment:
+    ANDROID_HOME: /usr/local/android-sdk-linux
+dependencies:
+  pre:
+    - echo y | android update sdk --no-ui --all --filter "build-tools-19.1.0"
 #test:
 #  override: 
 #   - gradle build
