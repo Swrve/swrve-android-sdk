@@ -890,14 +890,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             }
             byte[] fileContents = stream.toByteArray();
             String sha1File = SwrveHelper.sha1(stream.toByteArray());
-            if (assetPath.equals(sha1File)) {
+            // TODO: Disabled Hash SHA1 Checking until we can discover why images do nt have the correct SHA1
+            // if (assetPath.equals(sha1File)) {
                 // Save to file
                 FileOutputStream fileStream = new FileOutputStream(new File(cacheDir, assetPath));
                 fileStream.write(fileContents);
                 fileStream.close();
 
                 return true;
-            }
+            // }
         } catch (MalformedURLException e) {
             Log.e(LOG_TAG, "Error downloading campaigns", e);
             e.printStackTrace();
