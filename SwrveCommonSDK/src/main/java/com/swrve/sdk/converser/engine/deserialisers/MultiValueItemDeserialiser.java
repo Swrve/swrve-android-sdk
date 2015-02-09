@@ -5,25 +5,22 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.swrve.sdk.converser.engine.model.MultiValueInput.MultiValueItem;
+import com.swrve.sdk.converser.engine.model.ChoiceInputItem;
+
 
 import java.lang.reflect.Type;
 import java.util.Map;
 
-public class MultiValueItemDeserialiser implements JsonDeserializer<MultiValueItem> {
+public class MultiValueItemDeserialiser implements JsonDeserializer<ChoiceInputItem> {
 
     @Override
-    public MultiValueItem deserialize(JsonElement element, Type type, JsonDeserializationContext jdContext) throws JsonParseException {
+    public ChoiceInputItem deserialize(JsonElement element, Type type, JsonDeserializationContext jdContext) throws JsonParseException {
         if (element.isJsonObject()) {
             JsonObject obj = element.getAsJsonObject();
-            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                String label = entry.getKey();
-                String value = entry.getValue().getAsString();
 
-                return new MultiValueItem(label, value);
-            }
-
-            return null;
+            String answerID = obj.get("answer_id").getAsString();
+            String answerText = obj.get("answer_text").getAsString();
+            return new ChoiceInputItem(answerID, answerText);
         } else {
             return null;
         }
