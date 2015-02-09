@@ -13,18 +13,20 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.ChoiceInputItem;
 import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput.Item;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MultiValueLongInputControl extends LinearLayout implements ConverserInput {
 
     private MultiValueLongInput model;
-    private HashMap<String, String> responses = new HashMap<String, String>();
+    private HashMap<String, ChoiceInputItem> responses = new HashMap<String, ChoiceInputItem>();
     private OnContentChangedListener onContentChangedListener;
 
     @SuppressLint("NewApi")
@@ -64,13 +66,13 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
             Spinner selector = (Spinner) row.findViewById(R.id.cio__MIV_Item_Spinner);
 
             header.setText(item.getTitle());
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(context, R.layout.cio__simple_spinner_item, item.getOptions());
+            ArrayAdapter<ChoiceInputItem> adapter = new ArrayAdapter<ChoiceInputItem>(context, R.layout.cio__simple_spinner_item, item.getOptions());
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
             //a 'Header' type option to make people choose one
-            String pleaseSelect = "Please Select";
-            adapter.remove(pleaseSelect); // On rotation, the adapter can sometimes hold onto older items. To fix this, we attempt to remove the item if it exists alright.
-            adapter.insert(pleaseSelect, 0);
+            ChoiceInputItem pleaseSelectChoice = new ChoiceInputItem("123-fake-id", "Please Select");
+            adapter.remove(pleaseSelectChoice); // On rotation, the adapter can sometimes hold onto older items. To fix this, we attempt to remove the item if it exists alright.
+            adapter.insert(pleaseSelectChoice, 0);
             selector.setAdapter(adapter);
 
             selector.setOnItemSelectedListener(control.createListener(item));
@@ -82,26 +84,25 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
 
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
+
         for(String key: responses.keySet())
         {
-            String response = responses.get(key);
+            ChoiceInputItem response = responses.get(key);
             // Answer ID and Answer text are the same for both
             ChoiceInputResponse r = new ChoiceInputResponse();
             r.setQuestionID(key);
             r.setFragmentTag(model.getTag());
-            r.setAnswerID(response);
-            r.setAnswerText(response);
+            r.setAnswerID(response.getAnswerID());
+            r.setAnswerText(response.getAnswerText());
             dataMap.put(model.getTag() + "-" + key, r);
         }
     }
 
     @Override
     public String validate() {
-
         if (model.isOptional()) {
             return null;
         }
-
         if (responses.size() < model.getValues().size()) {
             return "Please choose an item";
         } else {
@@ -132,7 +133,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
                 responses.remove(item.getTitle());
                 return;
             } else {
-                responses.put(item.getTitle(), item.getOptions().get(position));
+                responses.put(item.getQuestionId(), item.getOptions().get(position));
             }
             if (onContentChangedListener != null) {
                 onContentChangedListener.onContentChanged();
