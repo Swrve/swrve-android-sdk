@@ -9,16 +9,16 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.ChoiceInputItem;
 import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.MultiValueInput;
-import com.swrve.sdk.converser.engine.model.MultiValueInput.MultiValueItem;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
 import java.util.Map;
 
 public class MultiValueInputControl extends LinearLayout implements ConverserInput, OnCheckedChangeListener {
     private MultiValueInput model;
-    private int selectedIndex = -1; //default to none selected
+    private int selectedIndex = -1; // default to none selected
     private OnContentChangedListener onContentChangedListener;
 
     public MultiValueInputControl(Context context, AttributeSet attrs, MultiValueInput model) {
@@ -40,7 +40,7 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
             RadioButton rb = new RadioButton(getContext(), null, R.attr.conversationInputMultiValueItemStyle);
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             rb.setLayoutParams(lp);
-            rb.setText(model.getValues().get(i).getValue());
+            rb.setText(model.getValues().get(i).getAnswerText());
             rb.setChecked(i == selectedIndex);
             if (!isInEditMode()) {
                 rb.setTag(R.string.cio__indexTag, i);
@@ -53,12 +53,12 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
         if (selectedIndex > -1) {
-            MultiValueItem mv = model.getValues().get(selectedIndex);
+            ChoiceInputItem mv = model.getValues().get(selectedIndex);
             ChoiceInputResponse r = new ChoiceInputResponse();
-            r.setQuestionID(mv.getName());
+            r.setQuestionID(model.getTag());
             r.setFragmentTag(model.getTag());
-            r.setAnswerID(mv.getName());
-            r.setAnswerText(mv.getValue());
+            r.setAnswerID(mv.getAnswerID());
+            r.setAnswerText(mv.getAnswerText());
             dataMap.put(model.getTag(), r);
         }
     }
