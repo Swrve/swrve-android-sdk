@@ -7,9 +7,9 @@ import com.swrve.sdk.converser.engine.deserialisers.ControlActionsDeserialiser;
 import com.swrve.sdk.converser.engine.deserialisers.ConversationAtomDeserialiser;
 import com.swrve.sdk.converser.engine.deserialisers.MultiValueItemDeserialiser;
 import com.swrve.sdk.converser.engine.deserialisers.SliderValueDeserialiser;
+import com.swrve.sdk.converser.engine.model.ChoiceInputItem;
 import com.swrve.sdk.converser.engine.model.ControlActions;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
-import com.swrve.sdk.converser.engine.model.MultiValueInput.MultiValueItem;
 import com.swrve.sdk.converser.engine.model.SliderInput.SliderValue;
 
 public class GsonHelper {
@@ -23,7 +23,7 @@ public class GsonHelper {
         db.registerTypeAdapter(ConversationAtom.class, new ConversationAtomDeserialiser());
         db.registerTypeAdapter(SliderValue.class, new SliderValueDeserialiser());
         db.registerTypeAdapter(ControlActions.class, new ControlActionsDeserialiser());
-        db.registerTypeAdapter(MultiValueItem.class, new MultiValueItemDeserialiser());
+        db.registerTypeAdapter(ChoiceInputItem.class, new MultiValueItemDeserialiser());
 
         return db.create();
     }
