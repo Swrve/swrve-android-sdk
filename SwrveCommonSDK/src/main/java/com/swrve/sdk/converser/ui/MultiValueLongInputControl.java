@@ -15,6 +15,7 @@ import android.widget.Spinner;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.engine.model.ChoiceInputItem;
 import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput;
 import com.swrve.sdk.converser.engine.model.MultiValueLongInput.Item;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
@@ -71,7 +72,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
 
             //a 'Header' type option to make people choose one
             ChoiceInputItem pleaseSelectChoice = new ChoiceInputItem("123-fake-id", "Please Select");
-            adapter.remove(pleaseSelectChoice); // On rotation, the adapter can sometimes hold onto older items. To fix this, we attempt to remove the item if it exists alright.
+            adapter.clear();
             adapter.insert(pleaseSelectChoice, 0);
             selector.setAdapter(adapter);
 
@@ -109,6 +110,11 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
             return null;
         }
     }
+
+    public void setUserInput(ConverserInputResult r){
+        // TODO: Implement this guy. Doesn't seem to be any real way to set the value of a spinner in android. Not sure if we'll even be able to do him.
+    }
+
 
     private MILongItemListener createListener(Item item) {
         return new MILongItemListener(item);

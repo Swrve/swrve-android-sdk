@@ -106,7 +106,29 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         userInteractionData = (userInteractionData == null) ? new HashMap<String, ConverserInputResult>() : userInteractionData;
 
         if (page != null) {
+            View currentView = getView();
             openConversationOnPage(page);
+            // Populate the page with existing inputs and answers
+            for (String key : userInteractionData.keySet()) {
+                ConverserInputResult userInput = userInteractionData.get(key);
+                String fragmentTag = userInput.getFragmentTag();
+                View inputView = currentView.findViewWithTag(fragmentTag);
+                if (userInput.isCalendar()) {
+                    CalendarInputControl inputControl = (CalendarInputControl) inputView;
+                } else if (userInput.isSingleChoice()) {
+                    MultiValueInputControl inputControl = (MultiValueInputControl) inputView;
+                    inputControl.setUserInput(userInput);
+                } else if (userInput.isMultiChoice()) {
+                    MultiValueLongInputControl inputControl = (MultiValueLongInputControl) inputView;
+                    inputControl.setUserInput(userInput);
+                } else if (userInput.isNps()) {
+                    NPSlider inputControl = (NPSlider) inputView;
+                    inputControl.setUserInput(userInput);
+                } else if (userInput.isTextInput()) {
+                    EditTextControl inputControl = (EditTextControl) inputView;
+                    inputControl.setUserInput(userInput);
+                }
+            }
         } else {
             openFirstPage();
         }
@@ -305,6 +327,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     ImageView iv = new ImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+                    iv.setTag(content.getTag());
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
@@ -322,6 +345,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
+                    view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
                     contentLayout.addView(view);
@@ -336,6 +360,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
                     HtmlVideoView view = new HtmlVideoView(activity, modelContent);
+                    view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
 
@@ -353,7 +378,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(view);
                 } else {
                     TextView tv = new TextView(activity, modelContent, R.attr.conversationTextContentDefaultStyle);
-
+                    tv.setTag(content.getTag());
                     LayoutParams tvLP;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         tvLP = new LayoutParams(controlLp);
@@ -370,6 +395,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     TextInput inputModel = (TextInput) content;
 
                     EditTextControl etc = (EditTextControl) getLayoutInflater(null).inflate(R.layout.cio__edittext_input, contentLayout, false);
+                    etc.setTag(content.getTag());
                     etc.setModel(inputModel);
 
                     // Store the result of the content for processing later
@@ -399,7 +425,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     lp.height = LayoutParams.WRAP_CONTENT;
 
                     input.setLayoutParams(lp);
-
+                    input.setTag(content.getTag());
                     final MultiValueInputControl mvicReference = input;
                     final String tag = content.getTag();
                     // Store the result of the content for processing later
@@ -436,7 +462,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashMultiChoiceLongInputData(page.getTag(), tag, result);
                         }
                     });
-
+                    input.setTag(content.getTag());
                     contentLayout.addView(input);
                     inputs.add(input);
                 } else if (content instanceof NPSInput) {
@@ -452,6 +478,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashNPSInputData(page.getTag(), tag, result);
                         }
                     });
+                    slider.setTag(content.getTag());
                     contentLayout.addView(slider);
                     inputs.add(slider);
                 } else if (content instanceof CalendarInput) {
@@ -467,6 +494,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
 
+                    cic.setTag(content.getTag());
                     contentLayout.addView(cic);
                     inputs.add(cic);
                 }

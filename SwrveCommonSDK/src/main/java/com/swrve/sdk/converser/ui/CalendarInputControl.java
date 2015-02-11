@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
@@ -15,6 +16,8 @@ import android.widget.LinearLayout;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.engine.ConverserOptions;
 import com.swrve.sdk.converser.engine.model.CalendarInput;
+import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
 import java.text.SimpleDateFormat;
@@ -101,6 +104,10 @@ public class CalendarInputControl extends LinearLayout implements ConverserInput
                 dpd.show();
             }
         });
+
+    }
+
+    public void setUserInput(ConverserInputResult r){
 
     }
 

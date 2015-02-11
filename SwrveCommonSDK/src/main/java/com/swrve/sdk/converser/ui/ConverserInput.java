@@ -1,5 +1,7 @@
 package com.swrve.sdk.converser.ui;
 
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
+
 import java.util.Map;
 
 public interface ConverserInput {
@@ -11,4 +13,6 @@ public interface ConverserInput {
      * @return null if validated ok. Otherwise a message detailing issue
      */
     public String validate();
+
+    public void setUserInput(ConverserInputResult r);
 }
