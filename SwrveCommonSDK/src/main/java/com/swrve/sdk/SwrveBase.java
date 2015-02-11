@@ -1107,9 +1107,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 if (userInteraction.isTextInput()){
                     payload.put("fragment", userInteraction.getFragmentTag());
                     payload.put("result", userInteraction.getResultAsString());
-                }else if(userInteraction.isCalendar()){
-                    payload.put("fragment", userInteraction.getFragmentTag());
-                    payload.put("result", userInteraction.getResultAsString());
                 }else if(userInteraction.isNps()){
                     payload.put("fragment", userInteraction.getFragmentTag());
                     payload.put("result", userInteraction.getResultAsString());

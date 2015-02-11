@@ -49,9 +49,4 @@ public class ConverserInputResult {
     public boolean isNps() {
         return type.equalsIgnoreCase(TYPE_NPS);
     }
-
-    public boolean isCalendar() {
-        return type.equalsIgnoreCase(TYPE_CALENDAR);
-    }
-
 }

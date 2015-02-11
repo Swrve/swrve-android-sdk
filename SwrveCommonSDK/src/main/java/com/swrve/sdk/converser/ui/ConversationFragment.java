@@ -25,7 +25,6 @@ import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.SwrveConversation;
 import com.swrve.sdk.converser.engine.ActionBehaviours;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
-import com.swrve.sdk.converser.engine.model.CalendarInput;
 import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ControlActions;
@@ -113,9 +112,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 ConverserInputResult userInput = userInteractionData.get(key);
                 String fragmentTag = userInput.getFragmentTag();
                 View inputView = currentView.findViewWithTag(fragmentTag);
-                if (userInput.isCalendar()) {
-                    CalendarInputControl inputControl = (CalendarInputControl) inputView;
-                } else if (userInput.isSingleChoice()) {
+                if (userInput.isSingleChoice()) {
                     MultiValueInputControl inputControl = (MultiValueInputControl) inputView;
                     inputControl.setUserInput(userInput);
                 } else if (userInput.isMultiChoice()) {
@@ -481,22 +478,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     slider.setTag(content.getTag());
                     contentLayout.addView(slider);
                     inputs.add(slider);
-                } else if (content instanceof CalendarInput) {
-                    CalendarInputControl cic = (CalendarInputControl) getLayoutInflater(null).inflate(R.layout.cio__calendar_input, contentLayout, false);
-                    cic.setModel((CalendarInput) content);
-                    final CalendarInputControl cicReference = cic;
-                    cic.setOnContentChangedListener(new OnContentChangedListener() {
-                        @Override
-                        public void onContentChanged() {
-                            HashMap<String, Object> result = new HashMap<String, Object>();
-                            cicReference.onReplyDataRequired(result);
-                            stashCalendarInputData(page.getTag(), cicReference.getModel().getTag(), result);
-                        }
-                    });
-
-                    cic.setTag(content.getTag());
-                    contentLayout.addView(cic);
-                    inputs.add(cic);
                 }
             }
         }
@@ -747,20 +728,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private void stashEditTextControlInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
         String type = ConverserInputResult.TYPE_TEXT;
-        for (String k : data.keySet()) {
-            ConverserInputResult result = new ConverserInputResult();
-            result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
-            result.fragmentTag = fragmentTag;
-            result.pageTag = pageTag;
-            result.result = data.get(k);
-            userInteractionData.put(key, result);
-        }
-    }
-
-    private void stashCalendarInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
-        String key = pageTag + "-" + fragmentTag;
-        String type = ConverserInputResult.TYPE_CALENDAR;
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;
