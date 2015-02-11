@@ -43,7 +43,6 @@ import com.swrve.sdk.converser.engine.model.NPSInput;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.TextInput;
 
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,28 +96,20 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     @Override
     public void onPause() {
-        // TODO: STM save the conversations position so it can be resumed at a later date.
         super.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (inputs == null) {
-            inputs = new ArrayList<ConverserInput>();
-        }
-        if (userInteractionData == null) {
-            userInteractionData = new HashMap<>();
-        }
+        inputs = (inputs == null) ? new ArrayList<ConverserInput>() : inputs;
+        userInteractionData = (userInteractionData == null) ? new HashMap<String, ConverserInputResult>() : userInteractionData;
 
-        // TODO: STM Beware of On resumes and other state held things. This may need to pick up where it leaves off in a conversation at a later time
-        // TODO: STM This onResume only respects getting the first page of the conversation, not where it left off.
-        openFirstPage();
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+        if (page != null) {
+            openConversationOnPage(page);
+        } else {
+            openFirstPage();
+        }
     }
 
 
