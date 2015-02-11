@@ -43,6 +43,7 @@ import com.swrve.sdk.converser.engine.model.NPSInput;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.TextInput;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,14 +54,38 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
-
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
     private ConversationPage page;
     private SwrveBase controller;
-    private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
-    private HashMap<String, ConverserInputResult> userInteractionData = new HashMap<>();
+    private ArrayList<ConverserInput> inputs;
+    private HashMap<String, ConverserInputResult> userInteractionData;
     private boolean userInputValid = false;
+
+
+    public ConversationPage getPage() {
+        return page;
+    }
+
+    public void setPage(ConversationPage page) {
+        this.page = page;
+    }
+
+    public ArrayList<ConverserInput> getInputs() {
+        return inputs;
+    }
+
+    public void setInputs(ArrayList<ConverserInput> inputs) {
+        this.inputs = inputs;
+    }
+
+    public HashMap<String, ConverserInputResult> getUserInteractionData() {
+        return userInteractionData;
+    }
+
+    public void setUserInteractionData(HashMap<String, ConverserInputResult> userInteractionData) {
+        this.userInteractionData = userInteractionData;
+    }
 
     public static ConversationFragment create(SwrveConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
@@ -79,20 +104,29 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
+        if (inputs == null) {
+            inputs = new ArrayList<ConverserInput>();
+        }
+        if (userInteractionData == null) {
+            userInteractionData = new HashMap<>();
+        }
+
         // TODO: STM Beware of On resumes and other state held things. This may need to pick up where it leaves off in a conversation at a later time
         // TODO: STM This onResume only respects getting the first page of the conversation, not where it left off.
         openFirstPage();
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.cio__conversation_fragment, container, false);
     }
 
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
 
     public void openFirstPage() {
         page = swrveConversation.getFirstPage();
