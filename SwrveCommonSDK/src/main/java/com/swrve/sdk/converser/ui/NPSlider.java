@@ -13,6 +13,7 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.converser.engine.model.NPSInput;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
@@ -69,6 +70,11 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
         seekbar.setProgress(6);
         seekbar.setProgress(5);
     }
+
+    public void setUserInput(ConverserInputResult r){
+        seekbar.setProgress((Integer) r.getResult());
+    }
+
 
     private WindowManager getWindowManager(Context context) {
         return (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
