@@ -6,7 +6,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
-import com.swrve.sdk.converser.engine.model.CalendarInput;
 import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ConversationAtom;
 import com.swrve.sdk.converser.engine.model.DateChoice;
@@ -61,8 +60,6 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
                 return jdContext.deserialize(obj, SliderInput.class);
             } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_NETPROMOTER)) {
                 return jdContext.deserialize(obj, NPSInput.class);
-            } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_CALENDAR_INPUT)) {
-                return jdContext.deserialize(obj, CalendarInput.class);
             } else {
                 //All else has failed? just return a plain Atom, *shrug*
                 //We should end up with types for everything, but this will probably get used a lot during initial dev
