@@ -721,7 +721,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.fragmentTag = fragmentTag;
             result.pageTag = pageTag;
             result.result = data.get(k);
-            userInteractionData.put(key, result);
+            String userInteractionKey = key + "-" + userChoice.getQuestionID(); // Important to note, using fragment and page is not enough to store this input. It needs a unique identifier such as the question ID or something specific since it goes 1 level down further than other inputs
+            userInteractionData.put(userInteractionKey, result);
         }
     }
 

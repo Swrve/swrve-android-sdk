@@ -11,6 +11,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.engine.model.ChoiceInputItem;
@@ -29,6 +30,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
     private MultiValueLongInput model;
     private HashMap<String, ChoiceInputItem> responses = new HashMap<String, ChoiceInputItem>();
     private OnContentChangedListener onContentChangedListener;
+    private ArrayList<Spinner> spinners;
 
     @SuppressLint("NewApi")
     public MultiValueLongInputControl(Context context, AttributeSet attrs, int defStyle) {
@@ -56,6 +58,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
         MultiValueLongInputControl control = (MultiValueLongInputControl) layoutInf.inflate(R.layout.cio__multiinputlong, parentContainer, false);
 
         control.model = model;
+        control.spinners = new ArrayList<Spinner>();
 
         int itemCount = control.model.getValues().size();
         for (int i = 0; i < itemCount; i++) {
@@ -70,13 +73,18 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
             ArrayAdapter<ChoiceInputItem> adapter = new ArrayAdapter<ChoiceInputItem>(context, R.layout.cio__simple_spinner_item, item.getOptions());
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-            //a 'Header' type option to make people choose one
-            ChoiceInputItem pleaseSelectChoice = new ChoiceInputItem("123-fake-id", "Please Select");
-            adapter.clear();
+            // a 'Header' type option to make people choose one
+            String pleaseSelect = "Please Select";
+            ChoiceInputItem pleaseSelectChoice = new ChoiceInputItem("123-fake-id", pleaseSelect);
+            ChoiceInputItem firstItem = (ChoiceInputItem) adapter.getItem(0);
+            if (firstItem.getAnswerText().equalsIgnoreCase(pleaseSelect)){
+                adapter.remove(adapter.getItem(0));
+            }
             adapter.insert(pleaseSelectChoice, 0);
             selector.setAdapter(adapter);
 
             selector.setOnItemSelectedListener(control.createListener(item));
+            control.spinners.add(selector);
             control.addView(row);
         }
         return control;
@@ -85,7 +93,6 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
 
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
-
         for(String key: responses.keySet())
         {
             ChoiceInputItem response = responses.get(key);
@@ -112,7 +119,17 @@ public class MultiValueLongInputControl extends LinearLayout implements Converse
     }
 
     public void setUserInput(ConverserInputResult r){
-        // TODO: Implement this guy. Doesn't seem to be any real way to set the value of a spinner in android. Not sure if we'll even be able to do him.
+        // Go through each of the spinners and find the answer which corresponds to the choice input by the user
+        for(Spinner spinner : spinners){
+            ChoiceInputResponse usersChoice = (ChoiceInputResponse) r.getResult();
+            SpinnerAdapter adapter = spinner.getAdapter();
+            for(int i = 0; i < adapter.getCount(); i++){
+                ChoiceInputItem choiceOption = (ChoiceInputItem) adapter.getItem(i);
+                if (choiceOption.getAnswerID().equalsIgnoreCase(usersChoice.getAnswerID())){
+                    spinner.setSelection(i);
+                }
+            }
+        }
     }
 
 
