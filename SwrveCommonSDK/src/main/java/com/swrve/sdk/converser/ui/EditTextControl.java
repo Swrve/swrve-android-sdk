@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.swrve.sdk.common.R;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 import com.swrve.sdk.converser.engine.model.TextInput;
 
@@ -50,6 +51,10 @@ public class EditTextControl extends LinearLayout implements ConverserInput {
     public void setModel(TextInput model) {
         this.model = model;
         init();
+    }
+
+    public void setUserInput(ConverserInputResult r) {
+        editText.setText(r.getResultAsString());
     }
 
     public void setOnContentChangedListener(OnContentChangedListener l) {

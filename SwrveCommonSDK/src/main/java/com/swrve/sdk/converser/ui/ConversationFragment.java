@@ -25,7 +25,6 @@ import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.SwrveConversation;
 import com.swrve.sdk.converser.engine.ActionBehaviours;
 import com.swrve.sdk.converser.engine.model.ButtonControl;
-import com.swrve.sdk.converser.engine.model.CalendarInput;
 import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.converser.engine.model.Content;
 import com.swrve.sdk.converser.engine.model.ControlActions;
@@ -53,14 +52,38 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
-
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
     private ConversationPage page;
     private SwrveBase controller;
-    private ArrayList<ConverserInput> inputs = new ArrayList<ConverserInput>();
-    private HashMap<String, ConverserInputResult> userInteractionData = new HashMap<>();
+    private ArrayList<ConverserInput> inputs;
+    private HashMap<String, ConverserInputResult> userInteractionData;
     private boolean userInputValid = false;
+
+
+    public ConversationPage getPage() {
+        return page;
+    }
+
+    public void setPage(ConversationPage page) {
+        this.page = page;
+    }
+
+    public ArrayList<ConverserInput> getInputs() {
+        return inputs;
+    }
+
+    public void setInputs(ArrayList<ConverserInput> inputs) {
+        this.inputs = inputs;
+    }
+
+    public HashMap<String, ConverserInputResult> getUserInteractionData() {
+        return userInteractionData;
+    }
+
+    public void setUserInteractionData(HashMap<String, ConverserInputResult> userInteractionData) {
+        this.userInteractionData = userInteractionData;
+    }
 
     public static ConversationFragment create(SwrveConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
@@ -72,27 +95,48 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     @Override
     public void onPause() {
-        // TODO: STM save the conversations position so it can be resumed at a later date.
         super.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        // TODO: STM Beware of On resumes and other state held things. This may need to pick up where it leaves off in a conversation at a later time
-        // TODO: STM This onResume only respects getting the first page of the conversation, not where it left off.
-        openFirstPage();
+        inputs = (inputs == null) ? new ArrayList<ConverserInput>() : inputs;
+        userInteractionData = (userInteractionData == null) ? new HashMap<String, ConverserInputResult>() : userInteractionData;
+
+        if (page != null) {
+            View currentView = getView();
+            openConversationOnPage(page);
+            // Populate the page with existing inputs and answers
+            for (String key : userInteractionData.keySet()) {
+                ConverserInputResult userInput = userInteractionData.get(key);
+                String fragmentTag = userInput.getFragmentTag();
+                View inputView = currentView.findViewWithTag(fragmentTag);
+                if (userInput.isSingleChoice()) {
+                    MultiValueInputControl inputControl = (MultiValueInputControl) inputView;
+                    inputControl.setUserInput(userInput);
+                } else if (userInput.isMultiChoice()) {
+                    MultiValueLongInputControl inputControl = (MultiValueLongInputControl) inputView;
+                    inputControl.setUserInput(userInput);
+                } else if (userInput.isNps()) {
+                    NPSlider inputControl = (NPSlider) inputView;
+                    inputControl.setUserInput(userInput);
+                } else if (userInput.isTextInput()) {
+                    EditTextControl inputControl = (EditTextControl) inputView;
+                    inputControl.setUserInput(userInput);
+                }
+            }
+        } else {
+            openFirstPage();
+        }
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.cio__conversation_fragment, container, false);
     }
 
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
 
     public void openFirstPage() {
         page = swrveConversation.getFirstPage();
@@ -280,6 +324,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     ImageView iv = new ImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+                    iv.setTag(content.getTag());
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
@@ -297,6 +342,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
+                    view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
                     contentLayout.addView(view);
@@ -311,6 +357,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
                     HtmlVideoView view = new HtmlVideoView(activity, modelContent);
+                    view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
 
@@ -328,7 +375,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(view);
                 } else {
                     TextView tv = new TextView(activity, modelContent, R.attr.conversationTextContentDefaultStyle);
-
+                    tv.setTag(content.getTag());
                     LayoutParams tvLP;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         tvLP = new LayoutParams(controlLp);
@@ -345,6 +392,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     TextInput inputModel = (TextInput) content;
 
                     EditTextControl etc = (EditTextControl) getLayoutInflater(null).inflate(R.layout.cio__edittext_input, contentLayout, false);
+                    etc.setTag(content.getTag());
                     etc.setModel(inputModel);
 
                     // Store the result of the content for processing later
@@ -374,7 +422,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     lp.height = LayoutParams.WRAP_CONTENT;
 
                     input.setLayoutParams(lp);
-
+                    input.setTag(content.getTag());
                     final MultiValueInputControl mvicReference = input;
                     final String tag = content.getTag();
                     // Store the result of the content for processing later
@@ -411,7 +459,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashMultiChoiceLongInputData(page.getTag(), tag, result);
                         }
                     });
-
+                    input.setTag(content.getTag());
                     contentLayout.addView(input);
                     inputs.add(input);
                 } else if (content instanceof NPSInput) {
@@ -427,23 +475,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashNPSInputData(page.getTag(), tag, result);
                         }
                     });
+                    slider.setTag(content.getTag());
                     contentLayout.addView(slider);
                     inputs.add(slider);
-                } else if (content instanceof CalendarInput) {
-                    CalendarInputControl cic = (CalendarInputControl) getLayoutInflater(null).inflate(R.layout.cio__calendar_input, contentLayout, false);
-                    cic.setModel((CalendarInput) content);
-                    final CalendarInputControl cicReference = cic;
-                    cic.setOnContentChangedListener(new OnContentChangedListener() {
-                        @Override
-                        public void onContentChanged() {
-                            HashMap<String, Object> result = new HashMap<String, Object>();
-                            cicReference.onReplyDataRequired(result);
-                            stashCalendarInputData(page.getTag(), cicReference.getModel().getTag(), result);
-                        }
-                    });
-
-                    contentLayout.addView(cic);
-                    inputs.add(cic);
                 }
             }
         }
@@ -687,27 +721,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.fragmentTag = fragmentTag;
             result.pageTag = pageTag;
             result.result = data.get(k);
-            userInteractionData.put(key, result);
+            String userInteractionKey = key + "-" + userChoice.getQuestionID(); // Important to note, using fragment and page is not enough to store this input. It needs a unique identifier such as the question ID or something specific since it goes 1 level down further than other inputs
+            userInteractionData.put(userInteractionKey, result);
         }
     }
 
     private void stashEditTextControlInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
         String type = ConverserInputResult.TYPE_TEXT;
-        for (String k : data.keySet()) {
-            ConverserInputResult result = new ConverserInputResult();
-            result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
-            result.fragmentTag = fragmentTag;
-            result.pageTag = pageTag;
-            result.result = data.get(k);
-            userInteractionData.put(key, result);
-        }
-    }
-
-    private void stashCalendarInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
-        String key = pageTag + "-" + fragmentTag;
-        String type = ConverserInputResult.TYPE_CALENDAR;
         for (String k : data.keySet()) {
             ConverserInputResult result = new ConverserInputResult();
             result.type = type;

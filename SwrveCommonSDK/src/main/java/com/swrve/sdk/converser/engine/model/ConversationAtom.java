@@ -18,7 +18,6 @@ public abstract class ConversationAtom implements Serializable {
     public static final String TYPE_INPUT_MULTIVALUELONG = "multi-value-long-input";
     public static final String TYPE_INPUT_REACTION = "reaction";
     public static final String TYPE_INPUT_NETPROMOTER = "nps-input";
-    public static final String TYPE_INPUT_CALENDAR_INPUT = "calendar-input";
 
     protected String tag;
     protected String type;

@@ -2,6 +2,7 @@ package com.swrve.sdk.converser.ui;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.LinearLayout;
@@ -11,15 +12,19 @@ import android.widget.TextView;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.converser.engine.model.ChoiceInputItem;
 import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
+import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 import com.swrve.sdk.converser.engine.model.MultiValueInput;
 import com.swrve.sdk.converser.engine.model.OnContentChangedListener;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 public class MultiValueInputControl extends LinearLayout implements ConverserInput, OnCheckedChangeListener {
     private MultiValueInput model;
     private int selectedIndex = -1; // default to none selected
     private OnContentChangedListener onContentChangedListener;
+    private TextView descLbl;
+    private ArrayList<RadioButton> radioButtons;
 
     public MultiValueInputControl(Context context, AttributeSet attrs, MultiValueInput model) {
         super(context, attrs);
@@ -31,11 +36,12 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
     private void setupViews() {
         removeAllViews();
         LayoutParams lbllp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        TextView descLbl = new TextView(getContext(), null, R.attr.conversationInputMultiValueDescriptionStyle);
+        descLbl = new TextView(getContext(), null, R.attr.conversationInputMultiValueDescriptionStyle);
         descLbl.setLayoutParams(lbllp);
         descLbl.setText(model.getDescription());
         addView(descLbl);
 
+        radioButtons = new ArrayList<RadioButton>();
         for (int i = 0; i < model.getValues().size(); i++) {
             RadioButton rb = new RadioButton(getContext(), null, R.attr.conversationInputMultiValueItemStyle);
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
@@ -47,6 +53,17 @@ public class MultiValueInputControl extends LinearLayout implements ConverserInp
             }
             this.addView(rb);
             rb.setOnCheckedChangeListener(this);
+            radioButtons.add(rb);
+        }
+    }
+
+    public void setUserInput(ConverserInputResult userInput){
+        ChoiceInputResponse choice = (ChoiceInputResponse) userInput.getResult();
+        for(RadioButton rb : radioButtons){
+            if (rb.getText().toString().equalsIgnoreCase(choice.getAnswerText()))
+            {
+                rb.setChecked(true);
+            }
         }
     }
 
