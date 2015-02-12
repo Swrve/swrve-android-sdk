@@ -14,5 +14,10 @@ public interface ConverserInput {
      */
     public String validate();
 
+    /**
+     * Each ConverserInput should be able to have its value set programmatically so the user sees certain things.
+     *
+     * @return null if validated ok. Otherwise a message detailing issue
+     */
     public void setUserInput(ConverserInputResult r);
 }
