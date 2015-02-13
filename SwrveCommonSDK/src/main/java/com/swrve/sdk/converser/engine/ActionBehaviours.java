@@ -24,7 +24,6 @@ public abstract class ActionBehaviours {
     }
 
     public void openDialer(Uri telUri, Activity activity) {
-        Log.i("ConversationFragment Action", "Action is call!");
         Intent dialNum = new Intent(Intent.ACTION_DIAL, telUri);
         activity.startActivity(dialNum);
     }
@@ -58,5 +57,10 @@ public abstract class ActionBehaviours {
         bundle.putString("referrer", referrer);
         visitWebpage.putExtra(Browser.EXTRA_HEADERS, bundle);
         activity.startActivity(visitWebpage);
+    }
+
+    public void openDeepLink(Uri uri, Activity activity){
+        Intent visitDeepLink = new Intent(Intent.ACTION_VIEW, uri);
+        activity.startActivity(visitDeepLink);
     }
 }
