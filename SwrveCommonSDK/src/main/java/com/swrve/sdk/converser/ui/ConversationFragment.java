@@ -230,7 +230,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             boolean isLast = (i == conversationPage.getControls().size() - 1);
 
             if (atom instanceof ButtonControl) {
-                // Fucked up use case
                 // There are times when the layout or styles will need to change
                 // based on the number of controls.
                 // EG if there is one button, make it green. If there are 2
