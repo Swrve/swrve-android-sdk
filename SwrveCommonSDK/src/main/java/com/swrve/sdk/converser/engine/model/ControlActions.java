@@ -2,9 +2,10 @@ package com.swrve.sdk.converser.engine.model;
 
 import android.net.Uri;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
-public class ControlActions {
+public class ControlActions implements Serializable {
     public static final Object CALL_ACTION = "call";
     public static final Object VISIT_URL_ACTION = "visit";
     public static final Object DEEPLINK_ACTION = "deeplink";
