@@ -60,7 +60,9 @@ public abstract class ActionBehaviours {
     }
 
     public void openDeepLink(Uri uri, Activity activity){
-        Intent visitDeepLink = new Intent(Intent.ACTION_VIEW, uri);
-        activity.startActivity(visitDeepLink);
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags (Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        activity.startActivity(intent);
     }
 }
