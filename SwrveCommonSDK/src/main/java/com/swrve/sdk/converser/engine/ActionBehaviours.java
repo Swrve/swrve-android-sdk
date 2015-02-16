@@ -2,6 +2,7 @@ package com.swrve.sdk.converser.engine;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.webkit.WebViewClient;
 import java.util.HashMap;
 
 public abstract class ActionBehaviours {
+    private static final String LOG_TAG = "ActionBehaviours";
     private Activity activity;
     private Context context;
 
@@ -60,9 +62,15 @@ public abstract class ActionBehaviours {
     }
 
     public void openDeepLink(Uri uri, Activity activity){
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        String uriString = uri.toString();
+        Intent intent = new Intent(Intent.ACTION_VIEW).setData(uri);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags (Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        activity.startActivity(intent);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        try {
+            activity.startActivity(intent);
+        }catch(ActivityNotFoundException anfe){
+            Log.e(LOG_TAG, "Could not launch activity for uri: " + uriString + ". Possibly badly formatted deep link", anfe);
+            activity.finish();
+        }
     }
 }
