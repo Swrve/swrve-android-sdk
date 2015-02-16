@@ -1266,6 +1266,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", viewEvent);
             payload.put("event", "error");
             payload.put("page", currentPageTag);
+            payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
         }

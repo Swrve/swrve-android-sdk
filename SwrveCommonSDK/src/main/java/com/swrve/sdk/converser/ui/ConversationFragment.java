@@ -522,6 +522,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         } else {
 
                         }
+                    } else if (actions.isDeepLink()) {
+                        {
+                            HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
+                            String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
+                            Uri uri = Uri.parse(urlStr);
+                            enforceValidations();
+                            sendDeepLinkActionEvent(page.getTag(), model);
+                            behaviours.openDeepLink(uri, this.getActivity());
+                        }
                     }
                 } else {
                     // There are no actions associated with Button. Send a normal reply
@@ -671,6 +680,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private void sendLinkActionEvent(String currentPageTag, ConversationAtom control) {
         if (controller != null) {
             controller.conversationLinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
+        }
+    }
+
+    private void sendDeepLinkActionEvent(String currentPageTag, ConversationAtom control) {
+        if (controller != null) {
+            // TODO: implement this guy.
+            // controller.conversationDeepLinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
         }
     }
 
