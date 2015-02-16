@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.BaseConverser" parent="@android:style/Theme.Holo.Light"></style>
+    <style name="Theme.BaseConversations" parent="@android:style/Theme.Holo.Light"></style>
 
-    <style name="Theme.Converser.NoTitleBar">
+    <style name="Theme.Conversations.NoTitleBar">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
     </style>

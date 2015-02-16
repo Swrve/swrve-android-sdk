@@ -3,26 +3,16 @@ package com.swrve.sdk.messaging;
 import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
-import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.converser.SwrveConversation;
-import com.swrve.sdk.converser.engine.model.Content;
-import com.swrve.sdk.converser.engine.model.ConversationAtom;
-import com.swrve.sdk.converser.engine.model.ConversationPage;
+import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.engine.model.Content;
+import com.swrve.sdk.conversations.engine.model.ConversationAtom;
+import com.swrve.sdk.conversations.engine.model.ConversationPage;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -98,6 +88,6 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     }
 
     public void conversationWasShownToUser() {
-        // TODO.Converser: Define what to do here
+        // TODO: Define what to do here
     }
 }
