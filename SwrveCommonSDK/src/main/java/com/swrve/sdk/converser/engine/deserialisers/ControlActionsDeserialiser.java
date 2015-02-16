@@ -32,7 +32,7 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
                     HashMap<String, String> visitUriDetails = new HashMap<String, String>();
 
                     String urlStr = "http://www.google.ie";
-                    String refer = "http://converser.io";
+                    String refer = "http://swrve.com";
                     String ext = "true";
 
                     if (jsonObject.has(ControlActions.VISIT_URL_URI_KEY)) {
