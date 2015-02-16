@@ -51,7 +51,21 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
                     visitUriDetails.put(ControlActions.VISIT_URL_REFERER_KEY, refer);
                     visitUriDetails.put(ControlActions.VISIT_URL_EXTERNAL_KEY, ext);
                     actions.includeAction(label, visitUriDetails);
-                } else {
+                } else if (label.equalsIgnoreCase(ControlActions.DEEPLINK_ACTION.toString())) {
+                    JsonObject jsonObject = entry.getValue().getAsJsonObject();
+                    HashMap<String, String> deeplinkURIDetails = new HashMap<String, String>();
+
+                    String urlStr = "twitter://"; // Default.
+
+                    if (jsonObject.has(ControlActions.DEEPLINK_URL_URI_KEY)) {
+                        urlStr = jsonObject.get(ControlActions.DEEPLINK_URL_URI_KEY).getAsString();
+                    }
+
+                    // Validate the url. Sometimes, the : character of http:// will cause a space to occur
+                    deeplinkURIDetails.put(ControlActions.DEEPLINK_URL_URI_KEY, urlStr);
+                    actions.includeAction(label, deeplinkURIDetails);
+                }
+                else {
                     Log.e("ControlActionsDeserialiser", "Unrecognized Action in json");
                     Log.e("ControlActionsDeserialiser", "JSON :: " + entry.getValue().getAsJsonObject().toString());
                 }
