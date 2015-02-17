@@ -16,6 +16,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.qa.SwrveQAUser;
 
+import java.util.Date;
 import java.util.Iterator;
 
 public class SwrveGcmHandler implements ISwrveGcmHandler {
@@ -101,9 +102,14 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     }
 
     @Override
-    public int showNotification(NotificationManager notificationManager, Notification notification, int id) {
+    public int showNotification(NotificationManager notificationManager, Notification notification) {
+        int id = generateTimestampId();
         notificationManager.notify(id, notification);
         return id;
+    }
+
+    private int generateTimestampId() {
+        return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 
     @Override
@@ -147,11 +153,11 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     }
 
     @Override
-    public PendingIntent createPendingIntent(Bundle msg, int id) {
+    public PendingIntent createPendingIntent(Bundle msg) {
         // Add notification to bundle
-        Intent intent = swrveGcmService.createIntent( msg);
+        Intent intent = swrveGcmService.createIntent(msg);
         if (intent != null) {
-            return PendingIntent.getActivity(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return null;
