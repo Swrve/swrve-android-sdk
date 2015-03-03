@@ -48,7 +48,7 @@ android.libraryVariants.all { variant ->
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: '*.jar')
     compile project(':SwrveCommonSDK')
-    compile project(':google-play-services_lib')
+    compile 'com.android.support:support-v4:21.0.0'
+    compile 'com.google.android.gms:play-services-base:6.5.87'
 }
