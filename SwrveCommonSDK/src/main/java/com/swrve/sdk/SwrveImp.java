@@ -15,8 +15,8 @@ import android.view.WindowManager;
 
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.converser.ISwrveConversationListener;
-import com.swrve.sdk.converser.SwrveConversation;
+import com.swrve.sdk.conversations.ISwrveConversationListener;
+import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.ILocalStorage;
