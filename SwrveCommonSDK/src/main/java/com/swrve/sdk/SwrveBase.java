@@ -15,11 +15,11 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.converser.ISwrveConversationListener;
-import com.swrve.sdk.converser.SwrveConversation;
-import com.swrve.sdk.converser.engine.model.ChoiceInputResponse;
-import com.swrve.sdk.converser.engine.model.ConverserInputResult;
-import com.swrve.sdk.converser.ui.ConversationActivity;
+import com.swrve.sdk.conversations.ISwrveConversationListener;
+import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
+import com.swrve.sdk.conversations.engine.model.UserInputResult;
+import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
@@ -1080,7 +1080,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _queueConversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
+    protected void _queueConversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<UserInputResult> userInteractions){
         if (conversation != null) {
             String baseEvent = getEventForConversation(conversation)  + ".page.";
 
@@ -1094,7 +1094,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                  }
             */
 
-            for (ConverserInputResult userInteraction : userInteractions){
+            for (UserInputResult userInteraction : userInteractions){
                 Map<String, String> payload = new HashMap<String, String>();
                 Map<String, Object> parameters = new HashMap<String, Object>();
                 String viewEvent = baseEvent + userInteraction.getType();
@@ -1616,7 +1616,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<ConverserInputResult> userInteractions){
+    public void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<UserInputResult> userInteractions){
         try {
             _queueConversationEventsCommitedByUser(conversation, userInteractions);
         } catch (Exception e) {
