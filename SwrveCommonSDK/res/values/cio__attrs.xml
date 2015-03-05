@@ -2,47 +2,22 @@
 <resources>
 
     <declare-styleable name="Theme.Converser">
-
         <attr name="conversationControlTrayStyle" format="reference" />
         <attr name="conversationControlTrayTopMargin" format="dimension" />
+        <attr name="conversationControlLayoutMargin" format="dimension" />
 
         <attr name="conversationContentStyle" format="reference" />
-
         <attr name="conversationControlButtonStyle" format="reference" />
 
-        <attr name="conversationControlFirstButtonStyle" format="reference" />
-        <attr name="conversationControlSecondButtonStyle" format="reference" />
-        <attr name="conversationControlThirdButtonStyle" format="reference" />
-
-
-        <attr name="conversationTalkbackOperatorStyle" format="reference" />
-        <attr name="conversationTalkbackSubscriberStyle" format="reference" />
-        <attr name="conversationTalkbackTimeStampStyle" format="reference" />
+        <attr name="conversationControlPrimaryButtonStyle" format="reference" />
+        <attr name="conversationControlSecondaryButtonStyle" format="reference" />
+        <attr name="conversationControlNeutralButtonStyle" format="reference" />
 
         <attr name="conversationTextContentDefaultStyle" format="reference" />
         <attr name="conversationTextContentDefaultBoldStyle" format="reference" />
         <attr name="conversationInputTextBoxDefaultStyle" format="reference" />
 
-        <attr name="conversationTalkbackOperatorMarginLeft" format="dimension" />
-        <attr name="conversationTalkbackOperatorMarginRight" format="dimension" />
-        <attr name="conversationTalkbackOperatorMarginTop" format="dimension" />
-
-        <attr name="conversationTalkbackSubscriberMarginLeft" format="dimension" />
-        <attr name="conversationTalkbackSubscriberMarginRight" format="dimension" />
-        <attr name="conversationTalkbackSubscriberMarginTop" format="dimension" />
-
-
-        <attr name="controlLayoutMargin" format="dimension" />
-
-        <attr name="conversationListViewStyle" format="reference" />
-        <attr name="conversationListRowStyle" format="reference" />
-
-        <attr name="conversationListDecorIcon" format="reference" />
-        <attr name="conversationListRowHeaderStyle" format="reference" />
-        <attr name="conversationListRowDateStyle" format="reference" />
-
-
-        <attr name="conversationListHelpTextStyle" format="reference" />
+        <attr name="conversationMVSpinner" format="reference" />
         <attr name="conversationInputMultiValueItemStyle" format="reference" />
         <attr name="conversationInputMultiValueDescriptionStyle" format="reference" />
 

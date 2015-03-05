@@ -2,9 +2,10 @@ package com.swrve.sdk.converser.ui;
 
 import com.swrve.sdk.converser.engine.model.ConverserInputResult;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public interface ConverserInput {
+public interface ConverserInput  {
     public void onReplyDataRequired(Map<String, Object> dataMap);
 
     /**
