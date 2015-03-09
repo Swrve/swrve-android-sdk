@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.swrve.sdk.converser.ui.NPSlider xmlns:android="http://schemas.android.com/apk/res/android"
+<com.swrve.sdk.conversations.ui.NPSlider xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
@@ -111,4 +111,4 @@
         android:progressDrawable="@drawable/cio__np_slider"
         android:thumb="@drawable/cio__npsliderthumb"
         android:thumbOffset="0dp" />
-</com.swrve.sdk.converser.ui.NPSlider>
+</com.swrve.sdk.conversations.ui.NPSlider>

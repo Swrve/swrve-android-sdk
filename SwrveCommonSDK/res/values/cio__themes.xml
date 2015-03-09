@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.BaseConverser" parent="Theme.AppCompat.Light.DarkActionBar"></style>
+    <style name="Theme.BaseConversations" parent="@android:style/Theme"></style>
 
-    <style name="Theme.Converser" parent="@style/Theme.BaseConverser">
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@color/cio__window_background</item> <!-- Note that the window background affects the control trays border -->
+    <style name="Theme.Conversations" parent="Theme.BaseConversations">
         <item name="conversationControlTrayStyle">@style/cio__button_tray</item>
         <item name="conversationControlTrayTopMargin">@dimen/control_tray_top_margin</item>
         <item name="conversationControlLayoutMargin">@dimen/control_tray_item_margin</item>
@@ -30,7 +28,7 @@
 
     </style>
 
-    <style name="Theme.Converser.NoTitleBar" parent="Theme.Converser">
+    <style name="Theme.Conversations.NoTitleBar">
         <item name="android:windowNoTitle">true</item>
     </style>
 

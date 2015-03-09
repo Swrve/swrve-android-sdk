@@ -5,7 +5,7 @@ import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.converser.SwrveConversation;
+import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
