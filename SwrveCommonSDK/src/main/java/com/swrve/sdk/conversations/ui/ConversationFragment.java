@@ -1,20 +1,30 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -52,6 +62,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
+    private Toolbar toolbar;
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
     private ConversationPage page;
@@ -146,8 +157,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     @SuppressLint("NewApi")
     public void openConversationOnPage(ConversationPage conversationPage) {
-        LayoutInflater layoutInf = getLayoutInflater(null);
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM");
+        int sdk = android.os.Build.VERSION.SDK_INT;
+        Context context = getActivity().getApplicationContext();
         this.page = conversationPage;
         if (inputs.size() > 0) {
             inputs.clear();
@@ -159,6 +170,24 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         root = (ViewGroup) getView();
         if (root == null) {
             return;
+        }
+
+        toolbar = (Toolbar) root.findViewById(R.id.cio__toolbar);
+        if(toolbar != null){
+            // Background Color
+            int actionBarBGColor = page.getHeaderBackgroundColor(context);
+            ColorDrawable actionBarBG = new ColorDrawable(actionBarBGColor);
+            if(sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                toolbar.setBackgroundDrawable(actionBarBG);
+            } else {
+                toolbar.setBackground(actionBarBG);
+            }
+
+            // Title
+            int actionBarTextColor = page.getHeaderBackgroundTextColor(context);
+            toolbar.setTitleTextColor(actionBarTextColor);
+            toolbar.setTitle(page.getTitle());
+            toolbar.setLogo(page.getHeaderIcon(context));
         }
 
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
@@ -184,28 +213,37 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             contentLp = new LayoutParams(root.getLayoutParams());
         } else {
             contentLp = new LayoutParams(root.getLayoutParams().width, root.getLayoutParams().height);
-
         }
 
         controlLp.height = LayoutParams.WRAP_CONTENT;
         contentLp.weight = 1;
 
-        TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[]
-                {R.attr.controlLayoutMargin});
-
+        TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
 
-        int buttonCount = 0;
-        if (conversationPage.getControls().size() == 0) {
 
-            Button ctrlButton = new Button(activity, null, (buttonCount == 0 ? R.attr.conversationControlSecondButtonStyle : R.attr.conversationControlSecondButtonStyle));// (buttonCount
-            // ==
-            // 1
-            // ?
-            // R.attr.conversationControlFirstButtonStyle
-            // :
-            // R.attr.conversationControlSecondButtonStyle)));
-            ctrlButton.setText("Done");
+        // Set the background from whatever color the page object specifies as well as the control tray down the bottom
+        if(sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(context));
+            controlLayout.setBackgroundDrawable(page.getControlTrayBackgroundDrawable(context));
+        } else {
+            contentLayout.setBackground(page.getContentBackgroundDrawable(context));
+            controlLayout.setBackground(page.getControlTrayBackgroundDrawable(context));
+        }
+
+        // Now setup the controls
+        int primaryButtonColor = page.getPrimaryButtonColor(context);
+        int primaryButtonTextColor = page.getPrimaryButtonTextColor(context);
+        int secondaryButtonColor = page.getSecondaryButtonColor(context);
+        int secondaryButtonTextColor = page.getSecondaryButtonTextColor(context);
+        int neutralButtonColor = page.getNeutralButtonColor(context);
+        int neutralButtonTextColor = page.getNeutralButtonTextColor(context);
+
+        int numControls = conversationPage.getControls().size();
+        if (numControls == 0) {
+            ConversationButton ctrlConversationButton = new ConversationButton(activity, null, R.attr.conversationControlSecondaryButtonStyle);
+            ctrlConversationButton.setText("Done");
+
             LayoutParams buttonLP;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 buttonLP = new LayoutParams(controlLp);
@@ -218,62 +256,86 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             buttonLP.topMargin = controlLayoutMarginInPixels;
             buttonLP.bottomMargin = controlLayoutMarginInPixels;
 
-            ctrlButton.setLayoutParams(buttonLP);
-            controlLayout.addView(ctrlButton);
-            ctrlButton.setOnClickListener(new DoneButtonListener());
+            ctrlConversationButton.setLayoutParams(buttonLP);
+            controlLayout.addView(ctrlConversationButton);
+            ctrlConversationButton.setOnClickListener(new DoneButtonListener());
+            ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
+            ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
+            ctrlConversationButton.setCurved();
         }
 
-        for (int i = 0; i < conversationPage.getControls().size(); i++) {
+        for (int i = 0; i < numControls; i++) {
             ConversationAtom atom = conversationPage.getControls().get(i);
 
             boolean isFirst = (i == 0);
-            boolean isLast = (i == conversationPage.getControls().size() - 1);
+            boolean isLast = (i == numControls - 1);
 
             if (atom instanceof ButtonControl) {
                 // There are times when the layout or styles will need to change
                 // based on the number of controls.
                 // EG if there is one button, make it green. If there are 2
                 // buttons, make the first red, and the second green
-                int numControls = conversationPage.getControls().size();
 
                 ButtonControl ctrl = (ButtonControl) atom;
-                Button ctrlButton = null;
+                ConversationButton ctrlConversationButton = null;
 
                 if (isFirst) {
                     if (numControls == 1) {
                         // Button should be green
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlSecondButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     } else if (numControls == 2) {
                         // Button should be red
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlFirstButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
                     } else if (numControls > 2) {
                         // Button should be red
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlFirstButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
                     }
                 } else if (!isFirst && !isLast) {
                     if (numControls == 1) {
                         // Button should be green
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlSecondButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     } else if (numControls == 2) {
-                        // Button should be blue
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlThirdButtonStyle);
+                        // Button should be green
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     } else if (numControls > 2) {
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlThirdButtonStyle);
+                        // Button should be gray
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlNeutralButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(neutralButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(neutralButtonTextColor);
                     }
                     // If it is not the first button but is also not the last IE
                     // it is in the middle
                 } else if (isLast) {
                     if (numControls == 1) {
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlSecondButtonStyle);
+                        // Should be green
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     } else if (numControls == 2) {
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlSecondButtonStyle);
+                        // Should be green
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     } else if (numControls > 2) {
-                        ctrlButton = new Button(activity, ctrl, R.attr.conversationControlThirdButtonStyle);
+                        // Should be green
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
+                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     }
-                    ctrlButton = new Button(activity, ctrl, R.attr.conversationControlSecondButtonStyle);
+                    // End Button
                 }
-
-                buttonCount++;
+                // All buttons curved by default on Android.
+                ctrlConversationButton.setCurved();
 
                 LayoutParams buttonLP;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -287,9 +349,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 buttonLP.topMargin = controlLayoutMarginInPixels;
                 buttonLP.bottomMargin = controlLayoutMarginInPixels;
 
-                ctrlButton.setLayoutParams(buttonLP);
-                controlLayout.addView(ctrlButton);
-                ctrlButton.setOnClickListener(this);
+                ctrlConversationButton.setLayoutParams(buttonLP);
+                controlLayout.addView(ctrlConversationButton);
+                ctrlConversationButton.setOnClickListener(this);
 
             } else if (atom instanceof DateChoice) {
                 DatePickerButton btn = new DatePickerButton(activity, (DateChoice) atom);
@@ -492,9 +554,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             // When a control is clicked, a navigation event or action event occurs. We then send all the queued SwrveEvents which have been queued for this page
             commitUserInputsToEvents();
 
-            if (v instanceof Button) {
+            if (v instanceof ConversationButton) {
                 ConversationReply reply = new ConversationReply();
-                Button convButton = (Button) v;
+                ConversationButton convButton = (ConversationButton) v;
                 ButtonControl model = convButton.getModel();
                 if (((ConversationControl) v).getModel().hasActions()) {
                     ActionBehaviours behaviours = new ActionBehaviours(this.getActivity(), this.getActivity().getApplicationContext()) {

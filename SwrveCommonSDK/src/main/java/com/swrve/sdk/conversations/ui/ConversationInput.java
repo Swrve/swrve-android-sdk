@@ -2,6 +2,7 @@ package com.swrve.sdk.conversations.ui;
 
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
+import java.io.Serializable;
 import java.util.Map;
 
 public interface ConversationInput {

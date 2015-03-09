@@ -15,10 +15,11 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class MultiValueInputControl extends LinearLayout implements ConversationInput, OnCheckedChangeListener {
+public class MultiValueInputControl extends LinearLayout implements Serializable, ConversationInput, OnCheckedChangeListener {
     private MultiValueInput model;
     private int selectedIndex = -1; // default to none selected
     private OnContentChangedListener onContentChangedListener;
@@ -35,14 +36,14 @@ public class MultiValueInputControl extends LinearLayout implements Conversation
     private void setupViews() {
         removeAllViews();
         LayoutParams lbllp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        descLbl = new TextView(getContext(), null, R.attr.conversationInputMultiValueDescriptionStyle);
+        descLbl = new TextView(getContext());
         descLbl.setLayoutParams(lbllp);
         descLbl.setText(model.getDescription());
         addView(descLbl);
 
         radioButtons = new ArrayList<RadioButton>();
         for (int i = 0; i < model.getValues().size(); i++) {
-            RadioButton rb = new RadioButton(getContext(), null, R.attr.conversationInputMultiValueItemStyle);
+            RadioButton rb = new RadioButton(getContext());
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             rb.setLayoutParams(lp);
             rb.setText(model.getValues().get(i).getAnswerText());
