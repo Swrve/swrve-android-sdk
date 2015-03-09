@@ -11,16 +11,6 @@ public class ConversationButton extends android.widget.Button implements Convers
     private ButtonControl model;
     protected GradientDrawable gradientDrawable;
 
-
-    public ConversationButton(Context context, ButtonControl model) {
-        super(context, null);
-        this.gradientDrawable = new GradientDrawable();
-        if (model != null) {
-            this.model = model;
-            setText(model.getDescription());
-        }
-    }
-
     public ConversationButton(Context context, ButtonControl model, int defStyle) {
         super(context, null, defStyle);
         this.gradientDrawable = new GradientDrawable();
