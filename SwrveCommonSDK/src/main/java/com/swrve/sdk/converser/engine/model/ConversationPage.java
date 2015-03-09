@@ -112,7 +112,7 @@ public class ConversationPage implements Serializable {
         try {
             defaultIcon = c.getPackageManager().getApplicationIcon(c.getPackageName());
         } catch (PackageManager.NameNotFoundException e) {
-            Log.e("Swrve", "Could not find application icon", e);
+            Log.i("Swrve", "Could not find application icon", e);
         }
         return defaultIcon;
     }
