@@ -4,23 +4,15 @@ import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.converser.SwrveConversation;
-import com.swrve.sdk.converser.engine.model.Content;
-import com.swrve.sdk.converser.engine.model.ConversationAtom;
-import com.swrve.sdk.converser.engine.model.ConversationPage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;

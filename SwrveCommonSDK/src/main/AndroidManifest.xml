@@ -9,8 +9,8 @@
 
     <application >
         <activity
-            android:name="com.swrve.sdk.converser.ui.ConversationActivity"
+            android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
             android:hardwareAccelerated="true"
-            android:theme="@style/Theme.Converser"></activity>
+            android:theme="@style/Theme.Conversations"></activity>
         </application>
 </manifest>
