@@ -1203,7 +1203,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
+    protected void _conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag, String controlTag) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation)  + ".done";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1212,6 +1212,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", viewEvent);
             payload.put("event", "done");
             payload.put("page", endPageTag); //The final page the user ended on
+            payload.put("control", controlTag); //The final button the user clicked
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload);
             saveCampaignSettings();
@@ -1656,9 +1657,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag) {
+    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag, String endControl) {
         try {
-            _conversationWasFinishedByUser(conversation, endPageTag);
+            _conversationWasFinishedByUser(conversation, endPageTag, endControl);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
