@@ -238,7 +238,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         int secondaryButtonTextColor = page.getSecondaryButtonTextColor(context);
         int neutralButtonColor = page.getNeutralButtonColor(context);
         int neutralButtonTextColor = page.getNeutralButtonTextColor(context);
-        int buttonCount = 0;
 
         int numControls = conversationPage.getControls().size();
         if (numControls == 0) {
@@ -338,7 +337,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 // All buttons curved by default on Android.
                 ctrlConversationButton.setCurved();
 
-                buttonCount++;
                 LayoutParams buttonLP;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                     buttonLP = new LayoutParams(controlLp);
