@@ -25,6 +25,11 @@
         <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item</item>
 
         <item name="conversationMVSpinner">@style/cio__mvl_spinner</item>
-</style>
+
+    </style>
+
+    <style name="Theme.Conversations.NoTitleBar">
+        <item name="android:windowNoTitle">true</item>
+    </style>
 
 </resources>

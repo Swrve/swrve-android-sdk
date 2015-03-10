@@ -220,6 +220,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
+
+
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
         if(sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
             contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(context));
@@ -239,22 +241,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         int numControls = conversationPage.getControls().size();
         if (numControls == 0) {
-            ConversationPageException exception = new ConversationPageException("No controls were detected in this page. This is a bad conversation!");
-            sendErrorNavigationEvent(page.getTag(), exception); // No exception. We just couldn't find a page attached to the control.
-
             ConversationButton ctrlConversationButton = new ConversationButton(activity, null, R.attr.conversationControlSecondaryButtonStyle);
             ctrlConversationButton.setText("Done");
-
-
-
-        // Set the background from whatever color the page object specifies as well as the control tray down the bottom
-        if(sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(context));
-            controlLayout.setBackgroundDrawable(page.getControlTrayBackgroundDrawable(context));
-        } else {
-            contentLayout.setBackground(page.getContentBackgroundDrawable(context));
-            controlLayout.setBackground(page.getControlTrayBackgroundDrawable(context));
-        }
 
             LayoutParams buttonLP;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -270,19 +258,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
             ctrlConversationButton.setLayoutParams(buttonLP);
             controlLayout.addView(ctrlConversationButton);
-            ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
-            ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
-            ctrlConversationButton.setCurved();
-            ctrlConversationButton.setLayoutParams(buttonLP);
-            controlLayout.addView(ctrlConversationButton);
-            ctrlConversationButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Log.e(LOG_TAG, "User recieved a bad conversation and had to finish the conversation prematurely");
-                    sendDoneNavigationEvent(page.getTag(), "no control present");
-                    getActivity().finish();
-                }
-            });
+            ctrlConversationButton.setOnClickListener(new DoneButtonListener());
             ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
             ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
             ctrlConversationButton.setCurved();
@@ -664,25 +640,20 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             if (isOkToProceed()) {
                 sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
                 openConversationOnPage(nextPage);
-            }else{
-                Log.i(LOG_TAG, "User tried to go to the next piece of the conversation but it is not ok to proceed");
             }
         }
+        // If the button is an action event then it will leave the conversations
         else if (control.hasActions()) {
+            Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             if (isOkToProceed()) {
-                Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
-                sendDoneNavigationEvent(page.getTag(), control.getTag());
+                sendDoneNavigationEvent(page.getTag());
                 getActivity().finish();
-            }else{
-                Log.i(LOG_TAG, "User tried to leave the conversation via an action but it is not ok to proceed");
             }
         } else {
-            Log.e(LOG_TAG, "No more pages in this conversation");
+            Log.e(LOG_TAG, "No more pages in this conversation. This is not normal and the conversation will end prematurely");
             if (isOkToProceed()) {
-                sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
+                sendErrorNavigationEvent(page.getTag(), null); // No exception. We just couldn't find a page
                 getActivity().finish();
-            }else{
-                Log.i(LOG_TAG, "User tried to go to the next piece of the conversation but it is not ok to proceed");
             }
         }
     }
@@ -714,6 +685,19 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
+    private class DoneButtonListener implements OnClickListener {
+        @Override
+        public void onClick(View v) {
+            enforceValidations();
+            if (isOkToProceed()) {
+                Activity act = getActivity();
+                sendDoneNavigationEvent(page.getTag());
+                commitUserInputsToEvents();
+                act.finish();
+            }
+        }
+    }
+
     private boolean isOkToProceed() {
         return userInputValid == true;
     }
@@ -731,9 +715,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void sendDoneNavigationEvent(String endPageTag, String endControlTag) {
+    private void sendDoneNavigationEvent(String endPageTag) {
         if (controller != null) {
-            controller.conversationWasFinishedByUser(swrveConversation, endPageTag, endControlTag);
+            controller.conversationWasFinishedByUser(swrveConversation, endPageTag);
         }
     }
 
@@ -844,14 +828,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.pageTag = pageTag;
             result.result = data.get(k);
             userInteractionData.put(key, result);
-        }
-    }
-
-    class ConversationPageException extends Exception
-    {
-        public ConversationPageException(String message)
-        {
-            super(message);
         }
     }
 }
