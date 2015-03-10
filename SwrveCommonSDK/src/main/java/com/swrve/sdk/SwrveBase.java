@@ -1657,9 +1657,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag, String endControl) {
+    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag, String endControlTag) {
         try {
-            _conversationWasFinishedByUser(conversation, endPageTag, endControl);
+            _conversationWasFinishedByUser(conversation, endPageTag, endControlTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
