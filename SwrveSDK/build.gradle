@@ -45,5 +45,4 @@ android.libraryVariants.all { variant ->
 
 dependencies {
     compile project(':SwrveCommonSDK')
-    compile 'com.android.support:support-v4:21.0.0'
 }
