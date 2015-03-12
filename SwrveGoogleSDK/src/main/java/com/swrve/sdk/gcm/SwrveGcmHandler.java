@@ -72,7 +72,10 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
             // Process notification
             swrveGcmService.processNotification(msg);
+            
+            return true;
         }
+        return false;
     }
 
     private static boolean isSwrveRemoteNotification(final Bundle msg) {
