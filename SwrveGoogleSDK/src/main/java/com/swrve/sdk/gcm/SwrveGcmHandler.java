@@ -22,7 +22,6 @@ import java.util.Iterator;
 public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     protected static final String TAG = "SwrveGcm";
-    private static int tempNotificationId = 1;
 
     private Context context;
     private ISwrveGcmService swrveGcmService;
@@ -35,7 +34,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     @Override
     public boolean onHandleIntent(Intent intent, GoogleCloudMessaging gcm) {
         boolean gcmHandled = false;
-        if(intent !=null) {
+        if(intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
                 // The getMessageType() intent parameter must be the intent you received in your BroadcastReceiver.
@@ -54,25 +53,32 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                     // If it's a regular GCM message, do some work.
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                     // Process notification.
-                    processRemoteNotification(extras);
+                    gcmHandled = processRemoteNotification(extras);
                     Log.i(TAG, "Received notification: " + extras.toString());
-                    gcmHandled = true;
                 }
             }
         }
         return gcmHandled;
     }
 
-    private void processRemoteNotification(Bundle msg) {
-        // Notify binded clients
-        Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-        while (iter.hasNext()) {
-            SwrveQAUser sdkListener = iter.next();
-            sdkListener.pushNotification(msg);
-        }
+    private boolean processRemoteNotification(Bundle msg) {
+        if (isSwrveRemoteNotification(msg)) {
+            // Notify binded clients
+            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+            while (iter.hasNext()) {
+                SwrveQAUser sdkListener = iter.next();
+                sdkListener.pushNotification(msg);
+            }
 
-        // Process notification
-        swrveGcmService.processNotification(msg);
+            // Process notification
+            swrveGcmService.processNotification(msg);
+        }
+    }
+
+    private static boolean isSwrveRemoteNotification(final Bundle msg) {
+        Object rawId = msg.get("_p");
+        String msgId = (rawId != null) ? rawId.toString() : null;
+        return !SwrveHelper.isNullOrEmpty(msgId);
     }
 
     @Override
