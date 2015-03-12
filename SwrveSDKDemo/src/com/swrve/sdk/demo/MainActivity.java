@@ -29,12 +29,14 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         // Configure SDK
-        int appId = YOUR_APP_ID;
-        String apiKey = YOUR_API_KEY;
+//        int appId = YOUR_APP_ID;
+//        String apiKey = YOUR_API_KEY;
+        int appId = 2152;
+        String apiKey = "gaEjmnmwVQ4T7FowkGsg";
 
         try {
             // Initialize SDK
-            swrve = SwrveInstance.getInstance().initOrBind(this, appId, apiKey);
+            swrve = SwrveInstance.getInstance().onCreate(this, appId, apiKey);
         } catch (IllegalArgumentException exp) {
             Log.e(LOG_TAG, "Could not initialize the Swrve SDK", exp);
         }

@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -38,27 +39,15 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @SuppressWarnings("unchecked")
     @Override
-    public T init(Context context, int appId, String apiKey) throws IllegalArgumentException {
-        return init(context, appId, apiKey, (C) new SwrveConfigBaseImp());
-    }
-
-    @Override
-    public T init(Context context, int appId, String apiKey, String userId, C config) throws IllegalArgumentException {
-        config.setUserId(userId);
-        return init(context, appId, apiKey, config);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public T init(Context context, int appId, String apiKey, C config) throws IllegalArgumentException {
-        this.context = new WeakReference<Context>(context);
+    public T onCreate(Activity activity, int appId, String apiKey, C config) throws IllegalArgumentException {
+        this.context = new WeakReference<Context>(activity);
         this.apiKey = apiKey;
         this.config = config;
         this.language = config.getLanguage();
         this.userId = config.getUserId();
         cacheDir = config.getCacheDir();
         if (cacheDir == null) {
-            cacheDir = context.getCacheDir();
+            cacheDir = activity.getCacheDir();
         }
 
         return (T) this;
@@ -66,13 +55,8 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @SuppressWarnings("unchecked")
     @Override
-    public T initOrBind(Context context, int appId, String apiKey) throws IllegalArgumentException {
-        return initOrBind(context, appId, apiKey, (C) new SwrveConfigBaseImp());
-    }
-
-    @Override
-    public T initOrBind(Context context, int appId, String apiKey, C config) throws IllegalArgumentException {
-        return init(context, appId, apiKey, config);
+    public T onCreate(Activity activity, int appId, String apiKey) throws IllegalArgumentException {
+        return onCreate(activity, appId, apiKey, (C) new SwrveConfigBaseImp());
     }
 
     @Override
