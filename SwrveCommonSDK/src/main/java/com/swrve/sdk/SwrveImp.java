@@ -217,19 +217,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         queueEvent("session_start", null, null);
     }
 
-    protected Context bindToContext(Context context) {
+    protected Context bindToContext(Activity activity) {
         bindCounter.incrementAndGet();
-        // Obtain activity context if possible
-        Activity activityContext = null;
-        if (context instanceof Activity) {
-            activityContext = (Activity) context;
-            // Attach to the application context
-            this.context = new WeakReference<Context>(context.getApplicationContext());
-            this.activityContext = new WeakReference<Activity>(activityContext);
-        } else {
-            this.context = new WeakReference<Context>(context);
-        }
-
+        this.context = new WeakReference<Context>(activity.getApplicationContext());
+        this.activityContext = new WeakReference<Activity>(activity);
         return this.context.get();
     }
 
