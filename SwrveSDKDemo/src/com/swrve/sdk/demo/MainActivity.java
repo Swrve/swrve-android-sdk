@@ -29,10 +29,8 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         // Configure SDK
-//        int appId = YOUR_APP_ID;
-//        String apiKey = YOUR_API_KEY;
-        int appId = 2152;
-        String apiKey = "gaEjmnmwVQ4T7FowkGsg";
+        int appId = YOUR_APP_ID;
+        String apiKey = YOUR_API_KEY;
 
         try {
             // Initialize SDK
