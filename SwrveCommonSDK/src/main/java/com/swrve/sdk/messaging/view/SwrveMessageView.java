@@ -77,7 +77,7 @@ public class SwrveMessageView extends RelativeLayout {
 
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
         innerMessageView = new SwrveInnerMessageView(context, this, message, format, installButtonListener, customButtonListener, minSampleSize);
-        setBackgroundColor(Color.BLACK);
+        setBackgroundColor(format.getBackgroundColor());
         setGravity(Gravity.CENTER);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         addView(innerMessageView);
