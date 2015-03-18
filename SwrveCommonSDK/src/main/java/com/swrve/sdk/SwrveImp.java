@@ -917,13 +917,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void unbindAndShutdown() {
+    protected void unbindAndShutdown(Activity ctx) {
         // Reduce the references to the SDK
         int counter = bindCounter.decrementAndGet();
         // Remove the binding to the current activity, if any
         this.activityContext = null;
 
-        removeCurrentDialog();
+        removeCurrentDialog(ctx);
 
         // Check if there are no more references to this object
         if (counter == 0) {
@@ -933,33 +933,38 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void removeCurrentDialog() {
+    protected void removeCurrentDialog(Activity callerActivity) {
         if (currentDialog != null) {
             final SwrveDialog dialog = currentDialog.get();
             if (dialog != null && dialog.isShowing()) {
-                messageDisplayed = dialog.getMessage();
-                // Remove reference to the SDK from the message
-                messageDisplayed.setMessageController(null);
-                lastMessageDestroyed = (new Date()).getTime();
-                Activity activity = dialog.getOwnerActivity();
-                if (activity == null) {
-                    activity = getActivityContext();
-                }
+                Activity dialogActivity = dialog.getParentActivity();
+                if (callerActivity == null || callerActivity ==  dialogActivity) {
+                    messageDisplayed = dialog.getMessage();
+                    // Remove reference to the SDK from the message
+                    messageDisplayed.setMessageController(null);
+                    lastMessageDestroyed = (new Date()).getTime();
+                    Activity activity = dialogActivity;
+                    if (activity == null) {
+                        activity = getActivityContext();
+                    }
 
-                if (activity != null) {
-                    // Call from activity UI thread
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            dialog.dismiss();
-                        }
-                    });
-                } else {
-                    // Call from this thread
-                    dialog.dismiss();
+                    if (activity != null) {
+                        // Call from activity UI thread
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialog.dismiss();
+                            }
+                        });
+                    } else {
+                        // Call from this thread
+                        dialog.dismiss();
+                    }
+                    currentDialog = null;
                 }
+            } else {
+                currentDialog = null;
             }
-            currentDialog = null;
         }
     }
 
