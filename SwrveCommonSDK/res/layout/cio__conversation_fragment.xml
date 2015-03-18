@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="@dimen/cio__conversation_fragment_width"
+    android:layout_height="@dimen/cio__conversation_fragment_height"
+    android:layout_gravity="center"
     android:orientation="vertical">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/cio__toolbar"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -27,9 +28,9 @@
     <LinearLayout
         android:id="@+id/cio__controls"
         style="?conversationControlTrayStyle"
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="?conversationControlTrayTopMargin"
-        android:layout_weight="0"></LinearLayout>
+        android:layout_weight="0"
+        android:orientation="horizontal"></LinearLayout>
 </LinearLayout>

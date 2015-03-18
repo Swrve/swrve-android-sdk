@@ -5,7 +5,7 @@
     <color name="cio__imageview_bg">#FFFFFF</color>
     <color name="cio__imageview_border">#ff000000</color>
 
-    <color name="cio__window_background">#D7D7D7</color>
+    <color name="cio__window_background">#80000000</color>
     <color name="cio__control_tray_color">#FFFFFF</color>
     <color name="cio__control_content_background_color">#FFFFFF</color>
     <color name="cio__control_primary_color">#009A30</color>
