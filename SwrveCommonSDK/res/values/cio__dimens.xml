@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-   <dimen name="control_tray_top_margin">3dp</dimen>
-   <dimen name="control_tray_item_margin">5dp</dimen>
+    <dimen name="control_tray_top_margin">0dp</dimen>
+    <dimen name="control_tray_item_margin">5dp</dimen>
+    <item name="custom_match_parent" type="dimen">-1</item>
+    <dimen name="cio__conversation_fragment_width">@dimen/custom_match_parent</dimen>
+    <dimen name="cio__conversation_fragment_height">@dimen/custom_match_parent</dimen>
 </resources>
