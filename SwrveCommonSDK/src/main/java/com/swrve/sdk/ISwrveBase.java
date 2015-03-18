@@ -208,23 +208,31 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     /**
      * Default SDK behavior for activity onPause(). Flush data to disk.
      * Notify the SDK that the binded activity may be finishing.
+     *
+     * @param ctx Activity that called this method
      */
-    void onPause();
+    void onPause(Activity ctx);
 
     /**
      * Default SDK behavior for activity onResume(). Send events to Swrve.
+     *
+     * @param ctx Activity that called this method
      */
-    void onResume();
+    void onResume(Activity ctx);
 
     /**
      * Notify that the app is low on memory.
+     *
+     * @param ctx Activity that called this method
      */
-    void onLowMemory();
+    void onLowMemory(Activity ctx);
 
     /**
      * Notify that the app has closed.
+     *
+     * @param ctx Activity that called this method
      */
-    void onDestroy();
+    void onDestroy(Activity ctx);
 
     /**
      * Shutdown the SDK. This instance will be unusable after shutdown.
@@ -310,7 +318,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
      * your implementation of the message renderer to update the campaign
      * information and send the appropriate data to Swrve.
      *
-     * @param message message that was shown to the user for the first time in this
+     * @param messageFormat message that was shown to the user for the first time in this
      *                session.
      */
     void messageWasShownToUser(SwrveMessageFormat messageFormat);
@@ -327,7 +335,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
      * Get location of the chosen cache folder where the resources will be
      * downloaded.
      *
-     * @return File path to the choosen cache folder
+     * @return File path to the chosen cache folder
      */
     File getCacheDir();
 
@@ -341,49 +349,49 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     /**
      * Get the time when the SDK was initialized.
      *
-     * @return
+     * @return the time the SDK was initialized
      */
     Date getInitialisedTime();
 
     /**
      * Get the custom listener to process Talk message install button clicks
      *
-     * @param buttonListener
+     * @return custom install button listener
      */
     ISwrveInstallButtonListener getInstallButtonListener();
 
     /**
      * Set the custom listener to process Talk message install button clicks
      *
-     * @param buttonListener
+     * @param installButtonListener
      */
     void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener);
 
     /**
      * Get the custom listener to process Talk message custom button clicks
      *
-     * @param buttonListener
+     * @return custom button listener
      */
     ISwrveCustomButtonListener getCustomButtonListener();
 
     /**
      * Set the custom listener to process Talk message custom button clicks
      *
-     * @param buttonListener
+     * @param customButtonListener
      */
     void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener);
 
     /**
      * Get the custom dialog listener for Talk message dialogs
      *
-     * @param buttonListener
+     * @return dialog listener
      */
     ISwrveDialogListener getDialogListener();
 
     /**
      * Set the custom dialog listener for Talk message dialogs
      *
-     * @param buttonListener
+     * @param dialogListener
      */
     void setDialogListener(ISwrveDialogListener dialogListener);
 
