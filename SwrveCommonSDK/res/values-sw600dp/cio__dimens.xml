@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="cio__conversation_fragment_width">580dp</dimen>
+    <dimen name="cio__conversation_fragment_height">580dp</dimen>
+</resources>
