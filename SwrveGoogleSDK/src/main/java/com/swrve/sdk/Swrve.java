@@ -223,8 +223,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         return true;
     }
 
-    public void onResume(Activity ctx) {
-        super.onResume(ctx);
+    public void onResume() {
+        super.onResume();
         try {
             if (config.isPushEnabled()) {
                 if (activityContext != null) {
