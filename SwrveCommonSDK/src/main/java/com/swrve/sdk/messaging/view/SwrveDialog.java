@@ -7,11 +7,12 @@ import android.view.WindowManager.LayoutParams;
 
 import com.swrve.sdk.messaging.SwrveMessage;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Dialog used to display in-app messages.
  */
 public class SwrveDialog extends Dialog {
-
     private SwrveMessageView innerView;
     private SwrveMessage message;
     private LayoutParams originalParams;
@@ -24,6 +25,7 @@ public class SwrveDialog extends Dialog {
         this.innerView = innerView;
         this.originalParams = context.getWindow().getAttributes();
         setContentView(innerView);
+        setOwnerActivity(context);
         innerView.setContainerDialog(this);
     }
 
@@ -38,7 +40,6 @@ public class SwrveDialog extends Dialog {
     @Override
     protected void onStart() {
         super.onStart();
-
         // Remove the status bar from the activity
         WindowManager.LayoutParams attrs = getWindow().getAttributes();
         attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;

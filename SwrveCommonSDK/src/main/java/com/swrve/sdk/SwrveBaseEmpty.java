@@ -139,6 +139,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void onLowMemory() {
+    }
+
+    @Override
     public void setLanguage(Locale locale) {
         this.language = SwrveHelper.toLanguageTag(locale);
     }
@@ -255,10 +259,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void shutdown() {
-    }
-
-    @Override
-    public void onLowMemory() {
     }
 
     private class SwrveConfigBaseImp extends SwrveConfigBase {
