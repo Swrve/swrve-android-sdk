@@ -1,5 +1,7 @@
 package com.swrve.sdk.config;
 
+import android.graphics.Color;
+
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -112,6 +114,11 @@ public abstract class SwrveConfigBase {
      * Will load the campaign and resources cache on the UI thread.
      */
     private boolean loadCachedCampaignsAndResourcesOnUIThread = true;
+
+    /**
+     * Default in-app background color used if none is specified in the template.
+     */
+    private int defaultBackgroundColor = Color.TRANSPARENT;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -515,5 +522,23 @@ public abstract class SwrveConfigBase {
      */
     public void setLoadCachedCampaignsAndResourcesOnUIThread(boolean loadOnUIThread) {
         this.loadCachedCampaignsAndResourcesOnUIThread = loadOnUIThread;
+    }
+
+
+    /**
+     * The default in-app background color, if none is specified in the template.
+     *
+     * @return The default in-app background color.
+     */
+    public int getDefaultBackgroundColor() {
+        return defaultBackgroundColor;
+    }
+
+    /**
+     * Set the default in-app background color.
+     * @param defaultBackgroundColor
+     */
+    public void setDefaultBackgroundColor(int defaultBackgroundColor) {
+        this.defaultBackgroundColor = defaultBackgroundColor;
     }
 }
