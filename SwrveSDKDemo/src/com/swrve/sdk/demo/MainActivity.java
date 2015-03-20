@@ -129,6 +129,14 @@ public class MainActivity extends Activity {
         swrve.onResume();
     }
 
+
+    @Override
+    public void onLowMemory() {
+        super.onResume();
+        // Notify the SDK of activity low memory.
+        swrve.onLowMemory();
+    }
+
     @Override
     protected void onPause() {
         super.onPause();

@@ -39,7 +39,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 // Push notification configured for this app
                 // Check device for Play Services APK.
                 if (checkPlayServices()) {
-                    String newRegistrationId = getRegistrationId(context);
+                    String newRegistrationId = getRegistrationId();
                     if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
                         registerInBackground();
                     } else {
@@ -170,13 +170,12 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     /**
      * Gets the current registration ID for application on GCM service.
-     *
      * If result is empty, the app needs to register.
      *
      * @return registration ID, or empty string if there is no existing
      * registration ID.
      */
-    protected String getRegistrationId(Context context) {
+    protected String getRegistrationId() {
         // Try to get registration id from storage
         String registrationIdRaw = cachedLocalStorage.getSharedCacheEntry(REGISTRATION_ID_CATEGORY);
         if (SwrveHelper.isNullOrEmpty(registrationIdRaw)) {
@@ -212,12 +211,12 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
     }
 
-    protected boolean checkPlayStoreSpecificArguments(String purchaseData, String dataSignature) throws IllegalArgumentException {
+    protected boolean checkPlayStoreSpecificArguments(String purchaseData, String receiptSignature) throws IllegalArgumentException {
         if (SwrveHelper.isNullOrEmpty(purchaseData)) {
             Log.e(LOG_TAG, "IAP event illegal argument: receipt cannot be empty for Google Play store event");
             return false;
         }
-        if (SwrveHelper.isNullOrEmpty(purchaseData)) {
+        if (SwrveHelper.isNullOrEmpty(receiptSignature)) {
             Log.e(LOG_TAG, "IAP event illegal argument: receiptSignature cannot be empty for Google Play store event");
             return false;
         }
