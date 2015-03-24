@@ -126,15 +126,15 @@ public class MainActivity extends Activity {
         super.onResume();
         // Notify the SDK of activity resume.
         appAvailable = true;
-        swrve.onResume();
+        swrve.onResume(this);
     }
 
 
     @Override
-    public void onLowMemory() {
+    protected void onLowMemory() {
         super.onResume();
         // Notify the SDK of activity low memory.
-        swrve.onLowMemory();
+        swrve.onLowMemory(this);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class MainActivity extends Activity {
         super.onPause();
         // Notify the SDK of activity pause.
         appAvailable = false;
-        swrve.onPause();
+        swrve.onPause(this);
     }
 
     @Override
@@ -150,6 +150,6 @@ public class MainActivity extends Activity {
         super.onDestroy();
         // Notify the SDK of activity destroy.
         appAvailable = false;
-        swrve.onDestroy();
+        swrve.onDestroy(this);
     }
 }
