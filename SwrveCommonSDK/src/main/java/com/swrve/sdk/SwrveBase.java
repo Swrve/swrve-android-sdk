@@ -472,7 +472,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         });
     }
 
-    protected void _onPause(Activity ctx) {
+    protected void _onPause() {
         if (campaignsAndResourcesExecutor != null) {
             campaignsAndResourcesExecutor.shutdown();
         }
@@ -488,7 +488,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         generateNewSessionInterval();
     }
 
-    protected void _onResume(Activity ctx) {
+    protected void _onResume() {
         Log.i(LOG_TAG, "onResume");
         startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
@@ -518,7 +518,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _onLowMemory(Activity ctx) {
+    protected void _onLowMemory() {
         // We should stop Talk from showing new messages
         config.setTalkEnabled(false);
     }
@@ -1172,27 +1172,27 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void onPause(Activity ctx) {
+    public void onPause() {
         try {
-            _onPause(ctx);
+            _onPause();
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
     @Override
-    public void onResume(Activity ctx) {
+    public void onResume() {
         try {
-            _onResume(ctx);
+            _onResume();
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
     @Override
-    public void onLowMemory(Activity ctx) {
+    public void onLowMemory() {
         try {
-            _onLowMemory(ctx);
+            _onLowMemory();
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
