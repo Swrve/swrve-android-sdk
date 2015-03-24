@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
 
 
     @Override
-    protected void onLowMemory() {
+    public void onLowMemory() {
         super.onResume();
         // Notify the SDK of activity low memory.
         swrve.onLowMemory(this);
