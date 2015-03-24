@@ -13,6 +13,8 @@ import java.lang.ref.WeakReference;
  * Dialog used to display in-app messages.
  */
 public class SwrveDialog extends Dialog {
+
+    private WeakReference<Activity> parentActivity;
     private SwrveMessageView innerView;
     private SwrveMessage message;
     private LayoutParams originalParams;
@@ -21,11 +23,11 @@ public class SwrveDialog extends Dialog {
 
     public SwrveDialog(Activity context, SwrveMessage message, SwrveMessageView innerView, int theme) {
         super(context, theme);
+        this.parentActivity = new WeakReference<Activity>(context);
         this.message = message;
         this.innerView = innerView;
         this.originalParams = context.getWindow().getAttributes();
         setContentView(innerView);
-        setOwnerActivity(context);
         innerView.setContainerDialog(this);
     }
 
@@ -71,5 +73,12 @@ public class SwrveDialog extends Dialog {
                 exp.printStackTrace();
             }
         }
+    }
+
+    public Activity getParentActivity() {
+        if (parentActivity != null) {
+            return parentActivity.get();
+        }
+        return null;
     }
 }

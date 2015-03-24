@@ -917,13 +917,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void unbindAndShutdown() {
+    protected void unbindAndShutdown(Activity ctx) {
         // Reduce the references to the SDK
         int counter = bindCounter.decrementAndGet();
         // Remove the binding to the current activity, if any
         this.activityContext = null;
 
-        removeCurrentDialog();
+        removeCurrentDialog(ctx);
 
         // Check if there are no more references to this object
         if (counter == 0) {
@@ -933,12 +933,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void removeCurrentDialog() {
+    protected void removeCurrentDialog(Activity callerActivity) {
         if (currentDialog != null) {
             final SwrveDialog dialog = currentDialog.get();
             if (dialog != null && dialog.isShowing()) {
-                Activity dialogActivity = dialog.getOwnerActivity();
-                if (dialogActivity == null || dialogActivity.isFinishing()) {
+                Activity dialogActivity = dialog.getParentActivity();
+                if (callerActivity == null || callerActivity ==  dialogActivity) {
                     messageDisplayed = dialog.getMessage();
                     // Remove reference to the SDK from the message
                     messageDisplayed.setMessageController(null);

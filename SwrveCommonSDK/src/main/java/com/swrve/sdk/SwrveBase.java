@@ -472,7 +472,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         });
     }
 
-    protected void _onPause() {
+    protected void _onPause(Activity ctx) {
         if (campaignsAndResourcesExecutor != null) {
             campaignsAndResourcesExecutor.shutdown();
         }
@@ -488,7 +488,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         generateNewSessionInterval();
     }
 
-    protected void _onResume() {
+    protected void _onResume(Activity ctx) {
         Log.i(LOG_TAG, "onResume");
         startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
@@ -518,13 +518,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _onLowMemory() {
+    protected void _onLowMemory(Activity ctx) {
         // We should stop Talk from showing new messages
         config.setTalkEnabled(false);
     }
 
-    protected void _onDestroy() {
-        unbindAndShutdown();
+    protected void _onDestroy(Activity ctx) {
+        unbindAndShutdown(ctx);
     }
 
     protected void _shutdown() throws InterruptedException {
@@ -538,7 +538,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Forget the initialised time
             initialisedTime = null;
 
-            removeCurrentDialog();
+            removeCurrentDialog(null);
             // Remove the binding to the current activity, if any
             this.activityContext = null;
 
@@ -1172,36 +1172,36 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void onPause() {
+    public void onPause(Activity ctx) {
         try {
-            _onPause();
+            _onPause(ctx);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
     @Override
-    public void onResume() {
+    public void onResume(Activity ctx) {
         try {
-            _onResume();
+            _onResume(ctx);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
     @Override
-    public void onLowMemory() {
+    public void onLowMemory(Activity ctx) {
         try {
-            _onLowMemory();
+            _onLowMemory(ctx);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
     @Override
-    public void onDestroy() {
+    public void onDestroy(Activity ctx) {
         try {
-            _onDestroy();
+            _onDestroy(ctx);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
