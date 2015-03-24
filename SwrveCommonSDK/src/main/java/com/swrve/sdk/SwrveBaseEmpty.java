@@ -127,19 +127,19 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void onPause() {
+    public void onPause(Activity ctx) {
     }
 
     @Override
-    public void onResume() {
+    public void onResume(Activity ctx) {
     }
 
     @Override
-    public void onDestroy() {
+    public void onDestroy(Activity ctx) {
     }
 
     @Override
-    public void onLowMemory() {
+    public void onLowMemory(Activity ctx) {
     }
 
     @Override

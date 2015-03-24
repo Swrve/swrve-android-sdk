@@ -208,23 +208,31 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     /**
      * Default SDK behavior for activity onPause(). Flush data to disk.
      * Notify the SDK that the binded activity may be finishing.
+     *
+     * @param ctx Activity that called this method
      */
-    void onPause();
+    void onPause(Activity ctx);
 
     /**
      * Default SDK behavior for activity onResume(). Send events to Swrve.
+     *
+     * @param ctx Activity that called this method
      */
-    void onResume();
+    void onResume(Activity ctx);
 
     /**
      * Notify that the app is low on memory.
+     *
+     * @param ctx Activity that called this method
      */
-    void onLowMemory();
+    void onLowMemory(Activity ctx);
 
     /**
      * Notify that the app has closed.
+     *
+     * @param ctx Activity that called this method
      */
-    void onDestroy();
+    void onDestroy(Activity ctx);
 
     /**
      * Shutdown the SDK. This instance will be unusable after shutdown.
