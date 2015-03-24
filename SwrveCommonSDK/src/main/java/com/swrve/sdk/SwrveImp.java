@@ -937,7 +937,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         if (currentDialog != null) {
             final SwrveDialog dialog = currentDialog.get();
             if (dialog != null && dialog.isShowing()) {
-                Activity dialogActivity = dialog.getParentActivity();
+                Activity dialogActivity = dialog.getOwnerActivity();
                 if (callerActivity == null || callerActivity ==  dialogActivity) {
                     messageDisplayed = dialog.getMessage();
                     // Remove reference to the SDK from the message
