@@ -1,6 +1,8 @@
 package com.swrve.sdk.conversations.engine.model;
 
-public class UserInputResult {
+import java.io.Serializable;
+
+public class UserInputResult implements Serializable{
     public static final String TYPE_TEXT = "text";
     public static final String TYPE_CALENDAR = "calendar";
     public static final String TYPE_MULTI_CHOICE = "multi-choice";
