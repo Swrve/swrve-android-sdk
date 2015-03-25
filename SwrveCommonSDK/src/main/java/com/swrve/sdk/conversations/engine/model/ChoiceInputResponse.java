@@ -1,6 +1,8 @@
 package com.swrve.sdk.conversations.engine.model;
 
-public class ChoiceInputResponse {
+import java.io.Serializable;
+
+public class ChoiceInputResponse implements Serializable{
     public String questionID, answerID, answerText, fragmentTag;
 
     public ChoiceInputResponse() {
