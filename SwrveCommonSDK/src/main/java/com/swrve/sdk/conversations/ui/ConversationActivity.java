@@ -4,14 +4,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
@@ -48,7 +46,6 @@ public class ConversationActivity extends FragmentActivity {
     protected void onSaveInstanceState(Bundle outState) {
         outState.putSerializable("page", conversationFragment.getPage());
         outState.putSerializable("userdata", conversationFragment.getUserInteractionData());
-        outState.putSerializable("inputs", conversationFragment.getInputs());
         super.onSaveInstanceState(outState);
     }
 
@@ -59,16 +56,12 @@ public class ConversationActivity extends FragmentActivity {
             conversationFragment = ConversationFragment.create(localConversation);
             ConversationPage page = (ConversationPage) savedState.getSerializable("page");
             HashMap<String, UserInputResult> userData = (HashMap<String, UserInputResult>) savedState.getSerializable("userdata");
-            ArrayList<ConversationInput> inputs = (ArrayList<ConversationInput>) savedState.getSerializable("inputs");
 
             if (page != null){
                 conversationFragment.setPage(page);
             }
             if (userData != null){
                 conversationFragment.setUserInteractionData(userData);
-            }
-            if (inputs != null){
-                conversationFragment.setInputs(inputs);
             }
             commitConversationFragment();
         }
