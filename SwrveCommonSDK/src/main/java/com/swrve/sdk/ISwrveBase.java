@@ -213,8 +213,10 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     /**
      * Default SDK behavior for activity onResume(). Send events to Swrve.
+     *
+     * @param ctx Activity that called this method
      */
-    void onResume();
+    void onResume(Activity ctx);
 
     /**
      * Notify that the app is low on memory.

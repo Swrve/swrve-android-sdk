@@ -488,8 +488,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         generateNewSessionInterval();
     }
 
-    protected void _onResume() {
+    protected void _onResume(Activity ctx) {
         Log.i(LOG_TAG, "onResume");
+        if (ctx != null) {
+            bindToContext(ctx);
+        }
         startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
 
@@ -1181,9 +1184,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void onResume() {
+    public void onResume(Activity ctx) {
         try {
-            _onResume();
+            _onResume(ctx);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
