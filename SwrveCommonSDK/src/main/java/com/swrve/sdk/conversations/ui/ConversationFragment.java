@@ -1,22 +1,16 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,7 +18,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -42,7 +35,6 @@ import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.ConversationReply;
-import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.DateChoice;
 import com.swrve.sdk.conversations.engine.model.DateSaver;
 import com.swrve.sdk.conversations.engine.model.InputBase;
@@ -51,8 +43,8 @@ import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
 import com.swrve.sdk.conversations.engine.model.NPSInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.TextInput;
+import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -78,14 +70,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     public void setPage(ConversationPage page) {
         this.page = page;
-    }
-
-    public ArrayList<ConversationInput> getInputs() {
-        return inputs;
-    }
-
-    public void setInputs(ArrayList<ConversationInput> inputs) {
-        this.inputs = inputs;
     }
 
     public HashMap<String, UserInputResult> getUserInteractionData() {
