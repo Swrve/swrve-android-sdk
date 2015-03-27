@@ -17,9 +17,9 @@
         <item name="conversationContentDescriptionStyle">@style/cio__description_item</item>
 
         <item name="conversationInputTextBoxDefaultStyle">@style/cio__edit_box</item>
-
         <item name="conversationTextContentDefaultStyle">@style/cio__content_textview</item>
-        <item name="conversationTextContentDefaultBoldStyle">@style/cio__content_bold_textview</item>
+        <item name="conversationDialogContentDefaultStyle">@style/cio__dialog_textview</item>
+        <item name="conversationDialogButtonDefaultStyle">@style/cio__dialog_button</item>
 
         <item name="conversationInputMultiValueItemStyle">@style/cio__mv_item</item>
         <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item</item>

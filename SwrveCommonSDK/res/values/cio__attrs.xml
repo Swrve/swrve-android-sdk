@@ -13,8 +13,9 @@
         <attr name="conversationControlNeutralButtonStyle" format="reference" />
 
         <attr name="conversationTextContentDefaultStyle" format="reference" />
-        <attr name="conversationTextContentDefaultBoldStyle" format="reference" />
         <attr name="conversationInputTextBoxDefaultStyle" format="reference" />
+        <attr name="conversationDialogContentDefaultStyle" format="reference" />
+        <attr name="conversationDialogButtonDefaultStyle" format="reference" />
 
         <attr name="conversationMVSpinner" format="reference" />
         <attr name="conversationInputMultiValueItemStyle" format="reference" />

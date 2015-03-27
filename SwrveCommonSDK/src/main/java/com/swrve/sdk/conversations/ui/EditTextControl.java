@@ -121,15 +121,15 @@ public class EditTextControl extends LinearLayout implements ConversationInput {
     }
 
     @Override
-    public String validate() {
+    public boolean isValid() {
         if (model.isOptional()) {
-            return null;
+            return true;
         }
 
         if (editText.getText().length() < 1) {
-            return "Please input a value";
+            return false;
         } else {
-            return null; //always ok. Maybe in the future we can detect if the input field is optional or must contain text
+            return true; //always ok. Maybe in the future we can detect if the input field is optional or must contain text
         }
     }
 }
