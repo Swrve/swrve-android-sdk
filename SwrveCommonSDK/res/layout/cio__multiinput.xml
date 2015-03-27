@@ -8,9 +8,6 @@
         android:id="@+id/cio__MIV_Header"
         style="?conversationContentDescriptionStyle"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        android:focusableInTouchMode="true" />
+        android:layout_height="wrap_content"/>
 
 </com.swrve.sdk.conversations.ui.MultiValueInputControl>
