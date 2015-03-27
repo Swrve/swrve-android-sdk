@@ -561,6 +561,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             commitUserInputsToEvents();
 
             if (v instanceof ConversationButton) {
+                enforceValidations();
+                if (!isOkToProceed()) {
+                    Log.i(LOG_TAG, "User tried to go to the next piece of the conversation but it is not ok to proceed");
+                    return;
+                }
+
                 ConversationReply reply = new ConversationReply();
                 ConversationButton convButton = (ConversationButton) v;
                 ButtonControl model = convButton.getModel();
@@ -578,27 +584,20 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         String referrer = visitUriDetails.get(ControlActions.VISIT_URL_REFERER_KEY);
                         String ext = visitUriDetails.get(ControlActions.VISIT_URL_EXTERNAL_KEY);
                         Uri uri = Uri.parse(urlStr);
-
                         if (Boolean.parseBoolean(ext) == true) {
                             sendReply(model, reply);
                             sendLinkActionEvent(page.getTag(), model);
                             behaviours.openIntentWebView(uri, this.getActivity(), referrer);
                         } else if (Boolean.parseBoolean(ext) == false) {
-                            enforceValidations();
                             sendLinkActionEvent(page.getTag(), model);
                             behaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
-                        } else {
-
                         }
                     } else if (actions.isDeepLink()) {
-                        {
-                            HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
-                            String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
-                            Uri uri = Uri.parse(urlStr);
-                            enforceValidations();
-                            sendDeepLinkActionEvent(page.getTag(), model);
-                            behaviours.openDeepLink(uri, this.getActivity());
-                        }
+                        HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
+                        String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
+                        Uri uri = Uri.parse(urlStr);
+                        sendDeepLinkActionEvent(page.getTag(), model);
+                        behaviours.openDeepLink(uri, this.getActivity());
                     }
                 } else {
                     // There are no actions associated with Button. Send a normal reply
@@ -639,33 +638,18 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         ConversationPage nextPage = swrveConversation.getPageForControl(control);
-
-        enforceValidations();
-
         if (nextPage != null) {
-            if (isOkToProceed()) {
-                sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
-                openConversationOnPage(nextPage);
-            }else{
-                Log.i(LOG_TAG, "User tried to go to the next piece of the conversation but it is not ok to proceed");
-            }
+            sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
+            openConversationOnPage(nextPage);
         }
         else if (control.hasActions()) {
-            if (isOkToProceed()) {
-                Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
-                sendDoneNavigationEvent(page.getTag(), control.getTag());
-                getActivity().finish();
-            }else{
-                Log.i(LOG_TAG, "User tried to leave the conversation via an action but it is not ok to proceed");
-            }
+            Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
+            sendDoneNavigationEvent(page.getTag(), control.getTag());
+            getActivity().finish();
         } else {
             Log.e(LOG_TAG, "No more pages in this conversation");
-            if (isOkToProceed()) {
-                sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
-                getActivity().finish();
-            }else{
-                Log.i(LOG_TAG, "User tried to go to the next piece of the conversation but it is not ok to proceed");
-            }
+            sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
+            getActivity().finish();
         }
     }
 
