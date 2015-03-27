@@ -19,7 +19,6 @@
         <item name="conversationInputTextBoxDefaultStyle">@style/cio__edit_box</item>
 
         <item name="conversationTextContentDefaultStyle">@style/cio__content_textview</item>
-        <item name="conversationTextContentDefaultBoldStyle">@style/cio__content_bold_textview</item>
 
         <item name="conversationInputMultiValueItemStyle">@style/cio__mv_item</item>
         <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item</item>

@@ -5,14 +5,14 @@
     android:orientation="vertical">
 
     <TextView
-        style="?conversationTextContentDefaultBoldStyle"
         android:id="@+id/cio__MIV_Item_Header"
+        style="?conversationTextContentDefaultStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
     <Spinner
-        style="?conversationMVSpinner"
         android:id="@+id/cio__MIV_Item_Spinner"
+        style="?conversationMVSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

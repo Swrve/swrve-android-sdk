@@ -13,7 +13,6 @@
         <attr name="conversationControlNeutralButtonStyle" format="reference" />
 
         <attr name="conversationTextContentDefaultStyle" format="reference" />
-        <attr name="conversationTextContentDefaultBoldStyle" format="reference" />
         <attr name="conversationInputTextBoxDefaultStyle" format="reference" />
 
         <attr name="conversationMVSpinner" format="reference" />
