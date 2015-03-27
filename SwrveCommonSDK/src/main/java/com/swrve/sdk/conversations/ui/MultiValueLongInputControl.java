@@ -16,16 +16,18 @@ import android.widget.SpinnerAdapter;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
-import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
 import com.swrve.sdk.conversations.engine.model.MultiValueLongInput.Item;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
+import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MultiValueLongInputControl extends LinearLayout implements ConversationInput {
+
+    private static String DEFAULT_ANSWER_ID ="123-fake-id";
 
     private MultiValueLongInput model;
     private HashMap<String, ChoiceInputItem> responses = new HashMap<String, ChoiceInputItem>();
@@ -56,6 +58,8 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
     public static MultiValueLongInputControl inflate(Context context, ViewGroup parentContainer, MultiValueLongInput model) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
         MultiValueLongInputControl control = (MultiValueLongInputControl) layoutInf.inflate(R.layout.cio__multiinputlong, parentContainer, false);
+        android.widget.TextView header = (android.widget.TextView) control.findViewById(R.id.cio__MIV_Header);
+        header.setText(model.getDescription());
 
         control.model = model;
         control.spinners = new ArrayList<Spinner>();
@@ -65,22 +69,24 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
             Item item = control.model.getValues().get(i);
 
             ViewGroup row = (ViewGroup) layoutInf.inflate(R.layout.cio__multiinputlong_row, control, false);
+            control.showHideError(item.hasError(), row, item);
 
-            android.widget.TextView header = (android.widget.TextView) row.findViewById(R.id.cio__MIV_Item_Header);
-            Spinner selector = (Spinner) row.findViewById(R.id.cio__MIV_Item_Spinner);
+            android.widget.TextView itemHeader = (android.widget.TextView) row.findViewById(R.id.cio__MIV_Item_Header);
+            itemHeader.setText(item.getTitle());
 
-            header.setText(item.getTitle());
             ArrayAdapter<ChoiceInputItem> adapter = new ArrayAdapter<ChoiceInputItem>(context, R.layout.cio__simple_spinner_item, item.getOptions());
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
             // a 'Header' type option to make people choose one
-            String pleaseSelect = "Please Select";
-            ChoiceInputItem pleaseSelectChoice = new ChoiceInputItem("123-fake-id", pleaseSelect);
+            String pleaseSelect = context.getString(R.string.cio__spinner_prompt);
+            ChoiceInputItem pleaseSelectChoice = new ChoiceInputItem(DEFAULT_ANSWER_ID, pleaseSelect);
             ChoiceInputItem firstItem = (ChoiceInputItem) adapter.getItem(0);
             if (firstItem.getAnswerText().equalsIgnoreCase(pleaseSelect)){
                 adapter.remove(adapter.getItem(0));
             }
             adapter.insert(pleaseSelectChoice, 0);
+
+            Spinner selector = (Spinner) row.findViewById(R.id.cio__MIV_Item_Spinner);
             selector.setAdapter(adapter);
 
             selector.setOnItemSelectedListener(control.createListener(item));
@@ -90,11 +96,9 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
         return control;
     }
 
-
     @Override
     public void onReplyDataRequired(Map<String, Object> dataMap) {
-        for(String key: responses.keySet())
-        {
+        for(String key: responses.keySet()) {
             ChoiceInputItem response = responses.get(key);
             // Answer ID and Answer text are the same for both
             ChoiceInputResponse r = new ChoiceInputResponse();
@@ -107,14 +111,25 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
     }
 
     @Override
-    public String validate() {
+    public boolean isValid() {
         if (model.isOptional()) {
-            return null;
+            return true;
         }
         if (responses.size() < model.getValues().size()) {
-            return "Please choose an item";
+            for (int i = 0; i < spinners.size(); i++) {
+                Spinner spinner = spinners.get(i);
+                Item item = model.getValues().get(i);
+                ChoiceInputItem choiceInputItem = (ChoiceInputItem)spinner.getSelectedItem();
+                ViewGroup viewGroup = (ViewGroup) spinner.getParent(); // parent hierarchy: spinner --> layout
+                if (DEFAULT_ANSWER_ID.equals(choiceInputItem.getAnswerID())) {
+                    showHideError(true, viewGroup, item);
+                } else {
+                    showHideError(false, viewGroup, item);
+                }
+            }
+            return false;
         } else {
-            return null;
+            return true;
         }
     }
 
@@ -132,7 +147,6 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
         }
     }
 
-
     private MILongItemListener createListener(Item item) {
         return new MILongItemListener(item);
     }
@@ -149,14 +163,15 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
         }
 
         @Override
-        public void onItemSelected(AdapterView<?> adapterView, View view, int position,
-                                   long id) {
+        public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
             if (position == 0) {
                 // This is the please select option. Ignore
                 responses.remove(item.getTitle());
                 return;
             } else {
                 responses.put(item.getQuestionId(), item.getOptions().get(position));
+                ViewGroup viewGroup = (ViewGroup) view.getParent().getParent(); // parent hierarchy: view --> spinner --> layout
+                showHideError(false, viewGroup, item);
             }
             if (onContentChangedListener != null) {
                 onContentChangedListener.onContentChanged();
@@ -167,5 +182,10 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
         public void onNothingSelected(AdapterView<?> arg0) {
             responses.remove(item.getTitle());
         }
+    }
+
+    private void showHideError(boolean hasError, ViewGroup viewGroup, Item item) {
+        viewGroup.setBackgroundResource(hasError ? R.drawable.cio__error : 0);
+        item.setError(hasError);
     }
 }

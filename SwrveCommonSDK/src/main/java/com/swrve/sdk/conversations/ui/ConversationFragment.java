@@ -107,16 +107,16 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 UserInputResult userInput = userInteractionData.get(key);
                 String fragmentTag = userInput.getFragmentTag();
                 View inputView = currentView.findViewWithTag(fragmentTag);
-                if (userInput.isSingleChoice()) {
+                if (userInput.isSingleChoice() && inputView instanceof MultiValueInputControl) {
                     MultiValueInputControl inputControl = (MultiValueInputControl) inputView;
                     inputControl.setUserInput(userInput);
-                } else if (userInput.isMultiChoice()) {
+                } else if (userInput.isMultiChoice() && inputView instanceof MultiValueLongInputControl) {
                     MultiValueLongInputControl inputControl = (MultiValueLongInputControl) inputView;
                     inputControl.setUserInput(userInput);
-                } else if (userInput.isNps()) {
+                } else if (userInput.isNps() && inputView instanceof NPSlider) {
                     NPSlider inputControl = (NPSlider) inputView;
                     inputControl.setUserInput(userInput);
-                } else if (userInput.isTextInput()) {
+                } else if (userInput.isTextInput() && inputView instanceof EditTextControl) {
                     EditTextControl inputControl = (EditTextControl) inputView;
                     inputControl.setUserInput(userInput);
                 }
@@ -125,7 +125,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             openFirstPage();
         }
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -479,8 +478,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(etc);
                     inputs.add(etc);
                 } else if (content instanceof MultiValueInput) {
-                    MultiValueInputControl input = new MultiValueInputControl(activity, null, (MultiValueInput) content);
-
+                    MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
                     LayoutParams lp;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         lp = new LayoutParams(controlLp);
@@ -677,19 +675,16 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     private void enforceValidations() {
-        ArrayList<String> validationErrors = new ArrayList<String>();
-
-        // First, validate
+        boolean hasErrors = false;
         for (ConversationInput inputView : inputs) {
-            String answer = inputView.validate();
-            if (answer != null) {
-                validationErrors.add(answer);
+            if (!inputView.isValid()) {
+                hasErrors = true;
             }
         }
 
-        if (validationErrors.size() > 0) {
+        if (hasErrors) {
             userInputValid = false;
-            validationDialog = ValidationDialog.create("Please fill out all of the items on this page before continuing");
+            validationDialog = ValidationDialog.create();
             validationDialog.show(getFragmentManager(), "validation_dialog");
             return;
         } else {
