@@ -153,11 +153,11 @@ public class NPSlider extends LinearLayout implements OnSeekBarChangeListener, C
     }
 
     @Override
-    public String validate() {
+    public boolean validate() {
         if (model.isOptional()) {
-            return null;
+            return true;
         }
-        return null;
+        return false;
     }
 
     public void setModel(NPSInput content) {
