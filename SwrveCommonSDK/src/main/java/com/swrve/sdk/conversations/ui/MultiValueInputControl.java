@@ -101,7 +101,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
     }
 
     @Override
-    public boolean validate() {
+    public boolean isValid() {
         if (model.isOptional()) {
             return true;
         }

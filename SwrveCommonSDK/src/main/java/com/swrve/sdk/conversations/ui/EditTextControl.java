@@ -121,7 +121,7 @@ public class EditTextControl extends LinearLayout implements ConversationInput {
     }
 
     @Override
-    public boolean validate() {
+    public boolean isValid() {
         if (model.isOptional()) {
             return true;
         }

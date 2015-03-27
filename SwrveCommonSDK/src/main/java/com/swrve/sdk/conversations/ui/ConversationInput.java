@@ -9,11 +9,11 @@ public interface ConversationInput {
     public void onReplyDataRequired(Map<String, Object> dataMap);
 
     /**
-     * Perform any validation needed
+     * Check input passes validation.
      *
      * @return true if validation passed ok. Otherwise false to indicate there were errors.
      */
-    public boolean validate();
+    public boolean isValid();
 
     /**
      * Each ConversationInput should be able to have its value set programmatically so the user sees certain things.

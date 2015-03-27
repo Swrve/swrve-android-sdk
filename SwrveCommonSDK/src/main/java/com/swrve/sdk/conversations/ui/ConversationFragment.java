@@ -677,7 +677,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private void enforceValidations() {
         boolean hasErrors = false;
         for (ConversationInput inputView : inputs) {
-            if (!inputView.validate()) {
+            if (!inputView.isValid()) {
                 hasErrors = true;
             }
         }

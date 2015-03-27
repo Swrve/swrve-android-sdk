@@ -111,7 +111,7 @@ public class MultiValueLongInputControl extends LinearLayout implements Conversa
     }
 
     @Override
-    public boolean validate() {
+    public boolean isValid() {
         if (model.isOptional()) {
             return true;
         }
