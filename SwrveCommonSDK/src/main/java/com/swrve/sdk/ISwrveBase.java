@@ -56,11 +56,11 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void onPause();
 
-    void onResume();
+    void onResume(Activity activity);
 
     void onLowMemory();
 
-    void onDestroy();
+    void onDestroy(Activity activity);
 
     void shutdown();
 

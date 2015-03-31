@@ -83,6 +83,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
+    protected static String version = "4.0";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
@@ -119,7 +120,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
     protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
     protected static final String LOG_TAG = "SwrveSDK";
-    protected static String version = "3.3.1-converser-beta";
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 150;
     protected static long DEFAULT_MAX_SHOWS = 99999;
     protected static int DEFAULT_MIN_DELAY = 55;
@@ -222,19 +222,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         queueEvent("session_start", null, null);
     }
 
-    protected Context bindToContext(Context context) {
+    protected Context bindToContext(Activity activity) {
         bindCounter.incrementAndGet();
-        // Obtain activity context if possible
-        Activity activityContext = null;
-        if (context instanceof Activity) {
-            activityContext = (Activity) context;
-            // Attach to the application context
-            this.context = new WeakReference<Context>(context.getApplicationContext());
-            this.activityContext = new WeakReference<Activity>(activityContext);
-        } else {
-            this.context = new WeakReference<Context>(context);
-        }
-
+        this.context = new WeakReference<Context>(activity.getApplicationContext());
+        this.activityContext = new WeakReference<Activity>(activity);
         return this.context.get();
     }
 
@@ -966,13 +957,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void unbindAndShutdown() {
+    protected void unbindAndShutdown(Activity ctx) {
         // Reduce the references to the SDK
         int counter = bindCounter.decrementAndGet();
         // Remove the binding to the current activity, if any
         this.activityContext = null;
 
-        removeCurrentDialog();
+        removeCurrentDialog(ctx);
 
         // Check if there are no more references to this object
         if (counter == 0) {
@@ -982,33 +973,38 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void removeCurrentDialog() {
+    protected void removeCurrentDialog(Activity callerActivity) {
         if (currentDialog != null) {
             final SwrveDialog dialog = currentDialog.get();
             if (dialog != null && dialog.isShowing()) {
-                messageDisplayed = dialog.getMessage();
-                // Remove reference to the SDK from the message
-                messageDisplayed.setMessageController(null);
-                lastMessageDestroyed = (new Date()).getTime();
-                Activity activity = dialog.getOwnerActivity();
-                if (activity == null) {
-                    activity = getActivityContext();
-                }
+                Activity dialogActivity = dialog.getOwnerActivity();
+                if (callerActivity == null || callerActivity ==  dialogActivity) {
+                    messageDisplayed = dialog.getMessage();
+                    // Remove reference to the SDK from the message
+                    messageDisplayed.setMessageController(null);
+                    lastMessageDestroyed = (new Date()).getTime();
+                    Activity activity = dialogActivity;
+                    if (activity == null) {
+                        activity = getActivityContext();
+                    }
 
-                if (activity != null) {
-                    // Call from activity UI thread
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            dialog.dismiss();
-                        }
-                    });
-                } else {
-                    // Call from this thread
-                    dialog.dismiss();
+                    if (activity != null) {
+                        // Call from activity UI thread
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialog.dismiss();
+                            }
+                        });
+                    } else {
+                        // Call from this thread
+                        dialog.dismiss();
+                    }
+                    currentDialog = null;
                 }
+            } else {
+                currentDialog = null;
             }
-            currentDialog = null;
         }
     }
 
@@ -1191,7 +1187,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.sendQueuedEvents();
             eventsWereSent = false;
-            swrve.refreshCampaignsAndResources();
+            ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
+            timedService.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    swrve.refreshCampaignsAndResources();
+                }
+            }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -1214,7 +1216,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             swrve.refreshCampaignsAndResources();
         }
 
-        // Start repeating timer to begin checking if campaigns/resources needs updating. It starts after a delay.
+        // Start repeating timer to begin checking if campaigns/resources needs updating. It starts straight away.
+        eventsWereSent = true;
         campaignsAndResourcesExecutor = new ScheduledThreadPoolExecutor(1);
         campaignsAndResourcesExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         campaignsAndResourcesExecutor.scheduleWithFixedDelay(new Runnable() {
@@ -1222,7 +1225,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             public void run() {
                 checkForCampaignAndResourcesUpdates();
             }
-        }, campaignsAndResourcesFlushRefreshDelay.longValue(), campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
+        }, 0l, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
     }
 
     public Set<String> getAssetsOnDisk() {

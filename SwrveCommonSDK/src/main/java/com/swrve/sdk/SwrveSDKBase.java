@@ -245,10 +245,12 @@ public abstract class SwrveSDKBase {
 
     /**
      * Default SDK behavior for activity onResume(). Send events to Swrve.
+     *
+     * @param activity Activity that called this method
      */
-    public static void onResume() {
+    public static void onResume(Activity activity) {
         checkInstanceCreated();
-        instance.onResume();
+        instance.onResume(activity);
     }
 
     /**
@@ -261,10 +263,12 @@ public abstract class SwrveSDKBase {
 
     /**
      * Notify that the app has closed.
+     *
+     * @param activity Activity that called this method
      */
-    public static void onDestroy() {
+    public static void onDestroy(Activity activity) {
         checkInstanceCreated();
-        instance.onDestroy();
+        instance.onDestroy(activity);
     }
 
     /**
