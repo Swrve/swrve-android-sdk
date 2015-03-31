@@ -503,8 +503,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         generateNewSessionInterval();
     }
 
-    protected void _onResume() {
+    protected void _onResume(Activity ctx) {
         Log.i(LOG_TAG, "onResume");
+        if (ctx != null) {
+            bindToContext(ctx);
+        }
         startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
 
@@ -538,8 +541,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         config.setTalkEnabled(false);
     }
 
-    protected void _onDestroy() {
-        unbindAndShutdown();
+    protected void _onDestroy(Activity ctx) {
+        unbindAndShutdown(ctx);
     }
 
     protected void _shutdown() throws InterruptedException {
@@ -553,7 +556,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Forget the initialised time
             initialisedTime = null;
 
-            removeCurrentDialog();
+            removeCurrentDialog(null);
             // Remove the binding to the current activity, if any
             this.activityContext = null;
 
@@ -1333,12 +1336,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected Context _getContext() {
-        Activity ctx = getActivityContext();
-        if (ctx != null) {
-            return ctx;
+        Context appCtx = context.get();
+        if(appCtx == null) {
+            return getActivityContext();
         }
-
-        return context.get();
+        return appCtx;
     }
 
     protected C _getConfig() {
@@ -1348,7 +1350,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     /**
      * Public functions all wrapped in try/catch to avoid exceptions leaving the SDK and affecting the app itself.
      */
-
+    @Override
     public void sessionStart() {
         try {
             _sessionStart();
@@ -1357,6 +1359,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void sessionEnd() {
         try {
             _sessionEnd();
@@ -1365,6 +1368,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void event(String name) {
         try {
             _event(name);
@@ -1373,6 +1377,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void event(String name, Map<String, String> payload) {
         try {
             _event(name, payload);
@@ -1381,6 +1386,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void purchase(String item, String currency, int cost, int quantity) {
         try {
             _purchase(item, currency, cost, quantity);
@@ -1389,6 +1395,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void currencyGiven(String givenCurrency, double givenAmount) {
         try {
             _currencyGiven(givenCurrency, givenAmount);
@@ -1397,6 +1404,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void userUpdate(Map<String, String> attributes) {
         try {
             _userUpdate(attributes);
@@ -1405,6 +1413,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void iap(int quantity, String productId, double productPrice, String currency) {
         try {
             _iap(quantity, productId, productPrice, currency);
@@ -1413,6 +1422,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void iap(int quantity, String productId, double productPrice, String currency, SwrveIAPRewards rewards) {
         try {
             _iap(quantity, productId, productPrice, currency, rewards);
@@ -1421,6 +1431,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public SwrveResourceManager getResourceManager() {
         try {
             return _getResourceManager();
@@ -1430,6 +1441,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public void getUserResources(final ISwrveUserResourcesListener listener) {
         try {
             _getUserResources(listener);
@@ -1438,6 +1450,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void getUserResourcesDiff(final ISwrveUserResourcesDiffListener listener) {
         try {
             _getUserResourcesDiff(listener);
@@ -1446,6 +1459,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void sendQueuedEvents() {
         try {
             _sendQueuedEvents();
@@ -1454,6 +1468,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void flushToDisk() {
         try {
             _flushToDisk();
@@ -1462,6 +1477,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void onPause() {
         try {
             _onPause();
@@ -1470,14 +1486,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void onResume() {
+    @Override
+    public void onResume(Activity ctx) {
         try {
-            _onResume();
+            _onResume(ctx);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
+    @Override
     public void onLowMemory() {
         try {
             _onLowMemory();
@@ -1486,14 +1504,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void onDestroy() {
+    @Override
+    public void onDestroy(Activity ctx) {
         try {
-            _onDestroy();
+            _onDestroy(ctx);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
+    @Override
     public void shutdown() {
         try {
             _shutdown();
@@ -1502,6 +1522,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void setLanguage(Locale locale) {
         try {
             _setLanguage(locale);
@@ -1510,6 +1531,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public String getLanguage() {
         try {
             return _getLanguage();
@@ -1522,6 +1544,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     /**
      * @deprecated
      */
+    @Override
     public void setLanguage(String language) {
         try {
             _setLanguage(language);
@@ -1530,6 +1553,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public String getApiKey() {
         try {
             return _getApiKey();
@@ -1539,6 +1563,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public String getUserId() {
         try {
             return _getUserId();
@@ -1548,6 +1573,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public JSONObject getDeviceInfo() {
         try {
             return _getDeviceInfo();
@@ -1557,6 +1583,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public void refreshCampaignsAndResources() {
         try {
             _refreshCampaignsAndResources();
@@ -1565,6 +1592,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public SwrveMessage getMessageForEvent(String event) {
         try {
             return _getMessageForEvent(event);
@@ -1583,6 +1611,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public SwrveMessage getMessageForId(int messageId) {
         try {
             return _getMessageForId(messageId);
@@ -1601,6 +1630,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public void buttonWasPressedByUser(SwrveButton button) {
         try {
             _buttonWasPressedByUser(button);
@@ -1609,6 +1639,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
         try {
             _messageWasShownToUser(messageFormat);
@@ -1689,6 +1720,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public String getAppStoreURLForApp(int appId) {
         try {
             return _getAppStoreURLForApp(appId);
@@ -1698,6 +1730,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public File getCacheDir() {
         try {
             return _getCacheDir();
@@ -1707,6 +1740,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public void setMessageListener(ISwrveMessageListener messageListener) {
         try {
             _setMessageListener(messageListener);
@@ -1723,7 +1757,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-
+    @Override
     public void setResourcesListener(ISwrveResourcesListener resourcesListener) {
         try {
             _setResourcesListener(resourcesListener);
@@ -1732,6 +1766,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public Date getInitialisedTime() {
         try {
             return _getInitialisedTime();
@@ -1741,6 +1776,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public ISwrveInstallButtonListener getInstallButtonListener() {
         try {
             return _getInstallButtonListener();
@@ -1750,6 +1786,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener) {
         try {
             _setInstallButtonListener(installButtonListener);
@@ -1758,6 +1795,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public ISwrveCustomButtonListener getCustomButtonListener() {
         try {
             return _getCustomButtonListener();
@@ -1767,6 +1805,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener) {
         try {
             _setCustomButtonListener(customButtonListener);
@@ -1794,6 +1833,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
     public Context getContext() {
         try {
             return _getContext();
@@ -1803,6 +1843,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
     public C getConfig() {
         try {
             return _getConfig();

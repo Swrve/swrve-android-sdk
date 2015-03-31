@@ -1,7 +1,11 @@
 package com.swrve.sdk.messaging;
 
+import android.graphics.Color;
 import android.graphics.Point;
 import android.util.Log;
+
+import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,6 +30,8 @@ public class SwrveMessageFormat {
     protected Point size;
     // Orientation of the format
     protected SwrveOrientation orientation;
+    // Background color of the template
+    protected int backgroundColor;
     // List of buttons in the format
     protected List<SwrveButton> buttons;
     // List of Background images in the format
@@ -41,7 +47,7 @@ public class SwrveMessageFormat {
      * @return SwrveMessageFormat new instance
      * @throws JSONException
      */
-    public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData) throws JSONException {
+    public SwrveMessageFormat(SwrveBase<?, ?> controller, SwrveMessage message, JSONObject messageFormatData) throws JSONException {
         this.message = message;
         this.buttons = new ArrayList<SwrveButton>();
         this.images = new ArrayList<SwrveImage>();
@@ -57,6 +63,15 @@ public class SwrveMessageFormat {
         // Scale
         if (messageFormatData.has("scale")) {
             setScale(Float.parseFloat(messageFormatData.getString("scale")));
+        }
+
+        // Background color (or use configured default)
+        setBackgroundColor(controller.getConfig().getDefaultBackgroundColor());
+        if (messageFormatData.has("color")) {
+            String strColor = messageFormatData.getString("color");
+            if (!SwrveHelper.isNullOrEmpty(strColor)) {
+                setBackgroundColor(Color.parseColor("#" + strColor));
+            }
         }
 
         setSize(getSizeFrom(messageFormatData.getJSONObject("size")));
@@ -153,5 +168,16 @@ public class SwrveMessageFormat {
 
     protected void setScale(float scale) {
         this.scale = scale;
+    }
+
+    /**
+     * @return the background color of the format.
+     */
+    public int getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    protected void setBackgroundColor(int backgroundColor) {
+        this.backgroundColor = backgroundColor;
     }
 }

@@ -117,7 +117,16 @@ public class MainActivity extends Activity {
         super.onResume();
         // Notify the SDK of activity resume.
         appAvailable = true;
-        SwrveSDK.onResume();
+
+        SwrveSDK.onResume(this);
+    }
+
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        // Notify the SDK of activity low memory.
+        SwrveSDK.onLowMemory();
     }
 
     @Override
@@ -133,6 +142,6 @@ public class MainActivity extends Activity {
         super.onDestroy();
         // Notify the SDK of activity destroy.
         appAvailable = false;
-        SwrveSDK.onDestroy();
+        SwrveSDK.onDestroy(this);
     }
 }

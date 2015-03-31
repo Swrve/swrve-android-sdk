@@ -66,7 +66,7 @@ public class SwrveMessage {
 
         for (int i = 0, j = jsonFormats.length(); i < j; i++) {
             JSONObject messageFormatData = jsonFormats.getJSONObject(i);
-            SwrveMessageFormat messageFormat = createMessageFormat(this, messageFormatData);
+            SwrveMessageFormat messageFormat = createMessageFormat(controller, this, messageFormatData);
             getFormats().add(messageFormat);
         }
     }
@@ -137,8 +137,8 @@ public class SwrveMessage {
         this.campaign = campaign;
     }
 
-    protected SwrveMessageFormat createMessageFormat(SwrveMessage swrveMessage, JSONObject messageFormatData) throws JSONException {
-        return new SwrveMessageFormat(swrveMessage, messageFormatData);
+    protected SwrveMessageFormat createMessageFormat(SwrveBase<?, ?> controller, SwrveMessage swrveMessage, JSONObject messageFormatData) throws JSONException {
+        return new SwrveMessageFormat(controller, swrveMessage, messageFormatData);
     }
 
     /**
