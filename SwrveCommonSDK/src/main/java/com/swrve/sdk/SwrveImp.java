@@ -920,13 +920,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected void unbindAndShutdown(Activity ctx) {
         // Reduce the references to the SDK
         int counter = bindCounter.decrementAndGet();
-        // Remove the binding to the current activity, if any
-        this.activityContext = null;
 
         removeCurrentDialog(ctx);
 
         // Check if there are no more references to this object
         if (counter == 0) {
+            this.activityContext = null;
             if (mustCleanInstance) {
                 ((SwrveBase<?, ?>) this).shutdown();
             }
