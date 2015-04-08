@@ -917,15 +917,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void unbindAndShutdown(Activity callerActivity) {
+    protected void unbindAndShutdown(Activity ctx) {
         // Reduce the references to the SDK
         int counter = bindCounter.decrementAndGet();
+        // Remove the binding to the current activity, if any
+        this.activityContext = null;
 
-        removeCurrentDialog(callerActivity);
-
-        if (counter == 0 || (this.activityContext != null && this.activityContext.get() == callerActivity)) {
-            this.activityContext = null;  // Remove the binding to the current activity, if any
-        }
+        removeCurrentDialog(ctx);
 
         // Check if there are no more references to this object
         if (counter == 0) {
