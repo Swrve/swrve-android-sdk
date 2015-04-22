@@ -6,11 +6,9 @@ import com.google.gson.GsonBuilder;
 import com.swrve.sdk.conversations.engine.deserialisers.ControlActionsDeserialiser;
 import com.swrve.sdk.conversations.engine.deserialisers.ConversationAtomDeserialiser;
 import com.swrve.sdk.conversations.engine.deserialisers.MultiValueItemDeserialiser;
-import com.swrve.sdk.conversations.engine.deserialisers.SliderValueDeserialiser;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.ControlActions;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
-import com.swrve.sdk.conversations.engine.model.SliderInput.SliderValue;
 
 public class GsonHelper {
 
@@ -21,7 +19,6 @@ public class GsonHelper {
         db.setDateFormat("yyyy-MM-dd HH:mm:ss");
 
         db.registerTypeAdapter(ConversationAtom.class, new ConversationAtomDeserialiser());
-        db.registerTypeAdapter(SliderValue.class, new SliderValueDeserialiser());
         db.registerTypeAdapter(ControlActions.class, new ControlActionsDeserialiser());
         db.registerTypeAdapter(ChoiceInputItem.class, new MultiValueItemDeserialiser());
 

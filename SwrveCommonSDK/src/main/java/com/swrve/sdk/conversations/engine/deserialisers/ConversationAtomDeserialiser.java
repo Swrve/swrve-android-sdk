@@ -10,8 +10,6 @@ import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
-import com.swrve.sdk.conversations.engine.model.ReactionInput;
-import com.swrve.sdk.conversations.engine.model.SliderInput;
 import com.swrve.sdk.conversations.engine.model.TextInput;
 
 import java.lang.reflect.Type;
@@ -47,10 +45,6 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
                 return jdContext.deserialize(obj, MultiValueInput.class);
             } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_MULTIVALUELONG)) {
                 return jdContext.deserialize(obj, MultiValueLongInput.class);
-            } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_REACTION)) {
-                return jdContext.deserialize(obj, ReactionInput.class);
-            } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_SLIDER)) {
-                return jdContext.deserialize(obj, SliderInput.class);
             } else {
                 //All else has failed? just return a plain Atom, *shrug*
                 //We should end up with types for everything, but this will probably get used a lot during initial dev
