@@ -53,9 +53,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
     private LayoutParams controlLp;
-    private TypedArray margins;
-    private int controlLayoutMarginInPixels;
-    private Toolbar toolbar;
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
     private ConversationPage page;
@@ -147,12 +144,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         initLayout(context);
         renderToolbar(context);
-        int numControls = page.getControls().size();
-        if (numControls == 0) {
-            renderNoControls(context);
-        } else {
-            renderControls(context);
-        }
+        renderControls(context);
         renderContent(context);
 
         sendPageImpressionEvent(page.getTag());
@@ -164,7 +156,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     private void renderToolbar(Context context) {
-        toolbar = (Toolbar) root.findViewById(R.id.cio__toolbar);
+        Toolbar toolbar = (Toolbar) root.findViewById(R.id.cio__toolbar);
         if(toolbar != null){
             // Background Color
             int actionBarBGColor = page.getHeaderBackgroundColor(context);
@@ -202,8 +194,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
-        margins = getActivity().getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
-        controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
         if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
             contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(context));
@@ -214,39 +204,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void renderNoControls(Context context){
-        ConversationPageException exception = new ConversationPageException("No controls were detected in this page. This is a bad conversation!");
-        sendErrorNavigationEvent(page.getTag(), exception); // No exception. We just couldn't find a page attached to the control.
-
-        ButtonControl buttonControl = new ButtonControl() {{description = "Done";}}; // TODO put into strings.xml
-        ConversationButton ctrlConversationButton = new ConversationButton(getActivity(), buttonControl, R.attr.conversationControlPrimaryButtonStyle);
-        ctrlConversationButton.setConversationButtonColor(page.getPrimaryButtonColor(context));
-        ctrlConversationButton.setConversationButtonTextColor(page.getPrimaryButtonTextColor(context));
-        ctrlConversationButton.setCurved();
-
-        LayoutParams buttonLP;
-        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-            buttonLP = new LayoutParams(controlLp);
-        } else {
-            buttonLP = new LayoutParams(controlLp.width, controlLp.height);
-        }
-        buttonLP.weight = 1;
-        buttonLP.leftMargin = controlLayoutMarginInPixels;
-        buttonLP.rightMargin = controlLayoutMarginInPixels;
-        buttonLP.topMargin = controlLayoutMarginInPixels;
-        buttonLP.bottomMargin = controlLayoutMarginInPixels;
-        ctrlConversationButton.setLayoutParams(buttonLP);
-
-        ctrlConversationButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendDoneNavigationEvent(page.getTag(), "no control present");
-                getActivity().finish();
-            }
-        });
-        controlLayout.addView(ctrlConversationButton);
-    }
-
     private void renderControls(Context context) {
         int primaryButtonColor = page.getPrimaryButtonColor(context);
         int primaryButtonTextColor = page.getPrimaryButtonTextColor(context);
@@ -254,6 +211,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         int secondaryButtonTextColor = page.getSecondaryButtonTextColor(context);
         int neutralButtonColor = page.getNeutralButtonColor(context);
         int neutralButtonTextColor = page.getNeutralButtonTextColor(context);
+
+        TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
+        int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
 
         int numControls = page.getControls().size();
         for (int i = 0; i < numControls; i++) {
