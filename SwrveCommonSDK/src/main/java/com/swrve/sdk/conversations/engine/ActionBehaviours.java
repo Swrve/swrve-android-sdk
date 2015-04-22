@@ -15,7 +15,7 @@ import android.webkit.WebViewClient;
 
 import java.util.HashMap;
 
-public abstract class ActionBehaviours {
+public class ActionBehaviours {
     private static final String LOG_TAG = "ActionBehaviours";
     private Activity activity;
     private Context context;

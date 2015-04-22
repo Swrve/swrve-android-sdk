@@ -1,17 +1,11 @@
 package com.swrve.sdk.conversations.engine.model;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.swrve.sdk.common.R;
-import com.google.gson.Gson;
 import com.swrve.sdk.conversations.engine.GsonHelper;
 
 import org.json.JSONObject;
@@ -105,17 +99,6 @@ public class ConversationPage implements Serializable {
 
     public int getHeaderBackgroundTextColor(Context c){
         return c.getResources().getColor(R.color.cio__header_text_color);
-    }
-
-    public Drawable getHeaderIcon(Context c){
-        int defaultIconInt = c.getResources().getColor(R.color.cio__header_background_color);
-        Drawable defaultIcon = new ColorDrawable(defaultIconInt);
-        try {
-            defaultIcon = c.getPackageManager().getApplicationIcon(c.getPackageName());
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.i("Swrve", "Could not find application icon", e);
-        }
-        return defaultIcon;
     }
 
     public static ConversationPage fromJson(JSONObject json) {
