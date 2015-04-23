@@ -671,26 +671,4 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             userInteractionData.put(key, result);
         }
     }
-
-    private void stashNPSInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
-        String key = pageTag + "-" + fragmentTag;
-        String type = UserInputResult.TYPE_NPS;
-        for (String k : data.keySet()) {
-            UserInputResult result = new UserInputResult();
-            result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
-            result.fragmentTag = fragmentTag;
-            result.pageTag = pageTag;
-            result.result = data.get(k);
-            userInteractionData.put(key, result);
-        }
-    }
-
-    class ConversationPageException extends Exception
-    {
-        public ConversationPageException(String message)
-        {
-            super(message);
-        }
-    }
 }
