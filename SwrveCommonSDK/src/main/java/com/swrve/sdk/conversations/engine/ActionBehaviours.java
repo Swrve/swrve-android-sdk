@@ -30,29 +30,6 @@ public class ActionBehaviours {
         activity.startActivity(dialNum);
     }
 
-    public void openPopupWebView(Uri uri, Activity activity, String referrer, String backMessage) {
-        AlertDialog.Builder alert = new AlertDialog.Builder(activity);
-        final HashMap<String, String> extraHeaders = new HashMap<String, String>();
-        extraHeaders.put("Referrer", referrer);
-        WebView wv = new WebView(activity);
-        wv.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url, extraHeaders);
-                return true;
-            }
-        });
-        wv.loadUrl(uri.toString(), extraHeaders);
-        alert.setView(wv);
-        alert.setNegativeButton(backMessage, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-            }
-        });
-        alert.show();
-        Log.i("ConversationFragment Action", "Action is visit URL!");
-    }
-
     public void openIntentWebView(Uri uri, Activity activity, String referrer) {
         Intent visitWebpage = new Intent(Intent.ACTION_VIEW, uri);
         Bundle bundle = new Bundle();

@@ -42,14 +42,9 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
                     if (jsonObject.has(ControlActions.VISIT_URL_REFERER_KEY)) {
                         refer = jsonObject.get(ControlActions.VISIT_URL_REFERER_KEY).getAsString().replaceAll("\\s", "");
                     }
-
-                    if (jsonObject.has(ControlActions.VISIT_URL_EXTERNAL_KEY)) {
-                        ext = jsonObject.get(ControlActions.VISIT_URL_EXTERNAL_KEY).getAsString().replaceAll("\\s", "");
-                    }
                     // Validate the url. Sometimes, the : character of http:// will cause a space to occur
                     visitUriDetails.put(ControlActions.VISIT_URL_URI_KEY, urlStr);
                     visitUriDetails.put(ControlActions.VISIT_URL_REFERER_KEY, refer);
-                    visitUriDetails.put(ControlActions.VISIT_URL_EXTERNAL_KEY, ext);
                     actions.includeAction(label, visitUriDetails);
                 } else if (label.equalsIgnoreCase(ControlActions.DEEPLINK_ACTION.toString())) {
                     JsonObject jsonObject = entry.getValue().getAsJsonObject();
