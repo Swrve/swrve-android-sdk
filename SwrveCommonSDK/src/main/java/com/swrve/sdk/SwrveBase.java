@@ -1185,9 +1185,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _conversationPageWasViewedByUser(SwrveConversation conversation, String pageTag) {
         if (conversation != null) {
             SwrveConversationCampaign campaign = conversation.getCampaign();
-            if (campaign != null) {
-                campaign.conversationWasShownToUser();
-            }
 
             String viewEvent = getEventForConversation(conversation) + ".impression";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1205,9 +1202,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
         if (conversation != null) {
             SwrveConversationCampaign campaign = conversation.getCampaign();
-            if (campaign != null) {
-                campaign.conversationWasShownToUser();
-            }
 
             String viewEvent = getEventForConversation(conversation) + ".start";
             Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);

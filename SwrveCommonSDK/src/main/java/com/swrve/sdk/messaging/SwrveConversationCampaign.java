@@ -86,8 +86,4 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     protected SwrveConversation createConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign swrveCampaign, JSONObject conversationData) throws JSONException {
         return new SwrveConversation(controller, swrveCampaign, conversationData);
     }
-
-    public void conversationWasShownToUser() {
-        // TODO: Define what to do here
-    }
 }
