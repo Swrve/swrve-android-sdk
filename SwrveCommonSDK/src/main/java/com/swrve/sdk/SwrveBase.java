@@ -1165,6 +1165,22 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             saveCampaignSettings();
         }
     }
+    protected void _conversationDeeplinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
+        if (conversation != null) {
+            String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".deeplink";
+            Log.i(LOG_TAG, "Sending view conversation event: " + viewEvent);
+            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("name", viewEvent);
+            payload.put("event", "deeplink");
+            payload.put("page", pageTag);
+            payload.put("control", controlTag);
+            payload.put("conversation", Integer.toString(conversation.getId()));
+            queueEvent("event", parameters, payload);
+            saveCampaignSettings();
+        }
+    }
+
 
     protected void _conversationPageWasViewedByUser(SwrveConversation conversation, String pageTag) {
         if (conversation != null) {
@@ -1659,6 +1675,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void conversationLinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
         try {
             _conversationLinkWasAccessedByUser(conversation, fromPageTag, toActionTag);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+    public void conversationDeeplinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
+        try {
+            _conversationDeeplinkWasAccessedByUser(conversation, fromPageTag, toActionTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }

@@ -79,7 +79,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     public static ConversationFragment create(SwrveConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
-        // TODO: STM Beware of OnResumes and other state held things.
         f.swrveConversation = swrveConversation;
         f.controller = (SwrveBase) SwrveSDKBase.getInstance();
         return f;
@@ -339,7 +338,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     view.setOnTouchListener(new View.OnTouchListener() {
                         @Override
                         public boolean onTouch(View v, MotionEvent event) {
-                            // TODO: STM Due the fact that we render video in HTML, its very difficult to detect when a video has started/stopped  playing. For now all we can say is that the video was touched. Note that on click listeners behave strange with WebViews
+                            // Due the fact that we render video in HTML, its very difficult to detect when a video has started/stopped  playing. For now all we can say is that the video was touched. Note that on click listeners behave strange with WebViews
                             stashVideoViewed(page.getTag(), tag, cloneView);
                             return false;
                         }
@@ -606,8 +605,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     private void sendDeepLinkActionEvent(String currentPageTag, ConversationAtom control) {
         if (controller != null) {
-            // TODO: implement this guy.
-            // controller.conversationDeepLinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
+            controller.conversationDeeplinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
         }
     }
 
@@ -619,7 +617,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     // For each of the content portions we store data about them which is then committed at a later point
     private void stashVideoViewed(String pageTag, String fragmentTag, HtmlVideoView v) {
-        // TODO: Is there any data we can record about clicked video views?
         String key = pageTag + "-" + fragmentTag;
         String type = UserInputResult.TYPE_VIDEO_PLAY;
         UserInputResult result = new UserInputResult();
