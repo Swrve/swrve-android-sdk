@@ -12,7 +12,6 @@ public class ControlActions implements Serializable {
 
     public static final String VISIT_URL_URI_KEY = "url";
     public static final String VISIT_URL_REFERER_KEY = "refer";
-    public static final String VISIT_URL_EXTERNAL_KEY = "ext";
     public static final String DEEPLINK_URL_URI_KEY = "url";
 
     private HashMap<String, Object> actionItems = new HashMap<String, Object>();

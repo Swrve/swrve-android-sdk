@@ -467,16 +467,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
                         String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
                         String referrer = visitUriDetails.get(ControlActions.VISIT_URL_REFERER_KEY);
-                        String ext = visitUriDetails.get(ControlActions.VISIT_URL_EXTERNAL_KEY);
                         Uri uri = Uri.parse(urlStr);
-                        if (Boolean.parseBoolean(ext) == true) {
-                            sendReply(model, reply);
-                            sendLinkActionEvent(page.getTag(), model);
-                            behaviours.openIntentWebView(uri, this.getActivity(), referrer);
-                        } else if (Boolean.parseBoolean(ext) == false) {
-                            sendLinkActionEvent(page.getTag(), model);
-                            behaviours.openPopupWebView(uri, this.getActivity(), referrer, "Back to Conversation");
-                        }
+
+                        sendReply(model, reply);
+                        sendLinkActionEvent(page.getTag(), model);
+                        behaviours.openIntentWebView(uri, this.getActivity(), referrer);
                     } else if (actions.isDeepLink()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
                         String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
