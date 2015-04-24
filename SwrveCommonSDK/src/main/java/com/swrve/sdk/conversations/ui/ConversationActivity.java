@@ -3,7 +3,6 @@ package com.swrve.sdk.conversations.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -31,7 +30,7 @@ public class ConversationActivity extends FragmentActivity {
         try {
             if (localConversation != null) {
                 conversationFragment = ConversationFragment.create(localConversation);
-                commitConversationFragment();
+                conversationFragment.commitConversationFragment(getSupportFragmentManager());
             } else {
                 Log.e("ConversationActivity", "Could not render ConversationActivity. No SwrveConversation was detected");
                 this.finish();
@@ -63,14 +62,8 @@ public class ConversationActivity extends FragmentActivity {
             if (userData != null){
                 conversationFragment.setUserInteractionData(userData);
             }
-            commitConversationFragment();
+            conversationFragment.commitConversationFragment(getSupportFragmentManager());
         }
-    }
-
-    protected void commitConversationFragment() {
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(android.R.id.content, conversationFragment, "conversation");
-        ft.commit();
     }
 
     @Override
