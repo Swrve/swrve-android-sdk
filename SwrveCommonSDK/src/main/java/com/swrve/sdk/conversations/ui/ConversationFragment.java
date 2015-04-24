@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -83,6 +85,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         f.swrveConversation = swrveConversation;
         f.controller = (SwrveBase) SwrveSDKBase.getInstance();
         return f;
+    }
+
+    public void commitConversationFragment(FragmentManager manager) {
+        FragmentTransaction ft = manager.beginTransaction();
+        ft.replace(android.R.id.content, this, "conversation");
+        ft.commit();
     }
 
     @Override

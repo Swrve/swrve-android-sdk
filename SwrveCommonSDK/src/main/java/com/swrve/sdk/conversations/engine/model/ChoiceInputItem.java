@@ -2,9 +2,6 @@ package com.swrve.sdk.conversations.engine.model;
 
 import java.io.Serializable;
 
-/**
- * Created by shanemoore on 09/02/15.
- */
 public class ChoiceInputItem implements Serializable {
     private String answer_id;
     private String answer_text;
