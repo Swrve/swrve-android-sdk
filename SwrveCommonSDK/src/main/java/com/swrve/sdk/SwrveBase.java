@@ -690,6 +690,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 if (config.isTalkEnabled()) {
                     // Talk only params
                     params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
+                    params.put("conversation_version", String.valueOf(CONVERSATION_VERSION));
                     params.put("language", language);
                     params.put("app_store", config.getAppStore());
 
