@@ -295,12 +295,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void renderContent(Context context) {
+    private void renderContent(Context context1) {
         for (ConversationAtom content : page.getContent()) {
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
                 if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
-                    ConversationImageView iv = new ConversationImageView(context, modelContent);
+                    ConversationImageView iv = new ConversationImageView(getActivity(), modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                     iv.setTag(content.getTag());
@@ -320,7 +320,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.width = LayoutParams.MATCH_PARENT;
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
-                    HtmlSnippetView view = new HtmlSnippetView(context, modelContent);
+                    HtmlSnippetView view = new HtmlSnippetView(getActivity(), modelContent);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
@@ -335,7 +335,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.width = LayoutParams.MATCH_PARENT;
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
-                    HtmlVideoView view = new HtmlVideoView(context, modelContent);
+                    HtmlVideoView view = new HtmlVideoView(getActivity(), modelContent);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
@@ -353,7 +353,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     });
                     contentLayout.addView(view);
                 } else {
-                    TextView tv = new TextView(context, modelContent, R.attr.conversationTextContentDefaultStyle);
+                    TextView tv = new TextView(getActivity(), modelContent, R.attr.conversationTextContentDefaultStyle);
                     tv.setTag(content.getTag());
                     LayoutParams tvLP;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
@@ -389,7 +389,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(etc);
                     inputs.add(etc);
                 } else if (content instanceof MultiValueInput) {
-                    MultiValueInputControl input = MultiValueInputControl.inflate(context, contentLayout, (MultiValueInput) content);
+                    MultiValueInputControl input = MultiValueInputControl.inflate(getActivity(), contentLayout, (MultiValueInput) content);
                     LayoutParams lp;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
                         lp = new LayoutParams(controlLp);
@@ -416,7 +416,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(input);
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
-                    MultiValueLongInputControl input = MultiValueLongInputControl.inflate(context, contentLayout, (MultiValueLongInput) content);
+                    MultiValueLongInputControl input = MultiValueLongInputControl.inflate(getActivity(), contentLayout, (MultiValueLongInput) content);
                     LayoutParams lp;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
                         lp = new LayoutParams(controlLp);
