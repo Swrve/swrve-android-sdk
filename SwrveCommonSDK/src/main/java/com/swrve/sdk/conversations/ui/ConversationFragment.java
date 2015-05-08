@@ -152,7 +152,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         initLayout(context);
         renderToolbar(context);
         renderControls(context);
-        renderContent(context);
+        renderContent();
 
         sendPageImpressionEvent(page.getTag());
         root.requestFocus();
@@ -295,7 +295,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void renderContent(Context context1) {
+    private void renderContent() {
         for (ConversationAtom content : page.getContent()) {
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
