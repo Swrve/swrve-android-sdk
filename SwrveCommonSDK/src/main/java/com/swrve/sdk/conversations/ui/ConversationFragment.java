@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -141,16 +140,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             inputs.clear();
         }
 
-        Activity activity = getActivity();
-        activity.setTitle(page.getTitle());
-
         root = (ViewGroup) getView();
         if (root == null) {
             return;
         }
 
         initLayout(context);
-        renderToolbar(context);
         renderControls(context);
         renderContent(context);
 
@@ -160,26 +155,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     protected int getSDKBuildVersion() {
         return android.os.Build.VERSION.SDK_INT;
-    }
-
-    private void renderToolbar(Context context) {
-        Toolbar toolbar = (Toolbar) root.findViewById(R.id.cio__toolbar);
-        if(toolbar != null){
-            // Background Color
-            int actionBarBGColor = page.getHeaderBackgroundColor(context);
-            ColorDrawable actionBarBG = new ColorDrawable(actionBarBGColor);
-            if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                toolbar.setBackgroundDrawable(actionBarBG);
-            } else {
-                toolbar.setBackground(actionBarBG);
-            }
-
-            // Title
-            int actionBarTextColor = page.getHeaderBackgroundTextColor(context);
-            toolbar.setTitleTextColor(actionBarTextColor);
-            toolbar.setTitle(page.getTitle());
-            toolbar.setLogo(swrveConversation.getHeaderIcon(context));
-        }
     }
 
     private void initLayout(Context context) {
