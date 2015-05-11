@@ -93,14 +93,6 @@ public class ConversationPage implements Serializable {
         return new ColorDrawable(colorInt);
     }
 
-    public int getHeaderBackgroundColor(Context c){
-        return c.getResources().getColor(R.color.cio__header_background_color);
-    }
-
-    public int getHeaderBackgroundTextColor(Context c){
-        return c.getResources().getColor(R.color.cio__header_text_color);
-    }
-
     public static ConversationPage fromJson(JSONObject json) {
         return fromJSON(json.toString());
     }

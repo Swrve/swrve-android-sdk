@@ -38,7 +38,6 @@ public class SwrveConversation implements Serializable {
     protected transient SwrveConversationCampaign campaign;
     // Location of the images and button resources
     protected File cacheDir;
-    private Drawable headerIcon;
 
     public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign) {
         setCampaign(campaign);
@@ -187,22 +186,5 @@ public class SwrveConversation implements Serializable {
 
     public void setPages(ArrayList<ConversationPage> pages) {
         this.pages = pages;
-    }
-
-    /**
-     * Get the application icon to display in toolbars and cache it
-     */
-    public Drawable getHeaderIcon(Context context){
-        if(headerIcon!=null) {
-            return headerIcon;
-        }
-        int defaultIconInt = context.getResources().getColor(R.color.cio__header_background_color);
-        headerIcon = new ColorDrawable(defaultIconInt);
-        try {
-            headerIcon = context.getPackageManager().getApplicationIcon(context.getPackageName());
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.i("Swrve", "Could not find application icon", e);
-        }
-        return headerIcon;
     }
 }

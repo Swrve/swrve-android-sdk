@@ -23,5 +23,4 @@ android {
 
 dependencies {
     compile project(':SwrveSDK')
-    compile 'com.android.support:support-v4:21.0.3'
 }

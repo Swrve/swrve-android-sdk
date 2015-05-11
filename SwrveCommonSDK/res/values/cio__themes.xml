@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.BaseConversations" parent="@android:style/Theme"></style>
+    <style name="Theme.BaseConversations" parent="Theme.AppCompat.Light">
+        <item name="android:windowNoTitle">true</item>
+    </style>
 
     <style name="Theme.Conversations" parent="Theme.BaseConversations">
         <item name="conversationControlTrayStyle">@style/cio__button_tray</item>
@@ -25,6 +27,6 @@
         <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item</item>
 
         <item name="conversationMVSpinner">@style/cio__mvl_spinner</item>
-</style>
+    </style>
 
 </resources>

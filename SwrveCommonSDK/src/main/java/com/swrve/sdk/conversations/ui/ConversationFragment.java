@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -152,7 +151,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         activity.setTitle(page.getTitle());
 
         initLayout(activity);
-        renderToolbar(activity);
         renderControls(activity);
         renderContent(activity);
 
@@ -162,26 +160,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     protected int getSDKBuildVersion() {
         return android.os.Build.VERSION.SDK_INT;
-    }
-
-    private void renderToolbar(Activity activity) {
-        Toolbar toolbar = (Toolbar) root.findViewById(R.id.cio__toolbar);
-        if(toolbar != null){
-            // Background Color
-            int actionBarBGColor = page.getHeaderBackgroundColor(activity);
-            ColorDrawable actionBarBG = new ColorDrawable(actionBarBGColor);
-            if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                toolbar.setBackgroundDrawable(actionBarBG);
-            } else {
-                toolbar.setBackground(actionBarBG);
-            }
-
-            // Title
-            int actionBarTextColor = page.getHeaderBackgroundTextColor(activity);
-            toolbar.setTitleTextColor(actionBarTextColor);
-            toolbar.setTitle(page.getTitle());
-            toolbar.setLogo(swrveConversation.getHeaderIcon(activity));
-        }
     }
 
     private void initLayout(Activity activity) {
