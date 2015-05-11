@@ -2,7 +2,6 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -135,24 +134,27 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     public void openConversationOnPage(ConversationPage conversationPage) {
-        Context context = getActivity().getApplicationContext();
-        this.page = conversationPage;
-        if (inputs.size() > 0) {
-            inputs.clear();
-        }
-
         Activity activity = getActivity();
-        activity.setTitle(page.getTitle());
+        if (!isAdded() || activity == null) {
+            return;
+        }
 
         root = (ViewGroup) getView();
         if (root == null) {
             return;
         }
 
-        initLayout(context);
-        renderToolbar(context);
-        renderControls(context);
-        renderContent();
+        this.page = conversationPage;
+        if (inputs.size() > 0) {
+            inputs.clear();
+        }
+
+        activity.setTitle(page.getTitle());
+
+        initLayout(activity);
+        renderToolbar(activity);
+        renderControls(activity);
+        renderContent(activity);
 
         sendPageImpressionEvent(page.getTag());
         root.requestFocus();
@@ -162,11 +164,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         return android.os.Build.VERSION.SDK_INT;
     }
 
-    private void renderToolbar(Context context) {
+    private void renderToolbar(Activity activity) {
         Toolbar toolbar = (Toolbar) root.findViewById(R.id.cio__toolbar);
         if(toolbar != null){
             // Background Color
-            int actionBarBGColor = page.getHeaderBackgroundColor(context);
+            int actionBarBGColor = page.getHeaderBackgroundColor(activity);
             ColorDrawable actionBarBG = new ColorDrawable(actionBarBGColor);
             if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
                 toolbar.setBackgroundDrawable(actionBarBG);
@@ -175,14 +177,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             }
 
             // Title
-            int actionBarTextColor = page.getHeaderBackgroundTextColor(context);
+            int actionBarTextColor = page.getHeaderBackgroundTextColor(activity);
             toolbar.setTitleTextColor(actionBarTextColor);
             toolbar.setTitle(page.getTitle());
-            toolbar.setLogo(swrveConversation.getHeaderIcon(context));
+            toolbar.setLogo(swrveConversation.getHeaderIcon(activity));
         }
     }
 
-    private void initLayout(Context context) {
+    private void initLayout(Activity activity) {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
 
@@ -203,23 +205,23 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
         if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(context));
-            controlLayout.setBackgroundDrawable(page.getControlTrayBackgroundDrawable(context));
+            contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(activity));
+            controlLayout.setBackgroundDrawable(page.getControlTrayBackgroundDrawable(activity));
         } else {
-            contentLayout.setBackground(page.getContentBackgroundDrawable(context));
-            controlLayout.setBackground(page.getControlTrayBackgroundDrawable(context));
+            contentLayout.setBackground(page.getContentBackgroundDrawable(activity));
+            controlLayout.setBackground(page.getControlTrayBackgroundDrawable(activity));
         }
     }
 
-    private void renderControls(Context context) {
-        int primaryButtonColor = page.getPrimaryButtonColor(context);
-        int primaryButtonTextColor = page.getPrimaryButtonTextColor(context);
-        int secondaryButtonColor = page.getSecondaryButtonColor(context);
-        int secondaryButtonTextColor = page.getSecondaryButtonTextColor(context);
-        int neutralButtonColor = page.getNeutralButtonColor(context);
-        int neutralButtonTextColor = page.getNeutralButtonTextColor(context);
+    private void renderControls(Activity activity) {
+        int primaryButtonColor = page.getPrimaryButtonColor(activity);
+        int primaryButtonTextColor = page.getPrimaryButtonTextColor(activity);
+        int secondaryButtonColor = page.getSecondaryButtonColor(activity);
+        int secondaryButtonTextColor = page.getSecondaryButtonTextColor(activity);
+        int neutralButtonColor = page.getNeutralButtonColor(activity);
+        int neutralButtonTextColor = page.getNeutralButtonTextColor(activity);
 
-        TypedArray margins = getActivity().getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
+        TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
 
         int numControls = page.getControls().size();
@@ -239,35 +241,35 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 if (isFirst) {
                     if (numControls == 1) {
                         // Button should be green
-                        ctrlConversationButton = new ConversationButton(getActivity(), ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
                         ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
                         ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     } else if (numControls == 2) {
                         // Button should be red
-                        ctrlConversationButton = new ConversationButton(getActivity(), ctrl, R.attr.conversationControlSecondaryButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
                         ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
                         ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
                     } else if (numControls > 2) {
                         // Button should be red
-                        ctrlConversationButton = new ConversationButton(getActivity(), ctrl, R.attr.conversationControlSecondaryButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
                         ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
                         ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
                     }
                 } else if (!isFirst && !isLast) {
                     // Button should be gray
-                    ctrlConversationButton = new ConversationButton(getActivity(), ctrl, R.attr.conversationControlNeutralButtonStyle);
+                    ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlNeutralButtonStyle);
                     ctrlConversationButton.setConversationButtonColor(neutralButtonColor);
                     ctrlConversationButton.setConversationButtonTextColor(neutralButtonTextColor);
                     // If it is not the first button but is also not the last IE it is in the middle
                 } else if (isLast) {
                     if (numControls == 2) {
                         // Should be green
-                        ctrlConversationButton = new ConversationButton(getActivity(), ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
                         ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
                         ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     } else if (numControls > 2) {
                         // Should be green
-                        ctrlConversationButton = new ConversationButton(getActivity(), ctrl, R.attr.conversationControlPrimaryButtonStyle);
+                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
                         ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
                         ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
                     }
@@ -295,12 +297,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void renderContent() {
+    private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
                 if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
-                    ConversationImageView iv = new ConversationImageView(getActivity(), modelContent);
+                    ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                     iv.setTag(content.getTag());
@@ -320,7 +322,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.width = LayoutParams.MATCH_PARENT;
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
-                    HtmlSnippetView view = new HtmlSnippetView(getActivity(), modelContent);
+                    HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
@@ -335,7 +337,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.width = LayoutParams.MATCH_PARENT;
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
-                    HtmlVideoView view = new HtmlVideoView(getActivity(), modelContent);
+                    HtmlVideoView view = new HtmlVideoView(activity, modelContent);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
@@ -353,7 +355,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     });
                     contentLayout.addView(view);
                 } else {
-                    TextView tv = new TextView(getActivity(), modelContent, R.attr.conversationTextContentDefaultStyle);
+                    TextView tv = new TextView(activity, modelContent, R.attr.conversationTextContentDefaultStyle);
                     tv.setTag(content.getTag());
                     LayoutParams tvLP;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
@@ -389,7 +391,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(etc);
                     inputs.add(etc);
                 } else if (content instanceof MultiValueInput) {
-                    MultiValueInputControl input = MultiValueInputControl.inflate(getActivity(), contentLayout, (MultiValueInput) content);
+                    MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
                     LayoutParams lp;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
                         lp = new LayoutParams(controlLp);
@@ -416,7 +418,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(input);
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
-                    MultiValueLongInputControl input = MultiValueLongInputControl.inflate(getActivity(), contentLayout, (MultiValueLongInput) content);
+                    MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
                     LayoutParams lp;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
                         lp = new LayoutParams(controlLp);
@@ -447,6 +449,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     @Override
     public void onClick(View v) {
+        Activity activity = getActivity();
+        if (!isAdded() || activity == null) {
+            return;
+        }
+
         if (v instanceof ConversationControl) {
             // Ok, lets do this....
 
@@ -464,12 +471,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 ConversationButton convButton = (ConversationButton) v;
                 ButtonControl model = convButton.getModel();
                 if (((ConversationControl) v).getModel().hasActions()) {
-                    ActionBehaviours behaviours = new ActionBehaviours(this.getActivity(), this.getActivity().getApplicationContext());
+                    ActionBehaviours behaviours = new ActionBehaviours(activity, activity.getApplicationContext());
                     ControlActions actions = ((ConversationControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
                         sendCallActionEvent(page.getTag(), model);
-                        behaviours.openDialer(actions.getCallUri(), this.getActivity());
+                        behaviours.openDialer(actions.getCallUri(), activity);
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
                         String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
@@ -478,13 +485,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                         sendReply(model, reply);
                         sendLinkActionEvent(page.getTag(), model);
-                        behaviours.openIntentWebView(uri, this.getActivity(), referrer);
+                        behaviours.openIntentWebView(uri, activity, referrer);
                     } else if (actions.isDeepLink()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
                         String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
                         Uri uri = Uri.parse(urlStr);
                         sendDeepLinkActionEvent(page.getTag(), model);
-                        behaviours.openDeepLink(uri, this.getActivity());
+                        behaviours.openDeepLink(uri, activity);
                     }
                 } else {
                     // There are no actions associated with Button. Send a normal reply
@@ -532,11 +539,17 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         else if (control.hasActions()) {
             Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag());
-            getActivity().finish();
+            Activity activity = getActivity();
+            if (!isAdded() || activity == null) {
+                activity.finish();
+            }
         } else {
             Log.e(LOG_TAG, "No more pages in this conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
-            getActivity().finish();
+            Activity activity = getActivity();
+            if (!isAdded() || activity == null) {
+                activity.finish();
+            }
         }
     }
 
