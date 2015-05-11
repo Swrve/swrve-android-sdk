@@ -540,14 +540,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag());
             Activity activity = getActivity();
-            if (!isAdded() || activity == null) {
+            if (isAdded() && activity != null) {
                 activity.finish();
             }
         } else {
             Log.e(LOG_TAG, "No more pages in this conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
             Activity activity = getActivity();
-            if (!isAdded() || activity == null) {
+            if (isAdded() && activity != null) {
                 activity.finish();
             }
         }
