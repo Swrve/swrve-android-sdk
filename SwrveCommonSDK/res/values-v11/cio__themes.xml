@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.BaseConversations" parent="@android:style/Theme.Holo.Light">
-        <item name="android:windowActionBar">false</item>
+
+    <style name="Theme.BaseConversations" parent="Theme.AppCompat.Light">
         <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
     </style>
 </resources>
