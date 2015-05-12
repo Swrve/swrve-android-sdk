@@ -33,6 +33,7 @@ public class SwrveEventListener implements ISwrveEventListener {
                 SwrveConversation conversation = talkRef.getConversationForEvent(eventName);
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
+                    return;
                 }
             }
         }

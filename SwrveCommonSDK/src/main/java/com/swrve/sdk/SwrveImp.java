@@ -603,7 +603,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
         for (final SwrveBaseCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-
             if (campaign.hasElementForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
@@ -612,42 +611,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                             activity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    try {
-                                        if (conversationListener != null) {
-                                            SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
-                                            if (conversation != null) {
-                                                conversationListener.onMessage(conversation);
-                                            }
-                                        }
-                                    } catch (Exception exp) {
-                                        Log.e(LOG_TAG, "Could not launch campaign automatically");
-                                    }
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-
-            if (campaign.hasElementForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
-                synchronized (this) {
-                    if (autoShowMessagesEnabled && activityContext != null) {
-                        Activity activity = activityContext.get();
-                        if (activity != null) {
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        if (messageListener != null) {
-                                            SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
-                                            if (message != null && message.supportsOrientation(getDeviceOrientation())) {
-                                                messageListener.onMessage(message, true);
-                                                autoShowMessagesEnabled = false;
-                                            }
-                                        }
-                                    } catch (Exception exp) {
-                                        Log.e(LOG_TAG, "Could not launch campaign automatically");
-                                    }
+                                    autoShowConversation(swrve);
+                                    autoShowInAppMessage(swrve);
                                 }
                             });
                         }
@@ -655,6 +620,34 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
                 break;
             }
+        }
+    }
+
+    protected void autoShowInAppMessage(SwrveBase<T, C> swrve) {
+        try {
+            if (messageListener != null && autoShowMessagesEnabled) {
+                SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+                if (message != null && message.supportsOrientation(getDeviceOrientation())) {
+                    messageListener.onMessage(message, true);
+                    autoShowMessagesEnabled = false;
+                }
+            }
+        } catch (Exception exp) {
+            Log.e(LOG_TAG, "Could not launch campaign automatically.", exp);
+        }
+    }
+
+    protected void autoShowConversation(SwrveBase<T, C> swrve) {
+        try {
+            if (conversationListener != null && autoShowMessagesEnabled) {
+                SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+                if (conversation != null) {
+                    conversationListener.onMessage(conversation);
+                    autoShowMessagesEnabled = false;
+                }
+            }
+        } catch (Exception exp) {
+            Log.e(LOG_TAG, "Could not launch conversation automatically.", exp);
         }
     }
 
