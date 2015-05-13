@@ -3,8 +3,6 @@ package com.swrve.sdk.conversations.ui;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
-import android.webkit.WebSettings.PluginState;
-import android.webkit.WebSettings.RenderPriority;
 import android.webkit.WebView;
 import android.widget.Toast;
 
@@ -56,12 +54,7 @@ public class HtmlVideoView extends WebView implements ConversationContent {
 
         // Setup the WebView for video playback
         this.getSettings().setJavaScriptEnabled(true);
-        this.getSettings().setRenderPriority(RenderPriority.HIGH);
-        this.getSettings().setLoadsImagesAutomatically(true);
-        this.getSettings().setPluginState(PluginState.ON);
-        this.getSettings().setPluginState(PluginState.ON);
         this.loadDataWithBaseURL("fake://fake", videoHtml, "text/html", "UTF-8", null);
-
     }
 
     @Override
@@ -69,7 +62,6 @@ public class HtmlVideoView extends WebView implements ConversationContent {
         if (visibility != View.VISIBLE) {
             Log.i("HTMLVideoView", "Stopping the Video!");
             this.stopLoading();
-            this.freeMemory();
             // Load some blank data into the webview
             this.loadData("<p></p>", "text/html", "utf8");
         }
