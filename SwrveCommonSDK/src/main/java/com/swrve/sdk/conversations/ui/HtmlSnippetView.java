@@ -16,7 +16,6 @@ public class HtmlSnippetView extends WebView implements ConversationContent {
 
     protected void init(Content model) {
         this.model = model;
-        this.getSettings().setLoadsImagesAutomatically(true);
         this.loadDataWithBaseURL("fake://fake", model.getValue(), "text/html", "UTF-8", null);
     }
 
