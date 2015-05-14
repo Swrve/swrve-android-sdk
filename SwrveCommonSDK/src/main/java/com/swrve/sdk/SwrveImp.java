@@ -83,12 +83,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.0";
+    protected static String version = "4.0-ea";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
     protected static final String TEMPLATE_VERSION = "1";
+    protected static final int CONVERSATION_VERSION = 1;
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -103,6 +104,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_DEVICE_WIDTH = "swrve.device_width";
     protected static final String SWRVE_DEVICE_HEIGHT = "swrve.device_height";
     protected static final String SWRVE_DEVICE_DPI = "swrve.device_dpi";
+    protected static final String SWRVE_CONVERSATION_VERSION = "swrve.conversation_version";
     protected static final String SWRVE_ANDROID_DEVICE_XDPI = "swrve.android_device_xdpi";
     protected static final String SWRVE_ANDROID_DEVICE_YDPI = "swrve.android_device_ydpi";
     protected static final String SWRVE_LANGUAGE = "swrve.language";
@@ -684,6 +686,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (!json.has("version")) {
                 return;
             }
+
             // Version check
             String version = json.getString("version");
             if (!version.equals(TEMPLATE_VERSION)) {
@@ -787,31 +790,39 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 // Load campaign and get assets to be loaded
                 Set<String> campaignAssetsQueue = new HashSet<String>();
 
-                SwrveBaseCampaign campaign;
+                SwrveBaseCampaign campaign = null;
                 if (campaignData.has("conversation")) {
-                    campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
+                    int conversationVersion = json.optInt("conversation_version", 1);
+                    if (conversationVersion <= CONVERSATION_VERSION) {
+                        campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
+                    } else {
+                        Log.i(LOG_TAG, "Conversation version " + conversationVersion + " cannot be loaded with this SDK version");
+                    }
                 } else {
                     campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
                 }
-                assetsQueue.addAll(campaignAssetsQueue);
 
-                // Check if we need to reset the device for QA, otherwise load campaign settings into downloaded campaign
-                if (qaUser == null || !qaUser.isResetDevice()) {
-                    String campaignIdStr = Integer.toString(campaign.getId());
-                    if (jsonSettings.has(campaignIdStr)) {
-                        JSONObject campaignSettings = jsonSettings.getJSONObject(campaignIdStr);
-                        if (campaignSettings != null) {
-                            campaign.loadSettings(campaignSettings);
+                if (campaign != null) {
+                    assetsQueue.addAll(campaignAssetsQueue);
+
+                    // Check if we need to reset the device for QA, otherwise load campaign settings into downloaded campaign
+                    if (qaUser == null || !qaUser.isResetDevice()) {
+                        String campaignIdStr = Integer.toString(campaign.getId());
+                        if (jsonSettings.has(campaignIdStr)) {
+                            JSONObject campaignSettings = jsonSettings.getJSONObject(campaignIdStr);
+                            if (campaignSettings != null) {
+                                campaign.loadSettings(campaignSettings);
+                            }
                         }
                     }
-                }
 
-                newCampaigns.add(campaign);
-                Log.i(LOG_TAG, "Got campaign with id " + campaign.getId());
+                    newCampaigns.add(campaign);
+                    Log.i(LOG_TAG, "Got campaign with id " + campaign.getId());
 
-                if (qaUser != null) {
-                    // Add campaign for QA purposes
-                    campaignsDownloaded.put(campaign.getId(), null);
+                    if (qaUser != null) {
+                        // Add campaign for QA purposes
+                        campaignsDownloaded.put(campaign.getId(), null);
+                    }
                 }
             }
 
