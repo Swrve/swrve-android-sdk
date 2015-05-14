@@ -83,7 +83,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.1";
+    protected static String version = "4.0-ea";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
@@ -104,6 +104,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_DEVICE_WIDTH = "swrve.device_width";
     protected static final String SWRVE_DEVICE_HEIGHT = "swrve.device_height";
     protected static final String SWRVE_DEVICE_DPI = "swrve.device_dpi";
+    protected static final String SWRVE_CONVERSATION_VERSION = "swrve.conversation_version";
     protected static final String SWRVE_ANDROID_DEVICE_XDPI = "swrve.android_device_xdpi";
     protected static final String SWRVE_ANDROID_DEVICE_YDPI = "swrve.android_device_ydpi";
     protected static final String SWRVE_LANGUAGE = "swrve.language";
@@ -798,11 +799,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
                 SwrveBaseCampaign campaign = null;
                 if (campaignData.has("conversation")) {
-                    int campaignVersion = json.optInt("conversation_version", 1);
-                    if (campaignVersion <= CONVERSATION_VERSION) {
+                    int conversationVersion = json.optInt("conversation_version", 1);
+                    if (conversationVersion <= CONVERSATION_VERSION) {
                         campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
                     } else {
-                        Log.i(LOG_TAG, "Conversation version " + campaignVersion + " cannot be loaded with this SDK version");
+                        Log.i(LOG_TAG, "Conversation version " + conversationVersion + " cannot be loaded with this SDK version");
                     }
                 } else {
                     campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
