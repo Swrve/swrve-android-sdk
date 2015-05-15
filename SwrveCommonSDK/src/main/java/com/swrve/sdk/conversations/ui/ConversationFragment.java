@@ -5,7 +5,7 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -149,10 +149,16 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         activity.setTitle(page.getTitle());
-
-        initLayout(activity);
-        renderControls(activity);
-        renderContent(activity);
+        try{
+            initLayout(activity);
+            renderControls(activity);
+            renderContent(activity);
+        }catch (Exception e){
+            // Something has gone wrong rendering the conversation. Log the error event and bail out
+            sendErrorNavigationEvent(page.getTag(), e);
+            if(activity != null) { activity.finish();}
+            return;
+        }
 
         sendPageImpressionEvent(page.getTag());
         root.requestFocus();
@@ -183,11 +189,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
         if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(activity));
-            controlLayout.setBackgroundDrawable(page.getControlTrayBackgroundDrawable(activity));
+            contentLayout.setBackgroundDrawable(page.getBackground());
+            controlLayout.setBackgroundDrawable(page.getBackground());
         } else {
-            contentLayout.setBackground(page.getContentBackgroundDrawable(activity));
-            controlLayout.setBackground(page.getControlTrayBackgroundDrawable(activity));
+            contentLayout.setBackground(page.getBackground());
+            controlLayout.setBackground(page.getBackground());
         }
     }
 
