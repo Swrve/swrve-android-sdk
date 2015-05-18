@@ -1,12 +1,12 @@
 package com.swrve.sdk.conversations.engine.model;
 
 import android.content.Context;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 
 import com.google.gson.Gson;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.conversations.engine.GsonHelper;
+import com.swrve.sdk.conversations.engine.model.ConversationStyle.BackgroundStyle;
 
 import org.json.JSONObject;
 
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 public class ConversationPage implements Serializable {
     private String tag;
     private String title;
+    private SwrvePageStyle style;
 
     private ArrayList<ConversationAtom> content;
     private ArrayList<ConversationAtom> controls;
@@ -60,8 +61,15 @@ public class ConversationPage implements Serializable {
         return gson.fromJson(json, ConversationPage.class);
     }
 
-
     // Custom Colors and style paramaters
+    public Drawable getBackground(){
+        return getStyle().bg.getPrimaryDrawable();
+    }
+
+    public SwrvePageStyle getStyle(){
+        return this.style;
+    }
+
     public int getPrimaryButtonColor(Context c){
         return c.getResources().getColor(R.color.cio__control_primary_color);
     }
@@ -84,16 +92,11 @@ public class ConversationPage implements Serializable {
         return c.getResources().getColor(R.color.cio__control_neutral_text_color);
     }
 
-    public Drawable getContentBackgroundDrawable(Context c){
-        return new ColorDrawable(c.getResources().getColor(R.color.cio__control_content_background_color));
-    }
-
-    public Drawable getControlTrayBackgroundDrawable(Context c){
-        int colorInt = c.getResources().getColor(R.color.cio__control_tray_color);
-        return new ColorDrawable(colorInt);
-    }
-
     public static ConversationPage fromJson(JSONObject json) {
         return fromJSON(json.toString());
+    }
+
+    private class SwrvePageStyle implements Serializable{
+        private BackgroundStyle bg;
     }
 }
