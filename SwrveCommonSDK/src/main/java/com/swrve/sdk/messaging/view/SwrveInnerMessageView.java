@@ -214,11 +214,12 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                         customButtonListener.onAction(button.getAction());
                                     } else {
                                         Context ctxt = buttonView.getContext();
+                                        String buttonAction = button.getAction();
                                         // Parse action as an Uri
                                         try {
-                                            ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(button.getAction())));
+                                            ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
                                         } catch (Exception e) {
-                                            Log.e(LOG_TAG, "Couldn't launch default custom action.", e);
+                                            Log.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
                                         }
                                     }
                                 }
