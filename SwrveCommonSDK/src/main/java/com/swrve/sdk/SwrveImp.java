@@ -792,7 +792,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
                 SwrveBaseCampaign campaign = null;
                 if (campaignData.has("conversation")) {
-                    int conversationVersion = json.optInt("conversation_version", 1);
+                    int conversationVersion = campaignData.optInt("conversation_version", 1);
                     if (conversationVersion <= CONVERSATION_VERSION) {
                         campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
                     } else {
