@@ -10,8 +10,7 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
-import com.swrve.sdk.conversations.engine.model.ConversationAtom;
-import com.swrve.sdk.conversations.engine.model.styles.SwrveAtomStyle;
+import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 
 public class ConversationButton extends android.widget.Button implements ConversationControl {
     private ButtonControl model;
@@ -26,7 +25,7 @@ public class ConversationButton extends android.widget.Button implements Convers
             setText(model.getDescription());
         }
 
-        SwrveAtomStyle style = model.getStyle();
+        AtomStyle style = model.getStyle();
 
         textColor = style.getTextColorInt();
         setTextColor(textColor);

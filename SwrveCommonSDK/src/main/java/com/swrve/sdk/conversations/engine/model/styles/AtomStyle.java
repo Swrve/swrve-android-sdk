@@ -3,18 +3,18 @@ package com.swrve.sdk.conversations.engine.model.styles;
 import android.graphics.Color;
 
 import java.io.Serializable;
-public class SwrveAtomStyle implements Serializable {
+public class AtomStyle implements Serializable {
     public static final String TYPE_OUTLINE = "outline", TYPE_SOLID = "solid";
 
     public String type;
     private BackgroundStyle bg;
     private ForegroundStyle fg;
 
-    public SwrveAtomStyle(){
+    public AtomStyle(){
 
     }
 
-    public SwrveAtomStyle(BackgroundStyle bg, ForegroundStyle fg){
+    public AtomStyle(BackgroundStyle bg, ForegroundStyle fg){
         this.bg = bg;
         this.fg = fg;
     }
