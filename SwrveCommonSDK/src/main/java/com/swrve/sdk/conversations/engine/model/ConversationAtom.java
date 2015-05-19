@@ -1,5 +1,8 @@
 package com.swrve.sdk.conversations.engine.model;
 
+
+import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
+
 import java.io.Serializable;
 
 public abstract class ConversationAtom implements Serializable {
@@ -15,14 +18,13 @@ public abstract class ConversationAtom implements Serializable {
 
     protected String tag;
     protected String type;
-    protected String target;
+    protected AtomStyle style;
 
-    public static ConversationAtom create(String tag, String type, String target) {
+
+    public static ConversationAtom create(String tag, String type) {
         BareConversationAtom bca = new BareConversationAtom();
         bca.tag = tag;
         bca.type = type;
-        bca.target = target;
-
         return bca;
     }
 
@@ -30,8 +32,8 @@ public abstract class ConversationAtom implements Serializable {
         return tag;
     }
 
-    public String getTarget() {
-        return target;
+    public AtomStyle getStyle(){
+        return this.style;
     }
 
     public String getType() {
