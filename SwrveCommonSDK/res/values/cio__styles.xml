@@ -8,19 +8,6 @@
         <item name="android:minHeight">50dp</item>
     </style>
 
-
-    <style name="cio__secondary_button" parent="@style/cio__control_button">
-
-    </style>
-
-    <style name="cio__primary_button" parent="@style/cio__control_button">
-
-    </style>
-
-    <style name="cio__neutral_button" parent="@style/cio__control_button">
-
-    </style>
-
     <style name="cio__button_tray">
 
     </style>

@@ -1,4 +1,4 @@
-package com.swrve.sdk.conversations.engine.model;
+package com.swrve.sdk.conversations.engine.model.styles;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -13,6 +13,11 @@ public class ConversationStyle implements Serializable {
 
     public ConversationStyle(){ }
 
+    public ConversationStyle(String type, String value){
+        this.type = type;
+        this.value = value;
+    }
+
     public Drawable getPrimaryDrawable(){
         if (this.isTypeColor()){
             return new ColorDrawable(Color.parseColor(this.value));
@@ -26,25 +31,28 @@ public class ConversationStyle implements Serializable {
         }
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+
     public boolean isTypeColor(){
         return TYPE_COLOR.equalsIgnoreCase(this.type);
     }
 
     public boolean isTypeTransparent(){
         return TYPE_TRANSPARENT.equalsIgnoreCase(this.type);
-    }
-
-    public class ForegroundStyle extends ConversationStyle {
-
-    }
-
-    public class BackgroundStyle extends ConversationStyle {
-
-    }
-
-    public class UnrecognizedSwrveStyleException extends Exception {
-        public UnrecognizedSwrveStyleException(String message) {
-            super(message);
-        }
     }
 }

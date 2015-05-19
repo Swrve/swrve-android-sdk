@@ -31,7 +31,6 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
 
             String caType = obj.get("type").getAsString();
             String caTag = (obj.has("tag") ? obj.get("tag").getAsString() : null);
-            String caTarget = (obj.has("target") ? obj.get("target").getAsString() : null);
 
             if (caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_AUDIO)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)
@@ -49,7 +48,7 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
                 //All else has failed? just return a plain Atom, *shrug*
                 //We should end up with types for everything, but this will probably get used a lot during initial dev
 
-                return ConversationAtom.create(caTag, caType, caTarget);
+                return ConversationAtom.create(caTag, caType);
             }
         } else {
             //If it's not an object type, somethings gone wrong

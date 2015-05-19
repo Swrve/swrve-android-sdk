@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -149,14 +148,16 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         activity.setTitle(page.getTitle());
-        try{
+        try {
             initLayout(activity);
             renderControls(activity);
             renderContent(activity);
-        }catch (Exception e){
+        } catch (Exception e) {
             // Something has gone wrong rendering the conversation. Log the error event and bail out
             sendErrorNavigationEvent(page.getTag(), e);
-            if(activity != null) { activity.finish();}
+            if (activity != null) {
+                activity.finish();
+            }
             return;
         }
 
@@ -188,7 +189,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
-        if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+        if (getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
             contentLayout.setBackgroundDrawable(page.getBackground());
             controlLayout.setBackgroundDrawable(page.getBackground());
         } else {
@@ -198,86 +199,28 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     private void renderControls(Activity activity) {
-        int primaryButtonColor = page.getPrimaryButtonColor(activity);
-        int primaryButtonTextColor = page.getPrimaryButtonTextColor(activity);
-        int secondaryButtonColor = page.getSecondaryButtonColor(activity);
-        int secondaryButtonTextColor = page.getSecondaryButtonTextColor(activity);
-        int neutralButtonColor = page.getNeutralButtonColor(activity);
-        int neutralButtonTextColor = page.getNeutralButtonTextColor(activity);
-
-        TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
+        TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[]{R.attr.conversationControlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
 
         int numControls = page.getControls().size();
         for (int i = 0; i < numControls; i++) {
-            ConversationAtom atom = page.getControls().get(i);
-
-            boolean isFirst = (i == 0);
-            boolean isLast = (i == numControls - 1);
-
-            if (atom instanceof ButtonControl) {
-                // There are times when the layout or styles will need to change based on the number of controls.
-                // EG if there is one button, make it green. If there are 2 buttons, make the first red, and the second green
-
-                ButtonControl ctrl = (ButtonControl) atom;
-                ConversationButton ctrlConversationButton = null;
-
-                if (isFirst) {
-                    if (numControls == 1) {
-                        // Button should be green
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
-                    } else if (numControls == 2) {
-                        // Button should be red
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
-                    } else if (numControls > 2) {
-                        // Button should be red
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
-                    }
-                } else if (!isFirst && !isLast) {
-                    // Button should be gray
-                    ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlNeutralButtonStyle);
-                    ctrlConversationButton.setConversationButtonColor(neutralButtonColor);
-                    ctrlConversationButton.setConversationButtonTextColor(neutralButtonTextColor);
-                    // If it is not the first button but is also not the last IE it is in the middle
-                } else if (isLast) {
-                    if (numControls == 2) {
-                        // Should be green
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
-                    } else if (numControls > 2) {
-                        // Should be green
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
-                    }
-                    // End Button
-                }
-                // All buttons curved by default on Android.
-                ctrlConversationButton.setCurved();
-
-                LayoutParams buttonLP;
-                if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                    buttonLP = new LayoutParams(controlLp);
-                } else {
-                    buttonLP = new LayoutParams(controlLp.width, controlLp.height);
-                }
-                buttonLP.weight = 1;
-                buttonLP.leftMargin = (isFirst ? controlLayoutMarginInPixels : controlLayoutMarginInPixels / 2);
-                buttonLP.rightMargin = (isLast ? controlLayoutMarginInPixels : controlLayoutMarginInPixels / 2);
-                buttonLP.topMargin = controlLayoutMarginInPixels;
-                buttonLP.bottomMargin = controlLayoutMarginInPixels;
-
-                ctrlConversationButton.setLayoutParams(buttonLP);
-                controlLayout.addView(ctrlConversationButton);
-                ctrlConversationButton.setOnClickListener(this);
+            ButtonControl ctrl = page.getControls().get(i);
+            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle);
+            LayoutParams buttonLP;
+            if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+                buttonLP = new LayoutParams(controlLp);
+            } else {
+                buttonLP = new LayoutParams(controlLp.width, controlLp.height);
             }
+            buttonLP.weight = 1;
+            buttonLP.leftMargin = controlLayoutMarginInPixels;
+            buttonLP.rightMargin = controlLayoutMarginInPixels;
+            buttonLP.topMargin = controlLayoutMarginInPixels;
+            buttonLP.bottomMargin = controlLayoutMarginInPixels;
+
+            ctrlConversationButton.setLayoutParams(buttonLP);
+            controlLayout.addView(ctrlConversationButton);
+            ctrlConversationButton.setOnClickListener(this);
         }
     }
 
@@ -519,8 +462,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         if (nextPage != null) {
             sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
             openConversationOnPage(nextPage);
-        }
-        else if (control.hasActions()) {
+        } else if (control.hasActions()) {
             Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag());
             Activity activity = getActivity();
