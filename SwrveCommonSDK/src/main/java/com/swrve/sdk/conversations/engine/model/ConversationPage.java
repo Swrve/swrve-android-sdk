@@ -70,28 +70,6 @@ public class ConversationPage implements Serializable {
         return this.style;
     }
 
-    public int getPrimaryButtonColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_primary_color);
-    }
-
-    public int getPrimaryButtonTextColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_primary_text_color);
-    }
-
-    public int getSecondaryButtonColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_secondary_color);
-    }
-    public int getSecondaryButtonTextColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_secondary_text_color);
-    }
-
-    public int getNeutralButtonColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_neutral_color);
-    }
-    public int getNeutralButtonTextColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_neutral_text_color);
-    }
-
     public static ConversationPage fromJson(JSONObject json) {
         return fromJSON(json.toString());
     }
