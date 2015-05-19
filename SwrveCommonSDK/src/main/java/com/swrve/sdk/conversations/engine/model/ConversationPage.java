@@ -6,7 +6,7 @@ import android.graphics.drawable.Drawable;
 import com.google.gson.Gson;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.conversations.engine.GsonHelper;
-import com.swrve.sdk.conversations.engine.model.ConversationStyle.BackgroundStyle;
+import com.swrve.sdk.conversations.engine.model.styles.PageStyle;
 
 import org.json.JSONObject;
 
@@ -16,10 +16,10 @@ import java.util.ArrayList;
 public class ConversationPage implements Serializable {
     private String tag;
     private String title;
-    private SwrvePageStyle style;
+    private PageStyle style;
 
     private ArrayList<ConversationAtom> content;
-    private ArrayList<ConversationAtom> controls;
+    private ArrayList<ButtonControl> controls;
 
     public String getTag() {
         return tag;
@@ -49,9 +49,9 @@ public class ConversationPage implements Serializable {
         this.content = content;
     }
 
-    public ArrayList<ConversationAtom> getControls() {
+    public ArrayList<ButtonControl> getControls() {
         if (controls == null) {
-            controls = new ArrayList<ConversationAtom>();
+            controls = new ArrayList<ButtonControl>();
         }
         return controls;
     }
@@ -63,10 +63,10 @@ public class ConversationPage implements Serializable {
 
     // Custom Colors and style paramaters
     public Drawable getBackground(){
-        return getStyle().bg.getPrimaryDrawable();
+        return getStyle().getBg().getPrimaryDrawable();
     }
 
-    public SwrvePageStyle getStyle(){
+    public PageStyle getStyle(){
         return this.style;
     }
 
@@ -96,7 +96,4 @@ public class ConversationPage implements Serializable {
         return fromJSON(json.toString());
     }
 
-    private class SwrvePageStyle implements Serializable{
-        private BackgroundStyle bg;
-    }
 }

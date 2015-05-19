@@ -1,5 +1,12 @@
 package com.swrve.sdk.conversations.engine.model;
 
+import android.graphics.Color;
+
+
+import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ForegroundStyle;
+import com.swrve.sdk.conversations.engine.model.styles.SwrveAtomStyle;
+
 import java.io.Serializable;
 
 public abstract class ConversationAtom implements Serializable {
@@ -15,14 +22,13 @@ public abstract class ConversationAtom implements Serializable {
 
     protected String tag;
     protected String type;
-    protected String target;
+    protected SwrveAtomStyle style;
 
-    public static ConversationAtom create(String tag, String type, String target) {
+
+    public static ConversationAtom create(String tag, String type) {
         BareConversationAtom bca = new BareConversationAtom();
         bca.tag = tag;
         bca.type = type;
-        bca.target = target;
-
         return bca;
     }
 
@@ -30,8 +36,8 @@ public abstract class ConversationAtom implements Serializable {
         return tag;
     }
 
-    public String getTarget() {
-        return target;
+    public SwrveAtomStyle getStyle(){
+        return this.style;
     }
 
     public String getType() {

@@ -9,12 +9,7 @@
         <item name="conversationControlTrayStyle">@style/cio__button_tray</item>
         <item name="conversationControlTrayTopMargin">@dimen/control_tray_top_margin</item>
         <item name="conversationControlLayoutMargin">@dimen/control_tray_item_margin</item>
-
         <item name="conversationControlButtonStyle">@style/cio__control_button</item>
-        <item name="conversationControlPrimaryButtonStyle">@style/cio__primary_button</item>
-        <item name="conversationControlSecondaryButtonStyle">@style/cio__secondary_button</item>
-        <item name="conversationControlNeutralButtonStyle">@style/cio__neutral_button</item>
-
         <item name="conversationContentStyle">@style/cio__conversation_content_box</item>
         <item name="conversationContentDescriptionStyle">@style/cio__description_item</item>
 
