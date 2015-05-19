@@ -236,7 +236,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
-                    iv.setPadding(12, 12, 12, 12);
+                    iv.setPadding(0, 12, 0, 12);
                     contentLayout.addView(iv);
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     LayoutParams tvLP;
