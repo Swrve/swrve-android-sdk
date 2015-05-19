@@ -2,10 +2,12 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 
@@ -29,13 +31,16 @@ public class ConversationButton extends android.widget.Button implements Convers
 
         textColor = style.getTextColorInt();
         setTextColor(textColor);
+        int bgColorInt = style.getBgColorInt();
 
         if (style.isSolidStyle()) {
             GradientDrawable gradientDrawable = new GradientDrawable();
-            gradientDrawable.setColor(style.getBgColorInt());
+            gradientDrawable.setColor(bgColorInt);
             gradientDrawable.setCornerRadius(10.0f);
             backgroundDrawable = gradientDrawable;
         } else if (style.isOutlineStyle()) {
+
+            // Border
             borderColor = style.getTextColorInt();
             float outer = 10.0f;
             float inner = 5.0f;
@@ -48,7 +53,18 @@ public class ConversationButton extends android.widget.Button implements Convers
             paint.setColor(borderColor);
             paint.setStyle(Paint.Style.FILL);
             paint.setStrokeWidth(6);
-            backgroundDrawable = rectShapeDrawable;
+
+            // Fill
+            GradientDrawable gradientDrawable = new GradientDrawable();
+            gradientDrawable.setColor(bgColorInt);
+            gradientDrawable.setCornerRadius(outer);
+
+
+            Drawable[] drawables = new Drawable[2];
+            drawables[1] = rectShapeDrawable;
+            drawables[0] = gradientDrawable;
+            LayerDrawable layerDrawable = new LayerDrawable(drawables);
+            backgroundDrawable = layerDrawable;
         } else {
             backgroundDrawable = null;
             // Return null. We want the activity to not be renderable since its an older version of conversations
