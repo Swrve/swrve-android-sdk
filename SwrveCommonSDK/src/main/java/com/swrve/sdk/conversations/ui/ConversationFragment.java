@@ -113,9 +113,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 } else if (userInput.isMultiChoice() && inputView instanceof MultiValueLongInputControl) {
                     MultiValueLongInputControl inputControl = (MultiValueLongInputControl) inputView;
                     inputControl.setUserInput(userInput);
-                } else if (userInput.isTextInput() && inputView instanceof EditTextControl) {
-                    EditTextControl inputControl = (EditTextControl) inputView;
-                    inputControl.setUserInput(userInput);
                 }
             }
         } else {
@@ -312,29 +309,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     contentLayout.addView(tv);
                 }
             } else if (content instanceof InputBase) {
-                if (content instanceof TextInput) {
-                    // Do stuff for text
-                    TextInput inputModel = (TextInput) content;
-
-                    EditTextControl etc = (EditTextControl) getLayoutInflater(null).inflate(R.layout.cio__edittext_input, contentLayout, false);
-                    etc.setTag(content.getTag());
-                    etc.setModel(inputModel);
-
-                    // Store the result of the content for processing later
-                    final EditTextControl etcReference = etc;
-                    final String tag = content.getTag();
-                    etc.setOnContentChangedListener(new OnContentChangedListener() {
-                        @Override
-                        public void onContentChanged() {
-                            HashMap<String, Object> result = new HashMap<String, Object>();
-                            etcReference.onReplyDataRequired(result);
-                            stashEditTextControlInputData(page.getTag(), tag, result);
-                        }
-                    });
-
-                    contentLayout.addView(etc);
-                    inputs.add(etc);
-                } else if (content instanceof MultiValueInput) {
+                if (content instanceof MultiValueInput) {
                     MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
                     LayoutParams lp;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
@@ -624,20 +599,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.result = data.get(k);
             String userInteractionKey = key + "-" + userChoice.getQuestionID(); // Important to note, using fragment and page is not enough to store this input. It needs a unique identifier such as the question ID or something specific since it goes 1 level down further than other inputs
             userInteractionData.put(userInteractionKey, result);
-        }
-    }
-
-    private void stashEditTextControlInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
-        String key = pageTag + "-" + fragmentTag;
-        String type = UserInputResult.TYPE_TEXT;
-        for (String k : data.keySet()) {
-            UserInputResult result = new UserInputResult();
-            result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
-            result.fragmentTag = fragmentTag;
-            result.pageTag = pageTag;
-            result.result = data.get(k);
-            userInteractionData.put(key, result);
         }
     }
 }
