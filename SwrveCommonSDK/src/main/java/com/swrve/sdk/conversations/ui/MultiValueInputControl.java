@@ -77,6 +77,10 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         return control;
     }
 
+    public void setTextColor(int colorInt){
+        descLbl.setTextColor(colorInt);
+    }
+
     public void setUserInput(UserInputResult userInput){
         ChoiceInputResponse choice = (ChoiceInputResponse) userInput.getResult();
         for(RadioButton rb : radioButtons){

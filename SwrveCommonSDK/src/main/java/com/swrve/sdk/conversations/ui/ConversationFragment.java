@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,11 +42,13 @@ import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.TextInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
+import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
+import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ForegroundStyle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@SuppressLint("NewApi")
 public class ConversationFragment extends Fragment implements OnClickListener {
     private static final String LOG_TAG = "ConversationFragment";
 
@@ -168,7 +172,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     protected int getSDKBuildVersion() {
         return android.os.Build.VERSION.SDK_INT;
     }
-
+    @SuppressLint("NewApi")
     private void initLayout(Activity activity) {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
@@ -198,6 +202,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
+    @SuppressLint("NewApi")
     private void renderControls(Activity activity) {
         TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[]{R.attr.conversationControlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
@@ -224,8 +229,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
+    @SuppressLint("NewApi")
     private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
+            AtomStyle atomStyle = content.getStyle();
+            BackgroundStyle atomBg = atomStyle.getBg();
+            ForegroundStyle atomFg = atomStyle.getFg();
+
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
                 if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
@@ -237,6 +247,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
                     iv.setPadding(0, 12, 0, 12);
+                    iv.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     LayoutParams tvLP;
@@ -249,10 +260,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.width = LayoutParams.MATCH_PARENT;
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
+
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
+                    view.setBackgroundColor(0); // Transparent
+                    view.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                     LayoutParams tvLP;
@@ -266,7 +279,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                     HtmlVideoView view = new HtmlVideoView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0);
+                    view.setBackgroundColor(0); // Transparent
+                    view.setBackground(atomBg.getPrimaryDrawable());
                     view.setLayoutParams(tvLP);
 
                     // Let the eventListener know that something has happened to the video
@@ -291,6 +305,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         tvLP = new LayoutParams(controlLp.width, controlLp.height);
                     }
                     tv.setLayoutParams(tvLP);
+                    tv.setBackground(atomBg.getPrimaryDrawable());
+                    int textColor = atomStyle.getTextColorInt();
+                    tv.setTextColor(textColor);
 
                     contentLayout.addView(tv);
                 }
@@ -341,8 +358,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashMultiChoiceInputData(page.getTag(), tag, result);
                         }
                     });
+                    input.setBackground(atomBg.getPrimaryDrawable());
+                    mvicReference.setTextColor(atomStyle.getTextColorInt());
 
                     contentLayout.addView(input);
+
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
                     MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
@@ -367,6 +387,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     input.setTag(content.getTag());
+                    input.setBackground(atomBg.getPrimaryDrawable());
+                    input.setHeaderTextColors(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
                 }
