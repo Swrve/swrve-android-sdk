@@ -792,18 +792,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 // Load campaign and get assets to be loaded
                 Set<String> campaignAssetsQueue = new HashSet<String>();
 
-                // Check requirements (permission requests, platform)
-                boolean hasAllRequirements = true;
-                String lastCheckedRequirement = null;
-                if (campaignData.has("required")) {
-                    JSONArray requirements = campaignData.getJSONArray("required");
-                    for (int ri = 0; ri < requirements.length() && hasAllRequirements; ri++) {
-                        lastCheckedRequirement = requirements.getString(ri);
-                        hasAllRequirements = supportsRequirement(lastCheckedRequirement);
+                // Check filters (permission requests, platform)
+                boolean passesAllFilters = true;
+                String lastCheckedFilter = null;
+                if (campaignData.has("filters")) {
+                    JSONArray filters = campaignData.getJSONArray("filters");
+                    for (int ri = 0; ri < filters.length() && passesAllFilters; ri++) {
+                        lastCheckedFilter = filters.getString(ri);
+                        passesAllFilters = supportsDeviceFilter(lastCheckedFilter);
                     }
                 }
 
-                if (hasAllRequirements) {
+                if (passesAllFilters) {
                     SwrveBaseCampaign campaign = null;
                     if (campaignData.has("conversation")) {
                         int conversationVersion = campaignData.optInt("conversation_version", 1);
@@ -839,7 +839,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         }
                     }
                 } else {
-                    Log.i(LOG_TAG, "Not all requirements were satisfied for this campaign: " + lastCheckedRequirement);
+                    Log.i(LOG_TAG, "Not all requirements were satisfied for this campaign: " + lastCheckedFilter);
                 }
             }
 
@@ -859,7 +859,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    private boolean supportsRequirement(String requirement) {
+    private boolean supportsDeviceFilter(String requirement) {
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase());
     }
 
