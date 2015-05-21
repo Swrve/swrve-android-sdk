@@ -31,14 +31,15 @@ public class ConversationButton extends android.widget.Button implements Convers
 
         textColor = style.getTextColorInt();
         setTextColor(textColor);
-        int bgColorInt = style.getBgColorInt();
 
         if (style.isSolidStyle()) {
+            int bgColorInt = style.getBgColorInt();
             GradientDrawable gradientDrawable = new GradientDrawable();
             gradientDrawable.setColor(bgColorInt);
             gradientDrawable.setCornerRadius(10.0f);
             backgroundDrawable = gradientDrawable;
         } else if (style.isOutlineStyle()) {
+            int bgColorInt = style.getBgColorInt();
 
             // Border
             borderColor = style.getTextColorInt();
