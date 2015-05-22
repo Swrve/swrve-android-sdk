@@ -31,23 +31,19 @@ public class ConversationButton extends android.widget.Button implements Convers
 
         textColor = style.getTextColorInt();
         setTextColor(textColor);
-        int bgColorInt = style.getBgColorInt();
 
         if (style.isSolidStyle()) {
+            int bgColorInt = style.getBgColorInt();
             GradientDrawable gradientDrawable = new GradientDrawable();
             gradientDrawable.setColor(bgColorInt);
-            gradientDrawable.setCornerRadius(10.0f);
             backgroundDrawable = gradientDrawable;
         } else if (style.isOutlineStyle()) {
+            int bgColorInt = style.getBgColorInt();
 
             // Border
             borderColor = style.getTextColorInt();
-            float outer = 10.0f;
-            float inner = 5.0f;
-            float[] outerR = new float[]{outer, outer, outer, outer, outer, outer, outer, outer};
-            float[] innerR = new float[]{inner, inner, inner, inner, inner, inner, inner, inner};
             RectF inset = new RectF(6, 6, 6, 6);
-            RoundRectShape rr = new RoundRectShape(outerR, inset, innerR);
+            RoundRectShape rr = new RoundRectShape(null, inset, null);
             ShapeDrawable rectShapeDrawable = new ShapeDrawable(rr);
             Paint paint = rectShapeDrawable.getPaint();
             paint.setColor(borderColor);
@@ -57,8 +53,6 @@ public class ConversationButton extends android.widget.Button implements Convers
             // Fill
             GradientDrawable gradientDrawable = new GradientDrawable();
             gradientDrawable.setColor(bgColorInt);
-            gradientDrawable.setCornerRadius(outer);
-
 
             Drawable[] drawables = new Drawable[2];
             drawables[1] = rectShapeDrawable;
