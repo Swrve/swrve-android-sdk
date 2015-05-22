@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,11 +42,13 @@ import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.TextInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
+import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
+import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ForegroundStyle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@SuppressLint("NewApi")
 public class ConversationFragment extends Fragment implements OnClickListener {
     private static final String LOG_TAG = "ConversationFragment";
 
@@ -109,9 +113,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 } else if (userInput.isMultiChoice() && inputView instanceof MultiValueLongInputControl) {
                     MultiValueLongInputControl inputControl = (MultiValueLongInputControl) inputView;
                     inputControl.setUserInput(userInput);
-                } else if (userInput.isTextInput() && inputView instanceof EditTextControl) {
-                    EditTextControl inputControl = (EditTextControl) inputView;
-                    inputControl.setUserInput(userInput);
                 }
             }
         } else {
@@ -168,7 +169,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     protected int getSDKBuildVersion() {
         return android.os.Build.VERSION.SDK_INT;
     }
-
+    @SuppressLint("NewApi")
     private void initLayout(Activity activity) {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
@@ -198,6 +199,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
+    @SuppressLint("NewApi")
     private void renderControls(Activity activity) {
         TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[]{R.attr.conversationControlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
@@ -224,8 +226,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
+    @SuppressLint("NewApi")
     private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
+            AtomStyle atomStyle = content.getStyle();
+            BackgroundStyle atomBg = atomStyle.getBg();
+            ForegroundStyle atomFg = atomStyle.getFg();
+
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
                 if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
@@ -236,7 +243,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
-                    iv.setPadding(12, 12, 12, 12);
+                    iv.setPadding(0, 12, 0, 12);
+                    iv.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     LayoutParams tvLP;
@@ -249,10 +257,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.width = LayoutParams.MATCH_PARENT;
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
+
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0);
                     view.setLayoutParams(tvLP);
+                    view.setBackgroundColor(0); // Transparent
+                    view.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                     LayoutParams tvLP;
@@ -266,7 +276,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                     HtmlVideoView view = new HtmlVideoView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0);
+                    view.setBackgroundColor(0); // Transparent
+                    view.setBackground(atomBg.getPrimaryDrawable());
                     view.setLayoutParams(tvLP);
 
                     // Let the eventListener know that something has happened to the video
@@ -291,33 +302,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         tvLP = new LayoutParams(controlLp.width, controlLp.height);
                     }
                     tv.setLayoutParams(tvLP);
+                    tv.setBackground(atomBg.getPrimaryDrawable());
+                    int textColor = atomStyle.getTextColorInt();
+                    tv.setTextColor(textColor);
 
                     contentLayout.addView(tv);
                 }
             } else if (content instanceof InputBase) {
-                if (content instanceof TextInput) {
-                    // Do stuff for text
-                    TextInput inputModel = (TextInput) content;
-
-                    EditTextControl etc = (EditTextControl) getLayoutInflater(null).inflate(R.layout.cio__edittext_input, contentLayout, false);
-                    etc.setTag(content.getTag());
-                    etc.setModel(inputModel);
-
-                    // Store the result of the content for processing later
-                    final EditTextControl etcReference = etc;
-                    final String tag = content.getTag();
-                    etc.setOnContentChangedListener(new OnContentChangedListener() {
-                        @Override
-                        public void onContentChanged() {
-                            HashMap<String, Object> result = new HashMap<String, Object>();
-                            etcReference.onReplyDataRequired(result);
-                            stashEditTextControlInputData(page.getTag(), tag, result);
-                        }
-                    });
-
-                    contentLayout.addView(etc);
-                    inputs.add(etc);
-                } else if (content instanceof MultiValueInput) {
+                if (content instanceof MultiValueInput) {
                     MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
                     LayoutParams lp;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
@@ -341,8 +333,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashMultiChoiceInputData(page.getTag(), tag, result);
                         }
                     });
+                    input.setBackground(atomBg.getPrimaryDrawable());
+                    mvicReference.setTextColor(atomStyle.getTextColorInt());
 
                     contentLayout.addView(input);
+
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
                     MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
@@ -367,6 +362,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     input.setTag(content.getTag());
+                    input.setBackground(atomBg.getPrimaryDrawable());
+                    input.setHeaderTextColors(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
                 }
@@ -602,20 +599,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.result = data.get(k);
             String userInteractionKey = key + "-" + userChoice.getQuestionID(); // Important to note, using fragment and page is not enough to store this input. It needs a unique identifier such as the question ID or something specific since it goes 1 level down further than other inputs
             userInteractionData.put(userInteractionKey, result);
-        }
-    }
-
-    private void stashEditTextControlInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
-        String key = pageTag + "-" + fragmentTag;
-        String type = UserInputResult.TYPE_TEXT;
-        for (String k : data.keySet()) {
-            UserInputResult result = new UserInputResult();
-            result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
-            result.fragmentTag = fragmentTag;
-            result.pageTag = pageTag;
-            result.result = data.get(k);
-            userInteractionData.put(key, result);
         }
     }
 }

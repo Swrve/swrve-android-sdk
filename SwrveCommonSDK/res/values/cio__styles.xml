@@ -23,11 +23,6 @@
 
     <style name="cio__content_textview" parent="@android:style/Widget.TextView">
         <item name="android:padding">10dp</item>
-        <item name="android:shadowColor">#FFFFFF</item>
-        <item name="android:shadowDx">0</item>
-        <item name="android:shadowDy">1</item>
-        <item name="android:shadowRadius">1</item>
-        <item name="android:textColor">#FF333333</item>
     </style>
 
     <style name="cio__content_bold_textview" parent="@style/cio__content_textview">
