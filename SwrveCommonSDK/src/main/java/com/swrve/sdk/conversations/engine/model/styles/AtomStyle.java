@@ -36,8 +36,12 @@ public class AtomStyle implements Serializable {
     }
 
     public int getBgColorInt() {
-        String colorHex = getBg().getValue();
-        return Color.parseColor(colorHex);
+        if (getBg().isTypeColor()){
+            String colorHex = getBg().getValue();
+            return Color.parseColor(colorHex);
+        }else{
+            return Color.TRANSPARENT;
+        }
     }
 
     public int getTextColorInt() {
