@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,7 +38,6 @@ import com.swrve.sdk.conversations.engine.model.InputBase;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
-import com.swrve.sdk.conversations.engine.model.TextInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
@@ -50,7 +47,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ConversationFragment extends Fragment implements OnClickListener {
-    private static final String LOG_TAG = "ConversationFragment";
+    private static final String LOG_TAG = "SwrveSDK";
 
     private ViewGroup root;
     private LinearLayout contentLayout;
@@ -154,7 +151,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             renderControls(activity);
             renderContent(activity);
         } catch (Exception e) {
-            // Something has gone wrong rendering the conversation. Log the error event and bail out
+            Log.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
             sendErrorNavigationEvent(page.getTag(), e);
             if (activity != null) {
                 activity.finish();
@@ -169,6 +166,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     protected int getSDKBuildVersion() {
         return android.os.Build.VERSION.SDK_INT;
     }
+
     @SuppressLint("NewApi")
     private void initLayout(Activity activity) {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
@@ -395,12 +393,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 ConversationButton convButton = (ConversationButton) v;
                 ButtonControl model = convButton.getModel();
                 if (((ConversationControl) v).getModel().hasActions()) {
-                    ActionBehaviours behaviours = new ActionBehaviours(activity, activity.getApplicationContext());
                     ControlActions actions = ((ConversationControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
                         sendCallActionEvent(page.getTag(), model);
-                        behaviours.openDialer(actions.getCallUri(), activity);
+                        ActionBehaviours.openDialer(actions.getCallUri(), activity);
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
                         String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
@@ -409,13 +406,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
                         sendReply(model, reply);
                         sendLinkActionEvent(page.getTag(), model);
-                        behaviours.openIntentWebView(uri, activity, referrer);
+                        ActionBehaviours.openIntentWebView(uri, activity, referrer);
                     } else if (actions.isDeepLink()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
                         String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
                         Uri uri = Uri.parse(urlStr);
                         sendDeepLinkActionEvent(page.getTag(), model);
-                        behaviours.openDeepLink(uri, activity);
+                        ActionBehaviours.openDeepLink(uri, activity);
                     }
                 } else {
                     // There are no actions associated with Button. Send a normal reply

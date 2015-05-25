@@ -12,7 +12,7 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
-    private static final String LOG_TAG = "ConversationActivity";
+    private static final String LOG_TAG = "SwrveSDK";
     private SwrveConversation localConversation;
     private ConversationFragment conversationFragment;
 
@@ -32,11 +32,11 @@ public class ConversationActivity extends FragmentActivity {
                 conversationFragment = ConversationFragment.create(localConversation);
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
             } else {
-                Log.e("ConversationActivity", "Could not render ConversationActivity. No SwrveConversation was detected");
+                Log.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
                 this.finish();
             }
         } catch (Exception ge) {
-            Log.e("ConversationActivity", "Could not render ConversationActivity.", ge);
+            Log.e(LOG_TAG, "Could not render ConversationActivity.", ge);
             this.finish();
         }
     }

@@ -10,6 +10,7 @@ import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 
 public class HtmlVideoView extends WebView implements ConversationContent {
+    private static final String LOG_TAG = "SwrveSDK";
     public static final String PLAYER_VIDEO_VIMEO = "vimeo";
     public static final String PLAYER_VIDEO_YOUTUBE = "youtube";
     private String url;
@@ -60,7 +61,7 @@ public class HtmlVideoView extends WebView implements ConversationContent {
     @Override
     protected void onWindowVisibilityChanged(int visibility) {
         if (visibility != View.VISIBLE) {
-            Log.i("HTMLVideoView", "Stopping the Video!");
+            Log.i(LOG_TAG, "Stopping the Video!");
             this.stopLoading();
             // Load some blank data into the webview
             this.loadData("<p></p>", "text/html", "utf8");
