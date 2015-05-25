@@ -3,6 +3,7 @@
     android:layout_width="@dimen/cio__conversation_fragment_width"
     android:layout_height="@dimen/cio__conversation_fragment_height"
     android:layout_gravity="center"
+    android:layout_marginBottom="?conversationControlTrayTopMargin"
     android:orientation="vertical">
 
     <ScrollView
