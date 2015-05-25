@@ -12,7 +12,6 @@ public abstract class ConversationAtom implements Serializable {
     public static final String TYPE_CONTENT_VIDEO = "video";
     public static final String TYPE_CONTENT_AUDIO = "audio";
 
-    public static final String TYPE_INPUT_TEXTINPUT = "text-input";
     public static final String TYPE_INPUT_MULTIVALUE = "multi-value-input";
     public static final String TYPE_INPUT_MULTIVALUELONG = "multi-value-long-input";
 
