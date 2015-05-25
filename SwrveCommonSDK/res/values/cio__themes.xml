@@ -11,6 +11,7 @@
         <item name="conversationControlLayoutMargin">@dimen/control_tray_item_margin</item>
         <item name="conversationControlButtonStyle">@style/cio__control_button</item>
         <item name="conversationContentStyle">@style/cio__conversation_content_box</item>
+        <item name="conversationContentTrayBottomMargin">@dimen/content_tray_bottom_margin</item>
         <item name="conversationContentDescriptionStyle">@style/cio__description_item</item>
 
         <item name="conversationInputTextBoxDefaultStyle">@style/cio__edit_box</item>
