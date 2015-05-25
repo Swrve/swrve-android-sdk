@@ -3,7 +3,9 @@ package com.swrve.sdk.conversations.ui;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import com.swrve.sdk.conversations.engine.model.Content;
@@ -44,17 +46,18 @@ public class HtmlVideoView extends WebView implements ConversationContent {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = "<p>Sorry, The video URL does not exist. The video cannot be played.</p> ";
         } else if (url.toLowerCase().contains(PLAYER_VIDEO_VIMEO)) {
-            videoHtml = "<iframe width='100%' height='" + height + "' src=" + url + " frameborder='0' webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>" + errorHtml;
+            videoHtml = "<iframe type='text/html' width='100%' height='" + height + "' src=" + url + " frameborder='0' webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>" + errorHtml;
         } else if (url.toLowerCase().contains(PLAYER_VIDEO_YOUTUBE)) {
-            videoHtml = "<iframe width='100%' height='" + height + "' src=" + url + " frameborder='0' allowFullScreen></iframe>" + errorHtml;
+            videoHtml = "<iframe type='text/html' width='100%' height='" + height + "' src=" + url + " frameborder='0' allowFullScreen></iframe>" + errorHtml;
         } else {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = errorHtml;
         }
-
         // Setup the WebView for video playback
+        this.setWebChromeClient(new WebChromeClient()); // Do not remove the WebChrome or WebView clients as they will stop video working on Android 4.2.2.
+        this.setWebViewClient(new SwrveVideoWebViewClient());
         this.getSettings().setJavaScriptEnabled(true);
-        this.loadDataWithBaseURL("fake://fake", videoHtml, "text/html", "UTF-8", null);
+        this.loadDataWithBaseURL(null, videoHtml, "text/html", "utf-8", null);
     }
 
     @Override
@@ -70,5 +73,15 @@ public class HtmlVideoView extends WebView implements ConversationContent {
     @Override
     public ConversationAtom getModel() {
         return model;
+    }
+
+    private class SwrveVideoWebViewClient extends WebViewClient {
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            Log.e("SwrveVideoWebViewClient", "Could not display url: " + failingUrl + "\n" +
+                            "Error code: " + Integer.toString(errorCode) + "\n" +
+                            "Message: " + description
+            );
+        }
     }
 }
