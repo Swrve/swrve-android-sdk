@@ -16,8 +16,11 @@ public class HtmlSnippetView extends WebView implements ConversationContent {
 
     protected void init(Content model) {
         this.model = model;
-        this.loadDataWithBaseURL("fake://fake", model.getValue(), "text/html", "UTF-8", null);
+
+        String safeHtml = "<div style='max-width:100%; overflow: hidden; word-wrap: break-word;'>" + model.getValue() + "</div>";
+        this.loadDataWithBaseURL(null, safeHtml, "text/html", "UTF-8", null);
     }
+
 
     @Override
     public ConversationAtom getModel() {
