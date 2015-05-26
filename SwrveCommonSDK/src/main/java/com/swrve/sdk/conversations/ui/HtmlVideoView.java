@@ -30,11 +30,10 @@ public class HtmlVideoView extends WebView implements ConversationContent {
 
     public HtmlVideoView(Context context, Content model) {
         super(context);
-        init(model);
+        this.model = model;
     }
 
     protected void init(Content model) {
-        this.model = model;
         url = model.getValue();
         height = Integer.parseInt(model.getHeight());
         if (height == 0) {
@@ -71,7 +70,11 @@ public class HtmlVideoView extends WebView implements ConversationContent {
         if (visibility != View.VISIBLE) {
             Log.i(LOG_TAG, "Stopping the Video!");
             this.stopLoading();
+            // Load some blank data into the webview
+            this.loadData("<p></p>", "text/html", "utf8");
+        } else {
             // Reload video
+            this.stopLoading();
             init(this.model);
         }
     }
