@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -229,22 +230,22 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         for (ConversationAtom content : page.getContent()) {
             AtomStyle atomStyle = content.getStyle();
             BackgroundStyle atomBg = atomStyle.getBg();
-            ForegroundStyle atomFg = atomStyle.getFg();
 
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
-                if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
+                String modelType = modelContent.getType().toString();
+                if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                     iv.setTag(content.getTag());
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
-                    iv.setScaleType(ScaleType.FIT_CENTER);
+                    iv.setScaleType(ScaleType.FIT_XY);
                     iv.setPadding(0, 12, 0, 12);
                     iv.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
-                } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
+                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     LayoutParams tvLP;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
                         tvLP = new LayoutParams(controlLp);
@@ -255,14 +256,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     tvLP.width = LayoutParams.MATCH_PARENT;
                     tvLP.height = LayoutParams.WRAP_CONTENT;
 
-
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
                     view.setLayoutParams(tvLP);
                     view.setBackgroundColor(0); // Transparent
                     view.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
-                } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
+                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                     LayoutParams tvLP;
                     if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
                         tvLP = new LayoutParams(controlLp);
@@ -277,7 +277,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     view.setBackgroundColor(0); // Transparent
                     view.setBackground(atomBg.getPrimaryDrawable());
                     view.setLayoutParams(tvLP);
-
                     // Let the eventListener know that something has happened to the video
                     final HtmlVideoView cloneView = view;
                     final String tag = content.getTag();
@@ -291,20 +290,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     });
                     contentLayout.addView(view);
                 } else {
-                    TextView tv = new TextView(activity, modelContent, R.attr.conversationTextContentDefaultStyle);
-                    tv.setTag(content.getTag());
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    tv.setLayoutParams(tvLP);
-                    tv.setBackground(atomBg.getPrimaryDrawable());
-                    int textColor = atomStyle.getTextColorInt();
-                    tv.setTextColor(textColor);
-
-                    contentLayout.addView(tv);
+                    // Unrecognized atom type!
                 }
             } else if (content instanceof InputBase) {
                 if (content instanceof MultiValueInput) {
@@ -333,9 +319,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     });
                     input.setBackground(atomBg.getPrimaryDrawable());
                     mvicReference.setTextColor(atomStyle.getTextColorInt());
-
                     contentLayout.addView(input);
-
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
                     MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
@@ -377,8 +361,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         if (v instanceof ConversationControl) {
-            // Ok, lets do this....
-
             // When a control is clicked, a navigation event or action event occurs. We then send all the queued SwrveEvents which have been queued for this page
             commitUserInputsToEvents();
 
@@ -444,7 +426,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      * @param reply
      */
     private void sendReply(ControlBase control, ConversationReply reply) {
-
         reply.setControl(control.getTag());
 
         // For all the inputs , get their data
