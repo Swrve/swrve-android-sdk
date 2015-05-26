@@ -1010,7 +1010,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             queueEvent("event", parameters, payload, false);
         }
 
-        return null;
+        return result;
     }
 
     protected SwrveMessage _getMessageForId(int messageId) {
