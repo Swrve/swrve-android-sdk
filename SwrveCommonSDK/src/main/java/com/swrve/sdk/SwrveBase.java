@@ -361,7 +361,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Log.i(LOG_TAG, "Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
-            queueEvent("event", parameters, null);
+            queueEvent("event", parameters, null, false);
             listener.onUserResourcesError(e);
         }
 
@@ -765,7 +765,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                             payload.put("count", String.valueOf(campaigns.size()));
                                             Map<String, Object> parameters = new HashMap<String, Object>();
                                             parameters.put("name", "Swrve.Messages.campaigns_downloaded");
-                                            queueEvent("event", parameters, payload);
+                                            queueEvent("event", parameters, payload, false);
                                         }
                                     }
 
@@ -911,7 +911,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("id", String.valueOf(result.getId()));
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.Conversations.conversation_returned");
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
         }
 
         return result;
@@ -1007,10 +1007,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("id", String.valueOf(result.getId()));
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.Messages.message_returned");
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
         }
 
-        return result;
+        return null;
     }
 
     protected SwrveMessage _getMessageForId(int messageId) {
@@ -1043,7 +1043,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("name", button.getName());
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", clickEvent);
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
         }
     }
 
@@ -1080,7 +1080,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("size", messageFormat.getSize().x + "x" + messageFormat.getSize().y);
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1130,7 +1130,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     Log.e(LOG_TAG, "Unknown Event occurred");
                 }
 
-                queueEvent("event", parameters, payload);
+                queueEvent("event", parameters, payload, false);
             }
             saveCampaignSettings();
         }
@@ -1147,7 +1147,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", pageTag);
             payload.put("control", controlTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1163,7 +1163,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", pageTag);
             payload.put("control", controlTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1178,7 +1178,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", pageTag);
             payload.put("control", controlTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1196,7 +1196,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("event", "impression");
             payload.put("page", pageTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1213,7 +1213,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("event", "start");
             payload.put("page", pageTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1229,7 +1229,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", endPageTag); //The final page the user ended on
             payload.put("control", controlTag); //The final button the user clicked
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1244,7 +1244,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("event", "cancel");
             payload.put("page", currentPageTag); //The current page the user is on when they cancelled
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1262,7 +1262,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("to", toPageTag); // The page the user ended on
             payload.put("page", fromPageTag); // The page the user came on
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }
@@ -1283,7 +1283,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("event", "error");
             payload.put("page", currentPageTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload);
+            queueEvent("event", parameters, payload, false);
             saveCampaignSettings();
         }
     }

@@ -429,10 +429,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected void queueEvent(String eventType, Map<String, Object> parameters, Map<String, String> payload) {
+        queueEvent(eventType, parameters, payload, true);
+    }
+
+    protected void queueEvent(String eventType, Map<String, Object> parameters, Map<String, String> payload, boolean triggerEventListener) {
         try {
             storageExecutorExecute(new QueueEventRunnable(eventType, parameters, payload));
-
-            if (eventListener != null) {
+            if (triggerEventListener && eventListener != null) {
                 eventListener.onEvent(EventHelper.getEventName(eventType, parameters));
             }
         } catch (Exception exp) {
@@ -1123,7 +1126,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             Log.i(LOG_TAG, "Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
-            queueEvent("event", parameters, null);
+            queueEvent("event", parameters, null, false);
         }
 
         if (cachedResources != null) {
@@ -1167,7 +1170,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             Log.e(LOG_TAG, "Signature validation failed when trying to load campaigns from cache.", e);
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
-            queueEvent("event", parameters, null);
+            queueEvent("event", parameters, null, false);
         }
     }
 

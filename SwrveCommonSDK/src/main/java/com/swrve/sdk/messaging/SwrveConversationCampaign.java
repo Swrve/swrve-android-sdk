@@ -29,7 +29,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * @param controller   SwrveTalk object that will manage the data from the campaign.
      * @param campaignData JSON data containing the campaign details.
      * @param assetsQueue  Set where to save the resources to be loaded
-     * @return SwrveCampaign Loaded SwrveCampaign.
+     * @return SwrveConversationCampaign Loaded SwrveConversationCampaign.
      * @throws org.json.JSONException
      */
     public SwrveConversationCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
@@ -71,11 +71,11 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * @param event           trigger event
      * @param now             device time
      * @param campaignReasons will contain the reason the campaign returned no message
-     * @return SwrveMessage message setup to the given trigger or null
+     * @return SwrveConversation message setup to the given trigger or null
      * otherwise.
      */
     public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
-        if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation") && conversation!=null && conversation.isDownloaded()) {
+        if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation") && conversation != null && conversation.isDownloaded()) {
             Log.i(LOG_TAG, event + " matches a trigger in " + id);
             return this.conversation;
         }
