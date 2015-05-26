@@ -75,7 +75,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * otherwise.
      */
     public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
-        if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation")) {
+        if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation") && conversation!=null && conversation.isDownloaded()) {
             Log.i(LOG_TAG, event + " matches a trigger in " + id);
             return this.conversation;
         }
