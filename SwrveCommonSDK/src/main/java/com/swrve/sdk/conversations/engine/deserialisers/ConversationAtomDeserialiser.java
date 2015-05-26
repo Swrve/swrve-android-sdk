@@ -31,7 +31,6 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
             if (caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_AUDIO)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)
-                    || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_TEXT)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                 return jdContext.deserialize(obj, Content.class);
             } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_MULTIVALUE)) {
