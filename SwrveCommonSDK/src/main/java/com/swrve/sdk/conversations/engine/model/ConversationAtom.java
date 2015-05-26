@@ -6,7 +6,6 @@ import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import java.io.Serializable;
 
 public abstract class ConversationAtom implements Serializable {
-    public static final String TYPE_CONTENT_TEXT = "text";
     public static final String TYPE_CONTENT_HTML = "html-fragment";
     public static final String TYPE_CONTENT_IMAGE = "image";
     public static final String TYPE_CONTENT_VIDEO = "video";
