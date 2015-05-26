@@ -241,7 +241,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setTag(content.getTag());
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
-                    iv.setScaleType(ScaleType.FIT_XY);
+                    iv.setScaleType(ScaleType.FIT_CENTER);
                     iv.setPadding(0, 12, 0, 12);
                     iv.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
