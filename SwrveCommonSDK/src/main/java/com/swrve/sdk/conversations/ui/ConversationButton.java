@@ -116,7 +116,7 @@ public class ConversationButton extends android.widget.Button implements Convers
         }
     }
 
-    public static int lerpColor(int color, int to, float amount) {
+    private int lerpColor(int color, int to, float amount) {
         if (color != Color.TRANSPARENT) {
             byte r = (byte) lerp(Color.red(color), Color.red(to), amount),
                     g = (byte) lerp(Color.green(color), Color.green(to), amount),
@@ -126,11 +126,11 @@ public class ConversationButton extends android.widget.Button implements Convers
         return color;
     }
 
-    public static float lerp(float start, float end, float amount) {
+    private float lerp(float start, float end, float amount) {
         return start + ((end - start) * amount);
     }
 
-    public static boolean isLight(int color) {
+    private boolean isLight(int color) {
         return ((0.2126*(Color.red(color)/255f) + 0.7152*(Color.green(color)/255f) + 0.0722*(Color.blue(color)/255f)) > 0.5f);
     }
 }
