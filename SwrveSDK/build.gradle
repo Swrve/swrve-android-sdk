@@ -1,4 +1,6 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
+
 
 android {
     compileSdkVersion 21
@@ -23,17 +25,18 @@ android {
     }
 }
 
-android.libraryVariants.all { variant ->
-    def name = variant.buildType.name
-    if (name.equals(com.android.builder.core.BuilderConstants.DEBUG)) {
-        return; // Skip debug builds.
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: '..//repo/releases') // Location of where the AAR project files are uploaded
+            pom.groupId = 'com.swrve.sdk.android'
+            pom.artifactId = 'swrve'
+            pom.version = '4.0.0-pre'
+        }
     }
-    def task = project.tasks.create "jar${name.capitalize()}", Jar
-    task.dependsOn variant.javaCompile
-    task.from variant.javaCompile.destinationDir
-    artifacts.add('archives', task);
 }
 
 dependencies {
-    compile project(':SwrveCommonSDK')
+//    compile project(':SwrveCommonSDK')
+    compile 'com.swrve.sdk.android:swrve-common:4.0.0-pre'
 }
