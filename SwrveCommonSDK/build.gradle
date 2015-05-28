@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'findbugs'
+apply plugin: 'maven'
 
 android {
     compileSdkVersion 21
@@ -27,8 +28,21 @@ android {
     }
 }
 
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: '..//repo/releases') // Location of where the AAR project files are uploaded
+            pom.groupId = 'com.swrve.sdk.android'
+            pom.artifactId = 'swrve-common'
+            pom.version = '4.0.0-pre'
+        }
+    }
+}
+
 dependencies {
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:22.1.+'
     compile 'com.android.support:appcompat-v7:22.1.+'
 }
+
