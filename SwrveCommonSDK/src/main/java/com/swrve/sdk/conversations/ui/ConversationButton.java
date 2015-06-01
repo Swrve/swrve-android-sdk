@@ -13,6 +13,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
+import android.text.TextUtils;
 
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 
@@ -32,6 +33,8 @@ public class ConversationButton extends android.widget.Button implements Convers
         initColors();
         initTextColorStates();
         initBackgroundColorStates();
+        setLines(1);
+        setEllipsize(TextUtils.TruncateAt.END);
     }
 
     private void initColors() {
