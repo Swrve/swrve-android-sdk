@@ -32,7 +32,7 @@ android {
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: '..//repo/releases') // Location of where the AAR project files are uploaded
+            repository(url: '..//../repo/releases') // Location of where the AAR project files are uploaded
             pom.groupId = 'com.swrve.sdk.android'
             pom.artifactId = 'swrve-google'
             pom.version = '4.0.0-pre'
