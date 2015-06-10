@@ -28,10 +28,10 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
             String caType = obj.get("type").getAsString();
             String caTag = (obj.has("tag") ? obj.get("tag").getAsString() : null);
 
-            if (caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_AUDIO)
-                    || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)
+            if (caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)
                     || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)
-                    || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
+                    || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)
+                    || caType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_SPACER)) {
                 return jdContext.deserialize(obj, Content.class);
             } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_MULTIVALUE)) {
                 return jdContext.deserialize(obj, MultiValueInput.class);
