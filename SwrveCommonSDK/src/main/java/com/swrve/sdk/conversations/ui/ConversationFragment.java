@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.Space;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveSDKBase;
@@ -42,7 +43,6 @@ import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
-import com.swrve.sdk.conversations.engine.model.styles.ForegroundStyle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -246,37 +246,18 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-
-                    tvLP.width = LayoutParams.MATCH_PARENT;
-                    tvLP.height = LayoutParams.WRAP_CONTENT;
-
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setLayoutParams(tvLP);
-                    view.setBackgroundColor(0); // Transparent
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                    view.setBackgroundColor(Color.TRANSPARENT);
                     view.setBackground(atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    tvLP.width = LayoutParams.MATCH_PARENT;
-                    tvLP.height = LayoutParams.WRAP_CONTENT;
-
                     HtmlVideoView view = new HtmlVideoView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0); // Transparent
+                    view.setBackgroundColor(Color.TRANSPARENT);
                     view.setBackground(atomBg.getPrimaryDrawable());
-                    view.setLayoutParams(tvLP);
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     // Let the eventListener know that something has happened to the video
                     final HtmlVideoView cloneView = view;
                     final String tag = content.getTag();
@@ -289,22 +270,19 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     contentLayout.addView(view);
-                } else {
-                    // Unrecognized atom type!
+                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_SPACER)) {
+                    Space space = new Space(activity);
+                    space.setTag(content.getTag());
+                    space.setBackgroundColor(Color.TRANSPARENT);
+                    space.setBackground(atomBg.getPrimaryDrawable());
+                    int heightPixels = Integer.parseInt(((Content) content).getHeight());
+                    space.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, heightPixels));
+                    contentLayout.addView(space);
                 }
             } else if (content instanceof InputBase) {
                 if (content instanceof MultiValueInput) {
                     MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
-                    LayoutParams lp;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        lp = new LayoutParams(controlLp);
-                    } else {
-                        lp = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    lp.width = LayoutParams.MATCH_PARENT;
-                    lp.height = LayoutParams.WRAP_CONTENT;
-
-                    input.setLayoutParams(lp);
+                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     input.setTag(content.getTag());
                     final MultiValueInputControl mvicReference = input;
                     final String tag = content.getTag();
@@ -323,16 +301,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
                     MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
-                    LayoutParams lp;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        lp = new LayoutParams(controlLp);
-                    } else {
-                        lp = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    lp.width = LayoutParams.MATCH_PARENT;
-                    lp.height = LayoutParams.WRAP_CONTENT;
-
-                    input.setLayoutParams(lp);
+                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     final MultiValueLongInputControl mviclReference = input;
                     final String tag = content.getTag();
                     input.setOnContentChangedListener(new OnContentChangedListener() {
@@ -351,6 +320,19 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 }
             }
         }
+    }
+
+    @SuppressLint("NewApi")
+    private LayoutParams getContentLayoutParams(int width, int height) {
+        LayoutParams layoutParams;
+        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+            layoutParams = new LayoutParams(controlLp);
+        } else {
+            layoutParams = new LayoutParams(controlLp.width, controlLp.height);
+        }
+        layoutParams.width = width;
+        layoutParams.height = height;
+        return layoutParams;
     }
 
     @Override
