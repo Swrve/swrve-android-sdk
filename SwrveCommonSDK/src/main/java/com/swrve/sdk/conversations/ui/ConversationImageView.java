@@ -9,7 +9,8 @@ public class ConversationImageView extends android.widget.ImageView implements C
     private final Content model;
 
     public ConversationImageView(Context context, Content model) {
-        super(context); this.model = model;
+        super(context);
+        this.model = model;
     }
 
     @Override
