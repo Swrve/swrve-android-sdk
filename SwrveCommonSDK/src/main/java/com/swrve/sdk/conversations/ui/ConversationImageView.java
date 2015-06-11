@@ -21,8 +21,9 @@ public class ConversationImageView extends android.widget.ImageView implements C
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = width;
-        if(getDrawable().getIntrinsicWidth() > 0 ) {
-            height = width * getDrawable().getIntrinsicHeight() / getDrawable().getIntrinsicWidth();
+        int intrinsicWidth = getDrawable().getIntrinsicWidth();
+        if(intrinsicWidth > 0 ) {
+            height = width * getDrawable().getIntrinsicHeight() / intrinsicWidth;
         }
         setMeasuredDimension(width, height);
     }
