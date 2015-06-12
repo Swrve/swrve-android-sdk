@@ -2,7 +2,6 @@ package com.swrve.sdk.conversations.ui;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.util.Log;
 import android.view.View;
@@ -103,6 +102,9 @@ public class HtmlVideoView extends WebView implements ConversationContent {
                             "Error code: " + Integer.toString(errorCode) + "\n" +
                             "Message: " + description
             );
+            String placeHolderHtml = "<div style=\"width: 100%; height: " + height + "px\"></div>";
+            String pageHtml = "<html><body style=\"margin: 0; padding: 0;\">" + placeHolderHtml + errorHtml + "</body></html>";
+            HtmlVideoView.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
         }
     }
 }
