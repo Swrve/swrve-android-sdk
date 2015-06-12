@@ -102,7 +102,7 @@ public class HtmlVideoView extends WebView implements ConversationContent {
                             "Error code: " + Integer.toString(errorCode) + "\n" +
                             "Message: " + description
             );
-            String placeHolderHtml = "<iframe type='text/html' width='100%' height='" + height + "' frameborder='0' allowFullScreen></iframe>";
+            String placeHolderHtml = "<div style=\"width: 100%; height: " + height + "px\"></div>";
             String pageHtml = "<html><body style=\"margin: 0; padding: 0;\">" + placeHolderHtml + errorHtml + "</body></html>";
             HtmlVideoView.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
         }
