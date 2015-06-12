@@ -79,7 +79,8 @@ public class ConversationButton extends android.widget.Button implements Convers
 
     private Drawable getOutlineDrawable(int borderColor, int backgroundColor) {
         RectF inset = new RectF(6, 6, 6, 6);
-        RoundRectShape rr = new RoundRectShape(null, inset, null);
+        float radii[] = {1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f};
+        RoundRectShape rr = new RoundRectShape(radii, inset, radii);
         ShapeDrawable rectShapeDrawable = new ShapeDrawable(rr);
         Paint paint = rectShapeDrawable.getPaint();
         paint.setColor(borderColor);

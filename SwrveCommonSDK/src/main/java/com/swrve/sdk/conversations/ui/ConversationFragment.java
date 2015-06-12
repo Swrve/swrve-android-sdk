@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,7 +22,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
-import android.widget.Space;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveSDKBase;
@@ -168,7 +168,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         return android.os.Build.VERSION.SDK_INT;
     }
 
-    @SuppressLint("NewApi")
     private void initLayout(Activity activity) {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
@@ -189,13 +188,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
-        if (getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            contentLayout.setBackgroundDrawable(page.getBackground());
-            controlLayout.setBackgroundDrawable(page.getBackground());
-        } else {
-            contentLayout.setBackground(page.getBackground());
-            controlLayout.setBackground(page.getBackground());
-        }
+        setBackgroundDrawable(contentLayout, page.getBackground());
+        setBackgroundDrawable(controlLayout, page.getBackground());
     }
 
     @SuppressLint("NewApi")
@@ -225,7 +219,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    @SuppressLint("NewApi")
     private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
             AtomStyle atomStyle = content.getStyle();
@@ -243,20 +236,20 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
                     iv.setPadding(0, 12, 0, 12);
-                    iv.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     view.setBackgroundColor(Color.TRANSPARENT);
-                    view.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                     HtmlVideoView view = new HtmlVideoView(activity, modelContent);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
-                    view.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     // Let the eventListener know that something has happened to the video
                     final HtmlVideoView cloneView = view;
@@ -271,13 +264,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     });
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_SPACER)) {
-                    Space space = new Space(activity);
-                    space.setTag(content.getTag());
-                    space.setBackgroundColor(Color.TRANSPARENT);
-                    space.setBackground(atomBg.getPrimaryDrawable());
+                    View view = new View(activity);
+                    view.setTag(content.getTag());
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     int heightPixels = Integer.parseInt(((Content) content).getHeight());
-                    space.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, heightPixels));
-                    contentLayout.addView(space);
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, heightPixels));
+                    contentLayout.addView(view);
                 }
             } else if (content instanceof InputBase) {
                 if (content instanceof MultiValueInput) {
@@ -295,7 +288,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashMultiChoiceInputData(page.getTag(), tag, result);
                         }
                     });
-                    input.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
                     mvicReference.setTextColor(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
@@ -313,7 +306,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     input.setTag(content.getTag());
-                    input.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
                     input.setHeaderTextColors(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
@@ -559,6 +552,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.result = data.get(k);
             String userInteractionKey = key + "-" + userChoice.getQuestionID(); // Important to note, using fragment and page is not enough to store this input. It needs a unique identifier such as the question ID or something specific since it goes 1 level down further than other inputs
             userInteractionData.put(userInteractionKey, result);
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private void setBackgroundDrawable(View view, Drawable drawable) {
+        if (getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            view.setBackgroundDrawable(drawable);
+        } else {
+            view.setBackground(drawable);
         }
     }
 }
