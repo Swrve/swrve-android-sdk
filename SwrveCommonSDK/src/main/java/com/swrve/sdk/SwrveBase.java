@@ -1088,17 +1088,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _queueConversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<UserInputResult> userInteractions){
         if (conversation != null) {
             String baseEvent = getEventForConversation(conversation)  + ".page.";
-
-            /* Structure of userInteractions
-                 {
-                   "<page-id>-<content-id>" =>
-                       {
-                           'type' => "video/nps/play/text etc...",
-                           'result' => "either a string or a HashMap as a string"
-                       }
-                 }
-            */
-
             for (UserInputResult userInteraction : userInteractions){
                 Map<String, String> payload = new HashMap<String, String>();
                 Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1106,28 +1095,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 parameters.put("name", viewEvent);
                 payload.put("page", userInteraction.getPageTag());
                 payload.put("conversation", userInteraction.getConversationId());
-                payload.put("event", "page");
-                payload.put("type", userInteraction.type);
+                payload.put("event", userInteraction.getType());
+                payload.put("fragment", userInteraction.getFragmentTag());
 
-                if (userInteraction.isTextInput()){
-                    payload.put("fragment", userInteraction.getFragmentTag());
-                    payload.put("result", userInteraction.getResultAsString());
-                }else if(userInteraction.isNps()){
-                    payload.put("fragment", userInteraction.getFragmentTag());
-                    payload.put("result", userInteraction.getResultAsString());
-                }else if(userInteraction.isSingleChoice()){
-                    payload.put("fragment", userInteraction.getFragmentTag());
+                if(userInteraction.isSingleChoice()){
                     ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
-                    payload.put("fragment", userInteraction.getFragmentTag());
-                    payload.put("set", response.getQuestionID());
-                    payload.put("result", response.getAnswerID());
+                    payload.put("value", response.getAnswerID());
                 }else if(userInteraction.isMultiChoice()){
                     ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
-                    payload.put("fragment", userInteraction.getFragmentTag());
                     payload.put("set", response.getQuestionID());
-                    payload.put("result", response.getAnswerID());
-                }else{
-                    Log.e(LOG_TAG, "Unknown Event occurred");
+                    payload.put("value", response.getAnswerID());
                 }
 
                 queueEvent("event", parameters, payload, false);
@@ -1152,14 +1129,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationLinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
+    protected void _conversationLinkVisitWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".link";
+            String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".visit";
             Log.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
-            payload.put("event", "link");
+            payload.put("event", "visit");
             payload.put("page", pageTag);
             payload.put("control", controlTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
@@ -1668,9 +1645,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationLinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
+    public void conversationLinkVisitActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
         try {
-            _conversationLinkWasAccessedByUser(conversation, fromPageTag, toActionTag);
+            _conversationLinkVisitWasAccessedByUser(conversation, fromPageTag, toActionTag);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
