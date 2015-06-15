@@ -362,7 +362,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         Uri uri = Uri.parse(urlStr);
 
                         sendReply(model, reply);
-                        sendLinkActionEvent(page.getTag(), model);
+                        sendLinkVisitActionEvent(page.getTag(), model);
                         ActionBehaviours.openIntentWebView(uri, activity, referrer);
                     } else if (actions.isDeepLink()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
@@ -494,9 +494,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void sendLinkActionEvent(String currentPageTag, ConversationAtom control) {
+    private void sendLinkVisitActionEvent(String currentPageTag, ConversationAtom control) {
         if (controller != null) {
-            controller.conversationLinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
+            controller.conversationLinkVisitActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
         }
     }
 
