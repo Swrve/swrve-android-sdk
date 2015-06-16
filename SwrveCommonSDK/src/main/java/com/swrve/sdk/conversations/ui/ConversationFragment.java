@@ -235,7 +235,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
-                    iv.setPadding(0, 12, 0, 12);
                     setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
