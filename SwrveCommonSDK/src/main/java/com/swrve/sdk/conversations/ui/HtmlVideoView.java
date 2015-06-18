@@ -29,9 +29,9 @@ public class HtmlVideoView extends WebView implements ConversationContent {
     // This is the final output. This will be the tags and information that is rendered in the application
     private String videoHtml;
     private Content model;
-    private FrameLayout fullScreenContainer;
+    private ConversationFullScreenVideoFrame fullScreenContainer;
 
-    public HtmlVideoView(Context context, Content model, FrameLayout fullScreenContainer) {
+    public HtmlVideoView(Context context, Content model, ConversationFullScreenVideoFrame fullScreenContainer) {
         super(context);
         this.model = model;
         this.fullScreenContainer = fullScreenContainer;
@@ -40,11 +40,11 @@ public class HtmlVideoView extends WebView implements ConversationContent {
     protected void init(Content model) {
         url = model.getValue();
         height = Integer.parseInt(model.getHeight());
-        if (height == 0) {
+        if (height <= 0) {
             height = 220;
         }
 
-        String aStyle = "style= 'font-size: 0.6875em; color: #666; width:100%;'";
+        String aStyle = "style='font-size: 0.6875em; color: #666; width:100%;'";
         String pStyle = "style='text-align:center; margin-top:8px'";
 
         errorHtml = ("<p " + pStyle + ">") + ("<a " + aStyle + " href='" + url.toString() + EXTERNAL_MARKER + "'>") + ("Can't see the video?</a>");
@@ -115,20 +115,30 @@ public class HtmlVideoView extends WebView implements ConversationContent {
 
     private class SwrveWebCromeClient extends WebChromeClient {
         private CustomViewCallback mCustomViewCallback;
+        private View mView;
 
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
-            fullScreenContainer.addView(view, ViewGroup.LayoutParams.MATCH_PARENT);
-            ((ConversationFullScreenVideoFrame)fullScreenContainer).setCustomViewCallback(callback);
+            super.onShowCustomView(view, callback);
             mCustomViewCallback = callback;
+            mView = view;
+
+            fullScreenContainer.setWebCromeClient(this);
             fullScreenContainer.setVisibility(View.VISIBLE);
+            fullScreenContainer.addView(view, ViewGroup.LayoutParams.MATCH_PARENT);
         }
 
         @Override
         public void onHideCustomView() {
-            fullScreenContainer.setVisibility(View.GONE);
-            mCustomViewCallback.onCustomViewHidden();
-            mCustomViewCallback = null;
+            if (mView != null) {
+                mView = null;
+                fullScreenContainer.removeWebCromeClient(this);
+                fullScreenContainer.removeView(mView);
+                mCustomViewCallback.onCustomViewHidden();
+                mCustomViewCallback = null;
+                fullScreenContainer.setVisibility(View.GONE);
+            }
+            super.onHideCustomView();
         }
     }
 }

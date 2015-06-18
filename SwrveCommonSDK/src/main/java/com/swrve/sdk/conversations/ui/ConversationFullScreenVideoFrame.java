@@ -8,7 +8,7 @@ import android.widget.FrameLayout;
 
 public class ConversationFullScreenVideoFrame extends FrameLayout {
 
-    private WebChromeClient.CustomViewCallback callback;
+    private WebChromeClient webCromeClient;
 
     public ConversationFullScreenVideoFrame(Context context) {
         super(context);
@@ -18,15 +18,21 @@ public class ConversationFullScreenVideoFrame extends FrameLayout {
         super(context, attrs);
     }
 
-    public void setCustomViewCallback(WebChromeClient.CustomViewCallback callback) {
-        this.callback = callback;
-    }
-
     public void disableFullScreen() {
-        if (callback != null) {
-            callback.onCustomViewHidden();
-            callback = null;
+        if (webCromeClient != null) {
+            webCromeClient.onHideCustomView();
+            webCromeClient = null;
         }
         setVisibility(View.GONE);
+    }
+
+    public void setWebCromeClient(WebChromeClient webCromeClient) {
+        this.webCromeClient = webCromeClient;
+    }
+
+    public void removeWebCromeClient(WebChromeClient webCromeClient) {
+        if (this.webCromeClient == webCromeClient) {
+            this.webCromeClient = null;
+        }
     }
 }
