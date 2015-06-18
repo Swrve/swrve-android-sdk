@@ -4,10 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.swrve.sdk.SwrveHelper;
@@ -26,20 +29,22 @@ public class HtmlVideoView extends WebView implements ConversationContent {
     // This is the final output. This will be the tags and information that is rendered in the application
     private String videoHtml;
     private Content model;
+    private ConversationFullScreenVideoFrame fullScreenContainer;
 
-    public HtmlVideoView(Context context, Content model) {
+    public HtmlVideoView(Context context, Content model, ConversationFullScreenVideoFrame fullScreenContainer) {
         super(context);
         this.model = model;
+        this.fullScreenContainer = fullScreenContainer;
     }
 
     protected void init(Content model) {
         url = model.getValue();
         height = Integer.parseInt(model.getHeight());
-        if (height == 0) {
+        if (height <= 0) {
             height = 220;
         }
 
-        String aStyle = "style= 'font-size: 0.6875em; color: #666; width:100%;'";
+        String aStyle = "style='font-size: 0.6875em; color: #666; width:100%;'";
         String pStyle = "style='text-align:center; margin-top:8px'";
 
         errorHtml = ("<p " + pStyle + ">") + ("<a " + aStyle + " href='" + url.toString() + EXTERNAL_MARKER + "'>") + ("Can't see the video?</a>");
@@ -47,10 +52,8 @@ public class HtmlVideoView extends WebView implements ConversationContent {
         if (SwrveHelper.isNullOrEmpty(url)) {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = "<p>Sorry, a malformed URL was detected. This video cannot be played.</p> ";
-        } else if (url.toLowerCase().contains(PLAYER_VIDEO_VIMEO)) {
+        } else if (url.toLowerCase().contains(PLAYER_VIDEO_YOUTUBE) || url.toLowerCase().contains(PLAYER_VIDEO_VIMEO)) {
             videoHtml = "<iframe type='text/html' width='100%' height='" + height + "' src=" + url + " frameborder='0' webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>" + errorHtml;
-        } else if (url.toLowerCase().contains(PLAYER_VIDEO_YOUTUBE)) {
-            videoHtml = "<iframe type='text/html' width='100%' height='" + height + "' src=" + url + " frameborder='0' allowFullScreen></iframe>" + errorHtml;
         } else {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = errorHtml;
@@ -59,13 +62,15 @@ public class HtmlVideoView extends WebView implements ConversationContent {
         String pageHtml = "<html><body style=\"margin: 0; padding: 0\">" + videoHtml + "</body></html>";
         // Setup the WebView for video playback
         // Do not remove the WebChrome or WebView clients as they will stop video working on Android 4.2.2.
-        this.setWebChromeClient(new WebChromeClient());
+        this.setWebChromeClient(new SwrveWebCromeClient());
         this.setWebViewClient(new SwrveVideoWebViewClient());
         this.getSettings().setJavaScriptEnabled(true);
         this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
     }
 
     protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+
         if (visibility != View.VISIBLE) {
             Log.i(LOG_TAG, "Stopping the Video!");
             this.stopLoading();
@@ -105,6 +110,35 @@ public class HtmlVideoView extends WebView implements ConversationContent {
             String placeHolderHtml = "<div style=\"width: 100%; height: " + height + "px\"></div>";
             String pageHtml = "<html><body style=\"margin: 0; padding: 0;\">" + placeHolderHtml + errorHtml + "</body></html>";
             HtmlVideoView.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
+        }
+    }
+
+    private class SwrveWebCromeClient extends WebChromeClient {
+        private CustomViewCallback mCustomViewCallback;
+        private View mView;
+
+        @Override
+        public void onShowCustomView(View view, CustomViewCallback callback) {
+            super.onShowCustomView(view, callback);
+            mCustomViewCallback = callback;
+            mView = view;
+
+            fullScreenContainer.setWebCromeClient(this);
+            fullScreenContainer.setVisibility(View.VISIBLE);
+            fullScreenContainer.addView(view, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
+
+        @Override
+        public void onHideCustomView() {
+            if (mView != null) {
+                mView = null;
+                fullScreenContainer.removeWebCromeClient(this);
+                fullScreenContainer.removeView(mView);
+                mCustomViewCallback.onCustomViewHidden();
+                mCustomViewCallback = null;
+                fullScreenContainer.setVisibility(View.GONE);
+            }
+            super.onHideCustomView();
         }
     }
 }
