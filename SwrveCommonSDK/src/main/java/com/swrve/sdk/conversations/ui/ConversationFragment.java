@@ -19,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -53,6 +54,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
+    private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
@@ -148,7 +150,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         activity.setTitle(page.getTitle());
         try {
-            initLayout(activity);
+            initLayout();
             renderControls(activity);
             renderContent(activity);
         } catch (Exception e) {
@@ -168,9 +170,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         return android.os.Build.VERSION.SDK_INT;
     }
 
-    private void initLayout(Activity activity) {
+    private void initLayout() {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
+        fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.cio__full_screen);
 
         if (contentLayout.getChildCount() > 0) {
             contentLayout.removeAllViews();
@@ -245,7 +248,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    HtmlVideoView view = new HtmlVideoView(activity, modelContent);
+                    HtmlVideoView view = new HtmlVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
@@ -428,9 +431,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    public void onBackPressed() {
-        sendCancelNavigationEvent(page.getTag());
-        commitUserInputsToEvents();
+    public boolean onBackPressed() {
+        if (fullScreenFrame.getVisibility() != View.GONE) {
+            fullScreenFrame.disableFullScreen();
+            return false;
+        } else {
+            sendCancelNavigationEvent(page.getTag());
+            commitUserInputsToEvents();
+        }
+        return true;
     }
 
     private void enforceValidations() {

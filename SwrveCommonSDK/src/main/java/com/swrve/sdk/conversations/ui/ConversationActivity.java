@@ -68,11 +68,14 @@ public class ConversationActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
+        boolean allowBackPress = true;
         try {
-            conversationFragment.onBackPressed();
+            allowBackPress = conversationFragment.onBackPressed();
         } catch (NullPointerException ne) {
             Log.e(LOG_TAG, "Could not call the ConversationFragments onBackPressed()", ne);
         }
-        super.onBackPressed();
+        if (allowBackPress) {
+            super.onBackPressed();
+        }
     }
 }
