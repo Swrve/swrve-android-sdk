@@ -2,7 +2,11 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -18,7 +22,6 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
-import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -75,11 +78,30 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             if (!control.isInEditMode()) {
                 rb.setTag(R.string.cio__indexTag, i);
             }
+            MultiValueInputControl.setTint(rb, textColorInt);
             control.addView(rb);
             rb.setOnCheckedChangeListener(control);
             control.radioButtons.add(rb);
         }
         return control;
+    }
+
+    private static void setTint(RadioButton radioButton, int color) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            radioButton.setButtonTintList(ColorStateList.valueOf(color));
+        } else {
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_enabled}, // enabled
+                    new int[] {-android.R.attr.state_enabled}, // disabled
+                    new int[] {-android.R.attr.state_checked}, // unchecked
+                    new int[] { android.R.attr.state_pressed}  // pressed
+            };
+            int[] colors = new int[]{color, color, color, color};
+            ColorStateList colorStateList = new ColorStateList(states, colors);
+            Drawable drawable = DrawableCompat.wrap(ContextCompat.getDrawable(radioButton.getContext(), R.drawable.abc_btn_radio_material));
+            DrawableCompat.setTintList(drawable, colorStateList);
+            radioButton.setButtonDrawable(drawable);
+        }
     }
 
     public void setTextColor(int colorInt){
