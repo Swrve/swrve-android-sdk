@@ -1087,7 +1087,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _queueConversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<UserInputResult> userInteractions){
         if (conversation != null) {
-            String baseEvent = getEventForConversation(conversation)  + ".page.";
+            String baseEvent = getEventForConversation(conversation)  + ".";
             for (UserInputResult userInteraction : userInteractions){
                 Map<String, String> payload = new HashMap<String, String>();
                 Map<String, Object> parameters = new HashMap<String, Object>();
