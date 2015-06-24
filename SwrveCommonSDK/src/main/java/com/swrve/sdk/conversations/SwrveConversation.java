@@ -88,7 +88,7 @@ public class SwrveConversation implements Serializable {
 
     protected boolean assetInCache(String asset) {
         Set<String> assetsOnDisk = conversationController.getAssetsOnDisk();
-        return SwrveHelper.isNullOrEmpty(asset) || assetsOnDisk.contains(asset);
+        return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
     }
 
     /**
