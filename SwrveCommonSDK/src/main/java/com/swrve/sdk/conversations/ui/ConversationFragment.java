@@ -386,7 +386,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     /**
      * Go through each of the recorded interactions the user has with the page and queue them as events
      */
-    private void commitUserInputsToEvents() {
+    public void commitUserInputsToEvents() {
         Log.i(LOG_TAG, "Commiting all stashed events");
         ArrayList<UserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
@@ -394,6 +394,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             userInputEvents.add(r);
         }
         controller.conversationEventsCommitedByUser(swrveConversation, userInputEvents);
+        userInteractionData.clear(); // Remove all events stored locally so that they don't get resubmitted during another commit.
     }
 
     /**
