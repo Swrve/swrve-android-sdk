@@ -308,17 +308,17 @@ public abstract class SwrveSDKBase {
     /**
      * Get the current api key
      */
-    public static void getApiKey() {
+    public static String getApiKey() {
         checkInstanceCreated();
-        instance.getApiKey();
+        return instance.getApiKey();
     }
 
     /**
      * Get the current user id
      */
-    public static void getUserId() {
+    public static String getUserId() {
         checkInstanceCreated();
-        instance.getUserId();
+        return instance.getUserId();
     }
 
     /**
