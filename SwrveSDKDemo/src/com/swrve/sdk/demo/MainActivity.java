@@ -16,6 +16,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+// --------------------------------------------------------------------
+// todo.gg - Refactor the example to show a "BaseActivity"
+// implementation.  Most customers, if not all, have a base activity
+// which all of their other activites derive.  We should follow that
+// pattern here.
+// --------------------------------------------------------------------
+
+
 public class MainActivity extends Activity {
     private static final String LOG_TAG = "SwrveDemo";
     private boolean appAvailable = true;
@@ -26,6 +34,19 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         SwrveSDK.onCreate(this);
+
+        // --------------------------------------------------------------------
+        // todo.gg - Add auto event instrumentation here. The default should
+        // be the name of the activity (probably with the package name taken
+        // out.)  Next, add support for class annotations where the developer
+        // can override the name on a per-class basis
+        // --------------------------------------------------------------------
+
+        // --------------------------------------------------------------------
+        // todo.gg - Add an example of where an engineer should send user
+        // properties.  We recommend once at the beginning and the end of each
+        // session.  That might be hard in Android though.
+        // --------------------------------------------------------------------
     }
 
     public void btnSendEvent(View v) {
@@ -45,6 +66,12 @@ public class MainActivity extends Activity {
         SwrveSDK.currencyGiven("gold", 999999);
     }
 
+    // --------------------------------------------------------------------
+    // todo.gg - Add a practical IAP example here as we have documented
+    // on our site.  It think we can add this to the base activity but we
+    // need to confirm
+    // --------------------------------------------------------------------
+
     public void btnIap(View v) {
         // Queue IAP event
         SwrveIAPRewards rewards = new SwrveIAPRewards("gold", 200);
@@ -58,6 +85,11 @@ public class MainActivity extends Activity {
         attributes.put("coins", "999");
         SwrveSDK.userUpdate(attributes);
     }
+
+    // --------------------------------------------------------------------
+    // todo.gg - Remove these callbacks.  Instead we should use the
+    // SwrveResourceManager class only because that's what we recommend
+    // --------------------------------------------------------------------
 
     public void btnGetResources(View v) {
         // Get resources
