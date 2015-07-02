@@ -22,57 +22,30 @@ android {
     lintOptions {
         abortOnError true
     }
-
-//    productFlavors {
-//        vanilla {
-//            versionCode 2
-//        }
-//
-//        google {
-//            versionCode 2
-//        }
-//    }
-
-//    sourceSets {
-//        main {
-//            manifest.srcFile 'src/main/AndroidManifest.xml'
-//            java.srcDirs = ['src/main/java']
-//            resources.srcDirs = ['src/main/java']
-////                aidl.srcDirs = ['src/main/java']
-////                renderscript.srcDirs = ['src/main/java']
-//            res.srcDirs = ['res']
-//            assets.srcDirs = ['assets']
-//        }
-//
-//        google {
-//            manifest.srcFile 'src/main/AndroidManifest.xml'
-////                manifest.srcFile 'AndroidManifest.xml'
-//            res.srcDirs = ['res']
-//            java.srcDirs = ['src/google/java', 'src/main/java']
-////                resources.srcDirs = ['src/google/java', 'src/main/java']
-////            aidl.srcDirs = ['src/google/java', 'src/main/java']
-////            renderscript.srcDirs = ['src/google/java', 'src/main/java']
-//        }
-//
-//        vanilla {
-//            manifest.srcFile 'src/main/AndroidManifest.xml'
-//            java.srcDirs = ['src/vanilla/java', 'src/main/java']
-////                resources.srcDirs = ['src/vanilla/java', 'src/main/java']
-////            aidl.srcDirs = ['src/vanilla/java', 'src/main/java']
-////            renderscript.srcDirs = ['src/vanilla/java', 'src/main/java']
-//            res.srcDirs = ['res']
-//            assets.srcDirs = ['assets']
-//        }
 }
+
+group = 'com.swrve.sdk.android'
+version = '4.0.0'
 
 uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: '..//../repo/releases')
             // Location of where the AAR project files are uploaded
-            pom.groupId = 'com.swrve.sdk.android'
-            pom.artifactId = 'swrve'
-            pom.version = '4.0.0'
+
+            addFilter('vanillaDebug') {artifact, file ->
+                artifact.attributes.classifier.equals("vanillaDebug")
+            }
+            addFilter('googleDebug') {artifact, file ->
+                artifact.attributes.classifier.equals("googleDebug")
+            }
+            pom('vanillaDebug').artifactId = "swrve"
+            pom('vanillaDebug').groupId = group
+            pom('vanillaDebug').version = version
+
+            pom('googleDebug').artifactId = "swrve-google"
+            pom('googleDebug').groupId = group
+            pom('googleDebug').version = version
         }
     }
 }
