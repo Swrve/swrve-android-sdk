@@ -9,11 +9,6 @@ android {
         targetSdkVersion 21
     }
 
-    productFlavors {
-        vanilla {}
-        google {}
-    }
-
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -28,11 +23,7 @@ android {
 }
 
 dependencies {
-    vanillaCompile project(path: ':SwrveSDK', configuration: 'vanillaRelease')
-    googleCompile project(path: ':SwrveSDK', configuration: 'googleRelease')
-
-//    compile project(path: ':SwrveSDK',  configuration: 'vanilla') // Use this library when compiling locally
-//    compile project(path: ':SwrveSDK') // Use this library when compiling locally
+    compile project(path: ':SwrveSDK', configuration: 'vanillaDebug')
 //    compile 'com.swrve.sdk.android:swrve:4.0.0-pre' // Use this when testing against remote Standard Library
 //    compile 'com.swrve.android:swrve-google:4.0.0-pre' // Use this when testing against remote Google Library
 }
