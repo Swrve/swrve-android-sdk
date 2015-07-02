@@ -1,10 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.swrve.sdk"
-    android:versionCode="2"
-    android:versionName="2.8">
+    android:versionCode="3"
+    android:versionName="3.1">
 
     <uses-sdk
         android:minSdkVersion="10"
-        android:targetSdkVersion="10" />
-    <application />
+        android:targetSdkVersion="21" />
+
+    <application >
+        <activity
+            android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.Conversations"></activity>
+        </application>
 </manifest>
