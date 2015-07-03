@@ -5,8 +5,7 @@ android {
     compileSdkVersion 22
     buildToolsVersion "22.0.1"
 
-//    publishNonDefault true // Needed to instruct the SDK build of a particular flavor
-//    defaultPublishConfig "vanilla"
+    publishNonDefault true // Needed to instruct the SDK build of a particular flavor
 
     defaultConfig {
         minSdkVersion 10
@@ -24,9 +23,6 @@ android {
     }
 }
 
-group = 'com.swrve.sdk.android'
-version = '4.0.0'
-
 uploadArchives {
     repositories {
         mavenDeployer {
@@ -40,12 +36,12 @@ uploadArchives {
                 artifact.attributes.classifier.equals("googleDebug")
             }
             pom('vanillaDebug').artifactId = "swrve"
-            pom('vanillaDebug').groupId = group
-            pom('vanillaDebug').version = version
+            pom('vanillaDebug').groupId = 'com.swrve.sdk.android'
+            pom('vanillaDebug').version = '4.0.0'
 
             pom('googleDebug').artifactId = "swrve-google"
-            pom('googleDebug').groupId = group
-            pom('googleDebug').version = version
+            pom('googleDebug').groupId = 'com.swrve.sdk.android'
+            pom('googleDebug').version = '4.0.0'
         }
     }
 }
