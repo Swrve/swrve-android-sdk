@@ -84,7 +84,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.0-ea";
+    protected static String version = "4.0";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
@@ -729,7 +729,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             int minDelay = (rules.has("min_delay_between_messages")) ? rules.getInt("min_delay_between_messages") : DEFAULT_MIN_DELAY;
 
             Date now = getNow();
-            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
+            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, 30, Calendar.SECOND); // DEBUG!
             this.minDelayBetweenMessage = minDelay;
             this.messagesLeftToShow = maxShows;
 
