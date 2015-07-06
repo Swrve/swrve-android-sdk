@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -108,27 +107,15 @@ public class HtmlVideoView extends WebView implements ConversationContent {
                             "Error code: " + Integer.toString(errorCode) + "\n" +
                             "Message: " + description
             );
-            showWebviewError();
+            String placeHolderHtml = "<div style=\"width: 100%; height: " + height + "px\"></div>";
+            String pageHtml = "<html><body style=\"margin: 0; padding: 0;\">" + placeHolderHtml + errorHtml + "</body></html>";
+            HtmlVideoView.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
         }
-    }
-
-    public void showWebviewError(){
-        String placeHolderHtml = "<div style=\"width: 100%; height: " + height + "px\"></div>";
-        String pageHtml = "<html><body style=\"margin: 0; padding: 0;\">" + placeHolderHtml + errorHtml + "</body></html>";
-        HtmlVideoView.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
     }
 
     private class SwrveWebCromeClient extends WebChromeClient {
         private CustomViewCallback mCustomViewCallback;
         private View mView;
-
-        @Override
-        public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-            if (consoleMessage.messageLevel().equals(ConsoleMessage.MessageLevel.ERROR)){
-                showWebviewError();
-            }
-            return true;
-        }
 
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
