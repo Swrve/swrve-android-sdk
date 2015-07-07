@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -42,7 +44,6 @@ import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
-import com.swrve.sdk.conversations.engine.model.styles.ForegroundStyle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +54,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
+    private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
@@ -148,7 +150,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         activity.setTitle(page.getTitle());
         try {
-            initLayout(activity);
+            initLayout();
             renderControls(activity);
             renderContent(activity);
         } catch (Exception e) {
@@ -168,10 +170,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         return android.os.Build.VERSION.SDK_INT;
     }
 
-    @SuppressLint("NewApi")
-    private void initLayout(Activity activity) {
+    private void initLayout() {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
+        fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.cio__full_screen);
 
         if (contentLayout.getChildCount() > 0) {
             contentLayout.removeAllViews();
@@ -189,13 +191,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
-        if (getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            contentLayout.setBackgroundDrawable(page.getBackground());
-            controlLayout.setBackgroundDrawable(page.getBackground());
-        } else {
-            contentLayout.setBackground(page.getBackground());
-            controlLayout.setBackground(page.getBackground());
-        }
+        setBackgroundDrawable(contentLayout, page.getBackground());
+        setBackgroundDrawable(controlLayout, page.getBackground());
     }
 
     @SuppressLint("NewApi")
@@ -225,7 +222,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    @SuppressLint("NewApi")
     private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
             AtomStyle atomStyle = content.getStyle();
@@ -242,41 +238,21 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
-                    iv.setPadding(0, 12, 0, 12);
-                    iv.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-
-                    tvLP.width = LayoutParams.MATCH_PARENT;
-                    tvLP.height = LayoutParams.WRAP_CONTENT;
-
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setLayoutParams(tvLP);
-                    view.setBackgroundColor(0); // Transparent
-                    view.setBackground(atomBg.getPrimaryDrawable());
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    tvLP.width = LayoutParams.MATCH_PARENT;
-                    tvLP.height = LayoutParams.WRAP_CONTENT;
-
-                    HtmlVideoView view = new HtmlVideoView(activity, modelContent);
+                    HtmlVideoView view = new HtmlVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0); // Transparent
-                    view.setBackground(atomBg.getPrimaryDrawable());
-                    view.setLayoutParams(tvLP);
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     // Let the eventListener know that something has happened to the video
                     final HtmlVideoView cloneView = view;
                     final String tag = content.getTag();
@@ -289,22 +265,19 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     contentLayout.addView(view);
-                } else {
-                    // Unrecognized atom type!
+                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_SPACER)) {
+                    View view = new View(activity);
+                    view.setTag(content.getTag());
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
+                    int heightPixels = Integer.parseInt(((Content) content).getHeight());
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, heightPixels));
+                    contentLayout.addView(view);
                 }
             } else if (content instanceof InputBase) {
                 if (content instanceof MultiValueInput) {
                     MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
-                    LayoutParams lp;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        lp = new LayoutParams(controlLp);
-                    } else {
-                        lp = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    lp.width = LayoutParams.MATCH_PARENT;
-                    lp.height = LayoutParams.WRAP_CONTENT;
-
-                    input.setLayoutParams(lp);
+                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     input.setTag(content.getTag());
                     final MultiValueInputControl mvicReference = input;
                     final String tag = content.getTag();
@@ -317,22 +290,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashMultiChoiceInputData(page.getTag(), tag, result);
                         }
                     });
-                    input.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
                     mvicReference.setTextColor(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
                     MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
-                    LayoutParams lp;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        lp = new LayoutParams(controlLp);
-                    } else {
-                        lp = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    lp.width = LayoutParams.MATCH_PARENT;
-                    lp.height = LayoutParams.WRAP_CONTENT;
-
-                    input.setLayoutParams(lp);
+                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     final MultiValueLongInputControl mviclReference = input;
                     final String tag = content.getTag();
                     input.setOnContentChangedListener(new OnContentChangedListener() {
@@ -344,13 +308,26 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     input.setTag(content.getTag());
-                    input.setBackground(atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
                     input.setHeaderTextColors(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
                 }
             }
         }
+    }
+
+    @SuppressLint("NewApi")
+    private LayoutParams getContentLayoutParams(int width, int height) {
+        LayoutParams layoutParams;
+        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+            layoutParams = new LayoutParams(controlLp);
+        } else {
+            layoutParams = new LayoutParams(controlLp.width, controlLp.height);
+        }
+        layoutParams.width = width;
+        layoutParams.height = height;
+        return layoutParams;
     }
 
     @Override
@@ -385,14 +362,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
                         String referrer = visitUriDetails.get(ControlActions.VISIT_URL_REFERER_KEY);
                         Uri uri = Uri.parse(urlStr);
-
                         sendReply(model, reply);
-                        sendLinkActionEvent(page.getTag(), model);
+                        sendLinkVisitActionEvent(page.getTag(), model);
                         ActionBehaviours.openIntentWebView(uri, activity, referrer);
                     } else if (actions.isDeepLink()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
                         String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
                         Uri uri = Uri.parse(urlStr);
+                        sendReply(model, reply);
                         sendDeepLinkActionEvent(page.getTag(), model);
                         ActionBehaviours.openDeepLink(uri, activity);
                     }
@@ -409,7 +386,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     /**
      * Go through each of the recorded interactions the user has with the page and queue them as events
      */
-    private void commitUserInputsToEvents() {
+    public void commitUserInputsToEvents() {
         Log.i(LOG_TAG, "Commiting all stashed events");
         ArrayList<UserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
@@ -417,6 +394,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             userInputEvents.add(r);
         }
         controller.conversationEventsCommitedByUser(swrveConversation, userInputEvents);
+        userInteractionData.clear(); // Remove all events stored locally so that they don't get resubmitted during another commit.
     }
 
     /**
@@ -454,9 +432,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    public void onBackPressed() {
-        sendCancelNavigationEvent(page.getTag());
-        commitUserInputsToEvents();
+    public boolean onBackPressed() {
+        if (fullScreenFrame.getVisibility() != View.GONE) {
+            fullScreenFrame.disableFullScreen();
+            return false;
+        } else {
+            sendCancelNavigationEvent(page.getTag());
+            commitUserInputsToEvents();
+        }
+        return true;
     }
 
     private void enforceValidations() {
@@ -519,9 +503,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void sendLinkActionEvent(String currentPageTag, ConversationAtom control) {
+    private void sendLinkVisitActionEvent(String currentPageTag, ConversationAtom control) {
         if (controller != null) {
-            controller.conversationLinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
+            controller.conversationLinkVisitActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
         }
     }
 
@@ -577,6 +561,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.result = data.get(k);
             String userInteractionKey = key + "-" + userChoice.getQuestionID(); // Important to note, using fragment and page is not enough to store this input. It needs a unique identifier such as the question ID or something specific since it goes 1 level down further than other inputs
             userInteractionData.put(userInteractionKey, result);
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private void setBackgroundDrawable(View view, Drawable drawable) {
+        if (getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            view.setBackgroundDrawable(drawable);
+        } else {
+            view.setBackground(drawable);
         }
     }
 }

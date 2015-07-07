@@ -84,13 +84,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.0-ea";
+    protected static String version = "4.0";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
     protected static final String TEMPLATE_VERSION = "1";
-    protected static final int CONVERSATION_VERSION = 1;
+    protected static final int CONVERSATION_VERSION = 2;
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -729,7 +729,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             int minDelay = (rules.has("min_delay_between_messages")) ? rules.getInt("min_delay_between_messages") : DEFAULT_MIN_DELAY;
 
             Date now = getNow();
-            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
+            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, 30, Calendar.SECOND); // DEBUG!
             this.minDelayBetweenMessage = minDelay;
             this.messagesLeftToShow = maxShows;
 

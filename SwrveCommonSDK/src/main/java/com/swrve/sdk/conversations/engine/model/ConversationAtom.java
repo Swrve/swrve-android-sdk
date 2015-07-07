@@ -9,7 +9,7 @@ public abstract class ConversationAtom implements Serializable {
     public static final String TYPE_CONTENT_HTML = "html-fragment";
     public static final String TYPE_CONTENT_IMAGE = "image";
     public static final String TYPE_CONTENT_VIDEO = "video";
-    public static final String TYPE_CONTENT_AUDIO = "audio";
+    public static final String TYPE_CONTENT_SPACER = "spacer";
 
     public static final String TYPE_INPUT_MULTIVALUE = "multi-value-input";
     public static final String TYPE_INPUT_MULTIVALUELONG = "multi-value-long-input";
@@ -17,7 +17,6 @@ public abstract class ConversationAtom implements Serializable {
     protected String tag;
     protected String type;
     protected AtomStyle style;
-
 
     public static ConversationAtom create(String tag, String type) {
         BareConversationAtom bca = new BareConversationAtom();

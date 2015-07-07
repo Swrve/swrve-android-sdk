@@ -9,7 +9,8 @@ public class ConversationImageView extends android.widget.ImageView implements C
     private final Content model;
 
     public ConversationImageView(Context context, Content model) {
-        super(context); this.model = model;
+        super(context);
+        this.model = model;
     }
 
     @Override
@@ -19,7 +20,11 @@ public class ConversationImageView extends android.widget.ImageView implements C
 
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
-        int height = width * getDrawable().getIntrinsicHeight() / getDrawable().getIntrinsicWidth();
+        int height = width;
+        int intrinsicWidth = getDrawable().getIntrinsicWidth();
+        if(intrinsicWidth > 0 ) {
+            height = width * getDrawable().getIntrinsicHeight() / intrinsicWidth;
+        }
         setMeasuredDimension(width, height);
     }
 }
