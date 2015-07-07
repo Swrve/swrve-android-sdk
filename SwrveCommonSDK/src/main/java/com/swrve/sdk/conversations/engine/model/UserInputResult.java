@@ -3,12 +3,9 @@ package com.swrve.sdk.conversations.engine.model;
 import java.io.Serializable;
 
 public class UserInputResult implements Serializable{
-    public static final String TYPE_TEXT = "text";
-    public static final String TYPE_CALENDAR = "calendar";
     public static final String TYPE_MULTI_CHOICE = "multi-choice";
     public static final String TYPE_SINGLE_CHOICE = "choice";
     public static final String TYPE_VIDEO_PLAY = "play";
-    public static final String TYPE_NPS = "nps";
     public String type, conversationId,  pageTag, fragmentTag;
     public Object result;
 
@@ -42,13 +39,5 @@ public class UserInputResult implements Serializable{
 
     public boolean isSingleChoice() {
         return type.equalsIgnoreCase(TYPE_SINGLE_CHOICE);
-    }
-
-    public boolean isTextInput() {
-        return type.equalsIgnoreCase(TYPE_TEXT);
-    }
-
-    public boolean isNps() {
-        return type.equalsIgnoreCase(TYPE_NPS);
     }
 }
