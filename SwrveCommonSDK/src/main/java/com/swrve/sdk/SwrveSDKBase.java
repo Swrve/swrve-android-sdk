@@ -23,8 +23,6 @@ import java.util.Map;
 
 public abstract class SwrveSDKBase {
 
-    // TODO move all javadoc comments from ISwrveBase to here
-
     protected static ISwrveBase instance;
 
     /**
@@ -503,7 +501,6 @@ public abstract class SwrveSDKBase {
         return instance.getContext();
     }
 
-    // TODO DOM review what type of exception needs to be thrown here? And also should the calling methods throw this too?
     protected static void checkInstanceCreated() throws RuntimeException {
         if (instance == null) {
             Log.e(SwrveImp.LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
