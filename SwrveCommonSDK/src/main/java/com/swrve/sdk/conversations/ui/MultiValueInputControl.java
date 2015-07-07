@@ -2,6 +2,7 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
+import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -56,6 +58,8 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.cio__multiinput, parentContainer, false);
         control.descLbl = (android.widget.TextView) control.findViewById(R.id.cio__MIV_Header);
         control.descLbl.setText(model.getDescription());
+        int textColorInt =  model.getStyle().getTextColorInt();
+
         control.showHideError(model.hasError(), control, model);
 
         control.model = model;
@@ -66,6 +70,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             rb.setLayoutParams(lp);
             rb.setText(model.getValues().get(i).getAnswerText());
+            rb.setTextColor(textColorInt);
             rb.setChecked(i == control.selectedIndex);
             if (!control.isInEditMode()) {
                 rb.setTag(R.string.cio__indexTag, i);
@@ -75,6 +80,10 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             control.radioButtons.add(rb);
         }
         return control;
+    }
+
+    public void setTextColor(int colorInt){
+        descLbl.setTextColor(colorInt);
     }
 
     public void setUserInput(UserInputResult userInput){

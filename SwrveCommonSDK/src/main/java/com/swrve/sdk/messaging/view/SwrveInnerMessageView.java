@@ -23,6 +23,8 @@ import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 
 import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -211,21 +213,13 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                     if (customButtonListener != null) {
                                         customButtonListener.onAction(button.getAction());
                                     } else {
-                                        // Search for an Activity with the given name and launch it
-                                        String className = button.getAction();
-                                        Class<?> activityClass = null;
+                                        Context ctxt = buttonView.getContext();
+                                        String buttonAction = button.getAction();
+                                        // Parse action as an Uri
                                         try {
-                                            if (className != null) {
-                                                activityClass = Class.forName(className);
-                                                Context ctxt = buttonView.getContext();
-                                                if (activityClass != null && ctxt != null) {
-                                                    ctxt.startActivity(new Intent(ctxt, activityClass));
-                                                }
-                                            }
-                                        } catch (ClassNotFoundException e) {
-                                            Log.e(LOG_TAG, "Couldn't launch default custom action. Activity with not found: " + className, e);
+                                            ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
                                         } catch (Exception e) {
-                                            Log.e(LOG_TAG, "Couldn't launch default custom action.", e);
+                                            Log.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
                                         }
                                     }
                                 }

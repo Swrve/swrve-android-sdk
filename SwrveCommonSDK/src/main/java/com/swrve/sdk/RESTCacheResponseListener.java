@@ -47,7 +47,7 @@ abstract class RESTCacheResponseListener implements IRESTResponseListener {
                 Log.i("REST", "Signature for " + cacheCategory + " invalid; could not retrieve data from cache");
                 Map<String, Object> parameters = new HashMap<String, Object>();
                 parameters.put("name", "Swrve.signature_invalid");
-                swrve.queueEvent("event", parameters, null);
+                swrve.queueEvent("event", parameters, null, false);
             }
         }
 
