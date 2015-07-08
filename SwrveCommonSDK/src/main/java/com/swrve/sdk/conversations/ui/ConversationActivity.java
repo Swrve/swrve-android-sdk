@@ -1,9 +1,9 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -13,7 +13,7 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
-    private static final String LOG_TAG = "ConversationActivity";
+    private static final String LOG_TAG = "SwrveSDK";
     private SwrveConversation localConversation;
     private ConversationFragment conversationFragment;
 
@@ -32,12 +32,13 @@ public class ConversationActivity extends FragmentActivity {
             if (localConversation != null) {
                 conversationFragment = ConversationFragment.create(localConversation);
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
             } else {
-                Log.e("ConversationActivity", "Could not render ConversationActivity. No SwrveConversation was detected");
+                Log.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
                 this.finish();
             }
         } catch (Exception ge) {
-            Log.e("ConversationActivity", "Could not render ConversationActivity.", ge);
+            Log.e(LOG_TAG, "Could not render ConversationActivity.", ge);
             this.finish();
         }
     }
@@ -69,11 +70,14 @@ public class ConversationActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
+        boolean allowBackPress = true;
         try {
-            conversationFragment.onBackPressed();
+            allowBackPress = conversationFragment.onBackPressed();
         } catch (NullPointerException ne) {
             Log.e(LOG_TAG, "Could not call the ConversationFragments onBackPressed()", ne);
         }
-        super.onBackPressed();
+        if (allowBackPress) {
+            super.onBackPressed();
+        }
     }
 }

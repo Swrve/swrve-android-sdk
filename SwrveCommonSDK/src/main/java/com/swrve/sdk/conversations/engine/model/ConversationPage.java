@@ -1,12 +1,12 @@
 package com.swrve.sdk.conversations.engine.model;
 
 import android.content.Context;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 
 import com.google.gson.Gson;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.conversations.engine.GsonHelper;
+import com.swrve.sdk.conversations.engine.model.styles.PageStyle;
 
 import org.json.JSONObject;
 
@@ -16,9 +16,10 @@ import java.util.ArrayList;
 public class ConversationPage implements Serializable {
     private String tag;
     private String title;
+    private PageStyle style;
 
     private ArrayList<ConversationAtom> content;
-    private ArrayList<ConversationAtom> controls;
+    private ArrayList<ButtonControl> controls;
 
     public String getTag() {
         return tag;
@@ -48,9 +49,9 @@ public class ConversationPage implements Serializable {
         this.content = content;
     }
 
-    public ArrayList<ConversationAtom> getControls() {
+    public ArrayList<ButtonControl> getControls() {
         if (controls == null) {
-            controls = new ArrayList<ConversationAtom>();
+            controls = new ArrayList<ButtonControl>();
         }
         return controls;
     }
@@ -60,40 +61,17 @@ public class ConversationPage implements Serializable {
         return gson.fromJson(json, ConversationPage.class);
     }
 
-
     // Custom Colors and style paramaters
-    public int getPrimaryButtonColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_primary_color);
+    public Drawable getBackground(){
+        return getStyle().getBg().getPrimaryDrawable();
     }
 
-    public int getPrimaryButtonTextColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_primary_text_color);
-    }
-
-    public int getSecondaryButtonColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_secondary_color);
-    }
-    public int getSecondaryButtonTextColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_secondary_text_color);
-    }
-
-    public int getNeutralButtonColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_neutral_color);
-    }
-    public int getNeutralButtonTextColor(Context c){
-        return c.getResources().getColor(R.color.cio__control_neutral_text_color);
-    }
-
-    public Drawable getContentBackgroundDrawable(Context c){
-        return new ColorDrawable(c.getResources().getColor(R.color.cio__control_content_background_color));
-    }
-
-    public Drawable getControlTrayBackgroundDrawable(Context c){
-        int colorInt = c.getResources().getColor(R.color.cio__control_tray_color);
-        return new ColorDrawable(colorInt);
+    public PageStyle getStyle(){
+        return this.style;
     }
 
     public static ConversationPage fromJson(JSONObject json) {
         return fromJSON(json.toString());
     }
+
 }
