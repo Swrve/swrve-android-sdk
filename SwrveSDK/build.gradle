@@ -36,6 +36,13 @@ uploadArchives {
     }
 }
 
+repositories {
+    jcenter {
+        url  "http://dl.bintray.com/swrve-inc/android"
+    }
+}
+
+
 dependencies {
     compile "com.swrve.sdk.android:swrve-common:4.0.0"
     // compile project(':SwrveCommonSDK') // For local development
