@@ -58,6 +58,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -83,12 +84,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.1";
+    protected static String version = "4.0";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
     protected static final String TEMPLATE_VERSION = "1";
+    protected static final int CONVERSATION_VERSION = 2;
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -103,6 +105,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_DEVICE_WIDTH = "swrve.device_width";
     protected static final String SWRVE_DEVICE_HEIGHT = "swrve.device_height";
     protected static final String SWRVE_DEVICE_DPI = "swrve.device_dpi";
+    protected static final String SWRVE_CONVERSATION_VERSION = "swrve.conversation_version";
     protected static final String SWRVE_ANDROID_DEVICE_XDPI = "swrve.android_device_xdpi";
     protected static final String SWRVE_ANDROID_DEVICE_YDPI = "swrve.android_device_ydpi";
     protected static final String SWRVE_LANGUAGE = "swrve.language";
@@ -120,6 +123,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
     protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
     protected static final String LOG_TAG = "SwrveSDK";
+    protected static final List<String> SUPPORTED_REQUIREMENTS = Arrays.asList("android");
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 150;
     protected static long DEFAULT_MAX_SHOWS = 99999;
     protected static int DEFAULT_MIN_DELAY = 55;
@@ -425,10 +429,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected void queueEvent(String eventType, Map<String, Object> parameters, Map<String, String> payload) {
+        queueEvent(eventType, parameters, payload, true);
+    }
+
+    protected void queueEvent(String eventType, Map<String, Object> parameters, Map<String, String> payload, boolean triggerEventListener) {
         try {
             storageExecutorExecute(new QueueEventRunnable(eventType, parameters, payload));
-
-            if (eventListener != null) {
+            if (triggerEventListener && eventListener != null) {
                 eventListener.onEvent(EventHelper.getEventName(eventType, parameters));
             }
         } catch (Exception exp) {
@@ -684,6 +691,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (!json.has("version")) {
                 return;
             }
+
             // Version check
             String version = json.getString("version");
             if (!version.equals(TEMPLATE_VERSION)) {
@@ -787,31 +795,54 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 // Load campaign and get assets to be loaded
                 Set<String> campaignAssetsQueue = new HashSet<String>();
 
-                SwrveBaseCampaign campaign;
-                if (campaignData.has("conversation")) {
-                    campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
-                } else {
-                    campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
-                }
-                assetsQueue.addAll(campaignAssetsQueue);
-
-                // Check if we need to reset the device for QA, otherwise load campaign settings into downloaded campaign
-                if (qaUser == null || !qaUser.isResetDevice()) {
-                    String campaignIdStr = Integer.toString(campaign.getId());
-                    if (jsonSettings.has(campaignIdStr)) {
-                        JSONObject campaignSettings = jsonSettings.getJSONObject(campaignIdStr);
-                        if (campaignSettings != null) {
-                            campaign.loadSettings(campaignSettings);
-                        }
+                // Check filters (permission requests, platform)
+                boolean passesAllFilters = true;
+                String lastCheckedFilter = null;
+                if (campaignData.has("filters")) {
+                    JSONArray filters = campaignData.getJSONArray("filters");
+                    for (int ri = 0; ri < filters.length() && passesAllFilters; ri++) {
+                        lastCheckedFilter = filters.getString(ri);
+                        passesAllFilters = supportsDeviceFilter(lastCheckedFilter);
                     }
                 }
 
-                newCampaigns.add(campaign);
-                Log.i(LOG_TAG, "Got campaign with id " + campaign.getId());
+                if (passesAllFilters) {
+                    SwrveBaseCampaign campaign = null;
+                    if (campaignData.has("conversation")) {
+                        int conversationVersion = campaignData.optInt("conversation_version", 1);
+                        if (conversationVersion <= CONVERSATION_VERSION) {
+                            campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
+                        } else {
+                            Log.i(LOG_TAG, "Conversation version " + conversationVersion + " cannot be loaded with this SDK version");
+                        }
+                    } else {
+                        campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
+                    }
 
-                if (qaUser != null) {
-                    // Add campaign for QA purposes
-                    campaignsDownloaded.put(campaign.getId(), null);
+                    if (campaign != null) {
+                        assetsQueue.addAll(campaignAssetsQueue);
+
+                        // Check if we need to reset the device for QA, otherwise load campaign settings into downloaded campaign
+                        if (qaUser == null || !qaUser.isResetDevice()) {
+                            String campaignIdStr = Integer.toString(campaign.getId());
+                            if (jsonSettings.has(campaignIdStr)) {
+                                JSONObject campaignSettings = jsonSettings.getJSONObject(campaignIdStr);
+                                if (campaignSettings != null) {
+                                    campaign.loadSettings(campaignSettings);
+                                }
+                            }
+                        }
+
+                        newCampaigns.add(campaign);
+                        Log.i(LOG_TAG, "Got campaign with id " + campaign.getId());
+
+                        if (qaUser != null) {
+                            // Add campaign for QA purposes
+                            campaignsDownloaded.put(campaign.getId(), null);
+                        }
+                    }
+                } else {
+                    Log.i(LOG_TAG, "Not all requirements were satisfied for this campaign: " + lastCheckedFilter);
                 }
             }
 
@@ -829,6 +860,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         } catch (JSONException exp) {
             Log.e(LOG_TAG, "Error parsing campaign JSON", exp);
         }
+    }
+
+    private boolean supportsDeviceFilter(String requirement) {
+        return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase());
     }
 
     protected void downloadAssets(final Set<String> assetsQueue) {
@@ -950,16 +985,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    protected void unbindAndShutdown(Activity ctx) {
+    protected void unbindAndShutdown(Activity callerActivity) {
         // Reduce the references to the SDK
         int counter = bindCounter.decrementAndGet();
-        // Remove the binding to the current activity, if any
-        this.activityContext = null;
 
-        removeCurrentDialog(ctx);
+        removeCurrentDialog(callerActivity);
 
         // Check if there are no more references to this object
         if (counter == 0) {
+            this.activityContext = null;  // Remove the binding to the current activity, if any
             if (mustCleanInstance) {
                 ((SwrveBase<?, ?>) this).shutdown();
             }
@@ -1092,7 +1126,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             Log.i(LOG_TAG, "Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
-            queueEvent("event", parameters, null);
+            queueEvent("event", parameters, null, false);
         }
 
         if (cachedResources != null) {
@@ -1136,7 +1170,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             Log.e(LOG_TAG, "Signature validation failed when trying to load campaigns from cache.", e);
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
-            queueEvent("event", parameters, null);
+            queueEvent("event", parameters, null, false);
         }
     }
 

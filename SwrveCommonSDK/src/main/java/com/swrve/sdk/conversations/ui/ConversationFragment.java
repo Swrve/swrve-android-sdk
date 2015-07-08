@@ -5,7 +5,8 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -39,19 +41,20 @@ import com.swrve.sdk.conversations.engine.model.InputBase;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
-import com.swrve.sdk.conversations.engine.model.TextInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
+import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
+import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@SuppressLint("NewApi")
 public class ConversationFragment extends Fragment implements OnClickListener {
-    private static final String LOG_TAG = "ConversationFragment";
+    private static final String LOG_TAG = "SwrveSDK";
 
     private ViewGroup root;
     private LinearLayout contentLayout;
     private LinearLayout controlLayout;
+    private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
     private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
@@ -110,9 +113,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 } else if (userInput.isMultiChoice() && inputView instanceof MultiValueLongInputControl) {
                     MultiValueLongInputControl inputControl = (MultiValueLongInputControl) inputView;
                     inputControl.setUserInput(userInput);
-                } else if (userInput.isTextInput() && inputView instanceof EditTextControl) {
-                    EditTextControl inputControl = (EditTextControl) inputView;
-                    inputControl.setUserInput(userInput);
                 }
             }
         } else {
@@ -149,10 +149,18 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         activity.setTitle(page.getTitle());
-
-        initLayout(activity);
-        renderControls(activity);
-        renderContent(activity);
+        try {
+            initLayout();
+            renderControls(activity);
+            renderContent(activity);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
+            sendErrorNavigationEvent(page.getTag(), e);
+            if (activity != null) {
+                activity.finish();
+            }
+            return;
+        }
 
         sendPageImpressionEvent(page.getTag());
         root.requestFocus();
@@ -162,9 +170,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         return android.os.Build.VERSION.SDK_INT;
     }
 
-    private void initLayout(Activity activity) {
+    private void initLayout() {
         contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
+        fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.cio__full_screen);
 
         if (contentLayout.getChildCount() > 0) {
             contentLayout.removeAllViews();
@@ -182,104 +191,46 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
-        if(getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            contentLayout.setBackgroundDrawable(page.getContentBackgroundDrawable(activity));
-            controlLayout.setBackgroundDrawable(page.getControlTrayBackgroundDrawable(activity));
-        } else {
-            contentLayout.setBackground(page.getContentBackgroundDrawable(activity));
-            controlLayout.setBackground(page.getControlTrayBackgroundDrawable(activity));
-        }
+        setBackgroundDrawable(contentLayout, page.getBackground());
+        setBackgroundDrawable(controlLayout, page.getBackground());
     }
 
+    @SuppressLint("NewApi")
     private void renderControls(Activity activity) {
-        int primaryButtonColor = page.getPrimaryButtonColor(activity);
-        int primaryButtonTextColor = page.getPrimaryButtonTextColor(activity);
-        int secondaryButtonColor = page.getSecondaryButtonColor(activity);
-        int secondaryButtonTextColor = page.getSecondaryButtonTextColor(activity);
-        int neutralButtonColor = page.getNeutralButtonColor(activity);
-        int neutralButtonTextColor = page.getNeutralButtonTextColor(activity);
-
-        TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[] {R.attr.conversationControlLayoutMargin});
+        TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[]{R.attr.conversationControlLayoutMargin});
         int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
 
         int numControls = page.getControls().size();
         for (int i = 0; i < numControls; i++) {
-            ConversationAtom atom = page.getControls().get(i);
-
-            boolean isFirst = (i == 0);
-            boolean isLast = (i == numControls - 1);
-
-            if (atom instanceof ButtonControl) {
-                // There are times when the layout or styles will need to change based on the number of controls.
-                // EG if there is one button, make it green. If there are 2 buttons, make the first red, and the second green
-
-                ButtonControl ctrl = (ButtonControl) atom;
-                ConversationButton ctrlConversationButton = null;
-
-                if (isFirst) {
-                    if (numControls == 1) {
-                        // Button should be green
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
-                    } else if (numControls == 2) {
-                        // Button should be red
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
-                    } else if (numControls > 2) {
-                        // Button should be red
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlSecondaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(secondaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(secondaryButtonTextColor);
-                    }
-                } else if (!isFirst && !isLast) {
-                    // Button should be gray
-                    ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlNeutralButtonStyle);
-                    ctrlConversationButton.setConversationButtonColor(neutralButtonColor);
-                    ctrlConversationButton.setConversationButtonTextColor(neutralButtonTextColor);
-                    // If it is not the first button but is also not the last IE it is in the middle
-                } else if (isLast) {
-                    if (numControls == 2) {
-                        // Should be green
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
-                    } else if (numControls > 2) {
-                        // Should be green
-                        ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlPrimaryButtonStyle);
-                        ctrlConversationButton.setConversationButtonColor(primaryButtonColor);
-                        ctrlConversationButton.setConversationButtonTextColor(primaryButtonTextColor);
-                    }
-                    // End Button
-                }
-                // All buttons curved by default on Android.
-                ctrlConversationButton.setCurved();
-
-                LayoutParams buttonLP;
-                if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                    buttonLP = new LayoutParams(controlLp);
-                } else {
-                    buttonLP = new LayoutParams(controlLp.width, controlLp.height);
-                }
-                buttonLP.weight = 1;
-                buttonLP.leftMargin = (isFirst ? controlLayoutMarginInPixels : controlLayoutMarginInPixels / 2);
-                buttonLP.rightMargin = (isLast ? controlLayoutMarginInPixels : controlLayoutMarginInPixels / 2);
-                buttonLP.topMargin = controlLayoutMarginInPixels;
-                buttonLP.bottomMargin = controlLayoutMarginInPixels;
-
-                ctrlConversationButton.setLayoutParams(buttonLP);
-                controlLayout.addView(ctrlConversationButton);
-                ctrlConversationButton.setOnClickListener(this);
+            ButtonControl ctrl = page.getControls().get(i);
+            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle);
+            LayoutParams buttonLP;
+            if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+                buttonLP = new LayoutParams(controlLp);
+            } else {
+                buttonLP = new LayoutParams(controlLp.width, controlLp.height);
             }
+            buttonLP.weight = 1;
+            buttonLP.leftMargin = controlLayoutMarginInPixels;
+            buttonLP.rightMargin = controlLayoutMarginInPixels;
+            buttonLP.topMargin = controlLayoutMarginInPixels;
+            buttonLP.bottomMargin = controlLayoutMarginInPixels;
+
+            ctrlConversationButton.setLayoutParams(buttonLP);
+            controlLayout.addView(ctrlConversationButton);
+            ctrlConversationButton.setOnClickListener(this);
         }
     }
 
     private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
+            AtomStyle atomStyle = content.getStyle();
+            BackgroundStyle atomBg = atomStyle.getBg();
+
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
-                if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
+                String modelType = modelContent.getType().toString();
+                if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     Bitmap bitmap = BitmapFactory.decodeFile(filePath);
@@ -287,39 +238,21 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     iv.setImageBitmap(bitmap);
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ScaleType.FIT_CENTER);
-                    iv.setPadding(12, 12, 12, 12);
+                    setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
                     contentLayout.addView(iv);
-                } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-
-                    tvLP.width = LayoutParams.MATCH_PARENT;
-                    tvLP.height = LayoutParams.WRAP_CONTENT;
-
+                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0);
-                    view.setLayoutParams(tvLP);
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
-                } else if (modelContent.getType().toString().equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    tvLP.width = LayoutParams.MATCH_PARENT;
-                    tvLP.height = LayoutParams.WRAP_CONTENT;
-
-                    HtmlVideoView view = new HtmlVideoView(activity, modelContent);
+                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
+                    HtmlVideoView view = new HtmlVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
-                    view.setBackgroundColor(0);
-                    view.setLayoutParams(tvLP);
-
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     // Let the eventListener know that something has happened to the video
                     final HtmlVideoView cloneView = view;
                     final String tag = content.getTag();
@@ -332,54 +265,19 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     contentLayout.addView(view);
-                } else {
-                    TextView tv = new TextView(activity, modelContent, R.attr.conversationTextContentDefaultStyle);
-                    tv.setTag(content.getTag());
-                    LayoutParams tvLP;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        tvLP = new LayoutParams(controlLp);
-                    } else {
-                        tvLP = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    tv.setLayoutParams(tvLP);
-
-                    contentLayout.addView(tv);
+                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_SPACER)) {
+                    View view = new View(activity);
+                    view.setTag(content.getTag());
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
+                    int heightPixels = Integer.parseInt(((Content) content).getHeight());
+                    view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, heightPixels));
+                    contentLayout.addView(view);
                 }
             } else if (content instanceof InputBase) {
-                if (content instanceof TextInput) {
-                    // Do stuff for text
-                    TextInput inputModel = (TextInput) content;
-
-                    EditTextControl etc = (EditTextControl) getLayoutInflater(null).inflate(R.layout.cio__edittext_input, contentLayout, false);
-                    etc.setTag(content.getTag());
-                    etc.setModel(inputModel);
-
-                    // Store the result of the content for processing later
-                    final EditTextControl etcReference = etc;
-                    final String tag = content.getTag();
-                    etc.setOnContentChangedListener(new OnContentChangedListener() {
-                        @Override
-                        public void onContentChanged() {
-                            HashMap<String, Object> result = new HashMap<String, Object>();
-                            etcReference.onReplyDataRequired(result);
-                            stashEditTextControlInputData(page.getTag(), tag, result);
-                        }
-                    });
-
-                    contentLayout.addView(etc);
-                    inputs.add(etc);
-                } else if (content instanceof MultiValueInput) {
+                if (content instanceof MultiValueInput) {
                     MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
-                    LayoutParams lp;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        lp = new LayoutParams(controlLp);
-                    } else {
-                        lp = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    lp.width = LayoutParams.MATCH_PARENT;
-                    lp.height = LayoutParams.WRAP_CONTENT;
-
-                    input.setLayoutParams(lp);
+                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     input.setTag(content.getTag());
                     final MultiValueInputControl mvicReference = input;
                     final String tag = content.getTag();
@@ -392,21 +290,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                             stashMultiChoiceInputData(page.getTag(), tag, result);
                         }
                     });
-
+                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
+                    mvicReference.setTextColor(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
                 } else if (content instanceof MultiValueLongInput) {
                     MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
-                    LayoutParams lp;
-                    if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
-                        lp = new LayoutParams(controlLp);
-                    } else {
-                        lp = new LayoutParams(controlLp.width, controlLp.height);
-                    }
-                    lp.width = LayoutParams.MATCH_PARENT;
-                    lp.height = LayoutParams.WRAP_CONTENT;
-
-                    input.setLayoutParams(lp);
+                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     final MultiValueLongInputControl mviclReference = input;
                     final String tag = content.getTag();
                     input.setOnContentChangedListener(new OnContentChangedListener() {
@@ -418,11 +308,26 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         }
                     });
                     input.setTag(content.getTag());
+                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
+                    input.setHeaderTextColors(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
                 }
             }
         }
+    }
+
+    @SuppressLint("NewApi")
+    private LayoutParams getContentLayoutParams(int width, int height) {
+        LayoutParams layoutParams;
+        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+            layoutParams = new LayoutParams(controlLp);
+        } else {
+            layoutParams = new LayoutParams(controlLp.width, controlLp.height);
+        }
+        layoutParams.width = width;
+        layoutParams.height = height;
+        return layoutParams;
     }
 
     @Override
@@ -433,8 +338,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         if (v instanceof ConversationControl) {
-            // Ok, lets do this....
-
             // When a control is clicked, a navigation event or action event occurs. We then send all the queued SwrveEvents which have been queued for this page
             commitUserInputsToEvents();
 
@@ -449,27 +352,26 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 ConversationButton convButton = (ConversationButton) v;
                 ButtonControl model = convButton.getModel();
                 if (((ConversationControl) v).getModel().hasActions()) {
-                    ActionBehaviours behaviours = new ActionBehaviours(activity, activity.getApplicationContext());
                     ControlActions actions = ((ConversationControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
                         sendCallActionEvent(page.getTag(), model);
-                        behaviours.openDialer(actions.getCallUri(), activity);
+                        ActionBehaviours.openDialer(actions.getCallUri(), activity);
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
                         String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
                         String referrer = visitUriDetails.get(ControlActions.VISIT_URL_REFERER_KEY);
                         Uri uri = Uri.parse(urlStr);
-
                         sendReply(model, reply);
-                        sendLinkActionEvent(page.getTag(), model);
-                        behaviours.openIntentWebView(uri, activity, referrer);
+                        sendLinkVisitActionEvent(page.getTag(), model);
+                        ActionBehaviours.openIntentWebView(uri, activity, referrer);
                     } else if (actions.isDeepLink()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
                         String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
                         Uri uri = Uri.parse(urlStr);
+                        sendReply(model, reply);
                         sendDeepLinkActionEvent(page.getTag(), model);
-                        behaviours.openDeepLink(uri, activity);
+                        ActionBehaviours.openDeepLink(uri, activity);
                     }
                 } else {
                     // There are no actions associated with Button. Send a normal reply
@@ -484,7 +386,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     /**
      * Go through each of the recorded interactions the user has with the page and queue them as events
      */
-    private void commitUserInputsToEvents() {
+    public void commitUserInputsToEvents() {
         Log.i(LOG_TAG, "Commiting all stashed events");
         ArrayList<UserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
@@ -492,6 +394,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             userInputEvents.add(r);
         }
         controller.conversationEventsCommitedByUser(swrveConversation, userInputEvents);
+        userInteractionData.clear(); // Remove all events stored locally so that they don't get resubmitted during another commit.
     }
 
     /**
@@ -501,7 +404,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      * @param reply
      */
     private void sendReply(ControlBase control, ConversationReply reply) {
-
         reply.setControl(control.getTag());
 
         // For all the inputs , get their data
@@ -513,8 +415,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         if (nextPage != null) {
             sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
             openConversationOnPage(nextPage);
-        }
-        else if (control.hasActions()) {
+        } else if (control.hasActions()) {
             Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag());
             Activity activity = getActivity();
@@ -531,9 +432,15 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    public void onBackPressed() {
-        sendCancelNavigationEvent(page.getTag());
-        commitUserInputsToEvents();
+    public boolean onBackPressed() {
+        if (fullScreenFrame.getVisibility() != View.GONE) {
+            fullScreenFrame.disableFullScreen();
+            return false;
+        } else {
+            sendCancelNavigationEvent(page.getTag());
+            commitUserInputsToEvents();
+        }
+        return true;
     }
 
     private void enforceValidations() {
@@ -596,9 +503,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void sendLinkActionEvent(String currentPageTag, ConversationAtom control) {
+    private void sendLinkVisitActionEvent(String currentPageTag, ConversationAtom control) {
         if (controller != null) {
-            controller.conversationLinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
+            controller.conversationLinkVisitActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
         }
     }
 
@@ -657,17 +564,12 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
-    private void stashEditTextControlInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
-        String key = pageTag + "-" + fragmentTag;
-        String type = UserInputResult.TYPE_TEXT;
-        for (String k : data.keySet()) {
-            UserInputResult result = new UserInputResult();
-            result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
-            result.fragmentTag = fragmentTag;
-            result.pageTag = pageTag;
-            result.result = data.get(k);
-            userInteractionData.put(key, result);
+    @SuppressLint("NewApi")
+    private void setBackgroundDrawable(View view, Drawable drawable) {
+        if (getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            view.setBackgroundDrawable(drawable);
+        } else {
+            view.setBackground(drawable);
         }
     }
 }
