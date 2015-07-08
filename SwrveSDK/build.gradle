@@ -44,6 +44,6 @@ repositories {
 
 
 dependencies {
-    compile "com.swrve.sdk.android:swrve-common:4.0.0"
-    // compile project(':SwrveCommonSDK') // For local development
+     // compile "com.swrve.sdk.android:swrve-common:4.0.0"
+     compile project(':SwrveCommonSDK') // For local development
 }
