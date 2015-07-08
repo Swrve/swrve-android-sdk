@@ -729,7 +729,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             int minDelay = (rules.has("min_delay_between_messages")) ? rules.getInt("min_delay_between_messages") : DEFAULT_MIN_DELAY;
 
             Date now = getNow();
-            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, 30, Calendar.SECOND); // DEBUG!
+            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
             this.minDelayBetweenMessage = minDelay;
             this.messagesLeftToShow = maxShows;
 
