@@ -191,6 +191,9 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void enableAutoShowMessage() {}
+
+    @Override
     public void buttonWasPressedByUser(SwrveButton button) {
     }
 

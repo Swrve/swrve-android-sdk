@@ -1652,6 +1652,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public void enableAutoShowMessage() {
+        autoShowMessagesEnabled = true;
+        disableAutoShowAfterDelay();
+    }
+
+    @Override
     public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
         try {
             _messageWasShownToUser(messageFormat);

@@ -391,6 +391,16 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Enables the auto show message feature for a single message.
+     *
+     */
+    public static void enableAutoShowMessage() {
+        checkInstanceCreated();
+        instance.enableAutoShowMessage();
+    }
+
+
+    /**
      * Get app store link configured in the dashboard for a given app id.
      *
      * @param appId id of the app

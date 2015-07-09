@@ -87,6 +87,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void messageWasShownToUser(SwrveMessageFormat messageFormat);
 
+    void enableAutoShowMessage();
+
     String getAppStoreURLForApp(int appId);
 
     File getCacheDir();
