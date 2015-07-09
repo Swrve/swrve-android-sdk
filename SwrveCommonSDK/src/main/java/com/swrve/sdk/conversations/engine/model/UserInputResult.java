@@ -3,7 +3,6 @@ package com.swrve.sdk.conversations.engine.model;
 import java.io.Serializable;
 
 public class UserInputResult implements Serializable{
-    public static final String TYPE_MULTI_CHOICE = "multi-choice";
     public static final String TYPE_SINGLE_CHOICE = "choice";
     public static final String TYPE_VIDEO_PLAY = "play";
     public String type, conversationId,  pageTag, fragmentTag;
@@ -31,10 +30,6 @@ public class UserInputResult implements Serializable{
 
     public String getConversationId() {
         return conversationId;
-    }
-
-    public boolean isMultiChoice() {
-        return type.equalsIgnoreCase(TYPE_MULTI_CHOICE);
     }
 
     public boolean isSingleChoice() {

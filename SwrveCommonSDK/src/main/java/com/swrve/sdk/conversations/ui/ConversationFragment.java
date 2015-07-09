@@ -39,7 +39,6 @@ import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.ConversationReply;
 import com.swrve.sdk.conversations.engine.model.InputBase;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
-import com.swrve.sdk.conversations.engine.model.MultiValueLongInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
@@ -109,9 +108,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 View inputView = currentView.findViewWithTag(fragmentTag);
                 if (userInput.isSingleChoice() && inputView instanceof MultiValueInputControl) {
                     MultiValueInputControl inputControl = (MultiValueInputControl) inputView;
-                    inputControl.setUserInput(userInput);
-                } else if (userInput.isMultiChoice() && inputView instanceof MultiValueLongInputControl) {
-                    MultiValueLongInputControl inputControl = (MultiValueLongInputControl) inputView;
                     inputControl.setUserInput(userInput);
                 }
             }
@@ -292,24 +288,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     });
                     setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
                     mvicReference.setTextColor(atomStyle.getTextColorInt());
-                    contentLayout.addView(input);
-                    inputs.add(input);
-                } else if (content instanceof MultiValueLongInput) {
-                    MultiValueLongInputControl input = MultiValueLongInputControl.inflate(activity, contentLayout, (MultiValueLongInput) content);
-                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-                    final MultiValueLongInputControl mviclReference = input;
-                    final String tag = content.getTag();
-                    input.setOnContentChangedListener(new OnContentChangedListener() {
-                        @Override
-                        public void onContentChanged() {
-                            HashMap<String, Object> result = new HashMap<String, Object>();
-                            mviclReference.onReplyDataRequired(result);
-                            stashMultiChoiceLongInputData(page.getTag(), tag, result);
-                        }
-                    });
-                    input.setTag(content.getTag());
-                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
-                    input.setHeaderTextColors(atomStyle.getTextColorInt());
                     contentLayout.addView(input);
                     inputs.add(input);
                 }
@@ -545,22 +523,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             result.pageTag = pageTag;
             result.result = data.get(k);
             userInteractionData.put(key, result);
-        }
-    }
-
-    private void stashMultiChoiceLongInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
-        String key = pageTag + "-" + fragmentTag;
-        String type = UserInputResult.TYPE_MULTI_CHOICE;
-        for (String k : data.keySet()) {
-            ChoiceInputResponse userChoice = (ChoiceInputResponse) data.get(k);
-            UserInputResult result = new UserInputResult();
-            result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
-            result.fragmentTag = fragmentTag;
-            result.pageTag = pageTag;
-            result.result = data.get(k);
-            String userInteractionKey = key + "-" + userChoice.getQuestionID(); // Important to note, using fragment and page is not enough to store this input. It needs a unique identifier such as the question ID or something specific since it goes 1 level down further than other inputs
-            userInteractionData.put(userInteractionKey, result);
         }
     }
 

@@ -1101,12 +1101,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 if(userInteraction.isSingleChoice()){
                     ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
                     payload.put("result", response.getAnswerID());
-                }else if(userInteraction.isMultiChoice()){
-                    ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
-                    payload.put("set", response.getQuestionID());
-                    payload.put("result", response.getAnswerID());
                 }
-
                 queueEvent("event", parameters, payload, false);
             }
             saveCampaignSettings();
