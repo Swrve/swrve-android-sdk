@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ImageView -->
+    <color name="cio__imageview_bg">#FFFFFF</color>
+    <color name="cio__imageview_border">#ff000000</color>
+
+    <color name="cio__window_background">#80000000</color>
+    <color name="cio__control_primary_color">#009A30</color>
+    <color name="cio__control_primary_text_color">#ffffff</color>
+    <color name="cio__control_secondary_color">#AF0000</color>
+    <color name="cio__control_secondary_text_color">#ffffff</color>
+    <color name="cio__control_neutral_color">#6B6B70</color>
+    <color name="cio__control_neutral_text_color">#ffffff</color>
+</resources>
