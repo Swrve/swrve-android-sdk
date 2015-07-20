@@ -5,7 +5,7 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">@color/cio__window_background</item>
+        <item name="android:windowBackground">@color/swrve__window_background</item>
     </style>
 
 </resources>
