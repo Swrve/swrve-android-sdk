@@ -20,7 +20,7 @@ public class HtmlSnippetView extends WebView implements ConversationContent {
         if (DEFAULT_CSS == null) {
             // Load CSS reset and default values
             try {
-                InputStream is = context.getAssets().open("swrve__css_defaults.css");
+                InputStream is = context.getAssets().open("cio__css_defaults.css");
                 if (is != null) {
                     DEFAULT_CSS = SwrveHelper.readStringFromInputStream(is);
                 }
