@@ -28,8 +28,8 @@ public class ValidationDialog extends DialogFragment implements OnClickListener 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.swrve__validation_dialog, container);
-        view.findViewById(R.id.swrve__btnDialogOk).setOnClickListener(this);
+        View view = inflater.inflate(R.layout.cio__validation_dialog, container);
+        view.findViewById(R.id.cio__btnDialogOk).setOnClickListener(this);
         return view;
     }
 
