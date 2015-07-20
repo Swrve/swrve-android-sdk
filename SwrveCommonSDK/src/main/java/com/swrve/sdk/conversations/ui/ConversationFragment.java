@@ -19,7 +19,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -30,7 +29,6 @@ import com.swrve.sdk.common.R;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.ActionBehaviours;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
-import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlActions;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
@@ -118,7 +116,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.cio__conversation_fragment, container, false);
+        return inflater.inflate(R.layout.swrve__conversation_fragment, container, false);
     }
 
 
@@ -167,9 +165,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     private void initLayout() {
-        contentLayout = (LinearLayout) root.findViewById(R.id.cio__content);
-        controlLayout = (LinearLayout) root.findViewById(R.id.cio__controls);
-        fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.cio__full_screen);
+        contentLayout = (LinearLayout) root.findViewById(R.id.swrve__content);
+        controlLayout = (LinearLayout) root.findViewById(R.id.swrve__controls);
+        fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.swrve__full_screen);
 
         if (contentLayout.getChildCount() > 0) {
             contentLayout.removeAllViews();

@@ -58,8 +58,8 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
      */
     public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
-        MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.cio__multiinput, parentContainer, false);
-        control.descLbl = (android.widget.TextView) control.findViewById(R.id.cio__MIV_Header);
+        MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.swrve__multiinput, parentContainer, false);
+        control.descLbl = (android.widget.TextView) control.findViewById(R.id.swrve__MIV_Header);
         control.descLbl.setText(model.getDescription());
         int textColorInt =  model.getStyle().getTextColorInt();
 
@@ -76,7 +76,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             rb.setTextColor(textColorInt);
             rb.setChecked(i == control.selectedIndex);
             if (!control.isInEditMode()) {
-                rb.setTag(R.string.cio__indexTag, i);
+                rb.setTag(R.string.swrve__indexTag, i);
             }
             MultiValueInputControl.setTint(rb, textColorInt);
             control.addView(rb);
@@ -152,7 +152,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        int index = (Integer) buttonView.getTag(R.string.cio__indexTag);
+        int index = (Integer) buttonView.getTag(R.string.swrve__indexTag);
 
         if (selectedIndex > -1 && selectedIndex != index) {
             RadioButton oldChecked = (RadioButton) getChildAt(selectedIndex + 1);
@@ -176,7 +176,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
     }
 
     private void showHideError(boolean hasError, ViewGroup viewGroup, MultiValueInput model) {
-        viewGroup.setBackgroundResource(hasError ? R.drawable.cio__error : 0);
+        viewGroup.setBackgroundResource(hasError ? R.drawable.swrve__error : 0);
         model.setError(hasError);
     }
 }

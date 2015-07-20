@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="cio__btn_ok">OK</string>
-    <string name="cio__validation_dialog_msg">Highlighted items are required on this page</string>
-    <string name="cio__spinner_prompt">Please select</string>
-
-</resources>
