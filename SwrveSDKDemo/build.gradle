@@ -24,6 +24,6 @@ android {
 
 dependencies {
     compile project(path: ':SwrveSDK', configuration: 'vanillaDebug')
-//    compile 'com.swrve.sdk.android:swrve:4.0.0-pre' // Use this when testing against remote Standard Library
-//    compile 'com.swrve.android:swrve-google:4.0.0-pre' // Use this when testing against remote Google Library
+//    compile 'com.swrve.sdk.android:swrve:4.0.0' // Use this when testing against remote Standard Library
+//    compile 'com.swrve.android:swrve-google:4.0.0' // Use this when testing against remote Google Library
 }
