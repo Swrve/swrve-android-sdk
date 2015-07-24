@@ -12,6 +12,11 @@ android {
         targetSdkVersion 22
     }
 
+    buildTypes {
+        release {}
+        debug {}
+    }
+
     publishNonDefault true
     productFlavors {
         vanilla {}
@@ -26,22 +31,26 @@ android {
 uploadArchives {
     repositories {
         mavenDeployer {
+            def version = '4.0.0'
+            def groupId = 'com.swrve.sdk.android'
+
             repository(url: '..//../repo/releases')
             // Location of where the AAR project files are uploaded
 
-            addFilter('vanillaDebug') {artifact, file ->
-                artifact.attributes.classifier.equals("vanillaDebug")
+            addFilter('vanillaRelease') {artifact, file ->
+                artifact.attributes.classifier.equals("vanillaRelease")
             }
-            addFilter('googleDebug') {artifact, file ->
-                artifact.attributes.classifier.equals("googleDebug")
+            addFilter('googleRelease') {artifact, file ->
+                artifact.attributes.classifier.equals("googleRelease")
             }
-            pom('vanillaDebug').artifactId = "swrve"
-            pom('vanillaDebug').groupId = 'com.swrve.sdk.android'
-            pom('vanillaDebug').version = '4.0.0'
+            pom('vanillaRelease').artifactId = "swrve"
+            pom('vanillaRelease').groupId = groupId
+            pom('vanillaRelease').version = version
 
-            pom('googleDebug').artifactId = "swrve-google"
-            pom('googleDebug').groupId = 'com.swrve.sdk.android'
-            pom('googleDebug').version = '4.0.0'
+            pom('googleRelease').artifactId = "swrve-google"
+            pom('googleRelease').groupId = groupId
+            pom('googleRelease').version = version
+
         }
     }
 }
