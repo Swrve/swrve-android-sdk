@@ -37,7 +37,8 @@ end
 
 # Run the upload archives task
 puts "Assembling AARS"
-`../gradlew clean build assembleRelease uploadArchives`
+# `../gradlew clean build assembleRelease uploadArchives`
+`../gradlew uploadArchives`
 
 # Examine the inner elements of the gradle file
 path = './build.gradle'
@@ -67,10 +68,8 @@ end
 
 # Where are libs published
 repo_location = gradle_build_str.string_between_markers "repository(url: '", "')"
+repo_location.gsub!('..//', '') # An unfortunate requirement to strip this from the directory location or else we get dir not found error.
 
-
-# Build poms from gathered information
-pomfiles = []
 
 puts "Building Poms for flavors! \n"
 # For every flavor
@@ -105,21 +104,19 @@ product_flavors.each do |flavor|
     }
   end
   pomfile.body = builder.to_xml
-  pomfiles.push pomfile
-end
 
-puts "Writing Poms! \n"
-pomfiles.each do |pom|
-  puts "Writing pom to #{pom.location}"
-  FileUtils.cd(pom.location) do ||
+  pomfile_name = "#{flavor.artifact_id}-#{flavor.version}.pom"
+
+  FileUtils.cd(pomfile.location) do ||
     begin
-      FileUtils.rm('pom.xml')
+      FileUtils.rm(pomfile_name)
     rescue => e
       # This is fine because there is no file there
     end
 
-    File.open('pom.xml', 'wb') do |f|
-      f.write(pom.body)
+
+    File.open(pomfile_name, 'wb') do |f|
+      f.write(pomfile.body)
       f.close
     end
   end
