@@ -1,25 +1,28 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven'
 
-
 android {
     compileSdkVersion 22
-    buildToolsVersion '22.0.1'
+    buildToolsVersion "22.0.1"
 
-	defaultConfig {
+    publishNonDefault true // Needed to instruct the SDK build of a particular flavor
+
+    defaultConfig {
         minSdkVersion 10
         targetSdkVersion 22
     }
-    sourceSets {
-        // Move the build types to build-types/<type>
-        // For instance, build-types/debug/java, build-types/debug/AndroidManifest.xml, ...
-        // This moves them out of them default location under src/<type>/... which would
-        // conflict with src/ being used by the main source set.
-        // Adding new build types or product flavors should be accompanied
-        // by a similar customization.
-        debug.setRoot('build-types/debug')
-        release.setRoot('build-types/release')
+
+    buildTypes {
+        release {}
+        debug {}
     }
+
+    publishNonDefault true
+    productFlavors {
+        vanilla {}
+        google {}
+    }
+
     lintOptions {
         abortOnError true
     }
@@ -28,22 +31,33 @@ android {
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: '..//../repo/releases') // Location of where the AAR project files are uploaded
-            pom.groupId = 'com.swrve.sdk.android'
-            pom.artifactId = 'swrve'
-            pom.version = '4.1.0'
+            def version = '4.0.0'
+            def groupId = 'com.swrve.sdk.android'
+
+            repository(url: '..//../repo/releases')
+            // Location of where the AAR project files are uploaded
+
+            addFilter('vanillaRelease') {artifact, file ->
+                artifact.attributes.classifier.equals("vanillaRelease")
+            }
+            addFilter('googleRelease') {artifact, file ->
+                artifact.attributes.classifier.equals("googleRelease")
+            }
+            pom('vanillaRelease').artifactId = "swrve"
+            pom('vanillaRelease').groupId = groupId
+            pom('vanillaRelease').version = version
+
+            pom('googleRelease').artifactId = "swrve-google"
+            pom('googleRelease').groupId = groupId
+            pom('googleRelease').version = version
+
         }
     }
 }
 
-repositories {
-    jcenter {
-        url  "http://dl.bintray.com/swrve-inc/android"
-    }
-}
-
-
 dependencies {
-     // compile "com.swrve.sdk.android:swrve-common:4.0.0"
-     compile project(':SwrveCommonSDK') // For local development
+    compile 'com.google.code.gson:gson:2.2.+'
+    compile 'com.android.support:support-v4:22.1.+'
+    compile 'com.android.support:appcompat-v7:22.1.+'
+    googleCompile 'com.google.android.gms:play-services:6.+'
 }
