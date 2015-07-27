@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="Theme.Conversations">
+        <attr name="conversationControlTrayStyle" format="reference" />
+        <attr name="conversationContentTrayBottomMargin" format="dimension" />
+        <attr name="conversationControlTrayTopMargin" format="dimension" />
+        <attr name="conversationControlLayoutMargin" format="dimension" />
+
+        <attr name="conversationContentStyle" format="reference" />
+        <attr name="conversationControlButtonStyle" format="reference" />
+        <attr name="conversationTextContentDefaultStyle" format="reference" />
+        <attr name="conversationInputTextBoxDefaultStyle" format="reference" />
+        <attr name="conversationDialogContentDefaultStyle" format="reference" />
+        <attr name="conversationDialogButtonDefaultStyle" format="reference" />
+
+        <attr name="conversationMVSpinner" format="reference" />
+        <attr name="conversationInputMultiValueItemStyle" format="reference" />
+        <attr name="conversationInputMultiValueDescriptionStyle" format="reference" />
+
+        <attr name="conversationContentDescriptionStyle" format="reference" />
+    </declare-styleable>
+
+</resources>
