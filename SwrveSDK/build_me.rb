@@ -37,8 +37,7 @@ end
 
 # Run the upload archives task
 puts "Assembling AARS"
-# `../gradlew clean build assembleRelease uploadArchives`
-`../gradlew uploadArchives`
+ `../gradlew clean build assembleRelease uploadArchives`
 
 # Examine the inner elements of the gradle file
 path = './build.gradle'
@@ -46,10 +45,11 @@ gradle_build_str = IO.read(path)
 
 puts "Calculating flavors (hardcoded)"
 group_id = 'com.swrve.sdk.android'
+version = '4.1.0'
 # Count the flavors, versions and artifact IDS # Hardcoded for now
 product_flavors = [
-  Flavor.new('vanilla', 'swrve', group_id, '4.0.0'),
-  Flavor.new('google', 'swrve-google', group_id, '4.0.0')
+  Flavor.new('vanilla', 'swrve', group_id, version),
+  Flavor.new('google', 'swrve-google', group_id, version)
 ]
 
 puts "Calculating Dependencies \n"
