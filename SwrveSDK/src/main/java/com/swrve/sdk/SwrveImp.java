@@ -13,7 +13,7 @@ import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.swrve.sdk.common.R;
+import com.swrve.sdk.R;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
