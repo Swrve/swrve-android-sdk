@@ -31,7 +31,7 @@ android {
 uploadArchives {
     repositories {
         mavenDeployer {
-            def version = '4.0.0'
+            def version = '4.1.0'
             def groupId = 'com.swrve.sdk.android'
 
             repository(url: '..//../repo/releases')
