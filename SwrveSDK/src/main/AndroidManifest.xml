@@ -1,10 +1,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.swrve.sdk"
-    android:versionCode="2"
-    android:versionName="2.8">
+    android:versionCode="3"
+    android:versionName="3.1">
 
     <uses-sdk
         android:minSdkVersion="10"
         android:targetSdkVersion="21" />
-    <application />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- required for assets caching -->
+
+    <application >
+        <activity
+            android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.Conversations">
+        </activity>
+
+        <receiver
+            android:name="com.swrve.sdk.SwrveInstallReferrerReceiver"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.android.vending.INSTALL_REFERRER" />
+            </intent-filter>
+        </receiver>
+
+    </application>
 </manifest>
