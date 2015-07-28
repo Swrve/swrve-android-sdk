@@ -2,6 +2,9 @@
 # This script will be used to parse the build.gradle, and for each flavor build a pom file and build it
 require 'nokogiri'
 require 'fileutils'
+require 'digest'
+require 'digest/md5'
+
 
 class PomFile
   attr_accessor :location, :body
@@ -103,7 +106,7 @@ product_flavors.each do |flavor|
       }
     }
   end
-  pomfile.body = builder.to_xml
+  pomfile.body = builder.doc.root.to_s
 
 
 
@@ -131,5 +134,8 @@ product_flavors.each do |flavor|
       f.write(pomfile.body)
       f.close
     end
+
+    md5 = Digest::MD5.hexdigest(File.read(pomfile_name))
+    IO.write("#{pomfile_name}.md5", md5)
   end
 end
