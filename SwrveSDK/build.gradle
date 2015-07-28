@@ -8,7 +8,7 @@ android {
     publishNonDefault true // Needed to instruct the SDK build of a particular flavor
 
     defaultConfig {
-        minSdkVersion 10
+        minSdkVersion 8
         targetSdkVersion 22
     }
 
