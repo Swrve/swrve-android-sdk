@@ -37,7 +37,7 @@ end
 
 # Run the upload archives task
 puts "Assembling AARS"
- `../gradlew clean build assembleRelease uploadArchives`
+`../gradlew clean build assemble uploadArchives`
 
 # Examine the inner elements of the gradle file
 path = './build.gradle'
@@ -105,15 +105,27 @@ product_flavors.each do |flavor|
   end
   pomfile.body = builder.to_xml
 
-  pomfile_name = "#{flavor.artifact_id}-#{flavor.version}.pom"
 
+
+  pomfile_name = "#{flavor.artifact_id}-#{flavor.version}.pom"
   FileUtils.cd(pomfile.location) do ||
+    # Rename the files so that they work with the new pom and artifact ID
+    Dir.foreach('./') do |file_str|
+      mime_type = file_str.split('.').last
+      if mime_type.eql?('pom') or file_str.start_with?('.')
+        next
+      else
+        new_file_name = "#{flavor.artifact_id}-#{flavor.version}.#{mime_type}"
+        FileUtils.mv("./#{file_str}", "./#{new_file_name}")
+      end
+    end
+
+    # Write the pom
     begin
       FileUtils.rm(pomfile_name)
     rescue => e
       # This is fine because there is no file there
     end
-
 
     File.open(pomfile_name, 'wb') do |f|
       f.write(pomfile.body)
