@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
 
 android {
     compileSdkVersion 22
@@ -8,8 +7,13 @@ android {
     publishNonDefault true // Needed to instruct the SDK build of a particular flavor
 
     defaultConfig {
-        minSdkVersion 8
+        minSdkVersion 10
         targetSdkVersion 22
+    }
+
+    sourceSets {
+        main.setRoot('src/main')
+        androidTest.setRoot('src/test')
     }
 
     buildTypes {
@@ -17,7 +21,6 @@ android {
         debug {}
     }
 
-    publishNonDefault true
     productFlavors {
         vanilla {}
         google {}
@@ -28,36 +31,97 @@ android {
     }
 }
 
-uploadArchives {
+dependencies {
+    compile 'com.google.code.gson:gson:2.2.+'
+    compile 'com.android.support:support-v4:22.2.+'
+    compile 'com.android.support:appcompat-v7:22.2.+'
+    googleCompile 'com.google.android.gms:play-services:6.+'
+}
+
+
+
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+group = 'com.swrve.sdk.android'
+def sdkVersion = '4.1.0'
+publishing {
+    publications {
+        vanilla(MavenPublication) {
+            artifactId "swrve"
+            groupId group
+            version sdkVersion
+            artifacts = [androidJavadocsJar, androidSourcesJar, "$buildDir/outputs/aar/${project.name}-vanilla-release.aar"]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.compile.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+
+                configurations.vanillaCompile.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+            }
+        }
+        google(MavenPublication) {
+            artifactId "swrve-google"
+            groupId group
+            version sdkVersion
+            artifacts = [androidJavadocsJar, androidSourcesJar, "$buildDir/outputs/aar/${project.name}-google-release.aar"]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.compile.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+
+                configurations.googleCompile.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+            }
+        }
+    }
+
     repositories {
-        mavenDeployer {
-            def version = '4.1.0'
-            def groupId = 'com.swrve.sdk.android'
-
-            repository(url: '..//../repo/releases')
-            // Location of where the AAR project files are uploaded
-
-            addFilter('vanillaRelease') {artifact, file ->
-                artifact.attributes.classifier.equals("vanillaRelease")
-            }
-            addFilter('googleRelease') {artifact, file ->
-                artifact.attributes.classifier.equals("googleRelease")
-            }
-            pom('vanillaRelease').artifactId = "swrve"
-            pom('vanillaRelease').groupId = groupId
-            pom('vanillaRelease').version = version
-
-            pom('googleRelease').artifactId = "swrve-google"
-            pom('googleRelease').groupId = groupId
-            pom('googleRelease').version = version
-
+        maven {
+            url '../repo/releases'
         }
     }
 }
 
-dependencies {
-    compile 'com.google.code.gson:gson:2.2.+'
-    compile 'com.android.support:support-v4:22.1.+'
-    compile 'com.android.support:appcompat-v7:22.1.+'
-    googleCompile 'com.google.android.gms:play-services:6.+'
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    excludes = ["**/README.md"]
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'source'
+    from android.sourceSets.main.java.srcDirs
 }
