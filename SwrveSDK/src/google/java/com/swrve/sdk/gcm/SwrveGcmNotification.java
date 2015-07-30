@@ -81,7 +81,7 @@ public class SwrveGcmNotification {
 
     private static Class<?> getClassForActivityClassName(Context context, String className) throws ClassNotFoundException {
         if (!SwrveHelper.isNullOrEmpty(className)) {
-            if (className.startsWith("")) {
+            if (className.startsWith(".")) {
                 className = context.getPackageName() + className; // Append application package as it starts with .
             }
             return Class.forName(className);
