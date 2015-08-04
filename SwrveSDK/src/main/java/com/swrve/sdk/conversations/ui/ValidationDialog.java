@@ -9,7 +9,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 
-import com.swrve.sdk.common.R;
+import com.swrve.sdk.R;
 
 
 public class ValidationDialog extends DialogFragment implements OnClickListener {

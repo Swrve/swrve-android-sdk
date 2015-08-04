@@ -25,7 +25,7 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveSDKBase;
-import com.swrve.sdk.common.R;
+import com.swrve.sdk.R;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.ActionBehaviours;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 
 import com.google.gson.Gson;
-import com.swrve.sdk.common.R;
+import com.swrve.sdk.R;
 import com.swrve.sdk.conversations.engine.GsonHelper;
 import com.swrve.sdk.conversations.engine.model.styles.PageStyle;
 
