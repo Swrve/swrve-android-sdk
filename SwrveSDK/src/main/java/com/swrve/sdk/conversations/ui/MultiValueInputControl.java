@@ -16,7 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
-import com.swrve.sdk.common.R;
+import com.swrve.sdk.R;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;

@@ -8,7 +8,7 @@ import android.util.Log;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.common.R;
+import com.swrve.sdk.R;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
