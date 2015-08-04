@@ -22,7 +22,7 @@ android {
 }
 
 dependencies {
-    compile project(path: ':SwrveSDK', configuration: 'vanillaDebug') // Use this library when compiling locally
+    compile project(path: ':SwrveSDK', configuration: 'googleDebug') // Use this library when compiling locally
 //    compile project(path: ':SwrveSDK', configuration: 'googleDebug') // Use this library when compiling locally with google services
 //    compile 'com.swrve.sdk.android:swrve:4.1.0' // Use this when testing against remote Standard Library
 //    compile 'com.swrve.android:swrve-google:4.1.0' // Use this when testing against remote Google Library
