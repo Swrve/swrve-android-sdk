@@ -63,8 +63,6 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         control.descLbl.setText(model.getDescription());
         int textColorInt =  model.getStyle().getTextColorInt();
 
-        control.showHideError(model.hasError(), control, model);
-
         control.model = model;
         control.radioButtons = new ArrayList<RadioButton>();
 
@@ -119,7 +117,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
     }
 
     @Override
-    public void onReplyDataRequired(Map<String, Object> dataMap) {
+    public void gatherValue(Map<String, Object> dataMap) {
         if (selectedIndex > -1) {
             ChoiceInputItem mv = model.getValues().get(selectedIndex);
             ChoiceInputResponse r = new ChoiceInputResponse();
@@ -128,21 +126,6 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             r.setAnswerID(mv.getAnswerID());
             r.setAnswerText(mv.getAnswerText());
             dataMap.put(model.getTag(), r);
-        }
-    }
-
-    @Override
-    public boolean isValid() {
-        if (model.isOptional()) {
-            return true;
-        }
-
-        if (this.selectedIndex < 0) {
-            showHideError(true, this, model);
-            return false;
-        } else {
-            showHideError(false, this, model);
-            return true;
         }
     }
 
@@ -171,12 +154,5 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         if (onContentChangedListener != null) {
             onContentChangedListener.onContentChanged();
         }
-
-        showHideError(false, this, model);
-    }
-
-    private void showHideError(boolean hasError, ViewGroup viewGroup, MultiValueInput model) {
-        viewGroup.setBackgroundResource(hasError ? R.drawable.swrve__error : 0);
-        model.setError(hasError);
     }
 }
