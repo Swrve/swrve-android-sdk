@@ -35,7 +35,6 @@ import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.ConversationReply;
-import com.swrve.sdk.conversations.engine.model.InputBase;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
@@ -53,13 +52,11 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private LinearLayout controlLayout;
     private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
-    private ValidationDialog validationDialog;
     private SwrveConversation swrveConversation;
     private ConversationPage page;
     private SwrveBase controller;
     private ArrayList<ConversationInput> inputs;
     private HashMap<String, UserInputResult> userInteractionData;
-    private boolean userInputValid = false;
 
     public ConversationPage getPage() {
         return page;
@@ -268,27 +265,25 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, heightPixels));
                     contentLayout.addView(view);
                 }
-            } else if (content instanceof InputBase) {
-                if (content instanceof MultiValueInput) {
-                    MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
-                    input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-                    input.setTag(content.getTag());
-                    final MultiValueInputControl mvicReference = input;
-                    final String tag = content.getTag();
-                    // Store the result of the content for processing later
-                    input.setOnContentChangedListener(new OnContentChangedListener() {
-                        @Override
-                        public void onContentChanged() {
-                            HashMap<String, Object> result = new HashMap<String, Object>();
-                            mvicReference.onReplyDataRequired(result);
-                            stashMultiChoiceInputData(page.getTag(), tag, result);
-                        }
-                    });
-                    setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
-                    mvicReference.setTextColor(atomStyle.getTextColorInt());
-                    contentLayout.addView(input);
-                    inputs.add(input);
-                }
+            } else if (content instanceof MultiValueInput) {
+                MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
+                input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                input.setTag(content.getTag());
+                final MultiValueInputControl mvicReference = input;
+                final String tag = content.getTag();
+                // Store the result of the content for processing later
+                input.setOnContentChangedListener(new OnContentChangedListener() {
+                    @Override
+                    public void onContentChanged() {
+                        HashMap<String, Object> result = new HashMap<String, Object>();
+                        mvicReference.gatherValue(result);
+                        stashMultiChoiceInputData(page.getTag(), tag, result);
+                    }
+                });
+                setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
+                mvicReference.setTextColor(atomStyle.getTextColorInt());
+                contentLayout.addView(input);
+                inputs.add(input);
             }
         }
     }
@@ -318,12 +313,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             commitUserInputsToEvents();
 
             if (v instanceof ConversationButton) {
-                enforceValidations();
-                if (!isOkToProceed()) {
-                    Log.i(LOG_TAG, "User tried to go to the next piece of the conversation but it is not ok to proceed");
-                    return;
-                }
-
                 ConversationReply reply = new ConversationReply();
                 ConversationButton convButton = (ConversationButton) v;
                 ButtonControl model = convButton.getModel();
@@ -384,7 +373,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
         // For all the inputs , get their data
         for (ConversationInput inputView : inputs) {
-            inputView.onReplyDataRequired(reply.getData());
+            inputView.gatherValue(reply.getData());
         }
 
         ConversationPage nextPage = swrveConversation.getPageForControl(control);
@@ -417,29 +406,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             commitUserInputsToEvents();
         }
         return true;
-    }
-
-    private void enforceValidations() {
-        boolean hasErrors = false;
-        for (ConversationInput inputView : inputs) {
-            if (!inputView.isValid()) {
-                hasErrors = true;
-            }
-        }
-
-        if (hasErrors) {
-            userInputValid = false;
-            validationDialog = ValidationDialog.create();
-            validationDialog.show(getFragmentManager(), "validation_dialog");
-            return;
-        } else {
-            userInputValid = true;
-            return;
-        }
-    }
-
-    private boolean isOkToProceed() {
-        return userInputValid == true;
     }
 
     // Events
