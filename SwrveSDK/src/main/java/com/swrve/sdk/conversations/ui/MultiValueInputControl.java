@@ -84,6 +84,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         return control;
     }
 
+    @SuppressLint("NewApi")
     private static void setTint(RadioButton radioButton, int color) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             radioButton.setButtonTintList(ColorStateList.valueOf(color));
