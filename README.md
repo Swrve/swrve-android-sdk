@@ -22,7 +22,7 @@ Import the SwrveSDKDemo project into your IDE and replace YOUR_APP_ID and YOUR_A
 How to build the SDK
 --------------------
 In the SwrveSDK or SwrveGoogleSDK folder run the following command:
-`gradle jarRelease`
+`gradlew clean build assemble publish`
 
 Contributing
 ------------
