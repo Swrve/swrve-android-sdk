@@ -265,6 +265,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void geofenceCrossed(String campaignId, String geofenceId, String trigger) {
+    public void onGeofenceCrossed(String campaignId, String geofenceId, String trigger) {
     }
 }

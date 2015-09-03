@@ -17,7 +17,7 @@ public class LocationCampaignEngageReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         FilterableNotification filterableNotification = intent.getParcelableExtra("notification");
-        if (intent.getParcelableExtra("notification") == null || SwrveHelper.isNullOrEmpty(filterableNotification.getData())) {
+        if (filterableNotification == null || SwrveHelper.isNullOrEmpty(filterableNotification.getData())) {
             Log.e(LOG_TAG, "LocationCampaignEngageReceiver. Payload data is null or empty or missing.");
         } else {
             // Queue event. Wakelock not required because app will be started in foreground.

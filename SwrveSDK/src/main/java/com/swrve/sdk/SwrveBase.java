@@ -1845,15 +1845,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void geofenceCrossed(String campaignId, String geofenceId, String trigger) {
+    public void onGeofenceCrossed(String campaignId, String geofenceId, String trigger) {
         try {
-            _geofenceCrossed(campaignId, geofenceId, trigger);
+            _onGeofenceCrossed(campaignId, geofenceId, trigger);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
-    protected void _geofenceCrossed(String campaignId, String geofenceId, String trigger) {
+    protected void _onGeofenceCrossed(String campaignId, String geofenceId, String trigger) {
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("campaignId", campaignId);
         parameters.put("geofenceId", geofenceId);
