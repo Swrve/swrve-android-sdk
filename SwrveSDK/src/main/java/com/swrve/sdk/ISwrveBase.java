@@ -111,6 +111,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     C getConfig();
 
-    void geofenceCrossed(String campaignId, String geofenceId, String trigger);
+    void onGeofenceCrossed(String campaignId, String geofenceId, String trigger);
 
 }
