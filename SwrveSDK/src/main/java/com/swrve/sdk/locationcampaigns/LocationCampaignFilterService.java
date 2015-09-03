@@ -56,7 +56,7 @@ public class LocationCampaignFilterService extends IntentService implements Noti
             for (FilterableNotification filterableNotification : filterableNotifications) {
                 try {
                     LocationCampaignPayload locationCampaignPayload = LocationCampaignPayload.fromJSON(filterableNotification.getData()); // todo add check for null or empty or bad data
-                    SwrveSDKBase.getInstance().geofenceCrossed(locationCampaignPayload.getCampaignId(), locationCampaignPayload.getGeofenceId(), filterableNotification.getTrigger());
+                    SwrveSDKBase.getInstance().onGeofenceCrossed(locationCampaignPayload.getCampaignId(), locationCampaignPayload.getGeofenceId(), filterableNotification.getTrigger());
                     hasValidLocationCampaigns = true;
                 } catch (Exception ex) {
                     Log.e(LOG_TAG, "Error in LocationCampaignsFilterService", ex);
