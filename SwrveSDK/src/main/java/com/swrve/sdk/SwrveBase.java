@@ -1843,4 +1843,21 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
         return null;
     }
+
+    @Override
+    public void geofenceCrossed(String campaignId, String geofenceId, String trigger) {
+        try {
+            _geofenceCrossed(campaignId, geofenceId, trigger);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    protected void _geofenceCrossed(String campaignId, String geofenceId, String trigger) {
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("campaignId", campaignId);
+        parameters.put("geofenceId", geofenceId);
+        parameters.put("trigger", trigger);
+        queueEvent("Swrve.Geofence.crossed", parameters, null);
+    }
 }
