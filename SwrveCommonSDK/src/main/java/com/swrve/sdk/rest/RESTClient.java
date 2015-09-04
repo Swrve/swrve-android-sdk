@@ -25,14 +25,19 @@ import java.util.zip.GZIPInputStream;
 public class RESTClient implements IRESTClient {
 
     private static final String CHARSET = "UTF-8";
-    private static final int TIMEOUT_MS = 15000;
     private static final String COMMA_SEPARATOR = ", ", SEMICOLON_SEPARATOR = "; ";
+
+    private final int httpTimeout;
 
     /**
      * Safeguarded against multiple writers
      * and on copy-and-clean when writing the headers.
      */
     private static List<String> metrics = new ArrayList<String>();
+
+    public RESTClient(int httpTimeout) {
+        this.httpTimeout = httpTimeout;
+    }
 
     public void get(String endpoint, IRESTResponseListener callback) {
         HttpURLConnection urlConnection = null;
@@ -45,8 +50,8 @@ public class RESTClient implements IRESTClient {
         try {
             URL url = new URL(endpoint);
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setReadTimeout(TIMEOUT_MS);
-            urlConnection.setConnectTimeout(TIMEOUT_MS);
+            urlConnection.setReadTimeout(httpTimeout);
+            urlConnection.setConnectTimeout(httpTimeout);
             urlConnection.setRequestMethod("GET");
             urlConnection.setRequestProperty("Accept-Charset", CHARSET);
             urlConnection.setRequestProperty("Connection", "close");
@@ -131,8 +136,8 @@ public class RESTClient implements IRESTClient {
             byte[] bytes = encodedBody.getBytes("UTF-8");
             URL url = new URL(endpoint);
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setReadTimeout(TIMEOUT_MS);
-            urlConnection.setConnectTimeout(TIMEOUT_MS);
+            urlConnection.setReadTimeout(httpTimeout);
+            urlConnection.setConnectTimeout(httpTimeout);
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Content-Type", contentType);
             urlConnection.setRequestProperty("Accept-Charset", CHARSET);
@@ -220,7 +225,7 @@ public class RESTClient implements IRESTClient {
     /*
      * Add a positive metric value to a list of metrics, formated with a template.
      *
-     * If value of not positive, add error string and optionally set the metric to timeout value.
+     * If value of not positive, add error string and optionally set the metric to httpTimeout value.
      *
      * If error, save the metrics early and return false.
      * Otherwise return true.
@@ -234,7 +239,7 @@ public class RESTClient implements IRESTClient {
             metricList.add(error);
             if (timeout) {
                 for (String metric : templates) {
-                    metricList.add(String.format(metric, TIMEOUT_MS));
+                    metricList.add(String.format(metric, httpTimeout));
                 }
             }
             synchronized (metrics) {
@@ -311,11 +316,5 @@ public class RESTClient implements IRESTClient {
             urlConnection.addRequestProperty("Swrve-Latency-Metrics", metricsString);
         }
         return urlConnection;
-    }
-
-    public static void cleanMetrics() {
-        synchronized (metrics) {
-            metrics.clear();
-        }
     }
 }
