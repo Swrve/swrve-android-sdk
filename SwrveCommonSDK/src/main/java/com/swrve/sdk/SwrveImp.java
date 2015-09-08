@@ -214,7 +214,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (messageDisplayed != null && messageListener != null) {
                 long currentTime = getNow().getTime();
                 if (currentTime < (lastMessageDestroyed + MESSAGE_REAPPEAR_TIMEOUT)) {
-                    messageDisplayed.setMessageController((SwrveBase<?, ?>) this);
                     messageListener.onMessage(messageDisplayed, false);
                 }
                 messageDisplayed = null;
@@ -1007,8 +1006,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 Activity dialogActivity = dialog.getOwnerActivity();
                 if (callerActivity == null || callerActivity ==  dialogActivity) {
                     messageDisplayed = dialog.getMessage();
-                    // Remove reference to the SDK from the message
-                    messageDisplayed.setMessageController(null);
                     lastMessageDestroyed = (new Date()).getTime();
                     Activity activity = dialogActivity;
                     if (activity == null) {
