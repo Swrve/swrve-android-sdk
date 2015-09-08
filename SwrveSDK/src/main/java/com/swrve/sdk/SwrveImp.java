@@ -117,6 +117,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_SIM_OPERATOR_NAME = "swrve.sim_operator.name";
     protected static final String SWRVE_SIM_OPERATOR_ISO_COUNTRY = "swrve.sim_operator.iso_country_code";
     protected static final String SWRVE_SIM_OPERATOR_CODE = "swrve.sim_operator.code";
+    protected static final String SWRVE_DEVICE_REGION = "swrve.device_region";
     protected static final String REFERRER = "referrer";
     protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
