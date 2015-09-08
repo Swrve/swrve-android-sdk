@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="swrve__btn_ok">OK</string>
+    
+    <string name="swrve__spinner_prompt">Please select</string>
+
+    <string name="swrve__indexTag"></string> <!-- used for tests -->
+
+</resources>
