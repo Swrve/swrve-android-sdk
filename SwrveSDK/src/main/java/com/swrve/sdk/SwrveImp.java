@@ -455,15 +455,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         restClient.post(config.getEventsUrl() + BATCH_EVENTS_ACTION, postData, new IRESTResponseListener() {
             @Override
             public void onResponse(RESTResponse response) {
+                boolean deleteEvents = true;
                 if (SwrveHelper.userErrorResponseCode(response.responseCode)) {
                     Log.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
                 } else if (SwrveHelper.successResponseCode(response.responseCode)) {
                     Log.i(LOG_TAG, "Events sent to Swrve");
+                } else if (SwrveHelper.serverErrorResponseCode(response.responseCode)) {
+                    deleteEvents = false;
+                    Log.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
                 }
 
-                // Do not resend if we got a response body back from the server
-                // (2XX, 4XX)
-                listener.onResponse(response.responseBody != null);
+                // Resend if we got a server error (5XX)
+                listener.onResponse(deleteEvents);
             }
 
             @Override
