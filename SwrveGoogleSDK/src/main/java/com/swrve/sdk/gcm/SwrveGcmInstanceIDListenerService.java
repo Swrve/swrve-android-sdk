@@ -6,15 +6,15 @@ import com.swrve.sdk.SwrveSDK;
 
 public class SwrveGcmInstanceIDListenerService extends InstanceIDListenerService {
 
-	protected static final String TAG = "SwrveGcm";
+    protected static final String TAG = "SwrveGcm";
 
     @Override
     public void onTokenRefresh() {
-    	SwrveSDK sdk = (SwrveSDK)SwrveSDK.getInstance();
-    	if (sdk != null) {
-        	sdk.onTokenRefreshed();
+        SwrveSDK sdk = (SwrveSDK)SwrveSDK.getInstance();
+        if (sdk != null) {
+            sdk.onTokenRefreshed();
         } else {
-        	Log.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
+            Log.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
         }
     }
 }
