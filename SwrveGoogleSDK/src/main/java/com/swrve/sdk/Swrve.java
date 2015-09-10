@@ -9,10 +9,9 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
-import com.swrve.sdk.gcm.SwrveGcmBroadcastReceiver;
 import com.swrve.sdk.gcm.SwrveGcmNotification;
 
 import org.json.JSONException;
@@ -43,6 +42,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         this.config = config;
     }
 
+    public void onTokenRefreshed() {
+        registerInBackground(getContext());
+    }
+
     @Override
     protected void beforeSendDeviceInfo(Context context) {
         if (config.isPushEnabled()) {
@@ -52,7 +55,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 if (checkPlayServices()) {
                     String newRegistrationId = getRegistrationId();
                     if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                        registerInBackground();
+                        registerInBackground(getContext());
                     } else {
                         registrationId = newRegistrationId;
                     }
@@ -106,13 +109,11 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      *
      * Stores the registration ID and app version
      */
-    protected void registerInBackground() {
+    protected void registerInBackground(final Context context) {
         new AsyncTask<Void, Integer, Void>() {
-
             private void setRegistrationId(String regId) {
                 try {
                     registrationId = regId;
-
                     if (qaUser != null) {
                         qaUser.updateDeviceInfo();
                     }
@@ -120,7 +121,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     // Store registration id and app version
                     cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
                     cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
-
                     // Re-send data now
                     queueDeviceInfoNow(true);
                 } catch (Exception ex) {
@@ -130,41 +130,16 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
             @Override
             protected Void doInBackground(Void... params) {
-                String gcmRegistrationId = null;
-
                 // Try to obtain the GCM registration id from Google Play
                 try {
-                    // Workaround: remove previous token if any
-                    SwrveGcmBroadcastReceiver.clearWorkaroundRegistrationId();
-
-                    GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(context.get());
-                    gcmRegistrationId = gcm.register(config.getSenderId());
+                    InstanceID instanceID = InstanceID.getInstance(context);
+                    String gcmRegistrationId = instanceID.getToken(config.getSenderId(), null);
+                    if (!SwrveHelper.isNullOrEmpty(gcmRegistrationId)) {
+                        setRegistrationId(gcmRegistrationId);
+                    }
                 } catch (Exception ex) {
                     Log.e(LOG_TAG, "Couldn't obtain the GCM registration id for the device", ex);
                 }
-
-                // Workaround Google Play bug
-                if (SwrveHelper.isNullOrEmpty(gcmRegistrationId)) {
-                    try {
-                        // Start pulling from broadcast listener
-                        String workaroundGcmRegId = null;
-                        int retries = 10;
-                        do {
-                            Thread.sleep(1000);
-                            workaroundGcmRegId = SwrveGcmBroadcastReceiver.getWorkaroundRegistrationId();
-                            retries--;
-                        } while (retries > 0 && SwrveHelper.isNullOrEmpty(workaroundGcmRegId));
-
-                        gcmRegistrationId = workaroundGcmRegId;
-                    } catch (Exception ex) {
-                        Log.e(LOG_TAG, "Couldn't obtain the GCM workaround registration id for the device", ex);
-                    }
-                }
-
-                if (!SwrveHelper.isNullOrEmpty(gcmRegistrationId)) {
-                    setRegistrationId(gcmRegistrationId);
-                }
-
                 return null;
             }
 
@@ -187,7 +162,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (SwrveHelper.isNullOrEmpty(registrationIdRaw)) {
             return "";
         }
-
         // Check if app was updated; if so, it must clear the registration ID
         // since the existing regID is not guaranteed to work with the new
         // app version.

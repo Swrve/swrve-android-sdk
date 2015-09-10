@@ -14,7 +14,9 @@ public interface ISwrve extends ISwrveBase<ISwrve, SwrveConfig> {
 
     void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature);
 
-    public void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature);
+    void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature);
 
-    public void processIntent(Intent intent);
+    void processIntent(Intent intent);
+
+    void onTokenRefreshed();
 }
