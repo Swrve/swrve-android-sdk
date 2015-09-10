@@ -12,7 +12,7 @@ import com.google.android.gms.gcm.GcmListenerService;
 /**
  * Used internally to process push notifications inside for your app.
  */
-public class SwrveGcmIntentService extends GcmListenerService implements ISwrveGcmService {
+public class SwrveGcmIntentService extends GcmListenerService {
     protected ISwrveGcmHandler handler;
 
     @Override
@@ -30,7 +30,6 @@ public class SwrveGcmIntentService extends GcmListenerService implements ISwrveG
      *
      * @param msg
      */
-    @Override
     public void processNotification(final Bundle msg) {
         handler.processNotification(msg);
     }
@@ -40,7 +39,6 @@ public class SwrveGcmIntentService extends GcmListenerService implements ISwrveG
      *
      * @return true when you want to display notifications
      */
-    @Override
     public boolean mustShowNotification() {
         return handler.mustShowNotification();
     }
@@ -52,7 +50,6 @@ public class SwrveGcmIntentService extends GcmListenerService implements ISwrveG
      * @param notification
      * @return the notification id so that it can be dismissed by other UI elements
      */
-    @Override
     public int showNotification(NotificationManager notificationManager, Notification notification) {
         return handler.showNotification(notificationManager, notification);
     }
@@ -64,7 +61,6 @@ public class SwrveGcmIntentService extends GcmListenerService implements ISwrveG
      * @param msg
      * @return
      */
-    @Override
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         return handler.createNotificationBuilder(msgText, msg);
     }
@@ -76,7 +72,6 @@ public class SwrveGcmIntentService extends GcmListenerService implements ISwrveG
      * @param contentIntent
      * @return
      */
-    @Override
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         return handler.createNotification(msg, contentIntent);
     }
@@ -93,7 +88,6 @@ public class SwrveGcmIntentService extends GcmListenerService implements ISwrveG
      * @param msg push message payload
      * @return pending intent
      */
-    @Override
     public PendingIntent createPendingIntent(Bundle msg) {
         return handler.createPendingIntent(msg);
     }
@@ -110,7 +104,6 @@ public class SwrveGcmIntentService extends GcmListenerService implements ISwrveG
      * @param msg
      * @return
      */
-    @Override
     public Intent createIntent(Bundle msg) {
         return handler.createIntent(msg);
     }
