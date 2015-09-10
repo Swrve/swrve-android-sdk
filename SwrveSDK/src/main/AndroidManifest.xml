@@ -31,9 +31,6 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="com.swrve.sdk.services.SwrveIntentService"></service>
-        <receiver android:name="com.swrve.sdk.services.SwrveBroadcastReceiver"></receiver>
-
         <!-- Plot projects -->
         <receiver android:name="com.plotprojects.retail.android.PlotBootReceiver">
             <intent-filter>
@@ -64,9 +61,8 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="com.swrve.sdk.locationcampaigns.LocationCampaignFilterService"></service>
+        <service android:name="com.swrve.sdk.locationcampaigns.LocationCampaignFilter"/>
         <!-- Plot projects -->
-
 
     </application>
 </manifest>
