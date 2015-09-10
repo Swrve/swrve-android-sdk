@@ -1,6 +1,5 @@
 package com.swrve.sdk.gcm;
 
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -8,19 +7,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-
-import java.util.Date;
+import com.google.android.gms.gcm.GcmListenerService;
 
 /**
  * Used internally to process push notifications inside for your app.
  */
-public class SwrveGcmIntentService extends IntentService implements ISwrveGcmService {
-
-    public SwrveGcmIntentService() {
-        super("SwrveGcmIntentService");
-    }
-
+public class SwrveGcmIntentService extends GcmListenerService implements ISwrveGcmService {
     protected ISwrveGcmHandler handler;
 
     @Override
@@ -30,14 +22,9 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        try {
-            handler.onHandleIntent(intent, GoogleCloudMessaging.getInstance(this));
-        } finally {
-            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent); // Always release the wake lock provided by the WakefulBroadcastReceiver.
-        }
+    public void onMessageReceived(String from, Bundle data) {
+        processNotification(data);
     }
-
     /**
      * Override this function to process notifications in a different way.
      *
