@@ -98,10 +98,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      */
     protected boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context.get());
-        if (resultCode != ConnectionResult.SUCCESS) {
-            return false;
-        }
-        return true;
+        return resultCode == ConnectionResult.SUCCESS;
     }
 
     /**
