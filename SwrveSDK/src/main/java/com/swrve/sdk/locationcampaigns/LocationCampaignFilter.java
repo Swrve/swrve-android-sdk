@@ -9,7 +9,7 @@ import android.util.Log;
 import com.plotprojects.retail.android.FilterableNotification;
 import com.plotprojects.retail.android.NotificationFilterReceiver;
 import com.swrve.sdk.SwrveSDKBase;
-import com.swrve.sdk.locationcampaigns.model.LocationCampaignPayload;
+import com.swrve.sdk.locationcampaigns.model.LocationPayload;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +45,8 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         List<FilterableNotification> notificationsToSend = new ArrayList<>();
         for (FilterableNotification filterableNotification : filterableNotifications) {
 
-            LocationCampaignPayload locationCampaignPayload = LocationCampaignPayload.fromJSON(filterableNotification.getData());
-            // todo dom: get campaignId from locationCampaignPayload and check if it matches any location campaigns recently downloaded.
+            LocationPayload locationPayload = LocationPayload.fromJSON(filterableNotification.getData());
+            // todo dom: get campaignId from locationPayload and check if it matches any location campaigns recently downloaded.
             boolean match = true;
             if (match) {
                 // todo: get location message variant from matched LocationCampaign:
