@@ -769,6 +769,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         }
                                     }
 
+                                    if (responseJson.has("location_campaigns")) {
+                                        JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
+                                        loadLocationCampaignsFromJSON(campaignJson);
+                                        saveLocationCampaignsInCache(campaignJson);
+                                    }
+
                                     if (responseJson.has("user_resources")) {
                                         // Update resource manager
                                         JSONArray resourceJson = responseJson.getJSONArray("user_resources");
