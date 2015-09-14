@@ -30,5 +30,5 @@ public interface ISwrveUserResourcesDiffListener {
     /**
      * Called back on error.
      */
-    public void onUserResourcesDiffError(Exception exception);
+    void onUserResourcesDiffError(Exception exception);
 }

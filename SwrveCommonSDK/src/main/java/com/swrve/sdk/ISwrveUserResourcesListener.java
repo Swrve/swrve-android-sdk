@@ -27,5 +27,5 @@ public interface ISwrveUserResourcesListener {
     /**
      * Called back on error.
      */
-    public void onUserResourcesError(Exception exception);
+    void onUserResourcesError(Exception exception);
 }

@@ -55,8 +55,8 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
 
     @Override
     public String getSecureCacheEntryForUser(String userId, String category, String uniqueKey) throws SecurityException {
-        String cachedContent = null;
-        String cachedSignature = null;
+        String cachedContent;
+        String cachedSignature;
 
         synchronized (cacheLock) {
             cachedContent = cache.getCacheEntryForUser(userId, category);
