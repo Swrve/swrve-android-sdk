@@ -17,8 +17,25 @@ public class LocationPayload implements Serializable {
         return campaignId;
     }
 
+    /**
+     * json example:
+     * {
+     *      "geoFenceId": "e12a97f53b624328b9e919489da2ab9e",
+     *      "campaignId": "456"
+     * }
+     * @param json the json to parse
+     * @return a deserialized json Object
+     */
     public static LocationPayload fromJSON(String json) {
         Gson gson = new Gson();
         return gson.fromJson(json, LocationPayload.class);
+    }
+
+    @Override
+    public String toString() {
+        return "LocationPayload{" +
+                "geofenceId='" + geofenceId + '\'' +
+                ", campaignId='" + campaignId + '\'' +
+                '}';
     }
 }
