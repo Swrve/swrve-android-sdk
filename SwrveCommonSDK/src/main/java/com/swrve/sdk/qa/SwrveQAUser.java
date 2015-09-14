@@ -52,7 +52,7 @@ public class SwrveQAUser {
         this.logging = jsonQa.optBoolean("logging", false);
         if (logging) {
             restClientExecutor = Executors.newSingleThreadExecutor();
-            restClient = new RESTClient();
+            restClient = new RESTClient(swrve.getConfig().getHttpTimeout());
             this.loggingUrl = jsonQa.optString("logging_url", null);
         }
     }

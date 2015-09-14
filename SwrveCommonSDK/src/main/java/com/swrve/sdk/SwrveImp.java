@@ -339,7 +339,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected IRESTClient createRESTClient() {
-        return new RESTClient();
+        return new RESTClient(config.getHttpTimeout());
     }
 
     protected MemoryCachedLocalStorage createCachedLocalStorage() {
