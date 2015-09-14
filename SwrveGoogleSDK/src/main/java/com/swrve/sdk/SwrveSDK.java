@@ -112,6 +112,14 @@ public class SwrveSDK extends SwrveSDKBase {
     }
 
     /**
+     * Used internally from the GCM ID listener to get notified that a new token is available.
+     */
+    public static void onTokenRefreshed() {
+        checkInstanceCreated();
+        ((ISwrve) instance).onTokenRefreshed();
+    }
+
+    /**
      * Process the push notification received from GCM that opened the app. This should be called on
      * the Activity's onCreate that was opened from a push notification.
      *

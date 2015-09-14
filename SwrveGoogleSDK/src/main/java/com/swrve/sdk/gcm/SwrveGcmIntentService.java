@@ -1,6 +1,5 @@
 package com.swrve.sdk.gcm;
 
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -8,19 +7,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-
-import java.util.Date;
+import com.google.android.gms.gcm.GcmListenerService;
 
 /**
  * Used internally to process push notifications inside for your app.
  */
-public class SwrveGcmIntentService extends IntentService implements ISwrveGcmService {
-
-    public SwrveGcmIntentService() {
-        super("SwrveGcmIntentService");
-    }
-
+public class SwrveGcmIntentService extends GcmListenerService {
     protected ISwrveGcmHandler handler;
 
     @Override
@@ -30,20 +22,14 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        try {
-            handler.onHandleIntent(intent, GoogleCloudMessaging.getInstance(this));
-        } finally {
-            SwrveGcmBroadcastReceiver.completeWakefulIntent(intent); // Always release the wake lock provided by the WakefulBroadcastReceiver.
-        }
+    public void onMessageReceived(String from, Bundle data) {
+        processNotification(data);
     }
-
     /**
      * Override this function to process notifications in a different way.
      *
      * @param msg
      */
-    @Override
     public void processNotification(final Bundle msg) {
         handler.processNotification(msg);
     }
@@ -53,7 +39,6 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      *
      * @return true when you want to display notifications
      */
-    @Override
     public boolean mustShowNotification() {
         return handler.mustShowNotification();
     }
@@ -65,7 +50,6 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      * @param notification
      * @return the notification id so that it can be dismissed by other UI elements
      */
-    @Override
     public int showNotification(NotificationManager notificationManager, Notification notification) {
         return handler.showNotification(notificationManager, notification);
     }
@@ -77,7 +61,6 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      * @param msg
      * @return
      */
-    @Override
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         return handler.createNotificationBuilder(msgText, msg);
     }
@@ -89,7 +72,6 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      * @param contentIntent
      * @return
      */
-    @Override
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         return handler.createNotification(msg, contentIntent);
     }
@@ -106,7 +88,6 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      * @param msg push message payload
      * @return pending intent
      */
-    @Override
     public PendingIntent createPendingIntent(Bundle msg) {
         return handler.createPendingIntent(msg);
     }
@@ -123,7 +104,6 @@ public class SwrveGcmIntentService extends IntentService implements ISwrveGcmSer
      * @param msg
      * @return
      */
-    @Override
     public Intent createIntent(Bundle msg) {
         return handler.createIntent(msg);
     }

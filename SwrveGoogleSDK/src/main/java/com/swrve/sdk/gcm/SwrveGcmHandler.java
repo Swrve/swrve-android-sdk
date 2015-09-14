@@ -24,9 +24,9 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     protected static final String TAG = "SwrveGcm";
 
     private Context context;
-    private ISwrveGcmService swrveGcmService;
+    private SwrveGcmIntentService swrveGcmService;
 
-    protected SwrveGcmHandler (Context context, ISwrveGcmService swrveGcmService) {
+    protected SwrveGcmHandler (Context context, SwrveGcmIntentService swrveGcmService) {
         this.context = context;
         this.swrveGcmService = swrveGcmService;
     }
