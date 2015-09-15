@@ -9,10 +9,15 @@ import android.util.Log;
 import com.plotprojects.retail.android.FilterableNotification;
 import com.plotprojects.retail.android.NotificationFilterReceiver;
 import com.swrve.sdk.SwrveSDKBase;
-import com.swrve.sdk.locationcampaigns.model.LocationCampaignPayload;
+import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
+import com.swrve.sdk.locationcampaigns.model.LocationMessage;
+import com.swrve.sdk.locationcampaigns.model.LocationPayload;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class LocationCampaignFilter extends NotificationFilterReceiver {
 
@@ -22,16 +27,17 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
     @Override
     public List<FilterableNotification> filterNotifications(List<FilterableNotification> notifications) {
 
-        Log.d(LOG_TAG, "LocationCampaignNotificationFilter. Got " + notifications.size() + " notifications from plot projects.");
+        Log.d(LOG_TAG, "LocationCampaignFilter. Received " + notifications.size() + " notifications to send.");
         PowerManager mgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "swrve_wakelock");
         try {
             wakeLock.acquire();
 
-            // todo dom: presumption here that we don't need to refresh location campaigns
-            return filterLocationCampaigns(notifications);
+            // presumption here for FA that is that location campaigns have been refreshed
+
+            return filterLocationCampaigns(notifications, System.currentTimeMillis());
         } catch (Exception ex) {
-            Log.e(LOG_TAG, "LocationCampaignNotificationFilter exception.", ex);
+            Log.e(LOG_TAG, "LocationCampaignFilter exception.", ex);
         } finally {
             if (wakeLock != null && wakeLock.isHeld()) {
                 wakeLock.release();
@@ -40,33 +46,76 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         return new ArrayList<>();
     }
 
-    private List<FilterableNotification> filterLocationCampaigns(List<FilterableNotification> filterableNotifications){
+    // TODO dom: need to refactor init sdk method so certain variables, executors, etc  are initialised. Currently most of this is done in onCreate method.
 
-        List<FilterableNotification> notificationsToSend = new ArrayList<>();
+    protected List<FilterableNotification> filterLocationCampaigns(List<FilterableNotification> filterableNotifications, long now) {
+
+        List<CampaignMatch> campaignMatches = new ArrayList<>();
+        Map<String, LocationCampaign> locationCampaigns = SwrveSDKBase.getInstance().getLocationCampaigns();
         for (FilterableNotification filterableNotification : filterableNotifications) {
 
-            LocationCampaignPayload locationCampaignPayload = LocationCampaignPayload.fromJSON(filterableNotification.getData());
-            // todo dom: get campaignId from locationCampaignPayload and check if it matches any location campaigns recently downloaded.
-            boolean match = true;
-            if (match) {
-                // todo: get location message variant from matched LocationCampaign:
-                // todo:    --> and update message text
-                // todo:    --> and add the locationMessageId into "data" to be used when notification is engaged.
-                String locationMessageId = "2468";
-                String locationMessageBody = filterableNotification.getMessage() + ". Content from LocationMessage.body should be swapped in at filterLocationCampaigns.";
-                filterableNotification.setData(locationMessageId);
-                filterableNotification.setMessage(locationMessageBody);
-                notificationsToSend.add(filterableNotification);
+            LocationPayload locationPayload = LocationPayload.fromJSON(filterableNotification.getData());
+            LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
+
+            if (locationCampaign == null || locationCampaign.getMessage() == null) {
+                Log.e(LOG_TAG, "LocationCampaign not downloaded, or not found, or invalid. Payload:" + filterableNotification.getData());
+                continue;
+            }
+
+            if (locationCampaign.getStart() < now && locationCampaign.getEnd() > now) {
+                campaignMatches.add(new CampaignMatch(filterableNotification, locationCampaign));
+            } else {
+                Log.i(LOG_TAG, "LocationCampaign is out of date:" + filterableNotification.getData());
             }
         }
 
-        // TODO dom: if more than one notification to send, then reduce campaigns list to the most recently started one, and send impression for that one only.
-        //String locationMessageId = filterableNotification.getData();
-        String locationMessageId = "2468";
-        SwrveSDKBase.event("Swrve.Location.Location-" + locationMessageId + ".impression");
-        SwrveSDKBase.sendQueuedEvents();
+        List<FilterableNotification> notificationsToSend = new ArrayList<>();
+        if (campaignMatches.size() == 0) {
+            Log.i(LOG_TAG, "No LocationCampaigns were matched ");
+        } else {
+            CampaignMatch match = getByMostRecentlyStarted(campaignMatches);
+            FilterableNotification notificationToSend = match.filterableNotification;
+            LocationMessage message = match.locationCampaign.getMessage();
 
-        Log.d(LOG_TAG, "LocationCampaignsFilterService.targetLocationCampaigns. Sending " + notificationsToSend.size() + " notifications.");
+            notificationToSend.setData(String.valueOf(message.getId())); // swap locationMessageId into "data" engagement event later
+            notificationToSend.setMessage(message.getBody()); // update content of notification
+            notificationsToSend.add(notificationToSend);
+
+            sendLocationImpression(message.getId());
+        }
         return notificationsToSend;
+    }
+
+    protected CampaignMatch getByMostRecentlyStarted(List<CampaignMatch> campaignMatches) {
+
+        // only send the most recently started campaign, so sort matched campaigns by start date.
+        Collections.sort(campaignMatches, new Comparator<CampaignMatch>() {
+            public int compare(CampaignMatch o1, CampaignMatch o2) {
+                long a = o1.locationCampaign.getStart();
+                long b = o2.locationCampaign.getStart();
+                if (a < b)
+                    return 1;
+                else if (a == b)
+                    return 0;
+                else
+                    return -1;
+            }
+        });
+        return campaignMatches.get(0);
+    }
+
+    protected void sendLocationImpression(int id) {
+        SwrveSDKBase.event("Swrve.Location.Location-" + id + ".impression");
+        SwrveSDKBase.sendQueuedEvents();
+    }
+
+    class CampaignMatch {
+        FilterableNotification filterableNotification;
+        LocationCampaign locationCampaign;
+
+        CampaignMatch(FilterableNotification filterableNotification, LocationCampaign locationCampaign) {
+            this.filterableNotification = filterableNotification;
+            this.locationCampaign = locationCampaign;
+        }
     }
 }
