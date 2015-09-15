@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.plotprojects.retail.android.FilterableNotification;
 import com.plotprojects.retail.android.NotificationFilterReceiver;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.locationcampaigns.model.LocationMessage;
@@ -55,14 +56,18 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         for (FilterableNotification filterableNotification : filterableNotifications) {
 
             LocationPayload locationPayload = LocationPayload.fromJSON(filterableNotification.getData());
-            LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
+            if (locationPayload == null || SwrveHelper.isNullOrEmpty(locationPayload.getCampaignId())) {
+                Log.e(LOG_TAG, "LocationPayload is invalid. Payload:" + filterableNotification.getData());
+                continue;
+            }
 
+            LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
             if (locationCampaign == null || locationCampaign.getMessage() == null) {
                 Log.e(LOG_TAG, "LocationCampaign not downloaded, or not found, or invalid. Payload:" + filterableNotification.getData());
                 continue;
             }
 
-            if (locationCampaign.getStart() < now && locationCampaign.getEnd() > now) {
+            if (locationCampaign.getStart() <= now && (locationCampaign.getEnd() >= now || locationCampaign.getEnd() == 0)) {
                 campaignMatches.add(new CampaignMatch(filterableNotification, locationCampaign));
             } else {
                 Log.i(LOG_TAG, "LocationCampaign is out of date:" + filterableNotification.getData());
