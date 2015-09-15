@@ -9,11 +9,11 @@ import java.util.Map;
 
 public class LocationCampaign  {
 
-    private int id;
-    private long start;
-    private long end;
-    private int version;
-    private LocationMessage message;
+    private final int id;
+    private final long start;
+    private final long end;
+    private final int version;
+    private final LocationMessage message;
 
     @VisibleForTesting
     public LocationCampaign(int id, long start, long end, int version, LocationMessage message) {
