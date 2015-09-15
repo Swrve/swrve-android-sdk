@@ -22,6 +22,7 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
+import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -1851,19 +1852,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void onGeofenceCrossed(String campaignId, String geofenceId, String trigger) {
-        try {
-            _onGeofenceCrossed(campaignId, geofenceId, trigger);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+    public Map<String, LocationCampaign> getLocationCampaigns() {
+        if (locationCampaigns == null) {
+            return new HashMap<>();
+        } else {
+            return this.locationCampaigns;
         }
-    }
-
-    protected void _onGeofenceCrossed(String campaignId, String geofenceId, String trigger) {
-        Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("campaignId", campaignId);
-        parameters.put("geofenceId", geofenceId);
-        parameters.put("trigger", trigger);
-        queueEvent("Swrve.Geofence.crossed", parameters, null);
     }
 }
