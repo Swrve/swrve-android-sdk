@@ -5,8 +5,8 @@ import android.support.annotation.VisibleForTesting;
 
 public class LocationMessage {
 
-    private int id;
-    private String body;
+    private final int id;
+    private final String body;
 
     @VisibleForTesting
     public LocationMessage(int id, String body) {
