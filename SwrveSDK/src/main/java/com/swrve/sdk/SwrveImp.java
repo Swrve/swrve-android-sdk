@@ -13,7 +13,6 @@ import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.swrve.sdk.R;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -23,6 +22,7 @@ import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
+import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -86,6 +86,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
     protected static String version = "4.1";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
+    protected static final String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
@@ -165,6 +166,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ExecutorService restClientExecutor;
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
+    protected Map<String, LocationCampaign> locationCampaigns;
     protected List<SwrveBaseCampaign> campaigns;
     protected Set<String> assetsOnDisk;
     protected boolean assetsCurrentlyDownloading;
@@ -587,6 +589,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         });
     }
 
+    protected void saveLocationCampaignsInCache(final JSONObject locationCampaignContent) {
+        storageExecutorExecute(new Runnable() {
+            @Override
+            public void run() {
+                cachedLocalStorage.setAndFlushSecureSharedEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, locationCampaignContent.toString(), getUniqueKey());
+            }
+        });
+    }
+
     protected void saveResourcesInCache(final JSONArray resourcesContent) {
         storageExecutorExecute(new Runnable() {
             @Override
@@ -859,6 +870,37 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             campaigns = new ArrayList<SwrveBaseCampaign>(newCampaigns);
         } catch (JSONException exp) {
             Log.e(LOG_TAG, "Error parsing campaign JSON", exp);
+        }
+    }
+
+    protected void loadLocationCampaignsFromJSON(JSONObject locationCampaignJSON) {
+        if (locationCampaignJSON == null) {
+            Log.i(LOG_TAG, "NULL JSON for location campaigns, aborting load.");
+            return;
+        }
+
+        if (locationCampaignJSON.length() == 0) {
+            Log.i(LOG_TAG, "Location campaign JSON empty, no location campaigns downloaded");
+            locationCampaigns.clear();
+            return;
+        }
+
+        if(locationCampaignJSON.has("campaigns") == false) {
+            Log.i(LOG_TAG, "No Location campaigns.");
+            locationCampaigns.clear();
+            return;
+        }
+
+        Log.i(LOG_TAG, "Location campaign JSON data: " + locationCampaignJSON);
+
+        try {
+            String campaignsJsonString = locationCampaignJSON.getString("campaigns");
+            Map<String, LocationCampaign> newLocationCampaigns = LocationCampaign.fromJSON(campaignsJsonString);
+
+            // Update current list of campaigns with new ones
+            locationCampaigns = new HashMap<String, LocationCampaign>(newLocationCampaigns);
+        } catch (JSONException ex) {
+            Log.e(LOG_TAG, "Error parsing location campaign JSON", ex);
         }
     }
 

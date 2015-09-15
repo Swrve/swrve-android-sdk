@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -111,6 +112,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     C getConfig();
 
-    void onGeofenceCrossed(String campaignId, String geofenceId, String trigger);
+    Map<String, LocationCampaign> getLocationCampaigns();
 
 }
