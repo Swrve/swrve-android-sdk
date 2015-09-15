@@ -67,7 +67,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
                 continue;
             }
 
-            if (locationCampaign.getStart() < now && (locationCampaign.getEnd() > now || locationCampaign.getEnd() == 0)) {
+            if (locationCampaign.getStart() <= now && (locationCampaign.getEnd() >= now || locationCampaign.getEnd() == 0)) {
                 campaignMatches.add(new CampaignMatch(filterableNotification, locationCampaign));
             } else {
                 Log.i(LOG_TAG, "LocationCampaign is out of date:" + filterableNotification.getData());
