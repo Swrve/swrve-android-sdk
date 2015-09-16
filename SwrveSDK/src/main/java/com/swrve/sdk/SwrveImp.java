@@ -1221,6 +1221,34 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     /**
+     * Initialize location campaigns with cache content
+     */
+    // TODO: visibility exposed for FA. Change for GA.
+    public void initLocationCampaigns() {
+        locationCampaigns = new HashMap<>();
+
+        try {
+            String locationCampaignsFromCache = cachedLocalStorage.getSecureCacheEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, getUniqueKey());
+            if (!SwrveHelper.isNullOrEmpty(locationCampaignsFromCache)) {
+                JSONObject locationCampaignsJson = new JSONObject(locationCampaignsFromCache);
+                loadLocationCampaignsFromJSON(locationCampaignsJson);
+                Log.i(LOG_TAG, "Loaded location campaigns from cache.");
+            } else {
+                invalidateETag();
+            }
+        } catch (JSONException e) {
+            invalidateETag();
+            Log.e(LOG_TAG, "Invalid json in cache, cannot load location campaigns", e);
+        } catch (SecurityException e) {
+            invalidateETag();
+            Log.e(LOG_TAG, "Signature validation failed when trying to load location campaigns from cache.", e);
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("name", "Swrve.signature_invalid");
+            queueEvent("event", parameters, null, false);
+        }
+    }
+
+    /**
      * Update campaigns with given JSON
      */
     protected void updateCampaigns(JSONObject campaignJSON, JSONObject campaignSettingsJSON) {
