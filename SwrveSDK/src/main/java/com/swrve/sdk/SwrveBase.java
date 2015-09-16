@@ -157,8 +157,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             this.resourceManager = new SwrveResourceManager();
             if (preloadRandC) {
-                // Initialize resources from cache
+                // Initialize resources and location campaigns from cache
                 initResources();
+                initLocationCampaigns();
             }
 
             // Send session start
@@ -200,8 +201,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
 
                 if (preloadRandC) {
-                    // Initialize campaigns from cache
-                    initCampaigns();
+                    initCampaigns(); // Initialize campaigns from cache
                 }
 
                 // Add custom message listener
@@ -262,6 +262,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         if (config.isTalkEnabled()) {
                             initCampaigns();
                         }
+                        initLocationCampaigns();
                     }
                 });
             }

@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.plotprojects.retail.android.FilterableNotification;
 import com.plotprojects.retail.android.NotificationFilterReceiver;
+import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
@@ -34,7 +35,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         try {
             wakeLock.acquire();
 
-            // presumption here for FA that is that location campaigns have been refreshed
+            ((SwrveBase)(SwrveSDKBase.getInstance())).initLocationCampaigns(); // TODO: presumption for FA is that location campaigns have been refreshed from ABTS by starting the app. Fix for GA.
 
             return filterLocationCampaigns(notifications, System.currentTimeMillis());
         } catch (Exception ex) {
@@ -47,7 +48,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         return new ArrayList<>();
     }
 
-    // TODO dom: need to refactor init sdk method so certain variables, executors, etc  are initialised. Currently most of this is done in onCreate method.
+    // TODO: need to refactor init sdk method so certain variables, executors, etc  are initialised. Currently most of this is done in onCreate method.
 
     protected List<FilterableNotification> filterLocationCampaigns(List<FilterableNotification> filterableNotifications, long now) {
 
