@@ -63,7 +63,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
 
             LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
             if (locationCampaign == null || locationCampaign.getMessage() == null) {
-                Log.e(LOG_TAG, "LocationCampaign not downloaded, or not found, or invalid. Payload:" + filterableNotification.getData());
+                Log.i(LOG_TAG, "LocationCampaign not downloaded, or not targeted, or invalid. Payload:" + filterableNotification.getData());
                 continue;
             }
 
