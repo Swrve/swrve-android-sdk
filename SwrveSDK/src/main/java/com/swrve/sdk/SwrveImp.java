@@ -1267,18 +1267,25 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             restClientExecutor = createRESTClientExecutor();
         }
 
-        this.appVersion = config.getAppVersion();
-        this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId);
-        if (SwrveHelper.isNullOrEmpty(this.appVersion)) {
-            try {
-                PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-                this.appVersion = pInfo.versionName;
-            } catch (Exception exp) {
-                Log.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
+        if (sessionToken == null) {
+            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId);
+        }
+
+        if (appVersion == null) {
+            this.appVersion = config.getAppVersion();
+            if (SwrveHelper.isNullOrEmpty(this.appVersion)) {
+                try {
+                    PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                    this.appVersion = pInfo.versionName;
+                } catch (Exception exp) {
+                    Log.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
+                }
             }
         }
 
-        initLocationCampaigns();
+        if (locationCampaigns == null) {
+            initLocationCampaigns();
+        }
     }
 
     /**
