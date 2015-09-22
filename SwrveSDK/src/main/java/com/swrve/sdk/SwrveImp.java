@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -1223,8 +1224,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     /**
      * Initialize location campaigns with cache content
      */
-    // TODO: visibility exposed for FA. Change for GA.
-    public void initLocationCampaigns() {
+    protected void initLocationCampaigns() {
         locationCampaigns = new HashMap<>();
 
         try {
@@ -1246,6 +1246,39 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             parameters.put("name", "Swrve.signature_invalid");
             queueEvent("event", parameters, null, false);
         }
+    }
+
+    // TODO: Change this for GA.
+    public void initSDKForLocationCampaigns(Context context) {
+
+        if (SwrveHelper.isNullOrEmpty(userId)) {
+            userId = getUniqueUserId(context);
+        }
+        if (restClient == null) {
+            restClient = createRESTClient();
+        }
+        if (cachedLocalStorage == null) {
+            cachedLocalStorage = createCachedLocalStorage();
+        }
+        if (storageExecutor == null) {
+            storageExecutor = createStorageExecutor();
+        }
+        if (restClientExecutor == null) {
+            restClientExecutor = createRESTClientExecutor();
+        }
+
+        this.appVersion = config.getAppVersion();
+        this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId);
+        if (SwrveHelper.isNullOrEmpty(this.appVersion)) {
+            try {
+                PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                this.appVersion = pInfo.versionName;
+            } catch (Exception exp) {
+                Log.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
+            }
+        }
+
+        initLocationCampaigns();
     }
 
     /**
