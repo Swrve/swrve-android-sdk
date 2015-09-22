@@ -16,10 +16,9 @@ import com.swrve.sdk.locationcampaigns.model.LocationMessage;
 import com.swrve.sdk.locationcampaigns.model.LocationPayload;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class LocationCampaignFilter extends NotificationFilterReceiver {
 
@@ -35,7 +34,8 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         try {
             wakeLock.acquire();
 
-            ((SwrveBase)(SwrveSDKBase.getInstance())).initLocationCampaigns(); // TODO: presumption for FA is that location campaigns have been refreshed from ABTS by starting the app. Fix for GA.
+            // TODO: presumption for FA is that location campaigns have been refreshed from ABTS by starting the app. Also that certain variables have been initialised. For FA hack this. For GA fix this.
+            ((SwrveBase) (SwrveSDKBase.getInstance())).initSDKForLocationCampaigns(this);
 
             return filterLocationCampaigns(notifications, System.currentTimeMillis());
         } catch (Exception ex) {
@@ -48,11 +48,9 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         return new ArrayList<>();
     }
 
-    // TODO: need to refactor init sdk method so certain variables, executors, etc  are initialised. Currently most of this is done in onCreate method.
-
     protected List<FilterableNotification> filterLocationCampaigns(List<FilterableNotification> filterableNotifications, long now) {
 
-        List<CampaignMatch> campaignMatches = new ArrayList<>();
+        TreeMap<Long, FilterableNotification> locationCampaignsMatched =  new TreeMap<>();
         Map<String, LocationCampaign> locationCampaigns = SwrveSDKBase.getInstance().getLocationCampaigns();
         for (FilterableNotification filterableNotification : filterableNotifications) {
 
@@ -69,19 +67,20 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
             }
 
             if (locationCampaign.getStart() <= now && (locationCampaign.getEnd() >= now || locationCampaign.getEnd() == 0)) {
-                campaignMatches.add(new CampaignMatch(filterableNotification, locationCampaign));
+                locationCampaignsMatched.put(locationCampaign.getStart(), filterableNotification); // store filterableNotification keyed on start time of campaign
             } else {
-                Log.i(LOG_TAG, "LocationCampaign is out of date:" + filterableNotification.getData());
+                Log.i(LOG_TAG, "LocationCampaign is out of date. \nnow:" + now + "\nlocationCampaign:" + locationCampaign);
             }
         }
 
         List<FilterableNotification> notificationsToSend = new ArrayList<>();
-        if (campaignMatches.size() == 0) {
+        if (locationCampaignsMatched.size() == 0) {
             Log.i(LOG_TAG, "No LocationCampaigns were matched ");
         } else {
-            CampaignMatch match = getByMostRecentlyStarted(campaignMatches);
-            FilterableNotification notificationToSend = match.filterableNotification;
-            LocationMessage message = match.locationCampaign.getMessage();
+            FilterableNotification notificationToSend = getByMostRecentlyStarted(locationCampaignsMatched);
+            LocationPayload locationPayload = LocationPayload.fromJSON(notificationToSend.getData());
+            LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
+            LocationMessage message = locationCampaign.getMessage();
 
             notificationToSend.setData(String.valueOf(message.getId())); // swap locationMessageId into "data" engagement event later
             notificationToSend.setMessage(message.getBody()); // update content of notification
@@ -92,36 +91,14 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         return notificationsToSend;
     }
 
-    protected CampaignMatch getByMostRecentlyStarted(List<CampaignMatch> campaignMatches) {
-
-        // only send the most recently started campaign, so sort matched campaigns by start date.
-        Collections.sort(campaignMatches, new Comparator<CampaignMatch>() {
-            public int compare(CampaignMatch o1, CampaignMatch o2) {
-                long a = o1.locationCampaign.getStart();
-                long b = o2.locationCampaign.getStart();
-                if (a < b)
-                    return 1;
-                else if (a == b)
-                    return 0;
-                else
-                    return -1;
-            }
-        });
-        return campaignMatches.get(0);
+    protected FilterableNotification getByMostRecentlyStarted(TreeMap<Long, FilterableNotification> locationCampaignsMatched) {
+        // only send the most recently started campaign. The treemap is keyed on start date so get the last entry.
+        FilterableNotification filterableNotification = locationCampaignsMatched.lastEntry().getValue();
+        return filterableNotification;
     }
 
     protected void sendLocationImpression(int id) {
         SwrveSDKBase.event("Swrve.Location.Location-" + id + ".impression");
         SwrveSDKBase.sendQueuedEvents();
-    }
-
-    class CampaignMatch {
-        FilterableNotification filterableNotification;
-        LocationCampaign locationCampaign;
-
-        CampaignMatch(FilterableNotification filterableNotification, LocationCampaign locationCampaign) {
-            this.filterableNotification = filterableNotification;
-            this.locationCampaign = locationCampaign;
-        }
     }
 }
