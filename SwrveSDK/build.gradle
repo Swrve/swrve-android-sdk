@@ -102,20 +102,22 @@ publishing {
     repositories {
         maven {
             url '../repo/releases'
-            repository(url: '..//../repo/releases') // Location of where the AAR project files are uploaded
-            pom.groupId = 'com.swrve.sdk.android'
-            pom.artifactId = 'swrve'
-            pom.version = '4.1.0'
         }
     }
+}
+
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    excludes = ["**/README.md"]
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
 }
 
 task androidSourcesJar(type: Jar) {
     classifier = 'source'
     from android.sourceSets.main.java.srcDirs
-}
-
-dependencies {
-    compile "com.swrve.sdk.android:swrve-common:4.0.2"
-//     compile project(':SwrveCommonSDK') // For local development
 }
