@@ -9,14 +9,14 @@ import java.util.Map;
 
 public class LocationCampaign  {
 
-    private final int id;
+    private String id;
     private final long start;
     private final long end;
     private final int version;
     private final LocationMessage message;
 
     @VisibleForTesting
-    public LocationCampaign(int id, long start, long end, int version, LocationMessage message) {
+    public LocationCampaign(String id, long start, long end, int version, LocationMessage message) {
         this.id = id;
         this.start = start;
         this.end = end;
@@ -24,7 +24,7 @@ public class LocationCampaign  {
         this.message = message;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
@@ -47,6 +47,10 @@ public class LocationCampaign  {
     public static Map<String, LocationCampaign> fromJSON(String jsonString) {
         Gson gson = new Gson();
         Map<String, LocationCampaign> locationCampaigns = gson.fromJson(jsonString, new TypeToken<Map<String, LocationCampaign>>(){}.getType());
+        for (Map.Entry<String, LocationCampaign> entry : locationCampaigns.entrySet())
+        {
+            entry.getValue().id = entry.getKey(); // populate the id field into the location campaign objects
+        }
         return locationCampaigns;
     }
 
