@@ -662,7 +662,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     /**
-     * Ensure that after SWRVE_DEFAULT_AUTOSHOW_MESSAGES_MAX_DELAY autoshow is disabled
+     * Ensure that after SwrveConfig.autoShowMessagesMaxDelay milliseconds autoshow is disabled
      */
     protected void disableAutoShowAfterDelay() {
         ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
