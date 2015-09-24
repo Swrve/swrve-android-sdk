@@ -89,6 +89,8 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
         } else {
             FilterableNotification notificationToSend = getByMostRecentlyStarted(locationCampaignsMatched);
             LocationPayload locationPayload = LocationPayload.fromJSON(notificationToSend.getData());
+            Log.d(LOG_TAG, "LocationCampaigns: Matched " + locationCampaignsMatched.size() + " campaigns. Using campaignId:" + locationPayload.getCampaignId());
+
             LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
             LocationMessage message = locationCampaign.getMessage();
 
