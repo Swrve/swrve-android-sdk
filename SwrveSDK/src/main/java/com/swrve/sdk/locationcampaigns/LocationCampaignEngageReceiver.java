@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.plotprojects.retail.android.FilterableNotification;
+import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDKBase;
 
@@ -20,6 +21,8 @@ public class LocationCampaignEngageReceiver extends BroadcastReceiver {
         if (filterableNotification == null || SwrveHelper.isNullOrEmpty(filterableNotification.getData())) {
             Log.e(LOG_TAG, "LocationCampaignEngageReceiver. Payload data is null or empty or missing.");
         } else {
+            ((SwrveBase) (SwrveSDKBase.getInstance())).initSDKForLocationCampaigns(context); // TODO: Make sure certain variables have been initialised. For FA hack this. For GA fix this.
+
             // Queue event. Wakelock not required because app will be started in foreground.
             String locationMessageId = filterableNotification.getData();
             SwrveSDKBase.event("Swrve.Location.Location-" + locationMessageId + ".engaged");
