@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.plotprojects.retail.android.FilterableNotification;
 import com.plotprojects.retail.android.NotificationFilterReceiver;
+import com.swrve.sdk.BuildConfig;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDKBase;
@@ -50,8 +51,17 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
 
     protected List<FilterableNotification> filterLocationCampaigns(List<FilterableNotification> filterableNotifications, long now) {
 
-        TreeMap<Long, FilterableNotification> locationCampaignsMatched =  new TreeMap<>();
         Map<String, LocationCampaign> locationCampaigns = SwrveSDKBase.getInstance().getLocationCampaigns();
+        Log.d(LOG_TAG, "LocationCampaigns: cache size of " + locationCampaigns.size());
+        if (BuildConfig.DEBUG && locationCampaigns.size() > 0 && locationCampaigns.size() < 20) {
+            StringBuilder builder = new StringBuilder();
+            for (Map.Entry<String, LocationCampaign> entry : locationCampaigns.entrySet()) {
+                builder.append(entry.getValue().getId() + ",");
+            }
+            Log.d(LOG_TAG, "LocationCampaigns in cache:" + builder);
+        }
+
+        TreeMap<Long, FilterableNotification> locationCampaignsMatched =  new TreeMap<>();
         for (FilterableNotification filterableNotification : filterableNotifications) {
 
             LocationPayload locationPayload = LocationPayload.fromJSON(filterableNotification.getData());
