@@ -215,7 +215,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (messageDisplayed != null && messageListener != null) {
                 long currentTime = getNow().getTime();
                 if (currentTime < (lastMessageDestroyed + MESSAGE_REAPPEAR_TIMEOUT)) {
-                    messageDisplayed.setMessageController((SwrveBase<?, ?>) this);
                     messageListener.onMessage(messageDisplayed, false);
                 }
                 messageDisplayed = null;
@@ -341,7 +340,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected IRESTClient createRESTClient() {
-        return new RESTClient();
+        return new RESTClient(config.getHttpTimeout());
     }
 
     protected MemoryCachedLocalStorage createCachedLocalStorage() {
@@ -456,15 +455,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         restClient.post(config.getEventsUrl() + BATCH_EVENTS_ACTION, postData, new IRESTResponseListener() {
             @Override
             public void onResponse(RESTResponse response) {
+                boolean deleteEvents = true;
                 if (SwrveHelper.userErrorResponseCode(response.responseCode)) {
                     Log.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
                 } else if (SwrveHelper.successResponseCode(response.responseCode)) {
                     Log.i(LOG_TAG, "Events sent to Swrve");
+                } else if (SwrveHelper.serverErrorResponseCode(response.responseCode)) {
+                    deleteEvents = false;
+                    Log.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
                 }
 
-                // Do not resend if we got a response body back from the server
-                // (2XX, 4XX)
-                listener.onResponse(response.responseBody != null);
+                // Resend if we got a server error (5XX)
+                listener.onResponse(deleteEvents);
             }
 
             @Override
@@ -1008,8 +1010,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 Activity dialogActivity = dialog.getOwnerActivity();
                 if (callerActivity == null || callerActivity ==  dialogActivity) {
                     messageDisplayed = dialog.getMessage();
-                    // Remove reference to the SDK from the message
-                    messageDisplayed.setMessageController(null);
                     lastMessageDestroyed = (new Date()).getTime();
                     Activity activity = dialogActivity;
                     if (activity == null) {

@@ -9,7 +9,8 @@ import java.util.Map.Entry;
  * Used internally to define a common storage for events and other persistent data.
  */
 public interface ILocalStorage {
-    static final String SIGNATURE_SUFFIX = "_SGT";
+
+    String SIGNATURE_SUFFIX = "_SGT";
 
     // Event storage methods
     void addEvent(String eventJSON) throws Exception;
