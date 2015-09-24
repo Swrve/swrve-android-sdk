@@ -6,5 +6,4 @@ package com.swrve.sdk;
 public interface ISwrveEventListener {
 
     void onEvent(String eventName);
-
 }

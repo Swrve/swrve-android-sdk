@@ -39,7 +39,10 @@ public class SwrveMessage {
     public SwrveMessage(SwrveBase<?, ?> messageController, SwrveCampaign campaign) {
         this.campaign = campaign;
         this.formats = new ArrayList<SwrveMessageFormat>();
-        setMessageController(messageController);
+        this.messageController = messageController;
+        if (messageController != null) {
+            setCacheDir(messageController.getCacheDir());
+        }
     }
 
     /**
@@ -146,18 +149,6 @@ public class SwrveMessage {
      */
     public SwrveBase<?, ?> getMessageController() {
         return messageController;
-    }
-
-    /**
-     * Set the Swrve SDK instance that will respond to the message.
-     *
-     * @param messageController
-     */
-    public void setMessageController(SwrveBase<?, ?> messageController) {
-        this.messageController = messageController;
-        if (messageController != null) {
-            setCacheDir(messageController.getCacheDir());
-        }
     }
 
     /**
