@@ -126,6 +126,11 @@ public abstract class SwrveConfigBase {
     private int httpTimeout = 60000;
 
     /**
+     * Automatically log Android ID as "swrve.android_id".
+     */
+    private boolean androidIdLogging;
+
+    /**
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
@@ -562,5 +567,19 @@ public abstract class SwrveConfigBase {
      */
     public int getHttpTimeout() {
         return httpTimeout;
+    }
+
+    /**
+     * @return if it will automatically log Android ID as "swrve.android_id".
+     */
+    public boolean isAndroidIdLogging() {
+        return androidIdLogging;
+    }
+
+    /**
+     * @param enabled to enable automatic logging of Android ID "swrve.android_id".
+     */
+    public void setAndroidIdLogging(boolean enabled) {
+        this.androidIdLogging = enabled;
     }
 }
