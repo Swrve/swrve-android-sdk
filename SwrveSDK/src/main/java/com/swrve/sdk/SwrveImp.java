@@ -1259,6 +1259,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
         if (cachedLocalStorage == null) {
             cachedLocalStorage = createCachedLocalStorage();
+            openLocalStorageConnection();
         }
         if (storageExecutor == null) {
             storageExecutor = createStorageExecutor();
