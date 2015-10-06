@@ -7,10 +7,8 @@ import com.swrve.sdk.SwrveSDK;
 
 public class DemoApplication extends Application {
 
-    private static final int YOUR_APP_ID = 2132;
-    private static final String YOUR_API_KEY = "AYgy6V2uk6f3d46ShfJ";
     private static final String LOG_TAG = "SwrveDemo";
-
+    
     @Override
     public void onCreate() {
         super.onCreate();
