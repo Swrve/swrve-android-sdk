@@ -121,6 +121,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_SIM_OPERATOR_NAME = "swrve.sim_operator.name";
     protected static final String SWRVE_SIM_OPERATOR_ISO_COUNTRY = "swrve.sim_operator.iso_country_code";
     protected static final String SWRVE_SIM_OPERATOR_CODE = "swrve.sim_operator.code";
+    protected static final String SWRVE_DEVICE_REGION = "swrve.device_region";
     protected static final String REFERRER = "referrer";
     protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
@@ -219,7 +220,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (messageDisplayed != null && messageListener != null) {
                 long currentTime = getNow().getTime();
                 if (currentTime < (lastMessageDestroyed + MESSAGE_REAPPEAR_TIMEOUT)) {
-                    messageDisplayed.setMessageController((SwrveBase<?, ?>) this);
                     messageListener.onMessage(messageDisplayed, false);
                 }
                 messageDisplayed = null;
@@ -345,7 +345,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected IRESTClient createRESTClient() {
-        return new RESTClient();
+        return new RESTClient(config.getHttpTimeout());
     }
 
     protected MemoryCachedLocalStorage createCachedLocalStorage() {
@@ -460,15 +460,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         restClient.post(config.getEventsUrl() + BATCH_EVENTS_ACTION, postData, new IRESTResponseListener() {
             @Override
             public void onResponse(RESTResponse response) {
+                boolean deleteEvents = true;
                 if (SwrveHelper.userErrorResponseCode(response.responseCode)) {
                     Log.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
                 } else if (SwrveHelper.successResponseCode(response.responseCode)) {
                     Log.i(LOG_TAG, "Events sent to Swrve");
+                } else if (SwrveHelper.serverErrorResponseCode(response.responseCode)) {
+                    deleteEvents = false;
+                    Log.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
                 }
 
-                // Do not resend if we got a response body back from the server
-                // (2XX, 4XX)
-                listener.onResponse(response.responseBody != null);
+                // Resend if we got a server error (5XX)
+                listener.onResponse(deleteEvents);
             }
 
             @Override
@@ -673,7 +676,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     /**
-     * Ensure that after SWRVE_DEFAULT_AUTOSHOW_MESSAGES_MAX_DELAY autoshow is disabled
+     * Ensure that after SwrveConfig.autoShowMessagesMaxDelay milliseconds autoshow is disabled
      */
     protected void disableAutoShowAfterDelay() {
         ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
@@ -1052,8 +1055,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 Activity dialogActivity = dialog.getOwnerActivity();
                 if (callerActivity == null || callerActivity ==  dialogActivity) {
                     messageDisplayed = dialog.getMessage();
-                    // Remove reference to the SDK from the message
-                    messageDisplayed.setMessageController(null);
                     lastMessageDestroyed = (new Date()).getTime();
                     Activity activity = dialogActivity;
                     if (activity == null) {

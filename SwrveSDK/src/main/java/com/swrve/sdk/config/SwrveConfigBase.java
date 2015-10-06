@@ -121,6 +121,11 @@ public abstract class SwrveConfigBase {
     private int defaultBackgroundColor = Color.TRANSPARENT;
 
     /**
+     * HTTP timeout used when contacting the Swrve APIs, in milliseconds.
+     */
+    private int httpTimeout = 60000;
+
+    /**
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
@@ -540,5 +545,22 @@ public abstract class SwrveConfigBase {
      */
     public void setDefaultBackgroundColor(int defaultBackgroundColor) {
         this.defaultBackgroundColor = defaultBackgroundColor;
+    }
+
+    /**
+     * Set the HTTP timeout
+     * @param httpTimeout
+     */
+    public void setHttpTimeout(int httpTimeout) {
+        this.httpTimeout = httpTimeout;
+    }
+
+    /**
+     * The HTTP timeout used in the Swrve API calls
+     *
+     * @return The timeout used in the HTTP calls
+     */
+    public int getHttpTimeout() {
+        return httpTimeout;
     }
 }
