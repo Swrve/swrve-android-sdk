@@ -1204,8 +1204,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 }
                 updateCampaigns(campaignsJson, campaignSettingsJson);
                 Log.i(LOG_TAG, "Loaded campaigns from cache.");
-                loadLocationCampaignsFromJSON(campaignsJson);
-                Log.i(LOG_TAG, "Loaded location campaigns from cache.");
             } else {
                 invalidateETag();
             }
