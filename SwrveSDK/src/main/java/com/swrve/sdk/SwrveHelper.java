@@ -145,6 +145,10 @@ public final class SwrveHelper {
         return (responseCode >= 200 && responseCode < 300);
     }
 
+    public static boolean serverErrorResponseCode(int responseCode) {
+        return (responseCode >= 500);
+    }
+
     public static void logAndThrowException(String reason) throws IllegalArgumentException {
         Log.e(LOG_TAG, reason);
         throw new IllegalArgumentException(reason);
