@@ -39,7 +39,8 @@ public class YoutubeVideoView extends WebVideoViewBase {
 
         pageHtml = pageHtml.replaceAll(VIDEO_ID_PLACEHOLDER, videoID);
         pageHtml = pageHtml.replaceAll(VIDEO_HEIGHT_PLACEHOLDER, videoHeight);
-
+        pageHtml = pageHtml + errorHtml;
+        
         YoutubeVideoView.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
         // Setup the WebView for video playback
         // Do not remove the WebChrome or WebView clients as they will stop video working on Android 4.2.2.
