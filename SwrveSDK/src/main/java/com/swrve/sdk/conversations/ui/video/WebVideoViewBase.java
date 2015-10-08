@@ -29,14 +29,12 @@ public abstract class WebVideoViewBase extends WebView implements ConversationCo
     // This is the final output. This will be the tags and information that is rendered in the application
     protected String videoHtml;
     protected Content model;
-    protected Context context;
     protected ConversationFullScreenVideoFrame fullScreenContainer;
     protected int width;
 
 
     public WebVideoViewBase(Context context, Content model, ConversationFullScreenVideoFrame fullScreenContainer) {
         super(context);
-        this.context = context;
         this.model = model;
         this.fullScreenContainer = fullScreenContainer;
         url = model.getValue();
