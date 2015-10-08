@@ -29,7 +29,7 @@ public class YoutubeVideoView extends WebVideoViewBase {
         String pageHtml = "";
         InputStream ims;
 
-        AssetManager assetManager = context.getAssets();
+        AssetManager assetManager = getContext().getAssets();
         try {
             ims = assetManager.open("youtubeapi.html");
             pageHtml = SwrveHelper.readStringFromInputStream(ims);
