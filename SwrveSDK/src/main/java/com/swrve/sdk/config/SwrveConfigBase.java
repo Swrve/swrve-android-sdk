@@ -126,6 +126,11 @@ public abstract class SwrveConfigBase {
     private int httpTimeout = 60000;
 
     /**
+     * Hide the toolbar when displaing in-app messages.
+     */
+    private boolean hideToolbar = true;
+
+    /**
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
@@ -322,7 +327,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Whether to use HTTPS for resources and in-app campagins.
+     * @return Whether to use HTTPS for resources and in-app campaigns.
      */
     public boolean getUseHttpsForContentUrl() {
         return useHttpsForContentUrl;
@@ -529,7 +534,6 @@ public abstract class SwrveConfigBase {
         this.loadCachedCampaignsAndResourcesOnUIThread = loadOnUIThread;
     }
 
-
     /**
      * The default in-app background color, if none is specified in the template.
      *
@@ -541,6 +545,7 @@ public abstract class SwrveConfigBase {
 
     /**
      * Set the default in-app background color.
+     *
      * @param defaultBackgroundColor
      */
     public void setDefaultBackgroundColor(int defaultBackgroundColor) {
@@ -548,7 +553,8 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Set the HTTP timeout
+     * Set the HTTP timeout.
+     *
      * @param httpTimeout
      */
     public void setHttpTimeout(int httpTimeout) {
@@ -556,11 +562,27 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * The HTTP timeout used in the Swrve API calls
+     * The HTTP timeout used in the Swrve API calls.
      *
      * @return The timeout used in the HTTP calls
      */
     public int getHttpTimeout() {
         return httpTimeout;
+    }
+
+    /**
+     * Hide the toolbar when displaying in-app messages.
+     *
+     * @param hideToolbar
+     */
+    public void setHideToolbar(boolean hideToolbar) {
+        this.hideToolbar = hideToolbar;
+    }
+
+    /**
+     * @return Whether the SDK will hide the toolbar when displaying in-app messages.
+     */
+    public boolean isHideToolbar() {
+        return hideToolbar;
     }
 }
