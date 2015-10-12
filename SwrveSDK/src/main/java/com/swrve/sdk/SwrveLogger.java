@@ -7,14 +7,16 @@ import com.swrve.sdk.SwrveLogger;
 public class SwrveLogger {
 
     private static final String LOG_TAG = "SWRVE";
+
+    // Config/Active/Inactive
     private static boolean isActive = true;
 
-    public boolean isActive() {
-        return isActive;
+    public static boolean isActive() {
+        return SwrveLogger.isActive;
     }
 
-    public void setActive(boolean isActive) {
-        this.isActive = isActive;
+    public static void setActive(boolean isActive) {
+        SwrveLogger.isActive = isActive;
     }
 
     // Verbose
