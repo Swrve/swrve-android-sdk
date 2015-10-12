@@ -8,7 +8,7 @@ import com.swrve.sdk.SwrveSDK;
 public class DemoApplication extends Application {
 
     private static final String LOG_TAG = "SwrveDemo";
-
+    
     @Override
     public void onCreate() {
         super.onCreate();

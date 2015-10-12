@@ -1,43 +1,42 @@
-package com.swrve.sdk.conversations.ui;
+package com.swrve.sdk.conversations.ui.video;
 
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
+import com.swrve.sdk.conversations.ui.ConversationContent;
+import com.swrve.sdk.conversations.ui.ConversationFullScreenVideoFrame;
 
-public class HtmlVideoView extends WebView implements ConversationContent {
-    private static final String LOG_TAG = "SwrveSDK";
-    public static final String PLAYER_VIDEO_VIMEO = "vimeo";
-    public static final String PLAYER_VIDEO_YOUTUBE = "youtube";
-    private static final String EXTERNAL_MARKER = "&swrveexternal";
-    private String url;
-    private int height;
+public abstract class WebVideoViewBase extends WebView implements ConversationContent {
+    protected static final String LOG_TAG = "SwrveSDK";
+    protected static final String PLAYER_VIDEO_VIMEO = "vimeo";
+    protected static final String PLAYER_VIDEO_YOUTUBE = "youtube";
+    protected static final String EXTERNAL_MARKER = "&swrveexternal";
+    protected String url;
+    protected int height;
     // This is a link to the video to be displayed in case the video is not visible to the customers
-    private String errorHtml;
+    protected String errorHtml;
     // This is the final output. This will be the tags and information that is rendered in the application
-    private String videoHtml;
-    private Content model;
-    private ConversationFullScreenVideoFrame fullScreenContainer;
+    protected String videoHtml;
+    protected Content model;
+    protected ConversationFullScreenVideoFrame fullScreenContainer;
+    protected int width;
 
-    public HtmlVideoView(Context context, Content model, ConversationFullScreenVideoFrame fullScreenContainer) {
+
+    public WebVideoViewBase(Context context, Content model, ConversationFullScreenVideoFrame fullScreenContainer) {
         super(context);
         this.model = model;
         this.fullScreenContainer = fullScreenContainer;
-    }
-
-    protected void init(Content model) {
         url = model.getValue();
         height = Integer.parseInt(model.getHeight());
         if (height <= 0) {
@@ -58,37 +57,15 @@ public class HtmlVideoView extends WebView implements ConversationContent {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = errorHtml;
         }
-
-        String pageHtml = "<html><body style=\"margin: 0; padding: 0\">" + videoHtml + "</body></html>";
-        // Setup the WebView for video playback
-        // Do not remove the WebChrome or WebView clients as they will stop video working on Android 4.2.2.
-        this.setWebChromeClient(new SwrveWebCromeClient());
-        this.setWebViewClient(new SwrveVideoWebViewClient());
-        this.getSettings().setJavaScriptEnabled(true);
-        this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
     }
 
-    protected void onWindowVisibilityChanged(int visibility) {
-        super.onWindowVisibilityChanged(visibility);
-
-        if (visibility != View.VISIBLE) {
-            Log.i(LOG_TAG, "Stopping the Video!");
-            this.stopLoading();
-            // Load some blank data into the webview
-            this.loadData("<p></p>", "text/html", "utf8");
-        } else {
-            // Reload video
-            this.stopLoading();
-            init(this.model);
-        }
-    }
 
     @Override
     public ConversationAtom getModel() {
         return model;
     }
 
-    private class SwrveVideoWebViewClient extends WebViewClient {
+    protected class SwrveVideoWebViewClient extends WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             // Check if link has to be opened with an intent
@@ -109,11 +86,11 @@ public class HtmlVideoView extends WebView implements ConversationContent {
             );
             String placeHolderHtml = "<div style=\"width: 100%; height: " + height + "px\"></div>";
             String pageHtml = "<html><body style=\"margin: 0; padding: 0;\">" + placeHolderHtml + errorHtml + "</body></html>";
-            HtmlVideoView.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
+            WebVideoViewBase.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);
         }
     }
 
-    private class SwrveWebCromeClient extends WebChromeClient {
+    protected class SwrveWebCromeClient extends WebChromeClient {
         private CustomViewCallback mCustomViewCallback;
         private View mView;
 

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body style = "padding: 0; margin: 0;">
+<div style = "width: 100%; height: 100%;" id="player"></div>
+
+<script>
+      var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      var player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          height: 'VIDEO_HEIGHT_PLACEHOLDER',
+          width:  '100%',
+          videoId: 'VIDEO_ID_PLACEHOLDER',
+          playerVars: {
+            iv_load_policy: 3, /* Don't show annotations by default */
+            modestbranding: 1, /* Don't show the youtube branding */
+            showinfo: 0, /* Dont' show title and video info before the user starts playing (its visually noisy) */
+            rel: 0, /* Don't show the related videos list when the video ends */
+            frameborder: 0 /* No border around the video */
+          }
+        });
+      }
+    </script>
+</body>
+</html>

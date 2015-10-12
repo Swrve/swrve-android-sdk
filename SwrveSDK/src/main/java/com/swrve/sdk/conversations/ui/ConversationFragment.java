@@ -40,6 +40,8 @@ import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
+import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
+import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -239,13 +241,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    HtmlVideoView view = new HtmlVideoView(activity, modelContent, fullScreenFrame);
+                    YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     // Let the eventListener know that something has happened to the video
-                    final HtmlVideoView cloneView = view;
+                    final YoutubeVideoView cloneView = view;
                     final String tag = content.getTag();
                     view.setOnTouchListener(new View.OnTouchListener() {
                         @Override
@@ -464,7 +466,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     // For each of the content portions we store data about them which is then committed at a later point
-    private void stashVideoViewed(String pageTag, String fragmentTag, HtmlVideoView v) {
+    private void stashVideoViewed(String pageTag, String fragmentTag, WebVideoViewBase v) {
         String key = pageTag + "-" + fragmentTag;
         String type = UserInputResult.TYPE_VIDEO_PLAY;
         UserInputResult result = new UserInputResult();
