@@ -2,7 +2,7 @@ package com.swrve.sdk.messaging;
 
 import android.graphics.Color;
 import android.graphics.Point;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
@@ -76,7 +76,7 @@ public class SwrveMessageFormat {
 
         setSize(getSizeFrom(messageFormatData.getJSONObject("size")));
 
-        Log.i(LOG_TAG, "Format " + getName() + " Size: " + size.x + "x" + size.y + " scale " + scale);
+        SwrveLogger.i(LOG_TAG, "Format " + getName() + " Size: " + size.x + "x" + size.y + " scale " + scale);
         JSONArray jsonButtons = messageFormatData.getJSONArray("buttons");
         for (int i = 0, j = jsonButtons.length(); i < j; i++) {
             SwrveButton button = new SwrveButton(message, jsonButtons.getJSONObject(i));

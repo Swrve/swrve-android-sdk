@@ -1,6 +1,6 @@
 package com.swrve.sdk;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,7 +35,7 @@ public class SwrveResourceManager {
                 }
             }
         } catch (JSONException e) {
-            Log.i(LOG_TAG, "Invalid JSON received for resources, resources not updated");
+            SwrveLogger.i(LOG_TAG, "Invalid JSON received for resources, resources not updated");
         }
     }
 
@@ -90,7 +90,7 @@ public class SwrveResourceManager {
         try {
             _setResourcesFromJSON(jsonResources);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -102,7 +102,7 @@ public class SwrveResourceManager {
         try {
             return _getResources();
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -116,7 +116,7 @@ public class SwrveResourceManager {
         try {
             return _getResource(resourceId);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -132,7 +132,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsString(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -148,7 +148,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsInt(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -164,7 +164,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsFloat(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -180,7 +180,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsBoolean(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }

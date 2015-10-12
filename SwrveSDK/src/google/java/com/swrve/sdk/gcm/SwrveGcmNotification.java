@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveHelper;
 
@@ -74,7 +74,7 @@ public class SwrveGcmNotification {
             swrveGcmNotification = new SwrveGcmNotification(pushActivityClass, pushIconId, pushTitle);
 
         } catch (Exception ex) {
-            Log.e(TAG, "Error creating push notification from metadata", ex);
+            SwrveLogger.e(TAG, "Error creating push notification from metadata", ex);
         }
         return swrveGcmNotification;
     }

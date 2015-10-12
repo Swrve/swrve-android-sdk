@@ -1,6 +1,6 @@
 package com.swrve.sdk.localstorage;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveHelper;
 
@@ -75,9 +75,9 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
                     throw new SecurityException("Signature validation failed");
                 }
             } catch (NoSuchAlgorithmException e) {
-                Log.i("SwrveSDK", "Computing signature failed because of invalid algorithm");
+                SwrveLogger.i("SwrveSDK", "Computing signature failed because of invalid algorithm");
             } catch (InvalidKeyException e) {
-                Log.i("SwrveSDK", "Computing signature failed because of an invalid key");
+                SwrveLogger.i("SwrveSDK", "Computing signature failed because of an invalid key");
             }
         }
 
@@ -155,13 +155,13 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
                     secondaryStorage.setSecureCacheEntryForUser(userId, category, rawData, signature);
                 }
             } catch (NoSuchAlgorithmException e) {
-                Log.i("SwrveSDK", "Computing signature failed because of invalid algorithm");
+                SwrveLogger.i("SwrveSDK", "Computing signature failed because of invalid algorithm");
                 cache.setCacheEntryForUser(userId, category, rawData);
                 if (secondaryStorage != null) {
                     secondaryStorage.setCacheEntryForUser(userId, category, rawData);
                 }
             } catch (InvalidKeyException e) {
-                Log.i("SwrveSDK", "Computing signature failed because of an invalid key");
+                SwrveLogger.i("SwrveSDK", "Computing signature failed because of an invalid key");
             }
         }
     }
