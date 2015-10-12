@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Content extends ConversationAtom {
-    public static final String YOUTUBE_VIDEO_ID_REGEX = "^https?://.*(?:youtu.be/|v/|u/\\w/|embed/|watch?v=)([^#&?]*).*$";
+    public static final String YOUTUBE_VIDEO_ID_REGEX = "^https?://.*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$";
 
     protected String value;
     protected String height;
