@@ -51,7 +51,8 @@ public class SwrveGcmNotification {
     protected static SwrveGcmNotification createNotificationFromMetaData(Context context) {
         SwrveGcmNotification swrveGcmNotification = null;
         try {
-            ApplicationInfo app = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+            PackageManager packageManager = context.getPackageManager();
+            ApplicationInfo app = packageManager.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
             Bundle metaData = app.metaData;
             if (metaData == null) {
                 throw new RuntimeException("No SWRVE metadata specified in AndroidManifest.xml");
@@ -59,21 +60,21 @@ public class SwrveGcmNotification {
 
             int iconId = metaData.getInt(SWRVE_PUSH_ICON_METADATA, -1);
             if (iconId < 0) {
-                // No icon specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_ICON_METADATA + " specified in AndroidManifest.xml");
+                // Default to the application icon
+                iconId = app.icon;
             }
 
             int iconMaterialId = metaData.getInt(SWRVE_PUSH_ICON_MATERIAL_METADATA, -1);
             if (iconMaterialId < 0) {
                 // No material (Android L+) icon specified in the metadata
-                Log.w(TAG, "No SWRVE_PUSH_ICON_MATERIAL specified. We recommend setting a special material icon for Android L+");
+                Log.w(TAG, "No " + SWRVE_PUSH_ICON_MATERIAL_METADATA + " specified. We recommend setting a special material icon for Android L+");
             }
 
             Bitmap largeIconBitmap = null;
             int largeIconBitmapId = metaData.getInt(SWRVE_PUSH_ICON_LARGE_METADATA, -1);
             if (largeIconBitmapId < 0) {
                 // No large icon specified in the metadata
-                Log.w(TAG, "No SWRVE_PUSH_ICON_LARGE specified. We recommend setting a large image for your notifications");
+                Log.w(TAG, "No " + SWRVE_PUSH_ICON_LARGE_METADATA + " specified. We recommend setting a large image for your notifications");
             } else {
                 largeIconBitmap = BitmapFactory.decodeResource(context.getResources(), largeIconBitmapId);
             }
@@ -81,15 +82,25 @@ public class SwrveGcmNotification {
             int accentColor = metaData.getInt(SWRVE_PUSH_ACCENT_COLOR_METADATA, -1);
             if (accentColor < 0) {
                 // No accent color specified in the metadata
-                Log.w(TAG, "No SWRVE_PUSH_ACCENT_COLOR specified. We recommend setting an accent color for your notifications");
+                Log.w(TAG, "No " + SWRVE_PUSH_ACCENT_COLOR_METADATA + " specified. We recommend setting an accent color for your notifications");
             }
 
             Class<?> pushActivityClass;
             String pushActivity = metaData.getString(SWRVE_PUSH_ACTIVITY_METADATA);
             if (SwrveHelper.isNullOrEmpty(pushActivity)) {
-                // No activity specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_ACTIVITY_METADATA + " specified in AndroidManifest.xml");
-            } else {
+                ResolveInfo resolveInfo = packageManager.resolveActivity(
+                        packageManager.getLaunchIntentForPackage(context.getPackageName()),
+                        PackageManager.MATCH_DEFAULT_ONLY);
+
+                if (resolveInfo != nul) {
+                    pushActivity = resolveInfo.activityInfo.name;
+                } else {
+                    // No activity specified in the metadata
+                    throw new RuntimeException("No " + SWRVE_PUSH_ACTIVITY_METADATA + " specified in AndroidManifest.xml");
+                }
+            }
+
+            if (pushActivity != null) {
                 // Check that the Activity exists and can be found
                 pushActivityClass = getClassForActivityClassName(context, pushActivity);
                 if (pushActivityClass == null) {
@@ -99,12 +110,17 @@ public class SwrveGcmNotification {
 
             String pushTitle = metaData.getString(SWRVE_PUSH_TITLE_METADATA);
             if (SwrveHelper.isNullOrEmpty(pushTitle)) {
-                // No activity specified in the metadata
-                throw new RuntimeException("No " + SWRVE_PUSH_TITLE_METADATA + " specified in AndroidManifest.xml");
+                CharSequence appTitle = app.loadLabel(packageManager);
+                if (appTitle != null) {
+                    pushTitle = appTitle.toString();
+                }
+                if (SwrveHelper.isNullOrEmpty(pushTitle)) {
+                    // No title specified in the metadata and could not find default
+                    throw new RuntimeException("No " + SWRVE_PUSH_TITLE_METADATA + " specified in AndroidManifest.xml");
+                }
             }
 
             swrveGcmNotification = new SwrveGcmNotification(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
-
         } catch (Exception ex) {
             Log.e(TAG, "Error creating push notification from metadata", ex);
         }
