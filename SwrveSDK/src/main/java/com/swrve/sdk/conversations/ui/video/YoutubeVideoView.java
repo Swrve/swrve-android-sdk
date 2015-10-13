@@ -3,6 +3,8 @@ package com.swrve.sdk.conversations.ui.video;
 import android.content.Context;
 import android.content.res.AssetManager;
 import com.swrve.sdk.SwrveLogger;
+
+import android.util.Log;
 import android.view.View;
 
 import com.swrve.sdk.SwrveHelper;
@@ -34,7 +36,7 @@ public class YoutubeVideoView extends WebVideoViewBase {
             ims = assetManager.open("youtubeapi.html");
             pageHtml = SwrveHelper.readStringFromInputStream(ims);
         } catch (IOException e) {
-            e.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(e));
         }
 
         pageHtml = pageHtml.replaceAll(VIDEO_ID_PLACEHOLDER, videoID);
