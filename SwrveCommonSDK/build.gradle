@@ -35,14 +35,14 @@ uploadArchives {
             repository(url: '..//../repo/releases') // Location of where the AAR project files are uploaded
             pom.groupId = 'com.swrve.sdk.android'
             pom.artifactId = 'swrve-common'
-            pom.version = '4.0.2'
+            pom.version = '4.0.3'
         }
     }
 }
 
 dependencies {
     compile 'com.google.code.gson:gson:2.2.+'
-    compile 'com.android.support:support-v4:22.1.+'
-    compile 'com.android.support:appcompat-v7:22.1.+'
+    compile 'com.android.support:support-v4:23.0.+'
+    compile 'com.android.support:appcompat-v7:23.0.+'
 }
 
