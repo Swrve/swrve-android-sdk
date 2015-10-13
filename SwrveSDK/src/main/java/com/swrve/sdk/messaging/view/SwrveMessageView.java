@@ -5,7 +5,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.AttributeSet;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
@@ -166,7 +166,7 @@ public class SwrveMessageView extends RelativeLayout {
                 startAnimation(animation);
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while showing message", e);
+            SwrveLogger.e(LOG_TAG, "Error while showing message", e);
         }
     }
 
@@ -202,7 +202,7 @@ public class SwrveMessageView extends RelativeLayout {
                 dismissView();
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while dismissing message", e);
+            SwrveLogger.e(LOG_TAG, "Error while dismissing message", e);
         }
     }
 
@@ -237,7 +237,7 @@ public class SwrveMessageView extends RelativeLayout {
                 message.getMessageController().messageWasShownToUser(format);
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while processing first impression", e);
+            SwrveLogger.e(LOG_TAG, "Error while processing first impression", e);
         }
     }
 

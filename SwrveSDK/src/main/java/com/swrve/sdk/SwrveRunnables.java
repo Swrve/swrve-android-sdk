@@ -1,6 +1,6 @@
 package com.swrve.sdk;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 /**
  * User internally to assure exceptions won't bubble up when executing a runnable
@@ -17,7 +17,7 @@ final class SwrveRunnables {
                 try {
                     r.run();
                 } catch (Exception exp) {
-                    Log.e(LOG_TAG, "Error executing runnable: ", exp);
+                    SwrveLogger.e(LOG_TAG, "Error executing runnable: ", exp);
                 }
             }
         };

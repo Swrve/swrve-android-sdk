@@ -3,7 +3,7 @@ package com.swrve.sdk.conversations.ui.video;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
@@ -80,7 +80,7 @@ public abstract class WebVideoViewBase extends WebView implements ConversationCo
 
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-            Log.e("SwrveVideoWebViewClient", "Could not display url: " + failingUrl + "\n" +
+            SwrveLogger.e("SwrveVideoWebViewClient", "Could not display url: " + failingUrl + "\n" +
                             "Error code: " + Integer.toString(errorCode) + "\n" +
                             "Message: " + description
             );

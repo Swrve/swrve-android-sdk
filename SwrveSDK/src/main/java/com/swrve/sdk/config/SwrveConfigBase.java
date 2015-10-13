@@ -4,6 +4,7 @@ import android.graphics.Color;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import java.io.File;
@@ -192,6 +193,28 @@ public abstract class SwrveConfigBase {
     public SwrveConfigBase setLanguage(String language) {
         this.language = language;
         return this;
+    }
+
+
+    /**
+     * Enable the Swrve logger. This is important for debugging purposes/
+     */
+    public void enableLogging() {
+        SwrveLogger.setActive(true);
+    }
+
+    /**
+     * Disable the SwrveLogger. This is important for IO heavy apps who don't want to write Logs so often.
+     */
+    public void disableLogging() {
+        SwrveLogger.setActive(false);
+    }
+
+    /**
+     * Check if the SwrveLogger is enabled
+     */
+    public boolean isLoggerEnabled() {
+        return SwrveLogger.isActive();
     }
 
     /**

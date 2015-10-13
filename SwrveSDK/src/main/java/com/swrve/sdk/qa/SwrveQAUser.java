@@ -1,7 +1,7 @@
 package com.swrve.sdk.qa;
 
 import android.os.Bundle;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
@@ -107,7 +107,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, talkSessionJson);
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
         }
     }
 
@@ -124,7 +124,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, triggerJson);
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
         }
     }
 
@@ -168,7 +168,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, triggerJson);
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
         }
     }
 
@@ -211,7 +211,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, triggerJson);
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
         }
     }
 
@@ -223,7 +223,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, deviceJson);
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "QA request device info failed", exp);
+            SwrveLogger.e(LOG_TAG, "QA request device info failed", exp);
         }
     }
 
@@ -241,11 +241,11 @@ public class SwrveQAUser {
                     pushJson.put("badge", "");
                     makeRequest(endpoint, pushJson);
                 } else {
-                    Log.e(LOG_TAG, "Push notification does not have a proper _p value");
+                    SwrveLogger.e(LOG_TAG, "Push notification does not have a proper _p value");
                 }
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
         }
     }
 
@@ -323,13 +323,13 @@ public class SwrveQAUser {
         @Override
         public void onResponse(RESTResponse response) {
             if (!SwrveHelper.successResponseCode(response.responseCode)) {
-                Log.e(LOG_TAG, "QA request to " + endpoint + " failed with error code " + response.responseCode + ": " + response.responseBody);
+                SwrveLogger.e(LOG_TAG, "QA request to " + endpoint + " failed with error code " + response.responseCode + ": " + response.responseBody);
             }
         }
 
         @Override
         public void onException(Exception exp) {
-            Log.e(LOG_TAG, "QA request to " + endpoint + " failed", exp);
+            SwrveLogger.e(LOG_TAG, "QA request to " + endpoint + " failed", exp);
         }
     }
 }

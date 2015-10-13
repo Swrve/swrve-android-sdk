@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import com.swrve.sdk.SwrveLogger;
+
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -110,9 +112,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
             options.inJustDecodeBounds = false;
             return new BitmapResult(BitmapFactory.decodeFile(filePath, options), bitmapWidth, bitmapHeight);
         } catch (OutOfMemoryError exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         } catch (Exception exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
 
         return null;
@@ -189,7 +191,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                     // in case the install link was not set correctly log issue and return early
                                     // without calling the install button listener not starting the install intent
                                     if (SwrveHelper.isNullOrEmpty(appInstallLink)) {
-                                        Log.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
+                                        SwrveLogger.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
                                         return;
                                     }
                                     boolean freeEvent = true;
@@ -203,9 +205,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                             try {
                                                 ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appInstallLink)));
                                             } catch (android.content.ActivityNotFoundException anfe) {
-                                                Log.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
+                                                SwrveLogger.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
                                             } catch (Exception exp) {
-                                                Log.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
+                                                SwrveLogger.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
                                             }
                                         }
                                     }
@@ -219,12 +221,12 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                         try {
                                             ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
                                         } catch (Exception e) {
-                                            Log.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
+                                            SwrveLogger.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
                                         }
                                     }
                                 }
                             } catch (Exception e) {
-                                Log.e(LOG_TAG, "Error in onClick handler.", e);
+                                SwrveLogger.e(LOG_TAG, "Error in onClick handler.", e);
                             }
                         }
                     });
@@ -238,11 +240,11 @@ public class SwrveInnerMessageView extends RelativeLayout {
         } catch (Exception e) {
             loadingCorrectly = false;
             loadErrorReason = "There was an exception";
-            Log.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
+            SwrveLogger.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
         } catch (OutOfMemoryError e) {
             loadingCorrectly = false;
             loadErrorReason = "OutOfMemoryError";
-            Log.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
+            SwrveLogger.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
         }
 
         if (!loadingCorrectly) {
@@ -280,7 +282,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
                 }
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while onLayout in SwrveMessageView", e);
+            SwrveLogger.e(LOG_TAG, "Error while onLayout in SwrveMessageView", e);
         }
     }
 
@@ -325,7 +327,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
             }
             System.gc();
         } catch (Exception exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
     }
 

@@ -1,6 +1,9 @@
 package com.swrve.sdk.rest;
 
+import android.util.Log;
+
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 
 import org.apache.http.HttpStatus;
 
@@ -85,7 +88,7 @@ public class RESTClient implements IRESTClient {
 
             responseBodyTime = milisecondsFrom(start);
         } catch (Exception e) {
-            e.printStackTrace();
+            SwrveLogger.e(Log.getStackTraceString(e));
             if (e instanceof SocketTimeoutException) {
                 isTimeout = true;
             }
@@ -101,7 +104,7 @@ public class RESTClient implements IRESTClient {
                 try {
                     wrapperIn.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    SwrveLogger.e(Log.getStackTraceString(e));
                 }
             }
             recordGetMetrics(endpoint, connectTime, responseHeaderTime, responseBodyTime, isTimeout);
@@ -172,7 +175,7 @@ public class RESTClient implements IRESTClient {
 
             responseBodyTime = milisecondsFrom(start);
         } catch (Exception e) {
-            e.printStackTrace();
+            SwrveLogger.e(Log.getStackTraceString(e));
             if (e instanceof SocketTimeoutException) {
                 isTimeout = true;
             }
@@ -187,7 +190,7 @@ public class RESTClient implements IRESTClient {
                 try {
                     wrapperIn.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    SwrveLogger.e(Log.getStackTraceString(e));
                 }
             }
             recordPostMetrics(endpoint, connectTime, requestBodyTime, responseHeaderTime, responseBodyTime, isTimeout);
@@ -256,7 +259,7 @@ public class RESTClient implements IRESTClient {
         try {
             params.add(String.format("u=%s", getUrlWithoutPathOrQuery(url)));
         } catch (Exception e) {
-            e.printStackTrace();
+            SwrveLogger.e(Log.getStackTraceString(e));
             return;
         }
 
