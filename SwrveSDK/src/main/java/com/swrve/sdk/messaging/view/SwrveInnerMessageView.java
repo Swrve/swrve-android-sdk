@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import com.swrve.sdk.SwrveLogger;
+
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
@@ -110,9 +112,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
             options.inJustDecodeBounds = false;
             return new BitmapResult(BitmapFactory.decodeFile(filePath, options), bitmapWidth, bitmapHeight);
         } catch (OutOfMemoryError exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         } catch (Exception exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
 
         return null;
@@ -325,7 +327,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
             }
             System.gc();
         } catch (Exception exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
     }
 

@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import com.swrve.sdk.SwrveLogger;
+
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
@@ -921,16 +923,16 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             }
         } catch (MalformedURLException e) {
             SwrveLogger.e(LOG_TAG, "Error downloading campaigns", e);
-            e.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(e));
         } catch (IOException e) {
             SwrveLogger.e(LOG_TAG, "Error downloading campaigns", e);
-            e.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(e));
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    SwrveLogger.e(LOG_TAG, Log.getStackTraceString(e));
                 }
             }
         }
