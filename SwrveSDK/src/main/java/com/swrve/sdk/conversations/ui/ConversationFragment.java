@@ -13,7 +13,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -147,7 +147,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             renderControls(activity);
             renderContent(activity);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
+            SwrveLogger.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
             sendErrorNavigationEvent(page.getTag(), e);
             if (activity != null) {
                 activity.finish();
@@ -354,7 +354,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      * Go through each of the recorded interactions the user has with the page and queue them as events
      */
     public void commitUserInputsToEvents() {
-        Log.i(LOG_TAG, "Commiting all stashed events");
+        SwrveLogger.i(LOG_TAG, "Commiting all stashed events");
         ArrayList<UserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
             UserInputResult r = userInteractionData.get(k);
@@ -383,14 +383,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
             openConversationOnPage(nextPage);
         } else if (control.hasActions()) {
-            Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
+            SwrveLogger.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag());
             Activity activity = getActivity();
             if (isAdded() && activity != null) {
                 activity.finish();
             }
         } else {
-            Log.e(LOG_TAG, "No more pages in this conversation");
+            SwrveLogger.e(LOG_TAG, "No more pages in this conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
             Activity activity = getActivity();
             if (isAdded() && activity != null) {

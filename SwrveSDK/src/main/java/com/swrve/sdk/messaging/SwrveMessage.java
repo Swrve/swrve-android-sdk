@@ -1,6 +1,6 @@
 package com.swrve.sdk.messaging;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
@@ -204,7 +204,7 @@ public class SwrveMessage {
                 while (itButtons.hasNext()) {
                     String buttonAsset = itButtons.next().getImage();
                     if (!this.assetInCache(buttonAsset)) {
-                        Log.i(LOG_TAG, "Button asset not yet downloaded: " + buttonAsset);
+                        SwrveLogger.i(LOG_TAG, "Button asset not yet downloaded: " + buttonAsset);
                         return false;
                     }
                 }
@@ -213,7 +213,7 @@ public class SwrveMessage {
                 while (itImages.hasNext()) {
                     String imageAsset = itImages.next().getFile();
                     if (!this.assetInCache(imageAsset)) {
-                        Log.i(LOG_TAG, "Image asset not yet downloaded: " + imageAsset);
+                        SwrveLogger.i(LOG_TAG, "Image asset not yet downloaded: " + imageAsset);
                         return false;
                     }
                 }

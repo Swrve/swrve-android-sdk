@@ -1,7 +1,7 @@
 package com.swrve.sdk;
 
 import android.util.Base64;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -75,7 +75,7 @@ public final class SwrveHelper {
                 }
                 return hexDigest.toString();
             } catch (NoSuchAlgorithmException nsae) {
-                Log.wtf(LOG_TAG, "Couldn't find MD5 - what a strange JVM", nsae);
+                SwrveLogger.wtf(LOG_TAG, "Couldn't find MD5 - what a strange JVM", nsae);
                 return "";
             }
         }
@@ -98,7 +98,7 @@ public final class SwrveHelper {
                 }
                 return hexDigest.toString();
             } catch (NoSuchAlgorithmException nsae) {
-                Log.wtf(LOG_TAG, "Couldn't find SHA1 - what a strange JVM", nsae);
+                SwrveLogger.wtf(LOG_TAG, "Couldn't find SHA1 - what a strange JVM", nsae);
                 return "";
             }
         }
@@ -150,7 +150,7 @@ public final class SwrveHelper {
     }
 
     public static void logAndThrowException(String reason) throws IllegalArgumentException {
-        Log.e(LOG_TAG, reason);
+        SwrveLogger.e(LOG_TAG, reason);
         throw new IllegalArgumentException(reason);
     }
 

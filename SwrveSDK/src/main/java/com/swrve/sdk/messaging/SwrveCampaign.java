@@ -1,6 +1,6 @@
 package com.swrve.sdk.messaging;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
@@ -114,7 +114,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      */
     public SwrveMessage getMessageForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
         if (checkCampaignLimits(event, now, campaignReasons, messages.size(), "message")) {
-            Log.i(LOG_TAG, event + " matches a trigger in " + id);
+            SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
             return getNextMessage(campaignReasons);
         }
         return null;
@@ -130,7 +130,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
     public SwrveMessage getMessageForId(int messageId) {
         int messagesCount = messages.size();
         if (messagesCount == 0) {
-            Log.i(LOG_TAG, "No messages in campaign " + id);
+            SwrveLogger.i(LOG_TAG, "No messages in campaign " + id);
             return null;
         }
 
@@ -180,9 +180,9 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         if (!isRandomOrder()) {
             int nextMessage = (getNext() + 1) % getMessages().size();
             setNext(nextMessage);
-            Log.i(LOG_TAG, "Round Robin: Next message in campaign " + getId() + " is " + nextMessage);
+            SwrveLogger.i(LOG_TAG, "Round Robin: Next message in campaign " + getId() + " is " + nextMessage);
         } else {
-            Log.i(LOG_TAG, "Next message in campaign " + getId() + " is random");
+            SwrveLogger.i(LOG_TAG, "Next message in campaign " + getId() + " is random");
         }
     }
 

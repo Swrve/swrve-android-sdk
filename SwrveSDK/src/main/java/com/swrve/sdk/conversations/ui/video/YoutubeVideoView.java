@@ -2,6 +2,8 @@ package com.swrve.sdk.conversations.ui.video;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import com.swrve.sdk.SwrveLogger;
+
 import android.util.Log;
 import android.view.View;
 
@@ -34,7 +36,7 @@ public class YoutubeVideoView extends WebVideoViewBase {
             ims = assetManager.open("youtubeapi.html");
             pageHtml = SwrveHelper.readStringFromInputStream(ims);
         } catch (IOException e) {
-            e.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(e));
         }
 
         pageHtml = pageHtml.replaceAll(VIDEO_ID_PLACEHOLDER, videoID);
@@ -54,7 +56,7 @@ public class YoutubeVideoView extends WebVideoViewBase {
         super.onWindowVisibilityChanged(visibility);
 
         if (visibility != View.VISIBLE) {
-            Log.i(LOG_TAG, "Stopping the Video!");
+            SwrveLogger.i(LOG_TAG, "Stopping the Video!");
             this.stopLoading();
             // Load some blank data into the webview
             this.loadData("<p></p>", "text/html", "utf8");
