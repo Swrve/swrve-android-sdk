@@ -9,7 +9,7 @@ public class SwrveLogger {
     private static final String LOG_TAG = "SWRVE";
 
     // Config/Active/Inactive
-    private static boolean isActive = true;
+    private static boolean isActive = BuildConfig.DEBUG;
 
     public static boolean isActive() {
         return SwrveLogger.isActive;
