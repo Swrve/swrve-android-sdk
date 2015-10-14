@@ -3,12 +3,12 @@ apply plugin: 'maven'
 
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion 23
     buildToolsVersion '21.1.2'
 
 	defaultConfig {
         minSdkVersion 10
-        targetSdkVersion 21
+        targetSdkVersion 23
     }
     sourceSets {
         // Move the build types to build-types/<type>
@@ -31,7 +31,7 @@ uploadArchives {
             repository(url: '..//../repo/releases') // Location of where the AAR project files are uploaded
             pom.groupId = 'com.swrve.sdk.android'
             pom.artifactId = 'swrve'
-            pom.version = '4.0.2'
+            pom.version = '4.0.3'
         }
     }
 }
