@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -23,7 +22,6 @@ import com.swrve.sdk.messaging.SwrveImage;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -139,7 +137,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
             setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             for (final SwrveImage image : format.getImages()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + image.getFile();
-                if(!hasFileAccess(filePath, loadErrorReasons)) {
+                if(!SwrveHelper.hasFileAccess(filePath)) {
+                    Log.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
                 }
 
@@ -168,7 +168,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
 
             for (final SwrveButton button : format.getButtons()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + button.getImage();
-                if(!hasFileAccess(filePath, loadErrorReasons)) {
+                if(!SwrveHelper.hasFileAccess(filePath)) {
+                    Log.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
                 }
 
@@ -260,20 +262,6 @@ public class SwrveInnerMessageView extends RelativeLayout {
             message.getMessageController().event("Swrve.Messages.view_failed", errorReasonPayload);
             destroy();
             throw new SwrveMessageViewBuildException("There was an error creating the view caused by:\n" + loadErrorReasons.toString());
-        }
-    }
-
-    private boolean hasFileAccess(String filePath, List<String> loadErrorReasons) {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-            return true;
-        }
-        File file = new File(filePath);
-        if (file.canRead()) {
-            return true;
-        } else {
-            Log.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
-            loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
-            return false;
         }
     }
 

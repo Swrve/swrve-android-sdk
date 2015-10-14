@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.common.R;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -44,7 +45,6 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -233,7 +233,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
-                    if(hasFileAccess(filePath)) {
+                    if(SwrveHelper.hasFileAccess(filePath)) {
                         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                         iv.setTag(content.getTag());
                         iv.setImageBitmap(bitmap);
@@ -241,6 +241,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                         iv.setScaleType(ScaleType.FIT_CENTER);
                         setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
                         contentLayout.addView(iv);
+                    } else {
+                        Log.e(LOG_TAG, "Could not render conversation asset image because there is no read access to:" + filePath);
                     }
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
@@ -316,19 +318,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     inputs.add(input);
                 }
             }
-        }
-    }
-
-    private boolean hasFileAccess(String filePath) {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-            return true;
-        }
-        File file = new File(filePath);
-        if (file.canRead()) {
-            return true;
-        } else {
-            Log.e(LOG_TAG, "Could not render conversation asset image because do not have read access to:" + filePath);
-            return false;
         }
     }
 
