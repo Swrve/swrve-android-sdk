@@ -148,7 +148,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             appStoreURLs = new SparseArray<String>();
 
             // Find cache folder
-            findCacheFolder(resolvedContext);
+            findCacheFolder(activity);
 
             beforeSendDeviceInfo(resolvedContext);
             // Open access to local storage

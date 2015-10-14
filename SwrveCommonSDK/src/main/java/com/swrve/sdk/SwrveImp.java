@@ -1,12 +1,16 @@
 package com.swrve.sdk;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.support.annotation.RequiresPermission;
+import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -53,7 +57,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
@@ -84,7 +87,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.0.2";
+    protected static String version = "4.0.3";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
@@ -550,15 +553,32 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return new AndroidTelephonyManagerWrapper(context);
     }
 
-    protected void findCacheFolder(Context context) {
+    @RequiresPermission (Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    protected void findCacheFolder(Activity activity) {
         cacheDir = config.getCacheDir();
-        if (cacheDir == null) {
-            cacheDir = context.getCacheDir();
-        }
 
-        if (!cacheDir.exists()) {
-            cacheDir.mkdirs();
+        if (cacheDir == null) {
+            cacheDir = activity.getCacheDir();
+        } else {
+            if (!checkPermissionGranted(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                final String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                requestPermissions(activity, permissions);
+                cacheDir = activity.getCacheDir(); // fall back to internal cache until permission granted.
+            }
+
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs();
+            }
         }
+        Log.d(LOG_TAG, "Using cache directory at " + cacheDir.getPath());
+    }
+
+    protected boolean checkPermissionGranted(Context context, String permission) {
+        return ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    protected void requestPermissions(Activity activity, String permissions[]) {
+        ActivityCompat.requestPermissions(activity, permissions, 0);
     }
 
     public Date getNow() {
@@ -897,6 +917,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
     }
 
+    @RequiresPermission (Manifest.permission.WRITE_EXTERNAL_STORAGE)
     protected boolean downloadAssetSynchronously(final String assetPath) {
         String url = cdnRoot + assetPath;
         InputStream inputStream = null;
@@ -912,24 +933,24 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             byte[] fileContents = stream.toByteArray();
             String sha1File = SwrveHelper.sha1(stream.toByteArray());
             if (assetPath.equals(sha1File)) {
-                // Save to file
-                FileOutputStream fileStream = new FileOutputStream(new File(cacheDir, assetPath));
-                fileStream.write(fileContents);
-                fileStream.close();
-                return true;
+                if (cacheDir.canWrite()) {
+                    FileOutputStream fileStream = new FileOutputStream(new File(cacheDir, assetPath));
+                    fileStream.write(fileContents); // Save to file
+                    fileStream.close();
+                    return true;
+                } else {
+                    boolean permission = checkPermissionGranted(context.get(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    Log.w(LOG_TAG, "Could not download assets because do not have write access to cacheDir:" + cacheDir + " WRITE_EXTERNAL_STORAGE permission granted:" + permission);
+                }
             }
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             Log.e(LOG_TAG, "Error downloading campaigns", e);
-            e.printStackTrace();
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "Error downloading campaigns", e);
-            e.printStackTrace();
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.e(LOG_TAG, "Error closing assets stream.", e);
                 }
             }
         }

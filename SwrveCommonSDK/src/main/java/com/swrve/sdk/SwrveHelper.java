@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 
@@ -7,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -186,5 +188,17 @@ public final class SwrveHelper {
     public static boolean sdkAvailable() {
         // Returns true if current SDK is higher or equal than 2.3.3 (API 10)
         return (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.GINGERBREAD_MR1);
+    }
+
+    public static boolean hasFileAccess(String filePath) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+            return true;
+        }
+        File file = new File(filePath);
+        if (file.canRead()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
