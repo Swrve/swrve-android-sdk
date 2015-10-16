@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.R;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -226,13 +227,17 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
-                    Bitmap bitmap = BitmapFactory.decodeFile(filePath);
-                    iv.setTag(content.getTag());
-                    iv.setImageBitmap(bitmap);
-                    iv.setAdjustViewBounds(true);
-                    iv.setScaleType(ScaleType.FIT_CENTER);
-                    setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
-                    contentLayout.addView(iv);
+                    if(SwrveHelper.hasFileAccess(filePath)) {
+                        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+                        iv.setTag(content.getTag());
+                        iv.setImageBitmap(bitmap);
+                        iv.setAdjustViewBounds(true);
+                        iv.setScaleType(ScaleType.FIT_CENTER);
+                        setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
+                        contentLayout.addView(iv);
+                    } else {
+                        SwrveLogger.e(LOG_TAG, "Could not render conversation asset image because there is no read access to:" + filePath);
+                    }
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
