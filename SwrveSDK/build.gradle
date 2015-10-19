@@ -1,9 +1,10 @@
 apply plugin: 'com.android.library'
 
 android {
-    publishNonDefault true // Needed to instruct the SDK build of a particular flavor
     compileSdkVersion 23
     buildToolsVersion '23.0.1'
+
+    publishNonDefault true // Needed to instruct the SDK build of a particular flavor
 
     defaultConfig {
         minSdkVersion 10
