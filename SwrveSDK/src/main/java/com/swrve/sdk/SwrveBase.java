@@ -38,13 +38,13 @@ import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
-import org.apache.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -148,7 +148,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             appStoreURLs = new SparseArray<String>();
 
             // Find cache folder
-            findCacheFolder(resolvedContext);
+            findCacheFolder(activity);
 
             beforeSendDeviceInfo(resolvedContext);
             // Open access to local storage
@@ -718,7 +718,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         @Override
                         public void onResponse(RESTResponse response) {
                             // Response received from server
-                            if (response.responseCode == HttpStatus.SC_OK) {
+                            if (response.responseCode == HttpURLConnection.HTTP_OK) {
                                 SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
                                 SharedPreferences.Editor settingsEditor = settings.edit();
 
