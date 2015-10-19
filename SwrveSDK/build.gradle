@@ -27,7 +27,7 @@ android {
 
 dependencies {
     compile 'com.google.code.gson:gson:2.2.+'
-    compile 'com.android.support:support-v4:23._'
+    compile 'com.android.support:support-v4:23.+'
     compile 'com.android.support:appcompat-v7:23.+'
     googleCompile 'com.google.android.gms:play-services-gcm:7.+'
 }
