@@ -1,14 +1,13 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
-
     publishNonDefault true // Needed to instruct the SDK build of a particular flavor
+    compileSdkVersion 23
+    buildToolsVersion '23.0.1'
 
     defaultConfig {
         minSdkVersion 10
-        targetSdkVersion 22
+        targetSdkVersion 23
     }
 
     buildTypes {
@@ -28,8 +27,8 @@ android {
 
 dependencies {
     compile 'com.google.code.gson:gson:2.2.+'
-    compile 'com.android.support:support-v4:22.+'
-    compile 'com.android.support:appcompat-v7:22.+'
+    compile 'com.android.support:support-v4:23.+'
+    compile 'com.android.support:appcompat-v7:23.+'
     googleCompile 'com.google.android.gms:play-services-gcm:7.+'
 }
 
@@ -96,12 +95,6 @@ publishing {
                     dependencyNode.appendNode('scope', 'compile')
                 }
             }
-        }
-    }
-
-    repositories {
-        maven {
-            url '../repo/releases'
         }
     }
 }

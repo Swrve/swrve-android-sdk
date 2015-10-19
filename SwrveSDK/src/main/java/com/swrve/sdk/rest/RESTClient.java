@@ -5,8 +5,6 @@ import android.util.Log;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 
-import org.apache.http.HttpStatus;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +43,7 @@ public class RESTClient implements IRESTClient {
     public void get(String endpoint, IRESTResponseListener callback) {
         HttpURLConnection urlConnection = null;
         String responseBody = null;
-        int responseCode = HttpStatus.SC_SERVICE_UNAVAILABLE;
+        int responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
         long connectTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
         boolean isTimeout = false;
 
@@ -130,7 +128,7 @@ public class RESTClient implements IRESTClient {
     public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
         HttpURLConnection urlConnection = null;
         String responseBody = null;
-        int responseCode = HttpStatus.SC_SERVICE_UNAVAILABLE;
+        int responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
         long connectTime = 0, requestBodyTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
         boolean isTimeout = false;
 
