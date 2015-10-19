@@ -3,7 +3,7 @@ package com.swrve.sdk;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
@@ -503,7 +503,7 @@ public abstract class SwrveSDKBase {
 
     protected static void checkInstanceCreated() throws RuntimeException {
         if (instance == null) {
-            Log.e(SwrveImp.LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
+            SwrveLogger.e(SwrveImp.LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
             throw new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
         }
     }
