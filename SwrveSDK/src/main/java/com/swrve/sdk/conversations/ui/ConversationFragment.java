@@ -13,7 +13,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.R;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -40,6 +41,8 @@ import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
+import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
+import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -145,7 +148,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             renderControls(activity);
             renderContent(activity);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
+            SwrveLogger.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
             sendErrorNavigationEvent(page.getTag(), e);
             if (activity != null) {
                 activity.finish();
@@ -224,13 +227,17 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
-                    Bitmap bitmap = BitmapFactory.decodeFile(filePath);
-                    iv.setTag(content.getTag());
-                    iv.setImageBitmap(bitmap);
-                    iv.setAdjustViewBounds(true);
-                    iv.setScaleType(ScaleType.FIT_CENTER);
-                    setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
-                    contentLayout.addView(iv);
+                    if(SwrveHelper.hasFileAccess(filePath)) {
+                        Bitmap bitmap = BitmapFactory.decodeFile(filePath);
+                        iv.setTag(content.getTag());
+                        iv.setImageBitmap(bitmap);
+                        iv.setAdjustViewBounds(true);
+                        iv.setScaleType(ScaleType.FIT_CENTER);
+                        setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
+                        contentLayout.addView(iv);
+                    } else {
+                        SwrveLogger.e(LOG_TAG, "Could not render conversation asset image because there is no read access to:" + filePath);
+                    }
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
@@ -239,13 +246,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                     setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    HtmlVideoView view = new HtmlVideoView(activity, modelContent, fullScreenFrame);
+                    YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     // Let the eventListener know that something has happened to the video
-                    final HtmlVideoView cloneView = view;
+                    final YoutubeVideoView cloneView = view;
                     final String tag = content.getTag();
                     view.setOnTouchListener(new View.OnTouchListener() {
                         @Override
@@ -352,7 +359,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      * Go through each of the recorded interactions the user has with the page and queue them as events
      */
     public void commitUserInputsToEvents() {
-        Log.i(LOG_TAG, "Commiting all stashed events");
+        SwrveLogger.i(LOG_TAG, "Commiting all stashed events");
         ArrayList<UserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
             UserInputResult r = userInteractionData.get(k);
@@ -381,14 +388,14 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
             openConversationOnPage(nextPage);
         } else if (control.hasActions()) {
-            Log.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
+            SwrveLogger.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag());
             Activity activity = getActivity();
             if (isAdded() && activity != null) {
                 activity.finish();
             }
         } else {
-            Log.e(LOG_TAG, "No more pages in this conversation");
+            SwrveLogger.e(LOG_TAG, "No more pages in this conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
             Activity activity = getActivity();
             if (isAdded() && activity != null) {
@@ -464,7 +471,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     // For each of the content portions we store data about them which is then committed at a later point
-    private void stashVideoViewed(String pageTag, String fragmentTag, HtmlVideoView v) {
+    private void stashVideoViewed(String pageTag, String fragmentTag, WebVideoViewBase v) {
         String key = pageTag + "-" + fragmentTag;
         String type = UserInputResult.TYPE_VIDEO_PLAY;
         UserInputResult result = new UserInputResult();

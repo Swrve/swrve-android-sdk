@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -62,7 +62,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 }
             } catch (Throwable exp) {
                 // Don't trust GCM and all the moving parts to work as expected
-                Log.e(LOG_TAG, "Couldn't obtain the registration id for the device", exp);
+                SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration id for the device", exp);
             }
         }
     }
@@ -121,7 +121,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     // Re-send data now
                     queueDeviceInfoNow(true);
                 } catch (Exception ex) {
-                    Log.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
+                    SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
                 }
             }
 
@@ -135,7 +135,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                         setRegistrationId(gcmRegistrationId);
                     }
                 } catch (Exception ex) {
-                    Log.e(LOG_TAG, "Couldn't obtain the GCM registration id for the device", ex);
+                    SwrveLogger.e(LOG_TAG, "Couldn't obtain the GCM registration id for the device", ex);
                 }
                 return null;
             }
@@ -184,17 +184,17 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 this._iap(1, productId, productPrice, currency, rewards, purchaseData, dataSignature, "Google");
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "IAP Play event failed", exp);
+            SwrveLogger.e(LOG_TAG, "IAP Play event failed", exp);
         }
     }
 
     protected boolean checkPlayStoreSpecificArguments(String purchaseData, String receiptSignature) throws IllegalArgumentException {
         if (SwrveHelper.isNullOrEmpty(purchaseData)) {
-            Log.e(LOG_TAG, "IAP event illegal argument: receipt cannot be empty for Google Play store event");
+            SwrveLogger.e(LOG_TAG, "IAP event illegal argument: receipt cannot be empty for Google Play store event");
             return false;
         }
         if (SwrveHelper.isNullOrEmpty(receiptSignature)) {
-            Log.e(LOG_TAG, "IAP event illegal argument: receiptSignature cannot be empty for Google Play store event");
+            SwrveLogger.e(LOG_TAG, "IAP event illegal argument: receiptSignature cannot be empty for Google Play store event");
             return false;
         }
         return true;
@@ -215,7 +215,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 }
             }
         } catch (Exception exp) {
-            Log.e(LOG_TAG, "onResume failed", exp);
+            SwrveLogger.e(LOG_TAG, "onResume failed", exp);
         }
     }
 

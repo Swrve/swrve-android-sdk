@@ -8,8 +8,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -88,7 +90,7 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
                     cursor.moveToNext();
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                SwrveLogger.e(Log.getStackTraceString(ex));
             } finally {
                 if (cursor != null) {
                     cursor.close();
@@ -139,7 +141,7 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
                     cursor.moveToNext();
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                SwrveLogger.e(Log.getStackTraceString(ex));
             } finally {
                 if (cursor != null) {
                     cursor.close();
@@ -191,7 +193,7 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
                     cursor.moveToNext();
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                SwrveLogger.e(Log.getStackTraceString(ex));
             } finally {
                 if (cursor != null) {
                     cursor.close();
