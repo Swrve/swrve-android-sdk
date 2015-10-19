@@ -19,6 +19,38 @@ android {
     productFlavors {
         core {}
         google {}
+        coreplot {}
+        googleplot {}
+    }
+
+    sourceSets{
+/**
+ *       // Documentation can be scarce for gradle source sets. These are the different configuration option styles
+ *       manifest.srcFile 'AndroidManifest.xml' // generally ill advise to use this as theres no need to specify manifest
+ *       java.srcDirs = ['src/commonFiles/java']
+ *       resources.srcDirs = ['src/commonFiles/java']
+ *       aidl.srcDirs = ['src/commonFiles/java']
+ *       renderscript.srcDirs = ['src/commonFiles/java']
+ *       res.srcDirs = ['res']
+ *       assets.srcDirs = ['assets']
+ */
+        main {
+            java.srcDirs = ['src/main/java']
+            resources.srcDirs = ['src/main/java']
+            aidl.srcDirs = ['src/main/java']
+            renderscript.srcDirs = ['src/main/java']
+            res.srcDirs = ['src/main/res']
+            assets.srcDirs = ['src/main/assets']
+        }
+
+        coreplot {
+            java.srcDirs = ["src/main/java", "src/core/java", "src/coreplot/java"]
+            res.srcDirs = ["src/main/res", "src/core/res", "src/coreplot/res"]
+        }
+        googleplot {
+            java.srcDirs = ["src/main/java", "src/google/java", "src/googleplot/java"]
+            res.srcDirs = ["src/main/res", "src/google/res", "src/googleplot/res"]
+        }
     }
 
     lintOptions {
@@ -27,11 +59,14 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:23.+'
     compile 'com.android.support:appcompat-v7:23.+'
     googleCompile 'com.google.android.gms:play-services-gcm:7.+'
+
+    googleplotCompile fileTree(dir: 'libs', include: ['*.jar'])
+    coreplotCompile fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 apply plugin: 'maven-publish'
