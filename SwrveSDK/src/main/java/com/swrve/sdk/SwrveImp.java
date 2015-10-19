@@ -763,6 +763,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
             Map<Integer, String> campaignsDownloaded = null;
 
+            boolean wasQAUser = (qaUser != null);
+
             // QA
             if (json.has("qa")) {
                 JSONObject jsonQa = json.getJSONObject("qa");
@@ -778,9 +780,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         JSONObject jsonQaCampaign = jsonQaCampaigns.getJSONObject(i);
                         int campaignId = jsonQaCampaign.getInt("id");
                         String campaignReason = jsonQaCampaign.getString("reason");
-
                         SwrveLogger.i(LOG_TAG, "Campaign " + campaignId + " not downloaded because: " + campaignReason);
-
                         // Add campaign for QA purposes
                         campaignsDownloaded.put(campaignId, campaignReason);
                     }
@@ -847,8 +847,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     if (campaign != null) {
                         assetsQueue.addAll(campaignAssetsQueue);
 
-                        // Check if we need to reset the device for QA, otherwise load campaign settings into downloaded campaign
-                        if (qaUser == null || !qaUser.isResetDevice()) {
+                        // Check if we need to load impressions and the next event
+                        if (wasQAUser || qaUser == null || !qaUser.isResetDevice()) {
                             String campaignIdStr = Integer.toString(campaign.getId());
                             if (jsonSettings.has(campaignIdStr)) {
                                 JSONObject campaignSettings = jsonSettings.getJSONObject(campaignIdStr);
