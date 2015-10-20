@@ -31,12 +31,12 @@ uploadArchives {
             repository(url: '..//../repo/releases') // Location of where the AAR project files are uploaded
             pom.groupId = 'com.swrve.sdk.android'
             pom.artifactId = 'swrve'
-            pom.version = '4.0.3'
+            pom.version = '4.0.4'
         }
     }
 }
 
 dependencies {
-    compile "com.swrve.sdk.android:swrve-common:4.0.3"
-//     compile project(':SwrveCommonSDK') // For local development
+//    compile 'com.swrve.sdk.android:swrve-common:4.0.4'
+    compile project(':SwrveCommonSDK') // For local development
 }
