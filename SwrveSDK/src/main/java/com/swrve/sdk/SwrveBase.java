@@ -22,6 +22,7 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
+import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -156,8 +157,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             this.resourceManager = new SwrveResourceManager();
             if (preloadRandC) {
-                // Initialize resources from cache
+                // Initialize resources and location campaigns from cache
                 initResources();
+                initLocationCampaigns();
             }
 
             // Send session start
@@ -199,8 +201,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
 
                 if (preloadRandC) {
-                    // Initialize campaigns from cache
-                    initCampaigns();
+                    initCampaigns(); // Initialize campaigns from cache
                 }
 
                 // Add custom message listener
@@ -261,6 +262,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         if (config.isTalkEnabled()) {
                             initCampaigns();
                         }
+                        initLocationCampaigns();
                     }
                 });
             }
@@ -633,6 +635,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, xdpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, ydpi);
                 deviceInfo.put(SWRVE_CONVERSATION_VERSION, CONVERSATION_VERSION);
+                deviceInfo.put(SWRVE_LOCATION_VERSION, LOCATION_VERSION);
                 // Carrier info
                 if (!SwrveHelper.isNullOrEmpty(sim_operator_name)) {
                     deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, sim_operator_name);
@@ -708,6 +711,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
+                params.put("location_version", String.valueOf(LOCATION_VERSION));
+
                 // If we have a last ETag value, send that along with the request
                 if (!SwrveHelper.isNullOrEmpty(campaignsAndResourcesLastETag)) {
                     params.put("etag", campaignsAndResourcesLastETag);
@@ -769,6 +774,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                             parameters.put("name", "Swrve.Messages.campaigns_downloaded");
                                             queueEvent("event", parameters, payload, false);
                                         }
+                                    }
+
+                                    if (responseJson.has("location_campaigns")) {
+                                        JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
+                                        loadLocationCampaignsFromJSON(campaignJson);
+                                        saveLocationCampaignsInCache(campaignJson);
                                     }
 
                                     if (responseJson.has("user_resources")) {
@@ -1844,5 +1855,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
+    }
+
+    @Override
+    public Map<String, LocationCampaign> getLocationCampaigns() {
+        if (locationCampaigns == null) {
+            return new HashMap<>();
+        } else {
+            return this.locationCampaigns;
+        }
     }
 }
