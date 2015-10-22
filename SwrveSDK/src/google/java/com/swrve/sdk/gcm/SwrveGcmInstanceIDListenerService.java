@@ -1,9 +1,9 @@
 package com.swrve.sdk.gcm;
 
-import android.util.Log;
 import com.google.android.gms.iid.InstanceIDListenerService;
 import com.swrve.sdk.ISwrveBase;
 import com.swrve.sdk.Swrve;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveSDK;
 
 public class SwrveGcmInstanceIDListenerService extends InstanceIDListenerService {
@@ -16,7 +16,7 @@ public class SwrveGcmInstanceIDListenerService extends InstanceIDListenerService
         if (sdk != null && sdk instanceof Swrve) {
             ((Swrve)sdk).onTokenRefreshed();
         } else {
-            Log.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
+            SwrveLogger.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
         }
     }
 }
