@@ -1860,7 +1860,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public Map<String, LocationCampaign> getLocationCampaigns() {
         if (locationCampaigns == null) {
-            return new HashMap<>();
+            return new HashMap<String, LocationCampaign>();
         } else {
             return this.locationCampaigns;
         }

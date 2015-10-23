@@ -121,8 +121,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
     }
 
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
-        List<String> loadErrorReasons = new ArrayList<>();
-
+        List<String> loadErrorReasons = new ArrayList<String>();
         try {
             // Create bitmap cache
             bitmapCache = new HashSet<WeakReference<Bitmap>>();

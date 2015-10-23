@@ -267,6 +267,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public Map<String, LocationCampaign> getLocationCampaigns() {
-            return new HashMap<>();
+        return new HashMap<String, LocationCampaign>();
     }
 }

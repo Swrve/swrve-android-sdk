@@ -46,7 +46,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
                 wakeLock.release();
             }
         }
-        return new ArrayList<>();
+        return new ArrayList<FilterableNotification>();
     }
 
     protected List<FilterableNotification> filterLocationCampaigns(List<FilterableNotification> filterableNotifications, long now) {
@@ -61,9 +61,8 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
             Log.d(LOG_TAG, "LocationCampaigns in cache:" + builder);
         }
 
-        TreeMap<Long, FilterableNotification> locationCampaignsMatched =  new TreeMap<>();
+        TreeMap<Long, FilterableNotification> locationCampaignsMatched =  new TreeMap<Long, FilterableNotification>();
         for (FilterableNotification filterableNotification : filterableNotifications) {
-
             LocationPayload locationPayload = LocationPayload.fromJSON(filterableNotification.getData());
             if (locationPayload == null || SwrveHelper.isNullOrEmpty(locationPayload.getCampaignId())) {
                 Log.e(LOG_TAG, "LocationPayload is invalid. Payload:" + filterableNotification.getData());
@@ -83,7 +82,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
             }
         }
 
-        List<FilterableNotification> notificationsToSend = new ArrayList<>();
+        List<FilterableNotification> notificationsToSend = new ArrayList<FilterableNotification>();
         if (locationCampaignsMatched.size() == 0) {
             Log.i(LOG_TAG, "No LocationCampaigns were matched ");
         } else {
