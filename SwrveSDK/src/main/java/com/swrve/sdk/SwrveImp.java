@@ -1248,7 +1248,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Initialize location campaigns with cache content
      */
     protected void initLocationCampaigns() {
-        locationCampaigns = new HashMap<>();
+        locationCampaigns = new HashMap<String, LocationCampaign>();
 
         try {
             String locationCampaignsFromCache = cachedLocalStorage.getSecureCacheEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, getUniqueKey());
@@ -1265,7 +1265,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         } catch (SecurityException e) {
             invalidateETag();
             Log.e(LOG_TAG, "Signature validation failed when trying to load location campaigns from cache.", e);
-            Map<String, Object> parameters = new HashMap<>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
             queueEvent("event", parameters, null, false);
         }

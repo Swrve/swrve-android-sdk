@@ -360,7 +360,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
      */
     public void commitUserInputsToEvents() {
         SwrveLogger.i(LOG_TAG, "Commiting all stashed events");
-        ArrayList<UserInputResult> userInputEvents = new ArrayList<>();
+        ArrayList<UserInputResult> userInputEvents = new ArrayList<UserInputResult>();
         for (String k : userInteractionData.keySet()) {
             UserInputResult r = userInteractionData.get(k);
             userInputEvents.add(r);
