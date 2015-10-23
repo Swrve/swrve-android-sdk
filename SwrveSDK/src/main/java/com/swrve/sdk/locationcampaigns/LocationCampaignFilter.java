@@ -4,13 +4,13 @@ import android.Manifest;
 import android.content.Context;
 import android.os.PowerManager;
 import android.support.annotation.RequiresPermission;
-import android.util.Log;
 
 import com.plotprojects.retail.android.FilterableNotification;
 import com.plotprojects.retail.android.NotificationFilterReceiver;
 import com.swrve.sdk.BuildConfig;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.locationcampaigns.model.LocationMessage;
@@ -29,7 +29,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
     @Override
     public List<FilterableNotification> filterNotifications(List<FilterableNotification> notifications) {
 
-        Log.d(LOG_TAG, "LocationCampaignFilter. Received " + notifications.size() + " notifications to send.");
+        SwrveLogger.d(LOG_TAG, "LocationCampaignFilter. Received " + notifications.size() + " notifications to send.");
         PowerManager mgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "swrve_wakelock");
         try {
@@ -40,7 +40,7 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
 
             return filterLocationCampaigns(notifications, System.currentTimeMillis());
         } catch (Exception ex) {
-            Log.e(LOG_TAG, "LocationCampaignFilter exception.", ex);
+            SwrveLogger.e(LOG_TAG, "LocationCampaignFilter exception.", ex);
         } finally {
             if (wakeLock != null && wakeLock.isHeld()) {
                 wakeLock.release();
@@ -52,43 +52,43 @@ public class LocationCampaignFilter extends NotificationFilterReceiver {
     protected List<FilterableNotification> filterLocationCampaigns(List<FilterableNotification> filterableNotifications, long now) {
 
         Map<String, LocationCampaign> locationCampaigns = SwrveSDKBase.getInstance().getLocationCampaigns();
-        Log.d(LOG_TAG, "LocationCampaigns: cache size of " + locationCampaigns.size());
+        SwrveLogger.d(LOG_TAG, "LocationCampaigns: cache size of " + locationCampaigns.size());
         if (BuildConfig.DEBUG && locationCampaigns.size() > 0 && locationCampaigns.size() < 20) {
             StringBuilder builder = new StringBuilder();
             for (Map.Entry<String, LocationCampaign> entry : locationCampaigns.entrySet()) {
                 builder.append(entry.getValue().getId() + ",");
             }
-            Log.d(LOG_TAG, "LocationCampaigns in cache:" + builder);
+            SwrveLogger.d(LOG_TAG, "LocationCampaigns in cache:" + builder);
         }
 
         TreeMap<Long, FilterableNotification> locationCampaignsMatched =  new TreeMap<Long, FilterableNotification>();
         for (FilterableNotification filterableNotification : filterableNotifications) {
             LocationPayload locationPayload = LocationPayload.fromJSON(filterableNotification.getData());
             if (locationPayload == null || SwrveHelper.isNullOrEmpty(locationPayload.getCampaignId())) {
-                Log.e(LOG_TAG, "LocationPayload is invalid. Payload:" + filterableNotification.getData());
+                SwrveLogger.e(LOG_TAG, "LocationPayload is invalid. Payload:" + filterableNotification.getData());
                 continue;
             }
 
             LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
             if (locationCampaign == null || locationCampaign.getMessage() == null) {
-                Log.i(LOG_TAG, "LocationCampaign not downloaded, or not targeted, or invalid. Payload:" + filterableNotification.getData());
+                SwrveLogger.i(LOG_TAG, "LocationCampaign not downloaded, or not targeted, or invalid. Payload:" + filterableNotification.getData());
                 continue;
             }
 
             if (locationCampaign.getStart() <= now && (locationCampaign.getEnd() >= now || locationCampaign.getEnd() == 0)) {
                 locationCampaignsMatched.put(locationCampaign.getStart(), filterableNotification); // store filterableNotification keyed on start time of campaign
             } else {
-                Log.i(LOG_TAG, "LocationCampaign is out of date. \nnow:" + now + "\nlocationCampaign:" + locationCampaign);
+                SwrveLogger.i(LOG_TAG, "LocationCampaign is out of date. \nnow:" + now + "\nlocationCampaign:" + locationCampaign);
             }
         }
 
         List<FilterableNotification> notificationsToSend = new ArrayList<FilterableNotification>();
         if (locationCampaignsMatched.size() == 0) {
-            Log.i(LOG_TAG, "No LocationCampaigns were matched ");
+            SwrveLogger.i(LOG_TAG, "No LocationCampaigns were matched ");
         } else {
             FilterableNotification notificationToSend = getByMostRecentlyStarted(locationCampaignsMatched);
             LocationPayload locationPayload = LocationPayload.fromJSON(notificationToSend.getData());
-            Log.d(LOG_TAG, "LocationCampaigns: Matched " + locationCampaignsMatched.size() + " campaigns. Using campaignId:" + locationPayload.getCampaignId());
+            SwrveLogger.d(LOG_TAG, "LocationCampaigns: Matched " + locationCampaignsMatched.size() + " campaigns. Using campaignId:" + locationPayload.getCampaignId());
 
             LocationCampaign locationCampaign = locationCampaigns.get(locationPayload.getCampaignId());
             LocationMessage message = locationCampaign.getMessage();
