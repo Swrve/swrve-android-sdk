@@ -578,7 +578,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 cacheDir.mkdirs();
             }
         }
-        Log.d(LOG_TAG, "Using cache directory at " + cacheDir.getPath());
+        SwrveLogger.d(LOG_TAG, "Using cache directory at " + cacheDir.getPath());
     }
 
     protected boolean checkPermissionGranted(Context context, String permission) {
@@ -903,23 +903,23 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
     protected void loadLocationCampaignsFromJSON(JSONObject locationCampaignJSON) {
         if (locationCampaignJSON == null) {
-            Log.i(LOG_TAG, "NULL JSON for location campaigns, aborting load.");
+            SwrveLogger.i(LOG_TAG, "NULL JSON for location campaigns, aborting load.");
             return;
         }
 
         if (locationCampaignJSON.length() == 0) {
-            Log.i(LOG_TAG, "Location campaign JSON empty, no location campaigns downloaded");
+            SwrveLogger.i(LOG_TAG, "Location campaign JSON empty, no location campaigns downloaded");
             locationCampaigns.clear();
             return;
         }
 
         if(locationCampaignJSON.has("campaigns") == false) {
-            Log.i(LOG_TAG, "No Location campaigns.");
+            SwrveLogger.i(LOG_TAG, "No Location campaigns.");
             locationCampaigns.clear();
             return;
         }
 
-        Log.i(LOG_TAG, "Location campaign JSON data: " + locationCampaignJSON);
+        SwrveLogger.i(LOG_TAG, "Location campaign JSON data: " + locationCampaignJSON);
 
         try {
             String campaignsJsonString = locationCampaignJSON.getString("campaigns");
@@ -928,7 +928,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             // Update current list of campaigns with new ones
             locationCampaigns = new HashMap<String, LocationCampaign>(newLocationCampaigns);
         } catch (JSONException ex) {
-            Log.e(LOG_TAG, "Error parsing location campaign JSON", ex);
+            SwrveLogger.e(LOG_TAG, "Error parsing location campaign JSON", ex);
         }
     }
 
@@ -988,7 +988,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     return true;
                 } else {
                     boolean permission = checkPermissionGranted(context.get(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                    Log.w(LOG_TAG, "Could not download assets because do not have write access to cacheDir:" + cacheDir + " WRITE_EXTERNAL_STORAGE permission granted:" + permission);
+                    SwrveLogger.w(LOG_TAG, "Could not download assets because do not have write access to cacheDir:" + cacheDir + " WRITE_EXTERNAL_STORAGE permission granted:" + permission);
                 }
             }
 
@@ -1255,16 +1255,16 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (!SwrveHelper.isNullOrEmpty(locationCampaignsFromCache)) {
                 JSONObject locationCampaignsJson = new JSONObject(locationCampaignsFromCache);
                 loadLocationCampaignsFromJSON(locationCampaignsJson);
-                Log.i(LOG_TAG, "Loaded location campaigns from cache.");
+                SwrveLogger.i(LOG_TAG, "Loaded location campaigns from cache.");
             } else {
                 invalidateETag();
             }
         } catch (JSONException e) {
             invalidateETag();
-            Log.e(LOG_TAG, "Invalid json in cache, cannot load location campaigns", e);
+            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load location campaigns", e);
         } catch (SecurityException e) {
             invalidateETag();
-            Log.e(LOG_TAG, "Signature validation failed when trying to load location campaigns from cache.", e);
+            SwrveLogger.e(LOG_TAG, "Signature validation failed when trying to load location campaigns from cache.", e);
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
             queueEvent("event", parameters, null, false);
@@ -1302,7 +1302,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
                     this.appVersion = pInfo.versionName;
                 } catch (Exception exp) {
-                    Log.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
+                    SwrveLogger.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
                 }
             }
         }

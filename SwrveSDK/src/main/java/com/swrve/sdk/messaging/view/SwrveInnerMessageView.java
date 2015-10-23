@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import com.swrve.sdk.SwrveLogger;
-
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -16,6 +14,7 @@ import android.widget.ImageView.ScaleType;
 import android.widget.RelativeLayout;
 
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveActionType;
@@ -139,7 +138,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
             for (final SwrveImage image : format.getImages()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + image.getFile();
                 if(!SwrveHelper.hasFileAccess(filePath)) {
-                    Log.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
                 }
@@ -170,7 +169,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
             for (final SwrveButton button : format.getButtons()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + button.getImage();
                 if(!SwrveHelper.hasFileAccess(filePath)) {
-                    Log.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
                 }
