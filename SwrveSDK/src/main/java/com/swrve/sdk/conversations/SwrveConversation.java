@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
@@ -63,7 +63,7 @@ public class SwrveConversation implements Serializable {
             try {
                 setId(Integer.valueOf(conversationData.getString("id")));
             } catch (Exception c) {
-                Log.e(LOG_TAG, "Could not cast String into ID");
+                SwrveLogger.e(LOG_TAG, "Could not cast String into ID");
             }
         }
 
@@ -101,7 +101,7 @@ public class SwrveConversation implements Serializable {
                     if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
                         Content modelContent = (Content) conversationAtom;
                         if (!this.assetInCache(modelContent.getValue())) {
-                            Log.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
+                            SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
                             return false;
                         }
                     }

@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
@@ -34,11 +34,11 @@ public class ConversationActivity extends FragmentActivity {
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
             } else {
-                Log.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
+                SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
                 this.finish();
             }
         } catch (Exception ge) {
-            Log.e(LOG_TAG, "Could not render ConversationActivity.", ge);
+            SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity.", ge);
             this.finish();
         }
     }
@@ -74,7 +74,7 @@ public class ConversationActivity extends FragmentActivity {
         try {
             allowBackPress = conversationFragment.onBackPressed();
         } catch (NullPointerException ne) {
-            Log.e(LOG_TAG, "Could not call the ConversationFragments onBackPressed()", ne);
+            SwrveLogger.e(LOG_TAG, "Could not call the ConversationFragments onBackPressed()", ne);
         }
         if (allowBackPress) {
             super.onBackPressed();

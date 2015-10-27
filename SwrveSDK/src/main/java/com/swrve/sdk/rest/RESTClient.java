@@ -1,8 +1,9 @@
 package com.swrve.sdk.rest;
 
-import com.swrve.sdk.SwrveHelper;
+import android.util.Log;
 
-import org.apache.http.HttpStatus;
+import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class RESTClient implements IRESTClient {
     public void get(String endpoint, IRESTResponseListener callback) {
         HttpURLConnection urlConnection = null;
         String responseBody = null;
-        int responseCode = HttpStatus.SC_SERVICE_UNAVAILABLE;
+        int responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
         long connectTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
         boolean isTimeout = false;
 
@@ -85,7 +86,7 @@ public class RESTClient implements IRESTClient {
 
             responseBodyTime = milisecondsFrom(start);
         } catch (Exception e) {
-            e.printStackTrace();
+            SwrveLogger.e(Log.getStackTraceString(e));
             if (e instanceof SocketTimeoutException) {
                 isTimeout = true;
             }
@@ -101,7 +102,7 @@ public class RESTClient implements IRESTClient {
                 try {
                     wrapperIn.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    SwrveLogger.e(Log.getStackTraceString(e));
                 }
             }
             recordGetMetrics(endpoint, connectTime, responseHeaderTime, responseBodyTime, isTimeout);
@@ -127,7 +128,7 @@ public class RESTClient implements IRESTClient {
     public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
         HttpURLConnection urlConnection = null;
         String responseBody = null;
-        int responseCode = HttpStatus.SC_SERVICE_UNAVAILABLE;
+        int responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
         long connectTime = 0, requestBodyTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
         boolean isTimeout = false;
 
@@ -172,7 +173,7 @@ public class RESTClient implements IRESTClient {
 
             responseBodyTime = milisecondsFrom(start);
         } catch (Exception e) {
-            e.printStackTrace();
+            SwrveLogger.e(Log.getStackTraceString(e));
             if (e instanceof SocketTimeoutException) {
                 isTimeout = true;
             }
@@ -187,7 +188,7 @@ public class RESTClient implements IRESTClient {
                 try {
                     wrapperIn.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    SwrveLogger.e(Log.getStackTraceString(e));
                 }
             }
             recordPostMetrics(endpoint, connectTime, requestBodyTime, responseHeaderTime, responseBodyTime, isTimeout);
@@ -256,7 +257,7 @@ public class RESTClient implements IRESTClient {
         try {
             params.add(String.format("u=%s", getUrlWithoutPathOrQuery(url)));
         } catch (Exception e) {
-            e.printStackTrace();
+            SwrveLogger.e(Log.getStackTraceString(e));
             return;
         }
 

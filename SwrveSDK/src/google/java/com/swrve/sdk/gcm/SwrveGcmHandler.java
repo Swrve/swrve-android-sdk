@@ -10,7 +10,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
@@ -47,14 +47,14 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                  * recognize.
                  */
                 if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                    Log.e(TAG, "Send error: " + extras.toString());
+                    SwrveLogger.e(TAG, "Send error: " + extras.toString());
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                    Log.e(TAG, "Deleted messages on server: " + extras.toString());
+                    SwrveLogger.e(TAG, "Deleted messages on server: " + extras.toString());
                     // If it's a regular GCM message, do some work.
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                     // Process notification.
                     gcmHandled = processRemoteNotification(extras);
-                    Log.i(TAG, "Received notification: " + extras.toString());
+                    SwrveLogger.i(TAG, "Received notification: " + extras.toString());
                 }
             }
         }
@@ -100,7 +100,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                     }
                 }
             } catch (Exception ex) {
-                Log.e(TAG, "Error processing push notification", ex);
+                SwrveLogger.e(TAG, "Error processing push notification", ex);
             }
         }
     }
