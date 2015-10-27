@@ -10,6 +10,8 @@ import com.swrve.sdk.SwrveLogger;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.iid.InstanceID;
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 import com.swrve.sdk.gcm.SwrveGcmNotification;
@@ -17,6 +19,7 @@ import com.swrve.sdk.gcm.SwrveGcmNotification;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 /**
@@ -25,8 +28,11 @@ import java.lang.ref.WeakReference;
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String REGISTRATION_ID_CATEGORY = "RegistrationId";
     protected static final String SWRVE_GCM_TOKEN = "swrve.gcm_token";
+    protected static final String SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY = "GoogleAdvertisingId";
+    protected static final String SWRVE_GOOGLE_ADVERTISING_ID = "swrve.GAID";
 
     protected String registrationId;
+    protected String advertisingId;
     protected ISwrvePushNotificationListener pushNotificationListener;
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
@@ -47,10 +53,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     @Override
-    protected void beforeSendDeviceInfo(Context context) {
+    protected void beforeSendDeviceInfo(final Context context) {
+        // Push notification configured for this app
         if (config.isPushEnabled()) {
             try {
-                // Push notification configured for this app
                 // Check device for Play Services APK.
                 if (checkPlayServices()) {
                     String newRegistrationId = getRegistrationId();
@@ -64,6 +70,30 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 // Don't trust GCM and all the moving parts to work as expected
                 SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration id for the device", exp);
             }
+        }
+
+        // Google Advertising Id logging enabled
+        if (config.isAdvertisingIdLogging()) {
+            // Load previous value for Advertising ID
+            advertisingId = cachedLocalStorage.getSharedCacheEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY);
+            new AsyncTask<Void, Integer, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        // Obtain and save the new Google Advertising Id
+                        Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context);
+                        advertisingId = adInfo.getId();
+                        cachedLocalStorage.setAndFlushSharedEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY, advertisingId);
+                    } catch (Exception ex) {
+                        Log.e(LOG_TAG, "Couldn't obtain Advertising Id", ex);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void v) {
+                }
+            }.execute(null, null, null);
         }
     }
 
@@ -82,8 +112,11 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {
-        if (!SwrveHelper.isNullOrEmpty(registrationId)) {
+        if (config.isPushEnabled() && !SwrveHelper.isNullOrEmpty(registrationId)) {
             deviceInfo.put(SWRVE_GCM_TOKEN, registrationId);
+        }
+        if (config.isAdvertisingIdLogging() && !SwrveHelper.isNullOrEmpty(advertisingId)) {
+            deviceInfo.put(SWRVE_GOOGLE_ADVERTISING_ID, advertisingId);
         }
     }
 
