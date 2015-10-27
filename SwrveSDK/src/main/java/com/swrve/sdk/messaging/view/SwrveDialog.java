@@ -6,10 +6,9 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 
+import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.SwrveMessage;
-
-import java.lang.ref.WeakReference;
 
 /**
  * Dialog used to display in-app messages.
@@ -17,14 +16,16 @@ import java.lang.ref.WeakReference;
 public class SwrveDialog extends Dialog {
     private SwrveMessageView innerView;
     private SwrveMessage message;
+    private final boolean hideToolbar;
     private LayoutParams originalParams;
 
     private boolean dismissed = false;
 
-    public SwrveDialog(Activity context, SwrveMessage message, SwrveMessageView innerView, int theme) {
-        super(context, theme);
+    public SwrveDialog(Activity context, SwrveMessage message, SwrveMessageView innerView, boolean hideToolbar) {
+        super(context, R.style.SwrveDialogTheme);
         this.message = message;
         this.innerView = innerView;
+        this.hideToolbar = hideToolbar;
         this.originalParams = context.getWindow().getAttributes();
         setContentView(innerView);
         setOwnerActivity(context);
@@ -42,10 +43,12 @@ public class SwrveDialog extends Dialog {
     @Override
     protected void onStart() {
         super.onStart();
-        // Remove the status bar from the activity
-        WindowManager.LayoutParams attrs = getWindow().getAttributes();
-        attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
-        getWindow().setAttributes(attrs);
+        if (hideToolbar) {
+            // Remove the status bar from the activity
+            WindowManager.LayoutParams attrs = getWindow().getAttributes();
+            attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+            getWindow().setAttributes(attrs);
+        }
     }
 
     @Override
@@ -65,12 +68,14 @@ public class SwrveDialog extends Dialog {
     private void goneAway() {
         if (!dismissed) {
             dismissed = true;
-            try {
-                // Restore the window attributes
-                getWindow().setAttributes(originalParams);
-            } catch (IllegalArgumentException exp) {
-                // Dialog was not on assigned to a parent view
-                SwrveLogger.e(Log.getStackTraceString(exp));
+            if (hideToolbar) {
+                try {
+                    // Restore the window attributes
+                    getWindow().setAttributes(originalParams);
+                } catch (IllegalArgumentException exp) {
+                    // Dialog was not on assigned to a parent view
+                    SwrveLogger.e(Log.getStackTraceString(exp));
+                }
             }
         }
     }

@@ -1460,7 +1460,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     SwrveOrientation deviceOrientation = getDeviceOrientation();
                     SwrveLogger.d(LOG_TAG, "Trying to show dialog with orientation " + deviceOrientation);
                     SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, previousOrientation, installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
-                    SwrveDialog newDialog = new SwrveDialog(activity, message, swrveMessageView, R.style.SwrveDialogTheme);
+                    SwrveDialog newDialog = new SwrveDialog(activity, message, swrveMessageView, config.isHideToolbar());
                     newDialog.setOnDismissListener(new OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialog) {
