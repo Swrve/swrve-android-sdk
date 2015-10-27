@@ -85,7 +85,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                         advertisingId = adInfo.getId();
                         cachedLocalStorage.setAndFlushSharedEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY, advertisingId);
                     } catch (Exception ex) {
-                        Log.e(LOG_TAG, "Couldn't obtain Advertising Id", ex);
+                        SwrveLogger.e(LOG_TAG, "Couldn't obtain Advertising Id", ex);
                     }
                     return null;
                 }
