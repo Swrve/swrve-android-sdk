@@ -3,6 +3,7 @@ package com.swrve.sdk.gcm;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -67,14 +68,14 @@ public class SwrveGcmNotification {
             int iconMaterialId = metaData.getInt(SWRVE_PUSH_ICON_MATERIAL_METADATA, -1);
             if (iconMaterialId < 0) {
                 // No material (Android L+) icon specified in the metadata
-                Log.w(TAG, "No " + SWRVE_PUSH_ICON_MATERIAL_METADATA + " specified. We recommend setting a special material icon for Android L+");
+                SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ICON_MATERIAL_METADATA + " specified. We recommend setting a special material icon for Android L+");
             }
 
             Bitmap largeIconBitmap = null;
             int largeIconBitmapId = metaData.getInt(SWRVE_PUSH_ICON_LARGE_METADATA, -1);
             if (largeIconBitmapId < 0) {
                 // No large icon specified in the metadata
-                Log.w(TAG, "No " + SWRVE_PUSH_ICON_LARGE_METADATA + " specified. We recommend setting a large image for your notifications");
+                SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ICON_LARGE_METADATA + " specified. We recommend setting a large image for your notifications");
             } else {
                 largeIconBitmap = BitmapFactory.decodeResource(context.getResources(), largeIconBitmapId);
             }
@@ -82,17 +83,17 @@ public class SwrveGcmNotification {
             int accentColor = metaData.getInt(SWRVE_PUSH_ACCENT_COLOR_METADATA, -1);
             if (accentColor < 0) {
                 // No accent color specified in the metadata
-                Log.w(TAG, "No " + SWRVE_PUSH_ACCENT_COLOR_METADATA + " specified. We recommend setting an accent color for your notifications");
+                SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ACCENT_COLOR_METADATA + " specified. We recommend setting an accent color for your notifications");
             }
 
-            Class<?> pushActivityClass;
+            Class<?> pushActivityClass = null;
             String pushActivity = metaData.getString(SWRVE_PUSH_ACTIVITY_METADATA);
             if (SwrveHelper.isNullOrEmpty(pushActivity)) {
                 ResolveInfo resolveInfo = packageManager.resolveActivity(
                         packageManager.getLaunchIntentForPackage(context.getPackageName()),
                         PackageManager.MATCH_DEFAULT_ONLY);
 
-                if (resolveInfo != nul) {
+                if (resolveInfo != null) {
                     pushActivity = resolveInfo.activityInfo.name;
                 } else {
                     // No activity specified in the metadata
