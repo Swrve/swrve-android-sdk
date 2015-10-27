@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.provider.Settings;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
@@ -127,6 +128,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_SIM_OPERATOR_ISO_COUNTRY = "swrve.sim_operator.iso_country_code";
     protected static final String SWRVE_SIM_OPERATOR_CODE = "swrve.sim_operator.code";
     protected static final String SWRVE_DEVICE_REGION = "swrve.device_region";
+    protected static final String SWRVE_ANDROID_ID = "swrve.android_id";
     protected static final String REFERRER = "referrer";
     protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
@@ -196,14 +198,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected long messagesLeftToShow;
     protected int minDelayBetweenMessage;
     protected File cacheDir;
-    protected int device_width;
-    protected int device_height;
-    protected float device_dpi;
-    protected float android_device_xdpi;
-    protected float android_device_ydpi;
-    protected String sim_operator_name;
-    protected String sim_operator_iso_country_code;
-    protected String sim_operator_code;
+    protected int deviceWidth;
+    protected int deviceHeight;
+    protected float deviceDpi;
+    protected float androidDeviceXdpi;
+    protected float androidDeviceYdpi;
+    protected String simOperatorName;
+    protected String simOperatorIsoCountryCode;
+    protected String simOperatorCode;
+    protected String androidId;
 
     protected int previousOrientation;
     protected SwrveQAUser qaUser;
@@ -541,17 +544,22 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             }
 
             // Set device info
-            this.device_width = width;
-            this.device_height = height;
-            this.device_dpi = metrics.densityDpi;
-            this.android_device_xdpi = xdpi;
-            this.android_device_ydpi = ydpi;
+            this.deviceWidth = width;
+            this.deviceHeight = height;
+            this.deviceDpi = metrics.densityDpi;
+            this.androidDeviceXdpi = xdpi;
+            this.androidDeviceYdpi = ydpi;
 
             // Carrier details
             ITelephonyManager tmanager = getTelephonyManager(context);
-            this.sim_operator_name = tmanager.getSimOperatorName();
-            this.sim_operator_iso_country_code = tmanager.getSimCountryIso();
-            this.sim_operator_code = tmanager.getSimOperator();
+            this.simOperatorName = tmanager.getSimOperatorName();
+            this.simOperatorIsoCountryCode = tmanager.getSimCountryIso();
+            this.simOperatorCode = tmanager.getSimOperator();
+
+            // Android ID
+            if (config.isAndroidIdLogging()) {
+                this.androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+            }
         } catch (Exception exp) {
             SwrveLogger.e(LOG_TAG, "Get device screen info failed", exp);
         }

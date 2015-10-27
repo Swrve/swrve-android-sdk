@@ -637,14 +637,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 deviceInfo.put(SWRVE_CONVERSATION_VERSION, CONVERSATION_VERSION);
                 deviceInfo.put(SWRVE_LOCATION_VERSION, LOCATION_VERSION);
                 // Carrier info
-                if (!SwrveHelper.isNullOrEmpty(sim_operator_name)) {
-                    deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, sim_operator_name);
+                if (!SwrveHelper.isNullOrEmpty(simOperatorName)) {
+                    deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, simOperatorName);
                 }
-                if (!SwrveHelper.isNullOrEmpty(sim_operator_iso_country_code)) {
-                    deviceInfo.put(SWRVE_SIM_OPERATOR_ISO_COUNTRY, sim_operator_iso_country_code);
+                if (!SwrveHelper.isNullOrEmpty(simOperatorIsoCountryCode)) {
+                    deviceInfo.put(SWRVE_SIM_OPERATOR_ISO_COUNTRY, simOperatorIsoCountryCode);
                 }
-                if (!SwrveHelper.isNullOrEmpty(sim_operator_code)) {
-                    deviceInfo.put(SWRVE_SIM_OPERATOR_CODE, sim_operator_code);
+                if (!SwrveHelper.isNullOrEmpty(simOperatorCode)) {
+                    deviceInfo.put(SWRVE_SIM_OPERATOR_CODE, simOperatorCode);
+                }
+                // Android ID
+                if (!SwrveHelper.isNullOrEmpty(androidId)) {
+                    deviceInfo.put(SWRVE_ANDROID_ID, androidId);
                 }
             } catch (Exception exp) {
                 SwrveLogger.e(LOG_TAG, "Get device screen info failed", exp);
@@ -701,11 +705,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("app_store", config.getAppStore());
 
                     // Device info
-                    params.put("device_width", String.valueOf(device_width));
-                    params.put("device_height", String.valueOf(device_height));
-                    params.put("device_dpi", String.valueOf(device_dpi));
-                    params.put("android_device_xdpi", String.valueOf(android_device_xdpi));
-                    params.put("android_device_ydpi", String.valueOf(android_device_ydpi));
+                    params.put("device_width", String.valueOf(deviceWidth));
+                    params.put("device_height", String.valueOf(deviceHeight));
+                    params.put("device_dpi", String.valueOf(deviceDpi));
+                    params.put("android_device_xdpi", String.valueOf(androidDeviceXdpi));
+                    params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
                     params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
                     params.put("device_name", getDeviceName());
                     params.put("os_version", Build.VERSION.RELEASE);
