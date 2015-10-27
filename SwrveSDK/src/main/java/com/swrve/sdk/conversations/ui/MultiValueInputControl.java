@@ -1,6 +1,7 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
@@ -84,7 +85,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         return control;
     }
 
-    @SuppressLint("NewApi")
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private static void setTint(RadioButton radioButton, int color) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             radioButton.setButtonTintList(ColorStateList.valueOf(color));

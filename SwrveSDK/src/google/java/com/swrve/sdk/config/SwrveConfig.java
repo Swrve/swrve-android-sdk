@@ -8,12 +8,17 @@ import com.swrve.sdk.SwrveHelper;
 public class SwrveConfig extends SwrveConfigBase {
 
     /**
-     * Android Google Cloud Messaging sender id.
+     * Android Google Cloud Messaging Sender id.
      */
     private String senderId;
 
     /**
-     * Returns an instance of SwrveConfig with the sender id.
+     * Automatically log Google's Advertising Id as "swrve.GAID".
+     */
+    private boolean advertisingIdLogging;
+
+    /**
+     * Returns an instance of SwrveConfig with the Sender id.
      *
      * @param senderId
      * @return
@@ -38,9 +43,23 @@ public class SwrveConfig extends SwrveConfigBase {
     }
 
     /**
-     * @return if push is enabled
+     * @return if push is enabled.
      */
     public boolean isPushEnabled() {
         return !SwrveHelper.isNullOrEmpty(this.senderId);
+    }
+
+    /**
+     * @return if it will automatically log Google's Advertising Id as "swrve.GAID".
+     */
+    public boolean isAdvertisingIdLogging() {
+        return advertisingIdLogging;
+    }
+
+    /**
+     * @param enabled to enable automatic logging of Google's Advertising Id as "swrve.GAID".
+     */
+    public void setAdvertisingIdLogging(boolean enabled) {
+        this.advertisingIdLogging = enabled;
     }
 }

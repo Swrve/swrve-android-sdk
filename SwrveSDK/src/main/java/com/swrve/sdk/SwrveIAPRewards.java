@@ -1,6 +1,6 @@
 package com.swrve.sdk;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,15 +62,15 @@ public class SwrveIAPRewards {
 
     protected boolean checkParameters(String name, long quantity, String type) throws IllegalArgumentException {
         if (SwrveHelper.isNullOrEmpty(type)) {
-            Log.e(LOG_TAG, "SwrveIAPRewards illegal argument: type cannot be empty");
+            SwrveLogger.e(LOG_TAG, "SwrveIAPRewards illegal argument: type cannot be empty");
             return false;
         }
         if (SwrveHelper.isNullOrEmpty(name)) {
-            Log.e(LOG_TAG, "SwrveIAPRewards illegal argument: reward name cannot be empty");
+            SwrveLogger.e(LOG_TAG, "SwrveIAPRewards illegal argument: reward name cannot be empty");
             return false;
         }
         if (quantity <= 0) {
-            Log.e(LOG_TAG, "SwrveIAPRewards illegal argument: reward amount must be greater than zero");
+            SwrveLogger.e(LOG_TAG, "SwrveIAPRewards illegal argument: reward amount must be greater than zero");
             return false;
         }
 
@@ -86,7 +86,7 @@ public class SwrveIAPRewards {
         try {
             _addItem(resourceName, quantity);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -99,7 +99,7 @@ public class SwrveIAPRewards {
         try {
             _addCurrency(currencyName, amount);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -111,7 +111,7 @@ public class SwrveIAPRewards {
         try {
             return _getRewardsJSON();
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
     }

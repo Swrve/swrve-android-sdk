@@ -114,7 +114,6 @@ public class MainActivity extends Activity {
         super.onResume();
         // Notify the SDK of activity resume.
         appAvailable = true;
-
         SwrveSDK.onResume(this);
     }
 

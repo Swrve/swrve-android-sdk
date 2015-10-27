@@ -1,7 +1,7 @@
 package com.swrve.sdk.messaging.view;
 
 import android.content.Context;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -54,7 +54,7 @@ public class SwrveMessageViewFactory {
         try {
             boolean hasToRotate = false;
             if (message != null && message.getFormats().size() > 0) {
-                Log.i(LOG_TAG, "Creating layout for message " + message.getId() + " with orientation " + orientation.toString());
+                SwrveLogger.i(LOG_TAG, "Creating layout for message " + message.getId() + " with orientation " + orientation.toString());
                 // Try to get current orientation
                 SwrveMessageFormat format = message.getFormat(orientation);
                 if (format == null && !firstTime) {
@@ -76,7 +76,7 @@ public class SwrveMessageViewFactory {
                                 }
                             }
                         } catch (Exception exp) {
-                            Log.e(LOG_TAG, "Could not obtain device orientation", exp);
+                            SwrveLogger.e(LOG_TAG, "Could not obtain device orientation", exp);
                         }
                     }
 
@@ -87,7 +87,7 @@ public class SwrveMessageViewFactory {
         } catch (SwrveMessageViewBuildException e) {
             throw e;
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while building SwrveMessageView view", e);
+            SwrveLogger.e(LOG_TAG, "Error while building SwrveMessageView view", e);
         }
 
         throw new SwrveMessageViewBuildException("No format with the given orientation was found");

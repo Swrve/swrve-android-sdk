@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Browser;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 public class ActionBehaviours {
     private static final String LOG_TAG = "SwrveSDK";
@@ -32,7 +32,7 @@ public class ActionBehaviours {
         try {
             activity.startActivity(intent);
         }catch(ActivityNotFoundException anfe){
-            Log.e(LOG_TAG, "Could not launch activity for uri: " + uriString + ". Possibly badly formatted deep link", anfe);
+            SwrveLogger.e(LOG_TAG, "Could not launch activity for uri: " + uriString + ". Possibly badly formatted deep link", anfe);
             activity.finish();
         }
     }
