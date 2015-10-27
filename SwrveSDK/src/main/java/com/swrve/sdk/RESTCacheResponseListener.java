@@ -1,6 +1,6 @@
 package com.swrve.sdk;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -44,7 +44,7 @@ abstract class RESTCacheResponseListener implements IRESTResponseListener {
                 String cachedResponse = memorylocalStorage.getSecureCacheEntryForUser(userId, cacheCategory, swrve.getUniqueKey());
                 rawResponse = cachedResponse;
             } catch (SecurityException e) {
-                Log.i("REST", "Signature for " + cacheCategory + " invalid; could not retrieve data from cache");
+                SwrveLogger.i("REST", "Signature for " + cacheCategory + " invalid; could not retrieve data from cache");
                 Map<String, Object> parameters = new HashMap<String, Object>();
                 parameters.put("name", "Swrve.signature_invalid");
                 swrve.queueEvent("event", parameters, null, false);

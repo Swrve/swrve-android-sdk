@@ -14,6 +14,7 @@ import android.widget.ImageView.ScaleType;
 import android.widget.RelativeLayout;
 
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveActionType;
@@ -23,11 +24,11 @@ import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 
 import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -110,18 +111,16 @@ public class SwrveInnerMessageView extends RelativeLayout {
             options.inJustDecodeBounds = false;
             return new BitmapResult(BitmapFactory.decodeFile(filePath, options), bitmapWidth, bitmapHeight);
         } catch (OutOfMemoryError exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         } catch (Exception exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
 
         return null;
     }
 
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
-        boolean loadingCorrectly = true;
-        String loadErrorReason = null;
-
+        List<String> loadErrorReasons = new ArrayList<String>();
         try {
             // Create bitmap cache
             bitmapCache = new HashSet<WeakReference<Bitmap>>();
@@ -137,8 +136,15 @@ public class SwrveInnerMessageView extends RelativeLayout {
             setMinimumHeight(format.getSize().y);
             setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             for (final SwrveImage image : format.getImages()) {
+                String filePath = message.getCacheDir().getAbsolutePath() + "/" + image.getFile();
+                if(!SwrveHelper.hasFileAccess(filePath)) {
+                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
+                    continue;
+                }
+
                 // Load image
-                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(message.getCacheDir().getAbsolutePath() + "/" + image.getFile(), screenWidth, screenHeight, minSampleSize);
+                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
                     SwrveImageView imageView = createSwrveImage(context);
@@ -155,14 +161,21 @@ public class SwrveInnerMessageView extends RelativeLayout {
                     // Add to parent
                     addView(imageView);
                 } else {
-                    loadingCorrectly = false;
+                    loadErrorReasons.add("Could not decode bitmap from file:" + filePath);
                     break;
                 }
             }
 
             for (final SwrveButton button : format.getButtons()) {
+                String filePath = message.getCacheDir().getAbsolutePath() + "/" + button.getImage();
+                if(!SwrveHelper.hasFileAccess(filePath)) {
+                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
+                    continue;
+                }
+
                 // Load image
-                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(message.getCacheDir().getAbsolutePath() + "/" + button.getImage(), screenWidth, screenHeight, minSampleSize);
+                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
                     SwrveButtonView buttonView = createSwrveButton(context, button.getActionType());
@@ -189,7 +202,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                     // in case the install link was not set correctly log issue and return early
                                     // without calling the install button listener not starting the install intent
                                     if (SwrveHelper.isNullOrEmpty(appInstallLink)) {
-                                        Log.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
+                                        SwrveLogger.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
                                         return;
                                     }
                                     boolean freeEvent = true;
@@ -203,9 +216,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                             try {
                                                 ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appInstallLink)));
                                             } catch (android.content.ActivityNotFoundException anfe) {
-                                                Log.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
+                                                SwrveLogger.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
                                             } catch (Exception exp) {
-                                                Log.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
+                                                SwrveLogger.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
                                             }
                                         }
                                     }
@@ -219,38 +232,36 @@ public class SwrveInnerMessageView extends RelativeLayout {
                                         try {
                                             ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
                                         } catch (Exception e) {
-                                            Log.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
+                                            SwrveLogger.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
                                         }
                                     }
                                 }
                             } catch (Exception e) {
-                                Log.e(LOG_TAG, "Error in onClick handler.", e);
+                                SwrveLogger.e(LOG_TAG, "Error in onClick handler.", e);
                             }
                         }
                     });
                     // Add to parent
                     addView(buttonView);
                 } else {
-                    loadingCorrectly = false;
+                    loadErrorReasons.add("Could not decode bitmap from file:" + filePath);
                     break;
                 }
             }
         } catch (Exception e) {
-            loadingCorrectly = false;
-            loadErrorReason = "There was an exception";
-            Log.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
+            SwrveLogger.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
+            loadErrorReasons.add("Error while initializing SwrveMessageView layout:" + e.getMessage());
         } catch (OutOfMemoryError e) {
-            loadingCorrectly = false;
-            loadErrorReason = "OutOfMemoryError";
-            Log.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
+            SwrveLogger.e(LOG_TAG, "OutOfMemoryError while initializing SwrveMessageView layout", e);
+            loadErrorReasons.add("OutOfMemoryError while initializing SwrveMessageView layout:" + e.getMessage());
         }
 
-        if (!loadingCorrectly) {
+        if (loadErrorReasons.size() > 0) {
             Map<String, String> errorReasonPayload = new HashMap<String, String>();
-            errorReasonPayload.put("reason", loadErrorReason);
+            errorReasonPayload.put("reason", loadErrorReasons.toString());
             message.getMessageController().event("Swrve.Messages.view_failed", errorReasonPayload);
             destroy();
-            throw new SwrveMessageViewBuildException("There was an error creating the view. This can be caused by an unexisting image in one of your message elements or no available memory to load the images.");
+            throw new SwrveMessageViewBuildException("There was an error creating the view caused by:\n" + loadErrorReasons.toString());
         }
     }
 
@@ -280,7 +291,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
                 }
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while onLayout in SwrveMessageView", e);
+            SwrveLogger.e(LOG_TAG, "Error while onLayout in SwrveMessageView", e);
         }
     }
 
@@ -325,7 +336,7 @@ public class SwrveInnerMessageView extends RelativeLayout {
             }
             System.gc();
         } catch (Exception exp) {
-            exp.printStackTrace();
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
     }
 

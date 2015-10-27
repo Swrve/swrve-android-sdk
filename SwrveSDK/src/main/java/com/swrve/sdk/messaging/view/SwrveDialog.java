@@ -2,10 +2,12 @@ package com.swrve.sdk.messaging.view;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.util.Log;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 
 import com.swrve.sdk.R;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.SwrveMessage;
 
 /**
@@ -72,7 +74,7 @@ public class SwrveDialog extends Dialog {
                     getWindow().setAttributes(originalParams);
                 } catch (IllegalArgumentException exp) {
                     // Dialog was not on assigned to a parent view
-                    exp.printStackTrace();
+                    SwrveLogger.e(Log.getStackTraceString(exp));
                 }
             }
         }

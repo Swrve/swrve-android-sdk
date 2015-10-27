@@ -1,6 +1,6 @@
 package com.swrve.sdk.messaging;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -76,7 +76,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      */
     public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
         if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation") && conversation != null && conversation.isDownloaded()) {
-            Log.i(LOG_TAG, event + " matches a trigger in " + id);
+            SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
             return this.conversation;
         }
 

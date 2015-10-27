@@ -1,6 +1,6 @@
 package com.swrve.sdk.messaging;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
@@ -73,7 +73,7 @@ public abstract class SwrveBaseCampaign {
         this();
         setId(campaignData.getInt("id"));
         setTalkController(controller);
-        Log.i(LOG_TAG, "Loading campaign " + getId());
+        SwrveLogger.i(LOG_TAG, "Loading campaign " + getId());
 
         // Campaign rule defaults
         this.maxImpressions = DEFAULT_MAX_IMPRESSIONS;
@@ -205,7 +205,7 @@ public abstract class SwrveBaseCampaign {
         if (campaignReasons != null) {
             campaignReasons.put(id, reason);
         }
-        Log.i(LOG_TAG, reason);
+        SwrveLogger.i(LOG_TAG, reason);
     }
 
     /**
@@ -287,7 +287,7 @@ public abstract class SwrveBaseCampaign {
                 this.impressions = settings.getInt("impressions");
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while trying to load campaign settings", e);
+            SwrveLogger.e(LOG_TAG, "Error while trying to load campaign settings", e);
         }
     }
 
@@ -303,7 +303,7 @@ public abstract class SwrveBaseCampaign {
 
     protected boolean checkCampaignLimits(String event, Date now, Map<Integer, String> campaignReasons, int elementCount, String elementName) {
         if (!hasElementForEvent(event)) {
-            Log.i(LOG_TAG, "There is no trigger in " + id + " that matches " + event);
+            SwrveLogger.i(LOG_TAG, "There is no trigger in " + id + " that matches " + event);
             return false;
         }
 

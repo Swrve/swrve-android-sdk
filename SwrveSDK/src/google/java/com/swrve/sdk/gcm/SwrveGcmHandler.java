@@ -10,7 +10,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
@@ -47,14 +47,14 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                  * recognize.
                  */
                 if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                    Log.e(TAG, "Send error: " + extras.toString());
+                    SwrveLogger.e(TAG, "Send error: " + extras.toString());
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                    Log.e(TAG, "Deleted messages on server: " + extras.toString());
+                    SwrveLogger.e(TAG, "Deleted messages on server: " + extras.toString());
                     // If it's a regular GCM message, do some work.
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                     // Process notification.
                     gcmHandled = processRemoteNotification(extras);
-                    Log.i(TAG, "Received notification: " + extras.toString());
+                    SwrveLogger.i(TAG, "Received notification: " + extras.toString());
                 }
             }
         }
@@ -100,7 +100,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                     }
                 }
             } catch (Exception ex) {
-                Log.e(TAG, "Error processing push notification", ex);
+                SwrveLogger.e(TAG, "Error processing push notification", ex);
             }
         }
     }
@@ -125,14 +125,27 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         String msgSound = msg.getString("sound");
 
+        SwrveGcmNotification notificationHelper = SwrveGcmNotification.getInstance(context);
+        boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
+        int iconResource = (materialDesignIcon && notificationHelper.iconMaterialDrawableId >= 0) ? notificationHelper.iconMaterialDrawableId : notificationHelper.iconDrawableId;
+
         // Build notification
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
-                .setSmallIcon(SwrveGcmNotification.getInstance(context).iconDrawableId)
-                .setContentTitle(SwrveGcmNotification.getInstance(context).notificationTitle)
+                .setSmallIcon(iconResource)
+                .setTicker(msgText)
+                .setContentTitle(notificationHelper.notificationTitle)
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(msgText))
                 .setContentText(msgText)
                 .setAutoCancel(true);
+
+        if (notificationHelper.largeIconDrawable != null) {
+            mBuilder.setLargeIcon(notificationHelper.largeIconDrawable);
+        }
+
+        if (notificationHelper.accentColor >= 0) {
+            mBuilder.setColor(notificationHelper.accentColor);
+        }
 
         if (!SwrveHelper.isNullOrEmpty(msgSound)) {
             Uri soundUri;
