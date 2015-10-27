@@ -1,6 +1,6 @@
 package com.swrve.sdk.conversations.engine.deserialisers;
 
-import android.util.Log;
+import com.swrve.sdk.SwrveLogger;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -62,8 +62,8 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
                     actions.includeAction(label, deeplinkURIDetails);
                 }
                 else {
-                    Log.e(LOG_TAG, "Unrecognized Action in json");
-                    Log.e(LOG_TAG, "JSON :: " + entry.getValue().getAsJsonObject().toString());
+                    SwrveLogger.e(LOG_TAG, "Unrecognized Action in json");
+                    SwrveLogger.e(LOG_TAG, "JSON :: " + entry.getValue().getAsJsonObject().toString());
                 }
             }
             return actions;

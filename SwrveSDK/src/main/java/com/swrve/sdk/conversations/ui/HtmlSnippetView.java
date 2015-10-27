@@ -1,9 +1,11 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.content.Context;
+import android.util.Log;
 import android.webkit.WebView;
 
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 
@@ -25,7 +27,7 @@ public class HtmlSnippetView extends WebView implements ConversationContent {
                     DEFAULT_CSS = SwrveHelper.readStringFromInputStream(is);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                SwrveLogger.e(Log.getStackTraceString(e));
             }
             if (SwrveHelper.isNullOrEmpty(DEFAULT_CSS)) {
                 DEFAULT_CSS = "";
