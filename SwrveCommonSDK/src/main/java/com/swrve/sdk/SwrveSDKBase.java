@@ -494,8 +494,8 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the latest list of conversations targeted for this user.
-     * @return list of conversation campaigns.
+     * Get the list active conversations targeted for this user.
+     * @return list of active conversation campaigns.
      */
     public static List<SwrveConversationCampaign> getConversationCampaigns() {
         checkInstanceCreated();

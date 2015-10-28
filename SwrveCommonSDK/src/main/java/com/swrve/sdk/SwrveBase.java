@@ -1839,7 +1839,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
                 if (campaign instanceof SwrveConversationCampaign) {
-                    result.add((SwrveConversationCampaign)campaign);
+                    if (campaign.isActive(getNow())) {
+                        result.add((SwrveConversationCampaign) campaign);
+                    }
                 }
             }
         }
@@ -1853,7 +1855,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             conversationListener.onMessage(campaign.getConversation());
             return true;
         } else {
-            Log.e(LOG_TAG, "No conversation listener available.");
+            Log.e(LOG_TAG, "No conversation or conversation listener.");
         }
         return false;
     }

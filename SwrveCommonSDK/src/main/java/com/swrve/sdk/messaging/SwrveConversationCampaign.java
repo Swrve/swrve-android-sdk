@@ -20,12 +20,12 @@ import java.util.Set;
  * Swrve campaign containing a conversation targeted to the current device and user id.
  */
 public class SwrveConversationCampaign extends SwrveBaseCampaign implements Serializable {
-    protected static final String SWRVE_INBOX_TRIGGER_FLAG = "Swrve.Messages.inbox";
-
     // Name of the campaign on the dashboard
     protected String name;
     // Description of the campaign on the dashboard
     protected String description;
+    // Flag indicating if it is an Inbox campaign
+    protected boolean inbox;
     // List of conversations contained in the campaign
     protected SwrveConversation conversation;
 
@@ -58,7 +58,11 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * @return true if the campaign is an Inbox campaign.
      */
     public boolean isInbox() {
-        return triggers.contains(SWRVE_INBOX_TRIGGER_FLAG);
+        return inbox;
+    }
+
+    protected void setIsInbox(boolean inbox) {
+        this.inbox = inbox;
     }
 
     /**
@@ -75,6 +79,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
 
         setName(campaignData.optString("name", ""));
         setDescription(campaignData.optString("description", ""));
+        setIsInbox(campaignData.optBoolean("inbox", false));
 
         if(campaignData.has("conversation")) {
             JSONObject conversationData = campaignData.getJSONObject("conversation");

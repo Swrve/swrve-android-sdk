@@ -180,6 +180,13 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
+     * @return true if the campaign is active at the given time.
+     */
+    public boolean isActive(Date now) {
+        return checkForStartAndEndDate(now, null);
+    }
+
+    /**
      * Check if the campaign contains messages for the given event.
      *
      * @param eventName
@@ -204,8 +211,8 @@ public abstract class SwrveBaseCampaign {
     protected void logAndAddReason(Map<Integer, String> campaignReasons, String reason) {
         if (campaignReasons != null) {
             campaignReasons.put(id, reason);
+            Log.i(LOG_TAG, reason);
         }
-        Log.i(LOG_TAG, reason);
     }
 
     /**
@@ -301,6 +308,19 @@ public abstract class SwrveBaseCampaign {
         this.talkController.setMessageMinDelayThrottle();
     }
 
+    protected boolean checkForStartAndEndDate(Date now, Map<Integer, String> campaignReasons) {
+        if (startDate.after(now)) {
+            logAndAddReason(campaignReasons, "Campaign " + id + " has not started yet");
+            return false;
+        }
+
+        if (endDate.before(now)) {
+            logAndAddReason(campaignReasons, "Campaign " + id + " has finished");
+            return false;
+        }
+        return true;
+    }
+
     protected boolean checkCampaignLimits(String event, Date now, Map<Integer, String> campaignReasons, int elementCount, String elementName) {
         if (!hasElementForEvent(event)) {
             Log.i(LOG_TAG, "There is no trigger in " + id + " that matches " + event);
@@ -312,15 +332,7 @@ public abstract class SwrveBaseCampaign {
             return false;
         }
 
-        if (startDate.after(now)) {
-            logAndAddReason(campaignReasons, "Campaign " + id + " has not started yet");
-            return false;
-        }
-
-        if (endDate.before(now)) {
-            logAndAddReason(campaignReasons, "Campaign " + id + " has finished");
-            return false;
-        }
+        checkForStartAndEndDate(now, campaignReasons);
 
         if (impressions >= maxImpressions) {
             logAndAddReason(campaignReasons, "{Campaign throttle limit} Campaign " + id + " has been shown " + maxImpressions + " times already");
