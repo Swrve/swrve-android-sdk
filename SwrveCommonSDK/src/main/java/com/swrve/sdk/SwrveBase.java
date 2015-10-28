@@ -584,11 +584,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         this.language = SwrveHelper.toLanguageTag(locale);
     }
 
-    @Deprecated
-    protected void _setLanguage(String language) {
-        this.language = language;
-    }
-
     protected String _getLanguage() {
         return language;
     }
@@ -1530,18 +1525,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    /**
-     * @deprecated
-     */
-    @Override
-    public void setLanguage(String language) {
-        try {
-            _setLanguage(language);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
     @Override
     public String getApiKey() {
         try {
@@ -1847,5 +1830,31 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Log.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
+    }
+
+    @Override
+    public List<SwrveConversationCampaign> getConversationCampaigns() {
+        List<SwrveConversationCampaign> result = new ArrayList<SwrveConversationCampaign>();
+        synchronized (campaigns) {
+            for (int i = 0; i < campaigns.size(); i++) {
+                SwrveBaseCampaign campaign = campaigns.get(i);
+                if (campaign instanceof SwrveConversationCampaign) {
+                    result.add((SwrveConversationCampaign)campaign);
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public boolean displayConversationCampaign(SwrveConversationCampaign campaign) {
+        if (campaign != null && campaign.getConversation() != null && conversationListener != null) {
+            // Display first message in the campaign
+            conversationListener.onMessage(campaign.getConversation());
+            return true;
+        } else {
+            Log.e(LOG_TAG, "No conversation listener available.");
+        }
+        return false;
     }
 }

@@ -8,7 +8,10 @@ import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 
@@ -17,6 +20,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -68,9 +72,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     String getLanguage();
 
-    @Deprecated
-    void setLanguage(String language);
-
     String getApiKey();
 
     String getUserId();
@@ -110,4 +111,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     Context getContext();
 
     C getConfig();
+
+    List<SwrveConversationCampaign> getConversationCampaigns();
+
+    boolean displayConversationCampaign(SwrveConversationCampaign campaign);
 }

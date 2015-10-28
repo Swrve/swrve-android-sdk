@@ -4,7 +4,7 @@ apply plugin: 'maven'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion '21.1.2'
+    buildToolsVersion '23.0.1'
 
 	defaultConfig {
         minSdkVersion 10
@@ -43,5 +43,5 @@ uploadArchives {
 dependencies {
     compile project(':SwrveCommonSDK') // For local development
 //    compile 'com.swrve.sdk.android:swrve-common:4.0.5'
-    compile 'com.google.android.gms:play-services-gcm:7.+'
+    compile 'com.google.android.gms:play-services-gcm:8.1.0'
 }

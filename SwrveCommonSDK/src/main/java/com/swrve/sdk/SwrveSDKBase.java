@@ -10,6 +10,7 @@ import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 
@@ -18,6 +19,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -296,16 +298,6 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Set the current language
-     *
-     * @deprecated use {@link #setLanguage(Locale)} instead
-     */
-    public static void setLanguage(String language) {
-        checkInstanceCreated();
-        instance.setLanguage(language);
-    }
-
-    /**
      * Get the current api key
      */
     public static String getApiKey() {
@@ -499,6 +491,26 @@ public abstract class SwrveSDKBase {
     public static Context getContext() {
         checkInstanceCreated();
         return instance.getContext();
+    }
+
+    /**
+     * Get the latest list of conversations targeted for this user.
+     * @return list of conversation campaigns.
+     */
+    public static List<SwrveConversationCampaign> getConversationCampaigns() {
+        checkInstanceCreated();
+        return instance.getConversationCampaigns();
+    }
+
+    /**
+     * Display the given conversation without the need to trigger an event and skipping
+     * the configured rules.
+     * @param campaign
+     * @return true if the conversation was displayed.
+     */
+    public static boolean displayConversationCampaign(SwrveConversationCampaign campaign) {
+        checkInstanceCreated();
+        return instance.displayConversationCampaign(campaign);
     }
 
     protected static void checkInstanceCreated() throws RuntimeException {
