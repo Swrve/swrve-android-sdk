@@ -38,6 +38,12 @@ public abstract class SwrveBaseCampaign {
     protected Date endDate;
     // List of triggers for the campaign
     protected Set<String> triggers;
+    // Flag indicating if it is an Inbox campaign
+    protected boolean inbox;
+    // Inbox subject of the campaign
+    protected String subject;
+    // Inbox status of the campaign
+    protected SwrveCampaignStatus status = SwrveCampaignStatus.Unseen;
     // Indicates if the campaign serves messages randomly or using round robin
     protected boolean randomOrder;
     // Next message to be shown if round robin campaign
@@ -72,6 +78,8 @@ public abstract class SwrveBaseCampaign {
     public SwrveBaseCampaign(SwrveBase<?, ?> controller, JSONObject campaignData) throws JSONException {
         this();
         setId(campaignData.getInt("id"));
+        setIsInbox(campaignData.optBoolean("inbox", false));
+        setSubject(campaignData.optString("subject", null));
         setTalkController(controller);
         Log.i(LOG_TAG, "Loading campaign " + getId());
 
@@ -100,6 +108,32 @@ public abstract class SwrveBaseCampaign {
     protected void setTalkController(SwrveBase<?, ?> controller) {
         this.talkController = controller;
     }
+
+    /**
+     * Returns true when the campaign has been marked as an Inbox campaign
+     * on the dashboard.
+     *
+     * @return true if the campaign is an Inbox campaign.
+     */
+    public boolean isInbox() {
+        return inbox;
+    }
+
+    protected void setIsInbox(boolean inbox) {
+        this.inbox = inbox;
+    }
+
+    /**
+     * @return the name of the campaign.
+     */
+    public String getSubject() {
+        return subject;
+    }
+
+    protected void setSubject(String subject) {
+        this.subject = subject;
+    }
+
 
     /**
      * @return the next message to show.
@@ -202,10 +236,7 @@ public abstract class SwrveBaseCampaign {
     }
 
     protected boolean isTooSoonToShowMessageAfterDelay(Date now) {
-        if (showMessagesAfterDelay == null) {
-            return false;
-        }
-        return now.before(showMessagesAfterDelay);
+        return (showMessagesAfterDelay != null && now.before(showMessagesAfterDelay));
     }
 
     protected void logAndAddReason(Map<Integer, String> campaignReasons, String reason) {
@@ -274,6 +305,7 @@ public abstract class SwrveBaseCampaign {
         JSONObject settings = new JSONObject();
         settings.put("next", next);
         settings.put("impressions", impressions);
+        settings.put("status", status.toString());
 
         return settings;
     }
@@ -292,6 +324,10 @@ public abstract class SwrveBaseCampaign {
 
             if (settings.has("impressions")) {
                 this.impressions = settings.getInt("impressions");
+            }
+
+            if (settings.has("status")) {
+                this.status = SwrveCampaignStatus.valueOf(settings.getString("status"));
             }
         } catch (Exception e) {
             Log.e(LOG_TAG, "Error while trying to load campaign settings", e);
@@ -351,5 +387,32 @@ public abstract class SwrveBaseCampaign {
         }
 
         return true;
+    }
+
+    /**
+     * Used internally to set the status of the campaign.
+     *
+     * @param status new status of the campaign
+     */
+    public void setStatus(SwrveCampaignStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * Get the status of the campaign.
+     *
+     * @return status of the campaign
+     */
+    public SwrveCampaignStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * Used by sublcasses to inform that the campaign was displayed.
+     */
+    public void messageWasShownToUser() {
+        setStatus(SwrveCampaignStatus.Seen);
+        incrementImpressions();
+        setMessageMinDelayThrottle();
     }
 }

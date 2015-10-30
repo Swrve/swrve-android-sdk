@@ -227,13 +227,17 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public List<SwrveConversationCampaign> getConversationCampaigns() {
-        return new ArrayList<SwrveConversationCampaign>();
+    public List<SwrveBaseCampaign> getCampaigns() {
+        return new ArrayList<SwrveBaseCampaign>();
     }
 
     @Override
-    public boolean displayConversationCampaign(SwrveConversationCampaign campaign) {
+    public boolean showCampaign(SwrveBaseCampaign campaign) {
         return false;
+    }
+
+    @Override
+    public void removeCampaign(SwrveBaseCampaign campaign) {
     }
 
     @Override

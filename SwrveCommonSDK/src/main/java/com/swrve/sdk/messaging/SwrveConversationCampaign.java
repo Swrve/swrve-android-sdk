@@ -20,50 +20,8 @@ import java.util.Set;
  * Swrve campaign containing a conversation targeted to the current device and user id.
  */
 public class SwrveConversationCampaign extends SwrveBaseCampaign implements Serializable {
-    // Name of the campaign on the dashboard
-    protected String name;
-    // Description of the campaign on the dashboard
-    protected String description;
-    // Flag indicating if it is an Inbox campaign
-    protected boolean inbox;
     // List of conversations contained in the campaign
     protected SwrveConversation conversation;
-
-    /**
-     * @return the name of the campaign.
-     */
-    public String getName() {
-        return name;
-    }
-
-    protected void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the description of the campaign.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    protected void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * Returns true when the campaign has been marked as an Inbox campaign
-     * on the dashboard.
-     *
-     * @return true if the campaign is an Inbox campaign.
-     */
-    public boolean isInbox() {
-        return inbox;
-    }
-
-    protected void setIsInbox(boolean inbox) {
-        this.inbox = inbox;
-    }
 
     /**
      * Load a campaign from JSON data.
@@ -76,11 +34,6 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      */
     public SwrveConversationCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
         super(controller, campaignData);
-
-        setName(campaignData.optString("name", ""));
-        setDescription(campaignData.optString("description", ""));
-        setIsInbox(campaignData.optBoolean("inbox", false));
-
         if(campaignData.has("conversation")) {
             JSONObject conversationData = campaignData.getJSONObject("conversation");
             this.conversation = createConversation(controller, this, conversationData);

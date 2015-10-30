@@ -173,9 +173,9 @@ public class SwrveCampaign extends SwrveBaseCampaign {
     /**
      * Notify that a message was shown to the user.
      */
+    @Override
     public void messageWasShownToUser() {
-        incrementImpressions();
-        setMessageMinDelayThrottle();
+        super.messageWasShownToUser();
         // Set next message to be shown
         if (!isRandomOrder()) {
             int nextMessage = (getNext() + 1) % getMessages().size();

@@ -112,7 +112,9 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     C getConfig();
 
-    List<SwrveConversationCampaign> getConversationCampaigns();
+    List<SwrveBaseCampaign> getCampaigns();
 
-    boolean displayConversationCampaign(SwrveConversationCampaign campaign);
+    boolean showCampaign(SwrveBaseCampaign campaign);
+
+    void removeCampaign(SwrveBaseCampaign campaign);
 }

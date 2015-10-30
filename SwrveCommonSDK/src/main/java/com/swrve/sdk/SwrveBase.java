@@ -30,6 +30,7 @@ import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveCampaignStatus;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEventListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -225,16 +226,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     setConversationListener(new ISwrveConversationListener() {
                         public void onMessage(final SwrveConversation conversation) {
                             if (SwrveBase.this.context != null) {
+                                // Start a Conversation activity to display the campaign
                                 final Context ctx = SwrveBase.this.context.get();
                                 if (ctx == null) {
                                     Log.e(LOG_TAG, "Can't display a conversation without a context");
                                     return;
                                 }
-
                                 Intent intent = new Intent(ctx, ConversationActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 intent.putExtra("conversation", conversation);
                                 ctx.startActivity(intent);
+                                // Report that the message was shown to users
+                                conversation.getCampaign().messageWasShownToUser();
                             }
                         }
                     });
@@ -1833,15 +1836,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public List<SwrveConversationCampaign> getConversationCampaigns() {
-        List<SwrveConversationCampaign> result = new ArrayList<SwrveConversationCampaign>();
+    public List<SwrveBaseCampaign> getCampaigns() {
+        List<SwrveBaseCampaign> result = new ArrayList<SwrveBaseCampaign>();
         synchronized (campaigns) {
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
-                if (campaign instanceof SwrveConversationCampaign) {
-                    if (campaign.isActive(getNow())) {
-                        result.add((SwrveConversationCampaign) campaign);
-                    }
+                if (campaign.isInbox() && campaign.getStatus() != SwrveCampaignStatus.Deleted && campaign.isActive(getNow())) {
+                    result.add(campaign);
                 }
             }
         }
@@ -1849,14 +1850,31 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public boolean displayConversationCampaign(SwrveConversationCampaign campaign) {
-        if (campaign != null && campaign.getConversation() != null && conversationListener != null) {
-            // Display first message in the campaign
-            conversationListener.onMessage(campaign.getConversation());
-            return true;
-        } else {
-            Log.e(LOG_TAG, "No conversation or conversation listener.");
+    public boolean showCampaign(SwrveBaseCampaign campaign) {
+        if (campaign instanceof SwrveCampaign) {
+            SwrveCampaign iamCampaign = (SwrveCampaign)campaign;
+            if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
+                // Display first message in the in-app campaign
+                messageListener.onMessage(iamCampaign.getMessages().get(0), true);
+                return true;
+            } else {
+                Log.e(LOG_TAG, "No in-app message or message listener.");
+            }
+        } else if (campaign instanceof SwrveConversationCampaign) {
+            SwrveConversationCampaign conversationCampaign = (SwrveConversationCampaign)campaign;
+            if (conversationCampaign != null && conversationCampaign.getConversation() != null && conversationListener != null) {
+                conversationListener.onMessage(conversationCampaign.getConversation());
+                return true;
+            } else {
+                Log.e(LOG_TAG, "No conversation campaign or conversation listener.");
+            }
         }
         return false;
+    }
+
+    @Override
+    public void removeCampaign(SwrveBaseCampaign campaign) {
+        campaign.setStatus(SwrveCampaignStatus.Deleted);
+        saveCampaignSettings();
     }
 }

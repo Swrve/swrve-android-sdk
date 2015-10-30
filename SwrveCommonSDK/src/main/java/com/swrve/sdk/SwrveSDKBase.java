@@ -9,6 +9,7 @@ import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -494,23 +495,34 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the list active conversations targeted for this user.
-     * @return list of active conversation campaigns.
+     * Get the list active Inbox campaigns targeted for this user.
+     * It will exclude campaigns that have been deleted with the
+     * removeCampaign method.
+     * @return list of active Inbox campaigns.
      */
-    public static List<SwrveConversationCampaign> getConversationCampaigns() {
+    public static List<SwrveBaseCampaign> getCampaigns() {
         checkInstanceCreated();
-        return instance.getConversationCampaigns();
+        return instance.getCampaigns();
     }
 
     /**
-     * Display the given conversation without the need to trigger an event and skipping
+     * Display the given campaign without the need to trigger an event and skipping
      * the configured rules.
      * @param campaign
-     * @return true if the conversation was displayed.
+     * @return true if the campaign was displayed.
      */
-    public static boolean displayConversationCampaign(SwrveConversationCampaign campaign) {
+    public static boolean showCampaign(SwrveBaseCampaign campaign) {
         checkInstanceCreated();
-        return instance.displayConversationCampaign(campaign);
+        return instance.showCampaign(campaign);
+    }
+
+    /**
+     * Remove this campaign. It won't be returned anymore by the method getCampaigns().
+     * @param campaign
+     */
+    public static void removeCampaign(SwrveBaseCampaign campaign) {
+        checkInstanceCreated();
+        instance.removeCampaign(campaign);
     }
 
     protected static void checkInstanceCreated() throws RuntimeException {
