@@ -3,7 +3,6 @@ package com.swrve.sdk.demo;
 import android.app.Application;
 import android.util.Log;
 
-import com.plotprojects.retail.android.Plot;
 import com.swrve.sdk.SwrveSDK;
 
 public class DemoApplication extends Application {
@@ -16,7 +15,6 @@ public class DemoApplication extends Application {
 
         try {
             SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY);
-            Plot.init(this);
         } catch (IllegalArgumentException exp) {
             Log.e(LOG_TAG, "Could not initialize the Swrve SDK", exp);
         }
