@@ -110,7 +110,7 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
-     * Returns true when the campaign has been marked as an Inbox campaign
+     * Used internally to identify campaigns that have been marked as Inbox campaigns
      * on the dashboard.
      *
      * @return true if the campaign is an Inbox campaign.
