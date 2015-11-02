@@ -182,19 +182,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Set the language of the app. If empty or null then
-     * the default locale is used.
-     *
-     * @param language Language of the app.
-     * @deprecated Use {@link #setLanguage(Locale)} instead.
-     */
-    @Deprecated
-    public SwrveConfigBase setLanguage(String language) {
-        this.language = language;
-        return this;
-    }
-
-    /**
      * @return Maximum byte size of the internal SQLite database.
      */
     public long getMaxSqliteDbSize() {

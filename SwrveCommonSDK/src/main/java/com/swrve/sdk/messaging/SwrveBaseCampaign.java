@@ -368,7 +368,9 @@ public abstract class SwrveBaseCampaign {
             return false;
         }
 
-        checkForStartAndEndDate(now, campaignReasons);
+        if (!checkForStartAndEndDate(now, campaignReasons)) {
+            return false;
+        }
 
         if (impressions >= maxImpressions) {
             logAndAddReason(campaignReasons, "{Campaign throttle limit} Campaign " + id + " has been shown " + maxImpressions + " times already");
