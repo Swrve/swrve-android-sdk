@@ -9,7 +9,6 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.util.DisplayMetrics;
-import com.swrve.sdk.SwrveLogger;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
@@ -22,7 +21,6 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
-import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -159,7 +157,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             if (preloadRandC) {
                 // Initialize resources and location campaigns from cache
                 initResources();
-                initLocationCampaigns();
             }
 
             // Send session start
@@ -262,7 +259,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         if (config.isTalkEnabled()) {
                             initCampaigns();
                         }
-                        initLocationCampaigns();
                     }
                 });
             }
@@ -635,7 +631,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, xdpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, ydpi);
                 deviceInfo.put(SWRVE_CONVERSATION_VERSION, CONVERSATION_VERSION);
-                deviceInfo.put(SWRVE_LOCATION_VERSION, LOCATION_VERSION);
                 // Carrier info
                 if (!SwrveHelper.isNullOrEmpty(simOperatorName)) {
                     deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, simOperatorName);
@@ -715,8 +710,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
-                params.put("location_version", String.valueOf(LOCATION_VERSION));
-
                 // If we have a last ETag value, send that along with the request
                 if (!SwrveHelper.isNullOrEmpty(campaignsAndResourcesLastETag)) {
                     params.put("etag", campaignsAndResourcesLastETag);
@@ -778,12 +771,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                             parameters.put("name", "Swrve.Messages.campaigns_downloaded");
                                             queueEvent("event", parameters, payload, false);
                                         }
-                                    }
-
-                                    if (responseJson.has("location_campaigns")) {
-                                        JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
-                                        loadLocationCampaignsFromJSON(campaignJson);
-                                        saveLocationCampaignsInCache(campaignJson);
                                     }
 
                                     if (responseJson.has("user_resources")) {
@@ -1861,12 +1848,4 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    @Override
-    public Map<String, LocationCampaign> getLocationCampaigns() {
-        if (locationCampaigns == null) {
-            return new HashMap<String, LocationCampaign>();
-        } else {
-            return this.locationCampaigns;
-        }
-    }
 }

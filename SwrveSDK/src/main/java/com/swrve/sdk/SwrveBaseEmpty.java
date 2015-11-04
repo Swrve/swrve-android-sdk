@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -263,10 +262,5 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     private class SwrveConfigBaseImp extends SwrveConfigBase {
-    }
-
-    @Override
-    public Map<String, LocationCampaign> getLocationCampaigns() {
-        return new HashMap<String, LocationCampaign>();
     }
 }
