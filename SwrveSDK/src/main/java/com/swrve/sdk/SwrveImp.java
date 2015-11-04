@@ -129,8 +129,26 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_SIM_OPERATOR_CODE = "swrve.sim_operator.code";
     protected static final String SWRVE_DEVICE_REGION = "swrve.device_region";
     protected static final String SWRVE_ANDROID_ID = "swrve.android_id";
-    protected static final String REFERRER = "referrer";
     protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
+
+    protected static final String DEVICE_NAME = "device_name";
+    protected static final String APP_VERSION = "app_version";
+    protected static final String OS_VERSION = "os_version";
+    protected static final String CONVERSATION_VERSION_KEY = "conversation_version";
+    protected static final String VERSION_KEY = "version";
+    protected static final String JOINED_KEY = "joined";
+    protected static final String USER_KEY = "user";
+    protected static final String API_KEY = "api_key";
+    protected static final String APP_STORE_KEY = "app_store";
+    protected static final String LANGUAGE_KEY = "language";
+    protected static final String ANDROID_DEVICE_YDPI = "android_device_ydpi";
+    protected static final String ANDROID_DEVICE_XDPI = "android_device_xdpi";
+    protected static final String DEVICE_DPI = "device_dpi";
+    protected static final String DEVICE_HEIGHT = "device_height";
+    protected static final String DEVICE_WIDTH = "device_width";
+    protected static final String ORIENTATION = "orientation";
+
+    protected static final String REFERRER = "referrer";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
     protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
