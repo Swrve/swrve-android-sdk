@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -118,6 +120,21 @@ public final class SwrveHelper {
             map.put(key, obj.getString(key));
         }
         return map;
+    }
+
+
+    /*
+     * Get the timezone name
+     */
+    public static String getDeviceTimezoneString(){
+        return SimpleTimeZone.getDefault().getID();
+    }
+
+    /*
+     * Get the timezone offset in seconds
+     */
+    public static String getDeviceTimezoneOffsetSeconds(){
+        return Integer.toString(SimpleTimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000);
     }
 
     /*
