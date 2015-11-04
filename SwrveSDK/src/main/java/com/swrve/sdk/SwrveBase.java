@@ -57,6 +57,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -712,6 +714,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
                     params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
                     params.put("device_name", getDeviceName());
+                    params.put(SWRVE_TIMEZONE_NAME, SwrveHelper.getDeviceTimezoneString());
+                    params.put(SWRVE_UTC_OFFSET_SECONDS, SwrveHelper.getDeviceTimezoneOffsetSeconds());
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
