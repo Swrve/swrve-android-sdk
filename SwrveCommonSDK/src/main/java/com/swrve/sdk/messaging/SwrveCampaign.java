@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 /*
- * Swrve campaign containing messages targeted for the current device and user id.
+ * Swrve campaign containing an in-app message targeted to the current device and user id.
  */
 public class SwrveCampaign extends SwrveBaseCampaign {
     // List of messages contained in the campaign
@@ -173,9 +173,9 @@ public class SwrveCampaign extends SwrveBaseCampaign {
     /**
      * Notify that a message was shown to the user.
      */
+    @Override
     public void messageWasShownToUser() {
-        incrementImpressions();
-        setMessageMinDelayThrottle();
+        super.messageWasShownToUser();
         // Set next message to be shown
         if (!isRandomOrder()) {
             int nextMessage = (getNext() + 1) % getMessages().size();
@@ -191,5 +191,17 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      */
     public void messageDismissed() {
         setMessageMinDelayThrottle();
+    }
+
+    @Override
+    public boolean supportsOrientation(SwrveOrientation orientation) {
+        Iterator<SwrveMessage> messageIt = messages.iterator();
+        while (messageIt.hasNext()) {
+            SwrveMessage message = messageIt.next();
+            if (message.supportsOrientation(orientation))
+                return true;
+        }
+
+        return false;
     }
 }

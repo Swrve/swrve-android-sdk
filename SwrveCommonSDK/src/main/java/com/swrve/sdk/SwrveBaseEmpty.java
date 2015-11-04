@@ -8,17 +8,23 @@ import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -153,12 +159,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    @Deprecated
-    public void setLanguage(String language) {
-        this.language = language;
-    }
-
-    @Override
     public String getApiKey() {
         return this.apiKey;
     }
@@ -225,6 +225,25 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public C getConfig() {
         return config;
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns() {
+        return new ArrayList<SwrveBaseCampaign>();
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+        return new ArrayList<SwrveBaseCampaign>();
+    }
+
+    @Override
+    public boolean showCampaign(SwrveBaseCampaign campaign) {
+        return false;
+    }
+
+    @Override
+    public void removeCampaign(SwrveBaseCampaign campaign) {
     }
 
     @Override
