@@ -250,10 +250,7 @@ public abstract class SwrveBaseCampaign {
         campaign.setEndDate(new Date(campaignData.getLong("end_date")));
     }
 
-    /**
-     * Increment impressions by one.
-     */
-    public void incrementImpressions() {
+    private void incrementImpressions() {
         this.impressions++;
     }
 
@@ -339,5 +336,13 @@ public abstract class SwrveBaseCampaign {
         }
 
         return true;
+    }
+
+    /**
+     * Used by sublcasses to inform that the campaign was displayed.
+     */
+    public void messageWasShownToUser() {
+        incrementImpressions();
+        setMessageMinDelayThrottle();
     }
 }
