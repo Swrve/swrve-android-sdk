@@ -713,8 +713,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put(ANDROID_DEVICE_YDPI, String.valueOf(androidDeviceYdpi));
                     params.put(ORIENTATION, config.getOrientation().toString().toLowerCase(Locale.US));
                     params.put(DEVICE_NAME, getDeviceName());
-                    params.put(SWRVE_TIMEZONE_NAME, SwrveHelper.getDeviceTimezoneString());
-                    params.put(SWRVE_UTC_OFFSET_SECONDS, SwrveHelper.getDeviceTimezoneOffsetSeconds());
                     params.put(OS_VERSION, Build.VERSION.RELEASE);
                 }
 
