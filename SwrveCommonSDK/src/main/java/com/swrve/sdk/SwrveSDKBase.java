@@ -14,6 +14,7 @@ import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -497,12 +498,28 @@ public abstract class SwrveSDKBase {
     /**
      * Get the list active Inbox campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
-     * removeCampaign method.
+     * removeCampaign method and those that do not support the current orientation.
+     *
+     * To obtain all Inbox campaigns independent of their orientation support
+     * use the getCampaigns(SwrveOrientation.Both) method.
+     *
      * @return list of active Inbox campaigns.
      */
     public static List<SwrveBaseCampaign> getCampaigns() {
         checkInstanceCreated();
         return instance.getCampaigns();
+    }
+
+    /**
+     * Get the list active Inbox campaigns targeted for this user.
+     * It will exclude campaigns that have been deleted with the
+     * removeCampaign method and those that do not support the given orientation.
+     *
+     * @return list of active Inbox campaigns.
+     */
+    public static List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+        checkInstanceCreated();
+        return instance.getCampaigns(orientation);
     }
 
     /**
@@ -517,7 +534,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Remove this campaign. It won't be returned anymore by the method getCampaigns().
+     * Remove this campaign. It won't be returned anymore by the 'getCampaigns' methods.
      * @param campaign
      */
     public static void removeCampaign(SwrveBaseCampaign campaign) {

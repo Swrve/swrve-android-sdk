@@ -1837,12 +1837,20 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public List<SwrveBaseCampaign> getCampaigns() {
+        return getCampaigns(SwrveOrientation.Both);
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
         List<SwrveBaseCampaign> result = new ArrayList<SwrveBaseCampaign>();
         synchronized (campaigns) {
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
                 if (campaign.isInbox() && campaign.getStatus() != SwrveCampaignStatus.Deleted && campaign.isActive(getNow())) {
-                    result.add(campaign);
+
+                    if (campaign.supportsOrientation(orientation)) {
+                        result.add(campaign);
+                    }
                 }
             }
         }

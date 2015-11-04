@@ -14,6 +14,7 @@ import com.swrve.sdk.messaging.SwrveCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -113,6 +114,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     C getConfig();
 
     List<SwrveBaseCampaign> getCampaigns();
+
+    List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation);
 
     boolean showCampaign(SwrveBaseCampaign campaign);
 

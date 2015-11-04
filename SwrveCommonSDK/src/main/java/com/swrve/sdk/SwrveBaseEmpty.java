@@ -14,6 +14,7 @@ import com.swrve.sdk.messaging.SwrveCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -228,6 +229,11 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public List<SwrveBaseCampaign> getCampaigns() {
+        return new ArrayList<SwrveBaseCampaign>();
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
         return new ArrayList<SwrveBaseCampaign>();
     }
 

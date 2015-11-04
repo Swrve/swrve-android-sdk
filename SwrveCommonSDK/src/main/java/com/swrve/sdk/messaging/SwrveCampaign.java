@@ -192,4 +192,16 @@ public class SwrveCampaign extends SwrveBaseCampaign {
     public void messageDismissed() {
         setMessageMinDelayThrottle();
     }
+
+    @Override
+    public boolean supportsOrientation(SwrveOrientation orientation) {
+        Iterator<SwrveMessage> messageIt = messages.iterator();
+        while (messageIt.hasNext()) {
+            SwrveMessage message = messageIt.next();
+            if (message.supportsOrientation(orientation))
+                return true;
+        }
+
+        return false;
+    }
 }

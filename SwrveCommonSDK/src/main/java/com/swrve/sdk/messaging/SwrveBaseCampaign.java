@@ -417,4 +417,6 @@ public abstract class SwrveBaseCampaign {
         incrementImpressions();
         setMessageMinDelayThrottle();
     }
+
+    public abstract boolean supportsOrientation(SwrveOrientation orientation);
 }

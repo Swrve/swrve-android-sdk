@@ -85,4 +85,9 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     protected SwrveConversation createConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign swrveCampaign, JSONObject conversationData) throws JSONException {
         return new SwrveConversation(controller, swrveCampaign, conversationData);
     }
+
+    @Override
+    public boolean supportsOrientation(SwrveOrientation orientation) {
+        return true;
+    }
 }
