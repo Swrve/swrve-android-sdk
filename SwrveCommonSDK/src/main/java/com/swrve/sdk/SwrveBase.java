@@ -1837,7 +1837,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public List<SwrveBaseCampaign> getCampaigns() {
-        return getCampaigns(SwrveOrientation.Both);
+        return getCampaigns(getDeviceOrientation()));
     }
 
     @Override
