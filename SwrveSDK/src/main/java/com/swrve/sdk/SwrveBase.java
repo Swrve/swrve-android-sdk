@@ -57,6 +57,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -659,9 +661,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceInfo.put(SWRVE_SDK_VERSION, PLATFORM + SwrveBase.version);
             deviceInfo.put(SWRVE_APP_STORE, config.getAppStore());
 
-            Calendar cal = new GregorianCalendar();
-            deviceInfo.put(SWRVE_TIMEZONE_NAME, cal.getTimeZone().getID());
-            deviceInfo.put(SWRVE_UTC_OFFSET_SECONDS, cal.getTimeZone().getOffset(System.currentTimeMillis()) / 1000);
+            deviceInfo.put(SWRVE_TIMEZONE_NAME, SwrveHelper.getDeviceTimezoneString());
+            deviceInfo.put(SWRVE_UTC_OFFSET_SECONDS, SwrveHelper.getDeviceTimezoneOffsetSeconds());
 
             if (!SwrveHelper.isNullOrEmpty(userInstallTime)) {
                 deviceInfo.put(SWRVE_INSTALL_DATE, userInstallTime);
@@ -692,27 +693,29 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Map<String, String> params = new HashMap<String, String>();
 
                 // General params
-                params.put("api_key", apiKey);
-                params.put("user", userId);
-                params.put("app_version", appVersion);
-                params.put("joined", String.valueOf(getOrWaitForInstallTime()));
+                params.put(API_KEY, apiKey);
+                params.put(USER_KEY, userId);
+                params.put(APP_VERSION, appVersion);
+                params.put(JOINED_KEY, String.valueOf(getOrWaitForInstallTime()));
 
                 if (config.isTalkEnabled()) {
                     // Talk only params
-                    params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
-                    params.put("conversation_version", String.valueOf(CONVERSATION_VERSION));
-                    params.put("language", language);
-                    params.put("app_store", config.getAppStore());
+                    params.put(VERSION_KEY, String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
+                    params.put(CONVERSATION_VERSION_KEY, String.valueOf(CONVERSATION_VERSION));
+                    params.put(LANGUAGE_KEY, language);
+                    params.put(APP_STORE_KEY, config.getAppStore());
 
                     // Device info
-                    params.put("device_width", String.valueOf(deviceWidth));
-                    params.put("device_height", String.valueOf(deviceHeight));
-                    params.put("device_dpi", String.valueOf(deviceDpi));
-                    params.put("android_device_xdpi", String.valueOf(androidDeviceXdpi));
-                    params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
-                    params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
-                    params.put("device_name", getDeviceName());
-                    params.put("os_version", Build.VERSION.RELEASE);
+                    params.put(DEVICE_WIDTH, String.valueOf(deviceWidth));
+                    params.put(DEVICE_HEIGHT, String.valueOf(deviceHeight));
+                    params.put(DEVICE_DPI, String.valueOf(deviceDpi));
+                    params.put(ANDROID_DEVICE_XDPI, String.valueOf(androidDeviceXdpi));
+                    params.put(ANDROID_DEVICE_YDPI, String.valueOf(androidDeviceYdpi));
+                    params.put(ORIENTATION, config.getOrientation().toString().toLowerCase(Locale.US));
+                    params.put(DEVICE_NAME, getDeviceName());
+                    params.put(SWRVE_TIMEZONE_NAME, SwrveHelper.getDeviceTimezoneString());
+                    params.put(SWRVE_UTC_OFFSET_SECONDS, SwrveHelper.getDeviceTimezoneOffsetSeconds());
+                    params.put(OS_VERSION, Build.VERSION.RELEASE);
                 }
 
                 params.put("location_version", String.valueOf(LOCATION_VERSION));
