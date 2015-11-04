@@ -16,7 +16,6 @@ import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import com.swrve.sdk.SwrveLogger;
 
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
@@ -30,7 +29,6 @@ import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
-import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -93,13 +91,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String PLATFORM = "Android ";
     protected static String version = "4.1";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
-    protected static final String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
     protected static final String CAMPAIGN_SETTINGS_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
     protected static final String TEMPLATE_VERSION = "1";
     protected static final int CONVERSATION_VERSION = 2;
-    protected static final int LOCATION_VERSION = 1;
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -115,7 +111,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_DEVICE_HEIGHT = "swrve.device_height";
     protected static final String SWRVE_DEVICE_DPI = "swrve.device_dpi";
     protected static final String SWRVE_CONVERSATION_VERSION = "swrve.conversation_version";
-    protected static final String SWRVE_LOCATION_VERSION = "swrve.location_version";
     protected static final String SWRVE_ANDROID_DEVICE_XDPI = "swrve.android_device_xdpi";
     protected static final String SWRVE_ANDROID_DEVICE_YDPI = "swrve.android_device_ydpi";
     protected static final String SWRVE_LANGUAGE = "swrve.language";
@@ -177,7 +172,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ExecutorService restClientExecutor;
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
-    protected Map<String, LocationCampaign> locationCampaigns;
     protected List<SwrveBaseCampaign> campaigns;
     protected Set<String> assetsOnDisk;
     protected boolean assetsCurrentlyDownloading;
@@ -625,15 +619,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         });
     }
 
-    protected void saveLocationCampaignsInCache(final JSONObject locationCampaignContent) {
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                cachedLocalStorage.setAndFlushSecureSharedEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, locationCampaignContent.toString(), getUniqueKey());
-            }
-        });
-    }
-
     protected void saveResourcesInCache(final JSONArray resourcesContent) {
         storageExecutorExecute(new Runnable() {
             @Override
@@ -906,37 +891,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             campaigns = new ArrayList<SwrveBaseCampaign>(newCampaigns);
         } catch (JSONException exp) {
             SwrveLogger.e(LOG_TAG, "Error parsing campaign JSON", exp);
-        }
-    }
-
-    protected void loadLocationCampaignsFromJSON(JSONObject locationCampaignJSON) {
-        if (locationCampaignJSON == null) {
-            SwrveLogger.i(LOG_TAG, "NULL JSON for location campaigns, aborting load.");
-            return;
-        }
-
-        if (locationCampaignJSON.length() == 0) {
-            SwrveLogger.i(LOG_TAG, "Location campaign JSON empty, no location campaigns downloaded");
-            locationCampaigns.clear();
-            return;
-        }
-
-        if(locationCampaignJSON.has("campaigns") == false) {
-            SwrveLogger.i(LOG_TAG, "No Location campaigns.");
-            locationCampaigns.clear();
-            return;
-        }
-
-        SwrveLogger.i(LOG_TAG, "Location campaign JSON data: " + locationCampaignJSON);
-
-        try {
-            String campaignsJsonString = locationCampaignJSON.getString("campaigns");
-            Map<String, LocationCampaign> newLocationCampaigns = LocationCampaign.fromJSON(campaignsJsonString);
-
-            // Update current list of campaigns with new ones
-            locationCampaigns = new HashMap<String, LocationCampaign>(newLocationCampaigns);
-        } catch (JSONException ex) {
-            SwrveLogger.e(LOG_TAG, "Error parsing location campaign JSON", ex);
         }
     }
 
@@ -1249,74 +1203,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
             queueEvent("event", parameters, null, false);
-        }
-    }
-
-    /**
-     * Initialize location campaigns with cache content
-     */
-    protected void initLocationCampaigns() {
-        locationCampaigns = new HashMap<String, LocationCampaign>();
-
-        try {
-            String locationCampaignsFromCache = cachedLocalStorage.getSecureCacheEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, getUniqueKey());
-            if (!SwrveHelper.isNullOrEmpty(locationCampaignsFromCache)) {
-                JSONObject locationCampaignsJson = new JSONObject(locationCampaignsFromCache);
-                loadLocationCampaignsFromJSON(locationCampaignsJson);
-                SwrveLogger.i(LOG_TAG, "Loaded location campaigns from cache.");
-            } else {
-                invalidateETag();
-            }
-        } catch (JSONException e) {
-            invalidateETag();
-            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load location campaigns", e);
-        } catch (SecurityException e) {
-            invalidateETag();
-            SwrveLogger.e(LOG_TAG, "Signature validation failed when trying to load location campaigns from cache.", e);
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", "Swrve.signature_invalid");
-            queueEvent("event", parameters, null, false);
-        }
-    }
-
-    // TODO: Change this for GA.
-    public void initSDKForLocationCampaigns(Context context) {
-
-        if (SwrveHelper.isNullOrEmpty(userId)) {
-            userId = getUniqueUserId(context);
-        }
-        if (restClient == null) {
-            restClient = createRESTClient();
-        }
-        if (cachedLocalStorage == null) {
-            cachedLocalStorage = createCachedLocalStorage();
-            openLocalStorageConnection();
-        }
-        if (storageExecutor == null) {
-            storageExecutor = createStorageExecutor();
-        }
-        if (restClientExecutor == null) {
-            restClientExecutor = createRESTClientExecutor();
-        }
-
-        if (sessionToken == null) {
-            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId);
-        }
-
-        if (appVersion == null) {
-            this.appVersion = config.getAppVersion();
-            if (SwrveHelper.isNullOrEmpty(this.appVersion)) {
-                try {
-                    PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-                    this.appVersion = pInfo.versionName;
-                } catch (Exception exp) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
-                }
-            }
-        }
-
-        if (locationCampaigns == null) {
-            initLocationCampaigns();
         }
     }
 
