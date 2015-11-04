@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 /*
- * Swrve campaign containing messages targeted for the current device and user id.
+ * Swrve campaign containing a conversation targeted to the current device and user id.
  */
 public class SwrveConversationCampaign extends SwrveBaseCampaign implements Serializable {
     // List of conversations contained in the campaign
