@@ -2,5 +2,4 @@
 <resources>
     <dimen name="swrve__conversation_fragment_width">580dp</dimen>
     <dimen name="swrve__conversation_fragment_height">580dp</dimen>
-    <bool name="swrve__is_sw600">true</bool>
 </resources>

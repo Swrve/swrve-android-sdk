@@ -6,5 +6,4 @@
     <item name="custom_match_parent" type="dimen">-1</item>
     <dimen name="swrve__conversation_fragment_width">@dimen/custom_match_parent</dimen>
     <dimen name="swrve__conversation_fragment_height">@dimen/custom_match_parent</dimen>
-    <bool name="swrve__is_sw600">false</bool>
 </resources>
