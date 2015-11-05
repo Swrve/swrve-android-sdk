@@ -21,8 +21,9 @@ Import the SwrveSDKDemo project into your IDE and replace YOUR_APP_ID and YOUR_A
 
 How to build the SDK
 --------------------
-In the SwrveSDK or SwrveGoogleSDK folder run the following command:
-`gradlew clean build assemble publish`
+To build the Swrve AAR library, run the following command from the SwrveSDK folder:
+`../gradlew clean build assemble`
+This will generate the AAR library in the build/outputs/aar folder. Use the `google` AAR for push related campaigns.
 
 Contributing
 ------------
