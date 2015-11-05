@@ -1,6 +1,7 @@
 package com.swrve.sdk.config;
 
 import android.graphics.Color;
+import android.net.Uri;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
@@ -16,6 +17,20 @@ import java.util.Locale;
  * Configuration for the Swrve SDK.
  */
 public abstract class SwrveConfigBase {
+
+    /**
+     * Default Log Tag
+     */
+
+    private final String LOG_TAG = "SwrveConfigBase";
+
+    /**
+     * List of supported stacks
+     */
+    public enum SwrveStack{
+        EU, US, ACTIVISION, FEATURESTACK
+    }
+
     /**
      * Custom unique user id.
      */
@@ -59,6 +74,22 @@ public abstract class SwrveConfigBase {
     private URL contentUrl = null;
     private URL defaultContentUrl = null;
     private boolean useHttpsForContentUrl = false;
+
+    /**
+     * Content and Events URL ID prefix
+     */
+    private Integer appIdPrefix;
+
+    /**
+     * Optional Featurestack Number if using featurestack
+     */
+    private Integer featureStackNum;
+
+
+    /**
+     * Current stack choice
+     */
+    private SwrveStack stack;
 
     /**
      * Session timeout time.
@@ -296,6 +327,125 @@ public abstract class SwrveConfigBase {
     }
 
     /**
+     * Using the information and flags provided in the class, generate the content URLS
+     * @return the SwrveConfigBase Object
+     */
+    private SwrveConfigBase regenerateURLS(){
+        Uri.Builder contentUriBuilder = new Uri.Builder();
+        Uri.Builder eventUriBuilder = new Uri.Builder();
+
+        // Set the Scheme
+        String contentScheme = getUseHttpsForContentUrl() ? "https" : "http";
+        String eventScheme = getUseHttpsForEventsUrl() ? "https" : "http";
+        contentUriBuilder.scheme(contentScheme);
+        eventUriBuilder.scheme(eventScheme);
+
+
+        // Set the appID prefix but only for supported stacks
+        boolean isAppIdSupportedStack  = (stack == SwrveStack.US || stack == SwrveStack.EU || stack == SwrveStack.ACTIVISION);
+        if (null != appIdPrefix && isAppIdSupportedStack){
+            contentUriBuilder.appendPath(Integer.toString(appIdPrefix) + ".");
+            eventUriBuilder.appendPath(Integer.toString(appIdPrefix) + ".");
+        }
+
+        // Set the stack prefix
+        String contentPrefix = "";
+        String eventPrefix = "";
+
+        switch (stack){
+            case US:
+                // No prefixes
+                break;
+            case EU:
+                contentPrefix = eventPrefix = "eu.";
+                break;
+            case ACTIVISION:
+                contentPrefix = eventPrefix = "activision.";
+                break;
+            case FEATURESTACK:
+                contentPrefix = eventPrefix = "featurestack" + Integer.toString(getFeatureStackNum()) + "-";
+                break;
+        }
+
+        contentUriBuilder.appendPath(contentPrefix);
+        eventUriBuilder.appendPath(eventPrefix);
+
+
+        contentUriBuilder.appendPath("content.swrve.com");
+        eventUriBuilder.appendPath("api.swrve.com");
+
+        try {
+            this.setEventsUrl(new URL(eventUriBuilder.toString()));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        try {
+            this.setContentUrl(new URL(contentUriBuilder.toString()));
+        } catch (MalformedURLException e) {
+            SwrveLogger.wtf(LOG_TAG, "Error setting contents url.", e);
+        }
+        return this;
+    }
+
+    /**
+     * @return
+     */
+    public SwrveConfigBase useEuStack(boolean useIt) throws MalformedURLException {
+        if (useIt){
+            setStack(SwrveStack.EU);
+        }
+        regenerateURLS();
+        return this;
+    }
+
+    /**
+     * Set the stack being currently used by the client
+     * @param stack
+     * @return
+     */
+    public SwrveConfigBase setStack(SwrveStack stack) throws MalformedURLException {
+        this.stack = stack;
+        regenerateURLS();
+        return this;
+    }
+
+    /**
+     * @return
+     */
+    public Integer getFeatureStackNum() {
+        return featureStackNum;
+    }
+
+    /**
+     *
+     * @param featureStackNum
+     * @return
+     */
+    public SwrveConfigBase setFeatureStackNum(Integer featureStackNum) {
+        this.featureStackNum = featureStackNum;
+        regenerateURLS();
+        return this;
+    }
+
+    /**
+     * @return
+     */
+    public Integer getAppIdPrefix() {
+        return appIdPrefix;
+    }
+
+    /**
+     *
+     * @param appIdPrefix
+     * @return
+     */
+    public SwrveConfigBase setAppIdPrefix(Integer appIdPrefix) {
+        this.appIdPrefix = appIdPrefix;
+        regenerateURLS();
+        return this;
+    }
+
+    /**
      * @return Location of the event server.
      */
     public URL getEventsUrl() {
@@ -330,6 +480,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
         this.useHttpsForEventsUrl = useHttpsForEventsUrl;
+        regenerateURLS();
         return this;
     }
 
@@ -368,6 +519,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setUseHttpsForContentUrl(boolean useHttpsForContentUrl) {
         this.useHttpsForContentUrl = useHttpsForContentUrl;
+        regenerateURLS();
         return this;
     }
 
