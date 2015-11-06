@@ -77,11 +77,6 @@ public abstract class SwrveConfigBase {
     private boolean userOverrideContentUrl = false;
 
     /**
-     * Content and Events URL ID prefix
-     */
-    private Integer appIdPrefix;
-
-    /**
      * Current currentStack choice
      */
     private SwrveStack currentStack = SwrveStack.US;
@@ -375,11 +370,6 @@ public abstract class SwrveConfigBase {
         boolean generatingEventURL = eventOrContent.equalsIgnoreCase("event");
         boolean generatingContentURL = eventOrContent.equalsIgnoreCase("content");
 
-        // Set the appID prefix but only for supported stacks
-        if (null != appIdPrefix){
-            authority = Integer.toString(appIdPrefix) + ".";
-        }
-
         // Host and Scheme to target
         String scheme, endpoint;
         if (generatingEventURL){
@@ -396,7 +386,7 @@ public abstract class SwrveConfigBase {
         String prefix = getStackPrefix();
 
         // Set the currentStack prefix and host
-        authority = authority + getStackPrefix() + endpoint;
+        authority = getStackPrefix() + endpoint;
         Uri uri = uriBuilder.scheme(scheme).authority(authority).build();
         URL newUrl = new URL(uri.toString());
         if (generatingContentURL){
@@ -426,24 +416,6 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setCurrentStack(SwrveStack currentStack) throws MalformedURLException {
         this.currentStack = currentStack;
-        generateURLS();
-        return this;
-    }
-
-    /**
-     * @return
-     */
-    public Integer getAppIdPrefix() {
-        return appIdPrefix;
-    }
-
-    /**
-     *
-     * @param appIdPrefix
-     * @return
-     */
-    public SwrveConfigBase setAppIdPrefix(Integer appIdPrefix) {
-        this.appIdPrefix = appIdPrefix;
         generateURLS();
         return this;
     }
