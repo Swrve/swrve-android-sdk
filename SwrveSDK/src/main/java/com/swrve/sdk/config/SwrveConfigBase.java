@@ -1,6 +1,7 @@
 package com.swrve.sdk.config;
 
 import android.graphics.Color;
+import android.net.Uri;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
@@ -16,6 +17,12 @@ import java.util.Locale;
  * Configuration for the Swrve SDK.
  */
 public abstract class SwrveConfigBase {
+
+    /**
+     * Default Log Tag
+     */
+    private final String LOG_TAG = "SwrveConfigBase";
+
     /**
      * Custom unique user id.
      */
@@ -52,6 +59,7 @@ public abstract class SwrveConfigBase {
     private URL eventsUrl = null;
     private URL defaultEventsUrl = null;
     private boolean useHttpsForEventsUrl = true;
+    private boolean userOverrideEventUrl = false;
 
     /**
      * Content end-point.
@@ -59,6 +67,12 @@ public abstract class SwrveConfigBase {
     private URL contentUrl = null;
     private URL defaultContentUrl = null;
     private boolean useHttpsForContentUrl = false;
+    private boolean userOverrideContentUrl = false;
+
+    /**
+     * Current currentStack choice
+     */
+    private SwrveStack currentStack = SwrveStack.US;
 
     /**
      * Session timeout time.
@@ -140,6 +154,11 @@ public abstract class SwrveConfigBase {
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
+        try {
+            this.setCurrentStack(SwrveStack.US);
+        }catch(MalformedURLException e){
+            SwrveLogger.wtf(LOG_TAG, "Failed to initialize SwrveConfig.", e);
+        }
     }
 
     /**
@@ -296,6 +315,110 @@ public abstract class SwrveConfigBase {
     }
 
     /**
+     * Based on the currentStack that has been chosen, return the correct prefix
+     * @return
+     */
+    private String getStackPrefix(){
+        String stackPrefix = "";
+
+        switch (currentStack){
+            case US:
+                // No prefixes
+                break;
+            case EU:
+                stackPrefix= "eu.";
+                break;
+        }
+        return stackPrefix;
+    }
+
+    /**
+     * Unless the user/developer has already set the content or event url, generate the urls based on config information.
+     *
+     * @return
+     * @throws MalformedURLException
+     */
+    private SwrveConfigBase generateURLS() {
+        try {
+            if (userOverrideContentUrl) {
+                SwrveLogger.warn("Contents Url has already been set by developer. Will not generate url");
+            } else {
+                generateUrlFor("content");
+            }
+            if (userOverrideEventUrl) {
+                SwrveLogger.warn("Events Url has already been set by developer. Will not generate url");
+            } else {
+                generateUrlFor("event");
+            }
+        } catch (MalformedURLException e) {
+            SwrveLogger.e(LOG_TAG, "Could not generate URLS for config ", e);
+        }
+        return this;
+    }
+
+    /**
+     * Using the information and flags provided in the class, generate the content URLS
+     *
+     * @param eventOrContent
+     * @throws MalformedURLException
+     */
+    private void generateUrlFor(String eventOrContent) throws MalformedURLException {
+        Uri.Builder uriBuilder = new Uri.Builder();
+        String authority = "";
+        boolean generatingEventURL = eventOrContent.equalsIgnoreCase("event");
+        boolean generatingContentURL = eventOrContent.equalsIgnoreCase("content");
+
+        // Host and Scheme to target
+        String scheme, endpoint;
+        if (generatingEventURL){
+            scheme = getUseHttpsForEventsUrl() ? "https" : "http";
+            endpoint = "api.swrve.com";
+        } else if(generatingContentURL) {
+            scheme = getUseHttpsForContentUrl() ? "https" : "http";
+            endpoint = "content.swrve.com";
+        }else{
+            SwrveLogger.wtf(LOG_TAG, "Unrecognized URL type asked to be generated :: " + eventOrContent);
+            return;
+        }
+
+        String prefix = getStackPrefix();
+
+        // Set the currentStack prefix and host
+        authority = getStackPrefix() + endpoint;
+        Uri uri = uriBuilder.scheme(scheme).authority(authority).build();
+        URL newUrl = new URL(uri.toString());
+        if (generatingContentURL){
+            this.setContentUrl(newUrl, false);
+        }else if(generatingEventURL){
+            this.setEventsUrl(newUrl, false);
+        }
+    }
+
+
+    /**
+     * Simple helper method to setup the EU currentStack
+     *
+     * @return
+     */
+    public SwrveConfigBase useEuStack() throws MalformedURLException {
+        setCurrentStack(SwrveStack.EU);
+        generateURLS();
+        return this;
+    }
+
+    /**
+     * Set the currentStack being currently used by the client
+     * 
+     * @param currentStack
+     * @return
+     */
+    public SwrveConfigBase setCurrentStack(SwrveStack currentStack) throws MalformedURLException {
+        this.currentStack = currentStack;
+        generateURLS();
+        return this;
+    }
+
+    /**
      * @return Location of the event server.
      */
     public URL getEventsUrl() {
@@ -312,26 +435,21 @@ public abstract class SwrveConfigBase {
      * @param eventsUrl Custom location of the event server.
      */
     public SwrveConfigBase setEventsUrl(URL eventsUrl) {
+        return setEventsUrl(eventsUrl, true); // By default, lock the url from being changed.
+    }
+
+    /**
+     *
+     * @param eventsUrl
+     * @param lockUrl
+     * @return
+     */
+    public SwrveConfigBase setEventsUrl(URL eventsUrl, boolean lockUrl) {
+        this.userOverrideEventUrl = lockUrl;
         this.eventsUrl = eventsUrl;
         return this;
     }
 
-    /**
-     * @return Whether to use HTTPS for events.
-     */
-    public boolean getUseHttpsForEventsUrl() {
-        return useHttpsForEventsUrl;
-    }
-
-    /**
-     * Enable HTTPS for event requests.
-     *
-     * @param useHttpsForEventsUrl Whether to use HTTPS for api.swrve.com.
-     */
-    public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
-        this.useHttpsForEventsUrl = useHttpsForEventsUrl;
-        return this;
-    }
 
     /**
      * @return Location of the content server.
@@ -350,7 +468,37 @@ public abstract class SwrveConfigBase {
      * @param contentUrl Custom location of the content server.
      */
     public SwrveConfigBase setContentUrl(URL contentUrl) {
+        return setContentUrl(contentUrl, true); // By default, lock the url from being changed.
+    }
+
+    /**
+     *
+     * @param contentUrl
+     * @param lockUrl
+     * @return
+     */
+    public SwrveConfigBase setContentUrl(URL contentUrl, boolean lockUrl) {
+        this.userOverrideContentUrl = lockUrl;
         this.contentUrl = contentUrl;
+        return this;
+    }
+
+
+    /**
+     * @return Whether to use HTTPS for events.
+     */
+    public boolean getUseHttpsForEventsUrl() {
+        return useHttpsForEventsUrl;
+    }
+
+    /**
+     * Enable HTTPS for event requests.
+     *
+     * @param useHttpsForEventsUrl Whether to use HTTPS for api.swrve.com.
+     */
+    public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
+        this.useHttpsForEventsUrl = useHttpsForEventsUrl;
+        generateURLS();
         return this;
     }
 
@@ -368,6 +516,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setUseHttpsForContentUrl(boolean useHttpsForContentUrl) {
         this.useHttpsForContentUrl = useHttpsForContentUrl;
+        generateURLS();
         return this;
     }
 
@@ -422,16 +571,6 @@ public abstract class SwrveConfigBase {
     public SwrveConfigBase setAppStore(String appStore) {
         this.appStore = appStore;
         return this;
-    }
-
-    /**
-     * Generate default endpoints with the given app id. Used internally.
-     *
-     * @throws MalformedURLException
-     */
-    public void generateUrls(int appId) throws MalformedURLException {
-        defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + ".api.swrve.com");
-        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + ".content.swrve.com");
     }
 
     private static String getSchema(boolean https) {
