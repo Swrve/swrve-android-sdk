@@ -22,7 +22,6 @@ public abstract class SwrveConfigBase {
     /**
      * Default Log Tag
      */
-
     private final String LOG_TAG = "SwrveConfigBase";
 
     /**
@@ -379,6 +378,7 @@ public abstract class SwrveConfigBase {
 
     /**
      * Using the information and flags provided in the class, generate the content URLS
+     *
      * @param eventOrContent
      * @throws MalformedURLException
      */
@@ -422,6 +422,8 @@ public abstract class SwrveConfigBase {
 
 
     /**
+     * Simple helper method to setup the EU stack
+     *
      * @return
      */
     public SwrveConfigBase useEuStack() throws MalformedURLException {
@@ -432,6 +434,7 @@ public abstract class SwrveConfigBase {
 
     /**
      * Set the stack being currently used by the client
+     * 
      * @param stack
      * @return
      */
