@@ -27,7 +27,7 @@ public abstract class SwrveConfigBase {
      * List of supported stacks
      */
     public enum SwrveStack{
-        EU, US, ACTIVISION, FEATURESTACK
+        EU, US
     }
 
     /**
@@ -80,12 +80,6 @@ public abstract class SwrveConfigBase {
      * Content and Events URL ID prefix
      */
     private Integer appIdPrefix;
-
-    /**
-     * Optional Featurestack Number if using featurestack
-     */
-    private Integer featureStackNum = 0;
-
 
     /**
      * Current currentStack choice
@@ -341,12 +335,6 @@ public abstract class SwrveConfigBase {
             case EU:
                 stackPrefix= "eu.";
                 break;
-            case ACTIVISION:
-                stackPrefix = "activision.";
-                break;
-            case FEATURESTACK:
-                stackPrefix = "featurestack" + Integer.toString(getFeatureStackNum()) + "-";
-                break;
         }
         return stackPrefix;
     }
@@ -388,8 +376,7 @@ public abstract class SwrveConfigBase {
         boolean generatingContentURL = eventOrContent.equalsIgnoreCase("content");
 
         // Set the appID prefix but only for supported stacks
-        boolean isAppIdSupportedStack  = (currentStack == SwrveStack.US || currentStack == SwrveStack.EU || currentStack == SwrveStack.ACTIVISION);
-        if (null != appIdPrefix && isAppIdSupportedStack){
+        if (null != appIdPrefix){
             authority = Integer.toString(appIdPrefix) + ".";
         }
 
@@ -439,24 +426,6 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setCurrentStack(SwrveStack currentStack) throws MalformedURLException {
         this.currentStack = currentStack;
-        generateURLS();
-        return this;
-    }
-
-    /**
-     * @return
-     */
-    public Integer getFeatureStackNum() {
-        return featureStackNum;
-    }
-
-    /**
-     *
-     * @param featureStackNum
-     * @return
-     */
-    public SwrveConfigBase setFeatureStackNum(Integer featureStackNum) {
-        this.featureStackNum = featureStackNum;
         generateURLS();
         return this;
     }
