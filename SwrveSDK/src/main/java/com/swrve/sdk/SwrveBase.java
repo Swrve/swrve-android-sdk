@@ -118,7 +118,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.i(LOG_TAG, "Your user id is: " + userId);
 
             // Generate default urls for the given app id
-            config.generateUrls(appId);
+            config.generateURLS();
 
             if (SwrveHelper.isNullOrEmpty(config.getLanguage())) {
                 this.language = SwrveHelper.toLanguageTag(Locale.getDefault());
