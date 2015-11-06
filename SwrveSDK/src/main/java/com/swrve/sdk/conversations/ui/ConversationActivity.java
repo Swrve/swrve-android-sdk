@@ -4,8 +4,9 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import com.swrve.sdk.SwrveLogger;
 
+import com.swrve.sdk.R;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
@@ -32,7 +33,7 @@ public class ConversationActivity extends FragmentActivity {
             if (localConversation != null) {
                 conversationFragment = ConversationFragment.create(localConversation);
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                setOrientation();
             } else {
                 SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
                 this.finish();
@@ -78,6 +79,13 @@ public class ConversationActivity extends FragmentActivity {
         }
         if (allowBackPress) {
             super.onBackPressed();
+        }
+    }
+
+    private void setOrientation() {
+        boolean isShortestWidthLessThan600 = !getResources().getBoolean(R.bool.swrve__is_sw600);
+        if(isShortestWidthLessThan600) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         }
     }
 }
