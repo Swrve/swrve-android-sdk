@@ -352,25 +352,25 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Unless the user/developer has already set the content or event url, regenerate the urls based on config information.
+     * Unless the user/developer has already set the content or event url, generate the urls based on config information.
      *
      * @return
      * @throws MalformedURLException
      */
-    private SwrveConfigBase regenerateURLS() {
+    private SwrveConfigBase generateURLS() {
         try {
             if (userOverrideContentUrl) {
-                SwrveLogger.warn("Contents Url has already been set by developer. Will not regenerate url");
+                SwrveLogger.warn("Contents Url has already been set by developer. Will not generate url");
             } else {
-                regenerateUrlFor("content");
+                generateUrlFor("content");
             }
             if (userOverrideEventUrl) {
-                SwrveLogger.warn("Events Url has already been set by developer. Will not regenerate url");
+                SwrveLogger.warn("Events Url has already been set by developer. Will not generate url");
             } else {
-                regenerateUrlFor("event");
+                generateUrlFor("event");
             }
         } catch (MalformedURLException e) {
-            SwrveLogger.e(LOG_TAG, "Could not regenerate URLS for config ", e);
+            SwrveLogger.e(LOG_TAG, "Could not generate URLS for config ", e);
         }
         return this;
     }
@@ -381,7 +381,7 @@ public abstract class SwrveConfigBase {
      * @param eventOrContent
      * @throws MalformedURLException
      */
-    private void regenerateUrlFor(String eventOrContent) throws MalformedURLException {
+    private void generateUrlFor(String eventOrContent) throws MalformedURLException {
         Uri.Builder uriBuilder = new Uri.Builder();
         String authority = "";
         boolean generatingEventURL = eventOrContent.equalsIgnoreCase("event");
@@ -427,7 +427,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase useEuStack() throws MalformedURLException {
         setCurrentStack(SwrveStack.EU);
-        regenerateURLS();
+        generateURLS();
         return this;
     }
 
@@ -439,7 +439,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setCurrentStack(SwrveStack currentStack) throws MalformedURLException {
         this.currentStack = currentStack;
-        regenerateURLS();
+        generateURLS();
         return this;
     }
 
@@ -457,7 +457,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setFeatureStackNum(Integer featureStackNum) {
         this.featureStackNum = featureStackNum;
-        regenerateURLS();
+        generateURLS();
         return this;
     }
 
@@ -475,7 +475,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setAppIdPrefix(Integer appIdPrefix) {
         this.appIdPrefix = appIdPrefix;
-        regenerateURLS();
+        generateURLS();
         return this;
     }
 
@@ -559,7 +559,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
         this.useHttpsForEventsUrl = useHttpsForEventsUrl;
-        regenerateURLS();
+        generateURLS();
         return this;
     }
 
@@ -577,7 +577,7 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setUseHttpsForContentUrl(boolean useHttpsForContentUrl) {
         this.useHttpsForContentUrl = useHttpsForContentUrl;
-        regenerateURLS();
+        generateURLS();
         return this;
     }
 
