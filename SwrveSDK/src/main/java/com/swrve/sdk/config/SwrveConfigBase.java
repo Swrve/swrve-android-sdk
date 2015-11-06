@@ -154,6 +154,11 @@ public abstract class SwrveConfigBase {
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
+        try {
+            this.setCurrentStack(SwrveStack.US);
+        }catch(MalformedURLException e){
+            SwrveLogger.wtf(LOG_TAG, "Failed to initialize SwrveConfig.", e);
+        }
     }
 
     /**
