@@ -24,13 +24,6 @@ public abstract class SwrveConfigBase {
     private final String LOG_TAG = "SwrveConfigBase";
 
     /**
-     * List of supported stacks
-     */
-    public enum SwrveStack{
-        EU, US
-    }
-
-    /**
      * Custom unique user id.
      */
     private String userId;
