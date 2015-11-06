@@ -10,7 +10,6 @@ import com.swrve.sdk.messaging.SwrveOrientation;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.Locale;
 
@@ -89,9 +88,9 @@ public abstract class SwrveConfigBase {
 
 
     /**
-     * Current stack choice
+     * Current currentStack choice
      */
-    private SwrveStack stack = SwrveStack.US;
+    private SwrveStack currentStack = SwrveStack.US;
 
     /**
      * Session timeout time.
@@ -329,13 +328,13 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Based on the stack that has been chosen, return the correct prefix
+     * Based on the currentStack that has been chosen, return the correct prefix
      * @return
      */
     private String getStackPrefix(){
         String stackPrefix = "";
 
-        switch (stack){
+        switch (currentStack){
             case US:
                 // No prefixes
                 break;
@@ -389,7 +388,7 @@ public abstract class SwrveConfigBase {
         boolean generatingContentURL = eventOrContent.equalsIgnoreCase("content");
 
         // Set the appID prefix but only for supported stacks
-        boolean isAppIdSupportedStack  = (stack == SwrveStack.US || stack == SwrveStack.EU || stack == SwrveStack.ACTIVISION);
+        boolean isAppIdSupportedStack  = (currentStack == SwrveStack.US || currentStack == SwrveStack.EU || currentStack == SwrveStack.ACTIVISION);
         if (null != appIdPrefix && isAppIdSupportedStack){
             authority = Integer.toString(appIdPrefix) + ".";
         }
@@ -409,7 +408,7 @@ public abstract class SwrveConfigBase {
 
         String prefix = getStackPrefix();
 
-        // Set the stack prefix and host
+        // Set the currentStack prefix and host
         authority = authority + getStackPrefix() + endpoint;
         Uri uri = uriBuilder.scheme(scheme).authority(authority).build();
         URL newUrl = new URL(uri.toString());
@@ -422,24 +421,24 @@ public abstract class SwrveConfigBase {
 
 
     /**
-     * Simple helper method to setup the EU stack
+     * Simple helper method to setup the EU currentStack
      *
      * @return
      */
     public SwrveConfigBase useEuStack() throws MalformedURLException {
-        setStack(SwrveStack.EU);
+        setCurrentStack(SwrveStack.EU);
         regenerateURLS();
         return this;
     }
 
     /**
-     * Set the stack being currently used by the client
+     * Set the currentStack being currently used by the client
      * 
-     * @param stack
+     * @param currentStack
      * @return
      */
-    public SwrveConfigBase setStack(SwrveStack stack) throws MalformedURLException {
-        this.stack = stack;
+    public SwrveConfigBase setCurrentStack(SwrveStack currentStack) throws MalformedURLException {
+        this.currentStack = currentStack;
         regenerateURLS();
         return this;
     }
