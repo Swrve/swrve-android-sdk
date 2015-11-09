@@ -39,6 +39,12 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 publishing {
+    repositories {
+        maven {
+            url "$buildDir/../publish" // SwrveSDK/publish
+        }
+    }
+
     publications {
         core(MavenPublication) {
             artifactId swrveCoreArtifactId
