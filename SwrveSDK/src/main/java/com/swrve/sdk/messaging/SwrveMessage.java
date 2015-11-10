@@ -51,8 +51,6 @@ public class SwrveMessage {
      * @param controller  SwrveTalk object that will manage the data from the campaign.
      * @param campaign    Related campaign.
      * @param messageData JSON data containing the message details.
-     * @return SwrveMessage
-     * Loaded SwrveMessage.
      * @throws JSONException
      */
     public SwrveMessage(SwrveBase<?, ?> controller, SwrveCampaign campaign, JSONObject messageData) throws JSONException {

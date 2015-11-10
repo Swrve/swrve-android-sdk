@@ -21,7 +21,7 @@ public class SwrveConfig extends SwrveConfigBase {
      * Returns an instance of SwrveConfig with the Sender id.
      *
      * @param senderId
-     * @return
+     * @return configuration object with the given Sender id.
      */
     public static SwrveConfig withPush(String senderId) {
         return new SwrveConfig().setSenderId(senderId);

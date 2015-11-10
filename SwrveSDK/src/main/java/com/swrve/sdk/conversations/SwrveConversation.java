@@ -50,8 +50,6 @@ public class SwrveConversation implements Serializable {
      * @param controller       SwrveTalk object that will manage the data from the campaign.
      * @param campaign         Related campaign.
      * @param conversationData JSON data containing the message details.
-     * @return SwrveConversation
-     * Loaded SwrveConversation.
      * @throws JSONException
      */
     public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
