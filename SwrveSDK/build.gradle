@@ -50,7 +50,7 @@ publishing {
             artifactId swrveCoreArtifactId
             groupId swrveGroupId
             version swrveSdkVersion
-            artifacts = [androidSourcesJar, "$buildDir/outputs/aar/${project.name}-core-release.aar"]
+            artifacts = [androidSourcesJar, "$buildDir/outputs/aar/${project.name}-core-release.aar", androidJavadocsJar]
 
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
@@ -87,7 +87,7 @@ publishing {
             artifactId swrveGoogleArtifactId
             groupId swrveGroupId
             version swrveSdkVersion
-            artifacts = [androidSourcesJar, "$buildDir/outputs/aar/${project.name}-google-release.aar"]
+            artifacts = [androidSourcesJar, "$buildDir/outputs/aar/${project.name}-google-release.aar", androidJavadocsJar]
 
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
