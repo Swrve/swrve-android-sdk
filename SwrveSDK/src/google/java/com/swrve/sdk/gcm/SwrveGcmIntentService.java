@@ -37,7 +37,7 @@ public class SwrveGcmIntentService extends GcmListenerService {
     /**
      * Override this function to decide when to show a notification.
      *
-     * @return true when you want to display notifications
+     * @return true when you want to display notifications.
      */
     public boolean mustShowNotification() {
         return handler.mustShowNotification();
@@ -48,7 +48,7 @@ public class SwrveGcmIntentService extends GcmListenerService {
      *
      * @param notificationManager
      * @param notification
-     * @return the notification id so that it can be dismissed by other UI elements
+     * @return the notification id so that it can be dismissed by other UI elements.
      */
     public int showNotification(NotificationManager notificationManager, Notification notification) {
         return handler.showNotification(notificationManager, notification);
@@ -59,7 +59,7 @@ public class SwrveGcmIntentService extends GcmListenerService {
      *
      * @param msgText
      * @param msg
-     * @return
+     * @return the notification builder.
      */
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         return handler.createNotificationBuilder(msgText, msg);
@@ -70,7 +70,7 @@ public class SwrveGcmIntentService extends GcmListenerService {
      *
      * @param msg
      * @param contentIntent
-     * @return
+     * @return the notification that will be displayed.
      */
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         return handler.createNotification(msg, contentIntent);
@@ -86,7 +86,7 @@ public class SwrveGcmIntentService extends GcmListenerService {
      * notification.
      *
      * @param msg push message payload
-     * @return pending intent
+     * @return pending intent.
      */
     public PendingIntent createPendingIntent(Bundle msg) {
         return handler.createPendingIntent(msg);
@@ -102,7 +102,7 @@ public class SwrveGcmIntentService extends GcmListenerService {
      * notification.
      *
      * @param msg
-     * @return
+     * @return the notification intent.
      */
     public Intent createIntent(Bundle msg) {
         return handler.createIntent(msg);

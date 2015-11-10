@@ -50,12 +50,12 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
     }
 
     /**
-     * inflates , but does not add to parent container. caller will need to add it
+     * Inflates but does not add to parent container. Caller will need to add it.
      *
      * @param context
      * @param parentContainer
      * @param model
-     * @return
+     * @return mutli value input control
      */
     public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model) {
         LayoutInflater layoutInf = LayoutInflater.from(context);

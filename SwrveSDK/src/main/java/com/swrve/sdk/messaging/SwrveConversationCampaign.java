@@ -29,7 +29,6 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * @param controller   SwrveTalk object that will manage the data from the campaign.
      * @param campaignData JSON data containing the campaign details.
      * @param assetsQueue  Set where to save the resources to be loaded
-     * @return SwrveConversationCampaign Loaded SwrveConversationCampaign.
      * @throws org.json.JSONException
      */
     public SwrveConversationCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {

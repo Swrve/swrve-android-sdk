@@ -66,7 +66,6 @@ public abstract class SwrveBaseCampaign {
      *
      * @param controller   SwrveTalk object that will manage the data from the campaign.
      * @param campaignData JSON data containing the campaign details.
-     * @return SwrveCampaign Loaded SwrveCampaign.
      * @throws org.json.JSONException
      */
     public SwrveBaseCampaign(SwrveBase<?, ?> controller, JSONObject campaignData) throws JSONException {

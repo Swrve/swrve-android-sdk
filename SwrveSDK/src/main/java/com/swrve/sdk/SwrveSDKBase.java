@@ -424,7 +424,7 @@ public abstract class SwrveSDKBase {
     /**
      * Get the time when the SDK was initialized.
      *
-     * @return
+     * @return the time the SDK was initialized.
      */
     public static Date getInitialisedTime() {
         checkInstanceCreated();

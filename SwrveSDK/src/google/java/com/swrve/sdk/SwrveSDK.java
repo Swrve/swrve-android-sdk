@@ -78,7 +78,6 @@ public class SwrveSDK extends SwrveSDKBase {
      * @param currency      real world currency used for this transaction. This must be an ISO
      *                      currency code. A typical value would be "USD". Required, cannot be empty.
      * @param dataSignature The purchase data received from Google Play. Required, cannot be empty.
-     * @param dataSignature The signature for the purchase data. Required, cannot be empty.
      */
     public static void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
         checkInstanceCreated();
@@ -89,7 +88,7 @@ public class SwrveSDK extends SwrveSDKBase {
      * Add a Swrve.iap event to the event queue. This event should be added for unvalidated real
      * money transactions in the Google Play Store, where in-app currency was purchased
      * or where multiple items and/or currencies were purchased.
-     * <p/>
+     *
      * To create the rewards object, create an instance of SwrveIAPRewards and
      * use addItem() and addCurrency() to add the individual rewards
      *
@@ -104,7 +103,6 @@ public class SwrveSDK extends SwrveSDKBase {
      * @param rewards       SwrveIAPRewards object containing any in-app currency and/or additional
      *                      items included in this purchase that need to be recorded.
      * @param dataSignature The purchase data received from Google Play. Required, cannot be empty.
-     * @param dataSignature The signature for the purchase data. Required, cannot be empty.
      */
     public static void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature) {
         checkInstanceCreated();
