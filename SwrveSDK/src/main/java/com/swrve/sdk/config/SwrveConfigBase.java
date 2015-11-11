@@ -46,6 +46,12 @@ public abstract class SwrveConfigBase {
      */
     private String dbName = "swrve.db";
 
+
+    /**
+     * Current selected stack by user. EU or US
+     */
+    private SwrveStack selectedStack = SwrveStack.US;
+
     /**
      * Events end-point.
      */
@@ -191,6 +197,33 @@ public abstract class SwrveConfigBase {
     public String getLanguage() {
         return language;
     }
+
+    /**
+     * Get the selected Stack
+     * @return
+     */
+    public SwrveStack getSelectedStack() {
+        return selectedStack;
+    }
+
+    /**
+     * Set the stack prefix for the events and content url
+     * @param stack The chosen stack of the app
+     * @return
+     */
+    public void setSelectedStack(SwrveStack stack){
+        selectedStack = stack;
+    }
+
+
+    /**
+     * Get the stack prefix for the events and content url
+     * @return
+     */
+    private String getStackHostPrefix(){
+        return (getSelectedStack() == SwrveStack.EU) ? "eu" : "";
+    }
+
 
     /**
      * Set the language of the app. If empty or null then
@@ -430,8 +463,15 @@ public abstract class SwrveConfigBase {
      * @throws MalformedURLException
      */
     public void generateUrls(int appId) throws MalformedURLException {
-        defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + ".api.swrve.com");
-        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + ".content.swrve.com");
+        // If the prefix is non empty, prepend it with a .
+        String prefix = getStackHostPrefix();
+        if (!prefix.equalsIgnoreCase("")) {
+            prefix = "." + prefix;
+        }
+
+        // Build the URL
+        defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + prefix + ".api.swrve.com");
+        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + prefix + ".content.swrve.com");
     }
 
     private static String getSchema(boolean https) {
