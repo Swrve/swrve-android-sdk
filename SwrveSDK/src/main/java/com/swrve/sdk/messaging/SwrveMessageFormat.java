@@ -44,7 +44,6 @@ public class SwrveMessageFormat {
      *
      * @param message
      * @param messageFormatData
-     * @return SwrveMessageFormat new instance
      * @throws JSONException
      */
     public SwrveMessageFormat(SwrveBase<?, ?> controller, SwrveMessage message, JSONObject messageFormatData) throws JSONException {

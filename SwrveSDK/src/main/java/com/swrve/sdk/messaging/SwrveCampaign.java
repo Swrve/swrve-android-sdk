@@ -30,7 +30,6 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      * @param controller   SwrveTalk object that will manage the data from the campaign.
      * @param campaignData JSON data containing the campaign details.
      * @param assetsQueue  Set where to save the resources to be loaded
-     * @return SwrveCampaign Loaded SwrveCampaign.
      * @throws JSONException
      */
     public SwrveCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {

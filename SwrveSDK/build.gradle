@@ -50,7 +50,7 @@ publishing {
             artifactId swrveCoreArtifactId
             groupId swrveGroupId
             version swrveSdkVersion
-            artifacts = [androidSourcesJar, "$buildDir/outputs/aar/${project.name}-core-release.aar", androidJavadocsJar]
+            artifacts = [androidCoreJavadocsJar, "$buildDir/outputs/aar/${project.name}-core-release.aar", androidCoreSourcesJar]
 
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
@@ -87,7 +87,7 @@ publishing {
             artifactId swrveGoogleArtifactId
             groupId swrveGroupId
             version swrveSdkVersion
-            artifacts = [androidSourcesJar, "$buildDir/outputs/aar/${project.name}-google-release.aar", androidJavadocsJar]
+            artifacts = [androidGoogleJavadocsJar, "$buildDir/outputs/aar/${project.name}-google-release.aar", androidGoogleSourcesJar]
 
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
@@ -123,18 +123,44 @@ publishing {
     }
 }
 
-task androidJavadocs(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    excludes = ["**/README.md"]
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+task androidCoreJavadoc(type: Javadoc) {
+    description "Generates Javadoc for Core."
+    source = android.libraryVariants.core.javaCompile.source
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(android.libraryVariants.core.javaCompile.classpath.files) + files(ext.androidJar)
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+    exclude '**/README.md'
+    failOnError false
 }
-
-task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+task androidCoreJavadocsJar(type: Jar) {
+    description "Package Javadoc for Core."
     classifier = 'javadoc'
-    from androidJavadocs.destinationDir
+    from androidCoreJavadoc
+}
+task androidCoreSourcesJar(type: Jar) {
+    description "Package sources for Core."
+    classifier = 'source'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.core.java.srcDirs)
 }
 
-task androidSourcesJar(type: Jar) {
+task androidGoogleJavadoc(type: Javadoc) {
+    description "Generates Javadoc for Google."
+    source = android.libraryVariants.google.javaCompile.source
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(android.libraryVariants.google.javaCompile.classpath.files) + files(ext.androidJar)
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+    exclude '**/README.md'
+    failOnError false
+}
+task androidGoogleJavadocsJar(type: Jar) {
+    description "Package Javadoc for Google."
+    classifier = 'javadoc'
+    from androidGoogleJavadoc
+}
+task androidGoogleSourcesJar(type: Jar) {
+    description "Package sources for Google."
     classifier = 'source'
-    from android.sourceSets.main.java.srcDirs
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.google.java.srcDirs)
 }
