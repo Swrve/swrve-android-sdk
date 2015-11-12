@@ -789,6 +789,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             Map<Integer, String> campaignsDownloaded = null;
 
             // QA
+            boolean wasPreviouslyQAUser = (qaUser != null);
             if (json.has("qa")) {
                 JSONObject jsonQa = json.getJSONObject("qa");
                 campaignsDownloaded = new HashMap<Integer, String>();
@@ -826,14 +827,14 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 newCampaignIds.add(campaignData.getInt("id"));
             }
 
+            boolean settingsApplied = (wasPreviouslyQAUser || qaUser == null || !qaUser.isResetDevice());
             // Also serialize the campaign settings
             JSONObject jsonSettings = (settings == null) ? new JSONObject() : settings;
-            boolean saveCampaignSettings = (qaUser == null || !qaUser.isResetDevice());
             for (int i = campaigns.size() - 1; i >= 0; i--) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
                 if (!newCampaignIds.contains(campaign.getId())) {
                     campaigns.remove(i);
-                } else if (saveCampaignSettings) {
+                } else if (settingsApplied) {
                     jsonSettings.put(Integer.toString(campaign.getId()), campaign.createSettings());
                 }
             }
@@ -873,7 +874,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         assetsQueue.addAll(campaignAssetsQueue);
 
                         // Check if we need to reset the device for QA, otherwise load campaign settings into downloaded campaign
-                        if (qaUser == null || !qaUser.isResetDevice()) {
+                        if (settingsApplied) {
                             String campaignIdStr = Integer.toString(campaign.getId());
                             if (jsonSettings.has(campaignIdStr)) {
                                 JSONObject campaignSettings = jsonSettings.getJSONObject(campaignIdStr);
