@@ -966,10 +966,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             availableMessages.add(nextMessage);
                             // Check if it is a candidate to be shown
                             if (nextMessage.getPriority() <= minPriority) {
-                                minPriority = nextMessage.getPriority();
                                 if (nextMessage.getPriority() < minPriority) {
+                                    // If it is lower than any of the previous ones
+                                    // remove those from being candidates
                                     candidateMessages.clear();
                                 }
+                                minPriority = nextMessage.getPriority();
                                 candidateMessages.add(nextMessage);
                             }
                         }
