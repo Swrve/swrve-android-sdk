@@ -1392,12 +1392,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     private boolean isValidEventName(String name) {
-        if(name==null || name.toLowerCase().startsWith("swrve.")) {
-            SwrveLogger.e(LOG_TAG, "Event names cannot begin with " + name + ". This event will not be sent.");
-            return false;
-        } else {
-            return true;
+        List<String> restrictedNamesStartWith = new ArrayList<String>() {{
+            add("Swrve.");
+            add("swrve.");
+        }};
+
+        for(String restricted: restrictedNamesStartWith) {
+            if(name==null || name.startsWith(restricted)) {
+                SwrveLogger.e(LOG_TAG, "Event names cannot begin with " + restricted + "* This event will not be sent. Eventname:" + name);
+                return false;
+            }
         }
+        return true;
     }
 
     @Override
