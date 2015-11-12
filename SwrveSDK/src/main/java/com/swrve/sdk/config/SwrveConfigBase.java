@@ -221,7 +221,7 @@ public abstract class SwrveConfigBase {
      * @return
      */
     private String getStackHostPrefix(){
-        return (getSelectedStack() == SwrveStack.EU) ? "eu" : "";
+        return (getSelectedStack() == SwrveStack.EU) ? "eu-" : "";
     }
 
 
@@ -465,13 +465,9 @@ public abstract class SwrveConfigBase {
     public void generateUrls(int appId) throws MalformedURLException {
         // If the prefix is non empty, prepend it with a .
         String prefix = getStackHostPrefix();
-        if (!prefix.equalsIgnoreCase("")) {
-            prefix = "." + prefix;
-        }
-
         // Build the URL
-        defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + prefix + ".api.swrve.com");
-        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + prefix + ".content.swrve.com");
+        defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + "." +  prefix + "api.swrve.com");
+        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + "." + prefix + "content.swrve.com");
     }
 
     private static String getSchema(boolean https) {
