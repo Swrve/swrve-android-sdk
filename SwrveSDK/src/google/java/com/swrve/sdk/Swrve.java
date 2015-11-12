@@ -5,13 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import com.swrve.sdk.SwrveLogger;
 
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.iid.InstanceID;
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 import com.swrve.sdk.gcm.SwrveGcmNotification;
@@ -19,7 +18,6 @@ import com.swrve.sdk.gcm.SwrveGcmNotification;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 /**
@@ -264,7 +262,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     // Only process once the message if possible
                     if (!SwrveHelper.isNullOrEmpty(msgId) && (lastProcessedMessage == null || !lastProcessedMessage.equals(msgId))) {
                         lastProcessedMessage = msgId;
-                        event("Swrve.Messages.Push-" + msgId + ".engaged", null);
+                        _event("Swrve.Messages.Push-" + msgId + ".engaged", null);
                         // Call custom listener
                         if (pushNotificationListener != null) {
                             pushNotificationListener.onPushNotification(msg);

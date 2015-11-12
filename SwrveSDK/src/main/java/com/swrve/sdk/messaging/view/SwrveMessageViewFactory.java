@@ -1,11 +1,11 @@
 package com.swrve.sdk.messaging.view;
 
 import android.content.Context;
-import com.swrve.sdk.SwrveLogger;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -50,7 +50,8 @@ public class SwrveMessageViewFactory {
      * orientation then the result will be null.
      * @throws SwrveMessageViewBuildException
      */
-    public SwrveMessageView buildLayout(Context context, SwrveMessage message, SwrveOrientation orientation, int previousOrientation, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, boolean firstTime, int minSampleSize) throws SwrveMessageViewBuildException {
+    public SwrveMessageView buildLayout(Context context, SwrveMessage message, SwrveOrientation orientation, int previousOrientation, ISwrveInstallButtonListener installButtonListener,
+                                        ISwrveCustomButtonListener customButtonListener, boolean firstTime, int minSampleSize) throws SwrveMessageViewBuildException {
         try {
             boolean hasToRotate = false;
             if (message != null && message.getFormats().size() > 0) {
@@ -71,7 +72,8 @@ public class SwrveMessageViewFactory {
                             final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
                             int currentOrientation = display.getRotation();
                             if (previousOrientation != currentOrientation) {
-                                if ((previousOrientation == Surface.ROTATION_90 && currentOrientation == Surface.ROTATION_0) || (previousOrientation == Surface.ROTATION_270 && currentOrientation == Surface.ROTATION_180)) {
+                                if ((previousOrientation == Surface.ROTATION_90 && currentOrientation == Surface.ROTATION_0) ||
+                                        (previousOrientation == Surface.ROTATION_270 && currentOrientation == Surface.ROTATION_180)) {
                                     rotation = 90;
                                 }
                             }

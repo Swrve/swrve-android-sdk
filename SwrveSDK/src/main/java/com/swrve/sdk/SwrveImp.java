@@ -26,6 +26,7 @@ import com.swrve.sdk.conversations.ISwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
+import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
@@ -42,6 +43,7 @@ import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.view.SwrveDialog;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
+import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
 import com.swrve.sdk.messaging.view.SwrveMessageViewFactory;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
@@ -70,6 +72,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IllegalFormatException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1457,9 +1460,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 SwrveLogger.d(LOG_TAG, "Called show dialog");
                 SwrveDialog dialog = (currentDialog == null) ? null : currentDialog.get();
                 if (dialog == null || !dialog.isShowing()) {
+
                     SwrveOrientation deviceOrientation = getDeviceOrientation();
                     SwrveLogger.d(LOG_TAG, "Trying to show dialog with orientation " + deviceOrientation);
-                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, previousOrientation, installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
+                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, previousOrientation,
+                            installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
+
                     SwrveDialog newDialog = new SwrveDialog(activity, message, swrveMessageView, config.isHideToolbar());
                     newDialog.setOnDismissListener(new OnDismissListener() {
                         @Override
@@ -1488,6 +1494,14 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 activity = null;
                 sdk = null;
                 message = null;
+            } catch (SwrveMessageViewBuildException e) {
+                Map<String, Object> parameters = new HashMap<String, Object>();
+                parameters.put("name", "Swrve.Messages.view_failed");
+                Map<String, String> errorReasonPayload = new HashMap<String, String>();
+                errorReasonPayload.put("reason", e.getMessage());
+                queueEvent("event", parameters, errorReasonPayload);
+
+                SwrveLogger.w(LOG_TAG, "Couldn't create a SwrveMessageView", e);
             } catch (Exception e) {
                 SwrveLogger.w(LOG_TAG, "Couldn't create a SwrveMessageView", e);
             }
