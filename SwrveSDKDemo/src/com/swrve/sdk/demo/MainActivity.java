@@ -101,7 +101,7 @@ public class MainActivity extends Activity {
 
     public void btnShowTalkMessage(View v) {
         // Swrve Talk - Trigger message for Swrve.Demo.OfferMessage
-        SwrveSDK.event("Swrve.Demo.OfferMessage");
+        SwrveSDK.event("Demo.OfferMessage");
     }
 
     public void btnSendQueuedEvents(View v) {
