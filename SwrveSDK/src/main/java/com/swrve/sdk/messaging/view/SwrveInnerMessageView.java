@@ -57,7 +57,8 @@ public class SwrveInnerMessageView extends RelativeLayout {
     // Bitmap cache
     protected Set<WeakReference<Bitmap>> bitmapCache;
 
-    public SwrveInnerMessageView(Context context, SwrveMessageView parent, SwrveMessage message, SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, int minSampleSize) throws SwrveMessageViewBuildException {
+    public SwrveInnerMessageView(Context context, SwrveMessageView parent, SwrveMessage message, SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener,
+                                 ISwrveCustomButtonListener customButtonListener, int minSampleSize) throws SwrveMessageViewBuildException {
         super(context);
         this.parent = parent;
         this.format = format;
@@ -259,7 +260,6 @@ public class SwrveInnerMessageView extends RelativeLayout {
         if (loadErrorReasons.size() > 0) {
             Map<String, String> errorReasonPayload = new HashMap<String, String>();
             errorReasonPayload.put("reason", loadErrorReasons.toString());
-            message.getMessageController().event("Swrve.Messages.view_failed", errorReasonPayload);
             destroy();
             throw new SwrveMessageViewBuildException("There was an error creating the view caused by:\n" + loadErrorReasons.toString());
         }

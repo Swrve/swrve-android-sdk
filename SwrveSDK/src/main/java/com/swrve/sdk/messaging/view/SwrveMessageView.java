@@ -3,9 +3,7 @@ package com.swrve.sdk.messaging.view;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.util.AttributeSet;
-import com.swrve.sdk.SwrveLogger;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
@@ -16,6 +14,7 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.RotateAnimation;
 import android.widget.RelativeLayout;
 
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveActionType;
@@ -67,7 +66,8 @@ public class SwrveMessageView extends RelativeLayout {
         this(context, message, format, null, null, firstTime, rotation, minSampleSize);
     }
 
-    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, boolean firstTime, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
+    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener,
+                            ISwrveCustomButtonListener customButtonListener, boolean firstTime, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
         super(context);
         this.message = message;
         this.format = format;
@@ -75,7 +75,8 @@ public class SwrveMessageView extends RelativeLayout {
         initializeLayout(context, message, format, installButtonListener, customButtonListener, rotation, minSampleSize);
     }
 
-    protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener, ISwrveCustomButtonListener customButtonListener, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
+    protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener,
+                                    ISwrveCustomButtonListener customButtonListener, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
         innerMessageView = new SwrveInnerMessageView(context, this, message, format, installButtonListener, customButtonListener, minSampleSize);
         setBackgroundColor(format.getBackgroundColor());
         setGravity(Gravity.CENTER);

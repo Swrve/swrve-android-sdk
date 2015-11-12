@@ -169,7 +169,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             String savedInstallTime = getSavedInstallTime();
             if (SwrveHelper.isNullOrEmpty(savedInstallTime)) {
                 // First time we see this user
-                event("Swrve.first_session");
+                _event("Swrve.first_session", null);
                 Date now = getNow();
                 userInstallTime = installTimeFormat.format(now);
             }
@@ -301,7 +301,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _event(String name) {
-        event(name, null);
+        _event(name, null);
     }
 
     protected void _event(String name, Map<String, String> payload) {
@@ -1372,7 +1372,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public void event(String name) {
         try {
-            _event(name);
+            if(isValidEventName(name)) {
+                _event(name);
+            }
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
@@ -1381,10 +1383,27 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public void event(String name, Map<String, String> payload) {
         try {
-            _event(name, payload);
+            if(isValidEventName(name)) {
+                _event(name, payload);
+            }
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
+    }
+
+    private boolean isValidEventName(String name) {
+        List<String> restrictedNamesStartWith = new ArrayList<String>() {{
+            add("Swrve.");
+            add("swrve.");
+        }};
+
+        for(String restricted: restrictedNamesStartWith) {
+            if(name==null || name.startsWith(restricted)) {
+                SwrveLogger.e(LOG_TAG, "Event names cannot begin with " + restricted + "* This event will not be sent. Eventname:" + name);
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
