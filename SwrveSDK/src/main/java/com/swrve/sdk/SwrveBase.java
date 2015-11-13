@@ -151,9 +151,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Find cache folder
             findCacheFolder(activity);
 
-            beforeSendDeviceInfo(resolvedContext);
             // Open access to local storage
             openLocalStorageConnection();
+
+            // Obtain extra device info
+            beforeSendDeviceInfo(resolvedContext);
 
             this.resourceManager = new SwrveResourceManager();
             if (preloadRandC) {
