@@ -20,8 +20,6 @@ public class ConfigContentFragment extends Fragment {
         return inflater.inflate(R.layout.frag_config, null);
     }
 
-
-
     @Override
     public void onResume() {
         super.onResume();
@@ -49,7 +47,5 @@ public class ConfigContentFragment extends Fragment {
         String userId = SwrveSDK.getUserId();
         TextView textViewUserId = (TextView) getView().findViewById(R.id.config_userid);
         textViewUserId.setText(userId);
-
-        //SwrveSDK.get
     }
 }
