@@ -140,7 +140,7 @@ public abstract class SwrveConfigBase {
     /**
      * Automatically log Android ID as "swrve.android_id".
      */
-    private boolean androidIdLogging;
+    private boolean androidIdLoggingEnabled;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -653,14 +653,14 @@ public abstract class SwrveConfigBase {
     /**
      * @return if it will automatically log Android ID as "swrve.android_id".
      */
-    public boolean isAndroidIdLogging() {
-        return androidIdLogging;
+    public boolean isAndroidIdLoggingEnabled() {
+        return androidIdLoggingEnabled;
     }
 
     /**
      * @param enabled to enable automatic logging of Android ID "swrve.android_id".
      */
-    public void setAndroidIdLogging(boolean enabled) {
-        this.androidIdLogging = enabled;
+    public void setAndroidIdLoggingEnabled(boolean enabled) {
+        this.androidIdLoggingEnabled = enabled;
     }
 }

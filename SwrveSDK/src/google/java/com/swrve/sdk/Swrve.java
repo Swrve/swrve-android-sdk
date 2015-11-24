@@ -71,7 +71,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
 
         // Google Advertising Id logging enabled
-        if (config.isAdvertisingIdLogging()) {
+        if (config.isGAIDLoggingEnabled()) {
             // Load previous value for Advertising ID
             advertisingId = cachedLocalStorage.getSharedCacheEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY);
             new AsyncTask<Void, Integer, Void>() {
@@ -113,7 +113,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (config.isPushEnabled() && !SwrveHelper.isNullOrEmpty(registrationId)) {
             deviceInfo.put(SWRVE_GCM_TOKEN, registrationId);
         }
-        if (config.isAdvertisingIdLogging() && !SwrveHelper.isNullOrEmpty(advertisingId)) {
+        if (config.isGAIDLoggingEnabled() && !SwrveHelper.isNullOrEmpty(advertisingId)) {
             deviceInfo.put(SWRVE_GOOGLE_ADVERTISING_ID, advertisingId);
         }
     }
