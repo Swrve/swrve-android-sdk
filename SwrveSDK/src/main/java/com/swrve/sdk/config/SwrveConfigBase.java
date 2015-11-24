@@ -238,21 +238,6 @@ public abstract class SwrveConfigBase {
         return this;
     }
 
-
-    /**
-     * Enable the Swrve logger. This is important for debugging purposes/
-     */
-    public void enableLogging() {
-        SwrveLogger.setActive(true);
-    }
-
-    /**
-     * Disable the SwrveLogger. This is important for IO heavy apps who don't want to write Logs so often.
-     */
-    public void disableLogging() {
-        SwrveLogger.setActive(false);
-    }
-
     /**
      * Check if the SwrveLogger is enabled
      */

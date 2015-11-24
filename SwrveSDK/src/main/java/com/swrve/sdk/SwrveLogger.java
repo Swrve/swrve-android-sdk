@@ -2,14 +2,26 @@ package com.swrve.sdk;
 
 import android.util.Log;
 
-import com.swrve.sdk.SwrveLogger;
-
 public class SwrveLogger {
 
     private static final String LOG_TAG = "SWRVE";
 
     // Config/Active/Inactive
     private static boolean isActive = true;
+
+    /**
+     * Enable the Swrve logger which will allow the Swrve sdk to send messages to logcat.
+     */
+    public void enableLogging() {
+        SwrveLogger.setActive(true);
+    }
+
+    /**
+     * Disable the Swrve logger which will stop the Swrve sdk from sending messages to logcat.
+     */
+    public void disableLogging() {
+        SwrveLogger.setActive(false);
+    }
 
     public static boolean isActive() {
         return SwrveLogger.isActive;
