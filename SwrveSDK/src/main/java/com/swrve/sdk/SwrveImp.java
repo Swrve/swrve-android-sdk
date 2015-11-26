@@ -560,7 +560,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             this.simOperatorCode = tmanager.getSimOperator();
 
             // Android ID
-            if (config.isAndroidIdLogging()) {
+            if (config.isAndroidIdLoggingEnabled()) {
                 this.androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
             }
         } catch (Exception exp) {

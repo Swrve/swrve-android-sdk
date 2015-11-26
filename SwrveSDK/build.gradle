@@ -125,7 +125,7 @@ publishing {
 
 task androidCoreJavadoc(type: Javadoc) {
     description "Generates Javadoc for Core."
-    source = android.libraryVariants.core.javaCompile.source
+    source = files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.core.java.srcDirs)
     ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
     classpath = files(android.libraryVariants.core.javaCompile.classpath.files) + files(ext.androidJar)
     exclude '**/BuildConfig.java'
@@ -146,7 +146,7 @@ task androidCoreSourcesJar(type: Jar) {
 
 task androidGoogleJavadoc(type: Javadoc) {
     description "Generates Javadoc for Google."
-    source = android.libraryVariants.google.javaCompile.source
+    source = files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.google.java.srcDirs)
     ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
     classpath = files(android.libraryVariants.google.javaCompile.classpath.files) + files(ext.androidJar)
     exclude '**/BuildConfig.java'
