@@ -15,7 +15,7 @@ public class SwrveConfig extends SwrveConfigBase {
     /**
      * Automatically log Google's Advertising Id as "swrve.GAID".
      */
-    private boolean advertisingIdLogging;
+    private boolean gAIDLoggingEnabled;
 
     /**
      * Returns an instance of SwrveConfig with the Sender id.
@@ -52,14 +52,14 @@ public class SwrveConfig extends SwrveConfigBase {
     /**
      * @return if it will automatically log Google's Advertising Id as "swrve.GAID".
      */
-    public boolean isAdvertisingIdLogging() {
-        return advertisingIdLogging;
+    public boolean isGAIDLoggingEnabled() {
+            return gAIDLoggingEnabled;
     }
 
     /**
      * @param enabled to enable automatic logging of Google's Advertising Id as "swrve.GAID".
      */
-    public void setAdvertisingIdLogging(boolean enabled) {
-        this.advertisingIdLogging = enabled;
+    public void setGAIDLoggingEnabled(boolean enabled) {
+        this.gAIDLoggingEnabled = enabled;
     }
 }
