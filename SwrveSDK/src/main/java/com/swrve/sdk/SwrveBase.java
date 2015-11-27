@@ -1529,6 +1529,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public void onNewIntent(Intent intent) {
+    }
+
+    @Override
     public void onDestroy(Activity ctx) {
         try {
             _onDestroy(ctx);
