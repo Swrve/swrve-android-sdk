@@ -9,7 +9,7 @@ import android.os.Bundle;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
@@ -70,8 +70,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             }
         }
 
-        // Google Advertising Id logging enabled
-        if (config.isGAIDLoggingEnabled()) {
+        // Google Advertising Id logging enabled and Google Play services ready
+        if (config.isGAIDLoggingEnabled() && checkPlayServices()) {
             // Load previous value for Advertising ID
             advertisingId = cachedLocalStorage.getSharedCacheEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY);
             new AsyncTask<Void, Integer, Void>() {
@@ -128,8 +128,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      * the Google Play Store or enable it in the device's system settings.
      */
     protected boolean checkPlayServices() {
-        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context.get());
-        return resultCode == ConnectionResult.SUCCESS;
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+        return api.isGooglePlayServicesAvailable(context.get()) == ConnectionResult.SUCCESS;
     }
 
     /**
