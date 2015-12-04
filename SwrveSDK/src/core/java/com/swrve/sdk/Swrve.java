@@ -16,16 +16,7 @@ import java.lang.ref.WeakReference;
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
-        super();
-        if (context instanceof Activity) {
-            this.context = new WeakReference<Context>(context.getApplicationContext());
-            this.activityContext = new WeakReference<Activity>((Activity) context);
-        } else {
-            this.context = new WeakReference<Context>(context);
-        }
-        this.appId = appId;
-        this.apiKey = apiKey;
-        this.config = config;
+        super(context, appId, apiKey, config);
     }
 
     @Override
