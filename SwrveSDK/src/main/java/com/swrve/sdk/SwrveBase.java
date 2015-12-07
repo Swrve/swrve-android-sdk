@@ -5,11 +5,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.util.DisplayMetrics;
-import com.swrve.sdk.SwrveLogger;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
@@ -22,7 +20,6 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
-import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -64,6 +61,10 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C> {
 
+    protected SwrveBase(Context context, int appId, String apiKey, C config) {
+        super(context, appId, apiKey, config);
+    }
+
     protected static String _getVersion() {
         return version;
     }
@@ -101,45 +102,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         try {
+            final Context resolvedContext = bindToContext(activity);
+            final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();
+
             // Save initialization time
             initialisedTime = getNow();
             initialised = true;
             this.lastSessionTick = getSessionTime();
-            this.userId = config.getUserId();
-            final Context resolvedContext = bindToContext(activity);
-            final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();
-
-            // Default user id to Android ID
-            if (SwrveHelper.isNullOrEmpty(userId)) {
-                userId = getUniqueUserId(resolvedContext);
-            }
-            checkUserId(userId);
-            saveUniqueUserId(resolvedContext, userId);
-            SwrveLogger.i(LOG_TAG, "Your user id is: " + userId);
-
-            // Generate default urls for the given app id
-            config.generateUrls(appId);
-
-            if (SwrveHelper.isNullOrEmpty(config.getLanguage())) {
-                this.language = SwrveHelper.toLanguageTag(Locale.getDefault());
-            } else {
-                this.language = config.getLanguage();
-            }
-            this.appVersion = config.getAppVersion();
-            this.newSessionInterval = config.getNewSessionInterval();
-
-            // Generate session token
-            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId);
-
-            // Default app version to android app version
-            if (SwrveHelper.isNullOrEmpty(this.appVersion)) {
-                try {
-                    PackageInfo pInfo = resolvedContext.getPackageManager().getPackageInfo(resolvedContext.getPackageName(), 0);
-                    this.appVersion = pInfo.versionName;
-                } catch (Exception exp) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
-                }
-            }
+            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId); // Generate session token
 
             restClient = createRESTClient();
             cachedLocalStorage = createCachedLocalStorage();
@@ -159,14 +129,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             this.resourceManager = new SwrveResourceManager();
             if (preloadRandC) {
-                // Initialize resources and location campaigns from cache
+                // Initialize resources from cache
                 initResources();
-                initLocationCampaigns();
             }
 
             // Send session start
             queueSessionStart();
             generateNewSessionInterval();
+
             // If user is first installed
             String savedInstallTime = getSavedInstallTime();
             if (SwrveHelper.isNullOrEmpty(savedInstallTime)) {
@@ -264,7 +234,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         if (config.isTalkEnabled()) {
                             initCampaigns();
                         }
-                        initLocationCampaigns();
                     }
                 });
             }
@@ -782,9 +751,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         }
                                     }
 
+                                    // If json contains lcoation campaigns then save it to sqlite cache to be used by the location sdk
                                     if (responseJson.has("location_campaigns")) {
                                         JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
-                                        loadLocationCampaignsFromJSON(campaignJson);
                                         saveLocationCampaignsInCache(campaignJson);
                                     }
 
@@ -1882,14 +1851,5 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
-    }
-
-    @Override
-    public Map<String, LocationCampaign> getLocationCampaigns() {
-        if (locationCampaigns == null) {
-            return new HashMap<String, LocationCampaign>();
-        } else {
-            return this.locationCampaigns;
-        }
     }
 }
