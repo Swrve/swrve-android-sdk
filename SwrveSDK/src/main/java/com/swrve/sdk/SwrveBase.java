@@ -129,7 +129,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             this.resourceManager = new SwrveResourceManager();
             if (preloadRandC) {
-                // Initialize resources and location campaigns from cache
+                // Initialize resources from cache
                 initResources();
             }
 
@@ -751,6 +751,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         }
                                     }
 
+                                    // If json contains lcoation campaigns then save it to sqlite cache to be used by the location sdk
                                     if (responseJson.has("location_campaigns")) {
                                         JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
                                         saveLocationCampaignsInCache(campaignJson);
