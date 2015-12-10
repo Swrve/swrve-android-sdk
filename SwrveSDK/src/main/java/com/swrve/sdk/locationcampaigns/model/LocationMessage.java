@@ -5,15 +5,18 @@ import android.support.annotation.VisibleForTesting;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.swrve.sdk.SwrveLogger;
 
 import java.lang.reflect.Type;
 import java.util.Map;
 
 public class LocationMessage {
 
+    private final String LOG_TAG = "SwrveLocationMessage";
     private final int id;
-    private final String body;
+    private String body;
     private final String payload;
+    public static final String GEOFENCE_LABEL_PLACEHOLDER = "${geofence.label}";
 
     @VisibleForTesting
     public LocationMessage(int id, String body, String payload) {
@@ -28,6 +31,16 @@ public class LocationMessage {
     public String getBody() {
         return body;
     }
+
+    public void replaceBodyGeofenceLabel(String geofenceLabel){
+        if (geofenceLabel!=null) {
+            this.body = body.replace(GEOFENCE_LABEL_PLACEHOLDER, geofenceLabel);
+        }else{
+            SwrveLogger.w(LOG_TAG, "No geofence label replacement found");
+        }
+    }
+
+
     public String getPayload() {
         return payload;
     }
@@ -35,6 +48,10 @@ public class LocationMessage {
     public static String toJSON(LocationMessage locationMessage) {
         Gson gson = new Gson();
         return gson.toJson(locationMessage);
+    }
+
+    public boolean expectsGeofenceLabel(){
+        return getBody().contains(GEOFENCE_LABEL_PLACEHOLDER);
     }
 
     public static LocationMessage fromJSON(String jsonString) {
