@@ -606,7 +606,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, xdpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, ydpi);
                 deviceInfo.put(SWRVE_CONVERSATION_VERSION, CONVERSATION_VERSION);
-                deviceInfo.put(SWRVE_LOCATION_VERSION, LOCATION_VERSION);
                 // Carrier info
                 if (!SwrveHelper.isNullOrEmpty(simOperatorName)) {
                     deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, simOperatorName);
@@ -686,7 +685,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
-                params.put("location_version", String.valueOf(LOCATION_VERSION));
+                if(locationVersion > 0) {
+                    params.put("location_version", String.valueOf(locationVersion));
+                }
 
                 // If we have a last ETag value, send that along with the request
                 if (!SwrveHelper.isNullOrEmpty(campaignsAndResourcesLastETag)) {
