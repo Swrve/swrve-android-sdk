@@ -97,7 +97,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
     protected static final String TEMPLATE_VERSION = "1";
     protected static final int CONVERSATION_VERSION = 2;
-    protected static final int LOCATION_VERSION = 1;
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -113,7 +112,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_DEVICE_HEIGHT = "swrve.device_height";
     protected static final String SWRVE_DEVICE_DPI = "swrve.device_dpi";
     protected static final String SWRVE_CONVERSATION_VERSION = "swrve.conversation_version";
-    protected static final String SWRVE_LOCATION_VERSION = "swrve.location_version";
     protected static final String SWRVE_ANDROID_DEVICE_XDPI = "swrve.android_device_xdpi";
     protected static final String SWRVE_ANDROID_DEVICE_YDPI = "swrve.android_device_ydpi";
     protected static final String SWRVE_LANGUAGE = "swrve.language";
@@ -204,6 +202,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected String simOperatorIsoCountryCode;
     protected String simOperatorCode;
     protected String androidId;
+    protected int locationVersion;
 
     protected int previousOrientation;
     protected SwrveQAUser qaUser;
