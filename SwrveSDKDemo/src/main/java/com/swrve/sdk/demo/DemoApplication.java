@@ -14,7 +14,7 @@ public class DemoApplication extends Application {
         super.onCreate();
 
         try {
-            SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY);
+            SwrveSDK.createInstance(this, 2132, "AYgy6V2uk6f3d46ShfJ");
         } catch (Exception exp) {
             Log.e(LOG_TAG, "Could not initialize the Swrve SDK", exp);
         }
