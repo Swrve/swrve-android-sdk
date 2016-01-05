@@ -20,7 +20,7 @@ import java.util.Set;
  * Swrve campaign containing messages targeted for the current device and user id.
  */
 public class SwrveConversationCampaign extends SwrveBaseCampaign implements Serializable {
-    // List of conversations contained in the campaign
+    // Single Conversation
     protected SwrveConversation conversation;
 
     /**
@@ -51,7 +51,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     }
 
     /**
-     * @return the campaign conversations.
+     * @return the campaign conversation.
      */
     public SwrveConversation getConversation() {
         return conversation;
