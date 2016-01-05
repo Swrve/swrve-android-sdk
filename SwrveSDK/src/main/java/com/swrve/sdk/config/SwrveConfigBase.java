@@ -1,16 +1,28 @@
 package com.swrve.sdk.config;
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.SwrveOrientation;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
+import com.swrve.sdk.rest.RESTClient;
+import com.swrve.sdk.rest.RESTResponse;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Configuration for the Swrve SDK.
@@ -108,6 +120,11 @@ public abstract class SwrveConfigBase {
     private File cacheDir;
 
     /**
+     * Private Http client
+     */
+    private IRESTClient restClient;
+
+    /**
      * Automatically send events onResume.
      */
     private boolean sendQueuedEventsOnResume = true;
@@ -146,6 +163,11 @@ public abstract class SwrveConfigBase {
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
+        createRESTClient();
+    }
+
+    public IRESTClient createRESTClient(){
+        restClient = new RESTClient(getHttpTimeout());
     }
 
     /**
@@ -608,6 +630,7 @@ public abstract class SwrveConfigBase {
      */
     public void setHttpTimeout(int httpTimeout) {
         this.httpTimeout = httpTimeout;
+        createRESTClient();
     }
 
     /**
@@ -647,5 +670,29 @@ public abstract class SwrveConfigBase {
      */
     public void setAndroidIdLoggingEnabled(boolean enabled) {
         this.androidIdLoggingEnabled = enabled;
+    }
+
+    /**
+     * Send a http request to test the credentials are properly configured
+     */
+    public void testEventsUrlWithCredentials(){
+//        TODO: Logger to the user that this is not to be used in production, only in debug
+//        TODO: Only enable this if build type if debug?
+
+        String testData = ""; // TODO: Proper test Data
+        restClient.post(getEventsUrl().toString(), testData, new IRESTResponseListener() {
+            @Override
+            public void onResponse(RESTResponse response) {
+                // Response received from server
+                if (response.responseCode == HttpURLConnection.HTTP_OK) {
+
+                }
+            }
+
+            @Override
+            public void onException(Exception exp) {
+
+            }
+        });
     }
 }

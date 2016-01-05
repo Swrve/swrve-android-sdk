@@ -355,9 +355,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
     }
 
-    protected IRESTClient createRESTClient() {
-        return new RESTClient(config.getHttpTimeout());
-    }
 
     protected MemoryCachedLocalStorage createCachedLocalStorage() {
         return new MemoryCachedLocalStorage(new MemoryLocalStorage(), null);
@@ -1290,7 +1287,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             userId = getUniqueUserId(context);
         }
         if (restClient == null) {
-            restClient = createRESTClient();
+            restClient = config.createRESTClient();
         }
         if (cachedLocalStorage == null) {
             cachedLocalStorage = createCachedLocalStorage();

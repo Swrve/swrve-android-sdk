@@ -168,6 +168,11 @@ public abstract class SwrveSDKBase {
         instance.iap(quantity, productId, productPrice, currency, rewards);
     }
 
+    public static boolean hasValidCredentials(){
+        checkInstanceCreated();
+        return true;
+    }
+
     /**
      * Get the SwrveResourceManager, which can be queried for up-to-date resource attribute values
      */
@@ -503,8 +508,9 @@ public abstract class SwrveSDKBase {
 
     protected static void checkInstanceCreated() throws RuntimeException {
         if (instance == null) {
-            SwrveLogger.e(SwrveImp.LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
-            throw new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
+            RuntimeException e = new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
+            SwrveLogger.e(SwrveImp.LOG_TAG, e.getMessage(), e);
+            throw e;
         }
     }
 

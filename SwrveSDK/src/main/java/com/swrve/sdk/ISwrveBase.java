@@ -65,6 +65,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void shutdown();
 
+    boolean hasValidCredentials();
+
     void setLanguage(Locale locale);
 
     String getLanguage();

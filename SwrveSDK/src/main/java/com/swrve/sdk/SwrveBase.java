@@ -141,7 +141,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
             }
 
-            restClient = createRESTClient();
+            restClient = config.createRESTClient();
             cachedLocalStorage = createCachedLocalStorage();
             storageExecutor = createStorageExecutor();
             restClientExecutor = createRESTClientExecutor();
