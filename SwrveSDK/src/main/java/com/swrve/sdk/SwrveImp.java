@@ -946,21 +946,31 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
     protected void downloadAssets(final Set<String> assetsQueue) {
         assetsCurrentlyDownloading = true;
+        final Set<String> failedAssets = new HashSet<String>();
         ExecutorService resourceDownloadExecutor = Executors.newSingleThreadExecutor();
+        Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
+
         resourceDownloadExecutor.execute(SwrveRunnables.withoutExceptions(new Runnable() {
             @Override
             public void run() {
                 Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
                 for (String asset : assetsToDownload) {
                     boolean success = downloadAssetSynchronously(asset);
-                    if (success) {
-                        synchronized (assetsOnDisk) {
+                    synchronized (assetsOnDisk) {
+                        if (success) {
                             assetsOnDisk.add(asset);
+                        } else {
+                            failedAssets.add(asset);
                         }
                     }
                 }
                 assetsCurrentlyDownloading = false;
-                autoShowMessages();
+
+                if(failedAssets.isEmpty()){
+                    autoShowMessages();
+                }else{
+                    downloadAssets(failedAssets);
+                }
             }
         }));
     }
