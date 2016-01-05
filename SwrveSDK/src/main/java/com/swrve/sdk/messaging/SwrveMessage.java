@@ -19,7 +19,7 @@ import java.util.Set;
  * In-app message inside a campaign, with different formats.
  */
 public class SwrveMessage {
-    protected static final String LOG_TAG = "SwrveSDK";
+    protected static final String LOG_TAG = "SwrveMessage";
 
     // Swrve SDK reference
     protected SwrveBase<?, ?> messageController;
