@@ -87,7 +87,8 @@ public class QueuedEventsManager {
             }
 
             @Override
-            public void onException(Exception exp) {
+            public void onException(Exception ex) {
+                SwrveLogger.e(LOG_TAG, "Error posting batch of events.", ex);
             }
         });
     }
