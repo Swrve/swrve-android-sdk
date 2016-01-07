@@ -19,7 +19,6 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
-import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -50,7 +49,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -111,10 +109,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             this.lastSessionTick = getSessionTime();
             this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId); // Generate session token
 
-            restClient = createRESTClient();
             cachedLocalStorage = createCachedLocalStorage();
-            storageExecutor = createStorageExecutor();
-            restClientExecutor = createRESTClientExecutor();
 
             appStoreURLs = new SparseArray<String>();
 
@@ -409,38 +404,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             restClientExecutorExecute(new Runnable() {
                 @Override
                 public void run() {
-                    // Get batch of events and send them
-                    final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
-                    final LinkedHashMap<Long, String> events = new LinkedHashMap<Long, String>();
-                    if (!combinedEvents.isEmpty()) {
-                        SwrveLogger.i(LOG_TAG, "Sending queued events");
-                        try {
-                            // Combine all events
-                            Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
-                            while (storageIt.hasNext()) {
-                                events.putAll(combinedEvents.get(storageIt.next()));
-                            }
-                            eventsWereSent = true;
-                            String data = com.swrve.sdk.EventHelper.eventsAsBatch(userId, appVersion, sessionToken, events, cachedLocalStorage);
-                            SwrveLogger.i(LOG_TAG, "Sending " + events.size() + " events to Swrve");
-                            postBatchRequest(config, data, new IPostBatchRequestListener() {
-                                public void onResponse(boolean shouldDelete) {
-                                    if (shouldDelete) {
-                                        // Remove events from where they came from
-                                        Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
-                                        while (storageIt.hasNext()) {
-                                            ILocalStorage storage = storageIt.next();
-                                            storage.removeEventsById(combinedEvents.get(storage).keySet());
-                                        }
-                                    } else {
-                                        SwrveLogger.e(LOG_TAG, "Batch of events could not be sent, retrying");
-                                    }
-                                }
-                            });
-                        } catch (JSONException je) {
-                            SwrveLogger.e(LOG_TAG, "Unable to generate event batch", je);
-                        }
-                    }
+                    QueuedEventsManager queuedEventsManager = new QueuedEventsManager(config, restClient, userId, appVersion, sessionToken);
+                    eventsWereSent = queuedEventsManager.sendQueuedEvents(cachedLocalStorage) > 0;
                 }
             });
         }
