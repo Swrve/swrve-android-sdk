@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 
 public class QueuedEventsManager {
 
-    protected static final String LOG_TAG = "SwrveSDK";
+    protected static final String LOG_TAG = "SwrveQueuedEventsManager";
 
     private final SwrveConfigBase config;
     private final String userId;
