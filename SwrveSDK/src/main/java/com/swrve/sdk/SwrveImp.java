@@ -11,7 +11,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
-import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
@@ -216,6 +215,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         this.installTimeLatch = new CountDownLatch(1);
         this.destroyed = false;
         this.autoShowExecutor = Executors.newSingleThreadExecutor();
+        this.storageExecutor = createStorageExecutor();
+        this.restClientExecutor = createRESTClientExecutor();
+        this.restClient = createRESTClient();
         this.bindCounter = new AtomicInteger();
         this.autoShowMessagesEnabled = true;
         this.assetsOnDisk = new HashSet<String>();
@@ -623,7 +625,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return new AndroidTelephonyManagerWrapper(context);
     }
 
-    @RequiresPermission (Manifest.permission.WRITE_EXTERNAL_STORAGE)
     protected void findCacheFolder(Activity activity) {
         cacheDir = config.getCacheDir();
 
@@ -997,7 +998,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
     }
 
-    @RequiresPermission (Manifest.permission.WRITE_EXTERNAL_STORAGE)
     protected boolean downloadAssetSynchronously(final String assetPath) {
         String url = cdnRoot + assetPath;
         InputStream inputStream = null;
