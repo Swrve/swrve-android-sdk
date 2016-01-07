@@ -25,5 +25,12 @@
             </intent-filter>
         </receiver>
 
+        <service android:exported="false" android:name="com.swrve.sdk.SwrveWakefulService"/>
+        <receiver android:exported="false" android:name="com.swrve.sdk.SwrveWakefulReceiver">
+            <intent-filter>
+                <action android:name="${applicationId}.swrve.SwrveWakeful" />
+            </intent-filter>
+        </receiver>
+
     </application>
 </manifest>

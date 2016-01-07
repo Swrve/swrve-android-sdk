@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -20,8 +19,6 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
-import com.swrve.sdk.localstorage.ILocalStorage;
-import com.swrve.sdk.locationcampaigns.model.LocationCampaign;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -52,7 +49,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -62,6 +58,10 @@ import java.util.concurrent.TimeUnit;
  * Main base class implementation of the Swrve SDK.
  */
 public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C> {
+
+    protected SwrveBase(Context context, int appId, String apiKey, C config) {
+        super(context, appId, apiKey, config);
+    }
 
     protected static String _getVersion() {
         return version;
@@ -100,50 +100,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         try {
+            final Context resolvedContext = bindToContext(activity);
+            final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();
+
             // Save initialization time
             initialisedTime = getNow();
             initialised = true;
             this.lastSessionTick = getSessionTime();
-            this.userId = config.getUserId();
-            final Context resolvedContext = bindToContext(activity);
-            final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();
+            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId); // Generate session token
 
-            // Default user id to Android ID
-            if (SwrveHelper.isNullOrEmpty(userId)) {
-                userId = getUniqueUserId(resolvedContext);
-            }
-            checkUserId(userId);
-            saveUniqueUserId(resolvedContext, userId);
-            SwrveLogger.i(LOG_TAG, "Your user id is: " + userId);
-
-            // Generate default urls for the given app id
-            config.generateUrls(appId);
-
-            if (SwrveHelper.isNullOrEmpty(config.getLanguage())) {
-                this.language = SwrveHelper.toLanguageTag(Locale.getDefault());
-            } else {
-                this.language = config.getLanguage();
-            }
-            this.appVersion = config.getAppVersion();
-            this.newSessionInterval = config.getNewSessionInterval();
-
-            // Generate session token
-            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId);
-
-            // Default app version to android app version
-            if (SwrveHelper.isNullOrEmpty(this.appVersion)) {
-                try {
-                    PackageInfo pInfo = resolvedContext.getPackageManager().getPackageInfo(resolvedContext.getPackageName(), 0);
-                    this.appVersion = pInfo.versionName;
-                } catch (Exception exp) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't get app version from PackageManager. Please provide the app version manually through the config object.", exp);
-                }
-            }
-
-            restClient = createRESTClient();
             cachedLocalStorage = createCachedLocalStorage();
-            storageExecutor = createStorageExecutor();
-            restClientExecutor = createRESTClientExecutor();
 
             appStoreURLs = new SparseArray<String>();
 
@@ -158,14 +124,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             this.resourceManager = new SwrveResourceManager();
             if (preloadRandC) {
-                // Initialize resources and location campaigns from cache
+                // Initialize resources from cache
                 initResources();
-                initLocationCampaigns();
             }
 
             // Send session start
             queueSessionStart();
             generateNewSessionInterval();
+
             // If user is first installed
             String savedInstallTime = getSavedInstallTime();
             if (SwrveHelper.isNullOrEmpty(savedInstallTime)) {
@@ -263,7 +229,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         if (config.isTalkEnabled()) {
                             initCampaigns();
                         }
-                        initLocationCampaigns();
                     }
                 });
             }
@@ -439,38 +404,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             restClientExecutorExecute(new Runnable() {
                 @Override
                 public void run() {
-                    // Get batch of events and send them
-                    final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
-                    final LinkedHashMap<Long, String> events = new LinkedHashMap<Long, String>();
-                    if (!combinedEvents.isEmpty()) {
-                        SwrveLogger.i(LOG_TAG, "Sending queued events");
-                        try {
-                            // Combine all events
-                            Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
-                            while (storageIt.hasNext()) {
-                                events.putAll(combinedEvents.get(storageIt.next()));
-                            }
-                            eventsWereSent = true;
-                            String data = com.swrve.sdk.EventHelper.eventsAsBatch(userId, appVersion, sessionToken, events, cachedLocalStorage);
-                            SwrveLogger.i(LOG_TAG, "Sending " + events.size() + " events to Swrve");
-                            postBatchRequest(config, data, new IPostBatchRequestListener() {
-                                public void onResponse(boolean shouldDelete) {
-                                    if (shouldDelete) {
-                                        // Remove events from where they came from
-                                        Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
-                                        while (storageIt.hasNext()) {
-                                            ILocalStorage storage = storageIt.next();
-                                            storage.removeEventsById(combinedEvents.get(storage).keySet());
-                                        }
-                                    } else {
-                                        SwrveLogger.e(LOG_TAG, "Batch of events could not be sent, retrying");
-                                    }
-                                }
-                            });
-                        } catch (JSONException je) {
-                            SwrveLogger.e(LOG_TAG, "Unable to generate event batch", je);
-                        }
-                    }
+                    QueuedEventsManager queuedEventsManager = new QueuedEventsManager(config, restClient, userId, appVersion, sessionToken);
+                    eventsWereSent = queuedEventsManager.sendQueuedEvents(cachedLocalStorage) > 0;
                 }
             });
         }
@@ -636,7 +571,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, xdpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, ydpi);
                 deviceInfo.put(SWRVE_CONVERSATION_VERSION, CONVERSATION_VERSION);
-                deviceInfo.put(SWRVE_LOCATION_VERSION, LOCATION_VERSION);
                 // Carrier info
                 if (!SwrveHelper.isNullOrEmpty(simOperatorName)) {
                     deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, simOperatorName);
@@ -716,7 +650,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
-                params.put("location_version", String.valueOf(LOCATION_VERSION));
+                if(locationVersion > 0) {
+                    params.put("location_version", String.valueOf(locationVersion));
+                }
 
                 // If we have a last ETag value, send that along with the request
                 if (!SwrveHelper.isNullOrEmpty(campaignsAndResourcesLastETag)) {
@@ -781,9 +717,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         }
                                     }
 
+                                    // If json contains lcoation campaigns then save it to sqlite cache to be used by the location sdk
                                     if (responseJson.has("location_campaigns")) {
                                         JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
-                                        loadLocationCampaignsFromJSON(campaignJson);
                                         saveLocationCampaignsInCache(campaignJson);
                                     }
 
@@ -1881,14 +1817,5 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
-    }
-
-    @Override
-    public Map<String, LocationCampaign> getLocationCampaigns() {
-        if (locationCampaigns == null) {
-            return new HashMap<String, LocationCampaign>();
-        } else {
-            return this.locationCampaigns;
-        }
     }
 }
