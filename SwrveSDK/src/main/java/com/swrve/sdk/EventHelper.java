@@ -16,7 +16,7 @@ import java.util.Random;
 final class EventHelper {
     private static final Object BATCH_API_VERSION = "2";
 
-    private synchronized static short getDeviceId(MemoryCachedLocalStorage storage) {
+    protected synchronized static short getDeviceId(MemoryCachedLocalStorage storage) {
         String id = storage.getSharedCacheEntry("device_id");
         if (id == null || id.length() <= 0) {
             short deviceId = (short) new Random().nextInt(Short.MAX_VALUE);
@@ -64,17 +64,14 @@ final class EventHelper {
      * Generate JSON in the format expected by the batch API to inform Swrve of
      * these events.
      */
-    public static String eventsAsBatch(String userId, String appVersion,
-                                       String sessionToken, LinkedHashMap<Long, String> events, MemoryCachedLocalStorage storage)
-            throws JSONException {
+    public static String eventsAsBatch(LinkedHashMap<Long, String> events, String userId, String appVersion, String sessionToken, short deviceId) throws JSONException {
         JSONObject batch = new JSONObject();
         batch.put("user", userId);
         batch.put("session_token", sessionToken);
         batch.put("version", BATCH_API_VERSION);
         batch.put("app_version", appVersion);
-        batch.put("device_id", getDeviceId(storage));
+        batch.put("device_id", deviceId);
         batch.put("data", orderedMapToJSONArray(events));
-
         return batch.toString();
     }
 
