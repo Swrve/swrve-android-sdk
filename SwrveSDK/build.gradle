@@ -31,8 +31,8 @@ dependencies {
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:23.+'
     compile 'com.android.support:appcompat-v7:23.+'
-    googleCompile 'com.google.android.gms:play-services-gcm:8.1.0'
-    googleCompile 'com.google.android.gms:play-services-ads:8.1.0'
+    googleCompile 'com.google.android.gms:play-services-gcm:8.4.0'
+    googleCompile 'com.google.android.gms:play-services-ads:8.4.0'
 }
 
 apply plugin: 'maven-publish'

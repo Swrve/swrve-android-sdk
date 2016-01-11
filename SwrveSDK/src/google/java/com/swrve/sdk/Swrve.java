@@ -9,7 +9,7 @@ import android.os.Bundle;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
@@ -45,7 +45,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (config.isPushEnabled()) {
             try {
                 // Check device for Play Services APK.
-                if (checkPlayServices()) {
+                if (isGooglePlayServicesAvailable()) {
                     String newRegistrationId = getRegistrationId();
                     if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
                         registerInBackground(getContext());
@@ -59,8 +59,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             }
         }
 
-        // Google Advertising Id logging enabled
-        if (config.isGAIDLoggingEnabled()) {
+        // Google Advertising Id logging enabled and Google Play services ready
+        if (config.isGAIDLoggingEnabled() && isGooglePlayServicesAvailable()) {
             // Load previous value for Advertising ID
             advertisingId = cachedLocalStorage.getSharedCacheEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY);
             new AsyncTask<Void, Integer, Void>() {
@@ -116,9 +116,20 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      * it doesn't, display a dialog that allows users to download the APK from
      * the Google Play Store or enable it in the device's system settings.
      */
-    protected boolean checkPlayServices() {
-        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context.get());
-        return resultCode == ConnectionResult.SUCCESS;
+    protected boolean isGooglePlayServicesAvailable() {
+        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
+        int resultCode = googleAPI.isGooglePlayServicesAvailable(context.get());
+        if (resultCode == ConnectionResult.SUCCESS) {
+            return true;
+        }
+        boolean resolveable = googleAPI.isUserResolvableError(resultCode);
+        if (resolveable) {
+            SwrveLogger.e(LOG_TAG, "Google Play Services are not available, resolveable error code: " + resultCode + ". You can use getErrorDialog in your app to try to address this issue at runtime.");
+        } else {
+            SwrveLogger.e(LOG_TAG, "Google Play Services are not available. Error code: " + resultCode);
+        }
+
+        return false;
     }
 
     /**
