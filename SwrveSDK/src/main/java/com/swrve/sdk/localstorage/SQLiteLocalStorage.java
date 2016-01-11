@@ -56,11 +56,17 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
     }
 
     public void addEvent(String eventJSON) throws SQLException {
+        addEventAndGetId(eventJSON);
+    }
+
+    public long addEventAndGetId(String eventJSON) throws SQLException {
+        long rowId = 0;
         if (connectionOpen.get()) {
             ContentValues values = new ContentValues();
             values.put(COLUMN_EVENT, eventJSON);
-            database.insertOrThrow(TABLE_EVENTS_JSON, null, values);
+            rowId = database.insertOrThrow(TABLE_EVENTS_JSON, null, values);
         }
+        return rowId;
     }
 
     public void removeEventsById(Collection<Long> ids) {

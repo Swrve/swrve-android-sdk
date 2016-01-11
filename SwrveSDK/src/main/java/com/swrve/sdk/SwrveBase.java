@@ -404,8 +404,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             restClientExecutorExecute(new Runnable() {
                 @Override
                 public void run() {
-                    QueuedEventsManager queuedEventsManager = new QueuedEventsManager(config, restClient, userId, appVersion, sessionToken);
-                    eventsWereSent = queuedEventsManager.sendQueuedEvents(cachedLocalStorage) > 0;
+                    short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
+                    SendEventsManager sendEventsManager = new SendEventsManager(config, restClient, userId, appVersion, sessionToken, deviceId);
+                    sendEventsManager.sendStoredEvents(cachedLocalStorage);
+                    eventsWereSent = true;
                 }
             });
         }
