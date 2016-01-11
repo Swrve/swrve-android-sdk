@@ -395,7 +395,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 activity.finish();
             }
         } else {
-            SwrveLogger.e(LOG_TAG, "No more pages in this conversation");
+            SwrveLogger.i(LOG_TAG, "No more pages in this conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
             Activity activity = getActivity();
             if (isAdded() && activity != null) {
