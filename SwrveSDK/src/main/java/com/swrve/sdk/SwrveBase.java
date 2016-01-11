@@ -405,8 +405,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 @Override
                 public void run() {
                     short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
-                    SendEventsManager sendEventsManager = new SendEventsManager(config, restClient, userId, appVersion, sessionToken, deviceId);
-                    sendEventsManager.sendStoredEvents(cachedLocalStorage);
+                    SwrveEventsManager swrveEventsManager = new SwrveEventsManager(config, restClient, userId, appVersion, sessionToken, deviceId);
+                    swrveEventsManager.sendStoredEvents(cachedLocalStorage);
                     eventsWereSent = true;
                 }
             });

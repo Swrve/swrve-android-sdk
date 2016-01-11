@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class SendEventsManager {
+public class SwrveEventsManager {
 
     private static final String LOG_TAG = "SwrveSDK";
     private static final Object lock = new Object();
@@ -28,7 +28,7 @@ public class SendEventsManager {
     private final String sessionToken;
     private final short deviceId;
 
-    protected SendEventsManager(SwrveConfigBase config, IRESTClient restClient, String userId, String appVersion, String sessionToken, short deviceId) {
+    protected SwrveEventsManager(SwrveConfigBase config, IRESTClient restClient, String userId, String appVersion, String sessionToken, short deviceId) {
         this.config = config;
         this.restClient = restClient;
         this.userId = userId;

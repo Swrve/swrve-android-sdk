@@ -57,8 +57,8 @@ public class SwrveWakefulService extends IntentService {
             sqLiteLocalStorage = new SQLiteLocalStorage(getApplicationContext(), swrve.config.getDbName(), swrve.config.getMaxSqliteDbSize());
             memoryCachedLocalStorage = new MemoryCachedLocalStorage(sqLiteLocalStorage, null);
 
-            SendEventsManager sendEventsManager = getSendEventsManager(memoryCachedLocalStorage);
-            eventsSent = sendEventsManager.storeAndSendEvents(events, memoryCachedLocalStorage, sqLiteLocalStorage);
+            SwrveEventsManager swrveEventsManager = getSendEventsManager(memoryCachedLocalStorage);
+            eventsSent = swrveEventsManager.storeAndSendEvents(events, memoryCachedLocalStorage, sqLiteLocalStorage);
         } finally {
             if (sqLiteLocalStorage != null) sqLiteLocalStorage.close();
             if (memoryCachedLocalStorage != null) memoryCachedLocalStorage.close();
@@ -67,10 +67,10 @@ public class SwrveWakefulService extends IntentService {
         return eventsSent;
     }
 
-    private SendEventsManager getSendEventsManager(MemoryCachedLocalStorage memoryCachedLocalStorage){
+    private SwrveEventsManager getSendEventsManager(MemoryCachedLocalStorage memoryCachedLocalStorage){
         IRESTClient restClient = new RESTClient(swrve.config.getHttpTimeout());
         short deviceId = EventHelper.getDeviceId(memoryCachedLocalStorage);
         String sessionToken = SwrveHelper.generateSessionToken(swrve.apiKey, swrve.appId, swrve.userId);
-        return new SendEventsManager(swrve.config, restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
+        return new SwrveEventsManager(swrve.config, restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
     }
 }
