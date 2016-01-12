@@ -11,6 +11,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
+import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
@@ -173,8 +174,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
     protected List<SwrveBaseCampaign> campaigns;
-    protected Set<String> assetsOnDisk;
-    protected boolean assetsCurrentlyDownloading;
+    protected SwrveAssetsManager assetManager;
     protected SparseArray<String> appStoreURLs;
     protected boolean autoShowMessagesEnabled;
     protected Integer campaignsAndResourcesFlushFrequency;
@@ -220,8 +220,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         this.restClient = createRESTClient();
         this.bindCounter = new AtomicInteger();
         this.autoShowMessagesEnabled = true;
-        this.assetsOnDisk = new HashSet<String>();
-        this.assetsCurrentlyDownloading = false;
         this.newSessionInterval = config.getNewSessionInterval();
 
         initContext(context);
@@ -625,6 +623,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return new AndroidTelephonyManagerWrapper(context);
     }
 
+    protected void initAssetManager(){
+        this.assetManager = new SwrveAssetsManager(cacheDir, cdnRoot);
+    }
+
     protected void findCacheFolder(Activity activity) {
         cacheDir = config.getCacheDir();
 
@@ -645,7 +647,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected boolean checkPermissionGranted(Context context, String permission) {
-        return ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+        return SwrveHelper.checkPermissionGranted(context, permission);
     }
 
     protected void requestPermissions(Activity activity, String permissions[]) {
@@ -965,51 +967,45 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
+    public SwrveAssetsManager getAssetsManager(){
+        return assetManager;
+    }
+
     private boolean supportsDeviceFilter(String requirement) {
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase());
     }
 
     protected void downloadAssets(final Set<String> assetsQueue) {
-        assetsCurrentlyDownloading = true;
-        final Set<String> failedAssets = new HashSet<String>();
+        assetManager.setAssetsCurrentlyDownloading(true);
         ExecutorService resourceDownloadExecutor = Executors.newSingleThreadExecutor();
-        Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
-
         resourceDownloadExecutor.execute(SwrveRunnables.withoutExceptions(new Runnable() {
             @Override
             public void run() {
                 Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
                 for (String asset : assetsToDownload) {
+                    Set<String> failedAssets = new HashSet<String>();
                     boolean success = downloadAssetSynchronously(asset);
-                    synchronized (assetsOnDisk) {
+                    if (success) {
                         if (success) {
-                            assetsOnDisk.add(asset);
+                            assetManager.addAsset(asset);
                         } else {
                             failedAssets.add(asset);
                         }
                     }
-                }
-                assetsCurrentlyDownloading = false;
 
-                if(failedAssets.isEmpty()){
-                    autoShowMessages();
-                }else{
-                    downloadAssets(failedAssets);
+                    if (!failedAssets.isEmpty()) {
+                        downloadAssets(failedAssets);
+                    }
                 }
+                assetManager.setAssetsCurrentlyDownloading(false);
+                autoShowMessages();
             }
         }));
     }
 
-    protected SwrveMessageCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveMessageCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
-    }
-
-    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
-    }
-
+    @RequiresPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     protected boolean downloadAssetSynchronously(final String assetPath) {
-        String url = cdnRoot + assetPath;
+        String url  = assetManager.getCDNUrlForAssetPath(assetPath);
         InputStream inputStream = null;
         try {
             URLConnection openConnection = new URL(url).openConnection();
@@ -1056,12 +1052,22 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             File file = new File(cacheDir, assetPath);
             if (file.exists()) {
                 itDownloadQueue.remove();
-                synchronized (assetsOnDisk) {
-                    assetsOnDisk.add(assetPath);
+
+                synchronized (assetManager) {
+                    assetManager.addAsset(assetPath);
                 }
             }
         }
         return assetsQueue;
+    }
+
+
+    protected SwrveMessageCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        return new SwrveMessageCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
+    }
+
+    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
     }
 
     protected void saveCampaignSettings() {
@@ -1368,9 +1374,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     public Set<String> getAssetsOnDisk() {
-        synchronized (assetsOnDisk) {
-            return this.assetsOnDisk;
-        }
+        return assetManager.getAssetsOnDisk();
     }
 
     public String getAutoShowEventTrigger() {

@@ -116,6 +116,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Find cache folder
             findCacheFolder(activity);
 
+            this.initAssetManager();
+
             // Open access to local storage
             openLocalStorageConnection();
 
@@ -158,6 +160,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Get device info
             getDeviceInfo(resolvedContext);
             queueDeviceInfoNow(true);
+
 
             // Talk initialization
             if (config.isTalkEnabled()) {
