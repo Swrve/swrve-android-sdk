@@ -19,7 +19,7 @@ import java.util.Set;
  * In-app message inside a campaign, with different formats.
  */
 public class SwrveMessage {
-    protected static final String LOG_TAG = "SwrveSDK";
+    protected static final String LOG_TAG = "SwrveMessage";
 
     // Swrve SDK reference
     protected SwrveBase<?, ?> messageController;
@@ -30,13 +30,13 @@ public class SwrveMessage {
     // Priority of the message
     protected int priority = 9999;
     // Parent in-app campaign
-    protected SwrveCampaign campaign;
+    protected SwrveMessageCampaign campaign;
     // List of available formats
     protected List<SwrveMessageFormat> formats;
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveMessage(SwrveBase<?, ?> messageController, SwrveCampaign campaign) {
+    public SwrveMessage(SwrveBase<?, ?> messageController, SwrveMessageCampaign campaign) {
         this.campaign = campaign;
         this.formats = new ArrayList<SwrveMessageFormat>();
         this.messageController = messageController;
@@ -53,7 +53,7 @@ public class SwrveMessage {
      * @param messageData JSON data containing the message details.
      * @throws JSONException
      */
-    public SwrveMessage(SwrveBase<?, ?> controller, SwrveCampaign campaign, JSONObject messageData) throws JSONException {
+    public SwrveMessage(SwrveBase<?, ?> controller, SwrveMessageCampaign campaign, JSONObject messageData) throws JSONException {
         this(controller, campaign);
         setId(messageData.getInt("id"));
         setName(messageData.getString("name"));
@@ -130,11 +130,11 @@ public class SwrveMessage {
     /**
      * @return the related campaign.
      */
-    public SwrveCampaign getCampaign() {
+    public SwrveMessageCampaign getCampaign() {
         return campaign;
     }
 
-    protected void setCampaign(SwrveCampaign campaign) {
+    protected void setCampaign(SwrveMessageCampaign campaign) {
         this.campaign = campaign;
     }
 
