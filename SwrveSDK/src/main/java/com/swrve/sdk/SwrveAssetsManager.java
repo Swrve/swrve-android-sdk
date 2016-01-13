@@ -8,15 +8,16 @@ public class SwrveAssetsManager {
     private final String LOG_TAG = "SwrveAssetsManager";
     private final String cdnRoot;
     protected Set<String> assetsOnDisk;
-    public int downloadedAssets = 0;
+    private Set<String> failedAssets;
     protected boolean assetsCurrentlyDownloading;
     protected File imageCacheDir;
 
 
-    protected SwrveAssetsManager(File imageCacheDir, String cdnRoot) {
+    public SwrveAssetsManager(File imageCacheDir, String cdnRoot) {
         this.imageCacheDir = imageCacheDir;
         this.cdnRoot = cdnRoot;
         this.assetsOnDisk = new HashSet<String>();
+        this.failedAssets = new HashSet<String>();
         this.assetsCurrentlyDownloading = false;
     }
 
@@ -33,24 +34,32 @@ public class SwrveAssetsManager {
     }
 
     public void addAsset(String asset) {
+        failedAssets.remove(asset);
         if (containsAsset(asset)) {
             SwrveLogger.w(LOG_TAG, "");
             return;
         } else {
             assetsOnDisk.add(asset);
-            downloadedAssets++;
         }
+    }
+
+    public void addFailedAsset(String asset) {
+        failedAssets.add(asset);
     }
 
     public boolean containsAsset(String asset) {
         return assetsOnDisk.contains(asset);
     }
 
-    public Set<String> getAssetsOnDisk() {
-        return this.assetsOnDisk;
+    public boolean hasFailedAssets() {
+        return failedAssets.size() > 0;
     }
 
-    public int getDownloadedAssets() {
-        return this.downloadedAssets;
+    public Set<String> getFailedAssets(){
+        return this.failedAssets;
+    }
+
+    public Set<String> getAssetsOnDisk() {
+        return this.assetsOnDisk;
     }
 }

@@ -967,10 +967,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    public SwrveAssetsManager getAssetsManager(){
-        return assetManager;
-    }
-
     private boolean supportsDeviceFilter(String requirement) {
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase());
     }
@@ -983,18 +979,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             public void run() {
                 Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
                 for (String asset : assetsToDownload) {
-                    Set<String> failedAssets = new HashSet<String>();
+
                     boolean success = downloadAssetSynchronously(asset);
                     if (success) {
                         if (success) {
                             assetManager.addAsset(asset);
                         } else {
-                            failedAssets.add(asset);
+                            assetManager.addFailedAsset(asset);
                         }
                     }
 
-                    if (!failedAssets.isEmpty()) {
-                        downloadAssets(failedAssets);
+                    if (assetManager.hasFailedAssets()) {
+                        downloadAssets(assetManager.getFailedAssets());
                     }
                 }
                 assetManager.setAssetsCurrentlyDownloading(false);
