@@ -51,6 +51,10 @@ public class SwrveAssetsManager {
         return assetsOnDisk.contains(asset);
     }
 
+    public void clearAssetsOnDisk(){
+        this.assetsOnDisk.clear();
+    }
+
     public boolean hasFailedAssets() {
         return failedAssets.size() > 0;
     }
