@@ -1,6 +1,9 @@
 package com.swrve.sdk;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.support.v4.app.ActivityCompat;
 import android.util.Base64;
 import com.swrve.sdk.SwrveLogger;
 
@@ -200,5 +203,9 @@ public final class SwrveHelper {
         } else {
             return false;
         }
+    }
+
+    protected static boolean checkPermissionGranted(Context context, String permission) {
+        return ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 }

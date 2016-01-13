@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * Swrve campaign containing messages targeted for the current device and user id.
  */
-public class SwrveCampaign extends SwrveBaseCampaign {
+public class SwrveMessageCampaign extends SwrveBaseCampaign {
     // List of messages contained in the campaign
     protected List<SwrveMessage> messages;
 
@@ -32,7 +32,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      * @param assetsQueue  Set where to save the resources to be loaded
      * @throws JSONException
      */
-    public SwrveCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    public SwrveMessageCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
         super(controller, campaignData);
         this.messages = new ArrayList<SwrveMessage>();
 
@@ -165,8 +165,8 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         return null;
     }
 
-    protected SwrveMessage createMessage(SwrveBase<?, ?> controller, SwrveCampaign swrveCampaign, JSONObject messageData) throws JSONException {
-        return new SwrveMessage(controller, swrveCampaign, messageData);
+    protected SwrveMessage createMessage(SwrveBase<?, ?> controller, SwrveMessageCampaign swrveMessageCampaign, JSONObject messageData) throws JSONException {
+        return new SwrveMessage(controller, swrveMessageCampaign, messageData);
     }
 
     /**
