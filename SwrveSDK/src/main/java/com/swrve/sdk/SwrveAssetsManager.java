@@ -36,7 +36,7 @@ public class SwrveAssetsManager {
     public void addAsset(String asset) {
         failedAssets.remove(asset);
         if (containsAsset(asset)) {
-            SwrveLogger.w(LOG_TAG, "");
+            SwrveLogger.w(LOG_TAG, "Asset already present in SwrveAssetManager");
             return;
         } else {
             assetsOnDisk.add(asset);

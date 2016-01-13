@@ -627,6 +627,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         this.assetManager = new SwrveAssetsManager(cacheDir, cdnRoot);
     }
 
+    protected SwrveAssetsManager getAssetManager(){
+        return this.assetManager;
+    }
+
     protected void findCacheFolder(Activity activity) {
         cacheDir = config.getCacheDir();
 
