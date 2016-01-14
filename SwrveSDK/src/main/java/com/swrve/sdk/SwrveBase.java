@@ -26,7 +26,7 @@ import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveMessageCampaign;
+import com.swrve.sdk.messaging.SwrveCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignStatus;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEventListener;
@@ -809,7 +809,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @SuppressLint("UseSparseArrays")
     protected SwrveConversation _getConversationForEvent(String event) {
         SwrveConversation result = null;
-        SwrveMessageCampaign campaign = null;
+        SwrveCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, String> campaignReasons = null;
@@ -880,7 +880,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @SuppressLint("UseSparseArrays")
     protected SwrveMessage _getMessageForEvent(String event, SwrveOrientation orientation) {
         SwrveMessage result = null;
-        SwrveMessageCampaign campaign = null;
+        SwrveCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, String> campaignReasons = null;
@@ -902,8 +902,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
                     SwrveBaseCampaign nextCampaign = itCampaign.next();
-                    if (nextCampaign instanceof SwrveMessageCampaign) {
-                        SwrveMessage nextMessage = ((SwrveMessageCampaign)nextCampaign).getMessageForEvent(event, now, campaignReasons);
+                    if (nextCampaign instanceof SwrveCampaign) {
+                        SwrveMessage nextMessage = ((SwrveCampaign)nextCampaign).getMessageForEvent(event, now, campaignReasons);
                         if (nextMessage != null) {
                             // Add to list of returned messages
                             availableMessages.add(nextMessage);
@@ -983,8 +983,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext() && result == null) {
                     SwrveBaseCampaign campaign = itCampaign.next();
-                    if (campaign instanceof SwrveMessageCampaign) {
-                        result = ((SwrveMessageCampaign)campaign).getMessageForId(messageId);
+                    if (campaign instanceof SwrveCampaign) {
+                        result = ((SwrveCampaign)campaign).getMessageForId(messageId);
                     }
                 }
             }
@@ -1029,7 +1029,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Update next for round robin
             SwrveMessage message = messageFormat.getMessage();
-            SwrveMessageCampaign campaign = message.getCampaign();
+            SwrveCampaign campaign = message.getCampaign();
             if (campaign != null) {
                 campaign.messageWasShownToUser();
             }
@@ -1553,8 +1553,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public boolean showCampaign(SwrveBaseCampaign campaign) {
-        if (campaign instanceof SwrveMessageCampaign) {
-            SwrveMessageCampaign iamCampaign = (SwrveMessageCampaign) campaign;
+        if (campaign instanceof SwrveCampaign) {
+            SwrveCampaign iamCampaign = (SwrveCampaign) campaign;
             if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
                 // Display first message in the in-app campaign
                 messageListener.onMessage(iamCampaign.getMessages().get(0), true);

@@ -31,7 +31,7 @@ import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveMessageCampaign;
+import com.swrve.sdk.messaging.SwrveCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -990,8 +990,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }));
     }
 
-    protected SwrveMessageCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveMessageCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
+    protected SwrveCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        return new SwrveCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
     }
 
     protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {

@@ -30,13 +30,13 @@ public class SwrveMessage {
     // Priority of the message
     protected int priority = 9999;
     // Parent in-app campaign
-    protected SwrveMessageCampaign campaign;
+    protected SwrveCampaign campaign;
     // List of available formats
     protected List<SwrveMessageFormat> formats;
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveMessage(SwrveBase<?, ?> messageController, SwrveMessageCampaign campaign) {
+    public SwrveMessage(SwrveBase<?, ?> messageController, SwrveCampaign campaign) {
         this.campaign = campaign;
         this.formats = new ArrayList<SwrveMessageFormat>();
         this.messageController = messageController;
@@ -53,7 +53,7 @@ public class SwrveMessage {
      * @param messageData JSON data containing the message details.
      * @throws JSONException
      */
-    public SwrveMessage(SwrveBase<?, ?> controller, SwrveMessageCampaign campaign, JSONObject messageData) throws JSONException {
+    public SwrveMessage(SwrveBase<?, ?> controller, SwrveCampaign campaign, JSONObject messageData) throws JSONException {
         this(controller, campaign);
         setId(messageData.getInt("id"));
         setName(messageData.getString("name"));
@@ -130,11 +130,11 @@ public class SwrveMessage {
     /**
      * @return the related campaign.
      */
-    public SwrveMessageCampaign getCampaign() {
+    public SwrveCampaign getCampaign() {
         return campaign;
     }
 
-    protected void setCampaign(SwrveMessageCampaign campaign) {
+    protected void setCampaign(SwrveCampaign campaign) {
         this.campaign = campaign;
     }
 
