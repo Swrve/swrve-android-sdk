@@ -26,7 +26,8 @@ import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveMessageCampaign;
+import com.swrve.sdk.messaging.SwrveCampaignStatus;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEventListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -192,6 +193,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 if (conversationListener == null) {
                     setConversationListener(new ISwrveConversationListener() {
                         public void onMessage(final SwrveConversation conversation) {
+                            // Start a Conversation activity to display the campaign
                             if (SwrveBase.this.context != null) {
                                 final Context ctx = SwrveBase.this.context.get();
                                 if (ctx == null) {
@@ -203,6 +205,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 intent.putExtra("conversation", conversation);
                                 ctx.startActivity(intent);
+                                // Report that the message was shown to users
+                                conversation.getCampaign().messageWasShownToUser();
                             }
                         }
                     });
@@ -805,7 +809,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @SuppressLint("UseSparseArrays")
     protected SwrveConversation _getConversationForEvent(String event) {
         SwrveConversation result = null;
-        SwrveCampaign campaign = null;
+        SwrveMessageCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, String> campaignReasons = null;
@@ -876,7 +880,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @SuppressLint("UseSparseArrays")
     protected SwrveMessage _getMessageForEvent(String event, SwrveOrientation orientation) {
         SwrveMessage result = null;
-        SwrveCampaign campaign = null;
+        SwrveMessageCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, String> campaignReasons = null;
@@ -898,8 +902,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
                     SwrveBaseCampaign nextCampaign = itCampaign.next();
-                    if (nextCampaign instanceof SwrveCampaign) {
-                        SwrveMessage nextMessage = ((SwrveCampaign)nextCampaign).getMessageForEvent(event, now, campaignReasons);
+                    if (nextCampaign instanceof SwrveMessageCampaign) {
+                        SwrveMessage nextMessage = ((SwrveMessageCampaign)nextCampaign).getMessageForEvent(event, now, campaignReasons);
                         if (nextMessage != null) {
                             // Add to list of returned messages
                             availableMessages.add(nextMessage);
@@ -979,8 +983,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext() && result == null) {
                     SwrveBaseCampaign campaign = itCampaign.next();
-                    if (campaign instanceof SwrveCampaign) {
-                        result = ((SwrveCampaign)campaign).getMessageForId(messageId);
+                    if (campaign instanceof SwrveMessageCampaign) {
+                        result = ((SwrveMessageCampaign)campaign).getMessageForId(messageId);
                     }
                 }
             }
@@ -1025,7 +1029,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Update next for round robin
             SwrveMessage message = messageFormat.getMessage();
-            SwrveCampaign campaign = message.getCampaign();
+            SwrveMessageCampaign campaign = message.getCampaign();
             if (campaign != null) {
                 campaign.messageWasShownToUser();
             }
@@ -1522,6 +1526,58 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return null;
+    }
+
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns() {
+        return getCampaigns(getDeviceOrientation());
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+        List<SwrveBaseCampaign> result = new ArrayList<SwrveBaseCampaign>();
+        synchronized (campaigns) {
+            for (int i = 0; i < campaigns.size(); i++) {
+                SwrveBaseCampaign campaign = campaigns.get(i);
+                if (campaign.isInbox() && campaign.getStatus() != SwrveCampaignStatus.Deleted && campaign.isActive(getNow())) {
+
+                    if (campaign.supportsOrientation(orientation)) {
+                        result.add(campaign);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public boolean showCampaign(SwrveBaseCampaign campaign) {
+        if (campaign instanceof SwrveMessageCampaign) {
+            SwrveMessageCampaign iamCampaign = (SwrveMessageCampaign) campaign;
+            if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
+                // Display first message in the in-app campaign
+                messageListener.onMessage(iamCampaign.getMessages().get(0), true);
+                return true;
+            } else {
+                SwrveLogger.e(LOG_TAG, "No in-app message or message listener.");
+            }
+        } else if (campaign instanceof SwrveConversationCampaign) {
+            SwrveConversationCampaign conversationCampaign = (SwrveConversationCampaign) campaign;
+            if (conversationCampaign != null && conversationCampaign.getConversation() != null && conversationListener != null) {
+                conversationListener.onMessage(conversationCampaign.getConversation());
+                return true;
+            } else {
+                SwrveLogger.e(LOG_TAG, "No conversation campaign or conversation listener.");
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void removeCampaign(SwrveBaseCampaign campaign) {
+        campaign.setStatus(SwrveCampaignStatus.Deleted);
+        saveCampaignSettings();
     }
 
     @Override

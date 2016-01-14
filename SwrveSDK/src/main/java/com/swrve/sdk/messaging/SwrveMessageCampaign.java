@@ -18,9 +18,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Swrve campaign containing messages targeted for the current device and user id.
+ * Swrve campaign containing an in-app message targeted to the current device and user id.
  */
-public class SwrveCampaign extends SwrveBaseCampaign {
+public class SwrveMessageCampaign extends SwrveBaseCampaign {
     // List of messages contained in the campaign
     protected List<SwrveMessage> messages;
 
@@ -32,7 +32,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      * @param assetsQueue  Set where to save the resources to be loaded
      * @throws JSONException
      */
-    public SwrveCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    public SwrveMessageCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
         super(controller, campaignData);
         this.messages = new ArrayList<SwrveMessage>();
 
@@ -165,16 +165,16 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         return null;
     }
 
-    protected SwrveMessage createMessage(SwrveBase<?, ?> controller, SwrveCampaign swrveCampaign, JSONObject messageData) throws JSONException {
+    protected SwrveMessage createMessage(SwrveBase<?, ?> controller, SwrveMessageCampaign swrveCampaign, JSONObject messageData) throws JSONException {
         return new SwrveMessage(controller, swrveCampaign, messageData);
     }
 
     /**
      * Notify that a message was shown to the user.
      */
+    @Override
     public void messageWasShownToUser() {
-        incrementImpressions();
-        setMessageMinDelayThrottle();
+        super.messageWasShownToUser();
         // Set next message to be shown
         if (!isRandomOrder()) {
             int nextMessage = (getNext() + 1) % getMessages().size();
@@ -184,7 +184,17 @@ public class SwrveCampaign extends SwrveBaseCampaign {
             SwrveLogger.i(LOG_TAG, "Next message in campaign " + getId() + " is random");
         }
     }
+    @Override
+    public boolean supportsOrientation(SwrveOrientation orientation) {
+        Iterator<SwrveMessage> messageIt = messages.iterator();
+        while (messageIt.hasNext()) {
+            SwrveMessage message = messageIt.next();
+            if (message.supportsOrientation(orientation))
+                return true;
+        }
 
+        return false;
+    }
     /**
      * Notify that a message was dismissed.
      */
