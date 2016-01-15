@@ -13,7 +13,9 @@ import java.util.ArrayList;
 public class SwrveWakefulService extends IntentService {
 
     private static final String LOG_TAG = "SwrveWakeful";
-    public static final String EXTRA_SEND_EVENTS = "swrve_wakeful_events";
+    public static final String EXTRA_EVENTS = "swrve_wakeful_events";
+    public static final String EXTRA_LOCATIONS_IMPRESSION_IDS = "swrve_wakeful_location_impression_ids";
+    public static final String EXTRA_LOCATIONS_ENGAGED_IDS = "swrve_wakeful_location_engaged_ids";
 
     private Swrve swrve = (Swrve) SwrveSDKBase.getInstance();
 
@@ -24,9 +26,26 @@ public class SwrveWakefulService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            if (hasValidExtra(intent)) {
-                handleSendEvents(intent);
-            } else {
+            boolean unkownIntentContent = true;
+            ArrayList<String> eventsExtras = intent.getExtras().getStringArrayList(EXTRA_EVENTS);
+            if (eventsExtras != null) {
+                unkownIntentContent = false;
+                handleSendEvents(SwrveEventsManager.EventType.NamedEvent, eventsExtras);
+            }
+
+            ArrayList<Integer> locationImpressionsExtras = intent.getExtras().getIntegerArrayList(EXTRA_LOCATIONS_IMPRESSION_IDS);
+            if (locationImpressionsExtras != null) {
+                unkownIntentContent = false;
+                handleSendEvents(SwrveEventsManager.EventType.LocationImpressionEvent, locationImpressionsExtras);
+            }
+
+            ArrayList<Integer> locationEngagedExtras = intent.getExtras().getIntegerArrayList(EXTRA_LOCATIONS_ENGAGED_IDS);
+            if (locationEngagedExtras != null) {
+                unkownIntentContent = false;
+                handleSendEvents(SwrveEventsManager.EventType.LocationEngagedEvent, locationEngagedExtras);
+            }
+
+            if (unkownIntentContent) {
                 SwrveLogger.e(LOG_TAG, "SwrveWakefulService: Unknown intent received.");
             }
         } catch (Exception ex) {
@@ -36,21 +55,8 @@ public class SwrveWakefulService extends IntentService {
         }
     }
 
-    private boolean hasValidExtra(Intent intent) {
-        if (intent.hasExtra(EXTRA_SEND_EVENTS) ) {
-            if(intent.getExtras().getStringArrayList(EXTRA_SEND_EVENTS) != null) {
-                ArrayList<String> events = intent.getExtras().getStringArrayList(EXTRA_SEND_EVENTS);
-                if(events.size() > 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    protected int handleSendEvents(Intent intent) throws Exception {
+    protected int handleSendEvents(SwrveEventsManager.EventType eventType, ArrayList<?> data) throws Exception {
         int eventsSent = 0;
-        ArrayList<String> events = intent.getExtras().getStringArrayList(EXTRA_SEND_EVENTS);
         MemoryCachedLocalStorage memoryCachedLocalStorage = null;
         SQLiteLocalStorage sqLiteLocalStorage = null;
         try {
@@ -58,7 +64,14 @@ public class SwrveWakefulService extends IntentService {
             memoryCachedLocalStorage = new MemoryCachedLocalStorage(sqLiteLocalStorage, null);
 
             SwrveEventsManager swrveEventsManager = getSendEventsManager(memoryCachedLocalStorage);
-            eventsSent = swrveEventsManager.storeAndSendEvents(events, memoryCachedLocalStorage, sqLiteLocalStorage);
+
+            if (eventType == SwrveEventsManager.EventType.NamedEvent) {
+                eventsSent = swrveEventsManager.storeAndSendEvents(eventType, data, memoryCachedLocalStorage, sqLiteLocalStorage);
+            } else if (eventType == SwrveEventsManager.EventType.LocationImpressionEvent) {
+                eventsSent = swrveEventsManager.storeAndSendEvents(eventType, data, memoryCachedLocalStorage, sqLiteLocalStorage);
+            } else if (eventType == SwrveEventsManager.EventType.LocationEngagedEvent) {
+                eventsSent = swrveEventsManager.storeAndSendEvents(eventType, data, memoryCachedLocalStorage, sqLiteLocalStorage);
+            }
         } finally {
             if (sqLiteLocalStorage != null) sqLiteLocalStorage.close();
             if (memoryCachedLocalStorage != null) memoryCachedLocalStorage.close();

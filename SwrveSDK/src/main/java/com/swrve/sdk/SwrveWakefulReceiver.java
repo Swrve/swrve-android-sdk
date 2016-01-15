@@ -13,9 +13,19 @@ public class SwrveWakefulReceiver extends WakefulBroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Intent service = new Intent(context, SwrveWakefulService.class);
-        if(intent.hasExtra(SwrveWakefulService.EXTRA_SEND_EVENTS)) {
-            ArrayList<String> events = intent.getExtras().getStringArrayList(SwrveWakefulService.EXTRA_SEND_EVENTS);
-            SwrveLogger.i(LOG_TAG, "SwrveWakefulReceiver. Events:" + events);
+        if(intent.hasExtra(SwrveWakefulService.EXTRA_EVENTS)) {
+            ArrayList<String> events = intent.getExtras().getStringArrayList(SwrveWakefulService.EXTRA_EVENTS);
+            SwrveLogger.i(LOG_TAG, "SwrveWakefulReceiver. Events: " + events);
+            service.putExtras(intent);
+        }
+        if(intent.hasExtra(SwrveWakefulService.EXTRA_LOCATIONS_IMPRESSION_IDS)) {
+            ArrayList<Integer> events = intent.getExtras().getIntegerArrayList(SwrveWakefulService.EXTRA_LOCATIONS_IMPRESSION_IDS);
+            SwrveLogger.i(LOG_TAG, "SwrveWakefulReceiver. Location impression events: " + events);
+            service.putExtras(intent);
+        }
+        if(intent.hasExtra(SwrveWakefulService.EXTRA_LOCATIONS_ENGAGED_IDS)) {
+            ArrayList<Integer> events = intent.getExtras().getIntegerArrayList(SwrveWakefulService.EXTRA_LOCATIONS_ENGAGED_IDS);
+            SwrveLogger.i(LOG_TAG, "SwrveWakefulReceiver. Location engagement events: " + events);
             service.putExtras(intent);
         }
         startWakefulService(context, service);
