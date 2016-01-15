@@ -14,8 +14,6 @@ public class SwrveWakefulService extends IntentService {
 
     private static final String LOG_TAG = "SwrveWakeful";
     public static final String EXTRA_EVENTS = "swrve_wakeful_events";
-    public static final String EXTRA_LOCATIONS_IMPRESSION_IDS = "swrve_wakeful_location_impression_ids";
-    public static final String EXTRA_LOCATIONS_ENGAGED_IDS = "swrve_wakeful_location_engaged_ids";
 
     private Swrve swrve = (Swrve) SwrveSDKBase.getInstance();
 
@@ -30,19 +28,7 @@ public class SwrveWakefulService extends IntentService {
             ArrayList<String> eventsExtras = intent.getExtras().getStringArrayList(EXTRA_EVENTS);
             if (eventsExtras != null) {
                 unkownIntentContent = false;
-                handleSendEvents(SwrveEventsManager.EventType.NamedEvent, eventsExtras);
-            }
-
-            ArrayList<Integer> locationImpressionsExtras = intent.getExtras().getIntegerArrayList(EXTRA_LOCATIONS_IMPRESSION_IDS);
-            if (locationImpressionsExtras != null) {
-                unkownIntentContent = false;
-                handleSendEvents(SwrveEventsManager.EventType.LocationImpressionEvent, locationImpressionsExtras);
-            }
-
-            ArrayList<Integer> locationEngagedExtras = intent.getExtras().getIntegerArrayList(EXTRA_LOCATIONS_ENGAGED_IDS);
-            if (locationEngagedExtras != null) {
-                unkownIntentContent = false;
-                handleSendEvents(SwrveEventsManager.EventType.LocationEngagedEvent, locationEngagedExtras);
+                handleSendEvents(eventsExtras);
             }
 
             if (unkownIntentContent) {
@@ -55,7 +41,7 @@ public class SwrveWakefulService extends IntentService {
         }
     }
 
-    protected int handleSendEvents(SwrveEventsManager.EventType eventType, ArrayList<?> data) throws Exception {
+    protected int handleSendEvents(ArrayList<String> eventsJson) throws Exception {
         int eventsSent = 0;
         MemoryCachedLocalStorage memoryCachedLocalStorage = null;
         SQLiteLocalStorage sqLiteLocalStorage = null;
@@ -64,14 +50,7 @@ public class SwrveWakefulService extends IntentService {
             memoryCachedLocalStorage = new MemoryCachedLocalStorage(sqLiteLocalStorage, null);
 
             SwrveEventsManager swrveEventsManager = getSendEventsManager(memoryCachedLocalStorage);
-
-            if (eventType == SwrveEventsManager.EventType.NamedEvent) {
-                eventsSent = swrveEventsManager.storeAndSendEvents(eventType, data, memoryCachedLocalStorage, sqLiteLocalStorage);
-            } else if (eventType == SwrveEventsManager.EventType.LocationImpressionEvent) {
-                eventsSent = swrveEventsManager.storeAndSendEvents(eventType, data, memoryCachedLocalStorage, sqLiteLocalStorage);
-            } else if (eventType == SwrveEventsManager.EventType.LocationEngagedEvent) {
-                eventsSent = swrveEventsManager.storeAndSendEvents(eventType, data, memoryCachedLocalStorage, sqLiteLocalStorage);
-            }
+            eventsSent = swrveEventsManager.storeAndSendEvents(eventsJson, memoryCachedLocalStorage, sqLiteLocalStorage);
         } finally {
             if (sqLiteLocalStorage != null) sqLiteLocalStorage.close();
             if (memoryCachedLocalStorage != null) memoryCachedLocalStorage.close();
