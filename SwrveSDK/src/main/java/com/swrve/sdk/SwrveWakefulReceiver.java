@@ -18,16 +18,6 @@ public class SwrveWakefulReceiver extends WakefulBroadcastReceiver {
             SwrveLogger.i(LOG_TAG, "SwrveWakefulReceiver. Events: " + events);
             service.putExtras(intent);
         }
-        if(intent.hasExtra(SwrveWakefulService.EXTRA_LOCATIONS_IMPRESSION_IDS)) {
-            ArrayList<Integer> events = intent.getExtras().getIntegerArrayList(SwrveWakefulService.EXTRA_LOCATIONS_IMPRESSION_IDS);
-            SwrveLogger.i(LOG_TAG, "SwrveWakefulReceiver. Location impression events: " + events);
-            service.putExtras(intent);
-        }
-        if(intent.hasExtra(SwrveWakefulService.EXTRA_LOCATIONS_ENGAGED_IDS)) {
-            ArrayList<Integer> events = intent.getExtras().getIntegerArrayList(SwrveWakefulService.EXTRA_LOCATIONS_ENGAGED_IDS);
-            SwrveLogger.i(LOG_TAG, "SwrveWakefulReceiver. Location engagement events: " + events);
-            service.putExtras(intent);
-        }
         startWakefulService(context, service);
     }
 }
