@@ -40,30 +40,26 @@ public class SwrveEventsManager {
     /*
      * Stores the events passed in from ArrayList and attempts to send only these events. If successful, these events are removed from storage.
      */
-    protected int storeAndSendEvents(ArrayList<String> events, MemoryCachedLocalStorage memoryCachedLocalStorage, SQLiteLocalStorage sqLiteLocalStorage) throws Exception {
-        if (events != null && events.size() == 0) {
+    protected int storeAndSendEvents(ArrayList<String> eventsJson, MemoryCachedLocalStorage memoryCachedLocalStorage, SQLiteLocalStorage sqLiteLocalStorage) throws Exception {
+        if (eventsJson == null || (eventsJson != null && eventsJson.size() == 0)) {
             return 0;
         }
         synchronized(lock) {
-            LinkedHashMap<Long, String> storedEvents = storeEvents(events, memoryCachedLocalStorage, sqLiteLocalStorage);
-
+            LinkedHashMap<Long, String> storedEvents = storeEvents(eventsJson, sqLiteLocalStorage);
             LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = new LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>>();
             combinedEvents.put(memoryCachedLocalStorage, storedEvents);
             return sendEvents(combinedEvents);
         }
     }
 
-    private LinkedHashMap<Long, String> storeEvents(ArrayList<String> events,
-                                                    MemoryCachedLocalStorage memoryCachedLocalStorage, SQLiteLocalStorage sqLiteLocalStorage) throws Exception {
+    private LinkedHashMap<Long, String> storeEvents(ArrayList<String> eventsJson, SQLiteLocalStorage sqLiteLocalStorage) throws Exception {
         LinkedHashMap<Long, String> storedEvents = new LinkedHashMap<Long, String>();
-        for (String event : events) {
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", event);
-
-            String eventAsJSON = EventHelper.eventAsJSON("event", parameters, null, memoryCachedLocalStorage);
+        // Store named events coming from the list
+        for (String eventAsJSON : eventsJson) {
             long id = sqLiteLocalStorage.addEventAndGetId(eventAsJSON);
             storedEvents.put(id, eventAsJSON);
         }
+
         return storedEvents;
     }
 
