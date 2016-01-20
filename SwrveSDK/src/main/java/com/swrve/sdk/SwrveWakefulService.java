@@ -24,14 +24,10 @@ public class SwrveWakefulService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            boolean unkownIntentContent = true;
             ArrayList<String> eventsExtras = intent.getExtras().getStringArrayList(EXTRA_EVENTS);
-            if (eventsExtras != null) {
-                unkownIntentContent = false;
+            if (eventsExtras != null && eventsExtras.size() > 0) {
                 handleSendEvents(eventsExtras);
-            }
-
-            if (unkownIntentContent) {
+            } else {
                 SwrveLogger.e(LOG_TAG, "SwrveWakefulService: Unknown intent received.");
             }
         } catch (Exception ex) {
