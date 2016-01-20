@@ -97,6 +97,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void afterInit() {
+        // process push notifications
+        afterBind();
     }
 
     @Override
