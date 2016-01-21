@@ -113,6 +113,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        SwrveSDK.processIntent(intent);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         SwrveSDK.onDestroy(this);

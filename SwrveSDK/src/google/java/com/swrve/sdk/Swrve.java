@@ -272,4 +272,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             }
         }
     }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        processIntent(intent);
+    }
 }

@@ -260,6 +260,16 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Notify the SDK that a new intent has been received.
+     *
+     * @param intent The intent received
+     */
+    public static void onNewIntent(Intent intent) {
+        checkInstanceCreated();
+        instance.onNewIntent(intent);
+    }
+
+    /**
      * Notify that the app has closed.
      *
      * @param activity Activity that called this method

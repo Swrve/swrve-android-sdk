@@ -143,6 +143,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void onNewIntent(Intent intent) {
+    }
+
+    @Override
     public void setLanguage(Locale locale) {
         this.language = SwrveHelper.toLanguageTag(locale);
     }

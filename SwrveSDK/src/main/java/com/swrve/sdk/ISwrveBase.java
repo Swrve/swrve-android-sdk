@@ -60,6 +60,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void onLowMemory();
 
+    void onNewIntent(Intent intent);
+
     void onDestroy(Activity activity);
 
     void shutdown();
