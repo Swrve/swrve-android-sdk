@@ -2,6 +2,7 @@ package com.swrve.sdk;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
