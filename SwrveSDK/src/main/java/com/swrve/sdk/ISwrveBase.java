@@ -7,9 +7,11 @@ import android.content.Intent;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 
@@ -18,6 +20,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -113,4 +116,12 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     Context getContext();
 
     C getConfig();
+
+    List<SwrveBaseCampaign> getCampaigns();
+
+    List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation);
+
+    boolean showCampaign(SwrveBaseCampaign campaign);
+
+    void removeCampaign(SwrveBaseCampaign campaign);
 }
