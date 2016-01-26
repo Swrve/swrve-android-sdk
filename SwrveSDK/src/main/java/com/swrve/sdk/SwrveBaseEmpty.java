@@ -168,25 +168,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public List<SwrveBaseCampaign> getCampaigns() {
-        return new ArrayList<SwrveBaseCampaign>();
-    }
-
-    @Override
-    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
-        return new ArrayList<SwrveBaseCampaign>();
-    }
-
-    @Override
-    public boolean showCampaign(SwrveBaseCampaign campaign) {
-        return false;
-    }
-
-    @Override
-    public void removeCampaign(SwrveBaseCampaign campaign) {
-    }
-
-    @Override
     public String getUserId() {
         if (SwrveHelper.isNullOrEmpty(userId)) {
             return "unsupported_version";
@@ -248,6 +229,25 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public C getConfig() {
         return config;
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns() {
+        return new ArrayList<SwrveBaseCampaign>();
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+        return new ArrayList<SwrveBaseCampaign>();
+    }
+
+    @Override
+    public boolean showCampaign(SwrveBaseCampaign campaign) {
+        return false;
+    }
+
+    @Override
+    public void removeCampaign(SwrveBaseCampaign campaign) {
     }
 
     @Override
