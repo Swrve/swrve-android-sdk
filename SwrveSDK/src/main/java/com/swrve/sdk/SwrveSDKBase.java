@@ -1,23 +1,26 @@
 package com.swrve.sdk;
 
-
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -260,6 +263,16 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Notify the SDK that a new intent has been received.
+     *
+     * @param intent The intent received
+     */
+    public static void onNewIntent(Intent intent) {
+        checkInstanceCreated();
+        instance.onNewIntent(intent);
+    }
+
+    /**
      * Notify that the app has closed.
      *
      * @param activity Activity that called this method
@@ -499,6 +512,55 @@ public abstract class SwrveSDKBase {
     public static Context getContext() {
         checkInstanceCreated();
         return instance.getContext();
+    }
+
+    /**
+     * Get the list active Inbox campaigns targeted for this user.
+     * It will exclude campaigns that have been deleted with the
+     * removeCampaign method and those that do not support the current orientation.
+     * <p>
+     * To obtain all Inbox campaigns independent of their orientation support
+     * use the getCampaigns(SwrveOrientation.Both) method.
+     *
+     * @return list of active Inbox campaigns.
+     */
+    public static List<SwrveBaseCampaign> getCampaigns() {
+        checkInstanceCreated();
+        return instance.getCampaigns();
+    }
+
+    /**
+     * Get the list active Inbox campaigns targeted for this user.
+     * It will exclude campaigns that have been deleted with the
+     * removeCampaign method and those that do not support the given orientation.
+     *
+     * @return list of active Inbox campaigns.
+     */
+    public static List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+        checkInstanceCreated();
+        return instance.getCampaigns(orientation);
+    }
+
+    /**
+     * Display the given campaign without the need to trigger an event and skipping
+     * the configured rules.
+     *
+     * @param campaign
+     * @return true if the campaign was displayed.
+     */
+    public static boolean showCampaign(SwrveBaseCampaign campaign) {
+        checkInstanceCreated();
+        return instance.showCampaign(campaign);
+    }
+
+    /**
+     * Remove this campaign. It won't be returned anymore by the 'getCampaigns' methods.
+     *
+     * @param campaign
+     */
+    public static void removeCampaign(SwrveBaseCampaign campaign) {
+        checkInstanceCreated();
+        instance.removeCampaign(campaign);
     }
 
     protected static void checkInstanceCreated() throws RuntimeException {

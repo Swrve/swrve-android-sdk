@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class SwrveWakefulService extends IntentService {
 
     private static final String LOG_TAG = "SwrveWakeful";
-    public static final String EXTRA_SEND_EVENTS = "swrve_wakeful_events";
+    public static final String EXTRA_EVENTS = "swrve_wakeful_events";
 
     private Swrve swrve = (Swrve) SwrveSDKBase.getInstance();
 
@@ -24,8 +24,9 @@ public class SwrveWakefulService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            if (hasValidExtra(intent)) {
-                handleSendEvents(intent);
+            ArrayList<String> eventsExtras = intent.getExtras().getStringArrayList(EXTRA_EVENTS);
+            if (eventsExtras != null && eventsExtras.size() > 0) {
+                handleSendEvents(eventsExtras);
             } else {
                 SwrveLogger.e(LOG_TAG, "SwrveWakefulService: Unknown intent received.");
             }
@@ -36,21 +37,8 @@ public class SwrveWakefulService extends IntentService {
         }
     }
 
-    private boolean hasValidExtra(Intent intent) {
-        if (intent.hasExtra(EXTRA_SEND_EVENTS) ) {
-            if(intent.getExtras().getStringArrayList(EXTRA_SEND_EVENTS) != null) {
-                ArrayList<String> events = intent.getExtras().getStringArrayList(EXTRA_SEND_EVENTS);
-                if(events.size() > 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    protected int handleSendEvents(Intent intent) throws Exception {
+    protected int handleSendEvents(ArrayList<String> eventsJson) throws Exception {
         int eventsSent = 0;
-        ArrayList<String> events = intent.getExtras().getStringArrayList(EXTRA_SEND_EVENTS);
         MemoryCachedLocalStorage memoryCachedLocalStorage = null;
         SQLiteLocalStorage sqLiteLocalStorage = null;
         try {
@@ -58,7 +46,7 @@ public class SwrveWakefulService extends IntentService {
             memoryCachedLocalStorage = new MemoryCachedLocalStorage(sqLiteLocalStorage, null);
 
             SwrveEventsManager swrveEventsManager = getSendEventsManager(memoryCachedLocalStorage);
-            eventsSent = swrveEventsManager.storeAndSendEvents(events, memoryCachedLocalStorage, sqLiteLocalStorage);
+            eventsSent = swrveEventsManager.storeAndSendEvents(eventsJson, memoryCachedLocalStorage, sqLiteLocalStorage);
         } finally {
             if (sqLiteLocalStorage != null) sqLiteLocalStorage.close();
             if (memoryCachedLocalStorage != null) memoryCachedLocalStorage.close();

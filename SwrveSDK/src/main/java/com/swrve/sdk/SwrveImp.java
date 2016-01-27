@@ -11,6 +11,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
+import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
@@ -959,7 +960,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             downloadAssets(assetsQueue);
 
             // Update current list of campaigns with new ones
-            campaigns = new ArrayList<SwrveBaseCampaign>(newCampaigns);
+            this.campaigns = new ArrayList<SwrveBaseCampaign>(newCampaigns);
         } catch (JSONException exp) {
             SwrveLogger.e(LOG_TAG, "Error parsing campaign JSON", exp);
         }
@@ -998,6 +999,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
     }
 
+    @RequiresPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     protected boolean downloadAssetSynchronously(final String assetPath) {
         String url = cdnRoot + assetPath;
         InputStream inputStream = null;

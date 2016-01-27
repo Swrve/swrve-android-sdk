@@ -1,6 +1,7 @@
 package com.swrve.sdk.demo;
 
 import android.os.Bundle;
+import android.content.Intent;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -110,6 +111,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         SwrveSDK.onPause();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        SwrveSDK.processIntent(intent);
     }
 
     @Override

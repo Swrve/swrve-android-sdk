@@ -46,8 +46,9 @@ final class EventHelper {
         JSONObject obj = new JSONObject();
         obj.put("type", type);
         obj.put("time", System.currentTimeMillis());
-        obj.put("seqnum", getNextSequenceNumber(storage));
-
+        if (storage != null) {
+            obj.put("seqnum", getNextSequenceNumber(storage));
+        }
         if (parameters != null) {
             for (Map.Entry<String, Object> entry : parameters.entrySet()) {
                 obj.put(entry.getKey(), entry.getValue());
