@@ -154,10 +154,10 @@ public class SwrveCampaign extends SwrveBaseCampaign {
                     return msg;
                 }
             }
-        } else if (next < messages.size()) {
-            SwrveMessage msg = messages.get(next);
+        } else if (state.next < messages.size()) {
+            SwrveMessage msg = messages.get(state.next);
             if (msg.isDownloaded()) {
-                return messages.get(next);
+                return messages.get(state.next);
             }
         }
 

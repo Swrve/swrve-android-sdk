@@ -446,6 +446,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         flushToDisk();
         // Session management
         generateNewSessionInterval();
+        // Save campaign state
+        if (config.isTalkEnabled()) {
+            saveCampaignSettings();
+        }
     }
 
     protected void _onResume(Activity ctx) {
@@ -703,7 +707,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     if (config.isTalkEnabled()) {
                                         if (responseJson.has("campaigns")) {
                                             JSONObject campaignJson = responseJson.getJSONObject("campaigns");
-                                            updateCampaigns(campaignJson, null);
+                                            updateCampaigns(campaignJson, campaignsState);
                                             saveCampaignsInCache(campaignJson);
                                             autoShowMessages();
 
@@ -1067,7 +1071,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
                 queueEvent("event", parameters, payload, false);
             }
-            saveCampaignSettings();
         }
     }
 
@@ -1083,7 +1086,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("control", controlTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
@@ -1099,7 +1101,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("control", controlTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
     protected void _conversationDeeplinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
@@ -1114,15 +1115,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("control", controlTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
 
     protected void _conversationPageWasViewedByUser(SwrveConversation conversation, String pageTag) {
         if (conversation != null) {
-            SwrveConversationCampaign campaign = conversation.getCampaign();
-
             String viewEvent = getEventForConversation(conversation) + ".impression";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
@@ -1132,14 +1130,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", pageTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
     protected void _conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
         if (conversation != null) {
-            SwrveConversationCampaign campaign = conversation.getCampaign();
-
             String viewEvent = getEventForConversation(conversation) + ".start";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
@@ -1149,7 +1144,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", pageTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
@@ -1165,7 +1159,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("control", controlTag); //The final button the user clicked
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
@@ -1180,14 +1173,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", currentPageTag); //The current page the user is on when they cancelled
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
 
     protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
         if (conversation != null) {
-            String viewEvent =getEventForConversation(conversation) + ".navigation";
+            String viewEvent = getEventForConversation(conversation) + ".navigation";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1198,14 +1190,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", fromPageTag); // The page the user came on
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
     protected void _conversationEncounteredError(SwrveConversation conversation, String currentPageTag,  Exception e) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation)  + ".error";
-            if (e!=null){
+            if (e != null){
                 SwrveLogger.e(LOG_TAG, "Sending error conversation event: " + viewEvent, e);
             }else{
                 SwrveLogger.e(LOG_TAG, "Sending error conversations event: (No Exception) " + viewEvent);
@@ -1219,7 +1210,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             payload.put("page", currentPageTag);
             payload.put("conversation", Integer.toString(conversation.getId()));
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
         }
     }
 
