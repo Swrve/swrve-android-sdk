@@ -15,7 +15,7 @@ public class SwrveWakefulService extends IntentService {
     private static final String LOG_TAG = "SwrveWakeful";
     public static final String EXTRA_EVENTS = "swrve_wakeful_events";
 
-    private Swrve swrve = (Swrve) SwrveSDKBase.getInstance();
+    private ISwrveCommon swrveCommon = SwrveCommon.getSwrveCommon();
 
     public SwrveWakefulService() {
         super("SwrveWakefulService");
@@ -42,7 +42,7 @@ public class SwrveWakefulService extends IntentService {
         MemoryCachedLocalStorage memoryCachedLocalStorage = null;
         SQLiteLocalStorage sqLiteLocalStorage = null;
         try {
-            sqLiteLocalStorage = new SQLiteLocalStorage(getApplicationContext(), swrve.config.getDbName(), swrve.config.getMaxSqliteDbSize());
+            sqLiteLocalStorage = new SQLiteLocalStorage(getApplicationContext(), swrveCommon.getConfig().getDbName(), swrveCommon.getConfig().getMaxSqliteDbSize());
             memoryCachedLocalStorage = new MemoryCachedLocalStorage(sqLiteLocalStorage, null);
 
             SwrveEventsManager swrveEventsManager = getSendEventsManager(memoryCachedLocalStorage);
@@ -56,9 +56,9 @@ public class SwrveWakefulService extends IntentService {
     }
 
     private SwrveEventsManager getSendEventsManager(MemoryCachedLocalStorage memoryCachedLocalStorage){
-        IRESTClient restClient = new RESTClient(swrve.config.getHttpTimeout());
+        IRESTClient restClient = new RESTClient(swrveCommon.getConfig().getHttpTimeout());
         short deviceId = EventHelper.getDeviceId(memoryCachedLocalStorage);
-        String sessionToken = SwrveHelper.generateSessionToken(swrve.apiKey, swrve.appId, swrve.userId);
-        return new SwrveEventsManager(swrve.config, restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
+        String sessionToken = SwrveHelper.generateSessionToken(swrveCommon.getApiKey(), swrveCommon.getAppId(), swrveCommon.getUserId());
+        return new SwrveEventsManager(swrveCommon.getConfig(), restClient, swrveCommon.getUserId(), swrveCommon.getAppVersion(), sessionToken, deviceId);
     }
 }

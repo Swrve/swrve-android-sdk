@@ -7,12 +7,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
+import android.telephony.SignalStrength;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
 import com.swrve.sdk.conversations.ISwrveConversationSDKProvider;
@@ -23,6 +25,8 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
+import com.swrve.sdk.localstorage.ILocalStorage;
+import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -62,10 +66,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Main base class implementation of the Swrve SDK.
  */
-public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveConversationsSDK {
+public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveConversationsSDK, ISwrveCommon {
 
     protected SwrveBase(Context context, int appId, String apiKey, C config) {
         super(context, appId, apiKey, config);
+        SwrveCommon.setSwrveCommon(this);
     }
 
     protected static String _getVersion() {
@@ -670,7 +675,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
-                if(locationVersion > 0) {
+                if (locationVersion > 0) {
                     params.put("location_version", String.valueOf(locationVersion));
                 }
 
@@ -1850,7 +1855,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-
     @Override
     public List<SwrveBaseCampaign> getCampaigns() {
         return getCampaigns(getDeviceOrientation());
@@ -1901,4 +1905,40 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         campaign.setStatus(SwrveCampaignStatus.Deleted);
         saveCampaignSettings();
     }
+    /***
+     * ISwrveCommon methods
+     */
+
+    public int getAppId() {
+        return appId;
+    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public ILocalStorage createLocalStorage() {
+        return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
+    }
+
+    public String getBatchEventsAction() {
+        return BATCH_EVENTS_ACTION;
+    }
+
+    public String getLocationCampaignCategory() {
+        return LOCATION_CAMPAIGN_CATEGORY;
+    }
+
+    public boolean isDebug() {
+        return BuildConfig.DEBUG;
+    }
+
+    @Override
+    public void setLocationVersion(int locationVersion) {
+        this.locationVersion = locationVersion;
+    }
+
+    /***
+     * eo ISwrveCommon
+     */
 }

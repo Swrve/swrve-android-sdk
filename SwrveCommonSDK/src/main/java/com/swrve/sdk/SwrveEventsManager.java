@@ -21,6 +21,7 @@ public class SwrveEventsManager {
     private static final String LOG_TAG = "SwrveSDK";
     private static final Object lock = new Object();
 
+    private final ISwrveCommon swrveCommon;
     private final SwrveConfigBase config;
     private final IRESTClient restClient;
     private final String userId;
@@ -29,6 +30,11 @@ public class SwrveEventsManager {
     private final short deviceId;
 
     protected SwrveEventsManager(SwrveConfigBase config, IRESTClient restClient, String userId, String appVersion, String sessionToken, short deviceId) {
+        this.swrveCommon = SwrveCommon.getSwrveCommon();
+        if (swrveCommon == null) {
+            SwrveLogger.e(LOG_TAG, "You have not called SwrveSDK.createInstance in your Application class. SwrveEventsManager will not be able to operate properly.");
+        }
+
         this.config = config;
         this.restClient = restClient;
         this.userId = userId;
@@ -110,7 +116,7 @@ public class SwrveEventsManager {
 
     private void postBatchRequest(final String postData, final IPostBatchRequestListener listener) {
 
-        restClient.post(config.getEventsUrl() + SwrveBase.BATCH_EVENTS_ACTION, postData, new IRESTResponseListener() {
+        restClient.post(config.getEventsUrl() + swrveCommon.getBatchEventsAction(), postData, new IRESTResponseListener() {
             @Override
             public void onResponse(RESTResponse response) {
                 boolean deleteEvents = true;
