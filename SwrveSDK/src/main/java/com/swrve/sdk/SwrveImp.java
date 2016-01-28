@@ -875,7 +875,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             List<Integer> newCampaignIds = new ArrayList<Integer>();
 
             // Save the state of previous campaigns
-            saveCampaignSettings();
+            saveCampaignsState();
 
             // Remove any campaigns that aren't in the new list
             // We do this before updating campaigns and adding new campaigns to ensure
@@ -930,12 +930,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                         if (mustLoadPreviousState) {
                             SwrveCampaignState state = states.get(campaign.getId());
                             if (state != null) {
-                                campaign.setState(state);
+                                campaign.setSaveableState(state);
                             }
                         }
 
                         newCampaigns.add(campaign);
-                        campaignsState.put(campaign.getId(), campaign.getState());
+                        campaignsState.put(campaign.getId(), campaign.getSaveableState());
                         SwrveLogger.i(LOG_TAG, "Got campaign with id " + campaign.getId());
 
                         if (qaUser != null) {
@@ -1054,31 +1054,33 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         return assetsQueue;
     }
 
-    protected void saveCampaignSettings() {
-        try {
-            // Save campaign state
-            JSONObject campaignStateJson = new JSONObject();
-            Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
-            while (itCampaign.hasNext()) {
-                SwrveBaseCampaign campaign = itCampaign.next();
-                campaignStateJson.put(Integer.toString(campaign.getId()), campaign.getState().toJSON());
-            }
-
-            final String serializedCampaignsState = campaignStateJson.toString();
-            // Write to cache
-            storageExecutorExecute(new Runnable() {
-                @Override
-                public void run() {
-                    MemoryCachedLocalStorage cachedStorage = cachedLocalStorage;
-                    cachedStorage.setCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY, serializedCampaignsState);
-                    if (cachedStorage.getSecondaryStorage() != null) {
-                        cachedStorage.getSecondaryStorage().setCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY, serializedCampaignsState);
-                    }
-                    SwrveLogger.i(LOG_TAG, "Saved campaigns in cache");
+    protected void saveCampaignsState() {
+        if (config.isTalkEnabled()) {
+            try {
+                // Save campaign state
+                JSONObject campaignStateJson = new JSONObject();
+                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
+                while (itCampaign.hasNext()) {
+                    SwrveBaseCampaign campaign = itCampaign.next();
+                    campaignStateJson.put(Integer.toString(campaign.getId()), campaign.getSaveableState().toJSON());
                 }
-            });
-        } catch (JSONException exp) {
-            SwrveLogger.e(LOG_TAG, "Error saving campaigns settings", exp);
+
+                final String serializedCampaignsState = campaignStateJson.toString();
+                // Write to cache
+                storageExecutorExecute(new Runnable() {
+                    @Override
+                    public void run() {
+                        MemoryCachedLocalStorage cachedStorage = cachedLocalStorage;
+                        cachedStorage.setCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY, serializedCampaignsState);
+                        if (cachedStorage.getSecondaryStorage() != null) {
+                            cachedStorage.getSecondaryStorage().setCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY, serializedCampaignsState);
+                        }
+                        SwrveLogger.i(LOG_TAG, "Saved campaigns in cache");
+                    }
+                });
+            } catch (JSONException exp) {
+                SwrveLogger.e(LOG_TAG, "Error saving campaigns settings", exp);
+            }
         }
     }
 
@@ -1255,21 +1257,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             if (!SwrveHelper.isNullOrEmpty(campaignsFromCache)) {
                 JSONObject campaignsJson = new JSONObject(campaignsFromCache);
                 // Load campaigns state
-                String campaignsStateFromCache = cachedLocalStorage.getCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY);
-                if (!SwrveHelper.isNullOrEmpty(campaignsStateFromCache)) {
-                    JSONObject campaignsStateJson = new JSONObject(campaignsStateFromCache);
-                    Iterator<String> campaignIdIterator = campaignsStateJson.keys();
-                    while(campaignIdIterator.hasNext()) {
-                        String campaignIdStr = campaignIdIterator.next();
-                        try {
-                            int campaignId = Integer.parseInt(campaignIdStr);
-                            SwrveCampaignState campaignState = new SwrveCampaignState(campaignsStateJson.getJSONObject(campaignIdStr));
-                            campaignsState.put(campaignId, campaignState);
-                        } catch(Exception exp) {
-                            SwrveLogger.e(LOG_TAG, "Could not load state for campaign " + campaignIdStr, exp);
-                        }
-                    }
-                }
+                loadCampaignsStateFromCache();
+                // Update campaigns with the loaded JSON content
                 updateCampaigns(campaignsJson, campaignsState);
                 SwrveLogger.i(LOG_TAG, "Loaded campaigns from cache.");
             } else {
@@ -1284,6 +1273,24 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
             queueEvent("event", parameters, null, false);
+        }
+    }
+
+    private void loadCampaignsStateFromCache() throws JSONException {
+        String campaignsStateFromCache = cachedLocalStorage.getCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY);
+        if (!SwrveHelper.isNullOrEmpty(campaignsStateFromCache)) {
+            JSONObject campaignsStateJson = new JSONObject(campaignsStateFromCache);
+            Iterator<String> campaignIdIterator = campaignsStateJson.keys();
+            while(campaignIdIterator.hasNext()) {
+                String campaignIdStr = campaignIdIterator.next();
+                try {
+                    int campaignId = Integer.parseInt(campaignIdStr);
+                    SwrveCampaignState campaignState = new SwrveCampaignState(campaignsStateJson.getJSONObject(campaignIdStr));
+                    campaignsState.put(campaignId, campaignState);
+                } catch(Exception exp) {
+                    SwrveLogger.e(LOG_TAG, "Could not load state for campaign " + campaignIdStr, exp);
+                }
+            }
         }
     }
 

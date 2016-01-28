@@ -446,10 +446,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         flushToDisk();
         // Session management
         generateNewSessionInterval();
-        // Save campaign state
-        if (config.isTalkEnabled()) {
-            saveCampaignSettings();
-        }
+        // Save campaign state if needed
+        saveCampaignsState();
     }
 
     protected void _onResume(Activity ctx) {
@@ -1048,7 +1046,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", viewEvent);
             queueEvent("event", parameters, payload, false);
-            saveCampaignSettings();
+            saveCampaignsState();
         }
     }
 
@@ -1869,6 +1867,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public void removeCampaign(SwrveBaseCampaign campaign) {
         campaign.setStatus(SwrveCampaignStatus.Deleted);
-        saveCampaignSettings();
+        saveCampaignsState();
     }
 }

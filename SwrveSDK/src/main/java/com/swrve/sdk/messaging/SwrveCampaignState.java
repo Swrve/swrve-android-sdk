@@ -19,7 +19,7 @@ public class SwrveCampaignState {
     protected SwrveCampaignStatus status;
 
     // Next message to be shown if round robin campaign
-    public int next;
+    protected int next;
 
     public SwrveCampaignState() {
         impressions = 0;

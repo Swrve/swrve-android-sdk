@@ -33,7 +33,7 @@ public abstract class SwrveBaseCampaign {
     // SDK controller for this campaign
     protected transient SwrveBase<?, ?> talkController;
     // The state of the campaign that will be kept saved by the SDK
-    protected SwrveCampaignState state;
+    protected SwrveCampaignState saveableState;
     // Start date of the campaign
     protected Date startDate;
     // End date of the campaign
@@ -78,7 +78,7 @@ public abstract class SwrveBaseCampaign {
         SwrveLogger.i(LOG_TAG, "Loading campaign " + getId());
 
         // Start with an empty state
-        this.state = new SwrveCampaignState();
+        this.saveableState = new SwrveCampaignState();
 
         // Campaign rule defaults
         this.maxImpressions = DEFAULT_MAX_IMPRESSIONS;
@@ -142,11 +142,11 @@ public abstract class SwrveBaseCampaign {
      * @return the next message to show.
      */
     public int getNext() {
-        return state.next;
+        return saveableState.next;
     }
 
     public void setNext(int next) {
-        this.state.next = next;
+        this.saveableState.next = next;
     }
 
     /**
@@ -176,11 +176,11 @@ public abstract class SwrveBaseCampaign {
      * @return current impressions
      */
     public int getImpressions() {
-        return state.impressions;
+        return saveableState.impressions;
     }
 
     public void setImpressions(int impressions) {
-        this.state.impressions = impressions;
+        this.saveableState.impressions = impressions;
     }
 
     /**
@@ -288,7 +288,7 @@ public abstract class SwrveBaseCampaign {
      * Increment impressions by one.
      */
     public void incrementImpressions() {
-        this.state.impressions++;
+        this.saveableState.impressions++;
     }
 
     /**
@@ -327,7 +327,7 @@ public abstract class SwrveBaseCampaign {
             return false;
         }
 
-        if (state.impressions >= maxImpressions) {
+        if (saveableState.impressions >= maxImpressions) {
             logAndAddReason(campaignReasons, "{Campaign throttle limit} Campaign " + id + " has been shown " + maxImpressions + " times already");
             return false;
         }
@@ -352,7 +352,7 @@ public abstract class SwrveBaseCampaign {
      * @param status new status of the campaign
      */
     public void setStatus(SwrveCampaignStatus status) {
-        this.state.status = status;
+        this.saveableState.status = status;
     }
 
     /**
@@ -361,7 +361,7 @@ public abstract class SwrveBaseCampaign {
      * @return status of the campaign
      */
     public SwrveCampaignStatus getStatus() {
-        return state.status;
+        return saveableState.status;
     }
 
     /**
@@ -379,15 +379,15 @@ public abstract class SwrveBaseCampaign {
      * Obtain the serializable state of the campaign.
      * @return the serializable state of the campaign.
      */
-    public SwrveCampaignState getState() {
-        return state;
+    public SwrveCampaignState getSaveableState() {
+        return saveableState;
     }
 
     /**
      * Set the previous state of this campaign.
      * @param state
      */
-    public void setState(SwrveCampaignState state) {
-        this.state = state;
+    public void setSaveableState(SwrveCampaignState saveableState) {
+        this.saveableState = saveableState;
     }
 }
