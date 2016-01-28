@@ -51,6 +51,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -428,7 +429,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 @Override
                 public void run() {
                     short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
-                    SwrveEventsManager swrveEventsManager = new SwrveEventsManager(config, restClient, userId, appVersion, sessionToken, deviceId);
+                    SwrveEventsManager swrveEventsManager = new SwrveEventsManager(restClient, userId, appVersion, sessionToken, deviceId);
                     swrveEventsManager.sendStoredEvents(cachedLocalStorage);
                     eventsWereSent = true;
                 }
@@ -1937,6 +1938,55 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void setLocationVersion(int locationVersion) {
         this.locationVersion = locationVersion;
     }
+
+    @Override
+    public String getSecureCacheEntryForUser(String userId, String category, String uniqueKey) {
+
+        ILocalStorage localStorage = null;
+        try {
+            localStorage = createLocalStorage();
+            return localStorage.getSecureCacheEntryForUser(userId, category, uniqueKey);
+        } catch (Exception e) {
+            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load " + category + " campaigns", e);
+        } finally {
+            if (localStorage != null) localStorage.close();
+        }
+
+        return null;
+    }
+
+    /***
+     * Config area
+     */
+
+    @Override
+    public URL getEventsUrl() {
+        return config.getEventsUrl();
+    }
+
+    @Override
+    public String getDbName() {
+        return config.getDbName();
+    }
+
+    @Override
+    public long getMaxSqliteDbSize() {
+        return config.getMaxSqliteDbSize();
+    }
+
+    @Override
+    public int getHttpTimeout() {
+        return config.getHttpTimeout();
+    }
+
+    @Override
+    public int getMaxEventsPerFlush() {
+        return config.getMaxEventsPerFlush();
+    }
+
+    /***
+     * eo Config
+     */
 
     /***
      * eo ISwrveCommon

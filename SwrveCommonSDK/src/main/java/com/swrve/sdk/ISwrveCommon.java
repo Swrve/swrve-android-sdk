@@ -1,8 +1,6 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.localstorage.ILocalStorage;
-
+import java.net.URL;
 import java.util.Map;
 
 public interface ISwrveCommon
@@ -17,17 +15,33 @@ public interface ISwrveCommon
 
     String getUniqueKey();
 
-    SwrveConfigBase getConfig();
-
     String getBatchEventsAction();
 
     String getLocationCampaignCategory();
 
-    ILocalStorage createLocalStorage();
+    String getSecureCacheEntryForUser(String userId, String category, String uniqueKey);
 
     boolean isDebug();
 
     void setLocationVersion(int locationVersion);
 
     void userUpdate(Map<String, String> attributes);
+
+    /***
+     * Config area
+     */
+
+    URL getEventsUrl();
+
+    String getDbName();
+
+    long getMaxSqliteDbSize();
+
+    int getHttpTimeout();
+
+    int getMaxEventsPerFlush();
+
+    /***
+     * eo Config
+     */
 }
