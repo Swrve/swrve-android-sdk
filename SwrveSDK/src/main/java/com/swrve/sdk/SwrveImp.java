@@ -160,7 +160,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ISwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
     protected String userInstallTime;
-    protected String lastProcessedMessage;
     protected AtomicInteger bindCounter;
     protected AtomicLong installTime;
     protected CountDownLatch installTimeLatch;
@@ -519,30 +518,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             parameters.put("attributes", attributes);
             queueEvent("user", parameters, null);
         }
-    }
-
-    protected void postBatchRequest(C config, String postData, final IPostBatchRequestListener listener) {
-        restClient.post(config.getEventsUrl() + BATCH_EVENTS_ACTION, postData, new IRESTResponseListener() {
-            @Override
-            public void onResponse(RESTResponse response) {
-                boolean deleteEvents = true;
-                if (SwrveHelper.userErrorResponseCode(response.responseCode)) {
-                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
-                } else if (SwrveHelper.successResponseCode(response.responseCode)) {
-                    SwrveLogger.i(LOG_TAG, "Events sent to Swrve");
-                } else if (SwrveHelper.serverErrorResponseCode(response.responseCode)) {
-                    deleteEvents = false;
-                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
-                }
-
-                // Resend if we got a server error (5XX)
-                listener.onResponse(deleteEvents);
-            }
-
-            @Override
-            public void onException(Exception exp) {
-            }
-        });
     }
 
     protected boolean restClientExecutorExecute(Runnable runnable) {
