@@ -192,7 +192,7 @@ public class SwrveMessage {
     /**
      * @return true if all assets for this message have been downloaded.
      */
-    public boolean assetsReady() {
+    public boolean areAssetsReady() {
         if (this.formats != null) {
             Iterator<SwrveMessageFormat> itFormats = formats.iterator();
             while (itFormats.hasNext()) {

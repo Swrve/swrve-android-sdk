@@ -150,14 +150,14 @@ public class SwrveCampaign extends SwrveBaseCampaign {
             Iterator<SwrveMessage> itRandom = randomMessages.iterator();
             while (itRandom.hasNext()) {
                 SwrveMessage msg = itRandom.next();
-                if (msg.assetsReady()) {
+                if (msg.areAssetsReady()) {
                     return msg;
                 }
             }
-        } else if (next < messages.size()) {
-            SwrveMessage msg = messages.get(next);
-            if (msg.assetsReady()) {
-                return messages.get(next);
+        } else if (saveableState.next < messages.size()) {
+            SwrveMessage msg = messages.get(saveableState.next);
+            if (msg.areAssetsReady()) {
+                return messages.get(saveableState.next);
             }
         }
 
@@ -202,11 +202,11 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         setMessageMinDelayThrottle();
     }
 
-    public boolean assetsReady() {
+    public boolean areAssetsReady() {
         Iterator<SwrveMessage> messageIt = messages.iterator();
         while (messageIt.hasNext()) {
             SwrveMessage message = messageIt.next();
-            if (!message.assetsReady())
+            if (!message.areAssetsReady())
                 return false;
         }
 

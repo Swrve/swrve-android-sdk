@@ -74,7 +74,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * otherwise.
      */
     public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
-        if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation") && conversation != null && conversation.assetsReady()) {
+        if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation") && conversation != null && conversation.areAssetsReady()) {
             SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
             return this.conversation;
         }
@@ -91,7 +91,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         return true;
     }
 
-    public boolean assetsReady() {
-        return conversation.assetsReady();
+    public boolean areAssetsReady() {
+        return conversation.areAssetsReady();
     }
 }
