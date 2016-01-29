@@ -32,6 +32,8 @@ public abstract class SwrveBaseCampaign {
     protected int id;
     // SDK controller for this campaign
     protected transient SwrveBase<?, ?> talkController;
+    // The state of the campaign that will be kept saved by the SDK
+    protected SwrveCampaignState saveableState;
     // Start date of the campaign
     protected Date startDate;
     // End date of the campaign
@@ -42,15 +44,8 @@ public abstract class SwrveBaseCampaign {
     protected boolean inbox;
     // Inbox subject of the campaign
     protected String subject;
-    // Inbox status of the campaign
-    protected SwrveCampaignStatus status = SwrveCampaignStatus.Unseen;
     // Indicates if the campaign serves messages randomly or using round robin
     protected boolean randomOrder;
-    // Next message to be shown if round robin campaign
-    protected int next;
-    // Number of impressions of this campaign. Used to disable the campaign if
-    // it reaches total impressions
-    protected int impressions;
     // Number of maximum impressions of the campaign
     protected int maxImpressions;
     // Minimum delay we want between messages
@@ -81,6 +76,9 @@ public abstract class SwrveBaseCampaign {
         setSubject(campaignData.optString("subject", null));
         setTalkController(controller);
         SwrveLogger.i(LOG_TAG, "Loading campaign " + getId());
+
+        // Start with an empty state
+        this.saveableState = new SwrveCampaignState();
 
         // Campaign rule defaults
         this.maxImpressions = DEFAULT_MAX_IMPRESSIONS;
@@ -144,11 +142,11 @@ public abstract class SwrveBaseCampaign {
      * @return the next message to show.
      */
     public int getNext() {
-        return next;
+        return saveableState.next;
     }
 
     public void setNext(int next) {
-        this.next = next;
+        this.saveableState.next = next;
     }
 
     /**
@@ -178,11 +176,11 @@ public abstract class SwrveBaseCampaign {
      * @return current impressions
      */
     public int getImpressions() {
-        return impressions;
+        return saveableState.impressions;
     }
 
     public void setImpressions(int impressions) {
-        this.impressions = impressions;
+        this.saveableState.impressions = impressions;
     }
 
     /**
@@ -290,46 +288,7 @@ public abstract class SwrveBaseCampaign {
      * Increment impressions by one.
      */
     public void incrementImpressions() {
-        this.impressions++;
-    }
-
-    /**
-     * Serialize the campaign state.
-     *
-     * @return JSONObject Settings for the campaign.
-     * @throws org.json.JSONException
-     */
-    public JSONObject createSettings() throws JSONException {
-        JSONObject settings = new JSONObject();
-        settings.put("next", next);
-        settings.put("impressions", impressions);
-        settings.put("status", status.toString());
-
-        return settings;
-    }
-
-    /**
-     * Load campaign settings from JSON data.
-     *
-     * @param settings JSONObject containing the campaign settings.
-     * @throws org.json.JSONException
-     */
-    public void loadSettings(JSONObject settings) throws JSONException {
-        try {
-            if (settings.has("next")) {
-                this.next = settings.getInt("next");
-            }
-
-            if (settings.has("impressions")) {
-                this.impressions = settings.getInt("impressions");
-            }
-
-            if (settings.has("status")) {
-                this.status = SwrveCampaignStatus.valueOf(settings.getString("status"));
-            }
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error while trying to load campaign settings", e);
-        }
+        this.saveableState.impressions++;
     }
 
     /**
@@ -368,7 +327,7 @@ public abstract class SwrveBaseCampaign {
             return false;
         }
 
-        if (impressions >= maxImpressions) {
+        if (saveableState.impressions >= maxImpressions) {
             logAndAddReason(campaignReasons, "{Campaign throttle limit} Campaign " + id + " has been shown " + maxImpressions + " times already");
             return false;
         }
@@ -392,8 +351,8 @@ public abstract class SwrveBaseCampaign {
      *
      * @param status new status of the campaign
      */
-    public void setStatus(SwrveCampaignStatus status) {
-        this.status = status;
+    public void setStatus(SwrveCampaignState.Status status) {
+        this.saveableState.status = status;
     }
 
     /**
@@ -401,18 +360,34 @@ public abstract class SwrveBaseCampaign {
      *
      * @return status of the campaign
      */
-    public SwrveCampaignStatus getStatus() {
-        return status;
+    public SwrveCampaignState.Status getStatus() {
+        return saveableState.status;
     }
 
     /**
      * Used by sublcasses to inform that the campaign was displayed.
      */
     public void messageWasShownToUser() {
-        setStatus(SwrveCampaignStatus.Seen);
+        setStatus(SwrveCampaignState.Status.Seen);
         incrementImpressions();
         setMessageMinDelayThrottle();
     }
 
     public abstract boolean supportsOrientation(SwrveOrientation orientation);
+
+    /**
+     * Obtain the serializable state of the campaign.
+     * @return the serializable state of the campaign.
+     */
+    public SwrveCampaignState getSaveableState() {
+        return saveableState;
+    }
+
+    /**
+     * Set the previous state of this campaign.
+     * @param saveableState
+     */
+    public void setSaveableState(SwrveCampaignState saveableState) {
+        this.saveableState = saveableState;
+    }
 }
