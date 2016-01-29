@@ -1276,21 +1276,25 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }
     }
 
-    private void loadCampaignsStateFromCache() throws JSONException {
-        String campaignsStateFromCache = cachedLocalStorage.getCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY);
-        if (!SwrveHelper.isNullOrEmpty(campaignsStateFromCache)) {
-            JSONObject campaignsStateJson = new JSONObject(campaignsStateFromCache);
-            Iterator<String> campaignIdIterator = campaignsStateJson.keys();
-            while(campaignIdIterator.hasNext()) {
-                String campaignIdStr = campaignIdIterator.next();
-                try {
-                    int campaignId = Integer.parseInt(campaignIdStr);
-                    SwrveCampaignState campaignState = new SwrveCampaignState(campaignsStateJson.getJSONObject(campaignIdStr));
-                    campaignsState.put(campaignId, campaignState);
-                } catch(Exception exp) {
-                    SwrveLogger.e(LOG_TAG, "Could not load state for campaign " + campaignIdStr, exp);
+    private void loadCampaignsStateFromCache() {
+        try {
+            String campaignsStateFromCache = cachedLocalStorage.getCacheEntryForUser(userId, CAMPAIGNS_STATE_CATEGORY);
+            if (!SwrveHelper.isNullOrEmpty(campaignsStateFromCache)) {
+                JSONObject campaignsStateJson = new JSONObject(campaignsStateFromCache);
+                Iterator<String> campaignIdIterator = campaignsStateJson.keys();
+                while (campaignIdIterator.hasNext()) {
+                    String campaignIdStr = campaignIdIterator.next();
+                    try {
+                        int campaignId = Integer.parseInt(campaignIdStr);
+                        SwrveCampaignState campaignState = new SwrveCampaignState(campaignsStateJson.getJSONObject(campaignIdStr));
+                        campaignsState.put(campaignId, campaignState);
+                    } catch (Exception exp) {
+                        SwrveLogger.e(LOG_TAG, "Could not load state for campaign " + campaignIdStr, exp);
+                    }
                 }
             }
+        } catch(JSONException e) {
+            SwrveLogger.e(LOG_TAG, "Could not load state of campaigns, bad JSON", e);
         }
     }
 

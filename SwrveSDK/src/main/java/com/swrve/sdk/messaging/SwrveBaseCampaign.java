@@ -351,7 +351,7 @@ public abstract class SwrveBaseCampaign {
      *
      * @param status new status of the campaign
      */
-    public void setStatus(SwrveCampaignStatus status) {
+    public void setStatus(SwrveCampaignState.Status status) {
         this.saveableState.status = status;
     }
 
@@ -360,7 +360,7 @@ public abstract class SwrveBaseCampaign {
      *
      * @return status of the campaign
      */
-    public SwrveCampaignStatus getStatus() {
+    public SwrveCampaignState.Status getStatus() {
         return saveableState.status;
     }
 
@@ -368,7 +368,7 @@ public abstract class SwrveBaseCampaign {
      * Used by sublcasses to inform that the campaign was displayed.
      */
     public void messageWasShownToUser() {
-        setStatus(SwrveCampaignStatus.Seen);
+        setStatus(SwrveCampaignState.Status.Seen);
         incrementImpressions();
         setMessageMinDelayThrottle();
     }
@@ -385,7 +385,7 @@ public abstract class SwrveBaseCampaign {
 
     /**
      * Set the previous state of this campaign.
-     * @param state
+     * @param saveableState
      */
     public void setSaveableState(SwrveCampaignState saveableState) {
         this.saveableState = saveableState;

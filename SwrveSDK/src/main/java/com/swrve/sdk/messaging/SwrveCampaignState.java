@@ -11,19 +11,43 @@ import org.json.JSONObject;
 public class SwrveCampaignState {
     protected static final String LOG_TAG = "SwrveMessagingSDK";
 
+    /**
+     * The status of the campaign
+     */
+    public enum Status {
+        Unseen, Seen, Deleted;
+
+        /**
+         * Convert from String to SwrveCampaignStatus.
+         *
+         * @param status String campaign status.
+         * @return SwrveCampaignStatus
+         */
+        public static Status parse(String status) {
+            if (status.equalsIgnoreCase("seen")) {
+                return Status.Seen;
+            } else if (status.equalsIgnoreCase("deleted")) {
+                return Status.Deleted;
+            }
+
+            return Status.Unseen;
+        }
+    }
+
+
     // Number of impressions of this campaign. Used to disable the campaign if
     // it reaches total impressions
     protected int impressions;
 
     // Inbox status of the campaign
-    protected SwrveCampaignStatus status;
+    protected Status status;
 
     // Next message to be shown if round robin campaign
     protected int next;
 
     public SwrveCampaignState() {
         impressions = 0;
-        status = SwrveCampaignStatus.Unseen;
+        status = Status.Unseen;
         next = 0;
     }
 
@@ -38,7 +62,7 @@ public class SwrveCampaignState {
             }
 
             if (state.has("status")) {
-                this.status = SwrveCampaignStatus.valueOf(state.getString("status"));
+                this.status = Status.valueOf(state.getString("status"));
             }
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error while trying to load campaign settings", e);

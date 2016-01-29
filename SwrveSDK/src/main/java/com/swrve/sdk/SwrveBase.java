@@ -28,7 +28,7 @@ import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaign;
-import com.swrve.sdk.messaging.SwrveCampaignStatus;
+import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEventListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -1830,7 +1830,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         synchronized (campaigns) {
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
-                if (campaign.isInbox() && campaign.getStatus() != SwrveCampaignStatus.Deleted && campaign.isActive(getNow())) {
+                if (campaign.isInbox() && campaign.getStatus() != SwrveCampaignState.Status.Deleted && campaign.isActive(getNow())) {
 
                     if (campaign.supportsOrientation(orientation)) {
                         result.add(campaign);
@@ -1866,7 +1866,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void removeCampaign(SwrveBaseCampaign campaign) {
-        campaign.setStatus(SwrveCampaignStatus.Deleted);
+        campaign.setStatus(SwrveCampaignState.Status.Deleted);
         saveCampaignsState();
     }
 }
