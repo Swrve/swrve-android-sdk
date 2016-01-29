@@ -376,6 +376,12 @@ public abstract class SwrveBaseCampaign {
     public abstract boolean supportsOrientation(SwrveOrientation orientation);
 
     /**
+     * Determine if the assets for this campaign have been downloaded.
+     * @return if the assets are ready
+     */
+    public abstract boolean areAssetsReady();
+
+    /**
      * Obtain the serializable state of the campaign.
      * @return the serializable state of the campaign.
      */
