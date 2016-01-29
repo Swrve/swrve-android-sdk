@@ -1842,11 +1842,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         synchronized (campaigns) {
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
-                if (campaign.isInbox() && campaign.getStatus() != SwrveCampaignStatus.Deleted && campaign.isActive(getNow())) {
-
-                    if (campaign.supportsOrientation(orientation)) {
-                        result.add(campaign);
-                    }
+                if (campaign.isInbox()
+                        && campaign.getStatus() != SwrveCampaignStatus.Deleted
+                        && campaign.isActive(getNow())
+                        && campaign.supportsOrientation(orientation)
+                        && campaign.assetsReady()) {
+                    result.add(campaign);
                 }
             }
         }
