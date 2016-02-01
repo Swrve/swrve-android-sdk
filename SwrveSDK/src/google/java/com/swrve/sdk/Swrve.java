@@ -259,13 +259,19 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     // Obtain push id
                     Object rawId = msg.get("_p");
                     String msgId = (rawId != null) ? rawId.toString() : null;
-                    // Only process once the message if possible
-                    if (!SwrveHelper.isNullOrEmpty(msgId) && (lastProcessedMessage == null || !lastProcessedMessage.equals(msgId))) {
-                        lastProcessedMessage = msgId;
-                        _event("Swrve.Messages.Push-" + msgId + ".engaged", null);
-                        // Call custom listener
+                    if(qaUser!=null && !SwrveHelper.isNullOrEmpty(msgId)){
                         if (pushNotificationListener != null) {
                             pushNotificationListener.onPushNotification(msg);
+                        }
+                    }else {
+                        // Only process once the message if possible
+                        if (!SwrveHelper.isNullOrEmpty(msgId) && (lastProcessedMessage == null || !lastProcessedMessage.equals(msgId))) {
+                            lastProcessedMessage = msgId;
+                            _event("Swrve.Messages.Push-" + msgId + ".engaged", null);
+                            // Call custom listener
+                            if (pushNotificationListener != null) {
+                                pushNotificationListener.onPushNotification(msg);
+                            }
                         }
                     }
                 }
