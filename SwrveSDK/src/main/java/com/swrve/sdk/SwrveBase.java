@@ -153,7 +153,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 attributes.put(SWRVE_REFERRER_ID, referrer);
                 SwrveLogger.i(LOG_TAG, "Received install referrer, so sending userUpdate:" + attributes);
                 userUpdate(attributes);
-                settings.edit().remove(SWRVE_REFERRER_ID).commit();
+                settings.edit().remove(SWRVE_REFERRER_ID).apply();
             }
 
             // Get device info
@@ -746,7 +746,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     SwrveLogger.e(LOG_TAG, "Could not parse JSON for campaigns and resources", e);
                                 }
 
-                                settingsEditor.commit();
+                                settingsEditor.apply();
                             }
 
                             this.firstRefreshFinished();

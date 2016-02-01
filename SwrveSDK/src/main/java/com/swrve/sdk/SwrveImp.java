@@ -17,6 +17,7 @@ import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
+import java.lang.SecurityException;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
@@ -319,8 +320,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
         // Save new user id
         SharedPreferences.Editor editor = settings.edit();
-        editor.putString("userId", userId);
-        editor.commit();
+        editor.putString("userId", userId).apply();
     }
 
     protected void checkUserId(String userId) {
@@ -949,17 +949,21 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         resourceDownloadExecutor.execute(SwrveRunnables.withoutExceptions(new Runnable() {
             @Override
             public void run() {
-                Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
-                for (String asset : assetsToDownload) {
-                    boolean success = downloadAssetSynchronously(asset);
-                    if (success) {
-                        synchronized (assetsOnDisk) {
-                            assetsOnDisk.add(asset);
+                try {
+                    Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
+                    for (String asset : assetsToDownload) {
+                        boolean success = downloadAssetSynchronously(asset);
+                        if (success) {
+                            synchronized (assetsOnDisk) {
+                                assetsOnDisk.add(asset);
+                            }
                         }
                     }
+                    assetsCurrentlyDownloading = false;
+                    autoShowMessages();
+                } catch (SecurityException e) {
+                    SwrveLogger.e(LOG_TAG, "Error downloading assets", e);
                 }
-                assetsCurrentlyDownloading = false;
-                autoShowMessages();
             }
         }));
     }
@@ -1187,8 +1191,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         campaignsAndResourcesLastETag = null;
         SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
         SharedPreferences.Editor settingsEditor = settings.edit();
-        settingsEditor.remove("campaigns_and_resources_etag");
-        settingsEditor.commit();
+        settingsEditor.remove("campaigns_and_resources_etag").apply();
     }
 
     /**

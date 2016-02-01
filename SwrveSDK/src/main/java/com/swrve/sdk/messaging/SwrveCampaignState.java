@@ -52,6 +52,8 @@ public class SwrveCampaignState {
     }
 
     public SwrveCampaignState(JSONObject state) {
+        this();
+
         try {
             if (state.has("next")) {
                 this.next = state.getInt("next");
@@ -62,7 +64,7 @@ public class SwrveCampaignState {
             }
 
             if (state.has("status")) {
-                this.status = Status.valueOf(state.getString("status"));
+                this.status = Status.parse(state.getString("status"));
             }
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error while trying to load campaign settings", e);
