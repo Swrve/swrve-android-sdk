@@ -25,6 +25,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class RESTClient implements IRESTClient {
 
+    private static final String LOG_TAG = "RESTClient";
     private static final String CHARSET = "UTF-8";
     private static final String COMMA_SEPARATOR = ", ", SEMICOLON_SEPARATOR = "; ";
 
@@ -173,7 +174,7 @@ public class RESTClient implements IRESTClient {
 
             responseBodyTime = milisecondsFrom(start);
         } catch (Exception e) {
-            SwrveLogger.e(Log.getStackTraceString(e));
+            SwrveLogger.e(LOG_TAG, "Got exception while trying to open post connection" ,e);
             if (e instanceof SocketTimeoutException) {
                 isTimeout = true;
             }
