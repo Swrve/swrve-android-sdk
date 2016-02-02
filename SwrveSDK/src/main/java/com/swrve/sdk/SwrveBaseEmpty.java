@@ -237,12 +237,12 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public List<SwrveBaseCampaign> getCampaigns() {
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
         return new ArrayList<SwrveBaseCampaign>();
     }
 
     @Override
-    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
         return new ArrayList<SwrveBaseCampaign>();
     }
 

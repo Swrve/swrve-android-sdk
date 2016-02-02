@@ -40,9 +40,9 @@ public abstract class SwrveBaseCampaign {
     protected Date endDate;
     // List of triggers for the campaign
     protected Set<String> triggers;
-    // Flag indicating if it is an Inbox campaign
-    protected boolean inbox;
-    // Inbox subject of the campaign
+    // Flag indicating if it is a MessageCenter campaign
+    protected boolean messageCenter;
+    // MessageCenter subject of the campaign
     protected String subject;
     // Indicates if the campaign serves messages randomly or using round robin
     protected boolean randomOrder;
@@ -72,7 +72,7 @@ public abstract class SwrveBaseCampaign {
     public SwrveBaseCampaign(SwrveBase<?, ?> controller, JSONObject campaignData) throws JSONException {
         this();
         setId(campaignData.getInt("id"));
-        setIsInbox(campaignData.optBoolean("inbox", false));
+        setMessageCenter(campaignData.optBoolean("message_center", false));
         setSubject(campaignData.optString("subject", null));
         setTalkController(controller);
         SwrveLogger.i(LOG_TAG, "Loading campaign " + getId());
@@ -107,17 +107,16 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
-     * Used internally to identify campaigns that have been marked as Inbox campaigns
-     * on the dashboard.
+     * Used internally to identify campaigns that have been marked as MessageCenter campaigns on the dashboard.
      *
-     * @return true if the campaign is an Inbox campaign.
+     * @return true if the campaign is an MessageCenter campaign.
      */
-    public boolean isInbox() {
-        return inbox;
+    public boolean isMessageCenter() {
+        return messageCenter;
     }
 
-    protected void setIsInbox(boolean inbox) {
-        this.inbox = inbox;
+    protected void setMessageCenter(boolean messageCenter) {
+        this.messageCenter = messageCenter;
     }
 
     /**

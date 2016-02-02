@@ -34,12 +34,10 @@ public class SwrveCampaignState {
         }
     }
 
-
-    // Number of impressions of this campaign. Used to disable the campaign if
-    // it reaches total impressions
+    // Number of impressions of this campaign. Used to disable the campaign if it reaches total impressions
     protected int impressions;
 
-    // Inbox status of the campaign
+    // MessageCenter status of the campaign
     protected Status status;
 
     // Next message to be shown if round robin campaign

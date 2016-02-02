@@ -3,7 +3,6 @@ package com.swrve.sdk;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
@@ -515,30 +514,30 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the list active Inbox campaigns targeted for this user.
+     * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
      * removeCampaign method and those that do not support the current orientation.
      * <p>
-     * To obtain all Inbox campaigns independent of their orientation support
-     * use the getCampaigns(SwrveOrientation.Both) method.
+     * To obtain all MessageCenter campaigns independent of their orientation support
+     * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
      *
-     * @return list of active Inbox campaigns.
+     * @return list of active MessageCenter campaigns.
      */
-    public static List<SwrveBaseCampaign> getCampaigns() {
+    public static List<SwrveBaseCampaign> getMessageCenterCampaigns() {
         checkInstanceCreated();
-        return instance.getCampaigns();
+        return instance.getMessageCenterCampaigns();
     }
 
     /**
-     * Get the list active Inbox campaigns targeted for this user.
+     * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
      * removeCampaign method and those that do not support the given orientation.
      *
-     * @return list of active Inbox campaigns.
+     * @return list of active MessageCenter campaigns.
      */
-    public static List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+    public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
         checkInstanceCreated();
-        return instance.getCampaigns(orientation);
+        return instance.getMessageCenterCampaigns(orientation);
     }
 
     /**
@@ -554,7 +553,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Remove this campaign. It won't be returned anymore by the 'getCampaigns' methods.
+     * Remove this campaign. It won't be returned anymore by the 'getMessageCenterCampaigns' methods.
      *
      * @param campaign
      */
