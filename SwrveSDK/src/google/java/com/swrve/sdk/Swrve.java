@@ -30,6 +30,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected String registrationId;
     protected String advertisingId;
     protected ISwrvePushNotificationListener pushNotificationListener;
+    protected String lastProcessedMessage;
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);

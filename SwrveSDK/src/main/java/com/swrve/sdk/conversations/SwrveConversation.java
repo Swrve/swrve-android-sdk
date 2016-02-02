@@ -68,7 +68,7 @@ public class SwrveConversation extends SwrveCommonConversation implements Serial
     /**
      * @return has the conversation been downloaded fully yet
      */
-    public boolean isDownloaded() {
+    public boolean areAssetsReady() {
         if (this.pages != null) {
             for (ConversationPage conversationPage : pages) {
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
