@@ -1926,10 +1926,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return BATCH_EVENTS_ACTION;
     }
 
-    public String getLocationCampaignCategory() {
-        return LOCATION_CAMPAIGN_CATEGORY;
-    }
-
     public boolean isDebug() {
         return BuildConfig.DEBUG;
     }
@@ -1940,14 +1936,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public String getSecureCacheEntryForUser(String userId, String category, String uniqueKey) {
-
+    public String getCachedLocationData() {
         ILocalStorage localStorage = null;
         try {
             localStorage = createLocalStorage();
-            return localStorage.getSecureCacheEntryForUser(userId, category, uniqueKey);
+            return localStorage.getSecureCacheEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, getUniqueKey());
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load " + category + " campaigns", e);
+            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load " + LOCATION_CAMPAIGN_CATEGORY + " campaigns", e);
         } finally {
             if (localStorage != null) localStorage.close();
         }

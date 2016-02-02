@@ -17,9 +17,7 @@ public interface ISwrveCommon
 
     String getBatchEventsAction();
 
-    String getLocationCampaignCategory();
-
-    String getSecureCacheEntryForUser(String userId, String category, String uniqueKey);
+    String getCachedLocationData();
 
     boolean isDebug();
 
