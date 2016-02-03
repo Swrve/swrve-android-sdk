@@ -1819,17 +1819,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
 
     @Override
-    public List<SwrveBaseCampaign> getCampaigns() {
-        return getCampaigns(getDeviceOrientation());
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
+        return getMessageCenterCampaigns(getDeviceOrientation());
     }
 
     @Override
-    public List<SwrveBaseCampaign> getCampaigns(SwrveOrientation orientation) {
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
         List<SwrveBaseCampaign> result = new ArrayList<SwrveBaseCampaign>();
         synchronized (campaigns) {
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
-                if (campaign.isInbox()
+                if (campaign.isMessageCenter()
                         && campaign.getStatus() != SwrveCampaignState.Status.Deleted
                         && campaign.isActive(getNow())
                         && campaign.supportsOrientation(orientation)
@@ -1842,7 +1842,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public boolean showCampaign(SwrveBaseCampaign campaign) {
+    public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
         if (campaign instanceof SwrveCampaign) {
             SwrveCampaign iamCampaign = (SwrveCampaign)campaign;
             if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
@@ -1865,7 +1865,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void removeCampaign(SwrveBaseCampaign campaign) {
+    public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
         campaign.setStatus(SwrveCampaignState.Status.Deleted);
         saveCampaignsState();
     }
