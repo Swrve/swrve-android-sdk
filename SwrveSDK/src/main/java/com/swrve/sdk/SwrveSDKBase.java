@@ -516,7 +516,7 @@ public abstract class SwrveSDKBase {
     /**
      * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
-     * removeCampaign method and those that do not support the current orientation.
+     * removeMessageCenterCampaign method and those that do not support the current orientation.
      * <p>
      * To obtain all MessageCenter campaigns independent of their orientation support
      * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
@@ -531,7 +531,7 @@ public abstract class SwrveSDKBase {
     /**
      * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
-     * removeCampaign method and those that do not support the given orientation.
+     * removeMessageCenterCampaign method and those that do not support the given orientation.
      *
      * @return list of active MessageCenter campaigns.
      */
@@ -547,9 +547,9 @@ public abstract class SwrveSDKBase {
      * @param campaign
      * @return true if the campaign was displayed.
      */
-    public static boolean showCampaign(SwrveBaseCampaign campaign) {
+    public static boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
         checkInstanceCreated();
-        return instance.showCampaign(campaign);
+        return instance.showMessageCenterCampaign(campaign);
     }
 
     /**
@@ -557,9 +557,9 @@ public abstract class SwrveSDKBase {
      *
      * @param campaign
      */
-    public static void removeCampaign(SwrveBaseCampaign campaign) {
+    public static void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
         checkInstanceCreated();
-        instance.removeCampaign(campaign);
+        instance.removeMessageCenterCampaign(campaign);
     }
 
     protected static void checkInstanceCreated() throws RuntimeException {

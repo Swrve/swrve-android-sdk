@@ -247,12 +247,12 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public boolean showCampaign(SwrveBaseCampaign campaign) {
+    public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
         return false;
     }
 
     @Override
-    public void removeCampaign(SwrveBaseCampaign campaign) {
+    public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
     }
 
     @Override

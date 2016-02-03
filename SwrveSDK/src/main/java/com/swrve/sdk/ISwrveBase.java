@@ -121,7 +121,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation);
 
-    boolean showCampaign(SwrveBaseCampaign campaign);
+    boolean showMessageCenterCampaign(SwrveBaseCampaign campaign);
 
-    void removeCampaign(SwrveBaseCampaign campaign);
+    void removeMessageCenterCampaign(SwrveBaseCampaign campaign);
 }
