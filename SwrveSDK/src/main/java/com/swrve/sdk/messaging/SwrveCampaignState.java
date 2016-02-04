@@ -5,6 +5,8 @@ import com.swrve.sdk.SwrveLogger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Date;
+
 /**
  * Used internally to save the state of campaigns
  */
@@ -42,6 +44,10 @@ public class SwrveCampaignState {
 
     // Next message to be shown if round robin campaign
     protected int next;
+
+    // Time we can show the next message
+    // Will be based on time previous message was shown + minDelayBetweenMessage
+    protected Date showMessagesAfterDelay;
 
     public SwrveCampaignState() {
         impressions = 0;

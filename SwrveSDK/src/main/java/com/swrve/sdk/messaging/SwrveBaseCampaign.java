@@ -52,9 +52,6 @@ public abstract class SwrveBaseCampaign {
     protected int minDelayBetweenMessage;
     // Time we can show the first message after launch
     protected Date showMessagesAfterLaunch;
-    // Time we can show the next message
-    // Will be based on time previous message was shown + minDelayBetweenMessage
-    protected Date showMessagesAfterDelay;
     // Amount of seconds to wait for the first message
     protected int delayFirstMessage;
 
@@ -231,7 +228,7 @@ public abstract class SwrveBaseCampaign {
     }
 
     protected boolean isTooSoonToShowMessageAfterDelay(Date now) {
-        return (showMessagesAfterDelay != null && now.before(showMessagesAfterDelay));
+        return (saveableState.showMessagesAfterDelay != null && now.before(saveableState.showMessagesAfterDelay));
     }
 
     protected void logAndAddReason(Map<Integer, String> campaignReasons, String reason) {
@@ -295,7 +292,7 @@ public abstract class SwrveBaseCampaign {
      */
     protected void setMessageMinDelayThrottle() {
         Date now = this.talkController.getNow();
-        this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
+        this.saveableState.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
         this.talkController.setMessageMinDelayThrottle();
     }
 
@@ -338,7 +335,7 @@ public abstract class SwrveBaseCampaign {
         }
 
         if (isTooSoonToShowMessageAfterDelay(now)) {
-            logAndAddReason(campaignReasons, "{Campaign throttle limit} Too soon after last " + elementName + ". Wait until " + timestampFormat.format(showMessagesAfterDelay));
+            logAndAddReason(campaignReasons, "{Campaign throttle limit} Too soon after last " + elementName + ". Wait until " + timestampFormat.format(saveableState.showMessagesAfterDelay));
             return false;
         }
 
