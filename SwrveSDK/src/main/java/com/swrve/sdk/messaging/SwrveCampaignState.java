@@ -5,6 +5,8 @@ import com.swrve.sdk.SwrveLogger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Date;
+
 /**
  * Used internally to save the state of campaigns
  */
@@ -34,16 +36,18 @@ public class SwrveCampaignState {
         }
     }
 
-
-    // Number of impressions of this campaign. Used to disable the campaign if
-    // it reaches total impressions
+    // Number of impressions of this campaign. Used to disable the campaign if it reaches total impressions
     protected int impressions;
 
-    // Inbox status of the campaign
+    // MessageCenter status of the campaign
     protected Status status;
 
     // Next message to be shown if round robin campaign
     protected int next;
+
+    // Time we can show the next message
+    // Will be based on time previous message was shown + minDelayBetweenMessage
+    protected Date showMessagesAfterDelay;
 
     public SwrveCampaignState() {
         impressions = 0;
