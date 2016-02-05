@@ -1,11 +1,18 @@
 package com.swrve.sdk;
 
+import android.content.Context;
+
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Map;
 
 public interface ISwrveCommon
 {
     String getApiKey();
+
+    String getSessionKey();
+
+    short getDeviceId();
 
     int getAppId();
 
@@ -24,6 +31,8 @@ public interface ISwrveCommon
     void setLocationVersion(int locationVersion);
 
     void userUpdate(Map<String, String> attributes);
+
+    void sendEventsWakefully(Context context, ArrayList<String> events);
 
     /***
      * Config area

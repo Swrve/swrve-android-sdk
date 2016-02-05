@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
@@ -11,10 +10,8 @@ import com.swrve.sdk.rest.RESTResponse;
 import org.json.JSONException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class SwrveEventsManager {
 

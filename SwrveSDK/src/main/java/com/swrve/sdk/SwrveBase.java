@@ -1942,6 +1942,23 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+    @Override
+    public void sendEventsWakefully(Context context, ArrayList<String> events) {
+        Intent intent = new Intent(context, SwrveWakefulReceiver.class);
+        intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);
+        context.sendBroadcast(intent);
+    }
+
+    @Override
+    public String getSessionKey() {
+        return this.sessionToken;
+    }
+
+    @Override
+    public short getDeviceId() {
+        return EventHelper.getDeviceId(cachedLocalStorage);
+    }
+
     /***
      * Config area
      */

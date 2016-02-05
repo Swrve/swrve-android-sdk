@@ -14,7 +14,7 @@ import java.util.Map.Entry;
 /**
  * Used internally to provide a multi-layer cache of events and resource diffs.
  */
-public class MemoryCachedLocalStorage implements ILocalStorage {
+public class MemoryCachedLocalStorage implements IMemoryLocalStorage {
     private ILocalStorage cache;
     private ILocalStorage secondaryStorage;
 
@@ -166,6 +166,7 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
         }
     }
 
+    @Override
     public void setAndFlushSharedEntry(String category, String rawData) {
         synchronized (cacheLock) {
             // Save to memory and secondary storage
@@ -176,6 +177,7 @@ public class MemoryCachedLocalStorage implements ILocalStorage {
         }
     }
 
+    @Override
     public String getSharedCacheEntry(String category) {
         return getCacheEntryForUser(category, category);
     }

@@ -44,9 +44,7 @@ import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
 import com.swrve.sdk.messaging.view.SwrveMessageViewFactory;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
-import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTClient;
-import com.swrve.sdk.rest.RESTResponse;
 import com.swrve.sdk.rest.SwrveFilterInputStream;
 
 import org.json.JSONArray;

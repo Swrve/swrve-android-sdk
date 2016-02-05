@@ -1,6 +1,7 @@
 package com.swrve.sdk.localstorage;
 
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.localstorage.ILocalStorage;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
