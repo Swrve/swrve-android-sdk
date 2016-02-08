@@ -1036,12 +1036,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected void saveCampaignsState() {
         if (config.isTalkEnabled()) {
             try {
-                // Save campaign state
+                // Save campaigns state
                 JSONObject campaignStateJson = new JSONObject();
-                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
-                while (itCampaign.hasNext()) {
-                    SwrveBaseCampaign campaign = itCampaign.next();
-                    campaignStateJson.put(Integer.toString(campaign.getId()), campaign.getSaveableState().toJSON());
+                Iterator<Integer> itCampaignStateId = campaignsState.keySet().iterator();
+                while (itCampaignStateId.hasNext()) {
+                    int campaignId = itCampaignStateId.next();
+                    SwrveCampaignState campaignState = campaignsState.get(campaignId);
+                    campaignStateJson.put(String.valueOf(campaignId), campaignState.toJSON());
                 }
 
                 final String serializedCampaignsState = campaignStateJson.toString();
