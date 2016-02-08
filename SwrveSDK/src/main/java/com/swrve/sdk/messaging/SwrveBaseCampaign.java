@@ -70,7 +70,7 @@ public abstract class SwrveBaseCampaign {
         this();
         setId(campaignData.getInt("id"));
         setMessageCenter(campaignData.optBoolean("message_center", false));
-        setSubject(campaignData.optString("subject", null));
+        setSubject(campaignData.isNull("subject") ? "" : campaignData.getString("subject"));
         setTalkController(controller);
         SwrveLogger.i(LOG_TAG, "Loading campaign " + getId());
 
