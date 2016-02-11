@@ -9,8 +9,8 @@ This Android SDK will enable your app to use all of these features.
     - [Android 2.3.3+](#android-233)
     - [Gradle (distributed with the SDK)](#gradle-distributed-with-the-sdk)
 - [Installation Instructions](#installation-instructions)
-  - [In-app Messaging](#in-app-messaging)
-    - [In-app Messaging Deeplinks](#in-app-messaging-deeplinks)
+  - [In-App Messaging](#in-app-messaging)
+    - [In-App Messaging Deeplinks](#in-app-messaging-deeplinks)
   - [Push Notifications](#push-notifications)
     - [If you already use Push Notifications](#if-you-already-use-push-notifications)
     - [Creating and Inputting the Android Server Key](#creating-and-inputting-the-android-server-key)
@@ -48,13 +48,13 @@ Used to build the SDK and its dependencies.
 Installation Instructions
 =
 
-In-app Messaging
+In-App Messaging
 -
 Integrate the in-app messaging functionality so you can use Swrve to send personalized messages to your app users while they’re using your app. If you’d like to find out more about in-app messaging, see [Intro to In-App Messages](http://docs.swrve.com/user-documentation/in-app-messaging/intro-to-in-app-messages/).
 
 Before you can test the in-app message feature in your game, you need to create an In App Message campaign in the Swrve Dashboard.
 
-### In-app Messaging Deeplinks
+### In-App Messaging Deeplinks
 
 When creating in-app messages in Swrve, you can configure message buttons to direct users to perform a custom action when clicked. For example, you might configure a button to direct the app user straight to your app store. To enable this feature, you must configure deeplinks by performing the actions outlined below. For more information about creating in-app messages in Swrve, see [Creating In-App Messages](http://docs.swrve.com/user-documentation/in-app-messaging/creating-in-app-messages/).
 
@@ -334,9 +334,14 @@ Rules for sending events:
  * Do not add timestamps to event names. For example, Tutorial.Start.1454458885
 * When creating custom events, do not use the `swrve.*` or `Swrve.*` namespace for your own events. This is reserved for Swrve use only. Custom event names beginning with `Swrve.` are restricted and cannot be sent.
 
-### Event Payloads ###
+### Event Payloads
 
-An event payload can be added and sent with every event. This allows for more detailed reporting around events and funnels. The associated payload should be a dictionary of key/value pairs; it is restricted to string and integer keys and values. There is a maximum cardinality of 500 key-value pairs for this payload per event. This parameter is optional.
+An event payload can be added and sent with every event. This allows for more detailed reporting around events and funnels. 
+
+Notes on associated payloads:
+* The associated payload should be a dictionary of key/value pairs; it is restricted to string keys and values. 
+* There is a maximum cardinality of 500 key-value pairs for this payload per event. This parameter is optional, but only the first 500 payloads will be seen in the dashboard. The data is still available in raw event logs.
+* It is not currently possible to use payloads as triggers or for filters in the dashboard. Events should be used for these purposes. 
 
 ```
 Map<String,String> payload = new HashMap<String, String>();
@@ -350,6 +355,7 @@ For example, if you want to track when a user starts the tutorial experience it 
 ```
 Map<String,String> payload = new HashMap<String, String>();
 payload.put("time", "100");
+payload.put("step", "5");
 SwrveSDK.event("tutorial.start", payload);
 ```
 
