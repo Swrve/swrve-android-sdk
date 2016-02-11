@@ -179,11 +179,9 @@ Before you can test the in-app message feature in your game, you need to create 
 
 ### In-App Messaging Deeplinks
 
-When creating in-app messages in Swrve, you can configure message buttons to direct users to perform a custom action when clicked. For example, you might configure a button to direct the app user straight to your app store. To enable this feature, you must configure deeplinks by performing the actions outlined below. For more information about creating in-app messages in Swrve, see [Creating In-App Messages](http://docs.swrve.com/user-documentation/in-app-messaging/creating-in-app-messages/).
+When creating in-app messages in Swrve, you can configure message buttons to direct users to perform a custom action when clicked. For example, you might configure a button to direct the app user straight to your app store. For more information about creating in-app messages in Swrve, see [Creating In-App Messages](http://docs.swrve.com/user-documentation/in-app-messaging/creating-in-app-messages/).
 
-Swrve's default deeplink behaviour is to treat custom actions as URLs and therefore use your existing custom URL scheme. Before handling deeplinks in Swrve, you’ll need to register a custom URL scheme in your `AndroidManifest.xml`.
-
-Once the custom URL scheme is set, your app can receive and direct users from outside of the app.
+Swrve's default behaviour is to treat custom actions as URLs. If your app has an existing custom URL scheme defined in your `AndroidManifest.xml`, you will be able to use this to deeplink into your app.
 
 It is also possible to override this behavior and integrate custom actions to direct users to a sale, website or other target when they click on an in-app message. For example, if you would like to handle additional swrve query parameters from this URL, you must implement this within the app.
 
@@ -289,7 +287,7 @@ dependencies {
   </manifest>
   ```
 
-  Note that you must replace `YOUR_PACKAGE_NAME` with the main package of your app. The listener services for push notifications need to live in one of your app’s packages.
+  Note that you must replace `YOUR_PACKAGE_NAME` with the main package of your app and `"Your app title"` with the title of your app. The listener services for push notifications need to live in one of your app’s packages.
 
 2. Provide the sender ID (the project number obtained from the Google Developer Console) to the SDK on initialization. If you haven’t specified any special configuration, do the following:
 
