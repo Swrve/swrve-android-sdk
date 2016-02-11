@@ -48,6 +48,129 @@ Used to build the SDK and its dependencies.
 Installation Instructions
 =
 
+Swrve has an open source SDK repository. There are two options for downloading the latest public Swrve Android SDK:
+
+* Download the SDK from the Github public repository at https://github.com/Swrve/swrve-android-sdk.
+* Integrate the Android SDK libraries using Maven from the Swrve repository on Jcenter.  To integrate this library with your project, add the following code to your `build.gradle` file.
+
+First, add the Swrve repository:
+
+```
+repositories {
+  jcenter{
+    url = 'http://dl.bintray.com/swrve-inc/android'
+  }
+}
+```
+
+Then, choose a Swrve library to install, ensuring you include the latest SDK version number (for example, 4.2.0). If no patch version is present, assume 0; for example with 4.2, use 4.2.0.
+
+```
+dependencies {
+  compile 'com.swrve.sdk.android:swrve:4.2.0’
+}
+```
+
+If you wish to use the Google-flavoured SDK, or if you’re using any of Google Play’s services (such as IAP or push notifications), add the `SwrveGoogleSDK` using this line instead:
+
+```
+dependencies {
+  compile 'com.swrve.sdk.android:swrve-google:4.2.0’
+}
+```
+
+Note: The Swrve Android SDK supports Android 2.3.3 and later. For versions prior to 2.3.3, the SDK uses a dummy implementation. If you're moving from an earlier version of the Android SDK to the current version, see the [Android SDK Upgrade Guide](/docs/upgrade_guide.md) for upgrade instructions.
+
+### Installation Instructions
+
+1. Create an instance of the SDK on your application level. Replace `<app_id>` and `<api_key>` with your app ID and API key.
+
+  By default, Swrve stores all customer data and content in our US data center. If you require EU-only data storage, use the second example below in your onCreate method to configure the SDK to point to Swrve's EU-based URL endpoints. For more information, see [How Do I Configure the Swrve SDK for EU Data Storage?](http://docs.swrve.com/faqs/sdk-integration/configure-sdk-for-eu-data-storage/) If you have any questions or need assistance configuring the SDK for EU data storage, please contact support@swrve.com.
+
+  * US Data Storage
+
+    ```
+    import com.swrve.sdk.SwrveSDK;
+
+    public class YourApplication extends Application {
+       @Override
+       public void onCreate() {
+           super.onCreate();
+           try {
+               SwrveSDK.createInstance(this, <app_id>, "<api_key>");
+           } catch (IllegalArgumentException exp) {
+               Log.e("SwrveDemo", "Could not initialize the Swrve SDK", exp);
+           }
+       }
+    }
+    ```
+
+  * EU Data Storage
+
+    ```
+    import com.swrve.sdk.SwrveSDK;
+    import com.swrve.sdk.config.SwrveSDK;
+    public class YourApplication extends Application {
+       @Override
+       public void onCreate() {
+           super.onCreate();
+           try {
+               SwrveConfig config = new SwrveConfig();
+               config.setSelectedStack(SwrveStack.EU);
+               SwrveSDK.createInstance(this, <app_id>, "<api_key>", config);
+           } catch (IllegalArgumentException exp) {
+               Log.e("SwrveDemo", "Could not initialize the Swrve SDK", exp);
+           }
+       }
+    }
+    ```
+
+2. Add the code below to the `onCreate`, `onPause`, `onResume`, `onDestroy` and `onLowMemory` methods of all of your activities.
+
+  ```
+  import com.swrve.sdk.SwrveSDK;
+
+  public class YourActivity extends Activity {
+
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        SwrveSDK.onCreate(this);
+     }
+
+     @Override
+     protected void onPause() {
+        super.onPause();
+        SwrveSDK.onPause();
+     }
+
+     @Override
+     protected void onResume() {
+        super.onResume();
+        SwrveSDK.onResume(this);
+     }
+
+     @Override
+     protected void onDestroy() {
+        SwrveSDK.onDestroy(this);
+        super.onDestroy();
+     }
+
+     @Override
+     public void onLowMemory() {
+        super.onLowMemory();
+        SwrveSDK.onLowMemory();
+     }
+
+     @Override
+     public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        SwrveSDK.onNewIntent(intent);
+     }
+  }
+  ```
+You can now compile and run your project in the Android simulator.
+
 In-App Messaging
 -
 Integrate the in-app messaging functionality so you can use Swrve to send personalized messages to your app users while they’re using your app. If you’d like to find out more about in-app messaging, see [Intro to In-App Messages](http://docs.swrve.com/user-documentation/in-app-messaging/intro-to-in-app-messages/).
@@ -318,7 +441,7 @@ This section describes how to configure advanced options for Android SDK push no
 Sending Events
 -
 
-### Sending Named Events ###
+### Sending Named Events
 
 ```
 SwrveSDK.event("custom.event_name");
@@ -359,7 +482,7 @@ payload.put("step", "5");
 SwrveSDK.event("tutorial.start", payload);
 ```
 
-### Send User Properties ###
+### Send User Properties
 
 Assign user properties to send the status of the user. For example create a custom user property called `premium`, and then target non-premium users and premium users in the dashboard.
 
@@ -373,7 +496,7 @@ attributes.put("balance", "999");
 SwrveSDK.userUpdate(attributes);
 ```
 
-### Sending Virtual Economy Events ###
+### Sending Virtual Economy Events
 
 To ensure virtual currency events are not ignored by the server, make sure the currency name configured in your app matches exactly the Currency Name you enter in the App Currencies section on the App Settings screen (including case-sensitive). If there is any difference, or if you haven’t added the currency in Swrve, the event will be ignored and return an error event called Swrve.error.invalid_currency. Additionally, the ignored events will not be included in your KPI reports. For more information, see [Add Your App](http://docs.swrve.com/getting-started/add-your-app/).
 
@@ -395,7 +518,7 @@ double givenAmount = 99;
 SwrveSDK.currencyGiven(givenCurrency, givenAmount);
 ```
 
-### Sending IAP Events and IAP Validation ###
+### Sending IAP Events and IAP Validation
 
 This section details the IAP functions for unverified IAP events and for IAP events where the receipt can be verified. It also details how to enable IAP receipt validation for Google Play.
 

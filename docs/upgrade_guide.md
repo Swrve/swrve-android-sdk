@@ -3,6 +3,7 @@ Android SDK Upgrade Guide
 
 This guide provides information about how you can upgrade to the latest Swrve Android SDK. For information about the changes that have been made in each Android SDK release, see [Android SDK Release Notes](/docs/release_notes.md).
 
+- [Upgrading to iOS SDK v4.2](#upgrading-to-ios-sdk-v42)
 - [Upgrading to Android SDK v4.1](#upgrading-to-android-sdk-v41)
   - [Custom Events Starting with "Swrve"](#custom-events-starting-with-swrve)
   - [Google Push New Material Metadata](#google-push-new-material-metadata)
@@ -49,6 +50,26 @@ This guide provides information about how you can upgrade to the latest Swrve An
   - [Deprecation of the `buy_in` function](#deprecation-of-the-buy_in-function)
 - [Upgrading to Android SDK v2.4](#upgrading-to-android-sdk-v24)
   - [Migrating from Android SDK 2.3 TO Android SDK 2.4](#migrating-from-android-sdk-23-to-android-sdk-24)
+
+
+Upgrading to iOS SDK v4.2
+-
+
+This section provides information to enable you to upgrade to Swrve Android SDK v4.2.
+
+### New `onNewIntent` method
+
+Instrument your activities to call the new onNewIntent method:
+
+```
+@Override
+public void onNewIntent(Intent intent) {
+   super.onNewIntent(intent);
+   SwrveSDK.onNewIntent(intent);
+}
+```
+
+If you're integrating the Android SDK libraries using Maven from the Swrve repository on Jcenter, then you need to update the version number to 4.2.0.
 
 Upgrading to Android SDK v4.1
 -

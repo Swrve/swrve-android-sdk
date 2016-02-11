@@ -3,6 +3,7 @@ Android SDK Release Notes
 
 For upgrade instructions, see [Android SDK Upgrade Guide](/docs/upgrade_guide.md).
 
+- [Release 4.2](#release-42)
 - [Release 4.1](#release-41)
 - [Release 4.0.5](#release-405)
 - [Release 4.0.4](#release-404)
@@ -25,6 +26,21 @@ For upgrade instructions, see [Android SDK Upgrade Guide](/docs/upgrade_guide.md
 - [Release 2.7.1](#release-271)
 - [Release 2.7](#release-27)
 - [Previous Releases Summary](#previous-releases-summary)
+
+Release 4.2
+-
+Release Date: February 11, 2016
+
+Android SDK release 4.2 is focused on the following:
+
+* New Message Center API enables you to list conversations and/or in-app messages in the app’s inbox. For more information, see the Swrve Message Center API Guide.
+* Upgrade of the GCM library to 8.4.0.
+* The SDK is ready to work with the future release of Location-based Campaigns.
+
+Android SDK release 4.2 includes the following bug fixes:
+
+* Improvements to the campaign state of in-app messages so it doesn’t get overwritten when campaigns are refreshed from the server.
+* Fixed an issue where apps with an Activity configured with singleTask launchMode were not logging push notification engagements events. For more information, see the onNewIntent method in the [Android SDK Upgrade Guide](/docs/upgrade_guide.md).
 
 Release 4.1
 -
