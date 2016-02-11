@@ -182,7 +182,7 @@ public final class SwrveHelper {
         hmac.init(secretKey);
 
         byte[] signature = hmac.doFinal(source.getBytes());
-        return Base64.encodeToString(signature, Base64.DEFAULT);
+        return Base64.encodeToString(signature, Base64.NO_WRAP);
     }
 
     public static boolean sdkAvailable() {
