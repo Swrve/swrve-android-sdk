@@ -26,6 +26,6 @@ dependencies {
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
     compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    releaseCompile project(path: ':SwrveCommonSDK', configuration: 'release')
-    debugCompile project(path: ':SwrveCommonSDK', configuration: 'debug')
+    releaseCompile project(path: ':SwrveSDKCommon', configuration: 'release')
+    debugCompile project(path: ':SwrveSDKCommon', configuration: 'debug')
 }

@@ -28,7 +28,7 @@ android {
 }
 
 dependencies {
-    compile project(path: ':SwrveCommonSDK')
+    compile project(path: ':SwrveSDKCommon')
     compile project(path: ':SwrveConversationsSDK')
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
