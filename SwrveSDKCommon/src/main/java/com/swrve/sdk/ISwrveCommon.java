@@ -22,7 +22,7 @@ public interface ISwrveCommon
 
     String getUniqueKey();
 
-    String getBatchEventsAction();
+    String getBatchURL();
 
     String getCachedLocationData();
 
@@ -32,17 +32,15 @@ public interface ISwrveCommon
 
     void userUpdate(Map<String, String> attributes);
 
+    void sendEventWakefully(Context context, String event);
+
     void sendEventsWakefully(Context context, ArrayList<String> events);
 
     /***
      * Config area
      */
 
-    URL getEventsUrl();
-
-    String getDbName();
-
-    long getMaxSqliteDbSize();
+    String getEventsServer();
 
     int getHttpTimeout();
 

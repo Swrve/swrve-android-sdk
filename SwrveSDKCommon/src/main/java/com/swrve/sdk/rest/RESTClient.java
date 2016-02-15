@@ -2,6 +2,7 @@ package com.swrve.sdk.rest;
 
 import android.util.Log;
 
+import com.swrve.sdk.SwrveCommon;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 

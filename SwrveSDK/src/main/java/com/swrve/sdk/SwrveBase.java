@@ -7,14 +7,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
-import android.telephony.SignalStrength;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
 import com.swrve.sdk.conversations.ISwrveConversationSDKProvider;
@@ -51,6 +49,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -428,7 +427,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 @Override
                 public void run() {
                     short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
-                    SwrveEventsManager swrveEventsManager = new SwrveEventsManager(restClient, userId, appVersion, sessionToken, deviceId);
+                    SwrveEventsManager swrveEventsManager = new SwrveEventsManager(restClient);
                     swrveEventsManager.sendStoredEvents(cachedLocalStorage);
                     eventsWereSent = true;
                 }
@@ -1914,8 +1913,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
     }
 
-    public String getBatchEventsAction() {
-        return BATCH_EVENTS_ACTION;
+    @Override
+    public String getBatchURL() {
+        return getEventsServer() +  BATCH_EVENTS_ACTION;
     }
 
     public boolean isDebug() {
@@ -1943,6 +1943,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public void sendEventWakefully(Context context, final String event) {
+        sendEventsWakefully(context, new ArrayList<String>() {{ add(event); }});
+    }
+
+    @Override
     public void sendEventsWakefully(Context context, ArrayList<String> events) {
         Intent intent = new Intent(context, SwrveWakefulReceiver.class);
         intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);
@@ -1964,18 +1969,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      */
 
     @Override
-    public URL getEventsUrl() {
-        return config.getEventsUrl();
-    }
-
-    @Override
-    public String getDbName() {
-        return config.getDbName();
-    }
-
-    @Override
-    public long getMaxSqliteDbSize() {
-        return config.getMaxSqliteDbSize();
+    public String getEventsServer() {
+        return config.getEventsUrl().toString();
     }
 
     @Override

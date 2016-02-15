@@ -15,7 +15,7 @@ public class SwrveWakefulService extends IntentService {
     private static final String LOG_TAG = "SwrveWakeful";
     public static final String EXTRA_EVENTS = "swrve_wakeful_events";
 
-    private ISwrveCommon swrveCommon = SwrveCommon.getSwrveCommon();
+    private Swrve swrve = (Swrve) SwrveSDKBase.getInstance();
 
     public SwrveWakefulService() {
         super("SwrveWakefulService");
@@ -42,10 +42,11 @@ public class SwrveWakefulService extends IntentService {
         MemoryCachedLocalStorage memoryCachedLocalStorage = null;
         SQLiteLocalStorage sqLiteLocalStorage = null;
         try {
-            sqLiteLocalStorage = new SQLiteLocalStorage(getApplicationContext(), swrveCommon.getDbName(), swrveCommon.getMaxSqliteDbSize());
+            ISwrveCommon swrveCommon = SwrveCommon.getSwrveCommon();
+            sqLiteLocalStorage = new SQLiteLocalStorage(getApplicationContext(), swrve.config.getDbName(), swrve.config.getMaxSqliteDbSize());
             memoryCachedLocalStorage = new MemoryCachedLocalStorage(sqLiteLocalStorage, null);
 
-            SwrveEventsManager swrveEventsManager = getSendEventsManager(memoryCachedLocalStorage);
+            SwrveEventsManager swrveEventsManager = getSendEventsManager();
             eventsSent = swrveEventsManager.storeAndSendEvents(eventsJson, memoryCachedLocalStorage, sqLiteLocalStorage);
         } finally {
             if (sqLiteLocalStorage != null) sqLiteLocalStorage.close();
@@ -55,10 +56,7 @@ public class SwrveWakefulService extends IntentService {
         return eventsSent;
     }
 
-    private SwrveEventsManager getSendEventsManager(MemoryCachedLocalStorage memoryCachedLocalStorage){
-        IRESTClient restClient = new RESTClient(swrveCommon.getHttpTimeout());
-        short deviceId = EventHelper.getDeviceId(memoryCachedLocalStorage);
-        String sessionToken = SwrveHelper.generateSessionToken(swrveCommon.getApiKey(), swrveCommon.getAppId(), swrveCommon.getUserId());
-        return new SwrveEventsManager(restClient, swrveCommon.getUserId(), swrveCommon.getAppVersion(), sessionToken, deviceId);
+    private SwrveEventsManager getSendEventsManager(){
+        return new SwrveEventsManager(new RESTClient(swrve.config.getHttpTimeout()));
     }
 }
