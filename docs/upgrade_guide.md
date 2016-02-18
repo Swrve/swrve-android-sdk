@@ -184,13 +184,13 @@ This section provides information to enable you to upgrade to Swrve Android SDK 
 The `SwrveInstance` class has been deprecated in favor of the new `SwrveSDK` class. Replace all instances of `SwrveInstance` with `Swrve.SDK` (see examples below).
 
 SYNTAX	EXAMPLE
-Old	SwrveInstance.getInstance().METHOD	SwrveInstance.getInstance().event(“tutorial.end”);
+Old	SwrveInstance.getInstance().METHOD	SwrveInstance.getInstance().event("tutorial.end");
 Map<String, String> attributes = new HashMap<String, String>();
-attributes.put(“subscriptionType”, “trial”);
+attributes.put("subscriptionType", "trial");
 SwrveInstance.getInstance().userUpdate(attributes);
-New	SwrveSDK.METHOD	SwrveSDK.event(“tutorial.end”);
+New	SwrveSDK.METHOD	SwrveSDK.event("tutorial.end");
 Map<String, String> attributes = new HashMap<String, String>();
-attributes.put(“subscriptionType”, “trial”);
+attributes.put("subscriptionType", "trial");
 SwrveSDK.userUpdate(attributes);
 
 
@@ -726,17 +726,17 @@ This section provides information to enable you to upgrade to Swrve Android SDK 
 
 The SDK app store setup has been changed from the `enum SwrveAppStore` to a `string`. You can now provide a custom value and set that app store in the dashboard. The configuration turns into:
 
-* `swrveConfig.setAppStore(“google”);`
-* `swrveConfig.setAppStore(“amazon”);`
-* `swrveConfig.setAppStore(“other”);`
+* `swrveConfig.setAppStore("google");`
+* `swrveConfig.setAppStore("amazon");`
+* `swrveConfig.setAppStore("other");`
 
 The SDK has been improved to avoid common instrumentation errors. If you want to configure a custom endpoint URL (ab test, content or link server) you now have to use a `java.net.URL` instance:
 
-* `swrveConfig.setContentUrl(new java.net.URL(“http://customeventurl.com”));`
+* `swrveConfig.setContentUrl(new java.net.URL("http://customeventurl.com"));`
 
 The link token now is a java.util.UUID. To set it up use the following snippet:
 
-* `swrveConfig.setLinkToken(java.util.UUID.fromString(“uuid_value”));`
+* `swrveConfig.setLinkToken(java.util.UUID.fromString("uuid_value"));`
 
 The SDK initialisation can now throw exceptions. The SDK throws an exception if:
 
@@ -748,4 +748,4 @@ The SDK initialisation can now throw exceptions. The SDK throws an exception if:
 
 Also, the SDK will warn if you initialize the SDK with an `Object.toString()` as the user id:
 
-“Please double-check your user id. It seems to be Object.toString(): UserIdStorage@12313”
+Please double-check your user id. It seems to be `Object.toString(): UserIdStorage@12313`
