@@ -18,6 +18,16 @@ public class SwrveConfig extends SwrveConfigBase {
     private boolean gAIDLoggingEnabled;
 
     /**
+     * Whether the Swrve SDK should handle GCM pushes
+     */
+    private boolean gGcmPushEnabled;
+
+    /**
+     * Whether the Swrve SDK should register to GCM (true) or let the app handles it (false)
+     */
+    private boolean performGcmRegistrationInternally;
+
+    /**
      * Returns an instance of SwrveConfig with the Sender id.
      *
      * @param senderId
@@ -39,6 +49,21 @@ public class SwrveConfig extends SwrveConfigBase {
      */
     public SwrveConfig setSenderId(String senderId) {
         this.senderId = senderId;
+        this.gGcmPushEnabled = !SwrveHelper.isNullOrEmpty(senderId);
+        this.performGcmRegistrationInternally = true;
+        return this;
+    }
+
+    /**
+     * Let your app handle GCM registration instead of Swrve
+     * <p>
+     * When calling this method, the Swrve SDK expects your app to register to
+     * GCM and then send Swrve the registration token via
+     * {@code SwrveSDK.setGcmRegistrationId(registrationId);}
+     */
+    public SwrveConfig provideOwnGcmRegistrationId() {
+        this.gGcmPushEnabled = true;
+        this.performGcmRegistrationInternally = false;
         return this;
     }
 
@@ -46,14 +71,14 @@ public class SwrveConfig extends SwrveConfigBase {
      * @return if push is enabled.
      */
     public boolean isPushEnabled() {
-        return !SwrveHelper.isNullOrEmpty(this.senderId);
+        return gGcmPushEnabled;
     }
 
     /**
      * @return if it will automatically log Google's Advertising Id as "swrve.GAID".
      */
     public boolean isGAIDLoggingEnabled() {
-            return gAIDLoggingEnabled;
+        return gAIDLoggingEnabled;
     }
 
     /**
@@ -61,5 +86,12 @@ public class SwrveConfig extends SwrveConfigBase {
      */
     public void setGAIDLoggingEnabled(boolean enabled) {
         this.gAIDLoggingEnabled = enabled;
+    }
+
+    /**
+     * @return if the Swrve SDK registers for gcm pushes by itself.
+     */
+    public boolean isPushRegistrationDoneBySwrve() {
+        return performGcmRegistrationInternally;
     }
 }

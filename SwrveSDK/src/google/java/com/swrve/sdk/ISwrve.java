@@ -19,4 +19,6 @@ public interface ISwrve extends ISwrveBase<ISwrve, SwrveConfig> {
     void processIntent(Intent intent);
 
     void onTokenRefreshed();
+
+    void setRegistrationId(String gcmRegistrationId);
 }

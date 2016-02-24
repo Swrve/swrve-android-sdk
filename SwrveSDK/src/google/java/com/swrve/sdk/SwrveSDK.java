@@ -11,6 +11,7 @@ public class SwrveSDK extends SwrveSDKBase {
 
     /**
      * Create a single Swrve SDK instance.
+     *
      * @param context your activity or application context
      * @param appId   your app id in the Swrve dashboard
      * @param apiKey  your app api_key in the Swrve dashboard
@@ -22,6 +23,7 @@ public class SwrveSDK extends SwrveSDKBase {
 
     /**
      * Create a single Swrve SDK instance.
+     *
      * @param context your activity or application context
      * @param appId   your app id in the Swrve dashboard
      * @param apiKey  your app api_key in the Swrve dashboard
@@ -88,7 +90,7 @@ public class SwrveSDK extends SwrveSDKBase {
      * Add a Swrve.iap event to the event queue. This event should be added for unvalidated real
      * money transactions in the Google Play Store, where in-app currency was purchased
      * or where multiple items and/or currencies were purchased.
-     *
+     * <p>
      * To create the rewards object, create an instance of SwrveIAPRewards and
      * use addItem() and addCurrency() to add the individual rewards
      *
@@ -126,5 +128,18 @@ public class SwrveSDK extends SwrveSDKBase {
     public static void processIntent(Intent intent) {
         checkInstanceCreated();
         ((ISwrve) instance).processIntent(intent);
+    }
+
+    /**
+     * Manually set the GCM registration ID.
+     * <p>
+     * Make sure to init Swrve with {@code SwrveConfig.provideOwnGcmRegistrationId();}
+     * if you want to use this method.
+     *
+     * @param registrationId the GCM registration token received after your app registers to GCM
+     */
+    public static void setGcmRegistrationId(String registrationId) {
+        checkInstanceCreated();
+        ((ISwrve) instance).setRegistrationId(registrationId);
     }
 }

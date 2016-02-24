@@ -36,6 +36,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         super(context, appId, apiKey, config);
     }
 
+    @Override
     public void onTokenRefreshed() {
         registerInBackground(getContext());
     }
@@ -48,7 +49,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 // Check device for Play Services APK.
                 if (isGooglePlayServicesAvailable()) {
                     String newRegistrationId = getRegistrationId();
-                    if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+                    if (SwrveHelper.isNullOrEmpty(newRegistrationId) && config.isPushRegistrationDoneBySwrve()) {
                         registerInBackground(getContext());
                     } else {
                         registrationId = newRegistrationId;
@@ -108,6 +109,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
     }
 
+    @Override
     public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         this.pushNotificationListener = pushNotificationListener;
     }
@@ -135,28 +137,11 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     /**
      * Registers the application with GCM servers asynchronously.
-     *
+     * <p>
      * Stores the registration ID and app version
      */
     protected void registerInBackground(final Context context) {
         new AsyncTask<Void, Integer, Void>() {
-            private void setRegistrationId(String regId) {
-                try {
-                    registrationId = regId;
-                    if (qaUser != null) {
-                        qaUser.updateDeviceInfo();
-                    }
-
-                    // Store registration id and app version
-                    cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
-                    cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
-                    // Re-send data now
-                    queueDeviceInfoNow(true);
-                } catch (Exception ex) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
-                }
-            }
-
             @Override
             protected Void doInBackground(Void... params) {
                 // Try to obtain the GCM registration id from Google Play
@@ -178,6 +163,24 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }.execute(null, null, null);
     }
 
+    @Override
+    public void setRegistrationId(String gcmRegistrationId) {
+        try {
+            registrationId = gcmRegistrationId;
+            if (qaUser != null) {
+                qaUser.updateDeviceInfo();
+            }
+
+            // Store registration id and app version
+            cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
+            cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
+            // Re-send data now
+            queueDeviceInfoNow(true);
+        } catch (Exception ex) {
+            SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
+        }
+    }
+
     /**
      * Gets the current registration ID for application on GCM service.
      * If result is empty, the app needs to register.
@@ -191,21 +194,26 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (SwrveHelper.isNullOrEmpty(registrationIdRaw)) {
             return "";
         }
-        // Check if app was updated; if so, it must clear the registration ID
-        // since the existing regID is not guaranteed to work with the new
-        // app version.
-        String registeredVersion = cachedLocalStorage.getSharedCacheEntry(APP_VERSION_CATEGORY);
-        if (!SwrveHelper.isNullOrEmpty(registeredVersion) && !registeredVersion.equals(appVersion)) {
-            return "";
+
+        if (config.isPushRegistrationDoneBySwrve()) {
+            // Check if app was updated; if so, it must clear the registration ID
+            // since the existing regID is not guaranteed to work with the new
+            // app version.
+            String registeredVersion = cachedLocalStorage.getSharedCacheEntry(APP_VERSION_CATEGORY);
+            if (!SwrveHelper.isNullOrEmpty(registeredVersion) && !registeredVersion.equals(appVersion)) {
+                return "";
+            }
         }
         return registrationIdRaw;
     }
 
+    @Override
     public void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
         SwrveIAPRewards rewards = new SwrveIAPRewards();
         this.iapPlay(productId, productPrice, currency, rewards, purchaseData, dataSignature);
     }
 
+    @Override
     public void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature) {
         this._iapPlay(productId, productPrice, currency, rewards, purchaseData, dataSignature);
     }
@@ -251,6 +259,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
     }
 
+    @Override
     public void processIntent(Intent intent) {
         if (intent != null) {
             Bundle extras = intent.getExtras();
