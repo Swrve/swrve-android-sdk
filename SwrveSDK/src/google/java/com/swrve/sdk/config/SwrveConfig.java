@@ -23,7 +23,7 @@ public class SwrveConfig extends SwrveConfigBase {
     private boolean gGcmPushEnabled;
 
     /**
-     * Whether the Swrve SDK should register to GCM (true) or let the app handles it (false)
+     * Whether the Swrve SDK should register to GCM (true) or let the app handle it (false)
      */
     private boolean performGcmRegistrationInternally;
 
