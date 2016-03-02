@@ -16,6 +16,7 @@ public class SwrveCommon {
         }
 
         if (swrveCommon == null) {
+            SwrveLogger.e(LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
             throw new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
         }
     }

@@ -1,6 +1,6 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
+import com.swrve.sdk.localstorage.IMemoryLocalStorage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,7 +16,7 @@ import java.util.Random;
 final class EventHelper {
     private static final Object BATCH_API_VERSION = "2";
 
-    protected synchronized static short getDeviceId(MemoryCachedLocalStorage storage) {
+    protected synchronized static short getDeviceId(IMemoryLocalStorage storage) {
         String id = storage.getSharedCacheEntry("device_id");
         if (id == null || id.length() <= 0) {
             short deviceId = (short) new Random().nextInt(Short.MAX_VALUE);
@@ -27,7 +27,7 @@ final class EventHelper {
         }
     }
 
-    private synchronized static int getNextSequenceNumber(MemoryCachedLocalStorage storage) {
+    private synchronized static int getNextSequenceNumber(IMemoryLocalStorage storage) {
         String id = storage.getSharedCacheEntry("seqnum");
         int seqnum = 1;
         if (!SwrveHelper.isNullOrEmpty(id)) {
@@ -42,7 +42,7 @@ final class EventHelper {
      * the batch API to inform Swrve of these events.
      */
     public static String eventAsJSON(String type, Map<String, Object> parameters,
-                                     Map<String, String> payload, MemoryCachedLocalStorage storage) throws JSONException {
+                                     Map<String, String> payload, IMemoryLocalStorage storage) throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put("type", type);
         obj.put("time", System.currentTimeMillis());

@@ -20,6 +20,8 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
+import com.swrve.sdk.localstorage.ILocalStorage;
+import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -59,7 +61,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Main base class implementation of the Swrve SDK.
  */
-public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C> {
+public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveCommon {
 
     protected SwrveBase(Context context, int appId, String apiKey, C config) {
         super(context, appId, apiKey, config);
@@ -1869,4 +1871,98 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         campaign.setStatus(SwrveCampaignState.Status.Deleted);
         saveCampaignsState();
     }
+
+    /***
+     * Implementation of ISwrveCommon methods
+     */
+
+    public int getAppId() {
+        return appId;
+    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public ILocalStorage createLocalStorage() {
+        return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
+    }
+
+    @Override
+    public String getBatchURL() {
+        return getEventsServer() +  BATCH_EVENTS_ACTION;
+    }
+
+    public boolean isDebug() {
+        return BuildConfig.DEBUG;
+    }
+
+    @Override
+    public void setLocationVersion(int locationVersion) {
+        this.locationVersion = locationVersion;
+    }
+
+    @Override
+    public String getCachedLocationData() {
+        ILocalStorage localStorage = null;
+        try {
+            localStorage = createLocalStorage();
+            return localStorage.getSecureCacheEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, getUniqueKey());
+        } catch (Exception e) {
+            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load " + LOCATION_CAMPAIGN_CATEGORY + " campaigns", e);
+        } finally {
+            if (localStorage != null) localStorage.close();
+        }
+
+        return null;
+    }
+
+    @Override
+    public void sendEventWakefully(Context context, final String event) {
+        sendEventsWakefully(context, new ArrayList<String>() {{ add(event); }});
+    }
+
+    @Override
+    public void sendEventsWakefully(Context context, ArrayList<String> events) {
+        Intent intent = new Intent(context, SwrveWakefulReceiver.class);
+        intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);
+        context.sendBroadcast(intent);
+    }
+
+    @Override
+    public String getSessionKey() {
+        return this.sessionToken;
+    }
+
+    @Override
+    public short getDeviceId() {
+        return EventHelper.getDeviceId(cachedLocalStorage);
+    }
+
+    /***
+     * Config area
+     */
+
+    @Override
+    public String getEventsServer() {
+        return config.getEventsUrl().toString();
+    }
+
+    @Override
+    public int getHttpTimeout() {
+        return config.getHttpTimeout();
+    }
+
+    @Override
+    public int getMaxEventsPerFlush() {
+        return config.getMaxEventsPerFlush();
+    }
+
+    /***
+     * eo Config
+     */
+
+    /***
+     * eo ISwrveCommon
+     */
 }
