@@ -1,0 +1,30 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+    buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
+
+    defaultConfig {
+        minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
+        targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
+    }
+
+    // Needed to publish all variants
+    publishNonDefault true
+
+    buildTypes {
+        debug {}
+        release { }
+    }
+
+    lintOptions {
+        abortOnError true
+    }
+}
+
+dependencies {
+    compile 'com.google.code.gson:gson:2.2.+'
+    compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    compile project(':SwrveSDKCommon')
+}

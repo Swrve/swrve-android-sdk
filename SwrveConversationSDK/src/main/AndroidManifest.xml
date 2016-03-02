@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.swrve.sdk.conversations"
+    android:versionCode="2"
+    android:versionName="2.8">
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="22" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required for assets caching -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application >
+        <activity
+            android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.Conversations">
+        </activity>
+
+    </application>
+</manifest>
