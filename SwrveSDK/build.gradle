@@ -1,15 +1,15 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion '23.0.2'
+    compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+    buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
 
     // Needed to publish all variants
     publishNonDefault true
 
     defaultConfig {
-        minSdkVersion 10
-        targetSdkVersion 23
+        minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
+        targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
     }
 
     buildTypes {
@@ -30,10 +30,10 @@ android {
 dependencies {
     compile project(':SwrveSDKCommon')
     compile 'com.google.code.gson:gson:2.2.+'
-    compile 'com.android.support:support-v4:23.+'
-    compile 'com.android.support:appcompat-v7:23.+'
-    googleCompile 'com.google.android.gms:play-services-gcm:8.4.0'
-    googleCompile 'com.google.android.gms:play-services-ads:8.4.0'
+    compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    googleCompile 'com.google.android.gms:play-services-gcm:' + project.GOOGLE_GMS_TOOLS_VERSION
+    googleCompile 'com.google.android.gms:play-services-ads:' + project.GOOGLE_GMS_TOOLS_VERSION
 }
 
 apply plugin: 'maven-publish'
