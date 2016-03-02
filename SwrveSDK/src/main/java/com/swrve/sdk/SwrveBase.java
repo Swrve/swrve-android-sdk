@@ -1939,10 +1939,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return EventHelper.getDeviceId(cachedLocalStorage);
     }
 
-    /***
-     * Config area
-     */
-
     @Override
     public String getEventsServer() {
         return config.getEventsUrl().toString();
@@ -1957,10 +1953,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public int getMaxEventsPerFlush() {
         return config.getMaxEventsPerFlush();
     }
-
-    /***
-     * eo Config
-     */
 
     /***
      * eo ISwrveCommon
