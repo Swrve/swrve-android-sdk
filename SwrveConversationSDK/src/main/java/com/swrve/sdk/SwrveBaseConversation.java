@@ -1,5 +1,6 @@
-package com.swrve.sdk.conversations;
+package com.swrve.sdk;
 
+import com.swrve.sdk.SwrveCommon;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
@@ -13,7 +14,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 // This class has to be extended by the SwrveSDK to add campaign and the other commented code
-public class SwrveCommonConversation implements Serializable {
+public class SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
     // Swrve SDK reference
     protected transient ISwrveConversationsSDK conversationController;
@@ -29,13 +30,12 @@ public class SwrveCommonConversation implements Serializable {
     /**
      * Load message from JSON data.
      *
-     * @param controller       SwrveTalk object that will manage the data from the campaign.
      * @param conversationData JSON data containing the message details.
      * @throws JSONException
      */
-    public SwrveCommonConversation(ISwrveConversationsSDK controller, JSONObject conversationData) throws JSONException {
+    public SwrveBaseConversation(JSONObject conversationData) throws JSONException {
         //READD ON EXTENDED CLASSthis(controller, campaign);
-        setConversationController(controller);
+        setConversationController();
 
         try {
             setId(conversationData.getInt("id"));
@@ -59,39 +59,12 @@ public class SwrveCommonConversation implements Serializable {
         setPages(pages);
     }
 
-    protected void setConversationController(ISwrveConversationsSDK conversationController) {
-        this.conversationController = conversationController;
+    protected void setConversationController() {
+        this.conversationController = SwrveCommon.getSwrveCommon().getConversationSDK();
         if (conversationController != null) {
             setCacheDir(conversationController.getCacheDir());
         }
     }
-
-    /*//READD ON EXTENDED CLASS
-    protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = conversationController.getAssetsOnDisk();
-        return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
-    }
-
-    /**
-     * @return has the conversation been downloaded fully yet
-     * /
-    public boolean isDownloaded() {
-        if (this.pages != null) {
-            for (ConversationPage conversationPage : pages) {
-                for (ConversationAtom conversationAtom : conversationPage.getContent()) {
-                    if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        Content modelContent = (Content) conversationAtom;
-                        if (!this.assetInCache(modelContent.getValue())) {
-                            SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-
-        return true;
-    }*/
 
     /**
      * @return the first ConversationPage (Page)

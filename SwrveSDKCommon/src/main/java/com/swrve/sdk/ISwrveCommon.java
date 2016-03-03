@@ -6,7 +6,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
-public interface ISwrveCommon
+interface ISwrveCommon
 {
     String getApiKey();
 
@@ -24,13 +24,15 @@ public interface ISwrveCommon
 
     String getBatchURL();
 
-    String getCachedLocationData();
-
     boolean isDebug();
+
+    String getCachedLocationData();
 
     void setLocationVersion(int locationVersion);
 
     void userUpdate(Map<String, String> attributes);
+
+    ISwrveConversationsSDK getConversationSDK();
 
     void sendEventWakefully(Context context, String event);
 

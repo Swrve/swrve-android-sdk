@@ -1,7 +1,7 @@
 package com.swrve.sdk;
 
 
-public class SwrveCommon {
+class SwrveCommon {
     private static final String LOG_TAG = "SwrveCommon";
     private static ISwrveCommon swrveCommon;
     private static Runnable toRunIfNull;

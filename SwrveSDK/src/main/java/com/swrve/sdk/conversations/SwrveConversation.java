@@ -1,6 +1,7 @@
 package com.swrve.sdk.conversations;
 
 import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.Content;
@@ -13,29 +14,28 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Set;
 
-public class SwrveConversation extends SwrveCommonConversation implements Serializable {
+public class SwrveConversation extends SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
     // SwrveSDK reference
-    protected transient SwrveBase<?, ?> controller;
+    protected transient SwrveBase<?, ?> swrve;
     // Parent in-app campaign
     protected transient SwrveConversationCampaign campaign;
 
     /**
      * Load message from JSON data.
      *
-     * @param controller       SwrveTalk object that will manage the data from the campaign.
+     * @param swrve       SwrveTalk object that will manage the data from the campaign.
      * @param campaign         Related campaign.
      * @param conversationData JSON data containing the message details.
      * @throws JSONException
      */
-    public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
-        super(controller, conversationData);
-        this.controller = controller;
+    public SwrveConversation(SwrveBase<?, ?> swrve, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
+        super(conversationData);
+        this.swrve = swrve;
         this.campaign = campaign;
 
         try {
@@ -61,7 +61,7 @@ public class SwrveConversation extends SwrveCommonConversation implements Serial
     }
 
     protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = controller.getAssetsOnDisk();
+        Set<String> assetsOnDisk = swrve.getAssetsOnDisk();
         return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
     }
 

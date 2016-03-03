@@ -15,12 +15,7 @@ import android.view.WindowManager;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
-import com.swrve.sdk.conversations.ISwrveConversationSDKProvider;
-import com.swrve.sdk.conversations.ISwrveConversationsSDK;
-import com.swrve.sdk.conversations.SwrveCommonConversation;
 import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
-import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
@@ -64,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Main base class implementation of the Swrve SDK.
  */
-public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveCommon, ISwrveConversationsSDK {
+public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveCommon {
 
     protected SwrveBase(Context context, int appId, String apiKey, C config) {
         super(context, appId, apiKey, config);
@@ -206,16 +201,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     SwrveLogger.e(LOG_TAG, "Can't display a conversation without a context");
                                     return;
                                 }
-
-                                // Set the SDK provider so that the ConversationActivity can find
-                                // the shared instance of the SDK
-                                // This is also implemented by the Unity Android SDK Java layer
-                                ConversationActivity.setSDKProvider(new ISwrveConversationSDKProvider() {
-                                    @Override
-                                    public ISwrveConversationsSDK getInstance() {
-                                        return (SwrveBase)SwrveSDKBase.getInstance();
-                                    }
-                                });
 
                                 Intent intent = new Intent(ctx, ConversationActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -674,7 +659,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
-                if(locationVersion > 0) {
+                if (locationVersion > 0) {
                     params.put("location_version", String.valueOf(locationVersion));
                 }
 
@@ -1036,10 +1021,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
     }
 
-    protected String getEventForConversation(SwrveCommonConversation conversation){
-        return "Swrve.Conversations.Conversation-" + conversation.getId();
-    }
-
     protected void _messageWasShownToUser(SwrveMessageFormat messageFormat) {
         if (messageFormat != null) {
             setMessageMinDelayThrottle();
@@ -1062,167 +1043,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", viewEvent);
             queueEvent("event", parameters, payload, false);
             saveCampaignsState();
-        }
-    }
-
-    protected void _queueConversationEventsCommitedByUser(SwrveCommonConversation conversation, ArrayList<UserInputResult> userInteractions){
-        if (conversation != null) {
-            String baseEvent = getEventForConversation(conversation)  + ".";
-            for (UserInputResult userInteraction : userInteractions){
-                Map<String, String> payload = new HashMap<String, String>();
-                Map<String, Object> parameters = new HashMap<String, Object>();
-                String viewEvent = baseEvent + userInteraction.getType();
-                parameters.put("name", viewEvent);
-                payload.put("page", userInteraction.getPageTag());
-                payload.put("conversation", userInteraction.getConversationId());
-                payload.put("event", userInteraction.getType());
-                payload.put("fragment", userInteraction.getFragmentTag());
-
-                if(userInteraction.isSingleChoice()){
-                    ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
-                    payload.put("result", response.getAnswerID());
-                }
-                queueEvent("event", parameters, payload, false);
-            }
-        }
-    }
-
-    protected void _conversationCallWasAccessedByUser(SwrveCommonConversation conversation, String pageTag, String controlTag){
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + ".call";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "call");
-            payload.put("page", pageTag);
-            payload.put("control", controlTag);
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-
-    protected void _conversationLinkVisitWasAccessedByUser(SwrveCommonConversation conversation, String pageTag, String controlTag){
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".visit";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "visit");
-            payload.put("page", pageTag);
-            payload.put("control", controlTag);
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-    protected void _conversationDeeplinkWasAccessedByUser(SwrveCommonConversation conversation, String pageTag, String controlTag){
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".deeplink";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "deeplink");
-            payload.put("page", pageTag);
-            payload.put("control", controlTag);
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-
-
-    protected void _conversationPageWasViewedByUser(SwrveCommonConversation conversation, String pageTag) {
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + ".impression";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "impression");
-            payload.put("page", pageTag);
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-
-    protected void _conversationWasStartedByUser(SwrveCommonConversation conversation, String pageTag) {
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + ".start";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "start");
-            payload.put("page", pageTag);
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-
-    protected void _conversationWasFinishedByUser(SwrveCommonConversation conversation, String endPageTag, String controlTag) {
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation)  + ".done";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "done");
-            payload.put("page", endPageTag); //The final page the user ended on
-            payload.put("control", controlTag); //The final button the user clicked
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-
-    protected void _conversationWasCancelledByUser(SwrveCommonConversation conversation, String currentPageTag) {
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + ".cancel";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "cancel");
-            payload.put("page", currentPageTag); //The current page the user is on when they cancelled
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-
-
-    protected void _conversationTransitionedToOtherPage(SwrveCommonConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation) + ".navigation";
-            SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "navigation");
-            payload.put("control", controlTag);
-            payload.put("to", toPageTag); // The page the user ended on
-            payload.put("page", fromPageTag); // The page the user came on
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
-        }
-    }
-
-    protected void _conversationEncounteredError(SwrveCommonConversation conversation, String currentPageTag,  Exception e) {
-        if (conversation != null) {
-            String viewEvent = getEventForConversation(conversation)  + ".error";
-            if (e != null){
-                SwrveLogger.e(LOG_TAG, "Sending error conversation event: " + viewEvent, e);
-            }else{
-                SwrveLogger.e(LOG_TAG, "Sending error conversations event: (No Exception) " + viewEvent);
-            }
-
-            SwrveLogger.d(LOG_TAG, "Sending error conversation event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("name", viewEvent);
-            payload.put("event", "error");
-            payload.put("page", currentPageTag);
-            payload.put("conversation", Integer.toString(conversation.getId()));
-            queueEvent("event", parameters, payload, false);
         }
     }
 
@@ -1622,96 +1442,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void conversationEventsCommitedByUser(SwrveCommonConversation conversation, ArrayList<UserInputResult> userInteractions){
-        try {
-            _queueConversationEventsCommitedByUser(conversation, userInteractions);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationLinkVisitActionCalledByUser(SwrveCommonConversation conversation, String fromPageTag, String toActionTag){
-        try {
-            _conversationLinkVisitWasAccessedByUser(conversation, fromPageTag, toActionTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationDeeplinkActionCalledByUser(SwrveCommonConversation conversation, String fromPageTag, String toActionTag){
-        try {
-            _conversationDeeplinkWasAccessedByUser(conversation, fromPageTag, toActionTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationCallActionCalledByUser(SwrveCommonConversation conversation, String fromPageTag, String toActionTag){
-        try {
-            _conversationCallWasAccessedByUser(conversation, fromPageTag, toActionTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationPageWasViewedByUser(SwrveCommonConversation conversation, String pageTag) {
-        try {
-            _conversationPageWasViewedByUser(conversation, pageTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationWasStartedByUser(SwrveCommonConversation conversation, String pageTag) {
-        try {
-            _conversationWasStartedByUser(conversation, pageTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationWasFinishedByUser(SwrveCommonConversation conversation, String endPageTag, String endControlTag) {
-        try {
-            _conversationWasFinishedByUser(conversation, endPageTag, endControlTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationEncounteredError(SwrveCommonConversation conversation, String currentPageTag, Exception e) {
-        try {
-            _conversationEncounteredError(conversation, currentPageTag, e);
-        } catch (Exception e2) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e2);
-        }
-    }
-
-    @Override
-    public void conversationWasCancelledByUser(SwrveCommonConversation conversation, String finalPageTag) {
-        try {
-            _conversationWasCancelledByUser(conversation, finalPageTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void conversationTransitionedToOtherPage(SwrveCommonConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
-        try {
-            _conversationTransitionedToOtherPage(conversation, fromPageTag, toPageTag, controlTag);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
     public String getAppStoreURLForApp(int appId) {
         try {
             return _getAppStoreURLForApp(appId);
@@ -1901,6 +1631,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      * Implementation of ISwrveCommon methods
      */
 
+    public ISwrveConversationsSDK getConversationSDK() {
+        return SwrveSDK.conversationInstance;
+    }
+
     public int getAppId() {
         return appId;
     }
@@ -1909,7 +1643,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return appVersion;
     }
 
-    public ILocalStorage createLocalStorage() {
+    protected ILocalStorage createLocalStorage() {
         return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
     }
 
@@ -1942,12 +1676,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    @Override
     public void sendEventWakefully(Context context, final String event) {
         sendEventsWakefully(context, new ArrayList<String>() {{ add(event); }});
     }
 
-    @Override
     public void sendEventsWakefully(Context context, ArrayList<String> events) {
         Intent intent = new Intent(context, SwrveWakefulReceiver.class);
         intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);

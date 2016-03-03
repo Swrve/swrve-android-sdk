@@ -25,9 +25,9 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveHelper;
 
-import com.swrve.sdk.conversations.ISwrveConversationsSDK;
 import com.swrve.sdk.conversations.R;
-import com.swrve.sdk.conversations.SwrveCommonConversation;
+import com.swrve.sdk.SwrveBaseConversation;
+import com.swrve.sdk.SwrveConversationEventHelper;
 import com.swrve.sdk.conversations.engine.ActionBehaviours;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.Content;
@@ -55,9 +55,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private LinearLayout controlLayout;
     private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
-    private SwrveCommonConversation swrveConversation;
+    private SwrveBaseConversation swrveConversation;
     private ConversationPage page;
-    private ISwrveConversationsSDK controller;
+    private SwrveConversationEventHelper eventHelper;
     private ArrayList<IConversationInput> inputs;
     private HashMap<String, UserInputResult> userInteractionData;
 
@@ -77,10 +77,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         this.userInteractionData = userInteractionData;
     }
 
-    public static ConversationFragment create(SwrveCommonConversation swrveConversation, ISwrveConversationsSDK controller) {
+    public static ConversationFragment create(SwrveBaseConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
         f.swrveConversation = swrveConversation;
-        f.controller = controller;
+        f.eventHelper = new SwrveConversationEventHelper();
         return f;
     }
 
@@ -365,7 +365,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             UserInputResult r = userInteractionData.get(k);
             userInputEvents.add(r);
         }
-        controller.conversationEventsCommitedByUser(swrveConversation, userInputEvents);
+        eventHelper.conversationEventsCommitedByUser(swrveConversation, userInputEvents);
         userInteractionData.clear(); // Remove all events stored locally so that they don't get resubmitted during another commit.
     }
 
@@ -417,57 +417,39 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     // Events
     private void sendPageImpressionEvent(String pageTag) {
-        if (controller != null) {
-            controller.conversationPageWasViewedByUser(swrveConversation, pageTag);
-        }
+        eventHelper.conversationPageWasViewedByUser(swrveConversation, pageTag);
     }
 
     private void sendStartNavigationEvent(String startPageTag) {
-        if (controller != null) {
-            controller.conversationWasStartedByUser(swrveConversation, startPageTag);
-        }
+        eventHelper.conversationWasStartedByUser(swrveConversation, startPageTag);
     }
 
     private void sendDoneNavigationEvent(String endPageTag, String endControlTag) {
-        if (controller != null) {
-            controller.conversationWasFinishedByUser(swrveConversation, endPageTag, endControlTag);
-        }
+        eventHelper.conversationWasFinishedByUser(swrveConversation, endPageTag, endControlTag);
     }
 
     private void sendCancelNavigationEvent(String currentPageTag) {
-        if (controller != null) {
-            controller.conversationWasCancelledByUser(swrveConversation, currentPageTag);
-        }
+        eventHelper.conversationWasCancelledByUser(swrveConversation, currentPageTag);
     }
 
     private void sendErrorNavigationEvent(String currentPageTag, Exception e) {
-        if (controller != null) {
-            controller.conversationEncounteredError(swrveConversation, currentPageTag, e);
-        }
+        eventHelper.conversationEncounteredError(swrveConversation, currentPageTag, e);
     }
 
     private void sendTransitionPageEvent(String currentPageTag, String targetPageTag, String controlTag) {
-        if (controller != null) {
-            controller.conversationTransitionedToOtherPage(swrveConversation, currentPageTag, targetPageTag, controlTag);
-        }
+        eventHelper.conversationTransitionedToOtherPage(swrveConversation, currentPageTag, targetPageTag, controlTag);
     }
 
     private void sendLinkVisitActionEvent(String currentPageTag, ConversationAtom control) {
-        if (controller != null) {
-            controller.conversationLinkVisitActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
-        }
+        eventHelper.conversationLinkVisitActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
     }
 
     private void sendDeepLinkActionEvent(String currentPageTag, ConversationAtom control) {
-        if (controller != null) {
-            controller.conversationDeeplinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
-        }
+        eventHelper.conversationDeeplinkActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
     }
 
     private void sendCallActionEvent(String currentPageTag, ConversationAtom control) {
-        if (controller != null) {
-            controller.conversationCallActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
-        }
+        eventHelper.conversationCallActionCalledByUser(swrveConversation, currentPageTag, control.getTag());
     }
 
     // For each of the content portions we store data about them which is then committed at a later point
