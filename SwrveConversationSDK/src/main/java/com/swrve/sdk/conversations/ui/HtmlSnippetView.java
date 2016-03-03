@@ -12,7 +12,7 @@ import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class HtmlSnippetView extends WebView implements ConversationContent {
+public class HtmlSnippetView extends WebView implements IConversationContent {
     private Content model;
     private static String DEFAULT_CSS = null;
 

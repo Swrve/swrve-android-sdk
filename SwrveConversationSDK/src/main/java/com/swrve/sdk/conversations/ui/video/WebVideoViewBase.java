@@ -12,12 +12,13 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import com.swrve.sdk.SwrveHelper;
+
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
-import com.swrve.sdk.conversations.ui.ConversationContent;
+import com.swrve.sdk.conversations.ui.IConversationContent;
 import com.swrve.sdk.conversations.ui.ConversationFullScreenVideoFrame;
 
-public abstract class WebVideoViewBase extends WebView implements ConversationContent {
+public abstract class WebVideoViewBase extends WebView implements IConversationContent {
     protected static final String LOG_TAG = "SwrveSDK";
     protected static final String PLAYER_VIDEO_VIMEO = "vimeo";
     protected static final String PLAYER_VIDEO_YOUTUBE = "youtube";
@@ -30,8 +31,6 @@ public abstract class WebVideoViewBase extends WebView implements ConversationCo
     protected String videoHtml;
     protected Content model;
     protected ConversationFullScreenVideoFrame fullScreenContainer;
-    protected int width;
-
 
     public WebVideoViewBase(Context context, Content model, ConversationFullScreenVideoFrame fullScreenContainer) {
         super(context);

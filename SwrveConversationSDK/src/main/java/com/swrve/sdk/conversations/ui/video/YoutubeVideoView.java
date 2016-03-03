@@ -8,13 +8,12 @@ import android.util.Log;
 import android.view.View;
 
 import com.swrve.sdk.SwrveHelper;
+
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.ui.ConversationFullScreenVideoFrame;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class YoutubeVideoView extends WebVideoViewBase {
     public static final String VIDEO_ID_PLACEHOLDER = "VIDEO_ID_PLACEHOLDER";

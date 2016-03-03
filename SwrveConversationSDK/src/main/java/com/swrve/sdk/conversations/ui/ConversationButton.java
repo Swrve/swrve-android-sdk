@@ -17,7 +17,7 @@ import android.text.TextUtils;
 
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 
-public class ConversationButton extends android.widget.Button implements ConversationControl {
+public class ConversationButton extends android.widget.Button implements IConversationControl {
     private ButtonControl model;
     private int textColor;
     private int textColorPressed;

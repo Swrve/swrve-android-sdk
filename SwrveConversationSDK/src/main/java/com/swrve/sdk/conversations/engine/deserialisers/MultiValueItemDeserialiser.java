@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 
-
 import java.lang.reflect.Type;
 
 public class MultiValueItemDeserialiser implements JsonDeserializer<ChoiceInputItem> {

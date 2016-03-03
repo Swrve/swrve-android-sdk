@@ -17,21 +17,21 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
-import com.swrve.sdk.R;
+import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
-import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
+import com.swrve.sdk.conversations.engine.model.IOnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class MultiValueInputControl extends LinearLayout implements Serializable, ConversationInput, OnCheckedChangeListener {
+public class MultiValueInputControl extends LinearLayout implements Serializable, IConversationInput, OnCheckedChangeListener {
     private MultiValueInput model;
     private int selectedIndex = -1; // default to none selected
-    private OnContentChangedListener onContentChangedListener;
+    private IOnContentChangedListener IOnContentChangedListener;
     private TextView descLbl;
     private ArrayList<RadioButton> radioButtons;
 
@@ -60,7 +60,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
     public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
         MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.swrve__multiinput, parentContainer, false);
-        control.descLbl = (android.widget.TextView) control.findViewById(R.id.swrve__MIV_Header);
+        control.descLbl = (TextView) control.findViewById(R.id.swrve__MIV_Header);
         control.descLbl.setText(model.getDescription());
         int textColorInt =  model.getStyle().getTextColorInt();
 
@@ -131,8 +131,8 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         }
     }
 
-    public void setOnContentChangedListener(OnContentChangedListener l) {
-        onContentChangedListener = l;
+    public void setOnContentChangedListener(IOnContentChangedListener l) {
+        IOnContentChangedListener = l;
     }
 
     @Override
@@ -153,8 +153,8 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         } else {
             selectedIndex = index;
         }
-        if (onContentChangedListener != null) {
-            onContentChangedListener.onContentChanged();
+        if (IOnContentChangedListener != null) {
+            IOnContentChangedListener.onContentChanged();
         }
     }
 }

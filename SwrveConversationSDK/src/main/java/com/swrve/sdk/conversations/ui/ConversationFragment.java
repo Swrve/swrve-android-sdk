@@ -23,11 +23,11 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
-import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.SwrveSDKBase;
-import com.swrve.sdk.R;
-import com.swrve.sdk.conversations.SwrveConversation;
+
+import com.swrve.sdk.conversations.ISwrveConversationsSDK;
+import com.swrve.sdk.conversations.R;
+import com.swrve.sdk.conversations.SwrveCommonConversation;
 import com.swrve.sdk.conversations.engine.ActionBehaviours;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.Content;
@@ -37,7 +37,7 @@ import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.ConversationReply;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
-import com.swrve.sdk.conversations.engine.model.OnContentChangedListener;
+import com.swrve.sdk.conversations.engine.model.IOnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
@@ -55,10 +55,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private LinearLayout controlLayout;
     private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
-    private SwrveConversation swrveConversation;
+    private SwrveCommonConversation swrveConversation;
     private ConversationPage page;
-    private SwrveBase controller;
-    private ArrayList<ConversationInput> inputs;
+    private ISwrveConversationsSDK controller;
+    private ArrayList<IConversationInput> inputs;
     private HashMap<String, UserInputResult> userInteractionData;
 
     public ConversationPage getPage() {
@@ -77,10 +77,10 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         this.userInteractionData = userInteractionData;
     }
 
-    public static ConversationFragment create(SwrveConversation swrveConversation) {
+    public static ConversationFragment create(SwrveCommonConversation swrveConversation, ISwrveConversationsSDK controller) {
         ConversationFragment f = new ConversationFragment();
         f.swrveConversation = swrveConversation;
-        f.controller = (SwrveBase) SwrveSDKBase.getInstance();
+        f.controller = controller;
         return f;
     }
 
@@ -93,7 +93,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
-        inputs = (inputs == null) ? new ArrayList<ConversationInput>() : inputs;
+        inputs = (inputs == null) ? new ArrayList<IConversationInput>() : inputs;
         userInteractionData = (userInteractionData == null) ? new HashMap<String, UserInputResult>() : userInteractionData;
 
         if (page != null) {
@@ -161,7 +161,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     }
 
     protected int getSDKBuildVersion() {
-        return android.os.Build.VERSION.SDK_INT;
+        return Build.VERSION.SDK_INT;
     }
 
     private void initLayout() {
@@ -279,7 +279,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 final MultiValueInputControl mvicReference = input;
                 final String tag = content.getTag();
                 // Store the result of the content for processing later
-                input.setOnContentChangedListener(new OnContentChangedListener() {
+                input.setOnContentChangedListener(new IOnContentChangedListener() {
                     @Override
                     public void onContentChanged() {
                         HashMap<String, Object> result = new HashMap<String, Object>();
@@ -315,7 +315,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
             return;
         }
 
-        if (v instanceof ConversationControl) {
+        if (v instanceof IConversationControl) {
             // When a control is clicked, a navigation event or action event occurs. We then send all the queued SwrveEvents which have been queued for this page
             commitUserInputsToEvents();
 
@@ -323,8 +323,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 ConversationReply reply = new ConversationReply();
                 ConversationButton convButton = (ConversationButton) v;
                 ButtonControl model = convButton.getModel();
-                if (((ConversationControl) v).getModel().hasActions()) {
-                    ControlActions actions = ((ConversationControl) v).getModel().getActions();
+                if (((IConversationControl) v).getModel().hasActions()) {
+                    ControlActions actions = ((IConversationControl) v).getModel().getActions();
                     if (actions.isCall()) {
                         sendReply(model, reply);
                         sendCallActionEvent(page.getTag(), model);
@@ -379,7 +379,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         reply.setControl(control.getTag());
 
         // For all the inputs , get their data
-        for (ConversationInput inputView : inputs) {
+        for (IConversationInput inputView : inputs) {
             inputView.gatherValue(reply.getData());
         }
 
@@ -499,7 +499,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
 
     @SuppressLint("NewApi")
     private void setBackgroundDrawable(View view, Drawable drawable) {
-        if (getSDKBuildVersion() < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+        if (getSDKBuildVersion() < Build.VERSION_CODES.JELLY_BEAN) {
             view.setBackgroundDrawable(drawable);
         } else {
             view.setBackground(drawable);

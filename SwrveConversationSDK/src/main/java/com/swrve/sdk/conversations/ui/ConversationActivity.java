@@ -5,9 +5,10 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
-import com.swrve.sdk.R;
+import com.swrve.sdk.conversations.ISwrveConversationSDKProvider;
+import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.SwrveCommonConversation;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
@@ -15,8 +16,13 @@ import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
     private static final String LOG_TAG = "SwrveSDK";
-    private SwrveConversation localConversation;
+    private SwrveCommonConversation localConversation;
     private ConversationFragment conversationFragment;
+    private static ISwrveConversationSDKProvider sdkProvider;
+
+    public static void setSDKProvider(ISwrveConversationSDKProvider sdkProvider) {
+        ConversationActivity.sdkProvider = sdkProvider;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -25,13 +31,13 @@ public class ConversationActivity extends FragmentActivity {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                this.localConversation = (SwrveConversation) extras.getSerializable("conversation");
+                this.localConversation = (SwrveCommonConversation) extras.getSerializable("conversation");
             }
         }
 
         try {
-            if (localConversation != null) {
-                conversationFragment = ConversationFragment.create(localConversation);
+            if (localConversation != null && sdkProvider != null) {
+                conversationFragment = ConversationFragment.create(localConversation, sdkProvider.getInstance());
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
                 setOrientation();
             } else {
@@ -54,8 +60,8 @@ public class ConversationActivity extends FragmentActivity {
     @Override
     protected void onRestoreInstanceState(Bundle savedState) {
         super.onRestoreInstanceState(savedState);
-        if (savedState != null && localConversation !=null) {
-            conversationFragment = ConversationFragment.create(localConversation);
+        if (savedState != null && localConversation != null && sdkProvider != null) {
+            conversationFragment = ConversationFragment.create(localConversation, sdkProvider.getInstance());
             ConversationPage page = (ConversationPage) savedState.getSerializable("page");
             HashMap<String, UserInputResult> userData = (HashMap<String, UserInputResult>) savedState.getSerializable("userdata");
 

@@ -5,7 +5,7 @@ import android.content.Context;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 
-public class ConversationImageView extends android.widget.ImageView implements ConversationContent {
+public class ConversationImageView extends android.widget.ImageView implements IConversationContent {
     private final Content model;
 
     public ConversationImageView(Context context, Content model) {
