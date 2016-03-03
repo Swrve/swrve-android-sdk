@@ -4,8 +4,11 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
 import java.util.Map;
 
-public interface ConversationInput {
+public interface IConversationInput {
 
+    /**
+     * Obtain the value of the content.
+     */
     void gatherValue(Map<String, Object> dataMap);
 
     /**

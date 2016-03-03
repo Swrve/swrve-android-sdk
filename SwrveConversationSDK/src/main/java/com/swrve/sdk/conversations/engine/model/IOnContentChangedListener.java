@@ -1,5 +1,5 @@
 package com.swrve.sdk.conversations.engine.model;
 
-public interface OnContentChangedListener {
+public interface IOnContentChangedListener {
     void onContentChanged();
 }
