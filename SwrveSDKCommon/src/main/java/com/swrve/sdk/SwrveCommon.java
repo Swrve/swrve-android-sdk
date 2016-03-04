@@ -3,7 +3,7 @@ package com.swrve.sdk;
 
 class SwrveCommon {
     private static final String LOG_TAG = "SwrveCommon";
-    private static ISwrveCommon swrveCommon;
+    private static ISwrveCommon instance;
     private static Runnable toRunIfNull;
 
     public static void setRunnable(Runnable toRunIfNull) {
@@ -11,21 +11,21 @@ class SwrveCommon {
     }
 
     protected static void checkInstanceCreated() throws RuntimeException {
-        if((swrveCommon == null) && (toRunIfNull != null)) {
+        if((instance == null) && (toRunIfNull != null)) {
             toRunIfNull.run();
         }
 
-        if (swrveCommon == null) {
+        if (instance == null) {
             SwrveLogger.e(LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
             throw new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
         }
     }
 
     public static void setSwrveCommon(ISwrveCommon swrveCommon) {
-        SwrveCommon.swrveCommon = swrveCommon;
+        instance = swrveCommon;
     }
 
-    public static ISwrveCommon getSwrveCommon() {
-        return swrveCommon;
+    public static ISwrveCommon getInstance() {
+        return instance;
     }
 }

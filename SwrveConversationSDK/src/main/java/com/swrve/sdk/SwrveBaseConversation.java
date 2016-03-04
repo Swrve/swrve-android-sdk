@@ -1,7 +1,5 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.SwrveCommon;
-import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 
@@ -17,7 +15,7 @@ import java.util.ArrayList;
 public class SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
     // Swrve SDK reference
-    protected transient ISwrveConversationsSDK conversationController;
+    protected transient ISwrveConversationsSDK swrveConversationSDK;
     // Identifies the message in a campaign
     protected int id;
     // Customer defined name of the conversation as it appears in the web app
@@ -33,9 +31,9 @@ public class SwrveBaseConversation implements Serializable {
      * @param conversationData JSON data containing the message details.
      * @throws JSONException
      */
-    public SwrveBaseConversation(JSONObject conversationData) throws JSONException {
-        //READD ON EXTENDED CLASSthis(controller, campaign);
-        setConversationController();
+    public SwrveBaseConversation(JSONObject conversationData, File cacheDir) throws JSONException {
+
+        this.cacheDir = cacheDir;
 
         try {
             setId(conversationData.getInt("id"));
@@ -57,13 +55,6 @@ public class SwrveBaseConversation implements Serializable {
             pages.add(ConversationPage.fromJson(o));
         }
         setPages(pages);
-    }
-
-    protected void setConversationController() {
-        this.conversationController = SwrveCommon.getSwrveCommon().getConversationSDK();
-        if (conversationController != null) {
-            setCacheDir(conversationController.getCacheDir());
-        }
     }
 
     /**
@@ -114,10 +105,6 @@ public class SwrveBaseConversation implements Serializable {
      */
     public File getCacheDir() {
         return cacheDir;
-    }
-
-    protected void setCacheDir(File cacheDir) {
-        this.cacheDir = cacheDir;
     }
 
     /**

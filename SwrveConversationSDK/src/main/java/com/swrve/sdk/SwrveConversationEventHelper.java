@@ -10,34 +10,27 @@ import java.util.Map;
 public class SwrveConversationEventHelper {
     private static final String LOG_TAG = "SwrveConversationSDK";
 
-    private ISwrveConversationsSDK swrve;
+    private ISwrveConversationsSDK swrveConversationSDK;
 
     public SwrveConversationEventHelper() {
-        this.swrve = SwrveCommon.getSwrveCommon().getConversationSDK();
+        this.swrveConversationSDK = SwrveCommon.getInstance().getConversationSDK();
     }
 
     protected static String getEventForConversation(SwrveBaseConversation conversation) {
         return "Swrve.Conversations.Conversation-" + conversation.getId();
     }
 
-    protected void queueEvent(
-            SwrveBaseConversation conversation,
-            String eventName, String page,
-            Map<String, String> payload) {
-        if (conversation != null && swrve != null) {
-            swrve.queueConversationEvent(getEventForConversation(conversation), eventName, page, Integer.toString(conversation.getId()), payload);
+    protected void queueEvent(SwrveBaseConversation conversation, String eventName, String page, Map<String, String> payload) {
+        if (conversation != null && swrveConversationSDK != null) {
+            swrveConversationSDK.queueConversationEvent(getEventForConversation(conversation), eventName, page, Integer.toString(conversation.getId()), payload);
         }
     }
 
-    protected void queueEvent(SwrveBaseConversation conversation,
-                              String eventName, String page) {
+    protected void queueEvent(SwrveBaseConversation conversation, String eventName, String page) {
         queueEvent(conversation, eventName, page, null);
     }
 
-    protected void queueEventPageAction(
-            SwrveBaseConversation conversation,
-            String pageKey, String fromPageTag,
-            String actionKey, String toActionTag) {
+    protected void queueEventPageAction(SwrveBaseConversation conversation, String pageKey, String fromPageTag, String actionKey, String toActionTag) {
         try {
             Map<String, String> payload = null;
             if ((actionKey != null) && (toActionTag != null)) {
@@ -51,9 +44,7 @@ public class SwrveConversationEventHelper {
         }
     }
 
-    protected void queueEventPageAction(
-            SwrveBaseConversation conversation,
-            String pageKey, String fromPageTag) {
+    protected void queueEventPageAction(SwrveBaseConversation conversation, String pageKey, String fromPageTag) {
         queueEventPageAction(conversation, pageKey, fromPageTag, null, null);
     }
 
@@ -87,7 +78,7 @@ public class SwrveConversationEventHelper {
 
     public void conversationEventsCommitedByUser(SwrveBaseConversation conversation, ArrayList<UserInputResult> userInteractions) {
         try {
-            if (swrve != null) {
+            if (swrveConversationSDK != null) {
                 for (UserInputResult userInteraction : userInteractions) {
                     Map<String, String> payload = new HashMap<String, String>();
                     payload.put("fragment", userInteraction.getFragmentTag());
@@ -97,10 +88,10 @@ public class SwrveConversationEventHelper {
                         payload.put("result", response.getAnswerID());
                     }
 
-                    swrve.queueConversationEvent(
-                        getEventForConversation(conversation),
-                        userInteraction.getType(), userInteraction.getPageTag(), userInteraction.getConversationId(),
-                        payload);
+                    swrveConversationSDK.queueConversationEvent(
+                            getEventForConversation(conversation),
+                            userInteraction.getType(), userInteraction.getPageTag(), userInteraction.getConversationId(),
+                            payload);
                 }
             }
         } catch (Exception e) {

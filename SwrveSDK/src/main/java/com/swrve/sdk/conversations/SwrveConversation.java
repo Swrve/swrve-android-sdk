@@ -34,7 +34,7 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
      * @throws JSONException
      */
     public SwrveConversation(SwrveBase<?, ?> swrve, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
-        super(conversationData);
+        super(conversationData, swrve.getCacheDir());
         this.swrve = swrve;
         this.campaign = campaign;
 
