@@ -2,7 +2,6 @@ package com.swrve.sdk;
 
 import android.content.Context;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -34,17 +33,9 @@ interface ISwrveCommon
 
     void sendEventsWakefully(Context context, ArrayList<String> events);
 
-    /***
-     * Config area
-     */
-
     String getEventsServer();
 
     int getHttpTimeout();
 
     int getMaxEventsPerFlush();
-
-    /***
-     * eo Config
-     */
 }

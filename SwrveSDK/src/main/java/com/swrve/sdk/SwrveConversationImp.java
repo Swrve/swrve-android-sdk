@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,12 +12,8 @@ public class SwrveConversationImp implements ISwrveConversationsSDK {
     }
 
     @Override
-    public void queueConversationEvent(
-            String viewEvent,
-            String eventName, String page, String conversationId,
-            Map<String, String> payload)
-    {
-        if(payload == null) {
+    public void queueConversationEvent(String viewEvent, String eventName, String page, String conversationId, Map<String, String> payload) {
+        if (payload == null) {
             payload = new HashMap<String, String>();
         }
         payload.put("event", eventName);
@@ -29,11 +24,6 @@ public class SwrveConversationImp implements ISwrveConversationsSDK {
 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("name", viewEvent);
-        ((SwrveBase)swrve).queueEvent("event", parameters, payload);
-    }
-
-    @Override
-    public File getCacheDir() {
-        return swrve.getCacheDir();
+        ((SwrveBase) swrve).queueEvent("event", parameters, payload);
     }
 }
