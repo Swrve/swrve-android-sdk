@@ -15,6 +15,9 @@ import android.view.WindowManager;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
+import com.swrve.sdk.conversations.ISwrveConversationSDKProvider;
+import com.swrve.sdk.conversations.ISwrveConversationsSDK;
+import com.swrve.sdk.conversations.SwrveCommonConversation;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
@@ -59,7 +62,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Main base class implementation of the Swrve SDK.
  */
-public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C> {
+public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveConversationsSDK {
 
     protected SwrveBase(Context context, int appId, String apiKey, C config) {
         super(context, appId, apiKey, config);
@@ -200,6 +203,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     SwrveLogger.e(LOG_TAG, "Can't display a conversation without a context");
                                     return;
                                 }
+
+                                // Set the SDK provider so that the ConversationActivity can find
+                                // the shared instance of the SDK
+                                // This is also implemented by the Unity Android SDK Java layer
+                                ConversationActivity.setSDKProvider(new ISwrveConversationSDKProvider() {
+                                    @Override
+                                    public ISwrveConversationsSDK getInstance() {
+                                        return (SwrveBase)SwrveSDKBase.getInstance();
+                                    }
+                                });
 
                                 Intent intent = new Intent(ctx, ConversationActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1020,7 +1033,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
     }
 
-    protected String getEventForConversation(SwrveConversation conversation){
+    protected String getEventForConversation(SwrveCommonConversation conversation){
         return "Swrve.Conversations.Conversation-" + conversation.getId();
     }
 
@@ -1049,7 +1062,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _queueConversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<UserInputResult> userInteractions){
+    protected void _queueConversationEventsCommitedByUser(SwrveCommonConversation conversation, ArrayList<UserInputResult> userInteractions){
         if (conversation != null) {
             String baseEvent = getEventForConversation(conversation)  + ".";
             for (UserInputResult userInteraction : userInteractions){
@@ -1071,7 +1084,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationCallWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
+    protected void _conversationCallWasAccessedByUser(SwrveCommonConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation) + ".call";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1086,7 +1099,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationLinkVisitWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
+    protected void _conversationLinkVisitWasAccessedByUser(SwrveCommonConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".visit";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1100,7 +1113,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             queueEvent("event", parameters, payload, false);
         }
     }
-    protected void _conversationDeeplinkWasAccessedByUser(SwrveConversation conversation, String pageTag, String controlTag){
+    protected void _conversationDeeplinkWasAccessedByUser(SwrveCommonConversation conversation, String pageTag, String controlTag){
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation) + conversation.getId()+ ".deeplink";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1116,7 +1129,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
 
-    protected void _conversationPageWasViewedByUser(SwrveConversation conversation, String pageTag) {
+    protected void _conversationPageWasViewedByUser(SwrveCommonConversation conversation, String pageTag) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation) + ".impression";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1130,7 +1143,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
+    protected void _conversationWasStartedByUser(SwrveCommonConversation conversation, String pageTag) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation) + ".start";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1144,7 +1157,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag, String controlTag) {
+    protected void _conversationWasFinishedByUser(SwrveCommonConversation conversation, String endPageTag, String controlTag) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation)  + ".done";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1159,7 +1172,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationWasCancelledByUser(SwrveConversation conversation, String currentPageTag) {
+    protected void _conversationWasCancelledByUser(SwrveCommonConversation conversation, String currentPageTag) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation) + ".cancel";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1174,7 +1187,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
 
-    protected void _conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
+    protected void _conversationTransitionedToOtherPage(SwrveCommonConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation) + ".navigation";
             SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
@@ -1190,7 +1203,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _conversationEncounteredError(SwrveConversation conversation, String currentPageTag,  Exception e) {
+    protected void _conversationEncounteredError(SwrveCommonConversation conversation, String currentPageTag,  Exception e) {
         if (conversation != null) {
             String viewEvent = getEventForConversation(conversation)  + ".error";
             if (e != null){
@@ -1331,7 +1344,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }};
 
         for(String restricted: restrictedNamesStartWith) {
-            if(name==null || name.startsWith(restricted)) {
+            if(name == null || name.startsWith(restricted)) {
                 SwrveLogger.e(LOG_TAG, "Event names cannot begin with " + restricted + "* This event will not be sent. Eventname:" + name);
                 return false;
             }
@@ -1605,7 +1618,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationEventsCommitedByUser(SwrveConversation conversation, ArrayList<UserInputResult> userInteractions){
+    @Override
+    public void conversationEventsCommitedByUser(SwrveCommonConversation conversation, ArrayList<UserInputResult> userInteractions){
         try {
             _queueConversationEventsCommitedByUser(conversation, userInteractions);
         } catch (Exception e) {
@@ -1613,14 +1627,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationLinkVisitActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
+    @Override
+    public void conversationLinkVisitActionCalledByUser(SwrveCommonConversation conversation, String fromPageTag, String toActionTag){
         try {
             _conversationLinkVisitWasAccessedByUser(conversation, fromPageTag, toActionTag);
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
-    public void conversationDeeplinkActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
+
+    @Override
+    public void conversationDeeplinkActionCalledByUser(SwrveCommonConversation conversation, String fromPageTag, String toActionTag){
         try {
             _conversationDeeplinkWasAccessedByUser(conversation, fromPageTag, toActionTag);
         } catch (Exception e) {
@@ -1628,14 +1645,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationCallActionCalledByUser(SwrveConversation conversation, String fromPageTag, String toActionTag){
+    @Override
+    public void conversationCallActionCalledByUser(SwrveCommonConversation conversation, String fromPageTag, String toActionTag){
         try {
             _conversationCallWasAccessedByUser(conversation, fromPageTag, toActionTag);
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
     }
-    public void conversationPageWasViewedByUser(SwrveConversation conversation, String pageTag) {
+
+    @Override
+    public void conversationPageWasViewedByUser(SwrveCommonConversation conversation, String pageTag) {
         try {
             _conversationPageWasViewedByUser(conversation, pageTag);
         } catch (Exception e) {
@@ -1643,8 +1663,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-
-    public void conversationWasStartedByUser(SwrveConversation conversation, String pageTag) {
+    @Override
+    public void conversationWasStartedByUser(SwrveCommonConversation conversation, String pageTag) {
         try {
             _conversationWasStartedByUser(conversation, pageTag);
         } catch (Exception e) {
@@ -1652,7 +1672,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationWasFinishedByUser(SwrveConversation conversation, String endPageTag, String endControlTag) {
+    @Override
+    public void conversationWasFinishedByUser(SwrveCommonConversation conversation, String endPageTag, String endControlTag) {
         try {
             _conversationWasFinishedByUser(conversation, endPageTag, endControlTag);
         } catch (Exception e) {
@@ -1660,7 +1681,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationEncounteredError(SwrveConversation conversation, String currentPageTag, Exception e) {
+    @Override
+    public void conversationEncounteredError(SwrveCommonConversation conversation, String currentPageTag, Exception e) {
         try {
             _conversationEncounteredError(conversation, currentPageTag, e);
         } catch (Exception e2) {
@@ -1668,7 +1690,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationWasCancelledByUser(SwrveConversation conversation, String finalPageTag) {
+    @Override
+    public void conversationWasCancelledByUser(SwrveCommonConversation conversation, String finalPageTag) {
         try {
             _conversationWasCancelledByUser(conversation, finalPageTag);
         } catch (Exception e) {
@@ -1676,7 +1699,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void conversationTransitionedToOtherPage(SwrveConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
+    @Override
+    public void conversationTransitionedToOtherPage(SwrveCommonConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
         try {
             _conversationTransitionedToOtherPage(conversation, fromPageTag, toPageTag, controlTag);
         } catch (Exception e) {
