@@ -1656,10 +1656,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return getEventsServer() +  BATCH_EVENTS_ACTION;
     }
 
-    public boolean isDebug() {
-        return BuildConfig.DEBUG;
-    }
-
     @Override
     public void setLocationVersion(int locationVersion) {
         this.locationVersion = locationVersion;

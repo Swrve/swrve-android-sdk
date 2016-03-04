@@ -23,8 +23,6 @@ interface ISwrveCommon
 
     String getBatchURL();
 
-    boolean isDebug();
-
     String getCachedLocationData();
 
     void setLocationVersion(int locationVersion);
