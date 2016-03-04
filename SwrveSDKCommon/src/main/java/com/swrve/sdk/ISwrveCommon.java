@@ -32,8 +32,6 @@ interface ISwrveCommon
 
     ISwrveConversationsSDK getConversationSDK();
 
-    void sendEventWakefully(Context context, String event);
-
     void sendEventsWakefully(Context context, ArrayList<String> events);
 
     /***

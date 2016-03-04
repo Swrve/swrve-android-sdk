@@ -1672,10 +1672,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    public void sendEventWakefully(Context context, final String event) {
-        sendEventsWakefully(context, new ArrayList<String>() {{ add(event); }});
-    }
-
+    @Override
     public void sendEventsWakefully(Context context, ArrayList<String> events) {
         Intent intent = new Intent(context, SwrveWakefulReceiver.class);
         intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);
