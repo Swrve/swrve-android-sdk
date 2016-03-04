@@ -1,14 +1,9 @@
 package com.swrve.sdk.conversations;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import com.swrve.sdk.SwrveLogger;
-
 import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.R;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
@@ -19,41 +14,29 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Set;
 
-public class SwrveConversation implements Serializable {
+public class SwrveConversation extends SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
-    // Swrve SDK reference
-    protected transient SwrveBase<?, ?> conversationController;
-    // Identifies the message in a campaign
-    protected int id;
-    // Customer defined name of the conversation as it appears in the web app
-    protected String name;
-    // Each of the conversations pages
-    protected ArrayList<ConversationPage> pages;
+    // SwrveSDK reference
+    protected transient SwrveBase<?, ?> swrve;
     // Parent in-app campaign
     protected transient SwrveConversationCampaign campaign;
-    // Location of the images and button resources
-    protected File cacheDir;
-
-    public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign) {
-        setCampaign(campaign);
-        setConversationController(controller);
-    }
 
     /**
      * Load message from JSON data.
      *
-     * @param controller       SwrveTalk object that will manage the data from the campaign.
+     * @param swrve       SwrveTalk object that will manage the data from the campaign.
      * @param campaign         Related campaign.
      * @param conversationData JSON data containing the message details.
      * @throws JSONException
      */
-    public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
-        this(controller, campaign);
+    public SwrveConversation(SwrveBase<?, ?> swrve, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
+        super(conversationData, swrve.getCacheDir());
+        this.swrve = swrve;
+        this.campaign = campaign;
 
         try {
             setId(conversationData.getInt("id"));
@@ -77,15 +60,8 @@ public class SwrveConversation implements Serializable {
         setPages(pages);
     }
 
-    private void setConversationController(SwrveBase<?, ?> conversationController) {
-        this.conversationController = conversationController;
-        if (conversationController != null) {
-            setCacheDir(conversationController.getCacheDir());
-        }
-    }
-
     protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = conversationController.getAssetsOnDisk();
+        Set<String> assetsOnDisk = swrve.getAssetsOnDisk();
         return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
     }
 
@@ -132,57 +108,9 @@ public class SwrveConversation implements Serializable {
     }
 
     /**
-     * @return the message id.
-     */
-    public int getId() {
-        return id;
-    }
-
-    protected void setId(int id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the message name.
-     */
-    public String getName() {
-        return name;
-    }
-
-    protected void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the directory where resources will be saved.
-     */
-    public File getCacheDir() {
-        return cacheDir;
-    }
-
-    protected void setCacheDir(File cacheDir) {
-        this.cacheDir = cacheDir;
-    }
-
-    /**
      * @return the related campaign.
      */
     public SwrveConversationCampaign getCampaign() {
         return campaign;
-    }
-
-    protected void setCampaign(SwrveConversationCampaign campaign) {
-        this.campaign = campaign;
-    }
-
-    /**
-     * @return the related pages in the conversation.
-     */
-    public ArrayList<ConversationPage> getPages() {
-        return pages;
-    }
-
-    public void setPages(ArrayList<ConversationPage> pages) {
-        this.pages = pages;
     }
 }
