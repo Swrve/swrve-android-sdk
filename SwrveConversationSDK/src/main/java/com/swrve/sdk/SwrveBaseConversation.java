@@ -34,7 +34,6 @@ public class SwrveBaseConversation implements Serializable {
      * @throws JSONException
      */
     public SwrveBaseConversation(JSONObject conversationData) throws JSONException {
-        //READD ON EXTENDED CLASSthis(controller, campaign);
         setConversationController();
 
         try {
