@@ -1631,18 +1631,22 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      * Implementation of ISwrveCommon methods
      */
 
+    @Override
     public ISwrveConversationsSDK getConversationSDK() {
         return SwrveSDK.conversationInstance;
     }
 
+    @Override
     public int getAppId() {
         return appId;
     }
 
+    @Override
     public String getAppVersion() {
         return appVersion;
     }
 
+    @Override
     protected ILocalStorage createLocalStorage() {
         return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
     }
