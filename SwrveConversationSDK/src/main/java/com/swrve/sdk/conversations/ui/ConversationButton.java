@@ -23,6 +23,7 @@ public class ConversationButton extends android.widget.Button implements IConver
     private int textColorPressed;
     private int backgroundColor;
     private int backgroundColorPressed;
+    private float borderRadius;
 
     public ConversationButton(Context context, ButtonControl model, int defStyle) {
         super(context, null, defStyle);
@@ -30,11 +31,19 @@ public class ConversationButton extends android.widget.Button implements IConver
             this.model = model;
             setText(model.getDescription());
         }
+        initBorderRadius();
         initColors();
         initTextColorStates();
         initBackgroundColorStates();
         setLines(1);
         setEllipsize(TextUtils.TruncateAt.END);
+    }
+
+    private void initBorderRadius() {
+        if(model.getBorderRadius() != null) {
+            borderRadius = Float.parseFloat(model.getBorderRadius());
+            // TODO convert from percent to correct units SWRVE-11668
+        }
     }
 
     private void initColors() {
@@ -62,12 +71,8 @@ public class ConversationButton extends android.widget.Button implements IConver
     private void initBackgroundColorStates() {
         Drawable backgroundStates = new ColorDrawable();
         if (model.getStyle().isSolidStyle()) {
-            GradientDrawable backgroundDrawable = new GradientDrawable();
-            backgroundDrawable.setColor(backgroundColor);
-
-            GradientDrawable backgroundDrawablePressed = new GradientDrawable();
-            backgroundDrawablePressed.setColor(backgroundColorPressed);
-
+            Drawable backgroundDrawable = getSolidDrawable(backgroundColor);
+            Drawable backgroundDrawablePressed = getSolidDrawable(backgroundColorPressed);
             backgroundStates = getStateListDrawable(backgroundDrawablePressed, backgroundDrawablePressed, backgroundDrawable);
         } else if (model.getStyle().isOutlineStyle()) {
             Drawable drawable = getOutlineDrawable(textColor, backgroundColor);
@@ -79,7 +84,8 @@ public class ConversationButton extends android.widget.Button implements IConver
 
     private Drawable getOutlineDrawable(int borderColor, int backgroundColor) {
         RectF inset = new RectF(6, 6, 6, 6);
-        float radii[] = {1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f};
+        // Each corner has 2 radii (xradius, yradius), giving 8 values
+        float radii[] = {borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius};
         RoundRectShape rr = new RoundRectShape(radii, inset, radii);
         ShapeDrawable rectShapeDrawable = new ShapeDrawable(rr);
         Paint paint = rectShapeDrawable.getPaint();
@@ -97,10 +103,21 @@ public class ConversationButton extends android.widget.Button implements IConver
         return new LayerDrawable(drawables);
     }
 
+    private ShapeDrawable getSolidDrawable(int color) {
+        // Each corner has 2 radii (xradius, yradius), giving 8 values
+        float radii[] = {borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius};
+        RoundRectShape rr = new RoundRectShape(radii, null, radii);
+        ShapeDrawable rectShapeDrawable = new ShapeDrawable(rr);
+        Paint paint = rectShapeDrawable.getPaint();
+        paint.setColor(color);
+        paint.setStyle(Paint.Style.FILL);
+        return rectShapeDrawable;
+    }
+
     private StateListDrawable getStateListDrawable(Drawable pressedDrawable, Drawable focusedDrawable, Drawable normalDrawable) {
         StateListDrawable states = new StateListDrawable();
         states.addState(new int[] {android.R.attr.state_pressed}, pressedDrawable);
-        states.addState(new int[] {android.R.attr.state_focused}, focusedDrawable);
+        states.addState(new int[]{android.R.attr.state_focused}, focusedDrawable);
         states.addState(new int[]{}, normalDrawable);
         return states;
     }
@@ -111,7 +128,7 @@ public class ConversationButton extends android.widget.Button implements IConver
     }
 
     @SuppressLint("NewApi")
-    public void setBackgroundForOs(Drawable drawable) {
+    private void setBackgroundForOs(Drawable drawable) {
         int sdk = android.os.Build.VERSION.SDK_INT;
         if (sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
             setBackgroundDrawable(drawable); // Deprecated but still in use for now
@@ -136,5 +153,9 @@ public class ConversationButton extends android.widget.Button implements IConver
 
     private boolean isLight(int color) {
         return ((0.2126*(Color.red(color)/255f) + 0.7152*(Color.green(color)/255f) + 0.0722*(Color.blue(color)/255f)) > 0.5f);
+    }
+
+    public float getBorderRadius() {
+        return borderRadius;
     }
 }
