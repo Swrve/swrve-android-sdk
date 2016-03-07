@@ -8,7 +8,7 @@ public class ButtonControl extends ControlBase {
         return description;
     }
 
-    public String getBorder_radius() {
+    public String getBorderRadius() {
         return border_radius;
     }
 }

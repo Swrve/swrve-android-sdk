@@ -40,8 +40,8 @@ public class ConversationButton extends android.widget.Button implements IConver
     }
 
     private void initBorderRadius() {
-        if(model.getBorder_radius() != null) {
-            borderRadius = Float.parseFloat(model.getBorder_radius());
+        if(model.getBorderRadius() != null) {
+            borderRadius = Float.parseFloat(model.getBorderRadius());
             // TODO convert from percent to correct units SWRVE-11668
         }
     }
