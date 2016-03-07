@@ -3,6 +3,7 @@ package com.swrve.sdk.conversations.ui;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -15,6 +16,7 @@ import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 import android.text.TextUtils;
 
+import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 
 public class ConversationButton extends android.widget.Button implements IConversationControl {
@@ -31,7 +33,7 @@ public class ConversationButton extends android.widget.Button implements IConver
             this.model = model;
             setText(model.getDescription());
         }
-        initBorderRadius();
+        initBorderRadius(context);
         initColors();
         initTextColorStates();
         initBackgroundColorStates();
@@ -39,10 +41,20 @@ public class ConversationButton extends android.widget.Button implements IConver
         setEllipsize(TextUtils.TruncateAt.END);
     }
 
-    private void initBorderRadius() {
-        if(model.getBorderRadius() != null) {
-            borderRadius = Float.parseFloat(model.getBorderRadius());
-            // TODO convert from percent to correct units SWRVE-11668
+    private void initBorderRadius(Context context) {
+        if (model.getBorderRadius() != null) {
+            float borderRadiusPerCent = Float.parseFloat(model.getBorderRadius());
+
+            int[] attrs = {android.R.attr.minHeight};
+            TypedArray ta = context.obtainStyledAttributes(R.style.cio__control_button, attrs);
+            String height = ta.getString(0);
+            height = height.contains("dip") ? height.substring(0, height.indexOf("dip")) : height;
+            float maxRadius = Float.parseFloat(height);
+            if (borderRadiusPerCent >= 100) {
+                borderRadius = maxRadius;
+            } else {
+                borderRadius = ((borderRadiusPerCent * maxRadius) / 100f);
+            }
         }
     }
 
