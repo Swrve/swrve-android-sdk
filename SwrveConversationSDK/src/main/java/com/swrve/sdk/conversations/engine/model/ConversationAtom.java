@@ -10,9 +10,9 @@ public abstract class ConversationAtom implements Serializable {
     public static final String TYPE_CONTENT_IMAGE = "image";
     public static final String TYPE_CONTENT_VIDEO = "video";
     public static final String TYPE_CONTENT_SPACER = "spacer";
-
     public static final String TYPE_INPUT_MULTIVALUE = "multi-value-input";
     public static final String TYPE_INPUT_MULTIVALUELONG = "multi-value-long-input";
+    public static final String TYPE_INPUT_STARRATING = "star-rating";
 
     protected String tag;
     protected String type;

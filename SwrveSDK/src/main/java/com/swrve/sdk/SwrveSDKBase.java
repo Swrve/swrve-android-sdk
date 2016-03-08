@@ -26,7 +26,6 @@ import java.util.Map;
 public abstract class SwrveSDKBase {
 
     protected static ISwrveBase instance;
-    protected static ISwrveConversationsSDK conversationInstance;
 
     /**
      * Typically this function is called in your main activity's onCreate function.

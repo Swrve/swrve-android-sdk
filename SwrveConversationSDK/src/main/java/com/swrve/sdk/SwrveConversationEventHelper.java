@@ -13,7 +13,7 @@ public class SwrveConversationEventHelper {
     private ISwrveConversationsSDK swrveConversationSDK;
 
     public SwrveConversationEventHelper() {
-        this.swrveConversationSDK = SwrveCommon.getInstance().getConversationSDK();
+        this.swrveConversationSDK = (ISwrveConversationsSDK) SwrveCommon.getInstance();
     }
 
     protected static String getEventForConversation(SwrveBaseConversation conversation) {

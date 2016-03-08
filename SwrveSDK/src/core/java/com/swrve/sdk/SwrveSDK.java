@@ -39,12 +39,8 @@ public class SwrveSDK extends SwrveSDKBase{
         if (instance == null) {
             instance = new Swrve(context, appId, apiKey, config);
         }
-        if(conversationInstance == null) {
-            conversationInstance = new SwrveConversationImp(instance);
-        }
         return (ISwrve)instance;
     }
-
 
     /**
      * Returns the Swrve configuration that was used to initialize the SDK.

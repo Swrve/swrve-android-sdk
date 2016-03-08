@@ -9,6 +9,7 @@ import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
+import com.swrve.sdk.conversations.engine.model.StarRating;
 
 import java.lang.reflect.Type;
 
@@ -34,6 +35,8 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
                 return jdContext.deserialize(obj, Content.class);
             } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_MULTIVALUE)) {
                 return jdContext.deserialize(obj, MultiValueInput.class);
+            } else if (caType.equalsIgnoreCase(ConversationAtom.TYPE_INPUT_STARRATING)) {
+                return jdContext.deserialize(obj, StarRating.class);
             } else {
                 return ConversationAtom.create(caTag, caType);
             }
