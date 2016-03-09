@@ -885,7 +885,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     SwrveBaseCampaign campaign = null;
                     if (campaignData.has("conversation")) {
                         int conversationVersionDownloaded = campaignData.optInt("conversation_version", 1);
-                        if (conversationVersionDownloaded <= ISwrveConversationsSDK.CONVERSATION_VERSION) {
+                        if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
                             campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
                         } else {
                             SwrveLogger.i(LOG_TAG, "Conversation version " + conversationVersionDownloaded + " cannot be loaded with this SDK version");

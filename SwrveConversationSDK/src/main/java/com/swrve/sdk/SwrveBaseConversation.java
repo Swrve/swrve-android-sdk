@@ -15,7 +15,7 @@ import java.util.ArrayList;
 public class SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
     // Swrve SDK reference
-    protected transient ISwrveConversationsSDK swrveConversationSDK;
+    protected transient ISwrveConversationSDK swrveConversationSDK;
     // Identifies the message in a campaign
     protected int id;
     // Customer defined name of the conversation as it appears in the web app

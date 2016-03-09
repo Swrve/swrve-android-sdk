@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Main base class implementation of the Swrve SDK.
  */
-public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveCommon, ISwrveConversationsSDK {
+public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveCommon, ISwrveConversationSDK {
 
     protected SwrveBase(Context context, int appId, String apiKey, C config) {
         super(context, appId, apiKey, config);
@@ -579,7 +579,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 deviceInfo.put(SWRVE_DEVICE_DPI, metrics.densityDpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, xdpi);
                 deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, ydpi);
-                deviceInfo.put(SWRVE_CONVERSATION_VERSION, ISwrveConversationsSDK.CONVERSATION_VERSION);
+                deviceInfo.put(SWRVE_CONVERSATION_VERSION, ISwrveConversationSDK.CONVERSATION_VERSION);
                 // Carrier info
                 if (!SwrveHelper.isNullOrEmpty(simOperatorName)) {
                     deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, simOperatorName);
@@ -644,7 +644,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 if (config.isTalkEnabled()) {
                     // Talk only params
                     params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
-                    params.put("conversation_version", String.valueOf(ISwrveConversationsSDK.CONVERSATION_VERSION));
+                    params.put("conversation_version", String.valueOf(ISwrveConversationSDK.CONVERSATION_VERSION));
                     params.put("language", language);
                     params.put("app_store", config.getAppStore());
 
@@ -1708,7 +1708,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      */
 
     /***
-     * Implementation of ISwrveConversationsSDK methods
+     * Implementation of ISwrveConversationSDK methods
      */
 
     @Override
@@ -1728,6 +1728,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     /***
-     * eo ISwrveConversationsSDK
+     * eo ISwrveConversationSDK
      */
 }
