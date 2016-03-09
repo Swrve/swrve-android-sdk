@@ -29,8 +29,6 @@ interface ISwrveCommon
 
     void userUpdate(Map<String, String> attributes);
 
-    ISwrveConversationsSDK getConversationSDK();
-
     void sendEventsWakefully(Context context, ArrayList<String> events);
 
     String getEventsServer();

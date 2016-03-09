@@ -17,7 +17,6 @@ import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
-import java.lang.SecurityException;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
@@ -44,9 +43,7 @@ import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
 import com.swrve.sdk.messaging.view.SwrveMessageViewFactory;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
-import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTClient;
-import com.swrve.sdk.rest.RESTResponse;
 import com.swrve.sdk.rest.SwrveFilterInputStream;
 
 import org.json.JSONArray;
@@ -98,7 +95,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
     protected static final String TEMPLATE_VERSION = "1";
-    protected static final int CONVERSATION_VERSION = 2;
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -888,11 +884,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 if (passesAllFilters) {
                     SwrveBaseCampaign campaign = null;
                     if (campaignData.has("conversation")) {
-                        int conversationVersion = campaignData.optInt("conversation_version", 1);
-                        if (conversationVersion <= CONVERSATION_VERSION) {
+                        int conversationVersionDownloaded = campaignData.optInt("conversation_version", 1);
+                        if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
                             campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
                         } else {
-                            SwrveLogger.i(LOG_TAG, "Conversation version " + conversationVersion + " cannot be loaded with this SDK version");
+                            SwrveLogger.i(LOG_TAG, "Conversation version " + conversationVersionDownloaded + " cannot be loaded with this SDK version");
                         }
                     } else {
                         campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
