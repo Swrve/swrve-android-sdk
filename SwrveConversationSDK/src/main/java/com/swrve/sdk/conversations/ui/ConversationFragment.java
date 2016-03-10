@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import com.swrve.sdk.SwrveLogger;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,11 +22,11 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
-import com.swrve.sdk.SwrveHelper;
-
-import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveConversationEventHelper;
+import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.ActionBehaviours;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.Content;
@@ -36,8 +35,9 @@ import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.ConversationReply;
-import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.IOnContentChangedListener;
+import com.swrve.sdk.conversations.engine.model.MultiValueInput;
+import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
@@ -291,6 +291,9 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 mvicReference.setTextColor(atomStyle.getTextColorInt());
                 contentLayout.addView(input);
                 inputs.add(input);
+            } else if (content instanceof StarRating) {
+                ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
+                contentLayout.addView(conversationRatingBar);
             }
         }
     }

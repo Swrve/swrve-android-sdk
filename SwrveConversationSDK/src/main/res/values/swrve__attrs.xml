@@ -18,6 +18,9 @@
         <attr name="conversationInputMultiValueDescriptionStyle" format="reference" />
 
         <attr name="conversationContentDescriptionStyle" format="reference" />
+
+        <attr name="conversationContentRatingBarStyle" format="reference" />
+
     </declare-styleable>
 
 </resources>
