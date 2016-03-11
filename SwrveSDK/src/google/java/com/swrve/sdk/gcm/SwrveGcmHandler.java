@@ -10,6 +10,8 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
+
 import com.swrve.sdk.SwrveLogger;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -144,7 +146,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         }
 
         if (notificationHelper.accentColor >= 0) {
-            mBuilder.setColor(notificationHelper.accentColor);
+            mBuilder.setColor(ContextCompat.getColor(context, notificationHelper.accentColor));
         }
 
         if (!SwrveHelper.isNullOrEmpty(msgSound)) {
