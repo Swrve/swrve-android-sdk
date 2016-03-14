@@ -42,19 +42,15 @@ public class ConversationButton extends android.widget.Button implements IConver
     }
 
     private void initBorderRadius(Context context) {
-        if (model.getBorderRadius() != null) {
-            float borderRadiusPerCent = Float.parseFloat(model.getBorderRadius());
-
-            int[] attrs = {android.R.attr.minHeight};
-            TypedArray ta = context.obtainStyledAttributes(R.style.cio__control_button, attrs);
-            String height = ta.getString(0);
-            height = height.contains("dip") ? height.substring(0, height.indexOf("dip")) : height;
-            float maxRadius = Float.parseFloat(height);
-            if (borderRadiusPerCent >= 100) {
-                borderRadius = maxRadius;
-            } else {
-                borderRadius = ((borderRadiusPerCent * maxRadius) / 100f);
-            }
+        int[] attrs = {android.R.attr.minHeight};
+        TypedArray ta = context.obtainStyledAttributes(R.style.cio__control_button, attrs);
+        String height = ta.getString(0);
+        height = height.contains("dip") ? height.substring(0, height.indexOf("dip")) : height;
+        float maxRadius = Float.parseFloat(height);
+        if (model.getStyle().getBorderRadius() >= 100) {
+            borderRadius = maxRadius;
+        } else {
+            borderRadius = ((model.getStyle().getBorderRadius() * maxRadius) / 100f);
         }
     }
 

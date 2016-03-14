@@ -6,6 +6,7 @@ import java.io.Serializable;
 public class AtomStyle implements Serializable {
     public static final String TYPE_OUTLINE = "outline", TYPE_SOLID = "solid";
 
+    public int border_radius;
     public String type;
     private BackgroundStyle bg;
     private ForegroundStyle fg;
@@ -13,9 +14,8 @@ public class AtomStyle implements Serializable {
     public AtomStyle() {
     }
 
-    public AtomStyle(BackgroundStyle bg, ForegroundStyle fg) {
-        this.bg = bg;
-        this.fg = fg;
+    public int getBorderRadius() {
+        return border_radius;
     }
 
     public BackgroundStyle getBg() {
