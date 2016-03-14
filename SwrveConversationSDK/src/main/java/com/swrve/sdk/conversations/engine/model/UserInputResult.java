@@ -5,6 +5,8 @@ import java.io.Serializable;
 public class UserInputResult implements Serializable{
     public static final String TYPE_SINGLE_CHOICE = "choice";
     public static final String TYPE_VIDEO_PLAY = "play";
+    public static final String TYPE_STAR_RATING = "star-rating";
+
     public String type, conversationId,  pageTag, fragmentTag;
     public Object result;
 
@@ -14,10 +16,6 @@ public class UserInputResult implements Serializable{
 
     public String getPageTag() {
         return pageTag;
-    }
-
-    public String getResultAsString() {
-        return result.toString();
     }
 
     public Object getResult() {
@@ -34,5 +32,9 @@ public class UserInputResult implements Serializable{
 
     public boolean isSingleChoice() {
         return type.equalsIgnoreCase(TYPE_SINGLE_CHOICE);
+    }
+
+    public boolean isStarRating() {
+        return type.equalsIgnoreCase(TYPE_STAR_RATING);
     }
 }

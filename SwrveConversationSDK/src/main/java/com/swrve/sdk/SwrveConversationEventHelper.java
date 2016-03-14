@@ -40,7 +40,7 @@ public class SwrveConversationEventHelper {
 
             queueEvent(conversation, pageKey, fromPageTag, payload);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e);
         }
     }
 
@@ -86,6 +86,8 @@ public class SwrveConversationEventHelper {
                     if (userInteraction.isSingleChoice()) {
                         ChoiceInputResponse response = (ChoiceInputResponse) userInteraction.getResult();
                         payload.put("result", response.getAnswerID());
+                    } else if (userInteraction.isStarRating()) {
+                        payload.put("result", String.valueOf(userInteraction.getResult()));
                     }
 
                     swrveConversationSDK.queueConversationEvent(
@@ -93,9 +95,11 @@ public class SwrveConversationEventHelper {
                             userInteraction.getType(), userInteraction.getPageTag(), userInteraction.getConversationId(),
                             payload);
                 }
+            } else {
+                SwrveLogger.e(LOG_TAG, "The SwrveConversationSDK is null, so cannot send events.");
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK.", e);
         }
     }
 
@@ -108,7 +112,7 @@ public class SwrveConversationEventHelper {
 
             queueEvent(conversation, "navigation", fromPageTag, payload); // The page the user came on
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e);
         }
     }
 
@@ -124,7 +128,7 @@ public class SwrveConversationEventHelper {
 
             queueEvent(conversation, "error", currentPageTag);
         } catch (Exception e2) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e2);
+            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e2);
         }
     }
 }

@@ -13,15 +13,21 @@ import android.widget.RatingBar;
 
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.Content;
+import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.StarRating;
+import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
 import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
 
-public class ConversationRatingBar extends LinearLayout implements RatingBar.OnRatingBarChangeListener {
+import java.util.HashMap;
+import java.util.Map;
+
+public class ConversationRatingBar extends LinearLayout implements RatingBar.OnRatingBarChangeListener, IConversationInput {
 
     private StarRating model;
     private HtmlSnippetView htmlSnippetView;
     private RatingBar ratingBar;
+    private ConversationInputChangedListener inputChangedListener;
 
     public ConversationRatingBar(Context context, StarRating model) {
         super(context);
@@ -87,6 +93,23 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
         if (rating < 1.0f) { // Once a star value is selected it can never be set to less than one
             ratingBar.setRating(1.0f);
         }
+
+        if (inputChangedListener != null) {
+            Map<String, Object> dataMap = new HashMap<>();
+            dataMap.put(model.getTag(), ratingBar.getRating());
+            inputChangedListener.onContentChanged(dataMap, model);
+        }
+    }
+
+    @Override
+    public void setUserInput(UserInputResult userInput) {
+        if (userInput.getResult() != null && userInput.getResult() instanceof Float) {
+            ratingBar.setRating((Float) userInput.getResult());
+        }
+    }
+
+    public void setContentChangedListener(ConversationInputChangedListener inputChangedListener) {
+        this.inputChangedListener = inputChangedListener;
     }
 
     public StarRating getModel() {
