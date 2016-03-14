@@ -65,9 +65,11 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         if (isSwrveRemoteNotification(msg)) {
             // Notify binded clients
             Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+            Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
+            String msgId = (rawId != null) ? rawId.toString() : null;
             while (iter.hasNext()) {
                 SwrveQAUser sdkListener = iter.next();
-                sdkListener.pushNotification(msg);
+                sdkListener.pushNotification(msgId, msg);
             }
 
             // Process notification
@@ -79,7 +81,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     }
 
     private static boolean isSwrveRemoteNotification(final Bundle msg) {
-        Object rawId = msg.get("_p");
+        Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
         String msgId = (rawId != null) ? rawId.toString() : null;
         return !SwrveHelper.isNullOrEmpty(msgId);
     }
