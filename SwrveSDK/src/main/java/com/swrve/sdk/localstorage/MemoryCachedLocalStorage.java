@@ -14,7 +14,7 @@ import java.util.Map.Entry;
 /**
  * Used internally to provide a multi-layer cache of events and resource diffs.
  */
-public class MemoryCachedLocalStorage implements ILocalStorage {
+public class MemoryCachedLocalStorage implements IMemoryLocalStorage {
     private ILocalStorage cache;
     private ILocalStorage secondaryStorage;
 
