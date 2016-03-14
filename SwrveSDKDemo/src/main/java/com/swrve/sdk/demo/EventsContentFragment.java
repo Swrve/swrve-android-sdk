@@ -31,7 +31,7 @@ public class EventsContentFragment extends Fragment implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btnQueueEvent:
-                btnQueueEvent();
+                btnQueueEvent(v);
                 break;
             case R.id.btnAction:
                 btnAction();
@@ -39,7 +39,7 @@ public class EventsContentFragment extends Fragment implements View.OnClickListe
         }
     }
 
-    private void btnQueueEvent() {
+    public void btnQueueEvent(View v) {
         EditText editText = (EditText) getView().findViewById(R.id.eventName);
         String eventName = editText.getText().toString();
         if(eventName.length()>0) {
