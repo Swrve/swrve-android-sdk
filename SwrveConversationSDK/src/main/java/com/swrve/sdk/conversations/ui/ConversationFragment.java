@@ -33,9 +33,9 @@ import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlActions;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
+import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.ConversationReply;
-import com.swrve.sdk.conversations.engine.model.IOnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
@@ -46,8 +46,9 @@ import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
-public class ConversationFragment extends Fragment implements OnClickListener {
+public class ConversationFragment extends Fragment implements OnClickListener, ConversationInputChangedListener {
     private static final String LOG_TAG = "SwrveSDK";
 
     private ViewGroup root;
@@ -58,7 +59,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private SwrveBaseConversation swrveConversation;
     private ConversationPage page;
     private SwrveConversationEventHelper eventHelper;
-    private ArrayList<IConversationInput> inputs;
     private HashMap<String, UserInputResult> userInteractionData;
 
     public ConversationPage getPage() {
@@ -93,7 +93,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
-        inputs = (inputs == null) ? new ArrayList<IConversationInput>() : inputs;
         userInteractionData = (userInteractionData == null) ? new HashMap<String, UserInputResult>() : userInteractionData;
 
         if (page != null) {
@@ -104,8 +103,8 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 UserInputResult userInput = userInteractionData.get(key);
                 String fragmentTag = userInput.getFragmentTag();
                 View inputView = currentView.findViewWithTag(fragmentTag);
-                if (userInput.isSingleChoice() && inputView instanceof MultiValueInputControl) {
-                    MultiValueInputControl inputControl = (MultiValueInputControl) inputView;
+                if (inputView instanceof IConversationInput) {
+                    IConversationInput inputControl = (IConversationInput) inputView;
                     inputControl.setUserInput(userInput);
                 }
             }
@@ -138,9 +137,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
 
         this.page = conversationPage;
-        if (inputs.size() > 0) {
-            inputs.clear();
-        }
 
         activity.setTitle(page.getTitle());
         try {
@@ -276,23 +272,13 @@ public class ConversationFragment extends Fragment implements OnClickListener {
                 MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
                 input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                 input.setTag(content.getTag());
-                final MultiValueInputControl mvicReference = input;
-                final String tag = content.getTag();
-                // Store the result of the content for processing later
-                input.setOnContentChangedListener(new IOnContentChangedListener() {
-                    @Override
-                    public void onContentChanged() {
-                        HashMap<String, Object> result = new HashMap<String, Object>();
-                        mvicReference.gatherValue(result);
-                        stashMultiChoiceInputData(page.getTag(), tag, result);
-                    }
-                });
+                input.setContentChangedListener(this);
                 setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
-                mvicReference.setTextColor(atomStyle.getTextColorInt());
+                input.setTextColor(atomStyle.getTextColorInt());
                 contentLayout.addView(input);
-                inputs.add(input);
             } else if (content instanceof StarRating) {
                 ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
+                conversationRatingBar.setContentChangedListener(this);
                 contentLayout.addView(conversationRatingBar);
             }
         }
@@ -381,11 +367,6 @@ public class ConversationFragment extends Fragment implements OnClickListener {
     private void sendReply(ControlBase control, ConversationReply reply) {
         reply.setControl(control.getTag());
 
-        // For all the inputs , get their data
-        for (IConversationInput inputView : inputs) {
-            inputView.gatherValue(reply.getData());
-        }
-
         ConversationPage nextPage = swrveConversation.getPageForControl(control);
         if (nextPage != null) {
             sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
@@ -468,7 +449,7 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         userInteractionData.put(key, result);
     }
 
-    private void stashMultiChoiceInputData(String pageTag, String fragmentTag, HashMap<String, Object> data) {
+    private void stashMultiChoiceInputData(String pageTag, String fragmentTag, Map<String, Object> data) {
         String key = pageTag + "-" + fragmentTag;
         String type = UserInputResult.TYPE_SINGLE_CHOICE;
         for (String k : data.keySet()) {
@@ -482,12 +463,34 @@ public class ConversationFragment extends Fragment implements OnClickListener {
         }
     }
 
+    private void stashStarRatingInputData(String pageTag, String contentTag, Map<String, Object> data) {
+        String key = pageTag + "-" + contentTag;
+        for (String k : data.keySet()) {
+            UserInputResult result = new UserInputResult();
+            result.type = UserInputResult.TYPE_STAR_RATING;
+            result.conversationId = Integer.toString(swrveConversation.getId());
+            result.fragmentTag = contentTag;
+            result.pageTag = pageTag;
+            result.result = data.get(k);
+            userInteractionData.put(key, result);
+        }
+    }
+
     @SuppressLint("NewApi")
     private void setBackgroundDrawable(View view, Drawable drawable) {
         if (getSDKBuildVersion() < Build.VERSION_CODES.JELLY_BEAN) {
             view.setBackgroundDrawable(drawable);
         } else {
             view.setBackground(drawable);
+        }
+    }
+
+    @Override
+    public void onContentChanged(Map<String, Object> contentChanged, ConversationAtom content) {
+        if(content instanceof MultiValueInput) {
+            stashMultiChoiceInputData(page.getTag(), content.getTag(), contentChanged);
+        } else if(content instanceof StarRating) {
+            stashStarRatingInputData(page.getTag(), content.getTag(), contentChanged);
         }
     }
 }

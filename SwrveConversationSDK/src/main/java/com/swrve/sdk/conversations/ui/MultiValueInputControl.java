@@ -20,21 +20,22 @@ import android.widget.TextView;
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
+import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
-import com.swrve.sdk.conversations.engine.model.IOnContentChangedListener;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+
 
 public class MultiValueInputControl extends LinearLayout implements Serializable, IConversationInput, OnCheckedChangeListener {
     private MultiValueInput model;
     private int selectedIndex = -1; // default to none selected
-    private IOnContentChangedListener IOnContentChangedListener;
+    private ConversationInputChangedListener inputChangedListener;
     private TextView descLbl;
     private ArrayList<RadioButton> radioButtons;
-
 
     @SuppressLint("NewApi")
     public MultiValueInputControl(Context context, AttributeSet attrs, int defStyle) {
@@ -108,6 +109,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         descLbl.setTextColor(colorInt);
     }
 
+    @Override
     public void setUserInput(UserInputResult userInput){
         ChoiceInputResponse choice = (ChoiceInputResponse) userInput.getResult();
         for(RadioButton rb : radioButtons){
@@ -118,21 +120,20 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         }
     }
 
-    @Override
-    public void gatherValue(Map<String, Object> dataMap) {
-        if (selectedIndex > -1) {
-            ChoiceInputItem mv = model.getValues().get(selectedIndex);
-            ChoiceInputResponse r = new ChoiceInputResponse();
-            r.setQuestionID(model.getTag());
-            r.setFragmentTag(model.getTag());
-            r.setAnswerID(mv.getAnswerID());
-            r.setAnswerText(mv.getAnswerText());
-            dataMap.put(model.getTag(), r);
-        }
+    private Map<String, Object> gatherValue() {
+        Map<String, Object> dataMap = new HashMap<>();
+        ChoiceInputItem mv = model.getValues().get(selectedIndex);
+        ChoiceInputResponse r = new ChoiceInputResponse();
+        r.setQuestionID(model.getTag());
+        r.setFragmentTag(model.getTag());
+        r.setAnswerID(mv.getAnswerID());
+        r.setAnswerText(mv.getAnswerText());
+        dataMap.put(model.getTag(), r);
+        return dataMap;
     }
 
-    public void setOnContentChangedListener(IOnContentChangedListener l) {
-        IOnContentChangedListener = l;
+    public void setContentChangedListener(ConversationInputChangedListener inputChangedListener) {
+        this.inputChangedListener = inputChangedListener;
     }
 
     @Override
@@ -153,8 +154,12 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         } else {
             selectedIndex = index;
         }
-        if (IOnContentChangedListener != null) {
-            IOnContentChangedListener.onContentChanged();
+        if (inputChangedListener != null) {
+            inputChangedListener.onContentChanged(gatherValue(), model);
         }
+    }
+
+    public ArrayList<RadioButton> getRadioButtons() {
+        return this.radioButtons;
     }
 }
