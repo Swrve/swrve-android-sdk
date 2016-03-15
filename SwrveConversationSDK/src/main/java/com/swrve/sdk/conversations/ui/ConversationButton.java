@@ -16,6 +16,7 @@ import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 import android.text.TextUtils;
 
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 
@@ -46,11 +47,12 @@ public class ConversationButton extends android.widget.Button implements IConver
         TypedArray ta = context.obtainStyledAttributes(R.style.cio__control_button, attrs);
         String height = ta.getString(0);
         height = height.contains("dip") ? height.substring(0, height.indexOf("dip")) : height;
-        float maxRadius = Float.parseFloat(height);
-        if (model.getStyle().getBorderRadius() >= 100) {
+        float maxRadius = SwrveHelper.convertDipToPixels(getContext(), Float.parseFloat(height))/2; // maxRadius is height divide by two
+        int borderRadiusPerCent = model.getStyle().getBorderRadius();
+        if (borderRadiusPerCent >= 100) {
             borderRadius = maxRadius;
         } else {
-            borderRadius = ((model.getStyle().getBorderRadius() * maxRadius) / 100f);
+            borderRadius = ((borderRadiusPerCent * maxRadius) / 100f);
         }
     }
 
