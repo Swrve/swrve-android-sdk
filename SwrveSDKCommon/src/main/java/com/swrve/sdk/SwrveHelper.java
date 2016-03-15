@@ -1,8 +1,10 @@
 package com.swrve.sdk;
 
+import android.content.Context;
 import android.os.Build;
 import android.util.Base64;
-import com.swrve.sdk.SwrveLogger;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -200,5 +202,11 @@ public final class SwrveHelper {
         } else {
             return false;
         }
+    }
+
+    public static float convertDipToPixels(Context context, float dipValue) {
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        float pixelValue = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
+        return pixelValue;
     }
 }
