@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -64,7 +63,7 @@ public class RESTClient implements IRESTClient {
             long start = System.nanoTime();
             try {
                 urlConnection.connect();
-            } catch (ConnectException e) {
+            } catch (IOException e) {
                 SwrveLogger.e("RESTClient unable to connect to " + endpoint);
                 throw e;
             }
