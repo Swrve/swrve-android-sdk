@@ -28,10 +28,10 @@ public class SwrveWakefulService extends IntentService {
             if (eventsExtras != null && eventsExtras.size() > 0) {
                 handleSendEvents(eventsExtras);
             } else {
-                SwrveLogger.e(LOG_TAG, "SwrveWakefulService: Unknown intent received.");
+                SwrveLogger.e(LOG_TAG, "SwrveWakefulService: Unknown intent received (extras: " + intent.getExtras().get(EXTRA_EVENTS) + ").");
             }
         } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "SwrveWakefulService exception:", ex);
+            SwrveLogger.e(LOG_TAG, "SwrveWakefulService exception (intent: " + intent + ") :", ex);
         } finally {
             SwrveWakefulReceiver.completeWakefulIntent(intent);
         }

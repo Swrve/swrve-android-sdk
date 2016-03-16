@@ -13,6 +13,7 @@ import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.google.gson.JsonSyntaxException;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -684,7 +685,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 }
 
                                 try {
-                                    JSONObject responseJson = new JSONObject(response.responseBody);
+                                    JSONObject responseJson = null;
+                                    try {
+                                        responseJson = new JSONObject(response.responseBody);
+                                    } catch(JsonSyntaxException e) {
+                                        SwrveLogger.e("SwrveSDK unable to decode \"" + response.responseBody + "\" with JSON.");
+                                        throw e;
+                                    }
 
                                     if (responseJson.has("flush_frequency")) {
                                         Integer flushFrequency = responseJson.getInt("flush_frequency");
