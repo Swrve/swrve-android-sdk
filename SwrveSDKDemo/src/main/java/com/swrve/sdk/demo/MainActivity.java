@@ -19,6 +19,13 @@ import com.swrve.sdk.SwrveSDK;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+ * Example of the Swrve SDK integrated in an Activity.
+ *
+ * It is VERY important to call the onCreate, onResume, onPause, onDestroy, onNewIntent, onLowMemory
+ * methods for the SDK to work properly, at least in the Activities that are going to display
+ * Swrve in-app messages, conversations or will be launched from a push notification
+ */
 public class MainActivity extends AppCompatActivity {
 
     private View root;

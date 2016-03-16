@@ -10,6 +10,8 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
+
 import com.swrve.sdk.SwrveLogger;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -65,9 +67,11 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         if (isSwrveRemoteNotification(msg)) {
             // Notify binded clients
             Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+            Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
+            String msgId = (rawId != null) ? rawId.toString() : null;
             while (iter.hasNext()) {
                 SwrveQAUser sdkListener = iter.next();
-                sdkListener.pushNotification(msg);
+                sdkListener.pushNotification(msgId, msg);
             }
 
             // Process notification
@@ -79,7 +83,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     }
 
     private static boolean isSwrveRemoteNotification(final Bundle msg) {
-        Object rawId = msg.get("_p");
+        Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
         String msgId = (rawId != null) ? rawId.toString() : null;
         return !SwrveHelper.isNullOrEmpty(msgId);
     }
@@ -144,7 +148,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         }
 
         if (notificationHelper.accentColor >= 0) {
-            mBuilder.setColor(notificationHelper.accentColor);
+            mBuilder.setColor(ContextCompat.getColor(context, notificationHelper.accentColor));
         }
 
         if (!SwrveHelper.isNullOrEmpty(msgSound)) {

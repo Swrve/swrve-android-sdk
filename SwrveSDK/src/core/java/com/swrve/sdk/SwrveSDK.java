@@ -42,7 +42,6 @@ public class SwrveSDK extends SwrveSDKBase{
         return (ISwrve)instance;
     }
 
-
     /**
      * Returns the Swrve configuration that was used to initialize the SDK.
      *

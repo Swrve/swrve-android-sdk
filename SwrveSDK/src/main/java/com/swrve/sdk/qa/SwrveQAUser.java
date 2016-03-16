@@ -227,15 +227,13 @@ public class SwrveQAUser {
         }
     }
 
-    public void pushNotification(Bundle msg) {
+    public void pushNotification(String trackingId, Bundle msg) {
         try {
             if (canMakeTriggerRequest()) {
-                Object rawId = msg.get("_p");
-                String msgId = (rawId != null) ? rawId.toString() : null;
-                if (!SwrveHelper.isNullOrEmpty(msgId)) {
+                if (!SwrveHelper.isNullOrEmpty(trackingId)) {
                     String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/push";
                     JSONObject pushJson = new JSONObject();
-                    pushJson.put("id", msgId);
+                    pushJson.put("id", trackingId);
                     pushJson.put("alert", msg.getString("text"));
                     pushJson.put("sound", msg.getString("sound"));
                     pushJson.put("badge", "");
