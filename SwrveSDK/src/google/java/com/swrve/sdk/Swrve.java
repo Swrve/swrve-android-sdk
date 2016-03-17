@@ -185,7 +185,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      * @return registration ID, or empty string if there is no existing
      * registration ID.
      */
-    protected String getRegistrationId() {
+    public String getRegistrationId() {
         // Try to get registration id from storage
         String registrationIdRaw = cachedLocalStorage.getSharedCacheEntry(REGISTRATION_ID_CATEGORY);
         if (SwrveHelper.isNullOrEmpty(registrationIdRaw)) {
