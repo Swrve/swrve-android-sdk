@@ -124,7 +124,6 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
 
     private void insertOrUpdate(String table, ContentValues values, String whereClause, String[] whereArgs) {
         if (connectionOpen.get()) {
-            // SwrveLogger.i("SQLLite", "Insert/Open into " + database + " isDbLockedByCurrentThread: " + database.isDbLockedByCurrentThread() + " isOpen: " + database.isOpen());
             int affectedRows = database.update(table, values, whereClause, whereArgs);
             if (affectedRows == 0) {
                 database.insertOrThrow(table, null, values);
@@ -264,21 +263,9 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
 
     @Override
     public void close() {
-        try {
-            dbHelper.close();
-        } catch (Exception e) {
-             SwrveLogger.e("SQLLite", "Exception closing dbHelper", e);
-        }
-        try {
-            database.close();
-        } catch (Exception e) {
-            SwrveLogger.e("SQLLite", "Exception closing database", e);
-        }
-        try {
-            connectionOpen.set(false);
-        } catch (Exception e) {
-            SwrveLogger.e("SQLLite", "Exception setting connectionOpen to false", e);
-        }
+        dbHelper.close();
+        database.close();
+        connectionOpen.set(false);
     }
 
     private static class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
