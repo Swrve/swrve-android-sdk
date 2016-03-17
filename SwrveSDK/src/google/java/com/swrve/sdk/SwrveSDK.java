@@ -43,6 +43,17 @@ public class SwrveSDK extends SwrveSDKBase {
         }
         return (ISwrve) instance;
     }
+    
+    /**
+     * Gets the current registration ID for application on GCM service.
+     * If result is empty, the app needs to register.
+     *
+     * @return registration ID, or empty string if there is no existing
+     * registration ID.
+     */
+    public static String getRegistrationId() {
+        return ((ISwrve) instance).getRegistrationId();
+    }
 
     /**
      * Returns the Swrve configuration that was used to initialize the SDK.
