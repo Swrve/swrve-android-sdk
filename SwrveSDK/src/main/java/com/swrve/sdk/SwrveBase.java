@@ -503,7 +503,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Forget the initialised time
             initialisedTime = null;
 
-            removeCurrentDialog(null);
+            try {
+                removeCurrentDialog(null);
+            }
+            catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Exception occurred removing current dialog", e);
+            }
             // Remove the binding to the current activity, if any
             this.activityContext = null;
 
@@ -512,18 +517,47 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Remove QA user from push notification listener
             if (qaUser != null) {
-                qaUser.unbindToServices();
+                try {
+                    qaUser.unbindToServices();
+                }
+                catch (Exception e) {
+                    SwrveLogger.e(LOG_TAG, "Exception occurred unbinding services from qaUser", e);
+                }
                 qaUser = null;
             }
 
             // Do not accept any more jobs but try to finish sending data
-            restClientExecutor.shutdown();
-            storageExecutor.shutdown();
-            campaignsAndResourcesExecutor.shutdown();
-            storageExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            restClientExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if(restClientExecutor != null) {
+                try {
+                    restClientExecutor.shutdown();
+                    restClientExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    SwrveLogger.e(LOG_TAG, "Exception occurred shutting down restClientExecutor", e);
+                }
+            }
+            if(storageExecutor != null) {
+                try {
+                    storageExecutor.shutdown();
+                    storageExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    SwrveLogger.e(LOG_TAG, "Exception occurred shutting down storageExecutor", e);
+                }
+            }
+            if(campaignsAndResourcesExecutor != null) {
+                try {
+                    campaignsAndResourcesExecutor.shutdown();
+                } catch (Exception e) {
+                    SwrveLogger.e(LOG_TAG, "Exception occurred shutting down campaignsAndResourcesExecutor", e);
+                }
+            }
 
-            cachedLocalStorage.close();
+            if(cachedLocalStorage != null) {
+                try {
+                    cachedLocalStorage.close();
+                } catch (Exception e) {
+                    SwrveLogger.e(LOG_TAG, "Exception occurred closing cachedLocalStorage", e);
+                }
+            }
         }
     }
 
