@@ -1718,18 +1718,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      */
 
     @Override
-    public void queueConversationEvent(String viewEvent, String eventName, String page, String conversationId, Map<String, String> payload) {
+    public void queueConversationEvent(String eventParamName, String eventPayloadName, String page, int conversationId, Map<String, String> payload) {
         if (payload == null) {
             payload = new HashMap<String, String>();
         }
-        payload.put("event", eventName);
-        payload.put("conversation", conversationId);
+        payload.put("event", eventPayloadName);
+        payload.put("conversation", Integer.toString(conversationId));
         payload.put("page", page);
 
-        SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + viewEvent);
+        SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + eventParamName);
 
         Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("name", viewEvent);
+        parameters.put("name", eventParamName);
         queueEvent("event", parameters, payload);
     }
 

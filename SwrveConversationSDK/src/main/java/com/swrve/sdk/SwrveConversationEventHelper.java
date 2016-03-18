@@ -16,13 +16,14 @@ public class SwrveConversationEventHelper {
         this.swrveConversationSDK = (ISwrveConversationSDK) SwrveCommon.getInstance();
     }
 
-    protected static String getEventForConversation(SwrveBaseConversation conversation) {
-        return "Swrve.Conversations.Conversation-" + conversation.getId();
+    protected String getEventForConversation(SwrveBaseConversation conversation, String suffix) {
+        return "Swrve.Conversations.Conversation-" + conversation.getId() + "." + suffix;
     }
 
-    protected void queueEvent(SwrveBaseConversation conversation, String eventName, String page, Map<String, String> payload) {
+    protected void queueEvent(SwrveBaseConversation conversation, String key, String page, Map<String, String> payload) {
         if (conversation != null && swrveConversationSDK != null) {
-            swrveConversationSDK.queueConversationEvent(getEventForConversation(conversation), eventName, page, Integer.toString(conversation.getId()), payload);
+            String eventParamName = getEventForConversation(conversation, key);
+            swrveConversationSDK.queueConversationEvent(eventParamName, key, page, conversation.getId(), payload);
         }
     }
 
@@ -30,7 +31,7 @@ public class SwrveConversationEventHelper {
         queueEvent(conversation, eventName, page, null);
     }
 
-    protected void queueEventPageAction(SwrveBaseConversation conversation, String pageKey, String fromPageTag, String actionKey, String toActionTag) {
+    protected void queueEventPageAction(SwrveBaseConversation conversation, String key, String fromPageTag, String actionKey, String toActionTag) {
         try {
             Map<String, String> payload = null;
             if ((actionKey != null) && (toActionTag != null)) {
@@ -38,14 +39,14 @@ public class SwrveConversationEventHelper {
                 payload.put(actionKey, toActionTag);
             }
 
-            queueEvent(conversation, pageKey, fromPageTag, payload);
+            queueEvent(conversation, key, fromPageTag, payload);
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e);
         }
     }
 
-    protected void queueEventPageAction(SwrveBaseConversation conversation, String pageKey, String fromPageTag) {
-        queueEventPageAction(conversation, pageKey, fromPageTag, null, null);
+    protected void queueEventPageAction(SwrveBaseConversation conversation, String key, String fromPageTag) {
+        queueEventPageAction(conversation, key, fromPageTag, null, null);
     }
 
     public void conversationPageWasViewedByUser(SwrveBaseConversation conversation, String pageTag) {
@@ -90,10 +91,9 @@ public class SwrveConversationEventHelper {
                         payload.put("result", String.valueOf(userInteraction.getResult()));
                     }
 
-                    swrveConversationSDK.queueConversationEvent(
-                            getEventForConversation(conversation),
-                            userInteraction.getType(), userInteraction.getPageTag(), userInteraction.getConversationId(),
-                            payload);
+                    String key = userInteraction.getType();
+                    String eventParamName = getEventForConversation(conversation, key);
+                    swrveConversationSDK.queueConversationEvent(eventParamName, key, userInteraction.getPageTag(), userInteraction.getConversationId(), payload);
                 }
             } else {
                 SwrveLogger.e(LOG_TAG, "The SwrveConversationSDK is null, so cannot send events.");
@@ -118,12 +118,11 @@ public class SwrveConversationEventHelper {
 
     public void conversationEncounteredError(SwrveBaseConversation conversation, String currentPageTag, Exception e) {
         try {
-            String viewEvent = getEventForConversation(conversation) + ".error";
-
+            String eventName = getEventForConversation(conversation, "error");
             if (e != null) {
-                SwrveLogger.e(LOG_TAG, "Sending error conversation event: " + viewEvent, e);
+                SwrveLogger.e(LOG_TAG, "Sending error conversation event: " + eventName, e);
             } else {
-                SwrveLogger.e(LOG_TAG, "Sending error conversations event: (No Exception) " + viewEvent);
+                SwrveLogger.e(LOG_TAG, "Sending error conversations event: (No Exception) " + eventName);
             }
 
             queueEvent(conversation, "error", currentPageTag);
