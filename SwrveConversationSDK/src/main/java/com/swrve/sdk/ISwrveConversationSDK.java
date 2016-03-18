@@ -7,5 +7,5 @@ import java.util.Map;
  */
 interface ISwrveConversationSDK {
     int CONVERSATION_VERSION = 3;
-    void queueConversationEvent(String viewEvent, String eventName, String page, String conversationId, Map<String, String> payload);
+    void queueConversationEvent(String eventParamName, String eventPayloadName, String page, int conversationId, Map<String, String> payload);
 }

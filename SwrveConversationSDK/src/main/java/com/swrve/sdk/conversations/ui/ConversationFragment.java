@@ -442,7 +442,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         String type = UserInputResult.TYPE_VIDEO_PLAY;
         UserInputResult result = new UserInputResult();
         result.type = type;
-        result.conversationId = Integer.toString(swrveConversation.getId());
+        result.conversationId = swrveConversation.getId();
         result.fragmentTag = fragmentTag;
         result.pageTag = pageTag;
         result.result = "";
@@ -455,7 +455,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         for (String k : data.keySet()) {
             UserInputResult result = new UserInputResult();
             result.type = type;
-            result.conversationId = Integer.toString(swrveConversation.getId());
+            result.conversationId = swrveConversation.getId();
             result.fragmentTag = fragmentTag;
             result.pageTag = pageTag;
             result.result = data.get(k);
@@ -468,7 +468,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         for (String k : data.keySet()) {
             UserInputResult result = new UserInputResult();
             result.type = UserInputResult.TYPE_STAR_RATING;
-            result.conversationId = Integer.toString(swrveConversation.getId());
+            result.conversationId = swrveConversation.getId();
             result.fragmentTag = contentTag;
             result.pageTag = pageTag;
             result.result = data.get(k);
