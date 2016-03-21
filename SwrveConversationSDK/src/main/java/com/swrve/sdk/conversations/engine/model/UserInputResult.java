@@ -7,7 +7,8 @@ public class UserInputResult implements Serializable{
     public static final String TYPE_VIDEO_PLAY = "play";
     public static final String TYPE_STAR_RATING = "star-rating";
 
-    public String type, conversationId,  pageTag, fragmentTag;
+    public String type, pageTag, fragmentTag;
+    public int conversationId;
     public Object result;
 
     public String getType() {
@@ -26,7 +27,7 @@ public class UserInputResult implements Serializable{
         return fragmentTag;
     }
 
-    public String getConversationId() {
+    public int getConversationId() {
         return conversationId;
     }
 
