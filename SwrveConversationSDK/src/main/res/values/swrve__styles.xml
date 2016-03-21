@@ -102,8 +102,14 @@
 
     <style name="cio__rating_bar" parent="@android:style/Widget.RatingBar">
         <item name="android:progressDrawable">@drawable/swrve__rating_bar</item>
-        <item name="android:minHeight">42dp</item>
-        <item name="android:maxHeight">42dp</item>
+        <item name="android:minHeight">50dp</item>
+        <item name="android:maxHeight">50dp</item>
+    </style>
+
+    <style name="cio__rating_bar_container">
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingLeft">20dp</item>
+        <item name="android:paddingTop">12dp</item>
     </style>
 
 </resources>
