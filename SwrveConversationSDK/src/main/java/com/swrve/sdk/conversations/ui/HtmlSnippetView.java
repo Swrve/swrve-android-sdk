@@ -1,7 +1,9 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
+import android.view.View;
 import android.webkit.WebView;
 
 import com.swrve.sdk.SwrveHelper;
@@ -34,6 +36,10 @@ public class HtmlSnippetView extends WebView implements IConversationContent {
             }
         }
         init(model);
+
+        if (Build.VERSION.SDK_INT >= 11) {
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null); // removes jankiness of html loading
+        }
     }
 
     protected void init(Content model) {

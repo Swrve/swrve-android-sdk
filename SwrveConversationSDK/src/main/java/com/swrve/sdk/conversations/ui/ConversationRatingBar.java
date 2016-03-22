@@ -6,10 +6,10 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
-import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
+import android.widget.RelativeLayout;
 
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.Content;
@@ -59,12 +59,15 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
         ratingBar.setOnRatingBarChangeListener(this);
 
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        layoutParams.gravity = Gravity.CENTER;
         ratingBar.setLayoutParams(layoutParams);
 
         setStarColor(Color.parseColor(model.getStarColor()));
 
-        addView(ratingBar);
+        RelativeLayout container = new RelativeLayout(getContext(), null, R.attr.conversationContentRatingBarContainerStyle);
+        LayoutParams containerParams = new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT);
+        container.setLayoutParams(containerParams);
+        container.addView(ratingBar);
+        addView(container);
     }
 
     private void setBackgroundDrawable(HtmlSnippetView view, Drawable drawable) {
