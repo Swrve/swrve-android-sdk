@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Used internally to provide a persistent storage of data on the device.
  */
 public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorage {
+    protected static final String LOG_TAG = "SQLite";
 
     // Database
     public static final int SWRVE_DB_VERSION = 1;
@@ -263,9 +264,27 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
 
     @Override
     public void close() {
-        dbHelper.close();
-        database.close();
-        connectionOpen.set(false);
+        if(dbHelper != null) {
+            try {
+                dbHelper.close();
+            } catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Exception occurred closing dbHelper", e);
+            }
+        }
+        if(database != null) {
+            try {
+                database.close();
+            } catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Exception occurred closing database", e);
+            }
+        }
+        if(connectionOpen != null) {
+            try {
+                connectionOpen.set(false);
+            } catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Exception occurred setting connectionOpen to false", e);
+            }
+        }
     }
 
     private static class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
