@@ -12,13 +12,10 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
-import com.swrve.sdk.SwrveLogger;
-
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.qa.SwrveQAUser;
-
-import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.Iterator;
@@ -38,7 +35,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     @Deprecated
     @Override
     public boolean onHandleIntent(Intent intent, GoogleCloudMessaging gcm) {
-        return false;
+        return onMessageReceived("", intent.getExtras());
     }
 
     @Override
@@ -71,7 +68,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         return gcmHandled;
     }
 
-    private boolean isSwrveRemoteNotification(final Bundle msg) {
+    protected boolean isSwrveRemoteNotification(final Bundle msg) {
         Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
         String msgId = (rawId != null) ? rawId.toString() : null;
         return !SwrveHelper.isNullOrEmpty(msgId);
