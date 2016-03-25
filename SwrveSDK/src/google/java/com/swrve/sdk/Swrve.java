@@ -13,6 +13,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
+import com.swrve.sdk.gcm.SwrveGcmConstants;
 import com.swrve.sdk.gcm.SwrveGcmNotification;
 
 import org.json.JSONException;
@@ -255,7 +256,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
-                Bundle msg = extras.getBundle(SwrveGcmNotification.GCM_BUNDLE);
+                Bundle msg = extras.getBundle(SwrveGcmConstants.GCM_BUNDLE);
                 if (msg != null && config.isPushEnabled()) {
                     // Obtain push id
                     Object rawId = msg.get("_p");

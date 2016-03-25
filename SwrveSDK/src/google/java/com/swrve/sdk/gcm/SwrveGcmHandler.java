@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,6 +20,9 @@ import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Date;
 import java.util.Iterator;
+
+import static com.swrve.sdk.gcm.SwrveGcmConstants.GCM_BUNDLE;
+import static com.swrve.sdk.gcm.SwrveGcmConstants.DEEPLINK_KEY;
 
 public class SwrveGcmHandler implements ISwrveGcmHandler {
 
@@ -177,10 +181,23 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     @Override
     public Intent createIntent(Bundle msg) {
         Intent intent = null;
-        if (SwrveGcmNotification.getInstance(context).activityClass != null) {
-            intent = new Intent(context, SwrveGcmNotification.getInstance(context).activityClass);
-            intent.putExtra(SwrveGcmNotification.GCM_BUNDLE, msg);
-            intent.setAction("openActivity");
+        if (msg != null && msg.containsKey(DEEPLINK_KEY)) {
+            String deeplink = msg.getString(DEEPLINK_KEY);
+            Intent intentDeeplink = SwrveHelper.convertDeeplinkToIntent(context.getPackageManager(), deeplink);
+            if(intentDeeplink == null) {
+                SwrveLogger.e(TAG, "Cannot find intent to open deeplink:" + deeplink + ". Using default from manifest.");
+            } else {
+                intentDeeplink.putExtra(GCM_BUNDLE, msg);
+                return intentDeeplink;
+            }
+        }
+        if(intent == null) { // if null, try using the default activity class configured in manifest
+            Class<?> activityClass = SwrveGcmNotification.getInstance(context).activityClass;
+            if (activityClass != null) {
+                intent = new Intent(context, activityClass);
+                intent.putExtra(GCM_BUNDLE, msg);
+                intent.setAction("openActivity");
+            }
         }
         return intent;
     }

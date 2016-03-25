@@ -15,8 +15,6 @@ public class SwrveGcmNotification {
 
     private static final String TAG = "SwrveGcm";
 
-    public static final String GCM_BUNDLE = "notification";
-
     private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
     private static final String SWRVE_PUSH_ICON_MATERIAL_METADATA = "SWRVE_PUSH_ICON_MATERIAL";
     private static final String SWRVE_PUSH_ICON_LARGE_METADATA = "SWRVE_PUSH_ICON_LARGE";
