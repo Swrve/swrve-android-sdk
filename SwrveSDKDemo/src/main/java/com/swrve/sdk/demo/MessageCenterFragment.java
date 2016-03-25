@@ -20,6 +20,8 @@ import com.swrve.sdk.ISwrveResourcesListener;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class MessageCenterFragment extends Fragment {
@@ -85,11 +87,13 @@ public class MessageCenterFragment extends Fragment {
 
         private final int itemResourceId;
         private final List<SwrveBaseCampaign> items;
+        private final SwrveBaseCampaignComparator comparator;
 
         public MessageCenterAdapter(Context context, int itemResourceId, List<SwrveBaseCampaign> items) {
             super(context, itemResourceId, items);
             this.itemResourceId = itemResourceId;
             this.items = items;
+            this.comparator = new SwrveBaseCampaignComparator();
         }
 
         @Override
@@ -156,9 +160,19 @@ public class MessageCenterFragment extends Fragment {
         }
 
         public void updateItems(List<SwrveBaseCampaign> list) {
+            // Order the list by start date
+            Collections.sort(list, comparator);
+            // Replace items with latest from the list
             items.clear();
             items.addAll(list);
             notifyDataSetChanged();
+        }
+
+        public class SwrveBaseCampaignComparator implements Comparator<SwrveBaseCampaign> {
+            @Override
+            public int compare(SwrveBaseCampaign o1, SwrveBaseCampaign o2) {
+                return o1.getStartDate().compareTo(o2.getStartDate());
+            }
         }
     }
 }
