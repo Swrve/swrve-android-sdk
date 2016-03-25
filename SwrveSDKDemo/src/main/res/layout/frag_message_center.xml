@@ -1,0 +1,6 @@
+<ListView android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent"
+    android:id="@+id/message_center_list"
+    android:paddingBottom="40dp"/>

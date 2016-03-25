@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         Adapter adapter = new Adapter(getSupportFragmentManager());
         adapter.addFragment(new ConfigContentFragment(), "Config");
         adapter.addFragment(new EventsContentFragment(), "Events");
+        adapter.addFragment(new MessageCenterFragment(), "Message Center");
         viewPager.setAdapter(adapter);
     }
 
