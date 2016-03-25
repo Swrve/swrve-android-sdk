@@ -10,7 +10,11 @@ import android.support.v4.app.NotificationCompat;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 interface ISwrveGcmHandler {
+
+    @Deprecated
     boolean onHandleIntent(Intent intent, GoogleCloudMessaging gcm);
+
+    boolean onMessageReceived(String from, Bundle data);
 
     void processNotification(Bundle msg);
 
