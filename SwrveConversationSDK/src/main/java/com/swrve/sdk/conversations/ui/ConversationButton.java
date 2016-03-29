@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -104,12 +103,11 @@ public class ConversationButton extends android.widget.Button implements IConver
         paint.setStrokeWidth(6);
 
         // Fill
-        GradientDrawable gradientDrawable = new GradientDrawable();
-        gradientDrawable.setColor(backgroundColor);
+        Drawable fillDrawable = getSolidDrawable(backgroundColor);
 
         Drawable[] drawables = new Drawable[2];
         drawables[1] = rectShapeDrawable;
-        drawables[0] = gradientDrawable;
+        drawables[0] = fillDrawable;
         return new LayerDrawable(drawables);
     }
 
