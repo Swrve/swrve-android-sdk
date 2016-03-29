@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,14 +14,15 @@ import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveIntentHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Date;
 import java.util.Iterator;
 
-import static com.swrve.sdk.gcm.SwrveGcmConstants.GCM_BUNDLE;
 import static com.swrve.sdk.gcm.SwrveGcmConstants.DEEPLINK_KEY;
+import static com.swrve.sdk.gcm.SwrveGcmConstants.GCM_BUNDLE;
 
 public class SwrveGcmHandler implements ISwrveGcmHandler {
 
@@ -183,7 +183,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         Intent intent = null;
         if (msg != null && msg.containsKey(DEEPLINK_KEY)) {
             String deeplink = msg.getString(DEEPLINK_KEY);
-            Intent intentDeeplink = SwrveHelper.convertDeeplinkToIntent(context.getPackageManager(), deeplink);
+            Intent intentDeeplink = getDeeplinkIntent(deeplink);
             if(intentDeeplink == null) {
                 SwrveLogger.e(TAG, "Cannot find intent to open deeplink:" + deeplink + ". Using default from manifest.");
             } else {
@@ -200,5 +200,9 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
             }
         }
         return intent;
+    }
+
+    protected Intent getDeeplinkIntent(String deeplink) {
+        return SwrveIntentHelper.convertDeeplinkToIntent(context.getPackageManager(), deeplink);
     }
 }

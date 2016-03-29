@@ -1,10 +1,6 @@
 package com.swrve.sdk;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.util.Base64;
 import android.util.DisplayMetrics;
@@ -27,7 +23,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -213,37 +208,5 @@ public final class SwrveHelper {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         float pixelValue = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
         return pixelValue;
-    }
-
-    public static Intent convertDeeplinkToIntent(final PackageManager packageManager, String deeplink) {
-        Intent intentDeeplink = new Intent(Intent.ACTION_VIEW);
-        intentDeeplink.setData(Uri.parse(deeplink));
-        if(SwrveHelper.canOpenIntent(packageManager, intentDeeplink)) {
-            return intentDeeplink;
-        } else {
-            return null;
-        }
-    }
-
-    private static boolean canOpenIntent(final PackageManager packageManager, Intent intent) {
-        return isIntentAvailable(packageManager, intent) || isActivityAvailable(packageManager, intent);
-    }
-
-    private static boolean isIntentAvailable(final PackageManager packageManager, Intent intent) {
-        List resolveInfo = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        if (resolveInfo.size() > 0) {
-            return true;
-        }
-        SwrveLogger.e(LOG_TAG, "SwrveHelper.isIntentAvailable is false. Intent:" + intent);
-        return false;
-    }
-
-    private static boolean isActivityAvailable(final PackageManager packageManager, Intent intent) {
-        ComponentName componentName = intent.resolveActivity(packageManager);
-        if(componentName == null) {
-            SwrveLogger.e(LOG_TAG, "SwrveHelper.isActivityAvailable is false. Intent:" + intent);
-            return false;
-        }
-        return true;
     }
 }
