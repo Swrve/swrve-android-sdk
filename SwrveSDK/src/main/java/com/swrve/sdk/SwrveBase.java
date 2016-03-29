@@ -632,7 +632,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 SwrveLogger.e(LOG_TAG, "Get device screen info failed", exp);
             }
             deviceInfo.put(SWRVE_LANGUAGE, SwrveBase.this.language);
-            String deviceRegion = Locale.getDefault().getISO3Country();
+            String deviceRegion = Locale.getDefault().getCountry();
             deviceInfo.put(SWRVE_DEVICE_REGION, deviceRegion);
             deviceInfo.put(SWRVE_SDK_VERSION, PLATFORM + SwrveBase.version);
             deviceInfo.put(SWRVE_APP_STORE, config.getAppStore());

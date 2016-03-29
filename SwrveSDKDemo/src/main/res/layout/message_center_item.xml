@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="30dp"
+    android:padding="10dp">
+
+    <ImageView
+        android:id="@+id/campaign_status_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:src="@android:drawable/presence_invisible" />
+
+    <TextView
+        android:id="@+id/campaign_subject"
+        android:text="some text"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="10dp"
+        android:textSize="10dp"
+        android:layout_toRightOf="@+id/campaign_status_icon"
+        tools:text="Campaign subject"
+        android:layout_width="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_height="wrap_content">
+    </TextView>
+
+    <Button
+        android:id="@+id/delete_button"
+        android:layout_width="100dp"
+        android:layout_alignParentRight="true"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:text="Delete"/>
+
+</RelativeLayout>
