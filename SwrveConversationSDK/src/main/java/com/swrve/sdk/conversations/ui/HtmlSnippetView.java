@@ -36,10 +36,6 @@ public class HtmlSnippetView extends WebView implements IConversationContent {
             }
         }
         init(model);
-
-        if (Build.VERSION.SDK_INT >= 11) {
-            setLayerType(View.LAYER_TYPE_SOFTWARE, null); // removes jankiness of html loading
-        }
     }
 
     protected void init(Content model) {
