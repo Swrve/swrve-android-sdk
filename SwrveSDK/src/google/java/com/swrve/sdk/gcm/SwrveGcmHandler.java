@@ -14,15 +14,11 @@ import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.SwrveIntentHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Date;
 import java.util.Iterator;
-
-import static com.swrve.sdk.gcm.SwrveGcmConstants.DEEPLINK_KEY;
-import static com.swrve.sdk.gcm.SwrveGcmConstants.GCM_BUNDLE;
 
 public class SwrveGcmHandler implements ISwrveGcmHandler {
 
@@ -181,28 +177,11 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     @Override
     public Intent createIntent(Bundle msg) {
         Intent intent = null;
-        if (msg != null && msg.containsKey(DEEPLINK_KEY)) {
-            String deeplink = msg.getString(DEEPLINK_KEY);
-            Intent intentDeeplink = getDeeplinkIntent(deeplink);
-            if(intentDeeplink == null) {
-                SwrveLogger.e(TAG, "Cannot find intent to open deeplink:" + deeplink + ". Using default from manifest.");
-            } else {
-                intentDeeplink.putExtra(GCM_BUNDLE, msg);
-                return intentDeeplink;
-            }
-        }
-        if(intent == null) { // if null, try using the default activity class configured in manifest
-            Class<?> activityClass = SwrveGcmNotification.getInstance(context).activityClass;
-            if (activityClass != null) {
-                intent = new Intent(context, activityClass);
-                intent.putExtra(GCM_BUNDLE, msg);
-                intent.setAction("openActivity");
-            }
+        if (SwrveGcmNotification.getInstance(context).activityClass != null) {
+            intent = new Intent(context, SwrveGcmNotification.getInstance(context).activityClass);
+            intent.putExtra(SwrveGcmConstants.GCM_BUNDLE, msg);
+            intent.setAction("openActivity");
         }
         return intent;
-    }
-
-    protected Intent getDeeplinkIntent(String deeplink) {
-        return SwrveIntentHelper.convertDeeplinkToIntent(context.getPackageManager(), deeplink);
     }
 }

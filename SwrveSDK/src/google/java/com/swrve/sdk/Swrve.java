@@ -14,7 +14,6 @@ import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 import com.swrve.sdk.gcm.SwrveGcmConstants;
-import com.swrve.sdk.gcm.SwrveGcmNotification;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -259,20 +258,39 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 Bundle msg = extras.getBundle(SwrveGcmConstants.GCM_BUNDLE);
                 if (msg != null && config.isPushEnabled()) {
                     // Obtain push id
-                    Object rawId = msg.get("_p");
+                    Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     // Only process once the message if possible
-                    if (!SwrveHelper.isNullOrEmpty(msgId) && (lastProcessedMessage == null || !lastProcessedMessage.equals(msgId))) {
-                        lastProcessedMessage = msgId;
-                        _event("Swrve.Messages.Push-" + msgId + ".engaged", null);
-                        // Call custom listener
-                        if (pushNotificationListener != null) {
-                            pushNotificationListener.onPushNotification(msg);
+                    if (!SwrveHelper.isNullOrEmpty(msgId)) {
+                        if (lastProcessedMessage == null || !lastProcessedMessage.equals(msgId)) {
+                            String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
+                            SwrveLogger.d(LOG_TAG, "GCM engaged, sending event:" + eventName);
+                            lastProcessedMessage = msgId;
+                            _event(eventName, null);
+                            // Call custom listener
+                            if (pushNotificationListener != null) {
+                                pushNotificationListener.onPushNotification(msg);
+                            }
+                            if(msg.containsKey(SwrveGcmConstants.DEEPLINK_KEY)) {
+                                processDeeplink(msg);
+                            }
+                        } else {
+                            SwrveLogger.d(LOG_TAG, "GCM already processed by Swrve SDK, not processing again. id:" + msgId);
                         }
                     }
                 }
             }
         }
+    }
+
+    protected void processDeeplink(Bundle msg) {
+        String uri = msg.getString(SwrveGcmConstants.DEEPLINK_KEY);
+        SwrveLogger.d(LOG_TAG, "Found GCM deeplink. Will attempt to open:" + uri);
+        // make copy of extras and remove any that have been handled
+        Bundle msgBundleCopy = new Bundle(msg);
+        msgBundleCopy.remove(SwrveGcmConstants.SWRVE_TRACKING_KEY);
+        msgBundleCopy.remove(SwrveGcmConstants.DEEPLINK_KEY);
+        SwrveIntentHelper.openDeepLink(context.get(), uri, msgBundleCopy);
     }
 
     @Override
