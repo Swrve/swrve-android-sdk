@@ -12,10 +12,9 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
-import com.swrve.sdk.SwrveLogger;
-
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Date;
@@ -33,39 +32,26 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         this.swrveGcmService = swrveGcmService;
     }
 
+    @Deprecated
     @Override
     public boolean onHandleIntent(Intent intent, GoogleCloudMessaging gcm) {
-        boolean gcmHandled = false;
-        if(intent != null) {
-            Bundle extras = intent.getExtras();
-            if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
-                // The getMessageType() intent parameter must be the intent you received in your BroadcastReceiver.
-                String messageType = gcm.getMessageType(intent);
+        return onMessageReceived("", intent.getExtras());
+    }
 
-                /*
-                 * Filter messages based on message type. Since it is likely that GCM
-                 * will be extended in the future with new message types, just ignore
-                 * any message types you're not interested in, or that you don't
-                 * recognize.
-                 */
-                if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                    SwrveLogger.e(TAG, "Send error: " + extras.toString());
-                } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                    SwrveLogger.e(TAG, "Deleted messages on server: " + extras.toString());
-                    // If it's a regular GCM message, do some work.
-                } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-                    // Process notification.
-                    gcmHandled = processRemoteNotification(extras);
-                    SwrveLogger.i(TAG, "Received notification: " + extras.toString());
-                }
-            }
+    @Override
+    public boolean onMessageReceived(String from, Bundle data) {
+        boolean gcmHandled = false;
+        if (data != null && !data.isEmpty()) {  // has effect of unparcelling Bundle
+            SwrveLogger.i(TAG, "Received GCM notification: " + data.toString());
+            gcmHandled = processRemoteNotification(data);
         }
         return gcmHandled;
     }
 
     private boolean processRemoteNotification(Bundle msg) {
+        boolean gcmHandled = false;
         if (isSwrveRemoteNotification(msg)) {
-            // Notify binded clients
+            // Notify bound clients
             Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
             Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
             String msgId = (rawId != null) ? rawId.toString() : null;
@@ -74,15 +60,15 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                 sdkListener.pushNotification(msgId, msg);
             }
 
-            // Process notification
             swrveGcmService.processNotification(msg);
-            
-            return true;
+            gcmHandled = true;
+        } else {
+            SwrveLogger.i(TAG, "GCM notification: but not processing as its missing the " + SwrveGcmConstants.SWRVE_TRACKING_KEY);
         }
-        return false;
+        return gcmHandled;
     }
 
-    private static boolean isSwrveRemoteNotification(final Bundle msg) {
+    protected boolean isSwrveRemoteNotification(final Bundle msg) {
         Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
         String msgId = (rawId != null) ? rawId.toString() : null;
         return !SwrveHelper.isNullOrEmpty(msgId);
@@ -90,11 +76,11 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     @Override
     public void processNotification(final Bundle msg) {
-        if (swrveGcmService.mustShowNotification()) {
+        boolean mustShowNotification = swrveGcmService.mustShowNotification();
+        if (mustShowNotification) {
             try {
                 // Put the message into a notification and post it.
-                final NotificationManager mNotificationManager = (NotificationManager)
-                        context.getSystemService(Context.NOTIFICATION_SERVICE);
+                final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
                 final PendingIntent contentIntent = swrveGcmService.createPendingIntent(msg);
                 if (contentIntent != null) {
@@ -104,8 +90,10 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                     }
                 }
             } catch (Exception ex) {
-                SwrveLogger.e(TAG, "Error processing push notification", ex);
+                SwrveLogger.e(TAG, "Error processing GCM push notification", ex);
             }
+        } else {
+            SwrveLogger.i(TAG, "GCM notification: not processing as mustShowNotification is false.");
         }
     }
 
@@ -138,8 +126,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                 .setSmallIcon(iconResource)
                 .setTicker(msgText)
                 .setContentTitle(notificationHelper.notificationTitle)
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(msgText))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(msgText))
                 .setContentText(msgText)
                 .setAutoCancel(true);
 
@@ -157,8 +144,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                 soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             } else {
                 String packageName = context.getApplicationContext().getPackageName();
-                soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
-                        + "://" + packageName + "/raw/" + msgSound);
+                soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + msgSound);
             }
             mBuilder.setSound(soundUri);
         }
@@ -185,7 +171,6 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         if (intent != null) {
             return PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
-
         return null;
     }
 
@@ -194,7 +179,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         Intent intent = null;
         if (SwrveGcmNotification.getInstance(context).activityClass != null) {
             intent = new Intent(context, SwrveGcmNotification.getInstance(context).activityClass);
-            intent.putExtra(SwrveGcmNotification.GCM_BUNDLE, msg);
+            intent.putExtra(SwrveGcmConstants.GCM_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;

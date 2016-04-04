@@ -25,9 +25,9 @@ import android.widget.LinearLayout.LayoutParams;
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveConversationEventHelper;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveIntentHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.R;
-import com.swrve.sdk.conversations.engine.ActionBehaviours;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlActions;
@@ -317,7 +317,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     if (actions.isCall()) {
                         sendReply(model, reply);
                         sendCallActionEvent(page.getTag(), model);
-                        ActionBehaviours.openDialer(actions.getCallUri(), activity);
+                        SwrveIntentHelper.openDialer(actions.getCallUri(), activity);
                     } else if (actions.isVisit()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
                         String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
@@ -325,14 +325,13 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                         Uri uri = Uri.parse(urlStr);
                         sendReply(model, reply);
                         sendLinkVisitActionEvent(page.getTag(), model);
-                        ActionBehaviours.openIntentWebView(uri, activity, referrer);
+                        SwrveIntentHelper.openIntentWebView(uri, activity, referrer);
                     } else if (actions.isDeepLink()) {
                         HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
                         String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
-                        Uri uri = Uri.parse(urlStr);
                         sendReply(model, reply);
                         sendDeepLinkActionEvent(page.getTag(), model);
-                        ActionBehaviours.openDeepLink(uri, activity);
+                        SwrveIntentHelper.openDeepLink(activity, urlStr);
                     }
                 } else {
                     // There are no actions associated with Button. Send a normal reply

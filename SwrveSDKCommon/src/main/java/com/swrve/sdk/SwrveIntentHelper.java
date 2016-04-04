@@ -1,14 +1,15 @@
-package com.swrve.sdk.conversations.engine;
+package com.swrve.sdk;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Browser;
-import com.swrve.sdk.SwrveLogger;
 
-public class ActionBehaviours {
+public final class SwrveIntentHelper {
+
     private static final String LOG_TAG = "SwrveSDK";
 
     public static void openDialer(Uri telUri, Activity activity) {
@@ -24,16 +25,22 @@ public class ActionBehaviours {
         activity.startActivity(visitWebpage);
     }
 
-    public static void openDeepLink(Uri uri, Activity activity){
-        String uriString = uri.toString();
+    public static void openDeepLink(Context context, String uriString){
+        openDeepLink(context, uriString, null);
+    }
+
+    public static void openDeepLink(Context context, String uriString, Bundle extras){
+        Uri uri = Uri.parse(uriString);
         Intent intent = new Intent(Intent.ACTION_VIEW).setData(uri);
+        if(extras!=null) {
+            intent.putExtras(extras);
+        }
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         try {
-            activity.startActivity(intent);
-        }catch(ActivityNotFoundException anfe){
-            SwrveLogger.e(LOG_TAG, "Could not launch activity for uri: " + uriString + ". Possibly badly formatted deep link", anfe);
-            activity.finish();
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException ex) {
+            SwrveLogger.e(LOG_TAG, "Could not launch activity for uri: " + uriString + ". Possibly badly formatted deep link", ex);
         }
     }
 }
