@@ -24,9 +24,9 @@ dependencies {
     compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
     compile 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
 
-    // In your app please include the SDK using the following dependency
-//  compile 'com.swrve.sdk.android:swrve:4.1.0' // No Google Services push
-//  compile 'com.swrve.sdk.android:swrve-google:4.1.0' // Google GCM push version
+    // In your app please include the SDK using one of the following dependencies (swrve or swrve-google)
+//  compile 'com.swrve.sdk.android:swrve:4.3.0' // No Google Services push
+//  compile 'com.swrve.sdk.android:swrve-google:4.3.0' // Google GCM push version
 
     // Use the SDK source shipped with this demo
 //  compile project(path: ':SwrveSDK', configuration: 'coreDebug') // No Google Services push
