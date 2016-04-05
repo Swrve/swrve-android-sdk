@@ -179,7 +179,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         Intent intent = null;
         if (SwrveGcmNotification.getInstance(context).activityClass != null) {
             intent = new Intent(context, SwrveGcmNotification.getInstance(context).activityClass);
-            intent.putExtra(SwrveGcmNotification.GCM_BUNDLE, msg);
+            intent.putExtra(SwrveGcmConstants.GCM_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;
