@@ -72,7 +72,7 @@ publishing {
                             dependencyNode.appendNode('scope', 'compile')
                         } else if (it.name == 'SwrveConversationSDK') {
                             dependencyNode.appendNode('groupId', 'com.swrve.sdk.android')
-                            dependencyNode.appendNode('artifactId', 'swrve-conversation-sdk')
+                            dependencyNode.appendNode('artifactId', 'swrve-conversations')
                             dependencyNode.appendNode('version', '4.3.0')
                             dependencyNode.appendNode('scope', 'compile')
                         } else {
@@ -121,7 +121,7 @@ publishing {
                             dependencyNode.appendNode('scope', 'compile')
                         } else if (it.name == 'SwrveConversationSDK') {
                             dependencyNode.appendNode('groupId', 'com.swrve.sdk.android')
-                            dependencyNode.appendNode('artifactId', 'swrve-conversation-sdk')
+                            dependencyNode.appendNode('artifactId', 'swrve-conversations')
                             dependencyNode.appendNode('version', '4.3.0')
                             dependencyNode.appendNode('scope', 'compile')
                         } else {
