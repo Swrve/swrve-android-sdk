@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.swrve.swrveunitybridge">
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true">
+
+        <service android:exported="false" android:name="com.swrve.sdk.SwrveWakefulService"/>
+        <receiver android:exported="false" android:name="com.swrve.sdk.SwrveWakefulReceiver">
+            <intent-filter>
+                <action android:name="${applicationId}.swrve.SwrveWakeful" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

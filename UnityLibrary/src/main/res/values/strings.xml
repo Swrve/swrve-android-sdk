@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Unity Library</string>
+    <string name="google_play_app_id">0123456789</string>
+    <string name="signin_other_error">Some other sign in error.</string>
+</resources>

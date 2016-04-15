@@ -1,0 +1,83 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+    buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
+
+    defaultConfig {
+        minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
+        targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
+    }
+}
+
+dependencies {
+    compile files('/Applications/Unity/PlaybackEngines/AndroidPlayer/Variations/mono/Development/Classes/classes.jar')
+}
+
+def recursiveDelete(dir) {
+    delete dir
+    println "deleting: " + dir
+    def parent = dir.getParentFile()
+    if(0 == parent.list().length) {
+        recursiveDelete(parent)
+    }
+}
+
+def deleteEmptyDirs(project) {
+    def emptyDirs = []
+
+    println "deleteEmptyDirs: " + project
+    fileTree (dir: project).visit { def fileVisitDetails ->
+        def file = fileVisitDetails.file
+        // if (file.isDirectory()) {
+        //     println "isDir: " + file
+        // }
+        if (file.isDirectory() && (file.list().length == 0)) {
+            emptyDirs << file
+        }
+    }
+
+    emptyDirs.each { dir ->
+        recursiveDelete(dir)
+    }
+}
+
+def customCopy(project, prefix) {
+    def todir = '../../../unity/public/unity3d/Assets/Plugins/Android'
+    def aarName = project + '-debug.aar'
+    def projectdir = todir + '/' + project
+    println 'deleting ' + projectdir
+    delete projectdir + '/'
+
+    def fromdir = '../../' + prefix + project
+
+    println 'copying ' + projectdir
+    println 'from ' + fromdir
+    copy {
+        from(zipTree(fromdir + '/build/outputs/aar/' + aarName))
+        into(projectdir)
+        exclude(['R.txt', 'annotations.zip', 'aapt/AndroidManifest.xml'])
+        // eachFile { println it }
+    }
+    deleteEmptyDirs(projectdir)
+
+    def bindir = projectdir + '/bin'
+    mkdir(bindir)
+    file(projectdir + '/classes.jar').renameTo(file(bindir + '/classes.jar'))
+    file(projectdir + '/AndroidManifest.xml').renameTo(file(projectdir + '/_AndroidManifest.xml'))
+    copy {
+        from('extras/project.properties')
+        into(projectdir)
+    }
+}
+
+task copyToUnity << {
+    ['SwrveLocationSDK', 'SwrveLocationSDKUnityBridge'].each { project ->
+        customCopy(project, '')
+    }
+    ['SwrveSDKCommon', 'SwrveConversationSDK', 'SwrveSDKUnityBridge',].each { project ->
+        customCopy(project, 'public/')
+    }
+}
+
+assembleDebug.finalizedBy copyToUnity
