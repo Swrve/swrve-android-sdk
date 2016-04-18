@@ -1,1 +1,1 @@
-include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDK', ':SwrveSDKDemo'
+include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDK', ':SwrveSDKDemo', ':SwrveSDKTest'
