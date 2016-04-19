@@ -3,13 +3,13 @@ package com.swrve.sdk.messaging.model;
 public class Trigger {
     private String eventName;
 
-    private Condition conditions;
+    private Conditions conditions;
 
     public String getEventName() {
         return eventName;
     }
 
-    public Condition getConditions() {
+    public Conditions getConditions() {
         return conditions;
     }
 }

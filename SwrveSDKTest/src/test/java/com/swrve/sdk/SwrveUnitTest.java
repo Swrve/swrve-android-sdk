@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.os.Build;
 
 import com.swrve.sdk.config.SwrveConfig;
+import com.swrve.sdk.messaging.model.Conditions;
 import com.swrve.sdk.messaging.model.Trigger;
 import com.swrve.sdk.messaging.model.Triggers;
 import com.swrve.sdk.test.BuildConfig;
@@ -20,8 +21,6 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -122,17 +121,30 @@ public class SwrveUnitTest {
     public void testTriggerModelWithConditions() throws Exception {
 
         String json = "{\n" +
-                "    triggers: [" +
-                "       {\n" +
-                "           \"event_name\": \"song1.played\",\n" +
-                "           \"conditions\": {\n" +
-                "               \"$and\": [{ \"artist\": \"madonna\" }, { \"song\": \"borderline\" } ]\n" +
-                "           }\n" +
-                "       }, {" +
-                "           \"event_name\": \"song2.played\",\n" +
-                "           \"conditions\": {}" +
-                "       }" +
-                "   ]" +
+                "   \"triggers\": [\n" +
+                "      {\n" +
+                "         \"event_name\": \"song1.played\",\n" +
+                "         \"conditions\": {\n" +
+                "            \"args\": [\n" +
+                "               {\n" +
+                "                  \"key\": \"artist\",\n" +
+                "                  \"op\": \"eq\",\n" +
+                "                  \"value\": \"madonna\"\n" +
+                "               },\n" +
+                "               {\n" +
+                "                  \"key\": \"artist\",\n" +
+                "                  \"op\": \"eq\",\n" +
+                "                  \"value\": \"queen\"\n" +
+                "               }\n" +
+                "            ],\n" +
+                "            \"op\": \"and\"\n" +
+                "         }\n" +
+                "      },\n" +
+                "      {\n" +
+                "         \"event_name\": \"song2.played\",\n" +
+                "         \"conditions\": {}\n" +
+                "      }\n" +
+                "   ]\n" +
                 "}";
 
         Triggers triggers = Triggers.fromJson(json);
@@ -143,14 +155,21 @@ public class SwrveUnitTest {
         Trigger trigger1 = triggers.getTriggers().get(0);
         assertEquals("song1.played", trigger1.getEventName());
         assertNotNull(trigger1.getConditions());
-        List<Map<String, String>> ands = trigger1.getConditions().getAnd();
-        assertEquals("madonna", ands.get(0).get("artist"));
-        assertEquals("borderline", ands.get(1).get("song"));
+        Conditions conditions = trigger1.getConditions();
+        assertEquals("and", conditions.getOp());
+        assertEquals(2, conditions.getArgs().size());
+        assertEquals("artist", conditions.getArgs().get(0).getKey());
+        assertEquals("eq", conditions.getArgs().get(0).getOp());
+        assertEquals("madonna", conditions.getArgs().get(0).getValue());
+        assertEquals("artist", conditions.getArgs().get(1).getKey());
+        assertEquals("eq", conditions.getArgs().get(1).getOp());
+        assertEquals("queen", conditions.getArgs().get(1).getValue());
 
         Trigger trigger2 = triggers.getTriggers().get(1);
         assertEquals("song2.played", trigger2.getEventName());
         assertNotNull(trigger2.getConditions());
-        assertNull(trigger2.getConditions().getAnd());
+        assertNull(trigger2.getConditions().getArgs());
+        assertNull(trigger2.getConditions().getOp());
     }
 
 }
