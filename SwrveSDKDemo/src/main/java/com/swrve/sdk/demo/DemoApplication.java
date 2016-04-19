@@ -12,10 +12,6 @@ public class DemoApplication extends Application {
 
     private static final String LOG_TAG = "SwrveDemo";
 
-    public static final String YOUR_SENDER_ID = "";
-    public static final String YOUR_API_KEY = "s";
-    public static final int YOUR_APP_ID = 1;
-
     @Override
     public void onCreate() {
         super.onCreate();
