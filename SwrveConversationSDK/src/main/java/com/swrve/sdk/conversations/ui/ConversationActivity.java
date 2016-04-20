@@ -33,7 +33,6 @@ public class ConversationActivity extends FragmentActivity {
             if (localConversation != null) {
                 conversationFragment = ConversationFragment.create(localConversation);
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
-                setOrientation();
             } else {
                 SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
                 this.finish();
@@ -79,13 +78,6 @@ public class ConversationActivity extends FragmentActivity {
         }
         if (allowBackPress) {
             super.onBackPressed();
-        }
-    }
-
-    private void setOrientation() {
-        boolean isShortestWidthLessThan600 = !getResources().getBoolean(R.bool.swrve__is_sw600);
-        if(isShortestWidthLessThan600) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         }
     }
 }

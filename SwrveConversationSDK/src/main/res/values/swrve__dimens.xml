@@ -3,7 +3,4 @@
     <dimen name="swrve__control_tray_top_margin">0dp</dimen>
     <dimen name="swrve__content_tray_bottom_margin">10dp</dimen>
     <dimen name="swrve__control_tray_item_margin">5dp</dimen>
-    <item name="swrve__custom_match_parent" type="dimen">-1</item>
-    <dimen name="swrve__conversation_fragment_width">@dimen/swrve__custom_match_parent</dimen>
-    <dimen name="swrve__conversation_fragment_height">@dimen/swrve__custom_match_parent</dimen>
 </resources>

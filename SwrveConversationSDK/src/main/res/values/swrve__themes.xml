@@ -6,12 +6,9 @@
     </style>
 
     <style name="Theme.Conversations" parent="Theme.BaseConversations">
-        <item name="conversationControlTrayStyle">@style/cio__button_tray</item>
-        <item name="conversationControlTrayTopMargin">@dimen/swrve__control_tray_top_margin</item>
         <item name="conversationControlLayoutMargin">@dimen/swrve__control_tray_item_margin</item>
         <item name="conversationControlButtonStyle">@style/cio__control_button</item>
         <item name="conversationContentStyle">@style/cio__conversation_content_box</item>
-        <item name="conversationContentTrayBottomMargin">@dimen/swrve__content_tray_bottom_margin</item>
         <item name="conversationContentDescriptionStyle">@style/cio__description_item</item>
         <item name="conversationInputTextBoxDefaultStyle">@style/cio__edit_box</item>
         <item name="conversationTextContentDefaultStyle">@style/cio__content_textview</item>

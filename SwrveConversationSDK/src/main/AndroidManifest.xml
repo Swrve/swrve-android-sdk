@@ -11,12 +11,11 @@
     <!-- Required for assets caching -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <application >
+    <application>
         <activity
             android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Conversations">
         </activity>
-
     </application>
 </manifest>
