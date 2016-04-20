@@ -33,6 +33,7 @@ import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveCampaignRulesManager;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -86,7 +87,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Internal base class implementation of the Swrve SDK.
  */
-abstract class SwrveImp<T, C extends SwrveConfigBase> {
+abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager {
     protected static final String PLATFORM = "Android ";
     protected static String version = "4.4";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
@@ -127,7 +128,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
-    protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
+    public static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
     protected static final String LOG_TAG = "SwrveSDK";
     protected static final List<String> SUPPORTED_REQUIREMENTS = Arrays.asList("android");
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 150;
@@ -171,6 +172,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
     protected List<SwrveBaseCampaign> campaigns;
+    protected SwrveCampaignRulesManager campaignRulesManager;
     protected Map<Integer, SwrveCampaignState> campaignsState;
     protected Set<String> assetsOnDisk;
     protected boolean assetsCurrentlyDownloading;
@@ -186,10 +188,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected boolean initialised = false;
     protected boolean mustCleanInstance;
     protected Date initialisedTime;
-    protected Date showMessagesAfterLaunch;
-    protected Date showMessagesAfterDelay;
-    protected long messagesLeftToShow;
-    protected int minDelayBetweenMessage;
     protected File cacheDir;
     protected int deviceWidth;
     protected int deviceHeight;
@@ -626,23 +624,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         ActivityCompat.requestPermissions(activity, permissions, 0);
     }
 
+    @Override
     public Date getNow() {
         return new Date();
-    }
-
-    protected boolean hasShowTooManyMessagesAlready() {
-        return (messagesLeftToShow <= 0);
-    }
-
-    protected boolean isTooSoonToShowMessageAfterLaunch(Date now) {
-        return now.before(showMessagesAfterLaunch);
-    }
-
-    protected boolean isTooSoonToShowMessageAfterDelay(Date now) {
-        if (showMessagesAfterDelay == null) {
-            return false;
-        }
-        return now.before(showMessagesAfterDelay);
     }
 
     protected void saveCampaignsInCache(final JSONObject campaignContent) {
@@ -686,7 +670,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
         for (final SwrveBaseCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-            if (campaign.hasElementForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+            boolean canTrigger = campaignRulesManager.canTrigger(campaign, SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+            if (canTrigger) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
@@ -805,12 +790,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             int minDelay = (rules.has("min_delay_between_messages")) ? rules.getInt("min_delay_between_messages") : DEFAULT_MIN_DELAY;
 
             Date now = getNow();
-            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
-            this.minDelayBetweenMessage = minDelay;
-            this.messagesLeftToShow = maxShows;
+            Date showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
+            campaignRulesManager.setShowMessagesAfterLaunch(showMessagesAfterLaunch);
+            campaignRulesManager.setMinDelayBetweenMessage(minDelay);
+            campaignRulesManager.setMessagesLeftToShow(maxShows);
 
             SwrveLogger.i(LOG_TAG, "App rules OK: Delay Seconds: " + delay + " Max shows: " + maxShows);
-            SwrveLogger.i(LOG_TAG, "Time is " + now.toString() + " show messages after " + this.showMessagesAfterLaunch.toString());
+            SwrveLogger.i(LOG_TAG, "Time is " + now.toString() + " show messages after " + showMessagesAfterLaunch.toString());
 
             Map<Integer, String> campaignsDownloaded = null;
 
@@ -965,11 +951,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected SwrveCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
+        return new SwrveCampaign(this, campaignRulesManager, campaignData, assetsQueue);
     }
 
     protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
+        return new SwrveConversationCampaign(this, campaignRulesManager, campaignData, assetsQueue);
     }
 
     @RequiresPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -1225,6 +1211,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      */
     protected void initCampaigns() {
         campaigns = new ArrayList<SwrveBaseCampaign>();
+        campaignRulesManager = new SwrveCampaignRulesManager(qaUser);
         campaignsState = new HashMap<Integer, SwrveCampaignState>();
 
         try {
@@ -1354,6 +1341,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         }, 0l, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
     }
 
+    @Override
     public Set<String> getAssetsOnDisk() {
         synchronized (assetsOnDisk) {
             return this.assetsOnDisk;

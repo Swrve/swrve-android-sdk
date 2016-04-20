@@ -194,12 +194,12 @@ public class SwrveInnerMessageView extends RelativeLayout {
                         @Override
                         public void onClick(View buttonView) {
                             try {
-                                message.getMessageController().buttonWasPressedByUser(button);
+                                message.getCampaignManager().buttonWasPressedByUser(button);
                                 message.getCampaign().messageDismissed();
                                 dismiss();
 
                                 if (button.getActionType() == SwrveActionType.Install) {
-                                    final String appInstallLink = message.getMessageController().getAppStoreURLForApp(button.getAppId());
+                                    final String appInstallLink = message.getCampaignManager().getAppStoreURLForApp(button.getAppId());
                                     // in case the install link was not set correctly log issue and return early
                                     // without calling the install button listener not starting the install intent
                                     if (SwrveHelper.isNullOrEmpty(appInstallLink)) {

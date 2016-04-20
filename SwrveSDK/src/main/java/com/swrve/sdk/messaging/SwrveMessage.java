@@ -1,9 +1,8 @@
 package com.swrve.sdk.messaging;
 
-import com.swrve.sdk.SwrveLogger;
-
-import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,8 +20,7 @@ import java.util.Set;
 public class SwrveMessage {
     protected static final String LOG_TAG = "SwrveSDK";
 
-    // Swrve SDK reference
-    protected SwrveBase<?, ?> messageController;
+    protected ISwrveCampaignManager campaignManager;
     // Identifies the message in a campaign
     protected int id;
     // Name of the message
@@ -36,25 +34,25 @@ public class SwrveMessage {
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveMessage(SwrveBase<?, ?> messageController, SwrveCampaign campaign) {
+    public SwrveMessage(SwrveCampaign campaign, ISwrveCampaignManager campaignManager) {
         this.campaign = campaign;
         this.formats = new ArrayList<SwrveMessageFormat>();
-        this.messageController = messageController;
-        if (messageController != null) {
-            setCacheDir(messageController.getCacheDir());
+        this.campaignManager = campaignManager;
+        if (campaignManager != null) {
+            setCacheDir(campaignManager.getCacheDir());
         }
     }
 
     /**
      * Load message from JSON data.
      *
-     * @param controller  SwrveTalk object that will manage the data from the campaign.
      * @param campaign    Related campaign.
      * @param messageData JSON data containing the message details.
+     * @param campaignManager
      * @throws JSONException
      */
-    public SwrveMessage(SwrveBase<?, ?> controller, SwrveCampaign campaign, JSONObject messageData) throws JSONException {
-        this(controller, campaign);
+    public SwrveMessage(SwrveCampaign campaign, JSONObject messageData, ISwrveCampaignManager campaignManager) throws JSONException {
+        this(campaign, campaignManager);
         setId(messageData.getInt("id"));
         setName(messageData.getString("name"));
 
@@ -67,7 +65,7 @@ public class SwrveMessage {
 
         for (int i = 0, j = jsonFormats.length(); i < j; i++) {
             JSONObject messageFormatData = jsonFormats.getJSONObject(i);
-            SwrveMessageFormat messageFormat = createMessageFormat(controller, this, messageFormatData);
+            SwrveMessageFormat messageFormat = createMessageFormat(this, messageFormatData);
             getFormats().add(messageFormat);
         }
     }
@@ -138,15 +136,13 @@ public class SwrveMessage {
         this.campaign = campaign;
     }
 
-    protected SwrveMessageFormat createMessageFormat(SwrveBase<?, ?> controller, SwrveMessage swrveMessage, JSONObject messageFormatData) throws JSONException {
-        return new SwrveMessageFormat(controller, swrveMessage, messageFormatData);
+    private SwrveMessageFormat createMessageFormat(SwrveMessage swrveMessage, JSONObject messageFormatData) throws JSONException {
+        int defaultBackgroundColor = campaignManager.getConfig().getDefaultBackgroundColor();
+        return new SwrveMessageFormat(swrveMessage, messageFormatData, defaultBackgroundColor);
     }
 
-    /**
-     * @return the SwrveTalk instance that manages the message.
-     */
-    public SwrveBase<?, ?> getMessageController() {
-        return messageController;
+    public ISwrveCampaignManager getCampaignManager() {
+        return campaignManager;
     }
 
     /**
@@ -185,7 +181,7 @@ public class SwrveMessage {
     }
 
     protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = messageController.getAssetsOnDisk();
+        Set<String> assetsOnDisk = campaignManager.getAssetsOnDisk();
         return SwrveHelper.isNullOrEmpty(asset) || assetsOnDisk.contains(asset);
     }
 

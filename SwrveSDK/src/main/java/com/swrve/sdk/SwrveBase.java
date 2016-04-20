@@ -824,31 +824,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return getMessageForEvent(event, SwrveOrientation.Both);
     }
 
-    private boolean checkCampaignRules(int elementCount, String elementName, String event, Date now) {
-        if (elementCount == 0) {
-            noMessagesWereShown(event, "No " + elementName + "s available");
-            return false;
-        }
-
-        if (!event.equalsIgnoreCase(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(now)) {
-            noMessagesWereShown(event, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch));
-            return false;
-        }
-
-        if (isTooSoonToShowMessageAfterDelay(now)) {
-            noMessagesWereShown(event, "{App throttle limit} Too soon after last " + elementName + ". Wait until " + timestampFormat.format(showMessagesAfterDelay));
-            return false;
-        }
-
-        if (hasShowTooManyMessagesAlready()) {
-            noMessagesWereShown(event, "{App Throttle limit} Too many " + elementName + "s shown");
-            return false;
-        }
-
-        return true;
-    }
-
-
     @SuppressLint("UseSparseArrays")
     protected SwrveConversation _getConversationForEvent(String event) {
         SwrveConversation result = null;
@@ -859,7 +834,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<Integer, Integer> campaignMessages = null;
 
         if (campaigns != null) {
-            if (!checkCampaignRules(campaigns.size(), "conversation", event, now)) {
+            if (!campaignRulesManager.checkCampaignRules(campaigns.size(), "conversation", event, now)) {
                 return null;
             }
             if (qaUser != null) {
@@ -930,7 +905,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<Integer, Integer> campaignMessages = null;
 
         if (campaigns != null) {
-            if (!checkCampaignRules(campaigns.size(), "message", event, now)) {
+            if (!campaignRulesManager.checkCampaignRules(campaigns.size(), "message", event, now)) {
                 return null;
             }
             if (qaUser != null) {
@@ -1052,19 +1027,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    /**
-     * Ensures a new message cannot be shown until now + minDelayBetweenMessage
-     */
-    public void setMessageMinDelayThrottle()
-    {
-        Date now = getNow();
-        this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
-    }
-
     protected void _messageWasShownToUser(SwrveMessageFormat messageFormat) {
         if (messageFormat != null) {
-            setMessageMinDelayThrottle();
-            this.messagesLeftToShow = this.messagesLeftToShow - 1;
+            campaignRulesManager.setMessageMinDelayThrottle(getNow());
+            campaignRulesManager.decrementMessagesLeftToShow();
 
             // Update next for round robin
             SwrveMessage message = messageFormat.getMessage();

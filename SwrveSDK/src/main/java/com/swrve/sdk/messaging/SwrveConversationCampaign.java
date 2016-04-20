@@ -1,8 +1,7 @@
 package com.swrve.sdk.messaging;
 
+import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.SwrveLogger;
-
-import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
@@ -20,23 +19,18 @@ import java.util.Set;
  * Swrve campaign containing a conversation targeted to the current device and user id.
  */
 public class SwrveConversationCampaign extends SwrveBaseCampaign implements Serializable {
-    // List of conversations contained in the campaign
+
     protected SwrveConversation conversation;
 
     /**
      * Load a campaign from JSON data.
-     *
-     * @param controller   SwrveTalk object that will manage the data from the campaign.
-     * @param campaignData JSON data containing the campaign details.
-     * @param assetsQueue  Set where to save the resources to be loaded
-     * @throws org.json.JSONException
      */
-    public SwrveConversationCampaign(SwrveBase<?, ?> controller, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        super(controller, campaignData);
+    public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignRulesManager rulesManager, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        super(campaignManager, rulesManager, campaignData);
 
         if(campaignData.has("conversation")) {
             JSONObject conversationData = campaignData.getJSONObject("conversation");
-            this.conversation = createConversation(controller, this, conversationData);
+            this.conversation = createConversation(this, conversationData, campaignManager);
 
             // Add assets to queue
             for (ConversationPage conversationPage : conversation.getPages()) {
@@ -50,9 +44,6 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         }
     }
 
-    /**
-     * @return the campaign conversations.
-     */
     public SwrveConversation getConversation() {
         return conversation;
     }
@@ -70,11 +61,11 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * @param event           trigger event
      * @param now             device time
      * @param campaignReasons will contain the reason the campaign returned no message
-     * @return SwrveConversation message setup to the given trigger or null
-     * otherwise.
+     * @return SwrveConversation message setup to the given trigger or null otherwise.
      */
     public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
-        if (checkCampaignLimits(event, now, campaignReasons, 1, "conversation") && conversation != null && conversation.areAssetsReady()) {
+        boolean canShowCampaign = rulesManager.shouldShowCampaign(this, event, now, campaignReasons, 1) && conversation != null && conversation.areAssetsReady();
+        if (canShowCampaign) {
             SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
             return this.conversation;
         }
@@ -82,8 +73,8 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         return null;
     }
 
-    protected SwrveConversation createConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign swrveCampaign, JSONObject conversationData) throws JSONException {
-        return new SwrveConversation(controller, swrveCampaign, conversationData);
+    protected SwrveConversation createConversation(SwrveConversationCampaign swrveCampaign, JSONObject conversationData, ISwrveCampaignManager campaignManager) throws JSONException {
+        return new SwrveConversation(swrveCampaign, conversationData, campaignManager);
     }
 
     @Override
