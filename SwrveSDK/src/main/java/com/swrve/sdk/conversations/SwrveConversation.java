@@ -20,7 +20,6 @@ import java.util.Set;
 
 public class SwrveConversation extends SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
-    private ISwrveCampaignManager campaignManager;
     protected transient SwrveConversationCampaign campaign; // Parent in-app campaign
 
     /**
@@ -34,7 +33,6 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
     public SwrveConversation(SwrveConversationCampaign campaign, JSONObject conversationData, ISwrveCampaignManager campaignManager) throws JSONException {
         super(conversationData, campaignManager.getCacheDir());
         this.campaign = campaign;
-        this.campaignManager = campaignManager;
 
         try {
             setId(conversationData.getInt("id"));
@@ -58,21 +56,20 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
         setPages(pages);
     }
 
-    protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = campaignManager.getAssetsOnDisk();
+    protected boolean assetInCache(Set<String> assetsOnDisk, String asset) {
         return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
     }
 
     /**
      * @return has the conversation been downloaded fully yet
      */
-    public boolean areAssetsReady() {
+    public boolean areAssetsReady(Set<String> assetsOnDisk) {
         if (this.pages != null) {
             for (ConversationPage conversationPage : pages) {
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
                     if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
                         Content modelContent = (Content) conversationAtom;
-                        if (!this.assetInCache(modelContent.getValue())) {
+                        if (!this.assetInCache(assetsOnDisk, modelContent.getValue())) {
                             SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
                             return false;
                         }

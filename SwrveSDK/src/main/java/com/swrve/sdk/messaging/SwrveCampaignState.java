@@ -37,7 +37,7 @@ public class SwrveCampaignState {
     }
 
     // Number of impressions of this campaign. Used to disable the campaign if it reaches total impressions
-    protected int impressions;
+    public int impressions;
 
     // MessageCenter status of the campaign
     protected Status status;
@@ -47,7 +47,7 @@ public class SwrveCampaignState {
 
     // Time we can show the next message
     // Will be based on time previous message was shown + minDelayBetweenMessage
-    protected Date showMessagesAfterDelay;
+    public Date showMessagesAfterDelay;
 
     public SwrveCampaignState() {
         impressions = 0;

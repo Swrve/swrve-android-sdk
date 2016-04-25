@@ -1,18 +1,17 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.messaging.model.Trigger;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 /*
@@ -27,19 +26,18 @@ public abstract class SwrveBaseCampaign {
     protected static int DEFAULT_MIN_DELAY_BETWEEN_MSGS = 60;
 
     protected ISwrveCampaignManager campaignManager;
-    protected SwrveCampaignRulesManager rulesManager;
+    protected SwrveCampaignDisplayer campaignDisplayer;
     protected int id;
     protected SwrveCampaignState saveableState; // The state of the campaign that will be kept saved by the SDK
     protected Date startDate;
     protected Date endDate;
-    protected Set<String> triggers;
+    protected List<Trigger> triggers;
     protected boolean messageCenter;
     protected String subject; // MessageCenter subject of the campaign
     protected boolean randomOrder; // Indicates if the campaign serves messages randomly or using round robin
     protected int maxImpressions;
     protected int minDelayBetweenMessage;
     protected Date showMessagesAfterLaunch; // Time we can show the first message after launch
-    protected int delayFirstMessage; // Amount of seconds to wait for the first message
 
     /**
      * Parse a campaign from JSON data.
@@ -48,9 +46,9 @@ public abstract class SwrveBaseCampaign {
      * @param campaignData JSON data containing the campaign details.
      * @throws org.json.JSONException
      */
-    public SwrveBaseCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignRulesManager rulesManager, JSONObject campaignData) throws JSONException {
+    public SwrveBaseCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData) throws JSONException {
         this.campaignManager = campaignManager;
-        this.rulesManager = rulesManager;
+        this.campaignDisplayer = campaignDisplayer;
 
         this.id = campaignData.getInt("id");
         SwrveLogger.i(LOG_TAG, "Parsing campaign " + id);
@@ -65,12 +63,8 @@ public abstract class SwrveBaseCampaign {
         this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(campaignManager.getInitialisedTime(), DEFAULT_DELAY_FIRST_MESSAGE, Calendar.SECOND);
 
         // Parse campaign triggers
-        this.triggers = new HashSet<String>();
-        JSONArray jsonTriggers = campaignData.getJSONArray("triggers");
-        for (int i = 0, j = jsonTriggers.length(); i < j; i++) {
-            String trigger = jsonTriggers.getString(i);
-            triggers.add(trigger.toLowerCase(Locale.US));
-        }
+        String triggersJson = campaignData.getString("triggers");
+        triggers = Trigger.fromJson(triggersJson);
 
         // Parse campaign rules
         JSONObject rules = campaignData.getJSONObject("rules");
@@ -80,9 +74,8 @@ public abstract class SwrveBaseCampaign {
             this.maxImpressions = totalImpressions;
         }
         if (rules.has("delay_first_message")) {
-            int delay = rules.getInt("delay_first_message");
-            this.delayFirstMessage = delay;
-            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(campaignManager.getInitialisedTime(), this.delayFirstMessage, Calendar.SECOND);
+            int delayFirstMessage = rules.getInt("delay_first_message");
+            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(campaignManager.getInitialisedTime(), delayFirstMessage, Calendar.SECOND);
         }
         if (rules.has("min_delay_between_messages")) {
             this.minDelayBetweenMessage = rules.getInt("min_delay_between_messages");
@@ -120,7 +113,7 @@ public abstract class SwrveBaseCampaign {
      * @return true if the campaign is active at the given time.
      */
     public boolean isActive(Date date) {
-        return rulesManager.isCampaignActive(this, date, null);
+        return campaignDisplayer.isCampaignActive(this, date, null);
     }
 
     /**
@@ -131,9 +124,9 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
-     * @return the set of triggers for this campaign.
+     * @return the triggers for this campaign.
      */
-    public Set<String> getTriggers() {
+    public List<Trigger> getTriggers() {
         return triggers;
     }
 
@@ -177,22 +170,6 @@ public abstract class SwrveBaseCampaign {
         return endDate;
     }
 
-    protected void logAndAddReason(Map<Integer, String> campaignReasons, String reason) {
-        if (campaignReasons != null) {
-            campaignReasons.put(id, reason);
-        }
-        SwrveLogger.i(LOG_TAG, reason);
-    }
-
-    /**
-     * Amount of seconds to wait for first message.
-     *
-     * @return time in seconds
-     */
-    public int getDelayFirstMessage() {
-        return delayFirstMessage;
-    }
-
     /**
      * Increment impressions by one.
      */
@@ -205,7 +182,7 @@ public abstract class SwrveBaseCampaign {
      */
     protected void setMessageMinDelayThrottle() {
         this.saveableState.showMessagesAfterDelay = SwrveHelper.addTimeInterval(campaignManager.getNow(), this.minDelayBetweenMessage, Calendar.SECOND);
-        rulesManager.setMessageMinDelayThrottle(campaignManager.getNow());
+        campaignDisplayer.setMessageMinDelayThrottle(campaignManager.getNow());
     }
 
     /**
@@ -239,9 +216,10 @@ public abstract class SwrveBaseCampaign {
 
     /**
      * Determine if the assets for this campaign have been downloaded.
+     * @param assetsOnDisk All assets that are already downloaded.
      * @return if the assets are ready
      */
-    public abstract boolean areAssetsReady();
+    public abstract boolean areAssetsReady(Set<String> assetsOnDisk);
 
     /**
      * Obtain the serializable state of the campaign.
@@ -257,5 +235,9 @@ public abstract class SwrveBaseCampaign {
      */
     public void setSaveableState(SwrveCampaignState saveableState) {
         this.saveableState = saveableState;
+    }
+
+    public Date getShowMessagesAfterLaunch() {
+        return showMessagesAfterLaunch;
     }
 }

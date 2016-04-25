@@ -180,15 +180,14 @@ public class SwrveMessage {
         return (getFormat(orientation) != null);
     }
 
-    protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = campaignManager.getAssetsOnDisk();
+    protected boolean assetInCache(Set<String> assetsOnDisk, String asset) {
         return SwrveHelper.isNullOrEmpty(asset) || assetsOnDisk.contains(asset);
     }
 
     /**
      * @return true if all assets for this message have been downloaded.
      */
-    public boolean areAssetsReady() {
+    public boolean areAssetsReady(Set<String> assetsOnDisk) {
         if (this.formats != null) {
             Iterator<SwrveMessageFormat> itFormats = formats.iterator();
             while (itFormats.hasNext()) {
@@ -197,7 +196,7 @@ public class SwrveMessage {
                 Iterator<SwrveButton> itButtons = format.buttons.iterator();
                 while (itButtons.hasNext()) {
                     String buttonAsset = itButtons.next().getImage();
-                    if (!this.assetInCache(buttonAsset)) {
+                    if (!this.assetInCache(assetsOnDisk, buttonAsset)) {
                         SwrveLogger.i(LOG_TAG, "Button asset not yet downloaded: " + buttonAsset);
                         return false;
                     }
@@ -206,7 +205,7 @@ public class SwrveMessage {
                 Iterator<SwrveImage> itImages = format.images.iterator();
                 while (itImages.hasNext()) {
                     String imageAsset = itImages.next().getFile();
-                    if (!this.assetInCache(imageAsset)) {
+                    if (!this.assetInCache(assetsOnDisk, imageAsset)) {
                         SwrveLogger.i(LOG_TAG, "Image asset not yet downloaded: " + imageAsset);
                         return false;
                     }

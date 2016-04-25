@@ -33,7 +33,6 @@ import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaign;
-import com.swrve.sdk.messaging.SwrveCampaignRulesManager;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -94,8 +93,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected static final String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
     protected static final String CAMPAIGNS_STATE_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
-    protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
-    protected static final String TEMPLATE_VERSION = "1";
+    protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
+    protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -172,7 +171,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
     protected List<SwrveBaseCampaign> campaigns;
-    protected SwrveCampaignRulesManager campaignRulesManager;
+    protected SwrveCampaignDisplayer campaignDisplayer;
     protected Map<Integer, SwrveCampaignState> campaignsState;
     protected Set<String> assetsOnDisk;
     protected boolean assetsCurrentlyDownloading;
@@ -501,7 +500,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         try {
             storageExecutorExecute(new QueueEventRunnable(eventType, parameters, payload));
             if (triggerEventListener && eventListener != null) {
-                eventListener.onEvent(EventHelper.getEventName(eventType, parameters));
+                eventListener.onEvent(EventHelper.getEventName(eventType, parameters), payload);
             }
         } catch (Exception exp) {
             SwrveLogger.e(LOG_TAG, "Unable to queue event", exp);
@@ -670,7 +669,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
         for (final SwrveBaseCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-            boolean canTrigger = campaignRulesManager.canTrigger(campaign, SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+            Map<String, String> emptyPayload = new HashMap<String, String>();
+            boolean canTrigger = campaignDisplayer.canTrigger(campaign, SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, emptyPayload, null);
             if (canTrigger) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
@@ -708,7 +708,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected void autoShowConversation(SwrveBase<T, C> swrve) {
         try {
             if (conversationListener != null && autoShowMessagesEnabled) {
-                SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+                SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, new HashMap<String, String>());
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
                     autoShowMessagesEnabled = false;
@@ -755,8 +755,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
             // Version check
             String version = json.getString("version");
-            if (!version.equals(TEMPLATE_VERSION)) {
-                SwrveLogger.i(LOG_TAG, "Campaign JSON has the wrong version. No campaigns loaded.");
+            if (!version.equals(CAMPAIGN_RESPONSE_VERSION)) {
+                SwrveLogger.i(LOG_TAG, "Campaign JSON (" + version + ") has the wrong version for this sdk (" + CAMPAIGN_RESPONSE_VERSION + "). No campaigns loaded." );
                 return;
             }
 
@@ -791,9 +791,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
             Date now = getNow();
             Date showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
-            campaignRulesManager.setShowMessagesAfterLaunch(showMessagesAfterLaunch);
-            campaignRulesManager.setMinDelayBetweenMessage(minDelay);
-            campaignRulesManager.setMessagesLeftToShow(maxShows);
+            campaignDisplayer.setShowMessagesAfterLaunch(showMessagesAfterLaunch);
+            campaignDisplayer.setMinDelayBetweenMessage(minDelay);
+            campaignDisplayer.setMessagesLeftToShow(maxShows);
 
             SwrveLogger.i(LOG_TAG, "App rules OK: Delay Seconds: " + delay + " Max shows: " + maxShows);
             SwrveLogger.i(LOG_TAG, "Time is " + now.toString() + " show messages after " + showMessagesAfterLaunch.toString());
@@ -951,11 +951,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     protected SwrveCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveCampaign(this, campaignRulesManager, campaignData, assetsQueue);
+        return new SwrveCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
     protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveConversationCampaign(this, campaignRulesManager, campaignData, assetsQueue);
+        return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
     @RequiresPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -1211,7 +1211,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
      */
     protected void initCampaigns() {
         campaigns = new ArrayList<SwrveBaseCampaign>();
-        campaignRulesManager = new SwrveCampaignRulesManager(qaUser);
+        campaignDisplayer = new SwrveCampaignDisplayer(qaUser);
         campaignsState = new HashMap<Integer, SwrveCampaignState>();
 
         try {

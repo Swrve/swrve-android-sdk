@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.Content;
@@ -25,8 +26,8 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     /**
      * Load a campaign from JSON data.
      */
-    public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignRulesManager rulesManager, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        super(campaignManager, rulesManager, campaignData);
+    public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        super(campaignManager, campaignDisplayer, campaignData);
 
         if(campaignData.has("conversation")) {
             JSONObject conversationData = campaignData.getJSONObject("conversation");
@@ -59,12 +60,14 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * the given event is not contained in the trigger set.
      *
      * @param event           trigger event
+     * @param payload         payload to compare conditions against
      * @param now             device time
-     * @param campaignReasons will contain the reason the campaign returned no message
+     * @param campaignDisplayResult will contain the reason the campaign returned no message
      * @return SwrveConversation message setup to the given trigger or null otherwise.
      */
-    public SwrveConversation getConversationForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
-        boolean canShowCampaign = rulesManager.shouldShowCampaign(this, event, now, campaignReasons, 1) && conversation != null && conversation.areAssetsReady();
+    public SwrveConversation getConversationForEvent(String event, Map<String, String> payload, Date now, Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResult) {
+        boolean shouldShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, campaignDisplayResult, 1);
+        boolean canShowCampaign = shouldShowCampaign && conversation != null && conversation.areAssetsReady(campaignManager.getAssetsOnDisk());
         if (canShowCampaign) {
             SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
             return this.conversation;
@@ -82,7 +85,8 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         return true;
     }
 
-    public boolean areAssetsReady() {
-        return conversation.areAssetsReady();
+    @Override
+    public boolean areAssetsReady(Set<String> assetsOnDisk) {
+        return conversation.areAssetsReady(assetsOnDisk);
     }
 }

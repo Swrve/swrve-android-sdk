@@ -1,6 +1,8 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.SwrveCampaignDisplayer;
+import com.swrve.sdk.SwrveCampaignDisplayer.Result;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 
@@ -16,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.swrve.sdk.SwrveCampaignDisplayer.RULE_RESULT_CAMPAIGN_NOT_DOWNLOADED;
+
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
  */
@@ -27,13 +31,13 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      * Load a campaign from JSON data.
      *
      * @param campaignManager
-     * @param rulesManager
+     * @param campaignDisplayer
      * @param campaignData JSON data containing the campaign details.
      * @param assetsQueue  Set where to save the resources to be loaded
      * @throws JSONException
      */
-    public SwrveCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignRulesManager rulesManager, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        super(campaignManager, rulesManager, campaignData);
+    public SwrveCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        super(campaignManager, campaignDisplayer, campaignData);
         this.messages = new ArrayList<SwrveMessage>();
 
         if (campaignData.has("messages")) {
@@ -87,35 +91,23 @@ public class SwrveCampaign extends SwrveBaseCampaign {
     }
 
     /**
-     * Search for a message with the given trigger event and that satisfies
-     * the specific rules for the campaign.
-     *
-     * @param event trigger event
-     * @param now   device time
-     * @return SwrveMessage message setup to the given trigger or null
-     * otherwise.
-     */
-    public SwrveMessage getMessageForEvent(String event, Date now) {
-        return getMessageForEvent(event, now, null);
-    }
-
-    /**
      * Search for a message related to the given trigger event at the given
      * time. This function will return null if too many messages were dismissed,
      * the campaign start is in the future, the campaign end is in the past or
      * the given event is not contained in the trigger set.
      *
      * @param event           trigger event
+     * @param payload         payload to compare conditions against
      * @param now             device time
-     * @param campaignReasons will contain the reason the campaign returned no message
+     * @param campaignDisplayResult will contain the reason the campaign returned no message
      * @return SwrveMessage message setup to the given trigger or null
      * otherwise.
      */
-    public SwrveMessage getMessageForEvent(String event, Date now, Map<Integer, String> campaignReasons) {
-        boolean canShowCampaign = rulesManager.shouldShowCampaign(this, event, now, campaignReasons, messages.size());
+    public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, Result> campaignDisplayResult) {
+        boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, campaignDisplayResult, messages.size());
         if (canShowCampaign) {
             SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
-            return getNextMessage(campaignReasons);
+            return getNextMessage(campaignDisplayResult);
         }
         return null;
     }
@@ -144,25 +136,30 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         return null;
     }
 
-    protected SwrveMessage getNextMessage(Map<Integer, String> campaignReasons) {
+    protected SwrveMessage getNextMessage(Map<Integer, Result> campaignDisplayResult) {
         if (randomOrder) {
             List<SwrveMessage> randomMessages = new ArrayList<SwrveMessage>(messages);
             Collections.shuffle(randomMessages);
             Iterator<SwrveMessage> itRandom = randomMessages.iterator();
             while (itRandom.hasNext()) {
                 SwrveMessage msg = itRandom.next();
-                if (msg.areAssetsReady()) {
+                if (msg.areAssetsReady(campaignManager.getAssetsOnDisk())) {
                     return msg;
                 }
             }
         } else if (saveableState.next < messages.size()) {
             SwrveMessage msg = messages.get(saveableState.next);
-            if (msg.areAssetsReady()) {
+            if (msg.areAssetsReady(campaignManager.getAssetsOnDisk())) {
                 return messages.get(saveableState.next);
             }
         }
 
-        logAndAddReason(campaignReasons, "Campaign " + this.getId() + " hasn't finished downloading.");
+        String resultText = "Campaign " + this.getId() + " hasn't finished downloading.";
+        if (campaignDisplayResult != null) {
+            campaignDisplayResult.put(id, campaignDisplayer.buildResult(RULE_RESULT_CAMPAIGN_NOT_DOWNLOADED, resultText));
+        }
+        SwrveLogger.i(LOG_TAG, resultText);
+
         return null;
     }
 
@@ -204,11 +201,12 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         setMessageMinDelayThrottle();
     }
 
-    public boolean areAssetsReady() {
+    @Override
+    public boolean areAssetsReady(Set<String> assetsOnDisk) {
         Iterator<SwrveMessage> messageIt = messages.iterator();
         while (messageIt.hasNext()) {
             SwrveMessage message = messageIt.next();
-            if (!message.areAssetsReady())
+            if (!message.areAssetsReady(assetsOnDisk))
                 return false;
         }
 
