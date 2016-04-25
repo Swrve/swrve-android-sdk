@@ -15,9 +15,9 @@ The SDK supports Android 2.3.3+ but will handle older versions with a dummy SDK.
 ### Gradle (distributed with the SDK)
 Used to build the SDK and its dependencies.
 
-How to run the demo
--------------------
-Import the SwrveSDKDemo project into your IDE and replace YOUR_APP_ID and YOUR_API_KEY with the values provided by Swrve. Run as a normal Android application on your device or emulator.
+How to run the demo / samples
+-----------------------------
+Import the SwrveSDKDemo project or any of the samples in the samples folder into your IDE and replace YOUR_APP_ID and YOUR_API_KEY with the values provided by Swrve. Run as a normal Android application on your device or emulator.
 
 How to build the SDK
 --------------------

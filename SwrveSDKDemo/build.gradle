@@ -20,7 +20,6 @@ android {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
     compile 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
 

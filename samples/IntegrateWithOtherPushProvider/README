@@ -1,0 +1,14 @@
+Eclipse ADT build instructions
+==================================================
+-Include SwrveSDK project in workspace.
+-Include SwrveSDKDemo project in workspace.
+-Replace YOUR_APP_ID in MainActivity.java with your app id.
+-Replace YOUR_API_KEY in MainActivity.java with your api key.
+-Run SwrveSDKDemo app normally.
+
+Android Studio build instructions
+==================================================
+-Import SwrveSDKDemo.
+-Replace YOUR_APP_ID in MainActivity.java with your app id.
+-Replace YOUR_API_KEY in MainActivity.java with your api key.
+-Run SwrveSDKDemo app normally.
