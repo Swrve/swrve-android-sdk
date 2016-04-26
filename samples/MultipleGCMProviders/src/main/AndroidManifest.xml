@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.swrve.sdk.demo">
+    package="com.swrve.sdk.sample">
 
     <uses-sdk
         android:minSdkVersion="10"
@@ -17,7 +17,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:name="com.swrve.sdk.demo.DemoApplication"
+        android:name="com.swrve.sdk.sample.SampleApplication"
         android:theme="@style/AppTheme" >
 
         <!-- Add this to your AndroidManifest.xml if you want to support push notifications  -->

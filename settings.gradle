@@ -1,7 +1,7 @@
 include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDK', ':SwrveSDKDemo', ':SwrveSDKTest', ':AdvancedPushNotifications'
 
-include ':IntegrateWithOtherPushProvider'
-project(":IntegrateWithOtherPushProvider").projectDir = file("samples/IntegrateWithOtherPushProvider")
+include ':MultipleGCMProviders'
+project(":MultipleGCMProviders").projectDir = file("samples/MultipleGCMProviders")
 
 include ':MessageCenter'
 project(":MessageCenter").projectDir = file("samples/MessageCenter")

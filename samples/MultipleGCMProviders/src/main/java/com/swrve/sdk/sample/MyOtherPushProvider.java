@@ -1,7 +1,6 @@
-package com.swrve.sdk.demo;
+package com.swrve.sdk.sample;
 
 import android.os.Bundle;
-
 import com.google.android.gms.gcm.GcmListenerService;
 
 /**

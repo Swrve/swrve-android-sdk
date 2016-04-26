@@ -1,4 +1,4 @@
-package com.swrve.sdk.demo;
+package com.swrve.sdk.sample;
 
 import android.app.Application;
 import android.os.Bundle;
@@ -8,9 +8,9 @@ import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 
-public class DemoApplication extends Application {
+public class SampleApplication extends Application {
 
-    private static final String LOG_TAG = "SwrveDemo";
+    private static final String LOG_TAG = "SwrveSample";
 
     @Override
     public void onCreate() {
@@ -27,7 +27,7 @@ public class DemoApplication extends Application {
                     if (bundle.containsKey("custom_key")) {
                         String customValue = bundle.getString("custom_key");
                         // Do something awesome with custom value!
-                        Log.d("DemoApplication", "Received push payload " + customValue);
+                        Log.d(LOG_TAG, "Received push payload " + customValue);
                     }
                 }
             });

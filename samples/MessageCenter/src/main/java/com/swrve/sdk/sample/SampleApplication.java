@@ -1,4 +1,4 @@
-package com.swrve.sdk.demo;
+package com.swrve.sdk.sample;
 
 import android.app.Application;
 import android.os.Bundle;
@@ -7,9 +7,9 @@ import android.util.Log;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
 
-public class DemoApplication extends Application {
+public class SampleApplication extends Application {
 
-    private static final String LOG_TAG = "SwrveDemo";
+    private static final String LOG_TAG = "SwrveSample";
 
     @Override
     public void onCreate() {

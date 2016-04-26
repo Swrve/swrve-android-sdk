@@ -1,4 +1,4 @@
-package com.swrve.sdk.demo;
+package com.swrve.sdk.sample;
 
 import android.content.ComponentName;
 import android.content.Context;

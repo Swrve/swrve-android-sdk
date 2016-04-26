@@ -1,4 +1,4 @@
-package com.swrve.sdk.demo;
+package com.swrve.sdk.sample;
 
 import android.app.Notification;
 import android.app.PendingIntent;

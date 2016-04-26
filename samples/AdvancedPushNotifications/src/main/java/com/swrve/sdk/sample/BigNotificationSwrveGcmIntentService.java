@@ -1,4 +1,4 @@
-package com.swrve.sdk.demo;
+package com.swrve.sdk.sample;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -9,6 +9,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import com.squareup.picasso.Picasso;
 import com.swrve.sdk.SwrveHelper;
@@ -52,8 +53,7 @@ public class BigNotificationSwrveGcmIntentService extends SwrveGcmIntentService 
                 try {
                     largeBitmap = Picasso.with(this).load(imageUrl).get();
                 } catch (IOException e) {
-                    // Download failed
-                    e.printStackTrace();
+                    Log.e("SwrveSample", "Download failed: " + e.toString());
                 }
             }
 
