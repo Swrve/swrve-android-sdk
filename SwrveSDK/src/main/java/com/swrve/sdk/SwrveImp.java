@@ -1354,7 +1354,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             @Override
             public void run() {
                 checkForCampaignAndResourcesUpdates();
-                localExecutor.shutdownNow(); // Shutdown when ready to release the thread
             }
         }, 0l, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
         campaignsAndResourcesExecutor = localExecutor;
