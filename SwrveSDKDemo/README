@@ -1,14 +1,11 @@
-Eclipse ADT build instructions
-==================================================
--Include SwrveSDK project in workspace.
--Include SwrveSDKDemo project in workspace.
--Replace YOUR_APP_ID in MainActivity.java with your app id.
--Replace YOUR_API_KEY in MainActivity.java with your api key.
--Run SwrveSDKDemo app normally.
+Swrve SDK Demo
+--------------
+General SDK demo. For advanced use cases please look at the [samples folder.](../samples/README.md)
 
 Android Studio build instructions
-==================================================
--Import SwrveSDKDemo.
--Replace YOUR_APP_ID in MainActivity.java with your app id.
--Replace YOUR_API_KEY in MainActivity.java with your api key.
--Run SwrveSDKDemo app normally.
+---------------------------------
+- Import SwrveSDKDemo.
+- Replace YOUR_APP_ID in DemoApplication.java with your Swrve app ID.
+- Replace YOUR_API_KEY in DemoApplication.java with your Swrve API key.
+- Replace YOUR_SENDER_ID in DemoApplication.java with your Google Cloud Messaging Sender ID if you want to do push notifications.
+- Run SwrveSDKDemo app normally.

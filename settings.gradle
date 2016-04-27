@@ -1,1 +1,10 @@
-include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDK', ':SwrveSDKDemo', ':SwrveSDKTest'
+include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDK', ':SwrveSDKDemo', ':SwrveSDKTest', ':AdvancedPushNotifications'
+
+include ':MultipleGCMProviders'
+project(":MultipleGCMProviders").projectDir = file("samples/MultipleGCMProviders")
+
+include ':MessageCenter'
+project(":MessageCenter").projectDir = file("samples/MessageCenter")
+
+include ':AdvancedPushNotifications'
+project(':AdvancedPushNotifications').projectDir = new File("samples/AdvancedPushNotifications")

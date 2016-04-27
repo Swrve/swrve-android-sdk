@@ -115,8 +115,6 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     @Override
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
-        String msgSound = msg.getString("sound");
-
         SwrveGcmNotification notificationHelper = SwrveGcmNotification.getInstance(context);
         boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && notificationHelper.iconMaterialDrawableId >= 0) ? notificationHelper.iconMaterialDrawableId : notificationHelper.iconDrawableId;
@@ -138,6 +136,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
             mBuilder.setColor(ContextCompat.getColor(context, notificationHelper.accentColor));
         }
 
+        String msgSound = msg.getString("sound");
         if (!SwrveHelper.isNullOrEmpty(msgSound)) {
             Uri soundUri;
             if (msgSound.equalsIgnoreCase("default")) {
@@ -156,7 +155,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         String msgText = msg.getString("text");
         if (!SwrveHelper.isNullOrEmpty(msgText)) {
             // Build notification
-            NotificationCompat.Builder mBuilder =  swrveGcmService.createNotificationBuilder(msgText, msg);
+            NotificationCompat.Builder mBuilder = swrveGcmService.createNotificationBuilder(msgText, msg);
             mBuilder.setContentIntent(contentIntent);
             return mBuilder.build();
         }
