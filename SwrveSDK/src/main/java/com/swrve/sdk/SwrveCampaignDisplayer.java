@@ -98,7 +98,7 @@ public class SwrveCampaignDisplayer {
             return false;
         }
 
-        if (swrveCampaign.getSaveableState().impressions >= swrveCampaign.getMaxImpressions()) {
+        if (swrveCampaign.getSaveableState().getImpressions() >= swrveCampaign.getMaxImpressions()) {
             String resultText = "{Campaign throttle limit} Campaign " + swrveCampaign.getId() + " has been shown " + swrveCampaign.getMaxImpressions() + " times already";
             logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_CAMPAIGN_THROTTLE_MAX_IMPRESSIONS, resultText);
             return false;

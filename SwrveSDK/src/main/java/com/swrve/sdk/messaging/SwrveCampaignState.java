@@ -37,7 +37,7 @@ public class SwrveCampaignState {
     }
 
     // Number of impressions of this campaign. Used to disable the campaign if it reaches total impressions
-    public int impressions;
+    protected int impressions;
 
     // MessageCenter status of the campaign
     protected Status status;
@@ -73,6 +73,10 @@ public class SwrveCampaignState {
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error while trying to load campaign settings", e);
         }
+    }
+
+    public int getImpressions() {
+        return impressions;
     }
 
     /**
