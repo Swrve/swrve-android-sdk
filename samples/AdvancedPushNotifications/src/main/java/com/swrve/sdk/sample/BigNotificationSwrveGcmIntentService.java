@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.squareup.picasso.Picasso;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.gcm.SwrveGcmIntentService;
 
@@ -46,17 +45,8 @@ public class BigNotificationSwrveGcmIntentService extends SwrveGcmIntentService 
                 msgGroup = "group_key_emails";
             }
 
-            // Set the large icon downloaded from the custom payload 'image_url' or a default
             Bitmap largeBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_large_image);
-            String imageUrl = msg.getString("image_url");
-            if (!SwrveHelper.isNullOrEmpty(imageUrl)) {
-                try {
-                    largeBitmap = Picasso.with(this).load(imageUrl).get();
-                } catch (IOException e) {
-                    Log.e("SwrveSample", "Download failed: " + e.toString());
-                }
-            }
-
+            // NOTE: You could also download an image using a library like Picasso and a custom payload 'image_url'
             NotificationCompat.BigPictureStyle bigPictureStyle = new NotificationCompat.BigPictureStyle()
                     .setSummaryText(msgSummary)
                     .bigPicture(largeBitmap);

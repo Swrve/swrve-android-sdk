@@ -22,7 +22,6 @@ android {
 dependencies {
     compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
     compile 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    compile 'com.squareup.picasso:picasso:2.5.2'
 
     // In your app please include the SDK using the following dependency
 //  compile 'com.swrve.sdk.android:swrve-google:4.3.0' // Google GCM push version
