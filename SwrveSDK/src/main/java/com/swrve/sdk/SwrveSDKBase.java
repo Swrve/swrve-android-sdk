@@ -7,6 +7,7 @@ import android.content.Intent;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
+import com.swrve.sdk.messaging.ISwrveMessageLifecycleListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
@@ -501,6 +502,16 @@ public abstract class SwrveSDKBase {
     public static void setDialogListener(ISwrveDialogListener dialogListener) {
         checkInstanceCreated();
         instance.setDialogListener(dialogListener);
+    }
+
+    /**
+     * Set a listener for in-app message lifecycle events.
+     *
+     * @param messageLifecycleListener
+     */
+    public static void setMessageLifecycleListener(ISwrveMessageLifecycleListener messageLifecycleListener) {
+        checkInstanceCreated();
+        instance.setMessageLifecycleListener(messageLifecycleListener);
     }
 
     /**

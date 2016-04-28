@@ -23,6 +23,7 @@ import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
+import com.swrve.sdk.messaging.ISwrveMessageLifecycleListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
@@ -183,6 +184,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     SwrveLogger.e(LOG_TAG, "Can't display a message with a non-Activity context");
                                     return;
                                 }
+
                                 // Run code on the UI thread
                                 activity.runOnUiThread(new DisplayMessageRunnable(SwrveBase.this, activity, message, firstTime));
                             }
@@ -1141,6 +1143,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         this.dialogListener = dialogListener;
     }
 
+    protected void _setMessageLifecycleListener(ISwrveMessageLifecycleListener messageLifecycleListener) {
+        this.messageLifecycleListener = messageLifecycleListener;
+    }
+
     protected ISwrveDialogListener _getDialogListener() {
         return dialogListener;
     }
@@ -1589,6 +1595,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void setDialogListener(ISwrveDialogListener dialogListener) {
         try {
             _setDialogListener(dialogListener);
+        } catch (Exception e) {
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
+    public void setMessageLifecycleListener(ISwrveMessageLifecycleListener messageLifecycleListener) {
+        try {
+            _setMessageLifecycleListener(messageLifecycleListener);
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
