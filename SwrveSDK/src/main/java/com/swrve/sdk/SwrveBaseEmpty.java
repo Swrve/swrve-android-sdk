@@ -8,6 +8,7 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
+import com.swrve.sdk.messaging.ISwrveMessageLifecycleListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
@@ -39,6 +40,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     private ISwrveCustomButtonListener customButtonListener;
     private ISwrveInstallButtonListener installButtonListener;
     private ISwrveDialogListener dialogListener;
+    private ISwrveMessageLifecycleListener messageLifecycleListener;
     private String language = "en-US";
     private String userId;
     private File cacheDir;
@@ -283,6 +285,11 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public void setDialogListener(ISwrveDialogListener dialogListener) {
         this.dialogListener = dialogListener;
+    }
+
+    @Override
+    public void setMessageLifecycleListener(ISwrveMessageLifecycleListener messageLifecycleListener) {
+        this.messageLifecycleListener = messageLifecycleListener;
     }
 
     @Override

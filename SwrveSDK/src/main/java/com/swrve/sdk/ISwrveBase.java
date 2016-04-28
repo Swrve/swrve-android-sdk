@@ -7,6 +7,7 @@ import android.content.Intent;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
+import com.swrve.sdk.messaging.ISwrveMessageLifecycleListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
@@ -112,6 +113,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     ISwrveDialogListener getDialogListener();
 
     void setDialogListener(ISwrveDialogListener dialogListener);
+
+    void setMessageLifecycleListener(ISwrveMessageLifecycleListener messageLifecycleListener);
 
     Context getContext();
 

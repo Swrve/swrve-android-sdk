@@ -30,6 +30,7 @@ import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
+import com.swrve.sdk.messaging.ISwrveMessageLifecycleListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaign;
@@ -156,6 +157,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ISwrveCustomButtonListener customButtonListener;
     protected ISwrveDialogListener dialogListener;
     protected ISwrveResourcesListener resourcesListener;
+    protected ISwrveMessageLifecycleListener messageLifecycleListener;
     protected ExecutorService autoShowExecutor;
     protected String userInstallTime;
     protected AtomicInteger bindCounter;
@@ -1427,9 +1429,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                                     currentDialog = null;
                                 }
                             }
+                            if (messageLifecycleListener != null) {
+                                messageLifecycleListener.onDismissMessage(message);
+                            }
+
                         }
                     });
                     saveCurrentOrientation(activity);
+
+                    if (messageLifecycleListener != null) {
+                        messageLifecycleListener.onShowMessage(message);
+                    }
 
                     // Check if the customer wants to manage the dialog themselves
                     if (dialogListener != null) {
