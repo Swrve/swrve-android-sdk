@@ -7,6 +7,10 @@ import java.util.Map;
 
 interface ISwrveCommon
 {
+    String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
+    String SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY = "GoogleAdvertisingId";
+    String SWRVE_GOOGLE_ADVERTISING_LIMIT_AD_TRACKING_CATEGORY = "GoogleAdvertisingLimitAdTrackingEnabled";
+
     String getApiKey();
 
     String getSessionKey();
@@ -23,7 +27,7 @@ interface ISwrveCommon
 
     String getBatchURL();
 
-    String getCachedLocationData();
+    String getCachedData(String userId, String key);
 
     void setLocationVersion(int locationVersion);
 

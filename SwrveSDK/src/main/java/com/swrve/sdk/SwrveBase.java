@@ -1697,17 +1697,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public String getCachedLocationData() {
+    public String getCachedData(String userId, String key) {
         ILocalStorage localStorage = null;
         try {
             localStorage = createLocalStorage();
-            return localStorage.getSecureCacheEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, getUniqueKey());
+            return localStorage.getSecureCacheEntryForUser(userId, key, getUniqueKey());
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load " + LOCATION_CAMPAIGN_CATEGORY + " campaigns", e);
+            SwrveLogger.e(LOG_TAG, "Error getting cached data. userId:" + userId + " key:" + key, e);
         } finally {
             if (localStorage != null) localStorage.close();
         }
-
         return null;
     }
 
