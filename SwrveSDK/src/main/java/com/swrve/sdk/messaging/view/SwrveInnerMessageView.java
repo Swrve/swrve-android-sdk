@@ -327,7 +327,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
                     WeakReference<Bitmap> weakBitmap = bitmapIt.next();
                     Bitmap b = weakBitmap.get();
                     if (b != null) {
-                        b.recycle();
+                        if (!b.isRecycled()) {
+                            b.recycle();
+                        }
                         b = null;
                     }
                     weakBitmap = null;
