@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.net.Uri;
 import android.util.Log;
 import android.view.Display;
@@ -127,9 +128,10 @@ public class SwrveInnerMessageView extends RelativeLayout {
             bitmapCache = new HashSet<WeakReference<Bitmap>>();
 
             // Get device screen metrics
-            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            int screenWidth = display.getWidth();
-            int screenHeight = display.getHeight();
+            Point sizePoint = new Point();
+            ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(sizePoint);
+            int screenWidth = sizePoint.x;
+            int screenHeight = sizePoint.y;
 
             // Construct layout
             scale = format.getScale();
