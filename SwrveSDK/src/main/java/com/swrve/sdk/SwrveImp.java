@@ -200,7 +200,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected String simOperatorIsoCountryCode;
     protected String simOperatorCode;
     protected String androidId;
-    protected String locationVersion;
+    protected int locationSegmentVersion;
+    protected String locationSDKVersion;
 
     protected int previousOrientation;
     protected SwrveQAUser qaUser;

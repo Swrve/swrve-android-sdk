@@ -693,8 +693,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
-                if (!SwrveHelper.isNullOrEmpty(locationVersion)) {
-                    params.put("location_version", locationVersion);
+                if (locationSegmentVersion > 0) {
+                    params.put("location_version", String.valueOf(locationSegmentVersion));
                 }
 
                 // If we have a last ETag value, send that along with the request
@@ -1692,8 +1692,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setLocationVersion(String locationVersion) {
-        this.locationVersion = locationVersion;
+    public void setLocationSegmentVersion(int locationSegmentVersion) {
+        this.locationSegmentVersion = locationSegmentVersion;
+    }
+
+    @Override
+    public void setLocationSDKVersion(String locationSDKVersion) {
+        this.locationSDKVersion = locationSDKVersion;
     }
 
     @Override
