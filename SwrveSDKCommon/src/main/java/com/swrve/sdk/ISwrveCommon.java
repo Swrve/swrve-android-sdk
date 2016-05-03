@@ -29,7 +29,9 @@ interface ISwrveCommon
 
     String getCachedData(String userId, String key);
 
-    void setLocationVersion(int locationVersion);
+    void setLocationVersion(String locationVersion);
+
+    String getSwrveSDKVersion();
 
     void userUpdate(Map<String, String> attributes);
 
