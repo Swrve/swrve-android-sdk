@@ -29,7 +29,7 @@ interface ISwrveCommon
 
     String getCachedData(String userId, String key);
 
-    void setLocationVersion(String locationVersion);
+    void setLocationSegmentVersion(int locationSegmentVersion);
 
     String getSwrveSDKVersion();
 
