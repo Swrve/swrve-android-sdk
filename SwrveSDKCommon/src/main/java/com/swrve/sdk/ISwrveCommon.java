@@ -31,8 +31,6 @@ interface ISwrveCommon
 
     void setLocationSegmentVersion(int locationSegmentVersion);
 
-    void setLocationSDKVersion(String locationVersion);
-
     String getSwrveSDKVersion();
 
     void userUpdate(Map<String, String> attributes);

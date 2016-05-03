@@ -1697,11 +1697,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setLocationSDKVersion(String locationSDKVersion) {
-        this.locationSDKVersion = locationSDKVersion;
-    }
-
-    @Override
     public String getSwrveSDKVersion() {
         return version;
     }
