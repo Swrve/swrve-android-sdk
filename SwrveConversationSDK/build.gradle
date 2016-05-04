@@ -41,7 +41,7 @@ publishing {
 
             artifactId 'swrve-conversations'
             groupId 'com.swrve.sdk.android'
-            version '4.3.0'
+            version '4.3.1'
             artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar"]
 
             pom.withXml {
@@ -51,7 +51,7 @@ publishing {
                     if (it.name == 'SwrveSDKCommon') {
                         dependencyNode.appendNode('groupId', 'com.swrve.sdk.android')
                         dependencyNode.appendNode('artifactId', 'swrve-common')
-                        dependencyNode.appendNode('version', '4.3.0')
+                        dependencyNode.appendNode('version', '4.3.1')
                         dependencyNode.appendNode('scope', 'compile')
                     } else {
                         dependencyNode.appendNode('groupId', it.group)
