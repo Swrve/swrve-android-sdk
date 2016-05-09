@@ -24,11 +24,11 @@ import org.json.JSONObject;
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String REGISTRATION_ID_CATEGORY = "RegistrationId";
     protected static final String SWRVE_GCM_TOKEN = "swrve.gcm_token";
-    protected static final String SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY = "GoogleAdvertisingId";
     protected static final String SWRVE_GOOGLE_ADVERTISING_ID = "swrve.GAID";
 
     protected String registrationId;
     protected String advertisingId;
+    protected boolean isAdvertisingLimitAdTrackingEnabled;
     protected ISwrvePushNotificationListener pushNotificationListener;
     protected String lastProcessedMessage;
 
@@ -63,7 +63,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         // Google Advertising Id logging enabled and Google Play services ready
         if (config.isGAIDLoggingEnabled() && isGooglePlayServicesAvailable()) {
             // Load previous value for Advertising ID
-            advertisingId = cachedLocalStorage.getSharedCacheEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY);
+            advertisingId = cachedLocalStorage.getCacheEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY);
+            String isAdvertisingLimitAdTrackingEnabledString = cachedLocalStorage.getCacheEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_LIMIT_AD_TRACKING_CATEGORY);
+            isAdvertisingLimitAdTrackingEnabled = Boolean.parseBoolean(isAdvertisingLimitAdTrackingEnabledString);
             new AsyncTask<Void, Integer, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {
@@ -71,7 +73,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                         // Obtain and save the new Google Advertising Id
                         Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context);
                         advertisingId = adInfo.getId();
-                        cachedLocalStorage.setAndFlushSharedEntry(SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY, advertisingId);
+                        isAdvertisingLimitAdTrackingEnabled = adInfo.isLimitAdTrackingEnabled();
+
+                        cachedLocalStorage.setAndFlushSecureSharedEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY, advertisingId, getUniqueKey());
+                        cachedLocalStorage.setAndFlushSecureSharedEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_LIMIT_AD_TRACKING_CATEGORY, Boolean.toString(isAdvertisingLimitAdTrackingEnabled), getUniqueKey());
                     } catch (Exception ex) {
                         SwrveLogger.e(LOG_TAG, "Couldn't obtain Advertising Id", ex);
                     }

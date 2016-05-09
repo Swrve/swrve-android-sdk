@@ -693,8 +693,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("os_version", Build.VERSION.RELEASE);
                 }
 
-                if (locationVersion > 0) {
-                    params.put("location_version", String.valueOf(locationVersion));
+                if (locationSegmentVersion > 0) {
+                    params.put("location_version", String.valueOf(locationSegmentVersion));
                 }
 
                 // If we have a last ETag value, send that along with the request
@@ -1692,22 +1692,26 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setLocationVersion(int locationVersion) {
-        this.locationVersion = locationVersion;
+    public void setLocationSegmentVersion(int locationSegmentVersion) {
+        this.locationSegmentVersion = locationSegmentVersion;
     }
 
     @Override
-    public String getCachedLocationData() {
+    public String getSwrveSDKVersion() {
+        return version;
+    }
+
+    @Override
+    public String getCachedData(String userId, String key) {
         ILocalStorage localStorage = null;
         try {
             localStorage = createLocalStorage();
-            return localStorage.getSecureCacheEntryForUser(userId, LOCATION_CAMPAIGN_CATEGORY, getUniqueKey());
+            return localStorage.getSecureCacheEntryForUser(userId, key, getUniqueKey());
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Invalid json in cache, cannot load " + LOCATION_CAMPAIGN_CATEGORY + " campaigns", e);
+            SwrveLogger.e(LOG_TAG, "Error getting cached data. userId:" + userId + " key:" + key, e);
         } finally {
             if (localStorage != null) localStorage.close();
         }
-
         return null;
     }
 

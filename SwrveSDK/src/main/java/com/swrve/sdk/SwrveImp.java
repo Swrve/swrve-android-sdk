@@ -103,26 +103,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SDK_PREFS_NAME = "swrve_prefs";
     protected static final String EMPTY_JSON_ARRAY = "[]";
     protected static final int SHUTDOWN_TIMEOUT_SECONDS = 5;
-    protected static final String SWRVE_DEVICE_NAME = "swrve.device_name";
-    protected static final String SWRVE_OS = "swrve.os";
-    protected static final String SWRVE_OS_VERSION = "swrve.os_version";
-    protected static final String SWRVE_DEVICE_WIDTH = "swrve.device_width";
-    protected static final String SWRVE_DEVICE_HEIGHT = "swrve.device_height";
-    protected static final String SWRVE_DEVICE_DPI = "swrve.device_dpi";
-    protected static final String SWRVE_CONVERSATION_VERSION = "swrve.conversation_version";
-    protected static final String SWRVE_ANDROID_DEVICE_XDPI = "swrve.android_device_xdpi";
-    protected static final String SWRVE_ANDROID_DEVICE_YDPI = "swrve.android_device_ydpi";
-    protected static final String SWRVE_LANGUAGE = "swrve.language";
-    protected static final String SWRVE_UTC_OFFSET_SECONDS = "swrve.utc_offset_seconds";
-    protected static final String SWRVE_TIMEZONE_NAME = "swrve.timezone_name";
-    protected static final String SWRVE_SDK_VERSION = "swrve.sdk_version";
-    protected static final String SWRVE_APP_STORE = "swrve.app_store";
-    protected static final String SWRVE_INSTALL_DATE = "swrve.install_date";
-    protected static final String SWRVE_SIM_OPERATOR_NAME = "swrve.sim_operator.name";
-    protected static final String SWRVE_SIM_OPERATOR_ISO_COUNTRY = "swrve.sim_operator.iso_country_code";
-    protected static final String SWRVE_SIM_OPERATOR_CODE = "swrve.sim_operator.code";
-    protected static final String SWRVE_DEVICE_REGION = "swrve.device_region";
-    protected static final String SWRVE_ANDROID_ID = "swrve.android_id";
     protected static final String REFERRER = "referrer";
     protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
@@ -200,7 +180,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected String simOperatorIsoCountryCode;
     protected String simOperatorCode;
     protected String androidId;
-    protected int locationVersion;
+    protected int locationSegmentVersion;
 
     protected int previousOrientation;
     protected SwrveQAUser qaUser;
