@@ -29,7 +29,7 @@ publishing {
         main(MavenPublication) {
             artifactId 'swrve-common'
             groupId 'com.swrve.sdk.android'
-            version '4.3.0'
+            version '4.4.0'
             artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar"]
         }
     }
