@@ -13,8 +13,12 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.swrve.sdk.ISwrveBase;
+import com.swrve.sdk.SilentPushReporter;
+import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveSDKBase;
 import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Date;
@@ -26,10 +30,12 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     private Context context;
     private SwrveGcmIntentService swrveGcmService;
+    private SilentPushReporter silentPushReporter;
 
     protected SwrveGcmHandler (Context context, SwrveGcmIntentService swrveGcmService) {
         this.context = context;
         this.swrveGcmService = swrveGcmService;
+        this.silentPushReporter = new SilentPushReporter();
     }
 
     @Deprecated
@@ -50,11 +56,13 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     private boolean processRemoteNotification(Bundle msg) {
         boolean gcmHandled = false;
-        if (isSwrveRemoteNotification(msg)) {
+
+        // Swrve UI Push
+        Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
+        String msgId = (rawId != null) ? rawId.toString() : null;
+        if (!SwrveHelper.isNullOrEmpty(msgId)) {
             // Notify bound clients
             Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-            Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
-            String msgId = (rawId != null) ? rawId.toString() : null;
             while (iter.hasNext()) {
                 SwrveQAUser sdkListener = iter.next();
                 sdkListener.pushNotification(msgId, msg);
@@ -63,15 +71,27 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
             swrveGcmService.processNotification(msg);
             gcmHandled = true;
         } else {
+            rawId = msg.get(SwrveGcmConstants.SWRVE_SILENT_TRACKING_KEY);
+            msgId = (rawId != null) ? rawId.toString() : null;
+            if (!SwrveHelper.isNullOrEmpty(msgId)) {
+                // Notify bound clients
+                Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+                while (iter.hasNext()) {
+                    SwrveQAUser sdkListener = iter.next();
+                    sdkListener.pushNotification(msgId, msg);
+                }
+                // Notify the singleton instance of the SDK of the silent push
+                ISwrveBase sdk = SwrveSDKBase.getInstance();
+                if (sdk != null && sdk instanceof Swrve) {
+                    ((Swrve)SwrveSDKBase.getInstance()).processSilentPush(msg);
+                }
+                // Sent the received event
+                silentPushReporter.sendReceivedEvent(context, msgId);
+                gcmHandled = true;
+            }
             SwrveLogger.i(TAG, "GCM notification: but not processing as its missing the " + SwrveGcmConstants.SWRVE_TRACKING_KEY);
         }
         return gcmHandled;
-    }
-
-    protected boolean isSwrveRemoteNotification(final Bundle msg) {
-        Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
-        String msgId = (rawId != null) ? rawId.toString() : null;
-        return !SwrveHelper.isNullOrEmpty(msgId);
     }
 
     @Override
@@ -134,6 +154,11 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
         if (notificationHelper.accentColor >= 0) {
             mBuilder.setColor(ContextCompat.getColor(context, notificationHelper.accentColor));
+        }
+
+        String msgTitle = msg.getString("title");
+        if (!SwrveHelper.isNullOrEmpty(msgTitle)) {
+            mBuilder.setContentTitle(msgTitle);
         }
 
         String msgSound = msg.getString("sound");

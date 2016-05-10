@@ -26,6 +26,11 @@ public class CustomGcmReceiver extends GcmReceiver {
             if (extras != null) {
                 Object rawId = extras.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
                 String msgId = (rawId != null) ? rawId.toString() : null;
+                if (SwrveHelper.isNullOrEmpty(msgId)) {
+                    // Check if it is a Swrve silent push
+                    rawId = extras.get(SwrveGcmConstants.SWRVE_SILENT_TRACKING_KEY);
+                    msgId = (rawId != null) ? rawId.toString() : null;
+                }
                 if (!SwrveHelper.isNullOrEmpty(msgId)) {
                     // It is a Swrve push!
                     SwrveLogger.d("Received Swrve push, starting " + SwrveGcmConstants.SWRVE_DEFAULT_INTENT_SERVICE + " instead");
