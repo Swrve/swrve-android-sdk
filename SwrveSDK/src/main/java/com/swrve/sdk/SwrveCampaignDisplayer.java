@@ -19,20 +19,22 @@ import java.util.Map;
  */
 public class SwrveCampaignDisplayer {
 
-    protected static final String LOG_TAG = "SwrveSDK";
+    private static final String LOG_TAG = "SwrveSDK";
     protected final SimpleDateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss ZZZZ", Locale.US);
 
-    public static final int RULE_RESULT_CAMPAIGN_THROTTLE_RECENT = 1;
-    public static final int RULE_RESULT_CAMPAIGN_THROTTLE_MAX_IMPRESSIONS = 2;
-    public static final int RULE_RESULT_CAMPAIGN_THROTTLE_LAUNCH_TIME = 3;
-    public static final int RULE_RESULT_ERROR_NO_VARIANT = 4;
-    public static final int RULE_RESULT_CAMPAIGN_NOT_ACTIVE = 5;
-    public static final int RULE_RESULT_ERROR_INVALID_TRIGGERS = 6;
-    public static final int RULE_RESULT_ERROR_UNSUPPORTED = 7;
-    public static final int RULE_RESULT_NO_MATCH = 8;
-    public static final int RULE_RESULT_CAMPAIGN_NOT_DOWNLOADED = 9;
-    public static final int RULE_RESULT_CAMPAIGN_WRONG_ORIENTATION = 10;
-    public static final int RULE_RESULT_ELIGIBLE_BUT_OTHER_CHOSEN = 11;
+    public enum DisplayResult {
+        CAMPAIGN_THROTTLE_RECENT,
+        CAMPAIGN_THROTTLE_MAX_IMPRESSIONS,
+        CAMPAIGN_THROTTLE_LAUNCH_TIME,
+        ERROR_NO_VARIANT,
+        CAMPAIGN_NOT_ACTIVE,
+        ERROR_INVALID_TRIGGERS,
+        NO_MATCH,
+        MATCH,
+        CAMPAIGN_NOT_DOWNLOADED,
+        CAMPAIGN_WRONG_ORIENTATION,
+        ELIGIBLE_BUT_OTHER_CHOSEN
+    }
 
     private final SwrveQAUser qaUser;
     protected Date showMessagesAfterLaunch;
@@ -90,7 +92,7 @@ public class SwrveCampaignDisplayer {
         }
 
         if (elementCount == 0) {
-            logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_ERROR_NO_VARIANT, "No campaign variants for campaign id:" + swrveCampaign.getId());
+            logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.ERROR_NO_VARIANT, "No campaign variants for campaign id:" + swrveCampaign.getId());
             return false;
         }
 
@@ -100,7 +102,7 @@ public class SwrveCampaignDisplayer {
 
         if (swrveCampaign.getSaveableState().getImpressions() >= swrveCampaign.getMaxImpressions()) {
             String resultText = "{Campaign throttle limit} Campaign " + swrveCampaign.getId() + " has been shown " + swrveCampaign.getMaxImpressions() + " times already";
-            logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_CAMPAIGN_THROTTLE_MAX_IMPRESSIONS, resultText);
+            logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.CAMPAIGN_THROTTLE_MAX_IMPRESSIONS, resultText);
             return false;
         }
 
@@ -108,14 +110,14 @@ public class SwrveCampaignDisplayer {
         if (!event.equalsIgnoreCase(SwrveBase.SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER) && isTooSoonToShowMessageAfterLaunch(swrveCampaign, now)) {
             String formattedDate = timestampFormat.format(swrveCampaign.getShowMessagesAfterLaunch());
             String resultText = "{Campaign throttle limit} Too soon after launch. Wait until " + formattedDate;
-            logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_CAMPAIGN_THROTTLE_LAUNCH_TIME, resultText);
+            logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.CAMPAIGN_THROTTLE_LAUNCH_TIME, resultText);
             return false;
         }
 
         if (isTooSoonToShowMessageAfterDelay(swrveCampaign, now)) {
             String formattedDate = timestampFormat.format(swrveCampaign.getSaveableState().showMessagesAfterDelay);
             String resultText = "{Campaign throttle limit} Too soon after last campaign. Wait until " + formattedDate;
-            logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_CAMPAIGN_THROTTLE_RECENT, resultText);
+            logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.CAMPAIGN_THROTTLE_RECENT, resultText);
             return false;
         }
 
@@ -125,7 +127,7 @@ public class SwrveCampaignDisplayer {
     protected boolean canTrigger(SwrveBaseCampaign swrveCampaign, String eventName, Map<String, String> payload, Map<Integer, Result> campaignDisplayResults) {
         if (swrveCampaign.getTriggers() == null || swrveCampaign.getTriggers().size() == 0) {
             String resultText = "Campaign [" + swrveCampaign.getId() + "], invalid triggers. Skipping this campaign.";
-            logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_ERROR_INVALID_TRIGGERS, resultText);
+            logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.ERROR_INVALID_TRIGGERS, resultText);
             return false;
         }
 
@@ -133,52 +135,42 @@ public class SwrveCampaignDisplayer {
         for (Trigger trigger : triggers) {
             if(eventName.equalsIgnoreCase(trigger.getEventName())) {
                 Conditions conditions = trigger.getConditions();
-                if (conditions == null) {
-                    String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], contains invalid conditions. Skipping this trigger.";
-                    logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_ERROR_UNSUPPORTED, resultText);
-                    continue;
-                }
-                else if (conditions.getOp() == null && conditions.getArgs() == null) {
+                if (conditions.getOp() == null && conditions.getArgs() == null) {
+                    String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
+                    logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.MATCH, resultText);
                     return true; // no conditions equates to a match
-                } else if (conditions.getOp() != null && "and".equals(conditions.getOp())) {
-                    if (conditions.getArgs() != null && conditions.getArgs().size() > 0) {
-                        boolean conditionsMatchPayload = false;
-                        for (Arg arg : conditions.getArgs()) {
-                            if (arg.getKey() == null || arg.getOp() == null || !"eq".equals(arg.getOp()) || arg.getValue() == null) {
-                                String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], contains invalid conditions. Skipping this trigger.";
-                                logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_ERROR_UNSUPPORTED, resultText);
-                                conditionsMatchPayload = false;
-                                continue;
-                            } else if (payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
-                                conditionsMatchPayload = true;
-                            } else {
-                                String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match conditions [" + arg + "]. Skipping this trigger.";
-                                logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_NO_MATCH, resultText);
-                                conditionsMatchPayload = false;
-                                break;
-                            }
+                } else if ("and".equals(conditions.getOp())) {
+                    boolean conditionsMatchPayload = false;
+                    for (Arg arg : conditions.getArgs()) {
+                        if (payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
+                            conditionsMatchPayload = true;
+                        } else {
+                            String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
+                            logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.NO_MATCH, resultText);
+                            conditionsMatchPayload = false;
+                            break;
                         }
-                        if (conditionsMatchPayload) {
-                            return true;
-                        }
-                    } else {
-                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], contains invalid conditions. Skipping this trigger.";
-                        logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_ERROR_UNSUPPORTED, resultText);
-                        continue;
                     }
-                } else if (conditions != null && conditions.getOp() != null && "eq".equals(conditions.getOp())) {
-                    if (conditions.getKey() == null  || conditions.getValue() == null) {
-                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], contains invalid conditions. Skipping this trigger.";
-                        logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_ERROR_UNSUPPORTED, resultText);
-                        continue;
-                    } else if (payload.containsKey(conditions.getKey()) && payload.get(conditions.getKey()).equalsIgnoreCase(conditions.getValue())) {
-                        return true; // matched condition
+                    if (conditionsMatchPayload) {
+                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
+                        logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.MATCH, resultText);
+                        return true;
+                    }
+                } else if ("eq".equals(conditions.getOp())) {
+                    if (payload.containsKey(conditions.getKey()) && payload.get(conditions.getKey()).equalsIgnoreCase(conditions.getValue())) {
+                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
+                        logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.MATCH, resultText);
+                        return true;
                     } else {
-                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match conditions. Skipping this trigger.";
-                        logAndAddReason(swrveCampaign, campaignDisplayResults, RULE_RESULT_NO_MATCH, resultText);
+                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
+                        logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.NO_MATCH, resultText);
                         continue;
                     }
                 }
+            } else {
+                String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
+                logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.NO_MATCH, resultText);
+                continue;
             }
         }
 
@@ -197,12 +189,12 @@ public class SwrveCampaignDisplayer {
     public boolean isCampaignActive(SwrveBaseCampaign swrveCampaign, Date now, Map<Integer, Result> campaignDisplayResult) {
         if (swrveCampaign.getStartDate().after(now)) {
             String resultText = "Campaign " + swrveCampaign.getId() + " has not started yet";
-            logAndAddReason(swrveCampaign, campaignDisplayResult, RULE_RESULT_CAMPAIGN_NOT_ACTIVE, resultText);
+            logAndAddReason(swrveCampaign, campaignDisplayResult, DisplayResult.CAMPAIGN_NOT_ACTIVE, resultText);
             return false;
         }
         if (swrveCampaign.getEndDate().before(now)) {
             String resultText = "Campaign " + swrveCampaign.getId() + " has finished";
-            logAndAddReason(swrveCampaign, campaignDisplayResult, RULE_RESULT_CAMPAIGN_NOT_ACTIVE, resultText);
+            logAndAddReason(swrveCampaign, campaignDisplayResult, DisplayResult.CAMPAIGN_NOT_ACTIVE, resultText);
             return false;
         }
         return true;
@@ -223,7 +215,7 @@ public class SwrveCampaignDisplayer {
         return now.before(showMessagesAfterDelay);
     }
 
-    private void logAndAddReason(SwrveBaseCampaign swrveCampaign, Map<Integer, Result> campaignDisplayResults, int resultCode, String resultText) {
+    private void logAndAddReason(SwrveBaseCampaign swrveCampaign, Map<Integer, Result> campaignDisplayResults, DisplayResult resultCode, String resultText) {
         if (campaignDisplayResults != null) {
             campaignDisplayResults.put(swrveCampaign.getId(), buildResult(resultCode, resultText));
         }
@@ -244,7 +236,7 @@ public class SwrveCampaignDisplayer {
         this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
     }
 
-    public Result buildResult(int resultCode, String resultText){
+    public Result buildResult(DisplayResult resultCode, String resultText){
         Result result = new Result();
         result.resultCode = resultCode;
         result.resultText = resultText;
@@ -252,7 +244,7 @@ public class SwrveCampaignDisplayer {
     }
 
     public final class Result {
-        public int resultCode;
+        public DisplayResult resultCode;
         public String resultText;
     }
 }

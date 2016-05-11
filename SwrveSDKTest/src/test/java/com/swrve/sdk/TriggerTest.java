@@ -77,7 +77,7 @@ public class TriggerTest extends SwrveBaseTest {
     @Test
     public void testTriggerModelV5ExceptionHandled() {
         String json = "[ \"song1.played\", \"song2.played\", \"song3.played\"]";
-        List<Trigger> triggers = Trigger.fromJson(json);
+        List<Trigger> triggers = Trigger.fromJson(json, 1);
         assertNull(triggers); // asserting that the invalid json exception is caught
     }
 
@@ -85,7 +85,7 @@ public class TriggerTest extends SwrveBaseTest {
     public void testTriggerModelWithConditions() throws Exception {
 
         String json = SwrveTestUtils.getAssetAsText(mActivity, "triggers.json");
-        List<Trigger> triggers = Trigger.fromJson(json);
+        List<Trigger> triggers = Trigger.fromJson(json, 1);
 
         assertNotNull(triggers);
         assertEquals(3, triggers.size());
@@ -132,36 +132,40 @@ public class TriggerTest extends SwrveBaseTest {
         payload.put("song", "PuRpLe RaIn"); // mixed case on purpose
         payload.put("extra", "unused");
         assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), campaignDisplayResults));
-        assertEquals(0, campaignDisplayResults.size());
+        assertEquals(1, campaignDisplayResults.size());
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
 
         campaignDisplayResults =  new HashMap<>();
         payload = new HashMap<>();
         payload.put("artist", "this should not match");
         assertNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), campaignDisplayResults));
         assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.RULE_RESULT_NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
 
         campaignDisplayResults =  new HashMap<>();
         payload = new HashMap<>();
         payload.put("artist", "queen");
         assertNotNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), campaignDisplayResults));
-        assertEquals(0, campaignDisplayResults.size());
+        assertEquals(1, campaignDisplayResults.size());
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
 
         campaignDisplayResults =  new HashMap<>();
         payload = new HashMap<>();
         payload.put("artist", "this should not match");
         assertNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), campaignDisplayResults));
         assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.RULE_RESULT_NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
 
         campaignDisplayResults =  new HashMap<>();
         payload = new HashMap<>();
         payload.put("extra", "unused");
         assertNotNull(campaign.getMessageForEvent("music.condition3", payload, new Date(), campaignDisplayResults));
-        assertEquals(0, campaignDisplayResults.size());
+        assertEquals(1, campaignDisplayResults.size());
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
 
         campaignDisplayResults =  new HashMap<>();
         assertNull(campaign.getMessageForEvent("random.event", null, new Date(), campaignDisplayResults));
-        assertEquals(0, campaignDisplayResults.size());
+        assertEquals(1, campaignDisplayResults.size());
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
     }
 }

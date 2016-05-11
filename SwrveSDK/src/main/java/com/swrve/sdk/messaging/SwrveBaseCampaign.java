@@ -64,7 +64,7 @@ public abstract class SwrveBaseCampaign {
 
         // Parse campaign triggers
         String triggersJson = campaignData.getString("triggers");
-        triggers = Trigger.fromJson(triggersJson);
+        triggers = Trigger.fromJson(triggersJson, id);
 
         // Parse campaign rules
         JSONObject rules = campaignData.getJSONObject("rules");

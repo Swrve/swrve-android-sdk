@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.swrve.sdk.SwrveCampaignDisplayer.RULE_RESULT_CAMPAIGN_NOT_DOWNLOADED;
+import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_NOT_DOWNLOADED;
 
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
@@ -156,7 +156,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
 
         String resultText = "Campaign " + this.getId() + " hasn't finished downloading.";
         if (campaignDisplayResult != null) {
-            campaignDisplayResult.put(id, campaignDisplayer.buildResult(RULE_RESULT_CAMPAIGN_NOT_DOWNLOADED, resultText));
+            campaignDisplayResult.put(id, campaignDisplayer.buildResult(CAMPAIGN_NOT_DOWNLOADED, resultText));
         }
         SwrveLogger.i(LOG_TAG, resultText);
 

@@ -56,8 +56,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.swrve.sdk.SwrveCampaignDisplayer.RULE_RESULT_CAMPAIGN_WRONG_ORIENTATION;
-import static com.swrve.sdk.SwrveCampaignDisplayer.RULE_RESULT_ELIGIBLE_BUT_OTHER_CHOSEN;
+import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_WRONG_ORIENTATION;
+import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.ELIGIBLE_BUT_OTHER_CHOSEN;
 
 /**
  * Main base class implementation of the Swrve SDK.
@@ -868,7 +868,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             if (!campaignMessages.containsKey(otherCampaignId)) {
                                 campaignMessages.put(otherCampaignId, otherMessage.getId());
                                 String resultText = "Campaign " + campaign.getId() + " was selected for display ahead of this campaign";
-                                campaignDisplayResults.put(otherCampaignId, campaignDisplayer.buildResult(RULE_RESULT_ELIGIBLE_BUT_OTHER_CHOSEN, resultText));
+                                campaignDisplayResults.put(otherCampaignId, campaignDisplayer.buildResult(ELIGIBLE_BUT_OTHER_CHOSEN, resultText));
                             }
                         }
                     }
@@ -952,7 +952,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             int campaignId = candidateMessage.getCampaign().getId();
                             campaignMessages.put(campaignId, candidateMessage.getId());
                             String resultText = "Message didn't support the given orientation: " + orientation;
-                            campaignDisplayResults.put(campaignId, campaignDisplayer.buildResult(RULE_RESULT_CAMPAIGN_WRONG_ORIENTATION, resultText));
+                            campaignDisplayResults.put(campaignId, campaignDisplayer.buildResult(CAMPAIGN_WRONG_ORIENTATION, resultText));
                         }
                     }
                 }
@@ -967,7 +967,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             if (!campaignMessages.containsKey(otherCampaignId)) {
                                 campaignMessages.put(otherCampaignId, otherMessage.getId());
                                 String resultText = "Campaign " + campaign.getId() + " was selected for display ahead of this campaign";
-                                campaignDisplayResults.put(otherCampaignId, campaignDisplayer.buildResult(RULE_RESULT_ELIGIBLE_BUT_OTHER_CHOSEN, resultText));
+                                campaignDisplayResults.put(otherCampaignId, campaignDisplayer.buildResult(ELIGIBLE_BUT_OTHER_CHOSEN, resultText));
                             }
                         }
                     }

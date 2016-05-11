@@ -7,6 +7,7 @@ public class Conditions {
     private String key;
     private String op;
     private String value;
+    private List<Arg> args;
 
     public String getKey() {
         return key;
@@ -19,8 +20,6 @@ public class Conditions {
     public String getValue() {
         return value;
     }
-
-    private List<Arg> args;
 
     public List<Arg> getArgs() {
         return args;
