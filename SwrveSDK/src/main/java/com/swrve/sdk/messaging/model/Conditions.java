@@ -1,11 +1,20 @@
 package com.swrve.sdk.messaging.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 public class Conditions {
 
+    public enum Op {
+        @SerializedName("and")
+        AND,
+        @SerializedName("eq")
+        EQ
+    }
+
+    private Op op = null;
     private String key;
-    private String op;
     private String value;
     private List<Arg> args;
 
@@ -13,7 +22,7 @@ public class Conditions {
         return key;
     }
 
-    public String getOp() {
+    public Op getOp() {
         return op;
     }
 

@@ -1,15 +1,23 @@
 package com.swrve.sdk.messaging.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Arg {
+
+    public enum Op {
+        @SerializedName("eq")
+        EQ
+    }
+
     private String key;
-    private String op;
+    private Op op;
     private String value;
 
     public String getKey() {
         return key;
     }
 
-    public String getOp() {
+    public Op getOp() {
         return op;
     }
 

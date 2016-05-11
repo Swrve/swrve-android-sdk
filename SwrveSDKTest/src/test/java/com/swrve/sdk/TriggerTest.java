@@ -5,6 +5,7 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaign;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.model.Arg;
 import com.swrve.sdk.messaging.model.Conditions;
 import com.swrve.sdk.messaging.model.Trigger;
 
@@ -94,20 +95,20 @@ public class TriggerTest extends SwrveBaseTest {
         assertEquals("music.condition1", trigger1.getEventName());
         assertNotNull(trigger1.getConditions());
         Conditions conditions = trigger1.getConditions();
-        assertEquals("and", conditions.getOp());
+        assertEquals(Conditions.Op.AND, conditions.getOp());
         assertEquals(2, conditions.getArgs().size());
         assertEquals("artist", conditions.getArgs().get(0).getKey());
-        assertEquals("eq", conditions.getArgs().get(0).getOp());
+        assertEquals(Arg.Op.EQ, conditions.getArgs().get(0).getOp());
         assertEquals("prince", conditions.getArgs().get(0).getValue());
         assertEquals("song", conditions.getArgs().get(1).getKey());
-        assertEquals("eq", conditions.getArgs().get(1).getOp());
+        assertEquals(Arg.Op.EQ, conditions.getArgs().get(1).getOp());
         assertEquals("purple rain", conditions.getArgs().get(1).getValue());
 
         Trigger trigger2 = triggers.get(1);
         assertEquals("music.condition2", trigger2.getEventName());
         assertNotNull(trigger2.getConditions());
         assertNull(trigger2.getConditions().getArgs());
-        assertEquals("eq", trigger2.getConditions().getOp());
+        assertEquals(Conditions.Op.EQ, trigger2.getConditions().getOp());
         assertEquals("artist", trigger2.getConditions().getKey());
         assertEquals("queen", trigger2.getConditions().getValue());
 
@@ -115,6 +116,121 @@ public class TriggerTest extends SwrveBaseTest {
         assertEquals("music.condition3", trigger3.getEventName());
         assertNull(trigger3.getConditions().getArgs());
         assertNull(trigger3.getConditions().getOp());
+    }
+
+    @Test
+    public void testTriggerModelWithInvalidConditions() {
+        // if any trigger is invalid, then all triggers are null'ed.
+
+        String unsupportedOp = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"key\": \"artist\",\n" +
+                "        \"op\": \"unsupported_op\",\n" +
+                "        \"value\": \"queen\"\n" +
+                "    }\n" +
+                "}]";
+        List<Trigger> triggers = Trigger.fromJson(unsupportedOp, 1);
+        assertNull(triggers);
+
+        String nullKey = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"key\": null,\n" +
+                "        \"op\": \"eq\",\n" +
+                "        \"value\": \"queen\"\n" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(nullKey, 1);
+        assertNull(triggers);
+
+        String nullValue = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"key\": \"artist\",\n" +
+                "        \"op\": \"eq\",\n" +
+                "        \"value\": null\n" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(nullValue, 1);
+        assertNull(triggers);
+
+        String missingArgs = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"key\": \"artist\",\n" +
+                "        \"op\": \"and\",\n" +
+                "        \"value\": \"queen\"\n" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(missingArgs, 1);
+        assertNull(triggers);
+
+        String nullArg = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"op\": \"and\",\n" +
+                "        \"args\": null" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(nullArg, 1);
+        assertNull(triggers);
+
+        String nullArgKey = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"op\": \"and\",\n" +
+                "        \"args\": [{\n" +
+                "            \"key\": null,\n" +
+                "            \"op\": \"eq\",\n" +
+                "            \"value\": \"prince\"\n" +
+                "        }]" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(nullArgKey, 1);
+        assertNull(triggers);
+
+        String nullArgOp = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"op\": \"and\",\n" +
+                "        \"args\": [{\n" +
+                "            \"key\": \"artist\",\n" +
+                "            \"op\": null,\n" +
+                "            \"value\": \"prince\"\n" +
+                "        }]" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(nullArgOp, 1);
+        assertNull(triggers);
+
+        String nullArgValue = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"op\": \"and\",\n" +
+                "        \"args\": [{\n" +
+                "            \"key\": \"artist\",\n" +
+                "            \"op\": \"eq\",\n" +
+                "            \"value\": null\n" +
+                "        }]" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(nullArgValue, 1);
+        assertNull(triggers);
+
+        String unsupportedArgOp = "[{\n" +
+                "    \"event_name\": \"invalid.trigger\",\n" +
+                "    \"conditions\": {\n" +
+                "        \"op\": \"and\",\n" +
+                "        \"args\": [{\n" +
+                "            \"key\": \"artist\",\n" +
+                "            \"op\": \"unsupported_op\",\n" +
+                "            \"value\": null\n" +
+                "        }]" +
+                "    }\n" +
+                "}]";
+        triggers = Trigger.fromJson(unsupportedArgOp, 1);
+        assertNull(triggers);
     }
 
     @Test

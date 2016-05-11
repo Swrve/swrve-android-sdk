@@ -40,19 +40,19 @@ public class Trigger {
                 return null;
             } else if (conditions.getOp() == null && conditions.getValue() == null && conditions.getKey() == null && conditions.getArgs() == null) {
                 continue; // no conditions is valid, check next trigger
-            } else if ("and".equals(conditions.getOp())) {
+            } else if (Conditions.Op.AND.equals(conditions.getOp())) {
                 if (conditions.getArgs() == null || conditions.getArgs().size() == 0) {
                     SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
                     return null;
                 } else {
                     for (Arg arg : conditions.getArgs()) {
-                        if (arg.getKey() == null || arg.getOp() == null || !"eq".equals(arg.getOp()) || arg.getValue() == null) {
+                        if (arg.getKey() == null || arg.getOp() == null || !Arg.Op.EQ.equals(arg.getOp()) || arg.getValue() == null) {
                             SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
                             return null;
                         }
                     }
                 }
-            } else if ("eq".equals(conditions.getOp())) {
+            } else if (Conditions.Op.EQ.equals(conditions.getOp())) {
                 if (conditions.getKey() == null || conditions.getValue() == null) {
                     SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
                     return null;
