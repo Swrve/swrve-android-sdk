@@ -724,8 +724,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             public void run() {
                 try {
                     autoShowMessagesEnabled = false;
-                } catch(Exception ex) {
-                    throw ex;
                 } finally {
                     timedService.shutdownNow();
                 }
@@ -1307,8 +1305,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                 public void run() {
                     try {
                         swrve.refreshCampaignsAndResources();
-                    } catch(Exception ex) {
-                        throw ex;
                     } finally {
                         timedService.shutdownNow();
                     }
