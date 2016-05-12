@@ -718,11 +718,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      * Ensure that after SwrveConfig.autoShowMessagesMaxDelay milliseconds autoshow is disabled
      */
     protected void disableAutoShowAfterDelay() {
-        ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
+        final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
         timedService.schedule(new Runnable() {
             @Override
             public void run() {
-                autoShowMessagesEnabled = false;
+                try {
+                    autoShowMessagesEnabled = false;
+                } catch(Exception ex) {
+                    throw ex;
+                } finally {
+                    timedService.shutdownNow();
+                }
             }
         }, config.getAutoShowMessagesMaxDelay(), TimeUnit.MILLISECONDS);
     }
@@ -921,7 +927,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
     protected void downloadAssets(final Set<String> assetsQueue) {
         assetsCurrentlyDownloading = true;
-        ExecutorService resourceDownloadExecutor = Executors.newSingleThreadExecutor();
+        final ExecutorService resourceDownloadExecutor = Executors.newSingleThreadExecutor();
         resourceDownloadExecutor.execute(SwrveRunnables.withoutExceptions(new Runnable() {
             @Override
             public void run() {
@@ -939,6 +945,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
                     autoShowMessages();
                 } catch (SecurityException e) {
                     SwrveLogger.e(LOG_TAG, "Error downloading assets", e);
+                } finally {
+                    resourceDownloadExecutor.shutdownNow();
                 }
             }
         }));
@@ -1293,11 +1301,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.sendQueuedEvents();
             eventsWereSent = false;
-            ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
+            final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
             timedService.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    swrve.refreshCampaignsAndResources();
+                    try {
+                        swrve.refreshCampaignsAndResources();
+                    } catch(Exception ex) {
+                        throw ex;
+                    } finally {
+                        timedService.shutdownNow();
+                    }
                 }
             }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
         }
@@ -1324,14 +1338,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
         // Start repeating timer to begin checking if campaigns/resources needs updating. It starts straight away.
         eventsWereSent = true;
-        campaignsAndResourcesExecutor = new ScheduledThreadPoolExecutor(1);
-        campaignsAndResourcesExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-        campaignsAndResourcesExecutor.scheduleWithFixedDelay(new Runnable() {
+        final ScheduledThreadPoolExecutor localExecutor = new ScheduledThreadPoolExecutor(1);
+        localExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        localExecutor.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 checkForCampaignAndResourcesUpdates();
             }
         }, 0l, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
+        campaignsAndResourcesExecutor = localExecutor;
     }
 
     public Set<String> getAssetsOnDisk() {
