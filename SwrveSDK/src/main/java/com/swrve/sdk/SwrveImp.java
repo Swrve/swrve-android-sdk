@@ -742,8 +742,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         timedService.schedule(new Runnable() {
             @Override
             public void run() {
-                autoShowMessagesEnabled = false;
-                timedService.shutdownNow();
+                try {
+                    autoShowMessagesEnabled = false;
+                } catch(Exception ex) {
+                    throw ex;
+                } finally {
+                    timedService.shutdownNow();
+                }
             }
         }, config.getAutoShowMessagesMaxDelay(), TimeUnit.MILLISECONDS);
     }
@@ -1320,8 +1325,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             timedService.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    swrve.refreshCampaignsAndResources();
-                    timedService.shutdownNow();
+                    try {
+                        swrve.refreshCampaignsAndResources();
+                    } catch(Exception ex) {
+                        throw ex;
+                    } finally {
+                        timedService.shutdownNow();
+                    }
                 }
             }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
         }
