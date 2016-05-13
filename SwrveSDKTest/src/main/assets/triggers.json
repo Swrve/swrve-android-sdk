@@ -1,0 +1,25 @@
+[{
+    "event_name": "music.condition1",
+    "conditions": {
+        "args": [{
+            "key": "artist",
+            "op": "eq",
+            "value": "prince"
+        }, {
+            "key": "song",
+            "op": "eq",
+            "value": "purple rain"
+        }],
+        "op": "and"
+    }
+}, {
+    "event_name": "music.condition2",
+    "conditions": {
+        "key": "artist",
+        "op": "eq",
+        "value": "queen"
+    }
+}, {
+    "event_name": "music.condition3",
+    "conditions": {}
+}]

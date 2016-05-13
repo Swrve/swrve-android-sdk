@@ -1,6 +1,5 @@
 package com.swrve.sdk.conversations;
 
-import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -8,6 +7,7 @@ import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
+import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 
 import org.json.JSONArray;
@@ -20,22 +20,18 @@ import java.util.Set;
 
 public class SwrveConversation extends SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
-    // SwrveSDK reference
-    protected transient SwrveBase<?, ?> swrve;
-    // Parent in-app campaign
-    protected transient SwrveConversationCampaign campaign;
+    protected transient SwrveConversationCampaign campaign; // Parent in-app campaign
 
     /**
      * Load message from JSON data.
      *
-     * @param swrve       SwrveTalk object that will manage the data from the campaign.
      * @param campaign         Related campaign.
      * @param conversationData JSON data containing the message details.
+     * @param campaignManager
      * @throws JSONException
      */
-    public SwrveConversation(SwrveBase<?, ?> swrve, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
-        super(conversationData, swrve.getCacheDir());
-        this.swrve = swrve;
+    public SwrveConversation(SwrveConversationCampaign campaign, JSONObject conversationData, ISwrveCampaignManager campaignManager) throws JSONException {
+        super(conversationData, campaignManager.getCacheDir());
         this.campaign = campaign;
 
         try {
@@ -60,21 +56,20 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
         setPages(pages);
     }
 
-    protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = swrve.getAssetsOnDisk();
+    protected boolean assetInCache(Set<String> assetsOnDisk, String asset) {
         return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
     }
 
     /**
      * @return has the conversation been downloaded fully yet
      */
-    public boolean areAssetsReady() {
+    public boolean areAssetsReady(Set<String> assetsOnDisk) {
         if (this.pages != null) {
             for (ConversationPage conversationPage : pages) {
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
                     if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
                         Content modelContent = (Content) conversationAtom;
-                        if (!this.assetInCache(modelContent.getValue())) {
+                        if (!this.assetInCache(assetsOnDisk, modelContent.getValue())) {
                             SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
                             return false;
                         }
