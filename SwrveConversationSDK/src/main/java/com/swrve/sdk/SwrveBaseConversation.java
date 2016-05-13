@@ -14,8 +14,6 @@ import java.util.ArrayList;
 // This class has to be extended by the SwrveSDK to add campaign and the other commented code
 public class SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
-    // Swrve SDK reference
-    protected transient ISwrveConversationSDK swrveConversationSDK;
     // Identifies the message in a campaign
     protected int id;
     // Customer defined name of the conversation as it appears in the web app
@@ -32,7 +30,6 @@ public class SwrveBaseConversation implements Serializable {
      * @throws JSONException
      */
     public SwrveBaseConversation(JSONObject conversationData, File cacheDir) throws JSONException {
-
         this.cacheDir = cacheDir;
 
         try {

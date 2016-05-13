@@ -24,6 +24,8 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
     protected transient SwrveBase<?, ?> swrve;
     // Parent in-app campaign
     protected transient SwrveConversationCampaign campaign;
+    // Priority of the conversation
+    protected int priority = 9999;
 
     /**
      * Load message from JSON data.
@@ -58,6 +60,10 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
             pages.add(ConversationPage.fromJson(o));
         }
         setPages(pages);
+
+        if (conversationData.has("priority")) {
+            setPriority(conversationData.getInt("priority"));
+        }
     }
 
     protected boolean assetInCache(String asset) {
@@ -112,5 +118,16 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
      */
     public SwrveConversationCampaign getCampaign() {
         return campaign;
+    }
+
+    /**
+     * @return the message priority.
+     */
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 }
