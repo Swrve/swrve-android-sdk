@@ -133,7 +133,7 @@ public class SwrveCampaignDisplayer {
 
         List<Trigger> triggers = swrveCampaign.getTriggers();
         for (Trigger trigger : triggers) {
-            if(eventName.equalsIgnoreCase(trigger.getEventName())) {
+            if (eventName != null && eventName.equalsIgnoreCase(trigger.getEventName())) {
                 Conditions conditions = trigger.getConditions();
                 if (conditions.getOp() == null && conditions.getArgs() == null) {
                     String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
@@ -142,7 +142,7 @@ public class SwrveCampaignDisplayer {
                 } else if (Conditions.Op.AND.equals(conditions.getOp())) {
                     boolean conditionsMatchPayload = false;
                     for (Arg arg : conditions.getArgs()) {
-                        if (payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
+                        if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
                             conditionsMatchPayload = true;
                         } else {
                             String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
@@ -157,7 +157,7 @@ public class SwrveCampaignDisplayer {
                         return true;
                     }
                 } else if (Conditions.Op.EQ.equals(conditions.getOp())) {
-                    if (payload.containsKey(conditions.getKey()) && payload.get(conditions.getKey()).equalsIgnoreCase(conditions.getValue())) {
+                    if (payload != null && payload.containsKey(conditions.getKey()) && payload.get(conditions.getKey()).equalsIgnoreCase(conditions.getValue())) {
                         String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
                         logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.MATCH, resultText);
                         return true;
@@ -236,7 +236,7 @@ public class SwrveCampaignDisplayer {
         this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
     }
 
-    public Result buildResult(DisplayResult resultCode, String resultText){
+    public Result buildResult(DisplayResult resultCode, String resultText) {
         Result result = new Result();
         result.resultCode = resultCode;
         result.resultText = resultText;

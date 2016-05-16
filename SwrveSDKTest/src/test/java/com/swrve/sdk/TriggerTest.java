@@ -283,5 +283,23 @@ public class TriggerTest extends SwrveBaseTest {
         assertNull(campaign.getMessageForEvent("random.event", null, new Date(), campaignDisplayResults));
         assertEquals(1, campaignDisplayResults.size());
         assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+
+        // match the event name but null payload
+        campaignDisplayResults =  new HashMap<>();
+        assertNull(campaign.getMessageForEvent("music.condition1", null, new Date(), campaignDisplayResults));
+        assertEquals(1, campaignDisplayResults.size());
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+
+        // match the event name but null payload
+        campaignDisplayResults =  new HashMap<>();
+        assertNull(campaign.getMessageForEvent("music.condition2", null, new Date(), campaignDisplayResults));
+        assertEquals(1, campaignDisplayResults.size());
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+
+        // null event name
+        campaignDisplayResults =  new HashMap<>();
+        assertNull(campaign.getMessageForEvent(null, null, new Date(), campaignDisplayResults));
+        assertEquals(1, campaignDisplayResults.size());
+        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
     }
 }
