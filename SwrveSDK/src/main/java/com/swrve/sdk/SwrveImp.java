@@ -86,15 +86,15 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Internal base class implementation of the Swrve SDK.
  */
-abstract class SwrveImp<T, C extends SwrveConfigBase> {
+abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager {
     protected static final String PLATFORM = "Android ";
     protected static String version = "4.5";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
     protected static final String CAMPAIGNS_STATE_CATEGORY = "SwrveCampaignSettings";
     protected static final String APP_VERSION_CATEGORY = "AppVersion";
-    protected static final int CAMPAIGN_ENDPOINT_VERSION = 5;
-    protected static final String TEMPLATE_VERSION = "1";
+    protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
+    protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
@@ -107,7 +107,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected static final String SWRVE_REFERRER_ID = "swrve.referrer_id";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
-    protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
+    public static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";
     protected static final String LOG_TAG = "SwrveSDK";
     protected static final List<String> SUPPORTED_REQUIREMENTS = Arrays.asList("android");
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 150;
@@ -151,6 +151,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
     protected List<SwrveBaseCampaign> campaigns;
+    protected SwrveCampaignDisplayer campaignDisplayer;
     protected Map<Integer, SwrveCampaignState> campaignsState;
     protected Set<String> assetsOnDisk;
     protected boolean assetsCurrentlyDownloading;
@@ -166,10 +167,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected boolean initialised = false;
     protected boolean mustCleanInstance;
     protected Date initialisedTime;
-    protected Date showMessagesAfterLaunch;
-    protected Date showMessagesAfterDelay;
-    protected long messagesLeftToShow;
-    protected int minDelayBetweenMessage;
     protected File cacheDir;
     protected int deviceWidth;
     protected int deviceHeight;
@@ -483,7 +480,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         try {
             storageExecutorExecute(new QueueEventRunnable(eventType, parameters, payload));
             if (triggerEventListener && eventListener != null) {
-                eventListener.onEvent(EventHelper.getEventName(eventType, parameters));
+                eventListener.onEvent(EventHelper.getEventName(eventType, parameters), payload);
             }
         } catch (Exception exp) {
             SwrveLogger.e(LOG_TAG, "Unable to queue event", exp);
@@ -606,23 +603,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         ActivityCompat.requestPermissions(activity, permissions, 0);
     }
 
+    @Override
     public Date getNow() {
         return new Date();
-    }
-
-    protected boolean hasShowTooManyMessagesAlready() {
-        return (messagesLeftToShow <= 0);
-    }
-
-    protected boolean isTooSoonToShowMessageAfterLaunch(Date now) {
-        return now.before(showMessagesAfterLaunch);
-    }
-
-    protected boolean isTooSoonToShowMessageAfterDelay(Date now) {
-        if (showMessagesAfterDelay == null) {
-            return false;
-        }
-        return now.before(showMessagesAfterDelay);
     }
 
     protected void saveCampaignsInCache(final JSONObject campaignContent) {
@@ -666,7 +649,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
         for (final SwrveBaseCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-            if (campaign.hasElementForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER)) {
+            Map<String, String> emptyPayload = new HashMap<String, String>();
+            boolean canTrigger = campaignDisplayer.canTrigger(campaign, SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, emptyPayload, null);
+            if (canTrigger) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
@@ -703,7 +688,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     protected void autoShowConversation(SwrveBase<T, C> swrve) {
         try {
             if (conversationListener != null && autoShowMessagesEnabled) {
-                SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+                SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, new HashMap<String, String>());
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
                     autoShowMessagesEnabled = false;
@@ -754,8 +739,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
 
             // Version check
             String version = json.getString("version");
-            if (!version.equals(TEMPLATE_VERSION)) {
-                SwrveLogger.i(LOG_TAG, "Campaign JSON has the wrong version. No campaigns loaded.");
+            if (!version.equals(CAMPAIGN_RESPONSE_VERSION)) {
+                SwrveLogger.i(LOG_TAG, "Campaign JSON (" + version + ") has the wrong version for this sdk (" + CAMPAIGN_RESPONSE_VERSION + "). No campaigns loaded." );
                 return;
             }
 
@@ -789,12 +774,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
             int minDelay = (rules.has("min_delay_between_messages")) ? rules.getInt("min_delay_between_messages") : DEFAULT_MIN_DELAY;
 
             Date now = getNow();
-            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
-            this.minDelayBetweenMessage = minDelay;
-            this.messagesLeftToShow = maxShows;
+            Date showMessagesAfterLaunch = SwrveHelper.addTimeInterval(initialisedTime, delay, Calendar.SECOND);
+            campaignDisplayer.setShowMessagesAfterLaunch(showMessagesAfterLaunch);
+            campaignDisplayer.setMinDelayBetweenMessage(minDelay);
+            campaignDisplayer.setMessagesLeftToShow(maxShows);
 
             SwrveLogger.i(LOG_TAG, "App rules OK: Delay Seconds: " + delay + " Max shows: " + maxShows);
-            SwrveLogger.i(LOG_TAG, "Time is " + now.toString() + " show messages after " + this.showMessagesAfterLaunch.toString());
+            SwrveLogger.i(LOG_TAG, "Time is " + now.toString() + " show messages after " + showMessagesAfterLaunch.toString());
 
             Map<Integer, String> campaignsDownloaded = null;
 
@@ -951,11 +937,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
     }
 
     protected SwrveCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
+        return new SwrveCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
     protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveConversationCampaign((SwrveBase<?, ?>) this, campaignData, assetsQueue);
+        return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
     @RequiresPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -1211,6 +1197,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
      */
     protected void initCampaigns() {
         campaigns = new ArrayList<SwrveBaseCampaign>();
+        campaignDisplayer = new SwrveCampaignDisplayer(qaUser);
         campaignsState = new HashMap<Integer, SwrveCampaignState>();
 
         try {
@@ -1345,6 +1332,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> {
         campaignsAndResourcesExecutor = localExecutor;
     }
 
+    @Override
     public Set<String> getAssetsOnDisk() {
         synchronized (assetsOnDisk) {
             return this.assetsOnDisk;

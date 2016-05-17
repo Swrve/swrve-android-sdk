@@ -1,6 +1,8 @@
 package com.swrve.sdk.qa;
 
 import android.os.Bundle;
+
+import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveLogger;
 
 import com.swrve.sdk.SwrveBase;
@@ -129,7 +131,7 @@ public class SwrveQAUser {
     }
 
 
-    public void trigger(String event, SwrveConversation conversationShown, Map<Integer, String> campaignReasons, Map<Integer, Integer> campaignConversations) {
+    public void trigger(String event, SwrveConversation conversationShown, Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults, Map<Integer, Integer> campaignConversations) {
         try {
             if (canMakeTriggerRequest()) {
                 String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/trigger";
@@ -140,17 +142,17 @@ public class SwrveQAUser {
 
                 // Add campaigns that were not displayed
                 JSONArray campaignsJson = new JSONArray();
-                Iterator<Integer> campaignIt = campaignReasons.keySet().iterator();
+                Iterator<Integer> campaignIt = campaignDisplayResults.keySet().iterator();
                 while (campaignIt.hasNext()) {
                     int campaignId = campaignIt.next();
-                    String reason = campaignReasons.get(campaignId);
+                    SwrveCampaignDisplayer.Result result = campaignDisplayResults.get(campaignId);
                     Integer conversationId = campaignConversations.get(campaignId);
 
                     JSONObject campaignInfo = new JSONObject();
                     campaignInfo.put("id", campaignId);
                     campaignInfo.put("displayed", false);
                     campaignInfo.put("conversation_id", (conversationId == null) ? -1 : conversationId);
-                    campaignInfo.put("reason", (reason == null) ? "" : reason);
+                    campaignInfo.put("reason", (result == null) ? "" : result.resultText);
                     campaignsJson.put(campaignInfo);
                 }
 
@@ -172,7 +174,7 @@ public class SwrveQAUser {
         }
     }
 
-    public void trigger(String event, SwrveMessage messageShown, Map<Integer, String> campaignReasons, Map<Integer, Integer> campaignMessages) {
+    public void trigger(String event, SwrveMessage messageShown, Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults, Map<Integer, Integer> campaignMessages) {
         try {
             if (canMakeTriggerRequest()) {
                 String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/trigger";
@@ -183,17 +185,17 @@ public class SwrveQAUser {
 
                 // Add campaigns that were not displayed
                 JSONArray campaignsJson = new JSONArray();
-                Iterator<Integer> campaignIt = campaignReasons.keySet().iterator();
+                Iterator<Integer> campaignIt = campaignDisplayResults.keySet().iterator();
                 while (campaignIt.hasNext()) {
                     int campaignId = campaignIt.next();
-                    String reason = campaignReasons.get(campaignId);
+                    SwrveCampaignDisplayer.Result result = campaignDisplayResults.get(campaignId);
                     Integer messageId = campaignMessages.get(campaignId);
 
                     JSONObject campaignInfo = new JSONObject();
                     campaignInfo.put("id", campaignId);
                     campaignInfo.put("displayed", false);
                     campaignInfo.put("message_id", (messageId == null) ? -1 : messageId);
-                    campaignInfo.put("reason", (reason == null) ? "" : reason);
+                    campaignInfo.put("reason", (result == null) ? "" : result.resultText);
                     campaignsJson.put(campaignInfo);
                 }
 

@@ -27,10 +27,32 @@ publishing {
 
     publications {
         main(MavenPublication) {
-            artifactId 'swrve-common'
-            groupId 'com.swrve.sdk.android'
-            version '4.5.0'
-            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar"]
+            artifactId project.SWRVE_COMMON_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidCommonJavadocsJar, androidCommonSourcesJar]
         }
     }
 }
+
+task androidCommonJavadoc(type: Javadoc) {
+    description "Generates Javadoc for Common."
+    source = files(android.sourceSets.main.java.srcDirs)
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(android.libraryVariants.javaCompile.classpath.files) + files(ext.androidJar)
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+    exclude '**/README.md'
+    failOnError false
+}
+task androidCommonJavadocsJar(type: Jar) {
+    description "Package Javadoc for Common."
+    classifier = 'javadoc'
+    from androidCommonJavadoc
+}
+task androidCommonSourcesJar(type: Jar) {
+    description "Package sources for Common."
+    classifier = 'source'
+    from files(android.sourceSets.main.java.srcDirs)
+}
+
