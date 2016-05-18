@@ -2,10 +2,9 @@ package com.swrve.sdk.messaging;
 
 import android.graphics.Color;
 import android.graphics.Point;
-import com.swrve.sdk.SwrveLogger;
 
-import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,7 +17,7 @@ import java.util.List;
  * In-app message format with a given language, size and orientation.
  */
 public class SwrveMessageFormat {
-    protected static final String LOG_TAG = "SwrveMessagingSDK";
+    protected static final String LOG_TAG = "SwrveSDK";
 
     // Name of the format
     protected String name;
@@ -46,7 +45,7 @@ public class SwrveMessageFormat {
      * @param messageFormatData
      * @throws JSONException
      */
-    public SwrveMessageFormat(SwrveBase<?, ?> controller, SwrveMessage message, JSONObject messageFormatData) throws JSONException {
+    public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData, int defaultBackgroundColor) throws JSONException {
         this.message = message;
         this.buttons = new ArrayList<SwrveButton>();
         this.images = new ArrayList<SwrveImage>();
@@ -65,7 +64,7 @@ public class SwrveMessageFormat {
         }
 
         // Background color (or use configured default)
-        setBackgroundColor(controller.getConfig().getDefaultBackgroundColor());
+        setBackgroundColor(defaultBackgroundColor);
         if (messageFormatData.has("color")) {
             String strColor = messageFormatData.getString("color");
             if (!SwrveHelper.isNullOrEmpty(strColor)) {

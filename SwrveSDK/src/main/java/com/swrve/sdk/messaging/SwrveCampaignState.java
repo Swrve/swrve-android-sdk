@@ -47,7 +47,7 @@ public class SwrveCampaignState {
 
     // Time we can show the next message
     // Will be based on time previous message was shown + minDelayBetweenMessage
-    protected Date showMessagesAfterDelay;
+    public Date showMessagesAfterDelay;
 
     public SwrveCampaignState() {
         impressions = 0;
@@ -73,6 +73,10 @@ public class SwrveCampaignState {
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error while trying to load campaign settings", e);
         }
+    }
+
+    public int getImpressions() {
+        return impressions;
     }
 
     /**

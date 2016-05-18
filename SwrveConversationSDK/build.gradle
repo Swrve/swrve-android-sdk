@@ -39,19 +39,19 @@ publishing {
     publications {
         main(MavenPublication) {
 
-            artifactId 'swrve-conversations'
-            groupId 'com.swrve.sdk.android'
-            version '4.4.0'
-            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar"]
+            artifactId project.SWRVE_CONVERSATIONS_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidConversationsJavadocsJar, androidConversationsSourcesJar]
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
                 configurations.compile.allDependencies.each {
                     def dependencyNode = dependenciesNode.appendNode('dependency')
                     if (it.name == 'SwrveSDKCommon') {
-                        dependencyNode.appendNode('groupId', 'com.swrve.sdk.android')
-                        dependencyNode.appendNode('artifactId', 'swrve-common')
-                        dependencyNode.appendNode('version', '4.4.0')
+                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                        dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
                         dependencyNode.appendNode('scope', 'compile')
                     } else {
                         dependencyNode.appendNode('groupId', it.group)
@@ -64,4 +64,25 @@ publishing {
 
         }
     }
+}
+
+task androidConversationsJavadoc(type: Javadoc) {
+    description "Generates Javadoc for Conversations."
+    source = files(android.sourceSets.main.java.srcDirs)
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(android.libraryVariants.javaCompile.classpath.files) + files(ext.androidJar)
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+    exclude '**/README.md'
+    failOnError false
+}
+task androidConversationsJavadocsJar(type: Jar) {
+    description "Package Javadoc for Conversations."
+    classifier = 'javadoc'
+    from androidConversationsJavadoc
+}
+task androidConversationsSourcesJar(type: Jar) {
+    description "Package sources for Conversations."
+    classifier = 'source'
+    from files(android.sourceSets.main.java.srcDirs)
 }

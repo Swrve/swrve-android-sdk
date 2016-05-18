@@ -85,8 +85,10 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void refreshCampaignsAndResources();
 
+    @Deprecated
     SwrveMessage getMessageForEvent(String event);
 
+    @Deprecated
     SwrveMessage getMessageForId(int messageId);
 
     void buttonWasPressedByUser(SwrveButton button);
