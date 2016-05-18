@@ -6,6 +6,7 @@ import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
+import com.swrve.sdk.gcm.ISwrveSilentPushNotificationListener;
 
 public class SwrveSDK extends SwrveSDKBase {
 
@@ -62,6 +63,16 @@ public class SwrveSDK extends SwrveSDKBase {
     public static void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
         ((ISwrve) instance).setPushNotificationListener(pushNotificationListener);
+    }
+
+    /**
+     * Set the silent push notification listener.
+     *
+     * @param pushNotificationListener
+     */
+    public static void setSilentPushNotificationListener(ISwrveSilentPushNotificationListener pushNotificationListener) {
+        checkInstanceCreated();
+        ((ISwrve) instance).setSilentPushNotificationListener(pushNotificationListener);
     }
 
     /**

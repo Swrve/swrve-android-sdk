@@ -7,6 +7,7 @@ import android.util.Log;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
+import com.swrve.sdk.gcm.ISwrveSilentPushNotificationListener;
 
 public class SampleApplication extends Application {
 
@@ -24,6 +25,16 @@ public class SampleApplication extends Application {
             SwrveSDK.setPushNotificationListener(new ISwrvePushNotificationListener() {
                 @Override
                 public void onPushNotification(Bundle bundle) {
+                    if (bundle.containsKey("custom_key")) {
+                        String customValue = bundle.getString("custom_key");
+                        // Do something awesome with custom value!
+                        Log.d(LOG_TAG, "Received push payload " + customValue);
+                    }
+                }
+            });
+            SwrveSDK.setSilentPushNotificationListener(new ISwrveSilentPushNotificationListener() {
+                @Override
+                public void onSilentPushNotification(Bundle bundle) {
                     if (bundle.containsKey("custom_key")) {
                         String customValue = bundle.getString("custom_key");
                         // Do something awesome with custom value!
