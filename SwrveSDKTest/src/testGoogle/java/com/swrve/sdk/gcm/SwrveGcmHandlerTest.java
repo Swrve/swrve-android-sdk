@@ -48,7 +48,7 @@ public class SwrveGcmHandlerTest {
 
     @Test
     public void testOnHandleIntentService() throws Exception {
-        TestableSwrveGcmHandler handler = new TestableSwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
+        SwrveGcmHandler handler = new SwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
         Bundle validBundle = new Bundle();
         validBundle.putString("text", "validBundle");
         validBundle.putString(SwrveGcmConstants.SWRVE_TRACKING_KEY, "1");
@@ -60,7 +60,6 @@ public class SwrveGcmHandlerTest {
 
     @Test
     public void testOnMessageReceivedService() throws Exception {
-        TestableSwrveGcmHandler handler = new TestableSwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
         Bundle validBundle = new Bundle();
         validBundle.putString("text", "validBundle");
         validBundle.putString(SwrveGcmConstants.SWRVE_TRACKING_KEY, "1");
@@ -70,19 +69,16 @@ public class SwrveGcmHandlerTest {
 
     @Test
     public void testOnMessageReceivedHandler() throws Exception {
-        TestableSwrveGcmHandler handler = new TestableSwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
+        SwrveGcmHandler handler = new SwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
 
         Bundle nullBundle = null;
         boolean gcmHandled = handler.onMessageReceived("1234", nullBundle);
         assertFalse(gcmHandled);
-        assertFalse(handler.isSwrveRemoteNotificationReturn.isPresent());
 
         Bundle missingTrackingKey = new Bundle();
         missingTrackingKey.putString("text", "");
         gcmHandled = handler.onMessageReceived("1234", missingTrackingKey);
         assertFalse(gcmHandled);
-        assertTrue(handler.isSwrveRemoteNotificationReturn.isPresent());
-        assertFalse(handler.isSwrveRemoteNotificationReturn.get());
 
         Bundle validBundle = new Bundle();
         validBundle.putString("text", "validBundle");
@@ -91,14 +87,24 @@ public class SwrveGcmHandlerTest {
         validBundle.putString(SwrveGcmConstants.SWRVE_TRACKING_KEY, "1");
         gcmHandled = handler.onMessageReceived("1234", validBundle);
         assertTrue(gcmHandled);
-        assertTrue(handler.isSwrveRemoteNotificationReturn.isPresent());
-        assertTrue(handler.isSwrveRemoteNotificationReturn.get());
         assertNotification("validBundle", "content://settings/system/notification_sound", validBundle);
     }
 
     @Test
+    public void testOnMessageReceivedHandlerSilent() throws Exception {
+        SwrveGcmHandler handler = new SwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
+
+        Bundle validBundle = new Bundle();
+        validBundle.putString("customData", "some custom values");
+        validBundle.putString(SwrveGcmConstants.SWRVE_SILENT_TRACKING_KEY, "1");
+        boolean gcmHandled = handler.onMessageReceived("1234", validBundle);
+        assertTrue(gcmHandled);
+        assertNoNotification();
+    }
+
+    @Test
     public void testOnMessageReceivedCustomSound() throws Exception {
-        TestableSwrveGcmHandler handler = new TestableSwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
+        SwrveGcmHandler handler = new SwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
         Bundle validBundleCustomSound = new Bundle();
         validBundleCustomSound.putString("text", "validBundleCustomSound");
         validBundleCustomSound.putString("sound", "customSound");
@@ -106,8 +112,6 @@ public class SwrveGcmHandlerTest {
         validBundleCustomSound.putString(SwrveGcmConstants.SWRVE_TRACKING_KEY, "1");
         boolean gcmHandled = handler.onMessageReceived("1234", validBundleCustomSound);
         assertTrue(gcmHandled);
-        assertTrue(handler.isSwrveRemoteNotificationReturn.isPresent());
-        assertTrue(handler.isSwrveRemoteNotificationReturn.get());
         assertNotification("validBundleCustomSound", "android.resource://com.swrve.sdk.test/raw/customSound", validBundleCustomSound);
     }
 
@@ -118,7 +122,7 @@ public class SwrveGcmHandlerTest {
         SwrveQAUser swrveQAUser = new SwrveQAUser(swrve, jsonObject);
         swrveQAUser.bindToServices();
 
-        TestableSwrveGcmHandler handler = new TestableSwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
+        SwrveGcmHandler handler = new SwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
         Bundle validBundle = new Bundle();
         validBundle.putString("text", "hello there");
         validBundle.putString(SwrveGcmConstants.SWRVE_TRACKING_KEY, "1");
@@ -129,7 +133,7 @@ public class SwrveGcmHandlerTest {
 
     @Test
     public void testWithDeeplink() throws Exception {
-        TestableSwrveGcmHandler handler = new TestableSwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
+        SwrveGcmHandler handler = new SwrveGcmHandler(RuntimeEnvironment.application, swrveGcmService);
         swrveGcmService.handler = handler;
         Bundle deeplinkBundle = new Bundle();
         deeplinkBundle.putString("text", "deeplinkBundle");
@@ -137,8 +141,6 @@ public class SwrveGcmHandlerTest {
         deeplinkBundle.putString(SwrveGcmConstants.SWRVE_TRACKING_KEY, "1");
         boolean gcmHandled = handler.onMessageReceived("1234", deeplinkBundle);
         assertTrue(gcmHandled);
-        assertTrue(handler.isSwrveRemoteNotificationReturn.isPresent());
-        assertTrue(handler.isSwrveRemoteNotificationReturn.get());
         assertNotification("deeplinkBundle", null, deeplinkBundle);
     }
 
@@ -167,18 +169,9 @@ public class SwrveGcmHandlerTest {
         assertEquals("Android Test App", shadowNotification.getContentTitle());
     }
 
-    class TestableSwrveGcmHandler extends SwrveGcmHandler {
-
-        Optional<Boolean> isSwrveRemoteNotificationReturn = Optional.absent();
-
-        TestableSwrveGcmHandler(Context context, SwrveGcmIntentService swrveGcmService) {
-            super(context, swrveGcmService);
-        }
-
-        @Override
-        protected boolean isSwrveRemoteNotification(final Bundle msg) {
-            isSwrveRemoteNotificationReturn = Optional.of(super.isSwrveRemoteNotification(msg));
-            return isSwrveRemoteNotificationReturn.get();
-        }
+    private void assertNoNotification() {
+        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
+        assertEquals(0, notifications.size());
     }
 }

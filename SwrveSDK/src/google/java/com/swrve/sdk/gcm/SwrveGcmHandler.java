@@ -83,8 +83,9 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
                     ((Swrve)SwrveSDKBase.getInstance()).processSilentPush(msg);
                 }
                 gcmHandled = true;
+            } else {
+                SwrveLogger.i(TAG, "GCM notification: but not processing as its missing the " + SwrveGcmConstants.SWRVE_TRACKING_KEY);
             }
-            SwrveLogger.i(TAG, "GCM notification: but not processing as its missing the " + SwrveGcmConstants.SWRVE_TRACKING_KEY);
         }
         return gcmHandled;
     }
