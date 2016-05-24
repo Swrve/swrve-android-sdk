@@ -37,11 +37,6 @@ public abstract class SwrveConfigBase {
     private int maxEventsPerFlush = 50;
 
     /**
-     * Maximum number of concurrent downloads.
-     */
-    private int maxConcurrentDownloads = 10;
-
-    /**
      * Name of SQLite database to use for storage.
      */
     private String dbName = "swrve.db";
@@ -280,23 +275,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Maximum number of concurrent asset downloads.
-     */
-    public int getMaxConcurrentDownloads() {
-        return maxConcurrentDownloads;
-    }
-
-    /**
-     * Set the maximum number of concurrent asset downloads.
-     *
-     * @param maxConcurrentDownloads Maximum number of concurrent asset downloads.
-     */
-    public SwrveConfigBase setMaxConcurrentDownloads(int maxConcurrentDownloads) {
-        this.maxConcurrentDownloads = maxConcurrentDownloads;
-        return this;
-    }
-
-    /**
      * @return Name of the internal SQLite database.
      */
     public String getDbName() {
@@ -520,9 +498,8 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Cache folder used to save the in-app message images.
-     * The default is Context.getCacheDir().
-     *
+     * Cache folder used to save the campaign images.
+     * The default is Context.getCacheDir(). If permission to cacheDir is denied, then default is used.
      * @param cacheDir cache folder
      */
     public void setCacheDir(File cacheDir) {

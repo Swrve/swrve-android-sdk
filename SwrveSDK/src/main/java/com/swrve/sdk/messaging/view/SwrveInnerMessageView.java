@@ -128,10 +128,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
             bitmapCache = new HashSet<WeakReference<Bitmap>>();
 
             // Get device screen metrics
-            Point sizePoint = new Point();
-            ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(sizePoint);
-            int screenWidth = sizePoint.x;
-            int screenHeight = sizePoint.y;
+            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            int screenWidth = display.getWidth();
+            int screenHeight = display.getHeight();
 
             // Construct layout
             scale = format.getScale();
