@@ -128,10 +128,9 @@ public class SwrveInnerMessageView extends RelativeLayout {
             bitmapCache = new HashSet<WeakReference<Bitmap>>();
 
             // Get device screen metrics
-            Point sizePoint = new Point();
-            ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(sizePoint);
-            int screenWidth = sizePoint.x;
-            int screenHeight = sizePoint.y;
+            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            int screenWidth = display.getWidth();
+            int screenHeight = display.getHeight();
 
             // Construct layout
             scale = format.getScale();
@@ -196,12 +195,12 @@ public class SwrveInnerMessageView extends RelativeLayout {
                         @Override
                         public void onClick(View buttonView) {
                             try {
-                                message.getMessageController().buttonWasPressedByUser(button);
+                                message.getCampaignManager().buttonWasPressedByUser(button);
                                 message.getCampaign().messageDismissed();
                                 dismiss();
 
                                 if (button.getActionType() == SwrveActionType.Install) {
-                                    final String appInstallLink = message.getMessageController().getAppStoreURLForApp(button.getAppId());
+                                    final String appInstallLink = message.getCampaignManager().getAppStoreURLForApp(button.getAppId());
                                     // in case the install link was not set correctly log issue and return early
                                     // without calling the install button listener not starting the install intent
                                     if (SwrveHelper.isNullOrEmpty(appInstallLink)) {

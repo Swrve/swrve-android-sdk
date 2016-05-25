@@ -235,7 +235,7 @@ public class SwrveMessageView extends RelativeLayout {
         try {
             if (firstTime && firstDraw) {
                 firstDraw = false;
-                message.getMessageController().messageWasShownToUser(format);
+                message.getCampaignManager().messageWasShownToUser(format);
             }
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error while processing first impression", e);

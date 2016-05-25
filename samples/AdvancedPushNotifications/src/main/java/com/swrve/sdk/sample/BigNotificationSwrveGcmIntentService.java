@@ -9,12 +9,10 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
+import android.support.v4.content.ContextCompat;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.gcm.SwrveGcmIntentService;
-
-import java.io.IOException;
 
 /*
  * Use this class when you want to create richer local notifications form a push notification
@@ -62,6 +60,7 @@ public class BigNotificationSwrveGcmIntentService extends SwrveGcmIntentService 
 
             if (materialDesignIcon) {
                 mBuilder.setSmallIcon(R.mipmap.ic_launcher_material);
+                mBuilder.setColor(ContextCompat.getColor(this, R.color.easter_blue));
             } else {
                 mBuilder.setSmallIcon(R.mipmap.ic_launcher);
             }
