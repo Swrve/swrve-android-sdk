@@ -3,10 +3,12 @@ package com.swrve.sdk.messaging;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+
 /**
  * In-app message background image.
  */
-public class SwrveImage extends SwrveWidget {
+public class SwrveImage extends SwrveWidget implements Serializable {
     // Cached path of the image file on disk
     protected String file;
 

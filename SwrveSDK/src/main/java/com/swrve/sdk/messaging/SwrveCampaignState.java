@@ -5,12 +5,13 @@ import com.swrve.sdk.SwrveLogger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Used internally to save the state of campaigns
  */
-public class SwrveCampaignState {
+public class SwrveCampaignState implements Serializable {
     protected static final String LOG_TAG = "SwrveMessagingSDK";
 
     /**

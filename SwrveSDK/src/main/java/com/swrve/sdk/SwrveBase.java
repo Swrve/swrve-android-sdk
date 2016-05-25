@@ -2,11 +2,17 @@ package com.swrve.sdk;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Messenger;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -22,18 +28,18 @@ import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
+import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
@@ -94,7 +100,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
         bindToContext(activity);
         afterBind();
-        showPreviousMessage();
         return (T) this;
     }
 
@@ -179,15 +184,35 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 // Add custom message listener
                 if (messageListener == null) {
                     setMessageListener(new ISwrveMessageListener() {
-                        public void onMessage(final SwrveMessage message, boolean firstTime) {
-                            if (SwrveBase.this.activityContext != null) {
-                                final Activity activity = SwrveBase.this.activityContext.get();
-                                if (activity == null) {
-                                    SwrveLogger.e(LOG_TAG, "Can't display a message with a non-Activity context");
+                        public void onMessage(final SwrveMessage message) {
+                            // Start a Conversation activity to display the campaign
+                            if (SwrveBase.this.context != null) {
+                                final Context ctx = SwrveBase.this.context.get();
+                                if (ctx == null) {
+                                    SwrveLogger.e(LOG_TAG, "Can't display a conversation without a context");
                                     return;
                                 }
-                                // Run code on the UI thread
-                                activity.runOnUiThread(new DisplayMessageRunnable(SwrveBase.this, activity, message, firstTime));
+
+                                Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                intent.putExtra("inAppMessage", message);
+                                intent.putExtra("hideToolbar", config.isHideToolbar());
+                                intent.putExtra("minSampleSize", config.getMinSampleSize());
+                                Handler iamHandler = new Handler(new Handler.Callback() {
+                                    @Override
+                                    public boolean handleMessage(Message msg) {
+                                        try {
+                                            Bundle bundle = msg.peekData();
+                                            String eventType = bundle.getString("eventType");
+                                            processIAMMessage(message, eventType, bundle);
+                                        } catch(Exception exp) {
+                                            SwrveLogger.e(LOG_TAG, "Swrve IAM event from Activity error", exp);
+                                        }
+                                        return true;
+                                    }
+                                });
+                                intent.putExtra("messenger", new Messenger(iamHandler));
+                                ctx.startActivity(intent);
                             }
                         }
                     });
@@ -209,15 +234,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 intent.putExtra("conversation", conversation);
                                 ctx.startActivity(intent);
-                                // Report that the message was shown to users
+                                // Report that the conversation was shown to the user
                                 conversation.getCampaign().messageWasShownToUser();
                             }
                         }
                     });
                 }
-
-                // Show any previous message after rotation
-                showPreviousMessage();
             }
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
@@ -249,6 +271,64 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e(LOG_TAG, "Swrve init failed", exp);
         }
         return (T) this;
+    }
+
+    private void processIAMMessage(SwrveMessage message, String eventType, Bundle bundle) {
+        if (eventType.equals("impression")) {
+            // IAM impression
+            int formatIndex = bundle.getInt("formatIndex");
+            SwrveMessageFormat format = null;
+            if (message.getFormats().size() > formatIndex) {
+                format = message.getFormats().get(formatIndex);
+            }
+            if (format != null) {
+                message.getCampaignManager().messageWasShownToUser(format);
+            } else {
+                SwrveLogger.e(LOG_TAG, "Swrve IAM impression received but no format specified");
+            }
+        } else if (eventType.equals("installButtonPress")) {
+            // IAM install button press
+            SwrveButton button = (SwrveButton) bundle.getSerializable("button");
+            message.getCampaignManager().buttonWasPressedByUser(button);
+            message.getCampaign().messageDismissed();
+
+            String appInstallLink = bundle.getString("appInstallLink");
+            boolean freeEvent = true;
+            if (installButtonListener != null) {
+                freeEvent = installButtonListener.onAction(appInstallLink);
+            }
+            if (freeEvent) {
+                Context ctx = getContext();
+                if (ctx != null) {
+                    // Launch app store
+                    try {
+                        ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appInstallLink)));
+                    } catch (android.content.ActivityNotFoundException anfe) {
+                        SwrveLogger.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
+                    } catch (Exception exp) {
+                        SwrveLogger.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
+                    }
+                }
+            }
+        } else if (eventType.equals("customButtonPress")) {
+            // IAM custom button press
+            SwrveButton button = (SwrveButton) bundle.getSerializable("button");
+            message.getCampaignManager().buttonWasPressedByUser(button);
+            message.getCampaign().messageDismissed();
+
+            if (customButtonListener != null) {
+                customButtonListener.onAction(button.getAction());
+            } else {
+                Context ctxt = getContext();
+                String buttonAction = button.getAction();
+                // Parse action as an Uri
+                try {
+                    ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
+                } catch (Exception e) {
+                    SwrveLogger.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
+                }
+            }
+        }
     }
 
     protected abstract void beforeSendDeviceInfo(Context context);
@@ -492,7 +572,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _onDestroy(Activity ctx) {
-        unbindAndShutdown(ctx);
+        unbindAndShutdown();
     }
 
     protected void _shutdown() throws InterruptedException {
@@ -500,23 +580,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.i(LOG_TAG, "Shutting down the SDK");
             destroyed = true;
 
-            // Forget the current displaying message
-            SwrveBase.messageDisplayed = null;
-
             // Forget the initialised time
             initialisedTime = null;
 
-            try {
-                removeCurrentDialog(null);
-            }
-            catch (Exception e) {
-                SwrveLogger.e(LOG_TAG, "Exception occurred removing current dialog", e);
-            }
             // Remove the binding to the current activity, if any
             this.activityContext = null;
-
-            // Remove reference to previous message
-            this.messageDisplayed = null;
 
             // Remove QA user from push notification listener
             if (qaUser != null) {
@@ -826,7 +894,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @SuppressLint("UseSparseArrays")
     protected SwrveConversation _getConversationForEvent(String event, Map<String, String> payload) {
         SwrveConversation result = null;
-        SwrveCampaign campaign = null;
+        SwrveInAppCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, Result> campaignDisplayResults = null;
@@ -898,7 +966,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @SuppressLint("UseSparseArrays")
     protected SwrveMessage _getMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation) {
         SwrveMessage result = null;
-        SwrveCampaign campaign = null;
+        SwrveInAppCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, Result> campaignDisplayResults = null;
@@ -920,8 +988,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
                     SwrveBaseCampaign nextCampaign = itCampaign.next();
-                    if (nextCampaign instanceof SwrveCampaign) {
-                        SwrveMessage nextMessage = ((SwrveCampaign)nextCampaign).getMessageForEvent(event, payload, now, campaignDisplayResults);
+                    if (nextCampaign instanceof SwrveInAppCampaign) {
+                        SwrveMessage nextMessage = ((SwrveInAppCampaign)nextCampaign).getMessageForEvent(event, payload, now, campaignDisplayResults);
                         if (nextMessage != null) {
                             // Add to list of returned messages
                             availableMessages.add(nextMessage);
@@ -1002,8 +1070,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext() && result == null) {
                     SwrveBaseCampaign campaign = itCampaign.next();
-                    if (campaign instanceof SwrveCampaign) {
-                        result = ((SwrveCampaign)campaign).getMessageForId(messageId);
+                    if (campaign instanceof SwrveInAppCampaign) {
+                        result = ((SwrveInAppCampaign)campaign).getMessageForId(messageId);
                     }
                 }
             }
@@ -1035,7 +1103,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Update next for round robin
             SwrveMessage message = messageFormat.getMessage();
-            SwrveCampaign campaign = message.getCampaign();
+            SwrveInAppCampaign campaign = message.getCampaign();
             if (campaign != null) {
                 campaign.messageWasShownToUser();
             }
@@ -1102,14 +1170,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected ISwrveCustomButtonListener _getCustomButtonListener() {
         return customButtonListener;
-    }
-
-    protected void _setDialogListener(ISwrveDialogListener dialogListener) {
-        this.dialogListener = dialogListener;
-    }
-
-    protected ISwrveDialogListener _getDialogListener() {
-        return dialogListener;
     }
 
     protected Context _getContext() {
@@ -1546,25 +1606,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public ISwrveDialogListener getDialogListener() {
-        try {
-            return _getDialogListener();
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-        return null;
-    }
-
-    @Override
-    public void setDialogListener(ISwrveDialogListener dialogListener) {
-        try {
-            _setDialogListener(dialogListener);
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
     public Context getContext() {
         try {
             return _getContext();
@@ -1610,11 +1651,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
-        if (campaign instanceof SwrveCampaign) {
-            SwrveCampaign iamCampaign = (SwrveCampaign)campaign;
+        if (campaign instanceof SwrveInAppCampaign) {
+            SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign)campaign;
             if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
                 // Display first message in the in-app campaign
-                messageListener.onMessage(iamCampaign.getMessages().get(0), true);
+                messageListener.onMessage(iamCampaign.getMessages().get(0));
                 return true;
             } else {
                 Log.e(LOG_TAG, "No in-app message or message listener.");

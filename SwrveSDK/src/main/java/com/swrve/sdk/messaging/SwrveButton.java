@@ -3,10 +3,12 @@ package com.swrve.sdk.messaging;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+
 /**
  * In-app message button.
  */
-public class SwrveButton extends SwrveWidget {
+public class SwrveButton extends SwrveWidget implements Serializable {
     // Name of this button
     protected String name;
     // Cached path of the button image on disk

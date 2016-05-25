@@ -3,7 +3,7 @@ package com.swrve.sdk;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.model.Arg;
 import com.swrve.sdk.messaging.model.Conditions;
@@ -239,7 +239,7 @@ public class TriggerTest extends SwrveBaseTest {
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);
-        SwrveCampaign campaign = new SwrveCampaign(testCampaignManger, new SwrveCampaignDisplayer(null), jsonObject, new HashSet<String>());
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(testCampaignManger, new SwrveCampaignDisplayer(null), jsonObject, new HashSet<String>());
         assertNotNull(campaign);
 
         Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults =  new HashMap<>();

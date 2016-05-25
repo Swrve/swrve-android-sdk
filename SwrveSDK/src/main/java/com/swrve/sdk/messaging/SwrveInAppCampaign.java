@@ -23,7 +23,7 @@ import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_NOT_DO
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
  */
-public class SwrveCampaign extends SwrveBaseCampaign {
+public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected List<SwrveMessage> messages;
 
@@ -36,7 +36,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      * @param assetsQueue  Set where to save the resources to be loaded
      * @throws JSONException
      */
-    public SwrveCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
         this.messages = new ArrayList<SwrveMessage>();
 
@@ -163,7 +163,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         return null;
     }
 
-    protected SwrveMessage createMessage(ISwrveCampaignManager campaignManager, SwrveCampaign swrveCampaign, JSONObject messageData) throws JSONException {
+    protected SwrveMessage createMessage(ISwrveCampaignManager campaignManager, SwrveInAppCampaign swrveCampaign, JSONObject messageData) throws JSONException {
         return new SwrveMessage(swrveCampaign, messageData, campaignManager);
     }
 

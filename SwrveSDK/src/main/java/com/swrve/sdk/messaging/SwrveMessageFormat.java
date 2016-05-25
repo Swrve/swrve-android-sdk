@@ -10,13 +10,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * In-app message format with a given language, size and orientation.
  */
-public class SwrveMessageFormat {
+public class SwrveMessageFormat implements Serializable {
     protected static final String LOG_TAG = "SwrveSDK";
 
     // Name of the format
@@ -26,7 +27,7 @@ public class SwrveMessageFormat {
     // Scale for the format in the device
     protected float scale;
     // Size of the format
-    protected Point size;
+    protected SwrvePoint size;
     // Orientation of the format
     protected SwrveOrientation orientation;
     // Background color of the template
@@ -88,8 +89,8 @@ public class SwrveMessageFormat {
         }
     }
 
-    protected static Point getSizeFrom(JSONObject data) throws JSONException {
-        return new Point(data.getJSONObject("w").getInt("value"), data.getJSONObject("h").getInt("value"));
+    protected static SwrvePoint getSizeFrom(JSONObject data) throws JSONException {
+        return new SwrvePoint(data.getJSONObject("w").getInt("value"), data.getJSONObject("h").getInt("value"));
     }
 
     /**
@@ -138,11 +139,11 @@ public class SwrveMessageFormat {
     /**
      * @return the size of the format.
      */
-    public Point getSize() {
+    public SwrvePoint getSize() {
         return size;
     }
 
-    protected void setSize(Point size) {
+    protected void setSize(SwrvePoint size) {
         this.size = size;
     }
 

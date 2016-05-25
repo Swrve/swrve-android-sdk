@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,10 +18,10 @@ import java.util.Set;
 /**
  * In-app message inside a campaign, with different formats.
  */
-public class SwrveMessage {
+public class SwrveMessage implements Serializable {
     protected static final String LOG_TAG = "SwrveSDK";
 
-    protected ISwrveCampaignManager campaignManager;
+    protected transient ISwrveCampaignManager campaignManager;
     // Identifies the message in a campaign
     protected int id;
     // Name of the message
@@ -28,13 +29,13 @@ public class SwrveMessage {
     // Priority of the message
     protected int priority = 9999;
     // Parent in-app campaign
-    protected SwrveCampaign campaign;
+    protected transient SwrveInAppCampaign campaign;
     // List of available formats
     protected List<SwrveMessageFormat> formats;
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveMessage(SwrveCampaign campaign, ISwrveCampaignManager campaignManager) {
+    public SwrveMessage(SwrveInAppCampaign campaign, ISwrveCampaignManager campaignManager) {
         this.campaign = campaign;
         this.formats = new ArrayList<SwrveMessageFormat>();
         this.campaignManager = campaignManager;
@@ -51,7 +52,7 @@ public class SwrveMessage {
      * @param campaignManager
      * @throws JSONException
      */
-    public SwrveMessage(SwrveCampaign campaign, JSONObject messageData, ISwrveCampaignManager campaignManager) throws JSONException {
+    public SwrveMessage(SwrveInAppCampaign campaign, JSONObject messageData, ISwrveCampaignManager campaignManager) throws JSONException {
         this(campaign, campaignManager);
         setId(messageData.getInt("id"));
         setName(messageData.getString("name"));
@@ -128,11 +129,11 @@ public class SwrveMessage {
     /**
      * @return the related campaign.
      */
-    public SwrveCampaign getCampaign() {
+    public SwrveInAppCampaign getCampaign() {
         return campaign;
     }
 
-    protected void setCampaign(SwrveCampaign campaign) {
+    protected void setCampaign(SwrveInAppCampaign campaign) {
         this.campaign = campaign;
     }
 

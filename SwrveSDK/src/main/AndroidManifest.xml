@@ -17,6 +17,12 @@
             android:theme="@style/Theme.Conversations">
         </activity>
 
+        <activity
+            android:name=".messaging.ui.SwrveInAppMessageActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.InAppMessage">
+        </activity>
+
         <receiver
             android:name="com.swrve.sdk.SwrveInstallReferrerReceiver"
             android:exported="true" >
