@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -109,8 +108,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     ISwrveCustomButtonListener getCustomButtonListener();
 
     void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener);
-
-    Context getContext();
 
     C getConfig();
 

@@ -225,11 +225,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public Context getContext() {
-        return context.get();
-    }
-
-    @Override
     public C getConfig() {
         return config;
     }

@@ -5,10 +5,13 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
@@ -29,10 +32,12 @@ import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
+import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
@@ -999,6 +1004,84 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 });
             } catch (JSONException exp) {
                 SwrveLogger.e(LOG_TAG, "Error saving campaigns settings", exp);
+            }
+        }
+    }
+
+    public Context getContext() {
+        Context appCtx = context.get();
+        if(appCtx == null) {
+            return getActivityContext();
+        }
+        return appCtx;
+    }
+
+    /**
+     * Process messages coming from IAM Activity / view
+     * @param message
+     * @param eventType
+     * @param bundle
+     */
+    protected void processIAMMessage(SwrveMessage message, String eventType, Bundle bundle) {
+        if (eventType.equals("impression")) {
+            // IAM impression
+            int formatIndex = bundle.getInt("formatIndex");
+            SwrveMessageFormat format = null;
+            if (message.getFormats().size() > formatIndex) {
+                format = message.getFormats().get(formatIndex);
+            }
+            if (format != null) {
+                messageWasShownToUser(format);
+            } else {
+                SwrveLogger.e(LOG_TAG, "Swrve IAM impression received but no format specified");
+            }
+        } else if (eventType.equals("installButtonPress")) {
+            // IAM install button press
+            SwrveButton button = (SwrveButton) bundle.getSerializable("button");
+            buttonWasPressedByUser(button);
+            message.getCampaign().messageDismissed();
+
+            String appInstallLink = getAppStoreURLForApp(button.getAppId());
+            // In case the install link was not set correctly log issue and return early
+            // without calling the install button listener not starting the install intent
+            if (SwrveHelper.isNullOrEmpty(appInstallLink)) {
+                SwrveLogger.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
+                return;
+            }
+            boolean freeEvent = true;
+            if (installButtonListener != null) {
+                freeEvent = installButtonListener.onAction(appInstallLink);
+            }
+            if (freeEvent) {
+                Context ctx = getContext();
+                if (ctx != null) {
+                    // Launch app store
+                    try {
+                        ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appInstallLink)));
+                    } catch (android.content.ActivityNotFoundException anfe) {
+                        SwrveLogger.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
+                    } catch (Exception exp) {
+                        SwrveLogger.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
+                    }
+                }
+            }
+        } else if (eventType.equals("customButtonPress")) {
+            // IAM custom button press
+            SwrveButton button = (SwrveButton) bundle.getSerializable("button");
+            buttonWasPressedByUser(button);
+            message.getCampaign().messageDismissed();
+
+            if (customButtonListener != null) {
+                customButtonListener.onAction(button.getAction());
+            } else {
+                Context ctxt = getContext();
+                String buttonAction = button.getAction();
+                // Parse action as an Uri
+                try {
+                    ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
+                } catch (Exception e) {
+                    SwrveLogger.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
+                }
             }
         }
     }

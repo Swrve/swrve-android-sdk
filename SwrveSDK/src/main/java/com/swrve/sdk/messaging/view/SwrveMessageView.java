@@ -2,13 +2,8 @@ package com.swrve.sdk.messaging.view;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Message;
-import android.os.Messenger;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -19,13 +14,12 @@ import android.widget.RelativeLayout;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveImage;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -43,8 +37,8 @@ import java.util.Set;
 public class SwrveMessageView extends RelativeLayout {
     protected static final String LOG_TAG = "SwrveMessagingSDK";
 
-    // Activity that contains
-    private final Messenger messenger;
+    // Activity that contains this view
+    private final SwrveInAppMessageActivity activity;
 
     // Message format chosen to display message
     protected final SwrveMessageFormat format;
@@ -55,48 +49,24 @@ public class SwrveMessageView extends RelativeLayout {
     // Minimum sample size to use when loading images
     protected int minSampleSize = 1;
 
+    // Default background color
+    protected int defaultBackgroundColor;
+
     // Bitmap cache
     protected Set<WeakReference<Bitmap>> bitmapCache;
 
-    public SwrveMessageView(Context context, Messenger messenger, SwrveMessage message, SwrveMessageFormat format, int minSampleSize) throws SwrveMessageViewBuildException {
-        super(context);
-        this.messenger = messenger;
+    public SwrveMessageView(SwrveInAppMessageActivity activity, SwrveMessage message,
+                            SwrveMessageFormat format, int minSampleSize,
+                            int defaultBackgroundColor) throws SwrveMessageViewBuildException {
+        super(activity);
+        this.activity = activity;
         this.format = format;
         // Sample size has to be a power of two or 1
         if (minSampleSize > 0 && (minSampleSize % 2) == 0) {
             this.minSampleSize = minSampleSize;
         }
-        initializeLayout(context, message, format);
-    }
-
-    public void notifyOfImpression(SwrveMessage message, SwrveMessageFormat format) {
-        Bundle bundle = new Bundle();
-        bundle.putInt("formatIndex", message.getFormats().indexOf(format));
-        sendMessage("impression", bundle);
-    }
-
-    private void notifyOfInstallButtonPress(SwrveButton button, String appInstallLink) {
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("button", button);
-        bundle.putString("appInstallLink", appInstallLink);
-        sendMessage("installButtonPress", bundle);
-    }
-
-    private void notifyOfCustomButtonPress(SwrveButton button) {
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("button", button);
-        sendMessage("customButtonPress", bundle);
-    }
-
-    public void sendMessage(String eventType, Bundle bundle) {
-        try {
-            Message msg = new Message();
-            bundle.putString("eventType", eventType);
-            msg.setData(bundle);
-            messenger.send(msg);
-        } catch(Exception exp) {
-            SwrveLogger.e(LOG_TAG, "Swrve IAM error sending event signal", exp);
-        }
+        this.defaultBackgroundColor = defaultBackgroundColor;
+        initializeLayout(activity, message, format);
     }
 
     private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
@@ -159,7 +129,11 @@ public class SwrveMessageView extends RelativeLayout {
             int screenHeight = display.getHeight();
 
             // Set background
-            setBackgroundColor(format.getBackgroundColor());
+            Integer backgroundColor = format.getBackgroundColor();
+            if (backgroundColor == null) {
+                backgroundColor = defaultBackgroundColor;
+            }
+            setBackgroundColor(backgroundColor);
 
             // Construct layout
             scale = format.getScale();
@@ -227,17 +201,9 @@ public class SwrveMessageView extends RelativeLayout {
                                 dismiss();
 
                                 if (button.getActionType() == SwrveActionType.Install) {
-                                    final String appInstallLink = message.getCampaignManager().getAppStoreURLForApp(button.getAppId());
-                                    // in case the install link was not set correctly log issue and return early
-                                    // without calling the install button listener not starting the install intent
-                                    if (SwrveHelper.isNullOrEmpty(appInstallLink)) {
-                                        SwrveLogger.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
-                                        return;
-                                    }
-                                    notifyOfInstallButtonPress(button, appInstallLink);
+                                    activity.notifyOfInstallButtonPress(button);
                                 } else if (button.getActionType() == SwrveActionType.Custom) {
-                                    String action = button.getAction();
-                                    notifyOfCustomButtonPress(button);
+                                    activity.notifyOfCustomButtonPress(button);
                                 }
                             } catch (Exception e) {
                                 SwrveLogger.e(LOG_TAG, "Error in onClick handler.", e);
@@ -337,6 +303,10 @@ public class SwrveMessageView extends RelativeLayout {
         } catch (Exception exp) {
             SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
+    }
+
+    public SwrveMessageFormat getFormat() {
+        return format;
     }
 
     @Override

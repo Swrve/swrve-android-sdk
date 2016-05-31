@@ -486,16 +486,6 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the context where the SDK is attached.
-     *
-     * @return activity or application context
-     */
-    public static Context getContext() {
-        checkInstanceCreated();
-        return instance.getContext();
-    }
-
-    /**
      * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the current orientation.

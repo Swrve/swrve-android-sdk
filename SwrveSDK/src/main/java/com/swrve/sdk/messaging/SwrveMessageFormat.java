@@ -1,7 +1,6 @@
 package com.swrve.sdk.messaging;
 
 import android.graphics.Color;
-import android.graphics.Point;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -31,7 +30,7 @@ public class SwrveMessageFormat implements Serializable {
     // Orientation of the format
     protected SwrveOrientation orientation;
     // Background color of the template
-    protected int backgroundColor;
+    protected Integer backgroundColor;
     // List of buttons in the format
     protected List<SwrveButton> buttons;
     // List of Background images in the format
@@ -46,7 +45,7 @@ public class SwrveMessageFormat implements Serializable {
      * @param messageFormatData
      * @throws JSONException
      */
-    public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData, int defaultBackgroundColor) throws JSONException {
+    public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData) throws JSONException {
         this.message = message;
         this.buttons = new ArrayList<SwrveButton>();
         this.images = new ArrayList<SwrveImage>();
@@ -64,8 +63,7 @@ public class SwrveMessageFormat implements Serializable {
             setScale(Float.parseFloat(messageFormatData.getString("scale")));
         }
 
-        // Background color (or use configured default)
-        setBackgroundColor(defaultBackgroundColor);
+        // Background color
         if (messageFormatData.has("color")) {
             String strColor = messageFormatData.getString("color");
             if (!SwrveHelper.isNullOrEmpty(strColor)) {
@@ -172,11 +170,11 @@ public class SwrveMessageFormat implements Serializable {
     /**
      * @return the background color of the format.
      */
-    public int getBackgroundColor() {
+    public Integer getBackgroundColor() {
         return backgroundColor;
     }
 
-    protected void setBackgroundColor(int backgroundColor) {
+    protected void setBackgroundColor(Integer backgroundColor) {
         this.backgroundColor = backgroundColor;
     }
 }

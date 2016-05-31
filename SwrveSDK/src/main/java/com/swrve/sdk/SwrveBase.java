@@ -2,10 +2,8 @@ package com.swrve.sdk;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
@@ -181,41 +179,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     initCampaigns(); // Initialize campaigns from cache
                 }
 
-                // Add custom message listener
+                // Add default message listener
                 if (messageListener == null) {
-                    setMessageListener(new ISwrveMessageListener() {
-                        public void onMessage(final SwrveMessage message) {
-                            // Start a Conversation activity to display the campaign
-                            if (SwrveBase.this.context != null) {
-                                final Context ctx = SwrveBase.this.context.get();
-                                if (ctx == null) {
-                                    SwrveLogger.e(LOG_TAG, "Can't display a conversation without a context");
-                                    return;
-                                }
-
-                                Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                intent.putExtra("inAppMessage", message);
-                                intent.putExtra("hideToolbar", config.isHideToolbar());
-                                intent.putExtra("minSampleSize", config.getMinSampleSize());
-                                Handler iamHandler = new Handler(new Handler.Callback() {
-                                    @Override
-                                    public boolean handleMessage(Message msg) {
-                                        try {
-                                            Bundle bundle = msg.peekData();
-                                            String eventType = bundle.getString("eventType");
-                                            processIAMMessage(message, eventType, bundle);
-                                        } catch(Exception exp) {
-                                            SwrveLogger.e(LOG_TAG, "Swrve IAM event from Activity error", exp);
-                                        }
-                                        return true;
-                                    }
-                                });
-                                intent.putExtra("messenger", new Messenger(iamHandler));
-                                ctx.startActivity(intent);
-                            }
-                        }
-                    });
+                    setDefaultMessageListener();
                 }
 
                 // Add custom conversation listener
@@ -273,62 +239,41 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return (T) this;
     }
 
-    private void processIAMMessage(SwrveMessage message, String eventType, Bundle bundle) {
-        if (eventType.equals("impression")) {
-            // IAM impression
-            int formatIndex = bundle.getInt("formatIndex");
-            SwrveMessageFormat format = null;
-            if (message.getFormats().size() > formatIndex) {
-                format = message.getFormats().get(formatIndex);
-            }
-            if (format != null) {
-                message.getCampaignManager().messageWasShownToUser(format);
-            } else {
-                SwrveLogger.e(LOG_TAG, "Swrve IAM impression received but no format specified");
-            }
-        } else if (eventType.equals("installButtonPress")) {
-            // IAM install button press
-            SwrveButton button = (SwrveButton) bundle.getSerializable("button");
-            message.getCampaignManager().buttonWasPressedByUser(button);
-            message.getCampaign().messageDismissed();
-
-            String appInstallLink = bundle.getString("appInstallLink");
-            boolean freeEvent = true;
-            if (installButtonListener != null) {
-                freeEvent = installButtonListener.onAction(appInstallLink);
-            }
-            if (freeEvent) {
-                Context ctx = getContext();
-                if (ctx != null) {
-                    // Launch app store
-                    try {
-                        ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appInstallLink)));
-                    } catch (android.content.ActivityNotFoundException anfe) {
-                        SwrveLogger.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
-                    } catch (Exception exp) {
-                        SwrveLogger.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
+    private void setDefaultMessageListener() {
+        setMessageListener(new ISwrveMessageListener() {
+            public void onMessage(final SwrveMessage message) {
+                // Start a Conversation activity to display the campaign
+                if (SwrveBase.this.context != null) {
+                    final Context ctx = SwrveBase.this.context.get();
+                    if (ctx == null) {
+                        SwrveLogger.e(LOG_TAG, "Can't display a in-app message without a context");
+                        return;
                     }
-                }
-            }
-        } else if (eventType.equals("customButtonPress")) {
-            // IAM custom button press
-            SwrveButton button = (SwrveButton) bundle.getSerializable("button");
-            message.getCampaignManager().buttonWasPressedByUser(button);
-            message.getCampaign().messageDismissed();
 
-            if (customButtonListener != null) {
-                customButtonListener.onAction(button.getAction());
-            } else {
-                Context ctxt = getContext();
-                String buttonAction = button.getAction();
-                // Parse action as an Uri
-                try {
-                    ctxt.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
-                } catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
+                    Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.putExtra("inAppMessage", message);
+                    intent.putExtra("hideToolbar", config.isHideToolbar());
+                    intent.putExtra("minSampleSize", config.getMinSampleSize());
+                    intent.putExtra("defaultBackgroundColor", config.getDefaultBackgroundColor());
+                    Handler iamHandler = new Handler(new Handler.Callback() {
+                        @Override
+                        public boolean handleMessage(Message msg) {
+                            try {
+                                Bundle bundle = msg.peekData();
+                                String eventType = bundle.getString("eventType");
+                                processIAMMessage(message, eventType, bundle);
+                            } catch(Exception exp) {
+                                SwrveLogger.e(LOG_TAG, "Swrve IAM event from Activity error", exp);
+                            }
+                            return true;
+                        }
+                    });
+                    intent.putExtra("messenger", new Messenger(iamHandler));
+                    ctx.startActivity(intent);
                 }
             }
-        }
+        });
     }
 
     protected abstract void beforeSendDeviceInfo(Context context);
@@ -1172,14 +1117,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return customButtonListener;
     }
 
-    protected Context _getContext() {
-        Context appCtx = context.get();
-        if(appCtx == null) {
-            return getActivityContext();
-        }
-        return appCtx;
-    }
-
     protected C _getConfig() {
         return config;
     }
@@ -1603,16 +1540,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
-    }
-
-    @Override
-    public Context getContext() {
-        try {
-            return _getContext();
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
-        }
-        return null;
     }
 
     @Override

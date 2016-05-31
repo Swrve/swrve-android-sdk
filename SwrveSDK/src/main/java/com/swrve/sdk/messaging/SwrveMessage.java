@@ -21,7 +21,6 @@ import java.util.Set;
 public class SwrveMessage implements Serializable {
     protected static final String LOG_TAG = "SwrveSDK";
 
-    protected transient ISwrveCampaignManager campaignManager;
     // Identifies the message in a campaign
     protected int id;
     // Name of the message
@@ -35,13 +34,10 @@ public class SwrveMessage implements Serializable {
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveMessage(SwrveInAppCampaign campaign, ISwrveCampaignManager campaignManager) {
+    public SwrveMessage(SwrveInAppCampaign campaign, File cacheDir) {
         this.campaign = campaign;
         this.formats = new ArrayList<SwrveMessageFormat>();
-        this.campaignManager = campaignManager;
-        if (campaignManager != null) {
-            setCacheDir(campaignManager.getCacheDir());
-        }
+        setCacheDir(cacheDir);
     }
 
     /**
@@ -49,11 +45,11 @@ public class SwrveMessage implements Serializable {
      *
      * @param campaign    Related campaign.
      * @param messageData JSON data containing the message details.
-     * @param campaignManager
+     * @param cacheDir    Folder where to find the downloaded assets
      * @throws JSONException
      */
-    public SwrveMessage(SwrveInAppCampaign campaign, JSONObject messageData, ISwrveCampaignManager campaignManager) throws JSONException {
-        this(campaign, campaignManager);
+    public SwrveMessage(SwrveInAppCampaign campaign, JSONObject messageData, File cacheDir) throws JSONException {
+        this(campaign, cacheDir);
         setId(messageData.getInt("id"));
         setName(messageData.getString("name"));
 
@@ -138,12 +134,7 @@ public class SwrveMessage implements Serializable {
     }
 
     private SwrveMessageFormat createMessageFormat(SwrveMessage swrveMessage, JSONObject messageFormatData) throws JSONException {
-        int defaultBackgroundColor = campaignManager.getConfig().getDefaultBackgroundColor();
-        return new SwrveMessageFormat(swrveMessage, messageFormatData, defaultBackgroundColor);
-    }
-
-    public ISwrveCampaignManager getCampaignManager() {
-        return campaignManager;
+        return new SwrveMessageFormat(swrveMessage, messageFormatData);
     }
 
     /**
