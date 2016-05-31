@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="Theme.Conversations">
+        <attr name="conversationControlTrayStyle" format="reference" />
+        <attr name="conversationContentTrayBottomMargin" format="dimension" />
+        <attr name="conversationControlTrayTopMargin" format="dimension" />
         <attr name="conversationControlLayoutMargin" format="dimension" />
 
         <attr name="conversationContentStyle" format="reference" />

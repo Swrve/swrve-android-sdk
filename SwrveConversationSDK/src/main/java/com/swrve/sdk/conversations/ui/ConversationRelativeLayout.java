@@ -1,11 +1,11 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.content.Context;
-import android.renderscript.Type;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 import com.swrve.sdk.conversations.R;
@@ -33,7 +33,7 @@ public class ConversationRelativeLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        // The first children is the container of the conversation (parent linear layout)
+        // The first child is the container of the conversation (parent linear layout)
         if (getChildCount() > 0) {
             View conversationLayout = getChildAt(0);
             RelativeLayout.LayoutParams lparams = (LayoutParams) conversationLayout.getLayoutParams();
@@ -43,7 +43,9 @@ public class ConversationRelativeLayout extends RelativeLayout {
                 lparams.bottomMargin = lparams.topMargin = topBottomPaddingPx;
                 conversationLayout.setPadding(paddingForBorder1DpPx, paddingForBorder1DpPx, paddingForBorder1DpPx, paddingForBorder1DpPx);
                 conversationLayout.setBackgroundResource(R.drawable.conversation_border);
+                conversationLayout.getLayoutParams().height= ViewGroup.LayoutParams.WRAP_CONTENT;
             } else {
+                conversationLayout.getLayoutParams().height= ViewGroup.LayoutParams.MATCH_PARENT;
                 conversationLayout.setPadding(0, 0, 0, 0);
             }
         }

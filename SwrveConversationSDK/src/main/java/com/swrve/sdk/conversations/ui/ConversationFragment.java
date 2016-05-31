@@ -18,6 +18,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.webkit.WebView;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -212,7 +214,32 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         }
     }
 
+    int listeners = 0;
+
+    private void addWebViewListener(final WebView webView){
+        contentLayout.setVisibility(View.GONE);
+        listeners++;
+        ViewTreeObserver viewTreeObserver  = webView.getViewTreeObserver();
+        viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                int height = webView.getMeasuredHeight();
+                if( height != 0 ){
+                    //Toast.makeText(getContext(), "height:"+height,Toast.LENGTH_SHORT).show();
+                    SwrveLogger.d("height = " + height);
+                    webView.getViewTreeObserver().removeOnPreDrawListener(this);
+                }
+                listeners--;
+                if(listeners == 0) {
+                    contentLayout.setVisibility(View.VISIBLE);
+                }
+                return false;
+            }
+        });
+    }
+
     private void renderContent(Activity activity) {
+
         for (ConversationAtom content : page.getContent()) {
             AtomStyle atomStyle = content.getStyle();
             BackgroundStyle atomBg = atomStyle.getBg();
@@ -241,6 +268,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
                     contentLayout.addView(view);
+                    addWebViewListener(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                     YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
@@ -280,6 +308,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
                 conversationRatingBar.setContentChangedListener(this);
                 contentLayout.addView(conversationRatingBar);
+                addWebViewListener(conversationRatingBar.htmlSnippetView);
             }
         }
     }
