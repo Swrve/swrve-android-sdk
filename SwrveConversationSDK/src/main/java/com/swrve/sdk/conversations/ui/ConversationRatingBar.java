@@ -25,7 +25,7 @@ import java.util.Map;
 public class ConversationRatingBar extends LinearLayout implements RatingBar.OnRatingBarChangeListener, IConversationInput {
 
     private StarRating model;
-    private HtmlSnippetView htmlSnippetView;
+    public HtmlSnippetView htmlSnippetView;
     private RatingBar ratingBar;
     private ConversationInputChangedListener inputChangedListener;
 
