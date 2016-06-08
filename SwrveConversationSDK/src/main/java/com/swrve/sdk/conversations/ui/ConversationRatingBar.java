@@ -16,8 +16,8 @@ import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
-import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
-import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationColorStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,9 +46,9 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         htmlSnippetView.setLayoutParams(layoutParams);
         htmlSnippetView.setBackgroundColor(Color.TRANSPARENT);
-        AtomStyle atomStyle = model.getStyle();
-        BackgroundStyle atomBg = atomStyle.getBg();
-        setBackgroundDrawable(htmlSnippetView, atomBg.getPrimaryDrawable());
+        ConversationStyle conversationStyle = model.getStyle();
+        ConversationColorStyle conversationStyleBg = conversationStyle.getBg();
+        setBackgroundDrawable(htmlSnippetView, conversationStyleBg.getPrimaryDrawable());
         addView(htmlSnippetView);
     }
 

@@ -39,8 +39,8 @@ import com.swrve.sdk.conversations.engine.model.ConversationReply;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
-import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
-import com.swrve.sdk.conversations.engine.model.styles.BackgroundStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationColorStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
 import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 
@@ -214,8 +214,8 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
 
     private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
-            AtomStyle atomStyle = content.getStyle();
-            BackgroundStyle atomBg = atomStyle.getBg();
+            ConversationStyle conversationStyle = content.getStyle();
+            ConversationColorStyle colorStyle = conversationStyle.getBg();
 
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
@@ -229,7 +229,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                         iv.setImageBitmap(bitmap);
                         iv.setAdjustViewBounds(true);
                         iv.setScaleType(ScaleType.FIT_CENTER);
-                        setBackgroundDrawable(iv, atomBg.getPrimaryDrawable());
+                        setBackgroundDrawable(iv, colorStyle.getPrimaryDrawable());
                         contentLayout.addView(iv);
                     } else {
                         SwrveLogger.e(LOG_TAG, "Could not render conversation asset image because there is no read access to:" + filePath);
@@ -239,13 +239,13 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     view.setTag(content.getTag());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     view.setBackgroundColor(Color.TRANSPARENT);
-                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
                     YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
-                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     // Let the eventListener know that something has happened to the video
                     final YoutubeVideoView cloneView = view;
@@ -263,7 +263,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     View view = new View(activity);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
-                    setBackgroundDrawable(view, atomBg.getPrimaryDrawable());
+                    setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
                     int heightPixels = Integer.parseInt(((Content) content).getHeight());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, heightPixels));
                     contentLayout.addView(view);
@@ -273,8 +273,8 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                 input.setTag(content.getTag());
                 input.setContentChangedListener(this);
-                setBackgroundDrawable(input, atomBg.getPrimaryDrawable());
-                input.setTextColor(atomStyle.getTextColorInt());
+                setBackgroundDrawable(input, colorStyle.getPrimaryDrawable());
+                input.setTextColor(conversationStyle.getTextColorInt());
                 contentLayout.addView(input);
             } else if (content instanceof StarRating) {
                 ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
