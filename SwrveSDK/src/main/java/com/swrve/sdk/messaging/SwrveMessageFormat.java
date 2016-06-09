@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import android.graphics.Color;
+import android.graphics.Point;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -25,7 +26,7 @@ public class SwrveMessageFormat {
     // Scale for the format in the device
     protected float scale;
     // Size of the format
-    protected SwrvePoint size;
+    protected Point size;
     // Orientation of the format
     protected SwrveOrientation orientation;
     // Background color of the template
@@ -86,8 +87,8 @@ public class SwrveMessageFormat {
         }
     }
 
-    protected static SwrvePoint getSizeFrom(JSONObject data) throws JSONException {
-        return new SwrvePoint(data.getJSONObject("w").getInt("value"), data.getJSONObject("h").getInt("value"));
+    protected static Point getSizeFrom(JSONObject data) throws JSONException {
+        return new Point(data.getJSONObject("w").getInt("value"), data.getJSONObject("h").getInt("value"));
     }
 
     /**
@@ -136,11 +137,11 @@ public class SwrveMessageFormat {
     /**
      * @return the size of the format.
      */
-    public SwrvePoint getSize() {
+    public Point getSize() {
         return size;
     }
 
-    protected void setSize(SwrvePoint size) {
+    protected void setSize(Point size) {
         this.size = size;
     }
 

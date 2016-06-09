@@ -1,5 +1,7 @@
 package com.swrve.sdk.messaging;
 
+import android.graphics.Point;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -10,39 +12,39 @@ import java.io.Serializable;
  */
 abstract class SwrveWidget implements Serializable {
     // Position of the widget
-    protected SwrvePoint position;
+    protected Point position;
     // Size of the widget
-    protected SwrvePoint size;
+    protected Point size;
 
     // Get size from the format data
-    protected static SwrvePoint getSizeFrom(JSONObject data) throws JSONException {
-        return new SwrvePoint(data.getJSONObject("w").getInt("value"), data.getJSONObject("h").getInt("value"));
+    protected static Point getSizeFrom(JSONObject data) throws JSONException {
+        return new Point(data.getJSONObject("w").getInt("value"), data.getJSONObject("h").getInt("value"));
     }
 
     // Get center from the format data
-    protected static SwrvePoint getCenterFrom(JSONObject data) throws JSONException {
-        return new SwrvePoint(data.getJSONObject("x").getInt("value"), data.getJSONObject("y").getInt("value"));
+    protected static Point getCenterFrom(JSONObject data) throws JSONException {
+        return new Point(data.getJSONObject("x").getInt("value"), data.getJSONObject("y").getInt("value"));
     }
 
     /**
      * @return the position of the widget.
      */
-    public SwrvePoint getPosition() {
+    public Point getPosition() {
         return position;
     }
 
-    protected void setPosition(SwrvePoint position) {
+    protected void setPosition(Point position) {
         this.position = position;
     }
 
     /**
      * @return the size of the widget.
      */
-    public SwrvePoint getSize() {
+    public Point getSize() {
         return size;
     }
 
-    protected void setSize(SwrvePoint size) {
+    protected void setSize(Point size) {
         this.size = size;
     }
 }
