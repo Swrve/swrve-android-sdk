@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -183,6 +184,11 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
         setBackgroundDrawable(contentLayout, page.getBackground());
         setBackgroundDrawable(controlLayout, page.getBackground());
+
+        // set lightbox color
+        int color = Color.parseColor(page.getStyle().getLb().getValue());
+        ColorDrawable colorDrawable = new ColorDrawable(color);
+        getActivity().getWindow().setBackgroundDrawable(colorDrawable);
     }
 
     @SuppressLint("NewApi")
