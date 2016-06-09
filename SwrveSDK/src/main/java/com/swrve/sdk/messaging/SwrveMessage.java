@@ -1,6 +1,5 @@
 package com.swrve.sdk.messaging;
 
-import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 
@@ -9,7 +8,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,7 +16,7 @@ import java.util.Set;
 /**
  * In-app message inside a campaign, with different formats.
  */
-public class SwrveMessage implements Serializable {
+public class SwrveMessage {
     protected static final String LOG_TAG = "SwrveSDK";
 
     // Identifies the message in a campaign

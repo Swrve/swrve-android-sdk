@@ -3,13 +3,16 @@ package com.swrve.sdk.messaging.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Message;
-import android.os.Messenger;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.swrve.sdk.SwrveBase;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveSDK;
+import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
@@ -20,29 +23,38 @@ import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
 public class SwrveInAppMessageActivity extends Activity {
 
     protected static final String LOG_TAG = "SwrveMessagingSDK";
+    public static final String MESSAGE_ID_KEY = "message_id";
 
+    private SwrveBase sdk;
     private SwrveMessage message;
     private boolean hideToolbar = false;
     private int minSampleSize;
-    private Messenger messenger;
     private int defaultBackgroundColor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent intent = getIntent();
-        if (intent != null) {
-            Bundle extras = intent.getExtras();
-            if (extras != null) {
-                this.message = (SwrveMessage) extras.getSerializable("inAppMessage");
-                this.hideToolbar = extras.getBoolean("hideToolbar", true);
-                this.minSampleSize = extras.getInt("minSampleSize", 1);
-                this.messenger = (Messenger)extras.get("messenger");
-                this.defaultBackgroundColor = extras.getInt("defaultBackgroundColor", 0);
+
+        sdk = (SwrveBase)SwrveSDK.getInstance();
+        if (sdk != null) {
+            Intent intent = getIntent();
+            if (intent != null) {
+                Bundle extras = intent.getExtras();
+                if (extras != null) {
+                    int messageId = extras.getInt(MESSAGE_ID_KEY);
+                    message = sdk.getMessageForId(messageId);
+
+                    SwrveConfigBase config = sdk.getConfig();
+                    this.hideToolbar = config.isHideToolbar();
+                    this.minSampleSize = config.getMinSampleSize();
+                    this.defaultBackgroundColor = config.getDefaultBackgroundColor();
+                }
             }
         }
 
         if (message != null) {
+            // Choose the current orientation. If it is not possible,
+            // pick the first one and set the requested orientation.
             SwrveOrientation deviceOrientation = getDeviceOrientation();
             SwrveMessageFormat format = message.getFormat(deviceOrientation);
             if (format == null) {
@@ -68,7 +80,7 @@ public class SwrveInAppMessageActivity extends Activity {
                         format, minSampleSize, defaultBackgroundColor);
                 setContentView(view);
                 if(savedInstanceState == null) {
-                    notifyOfImpression(message, format);
+                    notifyOfImpression(format);
                 }
             } catch (SwrveMessageViewBuildException e) {
                 e.printStackTrace();
@@ -82,32 +94,60 @@ public class SwrveInAppMessageActivity extends Activity {
         return SwrveOrientation.parse(getResources().getConfiguration().orientation);
     }
 
-    public void notifyOfImpression(SwrveMessage message, SwrveMessageFormat format) {
-        Bundle bundle = new Bundle();
-        bundle.putInt("formatIndex", message.getFormats().indexOf(format));
-        sendMessage("impression", bundle);
+    public void notifyOfImpression(SwrveMessageFormat format) {
+        sdk.messageWasShownToUser(format);
     }
 
     public void notifyOfInstallButtonPress(SwrveButton button) {
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("button", button);
-        sendMessage("installButtonPress", bundle);
+        // IAM install button press
+        sdk.buttonWasPressedByUser(button);
+        message.getCampaign().messageDismissed();
+
+        String appInstallLink = sdk.getAppStoreURLForApp(button.getAppId());
+        // In case the install link was not set correctly log issue and return early
+        // without calling the install button listener not starting the install intent
+        if (SwrveHelper.isNullOrEmpty(appInstallLink)) {
+            SwrveLogger.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
+            return;
+        }
+        boolean freeEvent = true;
+        if (sdk.getInstallButtonListener() != null) {
+            freeEvent = sdk.getInstallButtonListener().onAction(appInstallLink);
+        }
+        if (freeEvent) {
+            // Launch app store
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appInstallLink)));
+            } catch (android.content.ActivityNotFoundException anfe) {
+                SwrveLogger.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
+            } catch (Exception exp) {
+                SwrveLogger.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
+            }
+        }
     }
 
     public void notifyOfCustomButtonPress(SwrveButton button) {
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("button", button);
-        sendMessage("customButtonPress", bundle);
+        // IAM custom button press
+        sdk.buttonWasPressedByUser(button);
+        message.getCampaign().messageDismissed();
+
+        if (sdk.getCustomButtonListener() != null) {
+            sdk.getCustomButtonListener().onAction(button.getAction());
+        } else {
+            String buttonAction = button.getAction();
+            // Parse action as an Uri
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
+            } catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
+            }
+        }
     }
 
-    private void sendMessage(String eventType, Bundle bundle) {
-        try {
-            Message msg = new Message();
-            bundle.putString("eventType", eventType);
-            msg.setData(bundle);
-            messenger.send(msg);
-        } catch(Exception exp) {
-            SwrveLogger.e(LOG_TAG, "Swrve IAM error sending event signal", exp);
-        }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        message.getCampaign().messageDismissed();
     }
 }

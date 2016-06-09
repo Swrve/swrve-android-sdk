@@ -9,14 +9,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * In-app message format with a given language, size and orientation.
  */
-public class SwrveMessageFormat implements Serializable {
+public class SwrveMessageFormat {
     protected static final String LOG_TAG = "SwrveSDK";
 
     // Name of the format

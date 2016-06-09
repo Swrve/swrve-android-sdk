@@ -252,24 +252,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                     Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    intent.putExtra("inAppMessage", message);
-                    intent.putExtra("hideToolbar", config.isHideToolbar());
-                    intent.putExtra("minSampleSize", config.getMinSampleSize());
-                    intent.putExtra("defaultBackgroundColor", config.getDefaultBackgroundColor());
-                    Handler iamHandler = new Handler(new Handler.Callback() {
-                        @Override
-                        public boolean handleMessage(Message msg) {
-                            try {
-                                Bundle bundle = msg.peekData();
-                                String eventType = bundle.getString("eventType");
-                                processIAMMessage(message, eventType, bundle);
-                            } catch(Exception exp) {
-                                SwrveLogger.e(LOG_TAG, "Swrve IAM event from Activity error", exp);
-                            }
-                            return true;
-                        }
-                    });
-                    intent.putExtra("messenger", new Messenger(iamHandler));
+                    intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
                     ctx.startActivity(intent);
                 }
             }
@@ -1411,7 +1394,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    @Deprecated
     public SwrveMessage getMessageForId(int messageId) {
         try {
             return _getMessageForId(messageId);
