@@ -56,4 +56,6 @@ dependencies {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
+
+    testCompile 'org.nanohttpd:nanohttpd:2.3.0'
 }
