@@ -312,6 +312,7 @@ public abstract class SwrveSDKBase {
      *
      * @deprecated use {@link #setLanguage(Locale)} instead
      */
+    @Deprecated
     public static void setLanguage(String language) {
         checkInstanceCreated();
         instance.setLanguage(language);
@@ -362,6 +363,7 @@ public abstract class SwrveSDKBase {
      * @return SwrveMessage supported message from a campaign set up for the
      * given trigger
      */
+    @Deprecated
     public static SwrveMessage getMessageForEvent(String event) {
         checkInstanceCreated();
         return instance.getMessageForEvent(event);
@@ -374,6 +376,7 @@ public abstract class SwrveSDKBase {
      * @param messageId id of the message
      * @return SwrveMessage message with the given id
      */
+    @Deprecated
     public static SwrveMessage getMessageForId(int messageId) {
         checkInstanceCreated();
         return instance.getMessageForId(messageId);

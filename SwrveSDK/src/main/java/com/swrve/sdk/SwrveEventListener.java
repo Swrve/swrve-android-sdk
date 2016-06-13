@@ -1,14 +1,15 @@
-package com.swrve.sdk.messaging;
+package com.swrve.sdk;
 
 import android.content.Context;
 
-import com.swrve.sdk.ISwrveEventListener;
-import com.swrve.sdk.SwrveBase;
-import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.conversations.ISwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveOrientation;
 
 import java.lang.ref.WeakReference;
+import java.util.Map;
 
 /**
  * Default event listener. Will display an in-app message if available.
@@ -26,11 +27,11 @@ public class SwrveEventListener implements ISwrveEventListener {
     }
 
     @Override
-    public void onEvent(String eventName) {
+    public void onEvent(String eventName, Map<String, String> payload) {
         if (conversationListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
             SwrveBase<?, ?> talkRef = talk.get();
             if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
-                SwrveConversation conversation = talkRef.getConversationForEvent(eventName);
+                SwrveConversation conversation = talkRef.getConversationForEvent(eventName, payload);
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
                     return;
@@ -46,7 +47,7 @@ public class SwrveEventListener implements ISwrveEventListener {
                 if (ctx != null) {
                     deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
                 }
-                SwrveMessage message = talkRef.getMessageForEvent(eventName, deviceOrientation);
+                SwrveMessage message = talkRef.getMessageForEvent(eventName, payload, deviceOrientation);
                 if (message != null) {
                     messageListener.onMessage(message, true);
                 }
