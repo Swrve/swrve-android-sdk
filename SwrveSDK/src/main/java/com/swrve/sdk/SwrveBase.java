@@ -842,6 +842,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
             synchronized (campaigns) {
                 List<SwrveConversation> availableConversations = new ArrayList<SwrveConversation>();
+                // Select messages with higher priority
+                int minPriority = Integer.MAX_VALUE;
+                List<SwrveConversation> candidateConversations = new ArrayList<SwrveConversation>();
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
                     SwrveBaseCampaign nextCampaign = itCampaign.next();
@@ -850,13 +853,23 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         if (nextConversation != null) {
                             // Add to list of returned messages
                             availableConversations.add(nextConversation);
+                            // Check if it is a candidate to be shown
+                            if (nextConversation.getPriority() <= minPriority) {
+                                if (nextConversation.getPriority() < minPriority) {
+                                    // If it is lower than any of the previous ones
+                                    // remove those from being candidates
+                                    candidateConversations.clear();
+                                }
+                                minPriority = nextConversation.getPriority();
+                                candidateConversations.add(nextConversation);
+                            }
                         }
                     }
                 }
-                if (availableConversations.size() > 0) {
+                if (candidateConversations.size() > 0) {
                     // Select randomly
-                    Collections.shuffle(availableConversations);
-                    result = availableConversations.get(0);
+                    Collections.shuffle(candidateConversations);
+                    result = candidateConversations.get(0);
                 }
                 if (qaUser != null && campaign != null && result != null) {
                     // A message was chosen, set the reason for the others

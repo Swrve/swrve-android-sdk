@@ -10,17 +10,17 @@ import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Set;
 
 public class SwrveConversation extends SwrveBaseConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
-    protected transient SwrveConversationCampaign campaign; // Parent in-app campaign
+
+    // Parent in-app campaign
+    protected transient SwrveConversationCampaign campaign;
 
     /**
      * Load message from JSON data.
@@ -33,27 +33,6 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
     public SwrveConversation(SwrveConversationCampaign campaign, JSONObject conversationData, ISwrveCampaignManager campaignManager) throws JSONException {
         super(conversationData, campaignManager.getCacheDir());
         this.campaign = campaign;
-
-        try {
-            setId(conversationData.getInt("id"));
-        } catch (Exception e) {
-            try {
-                setId(Integer.valueOf(conversationData.getString("id")));
-            } catch (Exception c) {
-                SwrveLogger.e(LOG_TAG, "Could not cast String into ID");
-            }
-        }
-
-        setName(conversationData.getString("id"));
-
-        JSONArray pagesJson = conversationData.getJSONArray("pages");
-        ArrayList<ConversationPage> pages = new ArrayList<ConversationPage>();
-
-        for (int i = 0; i < pagesJson.length(); i++) {
-            JSONObject o = pagesJson.getJSONObject(i);
-            pages.add(ConversationPage.fromJson(o));
-        }
-        setPages(pages);
     }
 
     protected boolean assetInCache(Set<String> assetsOnDisk, String asset) {

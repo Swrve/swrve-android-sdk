@@ -22,6 +22,8 @@ public class SwrveBaseConversation implements Serializable {
     protected ArrayList<ConversationPage> pages;
     // Location of the images and button resources
     protected File cacheDir;
+    // Priority of the conversation
+    protected int priority = 9999;
 
     /**
      * Load message from JSON data.
@@ -30,7 +32,6 @@ public class SwrveBaseConversation implements Serializable {
      * @throws JSONException
      */
     public SwrveBaseConversation(JSONObject conversationData, File cacheDir) throws JSONException {
-
         this.cacheDir = cacheDir;
 
         try {
@@ -53,6 +54,10 @@ public class SwrveBaseConversation implements Serializable {
             pages.add(ConversationPage.fromJson(o));
         }
         setPages(pages);
+
+        if (conversationData.has("priority")) {
+            setPriority(conversationData.getInt("priority"));
+        }
     }
 
     /**
@@ -112,7 +117,18 @@ public class SwrveBaseConversation implements Serializable {
         return pages;
     }
 
-    public void setPages(ArrayList<ConversationPage> pages) {
+    protected void setPages(ArrayList<ConversationPage> pages) {
         this.pages = pages;
+    }
+
+    /**
+     * @return the message priority.
+     */
+    public int getPriority() {
+        return priority;
+    }
+
+    protected void setPriority(int priority) {
+        this.priority = priority;
     }
 }
