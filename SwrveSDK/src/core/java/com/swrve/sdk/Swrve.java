@@ -1,14 +1,11 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
 
 /**
  * Main object used to implement the Swrve SDK.

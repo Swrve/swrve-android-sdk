@@ -6,8 +6,8 @@
     android:versionName="1.0">
 
     <uses-sdk
-        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.locationcampaigns, com.google.android.gms, com.google.android.gms.gcm, com.google.android.gms.base, com.google.android.gms.ads, com.google.android.gms.appindexing, com.google.android.gms.measurement"/>
-        
+        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.locationcampaigns, com.google.android.gms, com.google.android.gms.gcm, com.google.android.gms.base, com.google.android.gms.ads, com.google.android.gms.appindexing, com.google.android.gms.measurement, com.google.firebase"/>
+
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
