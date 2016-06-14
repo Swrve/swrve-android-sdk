@@ -25,6 +25,7 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveConversationEventHelper;
+import com.swrve.sdk.SwrveConversationHelper;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveIntentHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -61,6 +62,8 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     private ConversationPage page;
     private SwrveConversationEventHelper eventHelper;
     private HashMap<String, UserInputResult> userInteractionData;
+    private float pageBorderRadius;
+    private int pageBgColor;
 
     public ConversationPage getPage() {
         return page;
@@ -182,8 +185,10 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
-        setBackgroundDrawable(contentLayout, page.getBackground());
-        setBackgroundDrawable(controlLayout, page.getBackground());
+        pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
+        pageBgColor = Color.parseColor(page.getStyle().getBg().getValue());
+        setBackgroundDrawable(contentLayout, page.getBackgroundTop(pageBorderRadius, pageBgColor));
+        setBackgroundDrawable(controlLayout, page.getBackgroundBottom(pageBorderRadius, pageBgColor));
 
         // set lightbox color
         int color = Color.parseColor(page.getStyle().getLb().getValue());
@@ -219,7 +224,8 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     }
 
     private void renderContent(Activity activity) {
-        for (ConversationAtom content : page.getContent()) {
+        for (int i = 0; i < page.getContent().size(); i++) {
+            ConversationAtom content = page.getContent().get(i);
             ConversationStyle conversationStyle = content.getStyle();
             ConversationColorStyle colorStyle = conversationStyle.getBg();
 
@@ -227,9 +233,14 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 Content modelContent = (Content) content;
                 String modelType = modelContent.getType().toString();
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
-                    ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     if(SwrveHelper.hasFileAccess(filePath)) {
+                        ConversationImageView iv;
+                        if (i == 0 && pageBorderRadius > 0) { // only apply rounded corner if its the first atom in page
+                            iv = new ConversationImageViewRounded(activity, modelContent, pageBorderRadius, pageBgColor);
+                        } else {
+                            iv = new ConversationImageView(activity, modelContent);
+                        }
                         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                         iv.setTag(content.getTag());
                         iv.setImageBitmap(bitmap);

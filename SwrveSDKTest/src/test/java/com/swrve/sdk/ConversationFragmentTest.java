@@ -29,6 +29,7 @@ import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.conversations.ui.ConversationButton;
 import com.swrve.sdk.conversations.ui.ConversationFragment;
 import com.swrve.sdk.conversations.ui.ConversationImageView;
+import com.swrve.sdk.conversations.ui.ConversationImageViewRounded;
 import com.swrve.sdk.conversations.ui.ConversationRatingBar;
 import com.swrve.sdk.conversations.ui.HtmlSnippetView;
 import com.swrve.sdk.conversations.ui.MultiValueInputControl;
@@ -52,6 +53,7 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -177,6 +179,23 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
         assertThat(content.getChildCount(), equalTo(1));
         assertTrue(content.getChildAt(0) instanceof ConversationImageView);
+        assertFalse(content.getChildAt(0) instanceof ConversationImageViewRounded);
+    }
+
+    @Test
+    public void testContentImageRounded() {
+        ArrayList<ConversationPage> pages = getMockContentConversationPages(1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50);
+        ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
+        ConversationColorStyle lbStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#5f68a3");
+        ConversationStyle pageStyle0 = new ConversationStyle(20, ConversationStyle.TYPE_SOLID, bgStyle, null, lbStyle); // border 20
+        when(pages.get(0).getStyle()).thenReturn(pageStyle0);
+        partialMockSwrveConversation.setPages(pages);
+
+        ConversationFragment fragment = createConversationFragment();
+        LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
+        assertThat(content.getVisibility(), equalTo(View.VISIBLE));
+        assertThat(content.getChildCount(), equalTo(1));
+        assertTrue(content.getChildAt(0) instanceof ConversationImageViewRounded);
     }
 
     @Test
@@ -295,11 +314,13 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testLightboxColor() {
         ArrayList<ConversationPage> pages = getMockContentConversationPages(2, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50);
-        ConversationStyle pageStyle0 = new ConversationStyle();
-        pageStyle0.setLb(new ConversationColorStyle("color", "#5f68a3"));
+        ConversationColorStyle bgStyle0 = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
+        ConversationColorStyle lbStyle0 = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#5f68a3");
+        ConversationStyle pageStyle0 = new ConversationStyle(0, ConversationStyle.TYPE_SOLID, bgStyle0, null, lbStyle0);
         when(pages.get(0).getStyle()).thenReturn(pageStyle0);
-        ConversationStyle pageStyle1 = new ConversationStyle();
-        pageStyle1.setLb(new ConversationColorStyle("color", "#a20932"));
+        ConversationColorStyle bgStyle1 = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
+        ConversationColorStyle lbStyle1 = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#a20932");
+        ConversationStyle pageStyle1 = new ConversationStyle(0, ConversationStyle.TYPE_SOLID, bgStyle1, null, lbStyle1);
         when(pages.get(1).getStyle()).thenReturn(pageStyle1);
 
         partialMockSwrveConversation.setPages(pages);
@@ -547,8 +568,9 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     // Mock pages of type CONTENT
     private ArrayList<ConversationPage> getMockContentConversationPages(int numPages, final int numButtonControls, final Object action, String contentType,
                                                                         final String buttonType, final int cornerRadiusPerCent) {
-        ConversationStyle pageStyle = new ConversationStyle();
-        pageStyle.setBg(new ConversationColorStyle("color", "#ffffff"));
+        ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
+        ConversationColorStyle lbStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, ConversationStyle.DEFAULT_LB_COLOR);
+        ConversationStyle pageStyle = new ConversationStyle(0, ConversationStyle.TYPE_SOLID, bgStyle, null, lbStyle);
 
         ArrayList<ConversationPage> pages = new ArrayList<>();
         for (int i = 0; i < numPages; i++) {
@@ -602,12 +624,16 @@ public class ConversationFragmentTest extends SwrveBaseTest{
 
     // Mock pages of type INPUT
     private ArrayList<ConversationPage> getMockInputConversationPages(final int num, String contentType, final String buttonType) {
+        ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
+        ConversationColorStyle lbStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, ConversationStyle.DEFAULT_LB_COLOR);
+        ConversationStyle pageStyle = new ConversationStyle(0, ConversationStyle.TYPE_SOLID, bgStyle, null, lbStyle);
+
         ArrayList<ConversationPage> pages = new ArrayList<>();
         for (int i = 0; i < num; i++) {
             ConversationPage page = mock(ConversationPage.class);
             when(page.getTag()).thenReturn("pageTag");
             when(page.getTitle()).thenReturn("pageTitle" + i);
-            when(page.getStyle()).thenReturn(new ConversationStyle());
+            when(page.getStyle()).thenReturn(pageStyle);
 
             ArrayList<ButtonControl> controls = new ArrayList<>();
             controls.add(mock(ButtonControl.class));
@@ -650,13 +676,9 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     }
 
     private ConversationStyle getDummyAtomStyle(String type, int cornerRadiusPerCent) {
-        ConversationColorStyle buttonBgStyle = new ConversationColorStyle("color", "#00ff00");
-        ConversationColorStyle buttonFgStyle = new ConversationColorStyle("color", "#000033");
-        ConversationStyle conversationStyle = new ConversationStyle();
-        conversationStyle.type = type;
-        conversationStyle.setBg(buttonBgStyle);
-        conversationStyle.setFg(buttonFgStyle);
-        conversationStyle.border_radius = cornerRadiusPerCent;
+        ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#00ff00");
+        ConversationColorStyle fgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#000033");
+        ConversationStyle conversationStyle = new ConversationStyle(cornerRadiusPerCent, type, bgStyle, fgStyle, null);
         return conversationStyle;
     }
 }

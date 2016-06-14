@@ -9,13 +9,21 @@ public class ConversationStyle implements Serializable {
     public static final String TYPE_SOLID = "solid";
     public static final String DEFAULT_LB_COLOR = "#B3000000";
 
-    public int border_radius;
-    public String type;
+    private int border_radius;
+    private String type;
     private ConversationColorStyle bg;
     private ConversationColorStyle fg;
     private ConversationColorStyle lb = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, DEFAULT_LB_COLOR);
 
-    public ConversationStyle() {
+    public ConversationStyle() { // empty constructor needed for gson
+    }
+
+    public ConversationStyle(int border_radius, String type, ConversationColorStyle bg, ConversationColorStyle fg, ConversationColorStyle lb){
+        this.border_radius = border_radius;
+        this.type = type;
+        this.bg = bg;
+        this.fg = fg;
+        this.lb = lb;
     }
 
     public int getBorderRadius() {
@@ -33,18 +41,6 @@ public class ConversationStyle implements Serializable {
     public ConversationColorStyle getLb() {
         return lb;
     }
-
-    public void setBg(ConversationColorStyle bg) {
-        this.bg = bg;
-    }
-
-    public void setFg(ConversationColorStyle fg) {
-        this.fg = fg;
-    }
-
-    public void setLb(ConversationColorStyle lb) {
-        this.lb = lb;
-    } // todo remove this
 
     public int getBgColorInt() {
         if (getBg().isTypeColor()){
