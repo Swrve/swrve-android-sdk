@@ -2,6 +2,3 @@
 -keepclassmembernames public class com.swrve.sdk.messaging.model.** {
    <fields>;
 }
--keepclassmembernames public class com.swrve.sdk.conversations.engine.model.** {
-   <fields>;
-}
