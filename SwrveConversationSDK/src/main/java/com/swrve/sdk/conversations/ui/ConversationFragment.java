@@ -25,7 +25,6 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveConversationEventHelper;
-import com.swrve.sdk.SwrveConversationHelper;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveIntentHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -188,13 +187,24 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         // Set the background from whatever color the page object specifies as well as the control tray down the bottom
         pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
         pageBgColor = Color.parseColor(page.getStyle().getBg().getValue());
-        setBackgroundDrawable(contentLayout, page.getBackgroundTop(pageBorderRadius, pageBgColor));
-        setBackgroundDrawable(controlLayout, page.getBackgroundBottom(pageBorderRadius, pageBgColor));
+
+        setBackgroundDrawable(contentLayout, getBackgroundContent(pageBorderRadius, pageBgColor));
+        setBackgroundDrawable(controlLayout, getBackgroundControls(pageBorderRadius, pageBgColor));
 
         // set lightbox color
         int color = Color.parseColor(page.getStyle().getLb().getValue());
         ColorDrawable colorDrawable = new ColorDrawable(color);
         getActivity().getWindow().setBackgroundDrawable(colorDrawable);
+    }
+
+    private Drawable getBackgroundContent(float borderRadius, int pageBgColor) {
+        float radii[] = {borderRadius, borderRadius, borderRadius, borderRadius, 0, 0, 0, 0};
+        return SwrveConversationHelper.createRoundedDrawable(pageBgColor, radii);
+    }
+
+    private Drawable getBackgroundControls(float borderRadius, int pageBgColor) {
+        float radii[] = {0, 0, 0, 0, borderRadius, borderRadius, borderRadius, borderRadius};
+        return SwrveConversationHelper.createRoundedDrawable(pageBgColor, radii);
     }
 
     @SuppressLint("NewApi")

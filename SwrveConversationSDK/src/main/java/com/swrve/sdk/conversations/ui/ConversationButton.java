@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.text.TextUtils;
 
-import com.swrve.sdk.SwrveConversationHelper;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 
 public class ConversationButton extends android.widget.Button implements IConversationControl {

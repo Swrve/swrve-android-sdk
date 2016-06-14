@@ -3,7 +3,6 @@ package com.swrve.sdk.conversations.engine.model;
 import android.graphics.drawable.Drawable;
 
 import com.google.gson.Gson;
-import com.swrve.sdk.SwrveConversationHelper;
 import com.swrve.sdk.conversations.engine.GsonHelper;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
@@ -73,13 +72,4 @@ public class ConversationPage implements Serializable {
         return fromJSON(json.toString());
     }
 
-    public Drawable getBackgroundTop(float borderRadius, int pageBgColor) {
-        float radii[] = {borderRadius, borderRadius, borderRadius, borderRadius, 0, 0, 0, 0};
-        return SwrveConversationHelper.createRoundedDrawable(pageBgColor, radii);
-    }
-
-    public Drawable getBackgroundBottom(float borderRadius, int pageBgColor) {
-        float radii[] = {0, 0, 0, 0, borderRadius, borderRadius, borderRadius, borderRadius};
-        return SwrveConversationHelper.createRoundedDrawable(pageBgColor, radii);
-    }
 }

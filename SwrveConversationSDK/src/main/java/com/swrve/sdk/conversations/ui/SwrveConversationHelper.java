@@ -1,4 +1,4 @@
-package com.swrve.sdk;
+package com.swrve.sdk.conversations.ui;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -9,9 +9,13 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.conversations.R;
 
-public class SwrveConversationHelper {
+/**
+ * Internal Swrve helper class for conversations.
+ */
+class SwrveConversationHelper {
 
     /**
      * Converts a percentage radius to a pixel float based from a fixed value.
