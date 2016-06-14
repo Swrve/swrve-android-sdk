@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:layout_gravity="center">
 
-    <LinearLayout
+    <com.swrve.sdk.conversations.ui.ConversationRoundedLinearLayout
         android:id="@+id/swrve__conversation_modal"
         android:layout_width="@dimen/swrve__conversation_max_modal_width"
         android:layout_height="match_parent"
@@ -44,7 +44,7 @@
                 android:layout_weight="0"
                 android:orientation="horizontal" />
         </LinearLayout>
-    </LinearLayout>
+    </com.swrve.sdk.conversations.ui.ConversationRoundedLinearLayout>
 
     <com.swrve.sdk.conversations.ui.ConversationFullScreenVideoFrame
         android:id="@+id/swrve__full_screen"

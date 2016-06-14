@@ -44,7 +44,6 @@ import com.swrve.sdk.conversations.engine.model.styles.ConversationColorStyle;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
 import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
-import com.swrve.sdk.conversations.ui.video.YoutubeVideoViewRounded;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,8 +61,6 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     private ConversationPage page;
     private SwrveConversationEventHelper eventHelper;
     private HashMap<String, UserInputResult> userInteractionData;
-    private float pageBorderRadius;
-    private int pageBgColor;
 
     public ConversationPage getPage() {
         return page;
@@ -165,6 +162,10 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     }
 
     private void initLayout() {
+        ConversationRoundedLinearLayout modalLayout = (ConversationRoundedLinearLayout) root.findViewById(R.id.swrve__conversation_modal);
+        float pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
+        modalLayout.setRadius(pageBorderRadius);
+
         contentLayout = (LinearLayout) root.findViewById(R.id.swrve__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.swrve__controls);
         fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.swrve__full_screen);
@@ -184,27 +185,13 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         }
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
-        // Set the background from whatever color the page object specifies as well as the control tray down the bottom
-        pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
-        pageBgColor = Color.parseColor(page.getStyle().getBg().getValue());
-
-        setBackgroundDrawable(contentLayout, getBackgroundContent(pageBorderRadius, pageBgColor));
-        setBackgroundDrawable(controlLayout, getBackgroundControls(pageBorderRadius, pageBgColor));
+        setBackgroundDrawable(contentLayout, page.getBackground());
+        setBackgroundDrawable(controlLayout, page.getBackground());
 
         // set lightbox color
         int color = Color.parseColor(page.getStyle().getLb().getValue());
         ColorDrawable colorDrawable = new ColorDrawable(color);
         getActivity().getWindow().setBackgroundDrawable(colorDrawable);
-    }
-
-    private Drawable getBackgroundContent(float borderRadius, int pageBgColor) {
-        float radii[] = {borderRadius, borderRadius, borderRadius, borderRadius, 0, 0, 0, 0};
-        return SwrveConversationHelper.createRoundedDrawable(pageBgColor, radii);
-    }
-
-    private Drawable getBackgroundControls(float borderRadius, int pageBgColor) {
-        float radii[] = {0, 0, 0, 0, borderRadius, borderRadius, borderRadius, borderRadius};
-        return SwrveConversationHelper.createRoundedDrawable(pageBgColor, radii);
     }
 
     @SuppressLint("NewApi")
@@ -235,8 +222,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     }
 
     private void renderContent(Activity activity) {
-        for (int i = 0; i < page.getContent().size(); i++) {
-            ConversationAtom content = page.getContent().get(i);
+        for (ConversationAtom content : page.getContent()) {
             ConversationStyle conversationStyle = content.getStyle();
             ConversationColorStyle colorStyle = conversationStyle.getBg();
 
@@ -246,12 +232,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     if(SwrveHelper.hasFileAccess(filePath)) {
-                        ConversationImageView iv;
-                        if (i == 0 && pageBorderRadius > 0) { // only apply rounded corner if its the first atom in page
-                            iv = new ConversationImageViewRounded(activity, modelContent, pageBorderRadius, pageBgColor);
-                        } else {
-                            iv = new ConversationImageView(activity, modelContent);
-                        }
+                        ConversationImageView iv = iv = new ConversationImageView(activity, modelContent);
                         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                         iv.setTag(content.getTag());
                         iv.setImageBitmap(bitmap);
@@ -270,12 +251,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    YoutubeVideoView view;
-                    if (i == 0 && pageBorderRadius > 0) { // only apply rounded corner if its the first atom in page
-                        view = new YoutubeVideoViewRounded(activity, modelContent, fullScreenFrame, pageBorderRadius, pageBgColor);
-                    } else {
-                        view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
-                    }
+                    YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);;
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
