@@ -45,6 +45,7 @@ import com.swrve.sdk.conversations.engine.model.styles.ConversationColorStyle;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
 import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
+import com.swrve.sdk.conversations.ui.video.YoutubeVideoViewRounded;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -259,7 +260,12 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
+                    YoutubeVideoView view;
+                    if (i == 0 && pageBorderRadius > 0) { // only apply rounded corner if its the first atom in page
+                        view = new YoutubeVideoViewRounded(activity, modelContent, fullScreenFrame, pageBorderRadius, pageBgColor);
+                    } else {
+                        view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
+                    }
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());

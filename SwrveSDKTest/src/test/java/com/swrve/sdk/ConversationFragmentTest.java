@@ -33,7 +33,8 @@ import com.swrve.sdk.conversations.ui.ConversationImageViewRounded;
 import com.swrve.sdk.conversations.ui.ConversationRatingBar;
 import com.swrve.sdk.conversations.ui.HtmlSnippetView;
 import com.swrve.sdk.conversations.ui.MultiValueInputControl;
-import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
+import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
+import com.swrve.sdk.conversations.ui.video.YoutubeVideoViewRounded;
 
 import org.junit.After;
 import org.junit.Before;
@@ -51,9 +52,9 @@ import java.util.HashMap;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -215,7 +216,24 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
         assertThat(content.getChildCount(), equalTo(1));
-        assertTrue(content.getChildAt(0) instanceof WebVideoViewBase);
+        assertTrue(content.getChildAt(0) instanceof YoutubeVideoView);
+        assertFalse(content.getChildAt(0) instanceof YoutubeVideoViewRounded);
+    }
+
+    @Test
+    public void testContentVideoRounded() {
+        ArrayList<ConversationPage> pages = getMockContentConversationPages(1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_VIDEO, "solid", 50);
+        ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
+        ConversationColorStyle lbStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#5f68a3");
+        ConversationStyle pageStyle0 = new ConversationStyle(20, ConversationStyle.TYPE_SOLID, bgStyle, null, lbStyle); // border 20
+        when(pages.get(0).getStyle()).thenReturn(pageStyle0);
+        partialMockSwrveConversation.setPages(pages);
+
+        ConversationFragment fragment = createConversationFragment();
+        LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
+        assertThat(content.getVisibility(), equalTo(View.VISIBLE));
+        assertThat(content.getChildCount(), equalTo(1));
+        assertTrue(content.getChildAt(0) instanceof YoutubeVideoViewRounded);
     }
 
     @Test
