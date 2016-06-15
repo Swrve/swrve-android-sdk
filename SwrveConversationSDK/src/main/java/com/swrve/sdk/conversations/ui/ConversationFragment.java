@@ -162,6 +162,10 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     }
 
     private void initLayout() {
+        ConversationRoundedLinearLayout modalLayout = (ConversationRoundedLinearLayout) root.findViewById(R.id.swrve__conversation_modal);
+        float pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
+        modalLayout.setRadius(pageBorderRadius);
+
         contentLayout = (LinearLayout) root.findViewById(R.id.swrve__content);
         controlLayout = (LinearLayout) root.findViewById(R.id.swrve__controls);
         fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.swrve__full_screen);
@@ -181,7 +185,6 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         }
         controlLp.height = LayoutParams.WRAP_CONTENT;
 
-        // Set the background from whatever color the page object specifies as well as the control tray down the bottom
         setBackgroundDrawable(contentLayout, page.getBackground());
         setBackgroundDrawable(controlLayout, page.getBackground());
 
@@ -227,9 +230,9 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 Content modelContent = (Content) content;
                 String modelType = modelContent.getType().toString();
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
-                    ConversationImageView iv = new ConversationImageView(activity, modelContent);
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     if(SwrveHelper.hasFileAccess(filePath)) {
+                        ConversationImageView iv = iv = new ConversationImageView(activity, modelContent);
                         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                         iv.setTag(content.getTag());
                         iv.setImageBitmap(bitmap);
