@@ -8,6 +8,8 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +25,11 @@ import static org.junit.Assert.fail;
 public class SwrveTestUtils {
 
     public static void removeSwrveSDKSingletonInstance() throws Exception{
-        Field instance = SwrveSDKBase.class.getDeclaredField("instance");
+        removeSingleton(SwrveSDKBase.class, "instance");
+    }
+
+    public static void removeSingleton(Class clazz, String fieldName) throws Exception{
+        Field instance = clazz.getDeclaredField(fieldName);
         instance.setAccessible(true);
         instance.set(null, null);
     }
@@ -45,6 +51,25 @@ public class SwrveTestUtils {
         return result;
     }
 
+    /**
+     * Loads the campaigns from json file into swrve sdk
+     * @param swrve sdk
+     * @param campaignFileName the cfile name in assets folder containing the campaign json
+     * @param imageAssets an array of downloaded assets so campaign is eligible
+     * @throws Exception
+     */
+    public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... imageAssets) throws Exception {
+        String json = SwrveTestUtils.getAssetAsText(context, campaignFileName);
+        JSONObject jsonObject = new JSONObject(json);
+        swrve.loadCampaignsFromJSON(jsonObject, swrve.campaignsState);
+        if (imageAssets.length > 0) {
+            Set<String> assetsOnDisk = new HashSet<>();
+            for(String asset : imageAssets) {
+                assetsOnDisk.add(asset);
+            }
+            swrve.assetsOnDisk = assetsOnDisk;
+        }
+    }
 
     public static ISwrveCampaignManager getTestSwrveCampaignManager() {
         return new ISwrveCampaignManager() {

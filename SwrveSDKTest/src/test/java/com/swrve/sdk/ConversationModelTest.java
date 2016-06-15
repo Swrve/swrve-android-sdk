@@ -7,14 +7,12 @@ import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -23,26 +21,28 @@ import static org.junit.Assert.assertThat;
 
 public class ConversationModelTest extends SwrveBaseTest {
 
-    private Swrve swrve;
+    private Swrve swrveSpy;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        swrve = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
-        swrve.init(mActivity);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        swrveSpy.init(mActivity);
     }
 
     @After
     public void tearDown() throws Exception {
         super.tearDown();
+        swrveSpy.shutdown();
         SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
     public void testConversationModel() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-        SwrveConversation conversation = swrve.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
-
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
         assertThat(conversation.getPages().size(), equalTo(3));
 
@@ -80,9 +80,8 @@ public class ConversationModelTest extends SwrveBaseTest {
 
     @Test
     public void test12887LightBoxRadius() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-        SwrveConversation conversation = swrve.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
-
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
         assertThat(conversation.getPages().size(), equalTo(3));
 
@@ -94,17 +93,6 @@ public class ConversationModelTest extends SwrveBaseTest {
         ConversationPage page2 = conversation.getPages().get(1);
         assertThat(page2.getStyle().getBorderRadius(), equalTo(0));
         assertThat(page2.getStyle().getLb().getValue(), equalTo(ConversationStyle.DEFAULT_LB_COLOR));
-    }
-
-    private void loadCampaignsFromAssets(String assetName, String... imageAssets) throws Exception {
-        String json = SwrveTestUtils.getAssetAsText(mActivity, assetName);
-        JSONObject jsonObject = new JSONObject(json);
-        swrve.loadCampaignsFromJSON(jsonObject, swrve.campaignsState);
-        if (imageAssets.length > 0) {
-            Set<String> assetsOnDisk = new HashSet<>();
-            assetsOnDisk.add(imageAssets[0]);
-            swrve.assetsOnDisk = assetsOnDisk;
-        }
     }
 
 }

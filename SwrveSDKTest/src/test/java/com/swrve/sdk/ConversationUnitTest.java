@@ -14,7 +14,6 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,9 +22,7 @@ import org.mockito.Mockito;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -41,26 +38,28 @@ import static org.mockito.Mockito.when;
 
 public class ConversationUnitTest extends SwrveBaseTest {
 
-    private Swrve swrve;
+    private Swrve swrveSpy;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        swrve = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
-        swrve.init(mActivity);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        swrveSpy.init(mActivity);
     }
 
     @After
     public void tearDown() throws Exception {
         super.tearDown();
+        swrveSpy.shutdown();
         SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
     public void testSwrveConversation() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-
-        SwrveConversation conversation = swrve.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
         assertThat(conversation.getPages().size(), equalTo(3));
 
@@ -71,25 +70,25 @@ public class ConversationUnitTest extends SwrveBaseTest {
 
     @Test
     public void testGetConversationForEvent() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
-        assertNull(swrve.getConversationForEvent("some_trigger_that_doesn't_exist", new HashMap<String, String>()));
+        assertNull(swrveSpy.getConversationForEvent("some_trigger_that_doesn't_exist", new HashMap<String, String>()));
 
-        SwrveConversation conversation = swrve.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
         assertThat(conversation.getPages().size(), equalTo(3));
     }
 
     @Test
     public void testConversationAssetsDownload() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
-        SwrveBaseCampaign swrveCampaign = swrve.campaigns.get(0);
+        SwrveBaseCampaign swrveCampaign = swrveSpy.campaigns.get(0);
         assertTrue(swrveCampaign instanceof SwrveConversationCampaign);
         SwrveConversation conversation = ((SwrveConversationCampaign) swrveCampaign).getConversation();
         assertEquals(conversation.getCampaign().getId(), swrveCampaign.getId());
 
-        assertTrue(conversation.areAssetsReady(swrve.getAssetsOnDisk()));
+        assertTrue(conversation.areAssetsReady(swrveSpy.getAssetsOnDisk()));
 
         boolean assetDownloaded = false;
         for (ConversationPage conversationPage : conversation.getPages()) {
@@ -105,17 +104,17 @@ public class ConversationUnitTest extends SwrveBaseTest {
         }
         assertTrue(assetDownloaded);
 
-        swrve.assetsOnDisk.clear();
-        assertFalse(conversation.areAssetsReady(swrve.getAssetsOnDisk()));
+        swrveSpy.assetsOnDisk.clear();
+        assertFalse(conversation.areAssetsReady(swrveSpy.getAssetsOnDisk()));
     }
 
     @Test
     public void testConversationCallActionCalledByUser() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
-        assertNotNull(swrve.campaigns);
-        assertThat(swrve.campaigns.size(), equalTo(1));
-        SwrveBaseCampaign swrveCampaign = swrve.campaigns.get(0);
+        assertNotNull(swrveSpy.campaigns);
+        assertThat(swrveSpy.campaigns.size(), equalTo(1));
+        SwrveBaseCampaign swrveCampaign = swrveSpy.campaigns.get(0);
         assertTrue(swrveCampaign instanceof SwrveConversationCampaign);
         SwrveConversation conversation = ((SwrveConversationCampaign) swrveCampaign).getConversation();
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
@@ -139,7 +138,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
         ISwrveConversationSDK swrveConversationSDKSpy = Mockito.spy(conversationEventHelper.swrveConversationSDK);
         conversationEventHelper.swrveConversationSDK = swrveConversationSDKSpy;
 
-        conversationEventHelper.conversationEncounteredError(mockConversation, "currentPageTag", new Exception());
+        conversationEventHelper.conversationEncounteredError(mockConversation, "currentPageTag", new Exception("FAKE EXCEPTION IN TESTS - IGNORE "));
 
         Mockito.verify(swrveConversationSDKSpy).queueConversationEvent("Swrve.Conversations.Conversation-1.error", "error", "currentPageTag", 1, null);
     }
@@ -181,90 +180,85 @@ public class ConversationUnitTest extends SwrveBaseTest {
 
     @Test
     public void testConversationLinkActionCalledByUser() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        conversationEventHelper.swrveConversationSDK = swrveSpy;
         conversationEventHelper.conversationLinkVisitActionCalledByUser(getMockSwrveConversation(1), "fromPageTag", "toActionTag");
-        swrve.storageExecutor.shutdown();
-        swrve.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        swrveSpy.storageExecutor.shutdown();
+        swrveSpy.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
         assertConversationEvent("Swrve.Conversations.Conversation-1.visit", "visit", "fromPageTag");
     }
 
     @Test
     public void testConversationPageWasViewedByUser() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        conversationEventHelper.swrveConversationSDK = swrveSpy;
         conversationEventHelper.conversationPageWasViewedByUser(getMockSwrveConversation(1), "pageTag");
-        swrve.storageExecutor.shutdown();
-        swrve.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        swrveSpy.storageExecutor.shutdown();
+        swrveSpy.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
         assertConversationEvent("Swrve.Conversations.Conversation-1.impression", "impression", "pageTag");
     }
 
     @Test
     public void testConversationTransitionedToOtherPage() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        conversationEventHelper.swrveConversationSDK = swrveSpy;
         conversationEventHelper.conversationTransitionedToOtherPage(getMockSwrveConversation(1), "fromPageTag", "toPageTag", "controlTag");
-        swrve.storageExecutor.shutdown();
-        swrve.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        swrveSpy.storageExecutor.shutdown();
+        swrveSpy.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
         assertConversationEvent("Swrve.Conversations.Conversation-1.navigation", "navigation", "fromPageTag");
     }
 
     @Test
     public void testConversationWasCancelledByUser() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        conversationEventHelper.swrveConversationSDK = swrveSpy;
         conversationEventHelper.conversationWasCancelledByUser(getMockSwrveConversation(1), "finalPageTag");
-        swrve.storageExecutor.shutdown();
-        swrve.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        swrveSpy.storageExecutor.shutdown();
+        swrveSpy.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
         assertConversationEvent("Swrve.Conversations.Conversation-1.cancel", "cancel", "finalPageTag");
     }
 
     @Test
     public void testConversationWasFinishedByUser() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        conversationEventHelper.swrveConversationSDK = swrveSpy;
         conversationEventHelper.conversationWasFinishedByUser(getMockSwrveConversation(1), "endPageTag", "endControlTag");
-        swrve.storageExecutor.shutdown();
-        swrve.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        swrveSpy.storageExecutor.shutdown();
+        swrveSpy.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
         assertConversationEvent("Swrve.Conversations.Conversation-1.done", "done", "endPageTag");
     }
 
     @Test
     public void testConversationWasStartedByUser() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        conversationEventHelper.swrveConversationSDK = swrveSpy;
         conversationEventHelper.conversationWasStartedByUser(getMockSwrveConversation(1), "pageTag");
-        swrve.storageExecutor.shutdown();
-        swrve.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        swrveSpy.storageExecutor.shutdown();
+        swrveSpy.storageExecutor.awaitTermination(1, TimeUnit.SECONDS);
         assertConversationEvent("Swrve.Conversations.Conversation-1.start", "start", "pageTag");
     }
 
     // NOTE: Update this JSON when increasing the conversation version in the SDK
     @Test
     public void testSwrveConversationVersionFiltered() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign_versions.json");
-        assertNotNull(swrve.campaigns);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_versions.json");
+        assertNotNull(swrveSpy.campaigns);
         // One campaign with no version (defaulted to 1), another campaign with v1, v4 is not loaded
-        assertThat(swrve.campaigns.size(), equalTo(2));
+        assertThat(swrveSpy.campaigns.size(), equalTo(2));
     }
 
     @Test
     public void testSwrveConversationDeviceFiltered() throws Exception {
-        loadCampaignsFromAssets("conversation_campaign_filters.json");
-        assertNotNull(swrve.campaigns);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_filters.json");
+        assertNotNull(swrveSpy.campaigns);
         // One with no requirements, another with "android" and a campaign with "ios_permissions" that will be rejected.
-        assertThat(swrve.campaigns.size(), equalTo(2));
-    }
-
-    private void loadCampaignsFromAssets(String assetName, String... imageAssets) throws Exception {
-        String json = SwrveTestUtils.getAssetAsText(mActivity, assetName);
-        JSONObject jsonObject = new JSONObject(json);
-        swrve.loadCampaignsFromJSON(jsonObject, swrve.campaignsState);
-        if (imageAssets.length > 0) {
-            Set<String> assetsOnDisk = new HashSet<>();
-            assetsOnDisk.add(imageAssets[0]);
-            swrve.assetsOnDisk = assetsOnDisk;
-        }
+        assertThat(swrveSpy.campaigns.size(), equalTo(2));
     }
 
     private SwrveConversation getMockSwrveConversation(int id) {
@@ -276,7 +270,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
     }
 
     private void assertConversationEvent(String eventName, String eventNamePayload, String pageTag) {
-        Map<Long, String> events = swrve.cachedLocalStorage.getFirstNEvents(50);
+        Map<Long, String> events = swrveSpy.cachedLocalStorage.getFirstNEvents(50);
 
         String conversationEvent = null;
         for (Map.Entry<Long, String> entry : events.entrySet()) {
