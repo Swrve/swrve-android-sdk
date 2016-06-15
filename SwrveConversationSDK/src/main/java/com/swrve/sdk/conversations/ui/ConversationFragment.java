@@ -251,7 +251,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
                     contentLayout.addView(view);
                 } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
-                    YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);;
+                    YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());

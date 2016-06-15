@@ -11,16 +11,19 @@ import com.swrve.sdk.conversations.R;
 
 public class ConversationRoundedLinearLayout extends LinearLayout {
 
+    private int maxModalWidthPx;
     private float radius;
     private final RectF rect = new RectF();
     private Path path = new Path();
 
     public ConversationRoundedLinearLayout(Context context) {
         super(context);
+        maxModalWidthPx = getResources().getDimensionPixelSize(R.dimen.swrve__conversation_max_modal_width);
     }
 
     public ConversationRoundedLinearLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        maxModalWidthPx = getResources().getDimensionPixelSize(R.dimen.swrve__conversation_max_modal_width);
     }
 
     @Override
@@ -28,7 +31,6 @@ public class ConversationRoundedLinearLayout extends LinearLayout {
         super.onSizeChanged(w, h, oldw, oldh);
         path.reset();
         rect.set(0, 0, w, h);
-        int maxModalWidthPx = getResources().getDimensionPixelSize(R.dimen.swrve__conversation_max_modal_width);
         float radiusToApply = getWidth() >= maxModalWidthPx ? radius : 0;
         path.addRoundRect(rect, radiusToApply, radiusToApply, Path.Direction.CW);
         path.close();
