@@ -7,6 +7,8 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
+import com.swrve.sdk.conversations.R;
+
 public class ConversationRoundedLinearLayout extends LinearLayout {
 
     private float radius;
@@ -26,7 +28,9 @@ public class ConversationRoundedLinearLayout extends LinearLayout {
         super.onSizeChanged(w, h, oldw, oldh);
         path.reset();
         rect.set(0, 0, w, h);
-        path.addRoundRect(rect, radius, radius, Path.Direction.CW);
+        int maxModalWidthPx = getResources().getDimensionPixelSize(R.dimen.swrve__conversation_max_modal_width);
+        float radiusToApply = getWidth() >= maxModalWidthPx ? radius : 0;
+        path.addRoundRect(rect, radiusToApply, radiusToApply, Path.Direction.CW);
         path.close();
     }
 
