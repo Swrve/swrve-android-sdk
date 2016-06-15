@@ -4,7 +4,7 @@ import android.graphics.drawable.Drawable;
 
 import com.google.gson.Gson;
 import com.swrve.sdk.conversations.engine.GsonHelper;
-import com.swrve.sdk.conversations.engine.model.styles.PageStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import org.json.JSONObject;
 
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class ConversationPage implements Serializable {
     private String tag;
     private String title;
-    private PageStyle style;
+    private ConversationStyle style;
 
     private ArrayList<ConversationAtom> content;
     private ArrayList<ButtonControl> controls;
@@ -64,7 +64,7 @@ public class ConversationPage implements Serializable {
         return getStyle().getBg().getPrimaryDrawable();
     }
 
-    public PageStyle getStyle(){
+    public ConversationStyle getStyle(){
         return this.style;
     }
 
