@@ -1,4 +1,6 @@
-# Do not obfuscate fields of model classes to be parsed by GSON
--keepclassmembernames public class com.swrve.sdk.messaging.model.** {
-   <fields>;
-}
+# GSON proguard config
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn sun.misc.Unsafe
+-keep class sun.misc.Unsafe { *; }
+-keep class com.swrve.sdk.messaging.model.** { *; }
