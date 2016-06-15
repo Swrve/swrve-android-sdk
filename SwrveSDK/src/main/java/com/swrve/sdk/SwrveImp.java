@@ -1008,7 +1008,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    public Context getContext() {
+    protected Context getContext() {
         Context appCtx = context.get();
         if(appCtx == null) {
             return getActivityContext();
@@ -1300,71 +1300,4 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             }
         }
     }
-
-    /*protected class DisplayMessageRunnable implements Runnable {
-        private SwrveBase<?, ?> sdk;
-        private Activity activity;
-        private SwrveMessage message;
-        private boolean firstTime;
-
-        public DisplayMessageRunnable(SwrveBase<?, ?> sdk, Activity activity, SwrveMessage message, boolean firstTime) {
-            this.sdk = sdk;
-            this.activity = activity;
-            this.message = message;
-            this.firstTime = firstTime;
-        }
-
-        @Override
-        public void run() {
-            try {
-                SwrveLogger.d(LOG_TAG, "Called show dialog");
-                SwrveDialog dialog = (currentDialog == null) ? null : currentDialog.get();
-                if (dialog == null || !dialog.isShowing()) {
-
-                    SwrveOrientation deviceOrientation = getDeviceOrientation();
-                    SwrveLogger.d(LOG_TAG, "Trying to show dialog with orientation " + deviceOrientation);
-                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, previousOrientation,
-                            installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
-
-                    SwrveDialog newDialog = new SwrveDialog(activity, message, swrveMessageView, config.isHideToolbar());
-                    newDialog.setOnDismissListener(new OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            // Remove reference to the dialog on our side
-                            if (currentDialog != null) {
-                                SwrveDialog refDialog = currentDialog.get();
-                                if (refDialog == dialog) {
-                                    currentDialog = null;
-                                }
-                            }
-                        }
-                    });
-                    saveCurrentOrientation(activity);
-
-                    // Check if the customer wants to manage the dialog themselves
-                    if (dialogListener != null) {
-                        dialogListener.onDialog(newDialog);
-                    } else {
-                        // Save a reference to the dialog and display it now
-                        sdk.currentDialog = new WeakReference<SwrveDialog>(newDialog);
-                        newDialog.show();
-                    }
-                }
-
-                activity = null;
-                sdk = null;
-                message = null;
-            } catch (SwrveMessageViewBuildException e) {
-                Map<String, Object> parameters = new HashMap<String, Object>();
-                parameters.put("name", "Swrve.Messages.view_failed");
-                Map<String, String> errorReasonPayload = new HashMap<String, String>();
-                errorReasonPayload.put("reason", e.getMessage());
-                queueEvent("event", parameters, errorReasonPayload);
-
-                SwrveLogger.w(LOG_TAG, "Couldn't create a SwrveMessageView", e);
-            } catch (Exception e) {
-                SwrveLogger.w(LOG_TAG, "Couldn't create a SwrveMessageView", e);
-            }
-        }
-    }*/
 }

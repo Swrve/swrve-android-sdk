@@ -152,7 +152,7 @@ public class SwrveMessageView extends RelativeLayout {
                 final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
-                    SwrveImageView imageView = createSwrveImage(context);
+                    SwrveImageView imageView = new SwrveImageView(context);
                     bitmapCache.add(new WeakReference<Bitmap>(imageBitmap));
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
@@ -183,7 +183,7 @@ public class SwrveMessageView extends RelativeLayout {
                 final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
-                    SwrveButtonView buttonView = createSwrveButton(context, button.getActionType());
+                    SwrveButtonView buttonView = new SwrveButtonView(context, button.getActionType());
                     bitmapCache.add(new WeakReference<Bitmap>(imageBitmap));
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
@@ -264,14 +264,6 @@ public class SwrveMessageView extends RelativeLayout {
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error while onLayout in SwrveMessageView", e);
         }
-    }
-
-    protected SwrveImageView createSwrveImage(Context context) {
-        return new SwrveImageView(context);
-    }
-
-    protected SwrveButtonView createSwrveButton(Context context, SwrveActionType type) {
-        return new SwrveButtonView(context, type);
     }
 
     @Override

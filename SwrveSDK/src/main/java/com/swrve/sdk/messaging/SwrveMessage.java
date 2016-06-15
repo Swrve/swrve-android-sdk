@@ -60,7 +60,7 @@ public class SwrveMessage {
 
         for (int i = 0, j = jsonFormats.length(); i < j; i++) {
             JSONObject messageFormatData = jsonFormats.getJSONObject(i);
-            SwrveMessageFormat messageFormat = createMessageFormat(this, messageFormatData);
+            SwrveMessageFormat messageFormat = new SwrveMessageFormat(this, messageFormatData);
             getFormats().add(messageFormat);
         }
     }
@@ -129,10 +129,6 @@ public class SwrveMessage {
 
     protected void setCampaign(SwrveInAppCampaign campaign) {
         this.campaign = campaign;
-    }
-
-    private SwrveMessageFormat createMessageFormat(SwrveMessage swrveMessage, JSONObject messageFormatData) throws JSONException {
-        return new SwrveMessageFormat(swrveMessage, messageFormatData);
     }
 
     /**

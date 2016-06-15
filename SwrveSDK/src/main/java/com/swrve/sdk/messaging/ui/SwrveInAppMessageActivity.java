@@ -36,57 +36,59 @@ public class SwrveInAppMessageActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         sdk = (SwrveBase)SwrveSDK.getInstance();
-        if (sdk != null) {
-            Intent intent = getIntent();
-            if (intent != null) {
-                Bundle extras = intent.getExtras();
-                if (extras != null) {
-                    int messageId = extras.getInt(MESSAGE_ID_KEY);
-                    message = sdk.getMessageForId(messageId);
+        if (sdk == null) {
+            finish();
+            return;
+        }
+        Intent intent = getIntent();
+        if (intent != null) {
+            Bundle extras = intent.getExtras();
+            if (extras != null) {
+                int messageId = extras.getInt(MESSAGE_ID_KEY);
+                message = sdk.getMessageForId(messageId);
 
-                    SwrveConfigBase config = sdk.getConfig();
-                    this.hideToolbar = config.isHideToolbar();
-                    this.minSampleSize = config.getMinSampleSize();
-                    this.defaultBackgroundColor = config.getDefaultBackgroundColor();
+                SwrveConfigBase config = sdk.getConfig();
+                this.hideToolbar = config.isHideToolbar();
+                this.minSampleSize = config.getMinSampleSize();
+                this.defaultBackgroundColor = config.getDefaultBackgroundColor();
+            }
+        }
+
+        if (message == null) {
+            finish();
+            return;
+        }
+        // Choose the current orientation. If it is not possible,
+        // pick the first one and set the requested orientation.
+        SwrveOrientation deviceOrientation = getDeviceOrientation();
+        SwrveMessageFormat format = message.getFormat(deviceOrientation);
+        if (format == null) {
+            format = message.getFormats().get(0);
+            if (format.getOrientation() != deviceOrientation) {
+                if (format.getOrientation() == SwrveOrientation.Landscape) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                } else {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 }
             }
         }
 
-        if (message != null) {
-            // Choose the current orientation. If it is not possible,
-            // pick the first one and set the requested orientation.
-            SwrveOrientation deviceOrientation = getDeviceOrientation();
-            SwrveMessageFormat format = message.getFormat(deviceOrientation);
-            if (format == null) {
-                format = message.getFormats().get(0);
-                if (format.getOrientation() != deviceOrientation) {
-                    if (format.getOrientation() == SwrveOrientation.Landscape) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                    } else {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                    }
-                }
-            }
+        if (hideToolbar) {
+            // Remove the status bar from the activity
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
 
-            if (hideToolbar) {
-                // Remove the status bar from the activity
-                getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                requestWindowFeature(Window.FEATURE_NO_TITLE);
+        try {
+            // Create view and add as root of the activity
+            SwrveMessageView view = new SwrveMessageView(this, message,
+                    format, minSampleSize, defaultBackgroundColor);
+            setContentView(view);
+            if(savedInstanceState == null) {
+                notifyOfImpression(format);
             }
-
-            try {
-                // Create view and add as root of the activity
-                SwrveMessageView view = new SwrveMessageView(this, message,
-                        format, minSampleSize, defaultBackgroundColor);
-                setContentView(view);
-                if(savedInstanceState == null) {
-                    notifyOfImpression(format);
-                }
-            } catch (SwrveMessageViewBuildException e) {
-                e.printStackTrace();
-            }
-        } else {
-            finish();
+        } catch (SwrveMessageViewBuildException e) {
+            SwrveLogger.e(LOG_TAG, "Error while creating the SwrveMessageView", e);
         }
     }
 
