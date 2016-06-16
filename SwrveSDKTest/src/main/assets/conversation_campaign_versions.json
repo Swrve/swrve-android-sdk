@@ -1,0 +1,172 @@
+{
+  "game_data": {},
+  "campaigns": [
+    {
+      "id": 15679,
+      "start_date": 1427120713000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 60
+      },
+      "triggers": [
+        {
+          "event_name": "Swrve.Messages.showAtSessionStart",
+          "conditions": {}
+        }
+      ],
+      "conversation": {
+        "id": 82,
+        "name": "Choose one",
+        "pages": [
+          {
+            "tag": "1427124319447-2Button",
+            "title": "Page 1 of x",
+            "style": {
+              "bg": {
+                "type": "color",
+                "value": "#666666"
+              }
+            },
+            "content": [
+              {
+                "type": "multi-value-input",
+                "description": "Please select an answer from the radio buttons below 1:",
+                "values": [
+                  {
+                    "answer_id": "13654815-option",
+                    "answer_text": "Option 1"
+                  }
+                ],
+                "tag": "1427192631272-fragment"
+              }
+            ],
+            "controls": [
+              {
+                "tag": "1427124319447-Button-1",
+                "description": "Call a number",
+                "target": "",
+                "action": {
+                  "call": "453453453"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 15689,
+      "start_date": 1427120713000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 60
+      },
+      "triggers": [
+        "Swrve.Messages.showAtSessionStart"
+      ],
+      "conversation_version": 2,
+      "conversation": {
+        "id": 83,
+        "name": "Choose one",
+        "pages": [
+          {
+            "tag": "1427124319447-2Button",
+            "title": "Page 1 of x",
+            "style": {
+              "bg": {
+                "type": "color",
+                "value": "#666666"
+              }
+            },
+            "content": [
+              {
+                "type": "multi-value-input",
+                "description": "Please select an answer from the radio buttons below 1:",
+                "values": [
+                  {
+                    "answer_id": "13654815-option",
+                    "answer_text": "Option 1"
+                  }
+                ],
+                "tag": "1427192631272-fragment"
+              }
+            ],
+            "controls": [
+              {
+                "tag": "1427124319447-Button-1",
+                "description": "Call a number",
+                "target": "",
+                "action": {
+                  "call": "453453453"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 15680,
+      "start_date": 1427120713000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 60
+      },
+      "triggers": [
+        "Swrve.Messages.showAtSessionStart"
+      ],
+      "conversation_version": 4,
+      "conversation": {
+        "id": 88,
+        "name": "Choose one",
+        "pages": [
+          {
+            "tag": "1427124319447-2Button",
+            "title": "Page 1 of x",
+            "style": {
+              "bg": {
+                "type": "color",
+                "value": "#666666"
+              }
+            },
+            "content": [
+              {
+                "type": "multi-value-input",
+                "description": "Please select an answer from the radio buttons below 1:",
+                "values": [
+                  {
+                    "answer_id": "13654815-option",
+                    "answer_text": "Option 1"
+                  }
+                ],
+                "tag": "1427192631272-fragment"
+              }
+            ],
+            "controls": [
+              {
+                "tag": "1427124319447-Button-1",
+                "description": "Call a number",
+                "target": "",
+                "action": {
+                  "call": "453453453"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "rules": {},
+  "cdn_root": "http://fake_cdn_root.com/someurl/image/",
+  "version": 2
+}

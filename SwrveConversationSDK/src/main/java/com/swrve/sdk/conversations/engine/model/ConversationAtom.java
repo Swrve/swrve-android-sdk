@@ -1,7 +1,7 @@
 package com.swrve.sdk.conversations.engine.model;
 
 
-import com.swrve.sdk.conversations.engine.model.styles.AtomStyle;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import java.io.Serializable;
 
@@ -11,12 +11,11 @@ public abstract class ConversationAtom implements Serializable {
     public static final String TYPE_CONTENT_VIDEO = "video";
     public static final String TYPE_CONTENT_SPACER = "spacer";
     public static final String TYPE_INPUT_MULTIVALUE = "multi-value-input";
-    public static final String TYPE_INPUT_MULTIVALUELONG = "multi-value-long-input";
     public static final String TYPE_INPUT_STARRATING = "star-rating";
 
     protected String tag;
     protected String type;
-    protected AtomStyle style;
+    protected ConversationStyle style;
 
     public static ConversationAtom create(String tag, String type) {
         BareConversationAtom bca = new BareConversationAtom();
@@ -29,7 +28,7 @@ public abstract class ConversationAtom implements Serializable {
         return tag;
     }
 
-    public AtomStyle getStyle(){
+    public ConversationStyle getStyle(){
         return this.style;
     }
 
