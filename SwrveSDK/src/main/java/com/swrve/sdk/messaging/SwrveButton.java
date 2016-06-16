@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * In-app message button.
  */
-public class SwrveButton extends SwrveWidget implements Serializable {
+public class SwrveButton extends SwrveWidget {
     // Name of this button
     protected String name;
     // Cached path of the button image on disk

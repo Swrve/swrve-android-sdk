@@ -5,9 +5,11 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.VisibleForTesting;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -30,6 +32,8 @@ public class SwrveInAppMessageActivity extends Activity {
     private boolean hideToolbar = false;
     private int minSampleSize;
     private int defaultBackgroundColor;
+
+    private SwrveMessageFormat format;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,22 +65,24 @@ public class SwrveInAppMessageActivity extends Activity {
         // Choose the current orientation. If it is not possible,
         // pick the first one and set the requested orientation.
         SwrveOrientation deviceOrientation = getDeviceOrientation();
-        SwrveMessageFormat format = message.getFormat(deviceOrientation);
+        format = message.getFormat(deviceOrientation);
         if (format == null) {
             format = message.getFormats().get(0);
-            if (format.getOrientation() != deviceOrientation) {
-                if (format.getOrientation() == SwrveOrientation.Landscape) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                } else {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                }
+        }
+
+        if (message.getFormats().size() == 1) {
+            if (format.getOrientation() == SwrveOrientation.Landscape) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             }
         }
 
+        // Add the status bar if configured that way
         if (hideToolbar) {
-            // Remove the status bar from the activity
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        } else {
+            setTheme(R.style.Theme_InAppMessageWithToolbar);
         }
 
         try {
@@ -146,10 +152,16 @@ public class SwrveInAppMessageActivity extends Activity {
         }
     }
 
+    @VisibleForTesting
+    public SwrveMessageFormat getFormat() {
+        return format;
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        message.getCampaign().messageDismissed();
+        if (message != null && message.getCampaign() != null) {
+            message.getCampaign().messageDismissed();
+        }
     }
 }

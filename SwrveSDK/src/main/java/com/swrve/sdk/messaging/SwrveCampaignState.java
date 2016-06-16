@@ -11,7 +11,7 @@ import java.util.Date;
 /**
  * Used internally to save the state of campaigns
  */
-public class SwrveCampaignState implements Serializable {
+public class SwrveCampaignState {
     protected static final String LOG_TAG = "SwrveMessagingSDK";
 
     /**

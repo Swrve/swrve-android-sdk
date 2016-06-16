@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-
 class SwrveCommon {
     private static final String LOG_TAG = "SwrveCommon";
     private static ISwrveCommon instance;

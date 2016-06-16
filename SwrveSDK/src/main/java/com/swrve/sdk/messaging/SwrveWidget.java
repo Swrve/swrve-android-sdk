@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * Base in-app message element widget class.
  */
-abstract class SwrveWidget implements Serializable {
+abstract class SwrveWidget {
     // Position of the widget
     protected Point position;
     // Size of the widget

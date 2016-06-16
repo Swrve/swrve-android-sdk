@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * In-app message background image.
  */
-public class SwrveImage extends SwrveWidget implements Serializable {
+public class SwrveImage extends SwrveWidget {
     // Cached path of the image file on disk
     protected String file;
 

@@ -26,7 +26,7 @@ public class SwrveMessage {
     // Priority of the message
     protected int priority = 9999;
     // Parent in-app campaign
-    protected transient SwrveInAppCampaign campaign;
+    protected SwrveInAppCampaign campaign;
     // List of available formats
     protected List<SwrveMessageFormat> formats;
     // Location of the images and button resources
