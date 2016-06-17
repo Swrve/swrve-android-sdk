@@ -90,15 +90,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     @Override
-    protected void afterInit() {
-    }
-
-    @Override
-    protected void afterBind() {
-        // empty
-    }
-
-    @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {
         if (config.isPushEnabled() && !SwrveHelper.isNullOrEmpty(registrationId)) {
             deviceInfo.put(SWRVE_GCM_TOKEN, registrationId);

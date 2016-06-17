@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class SwrvePushEngageReceiver extends BroadcastReceiver {
 
-    private static final String LOG_TAG = "SwrveGcmEngageReceiver";
+    private static final String LOG_TAG = "SwrveGcm";
 
     private Context context;
     private Swrve swrve;
@@ -43,7 +43,6 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     // Obtain push id
                     Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
-                    // Only process once the message if possible
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
                         SwrveLogger.d(LOG_TAG, "GCM engaged, sending event:" + eventName);
@@ -53,7 +52,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                             swrve.pushNotificationListener.onPushNotification(msg); // todo warning that this should not take long......
                         }
                         if(msg.containsKey(SwrveGcmConstants.DEEPLINK_KEY)) {
-                            processDeeplink(msg);
+                            openDeeplink(msg);
                         } else {
                             openActivity(msg);
                         }
@@ -77,7 +76,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         }
     }
 
-    private void processDeeplink(Bundle msg) {
+    private void openDeeplink(Bundle msg) {
         String uri = msg.getString(SwrveGcmConstants.DEEPLINK_KEY);
         SwrveLogger.d(LOG_TAG, "Found GCM deeplink. Will attempt to open:" + uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled

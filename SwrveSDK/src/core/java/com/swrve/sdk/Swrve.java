@@ -21,14 +21,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     @Override
-    protected void afterInit() {
-    }
-
-    @Override
-    protected void afterBind() {
-    }
-
-    @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {
     }
 }
