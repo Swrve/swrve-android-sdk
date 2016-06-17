@@ -18,5 +18,7 @@ public interface ISwrve extends ISwrveBase<ISwrve, SwrveConfig> {
 
     void processIntent(Intent intent);
 
+    void setRegistrationId(String registrationId);
+
     void onTokenRefreshed();
 }

@@ -41,4 +41,13 @@ public class SwrveGoogleConfigTest {
         swrveConfig.setAndroidIdLoggingEnabled(true);
         assertEquals(true, swrveConfig.isAndroidIdLoggingEnabled());
     }
+
+    @Test
+    public void testObtainRegistrationId() {
+        SwrveConfig swrveConfig = new SwrveConfig();
+        assertEquals(true, swrveConfig.isObtainRegistrationIdEnabled());
+
+        swrveConfig.setAndroidIdLoggingEnabled(false);
+        assertEquals(false, swrveConfig.isObtainRegistrationIdEnabled());
+    }
 }

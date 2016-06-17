@@ -78,4 +78,15 @@ public class SwrveGoogleUnitTest {
         assertEquals("customdata_value", nextIntent.getStringExtra("customdata"));
     }
 
+    @Test
+    public void testManualRegistrationId() {
+        SwrveConfig config = new SwrveConfig();
+        config.setSenderId("12345");
+        config.setObtainRegistrationIdEnabled(false);
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(activity, 1, "apiKey", config);
+        swrve.setRegistrationId("manual_reg_id");
+
+        // An event must be sent
+        // TOOD: HTTP mock server check that an update event was sent with the right property
+    }
 }
