@@ -24,7 +24,7 @@ public class SwrveGcmNotification {
 
     private static SwrveGcmNotification instance;
 
-    protected final Class<?> activityClass;
+    public final Class<?> activityClass;
     protected final int iconDrawableId;
     protected final int iconMaterialDrawableId;
     protected final Bitmap largeIconDrawable;
@@ -40,7 +40,7 @@ public class SwrveGcmNotification {
         this.notificationTitle = notificationTitle;
     }
 
-    protected static SwrveGcmNotification getInstance(Context context) {
+    public static SwrveGcmNotification getInstance(Context context) {
         if (instance == null) {
             instance = createNotificationFromMetaData(context);
         }
