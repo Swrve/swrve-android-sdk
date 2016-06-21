@@ -1,10 +1,8 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Bundle;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
@@ -13,7 +11,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
-import com.swrve.sdk.gcm.SwrveGcmConstants;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,6 +33,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         super(context, appId, apiKey, config);
     }
 
+    @Override
     public void onTokenRefreshed() {
         registerInBackground(getContext());
     }
@@ -91,19 +89,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     @Override
-    protected void afterInit() {
-    }
-
-    @Override
-    protected void afterBind() {
-        // Process intent that opened the app
-        Activity ctx = getActivityContext();
-        if (config.isPushEnabled() && ctx != null) {
-            processIntent(ctx.getIntent());
-        }
-    }
-
-    @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {
         if (config.isPushEnabled() && !SwrveHelper.isNullOrEmpty(registrationId)) {
             deviceInfo.put(SWRVE_GCM_TOKEN, registrationId);
@@ -113,6 +98,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
     }
 
+    @Override
     public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         this.pushNotificationListener = pushNotificationListener;
     }
@@ -206,11 +192,13 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         return registrationIdRaw;
     }
 
+    @Override
     public void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
         SwrveIAPRewards rewards = new SwrveIAPRewards();
         this.iapPlay(productId, productPrice, currency, rewards, purchaseData, dataSignature);
     }
 
+    @Override
     public void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature) {
         this._iapPlay(productId, productPrice, currency, rewards, purchaseData, dataSignature);
     }
@@ -237,69 +225,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         return true;
     }
 
-    public void onResume(Activity ctx) {
-        super.onResume(ctx);
-        try {
-            if (config.isPushEnabled()) {
-                if (activityContext != null) {
-                    Activity relatedActivity = activityContext.get();
-                    if (relatedActivity != null) {
-                        processIntent(relatedActivity.getIntent());
-                    }
-                }
-                if (qaUser != null) {
-                    qaUser.bindToServices();
-                }
-            }
-        } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "onResume failed", exp);
-        }
-    }
-
+    @Deprecated
     public void processIntent(Intent intent) {
-        if (intent != null) {
-            Bundle extras = intent.getExtras();
-            if (extras != null && !extras.isEmpty()) {
-                Bundle msg = extras.getBundle(SwrveGcmConstants.GCM_BUNDLE);
-                if (msg != null && config.isPushEnabled()) {
-                    // Obtain push id
-                    Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
-                    String msgId = (rawId != null) ? rawId.toString() : null;
-                    // Only process once the message if possible
-                    if (!SwrveHelper.isNullOrEmpty(msgId)) {
-                        if (lastProcessedMessage == null || !lastProcessedMessage.equals(msgId)) {
-                            String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
-                            SwrveLogger.d(LOG_TAG, "GCM engaged, sending event:" + eventName);
-                            lastProcessedMessage = msgId;
-                            _event(eventName, null);
-                            // Call custom listener
-                            if (pushNotificationListener != null) {
-                                pushNotificationListener.onPushNotification(msg);
-                            }
-                            if(msg.containsKey(SwrveGcmConstants.DEEPLINK_KEY)) {
-                                processDeeplink(msg);
-                            }
-                        } else {
-                            SwrveLogger.d(LOG_TAG, "GCM already processed by Swrve SDK, not processing again. id:" + msgId);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    protected void processDeeplink(Bundle msg) {
-        String uri = msg.getString(SwrveGcmConstants.DEEPLINK_KEY);
-        SwrveLogger.d(LOG_TAG, "Found GCM deeplink. Will attempt to open:" + uri);
-        // make copy of extras and remove any that have been handled
-        Bundle msgBundleCopy = new Bundle(msg);
-        msgBundleCopy.remove(SwrveGcmConstants.SWRVE_TRACKING_KEY);
-        msgBundleCopy.remove(SwrveGcmConstants.DEEPLINK_KEY);
-        SwrveIntentHelper.openDeepLink(context.get(), uri, msgBundleCopy);
-    }
-
-    @Override
-    public void onNewIntent(Intent intent) {
-        processIntent(intent);
+        SwrveLogger.e(LOG_TAG, "The processIntent method is Deprecated and should not be used anymore");
     }
 }
