@@ -79,9 +79,7 @@ public class SwrveInAppMessageActivity extends Activity {
         }
 
         // Add the status bar if configured that way
-        if (hideToolbar) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        } else {
+        if (!hideToolbar) {
             setTheme(R.style.Theme_InAppMessageWithToolbar);
         }
 
