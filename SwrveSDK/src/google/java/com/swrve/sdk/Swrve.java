@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -224,20 +223,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             return false;
         }
         return true;
-    }
-
-    @Override
-    public void onResume(Activity ctx) {
-        super.onResume(ctx);
-        try {
-            if (config.isPushEnabled()) {
-                if (qaUser != null) {
-                    qaUser.bindToServices(); // todo is this needed?
-                }
-            }
-        } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "onResume failed", exp);
-        }
     }
 
     @Deprecated

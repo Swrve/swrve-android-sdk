@@ -152,11 +152,10 @@ public class SwrveGcmHandlerTest {
         PendingIntent pendingIntent = notification.contentIntent;
         ShadowPendingIntent shadowPendingIntent = shadowOf(pendingIntent);
         assertNotNull(shadowPendingIntent);
-        assertTrue(shadowPendingIntent.isActivityIntent());
+        assertTrue(shadowPendingIntent.isBroadcastIntent());
         assertEquals(1, shadowPendingIntent.getSavedIntents().length);
         Intent intent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("openActivity", intent.getAction());
-        assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName());
+        assertEquals("com.swrve.sdk.SwrvePushEngageReceiver", intent.getComponent().getClassName());
         Bundle intentExtras = intent.getBundleExtra(SwrveGcmConstants.GCM_BUNDLE);
         assertNotNull(intentExtras);
         for (String key : extras.keySet()) {

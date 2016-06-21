@@ -47,14 +47,14 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                         String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
                         SwrveLogger.d(LOG_TAG, "GCM engaged, sending event:" + eventName);
                         sendEngagedEvent(eventName);
-                        // Call custom listener
-                        if (swrve.pushNotificationListener != null) {
-                            swrve.pushNotificationListener.onPushNotification(msg); // todo warning that this should not take long......
-                        }
                         if(msg.containsKey(SwrveGcmConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg);
                         } else {
                             openActivity(msg);
+                        }
+
+                        if (swrve.pushNotificationListener != null) {
+                            swrve.pushNotificationListener.onPushNotification(msg);
                         }
                     }
                 }
@@ -98,8 +98,9 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
 
     private Intent getActivityIntent(Bundle msg) {
         Intent intent = null;
-        if (SwrveGcmNotification.getInstance(context).activityClass != null) {
-            intent = new Intent(context, SwrveGcmNotification.getInstance(context).activityClass);
+        Class<?> clazz = SwrveGcmNotification.getInstance(context).getActivityClass();
+        if (clazz != null) {
+            intent = new Intent(context, clazz);
             intent.putExtra(SwrveGcmConstants.GCM_BUNDLE, msg);
             intent.setAction("openActivity");
         }

@@ -24,7 +24,7 @@ public class SwrveGcmNotification {
 
     private static SwrveGcmNotification instance;
 
-    public final Class<?> activityClass;
+    protected final Class<?> activityClass;
     protected final int iconDrawableId;
     protected final int iconMaterialDrawableId;
     protected final Bitmap largeIconDrawable;
@@ -136,4 +136,7 @@ public class SwrveGcmNotification {
         return null;
     }
 
+    public Class<?> getActivityClass() {
+        return activityClass;
+    }
 }
