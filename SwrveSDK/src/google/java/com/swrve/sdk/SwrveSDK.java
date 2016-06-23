@@ -123,6 +123,7 @@ public class SwrveSDK extends SwrveSDKBase {
      *
      * @param intent The intent that opened the activity
      */
+    @Deprecated
     public static void processIntent(Intent intent) {
         checkInstanceCreated();
         ((ISwrve) instance).processIntent(intent);
