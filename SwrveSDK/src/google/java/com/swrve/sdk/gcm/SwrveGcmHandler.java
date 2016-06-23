@@ -15,6 +15,7 @@ import android.support.v4.content.ContextCompat;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrvePushEngageReceiver;
 import com.swrve.sdk.qa.SwrveQAUser;
 
 import java.util.Date;
@@ -165,22 +166,18 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     @Override
     public PendingIntent createPendingIntent(Bundle msg) {
-        // Add notification to bundle
         Intent intent = swrveGcmService.createIntent(msg);
         if (intent != null) {
-            return PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return PendingIntent.getBroadcast(context, generateTimestampId(), intent,PendingIntent.FLAG_CANCEL_CURRENT);
         }
         return null;
     }
 
     @Override
     public Intent createIntent(Bundle msg) {
-        Intent intent = null;
-        if (SwrveGcmNotification.getInstance(context).activityClass != null) {
-            intent = new Intent(context, SwrveGcmNotification.getInstance(context).activityClass);
-            intent.putExtra(SwrveGcmConstants.GCM_BUNDLE, msg);
-            intent.setAction("openActivity");
-        }
+        Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
+        intent.putExtra(SwrveGcmConstants.GCM_BUNDLE, msg);
         return intent;
     }
+
 }

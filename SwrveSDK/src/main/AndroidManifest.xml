@@ -10,18 +10,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
-        <activity
-            android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
-            android:hardwareAccelerated="true"
-            android:theme="@style/Theme.Conversations">
-        </activity>
-
-        <activity
-            android:name=".messaging.ui.SwrveInAppMessageActivity"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.InAppMessage">
-        </activity>
-
         <receiver
             android:name="com.swrve.sdk.SwrveInstallReferrerReceiver"
             android:exported="true" >

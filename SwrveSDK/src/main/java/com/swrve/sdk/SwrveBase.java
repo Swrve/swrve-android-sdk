@@ -97,7 +97,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             return init(activity);
         }
         bindToContext(activity);
-        afterBind();
         return (T) this;
     }
 
@@ -230,7 +229,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             sendCrashlyticsMetadata();
-            afterInit();
 
             SwrveLogger.i(LOG_TAG, "Init finished");
         } catch (Exception exp) {
@@ -260,10 +258,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected abstract void beforeSendDeviceInfo(Context context);
-
-    protected abstract void afterInit();
-
-    protected abstract void afterBind();
 
     protected abstract void extraDeviceInfo(JSONObject deviceInfo) throws JSONException;
 
