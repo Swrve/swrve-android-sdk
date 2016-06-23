@@ -21,7 +21,6 @@ public class DemoApplication extends Application {
             config.setSenderId(YOUR_SENDER_ID);
 
             SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY, config);
-
             // Comment the following lines if you do not want to do GCM push notifications
             // React to the push notification when the user clicks on it
             SwrveSDK.setPushNotificationListener(new ISwrvePushNotificationListener() {
