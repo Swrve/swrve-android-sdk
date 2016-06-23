@@ -466,18 +466,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         }
         generateNewSessionInterval();
-
-        Activity activity = getActivityContext();
-        if (activity != null && activity.getIntent() != null && activity.getIntent().getData() != null) {
-            Uri uri = activity.getIntent().getData();
-            String referrer = uri.getQueryParameter(REFERRER);
-            if (!SwrveHelper.isNullOrEmpty(referrer)) {
-                Map<String, String> attributes = new HashMap<String, String>();
-                attributes.put(SWRVE_REFERRER_ID, referrer);
-                SwrveLogger.i(LOG_TAG, "Received referrer, so sending userUpdate:" + attributes);
-                userUpdate(attributes);
-            }
-        }
     }
 
     protected void _onLowMemory() {
