@@ -66,8 +66,6 @@ interface ISwrveCommon
 
     int getHttpTimeout();
 
-    int getMaxEventsPerFlush();
-
     JSONObject getDeviceInfo() throws JSONException;
 
 }
