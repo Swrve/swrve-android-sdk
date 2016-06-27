@@ -1,6 +1,5 @@
 package com.swrve.sdk.messaging;
 
-import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 
@@ -20,7 +19,6 @@ import java.util.Set;
 public class SwrveMessage {
     protected static final String LOG_TAG = "SwrveSDK";
 
-    protected ISwrveCampaignManager campaignManager;
     // Identifies the message in a campaign
     protected int id;
     // Name of the message
@@ -28,19 +26,16 @@ public class SwrveMessage {
     // Priority of the message
     protected int priority = 9999;
     // Parent in-app campaign
-    protected SwrveCampaign campaign;
+    protected SwrveInAppCampaign campaign;
     // List of available formats
     protected List<SwrveMessageFormat> formats;
     // Location of the images and button resources
     protected File cacheDir;
 
-    public SwrveMessage(SwrveCampaign campaign, ISwrveCampaignManager campaignManager) {
+    public SwrveMessage(SwrveInAppCampaign campaign, File cacheDir) {
         this.campaign = campaign;
         this.formats = new ArrayList<SwrveMessageFormat>();
-        this.campaignManager = campaignManager;
-        if (campaignManager != null) {
-            setCacheDir(campaignManager.getCacheDir());
-        }
+        setCacheDir(cacheDir);
     }
 
     /**
@@ -48,11 +43,11 @@ public class SwrveMessage {
      *
      * @param campaign    Related campaign.
      * @param messageData JSON data containing the message details.
-     * @param campaignManager
+     * @param cacheDir    Folder where to find the downloaded assets
      * @throws JSONException
      */
-    public SwrveMessage(SwrveCampaign campaign, JSONObject messageData, ISwrveCampaignManager campaignManager) throws JSONException {
-        this(campaign, campaignManager);
+    public SwrveMessage(SwrveInAppCampaign campaign, JSONObject messageData, File cacheDir) throws JSONException {
+        this(campaign, cacheDir);
         setId(messageData.getInt("id"));
         setName(messageData.getString("name"));
 
@@ -65,7 +60,7 @@ public class SwrveMessage {
 
         for (int i = 0, j = jsonFormats.length(); i < j; i++) {
             JSONObject messageFormatData = jsonFormats.getJSONObject(i);
-            SwrveMessageFormat messageFormat = createMessageFormat(this, messageFormatData);
+            SwrveMessageFormat messageFormat = new SwrveMessageFormat(this, messageFormatData);
             getFormats().add(messageFormat);
         }
     }
@@ -128,21 +123,12 @@ public class SwrveMessage {
     /**
      * @return the related campaign.
      */
-    public SwrveCampaign getCampaign() {
+    public SwrveInAppCampaign getCampaign() {
         return campaign;
     }
 
-    protected void setCampaign(SwrveCampaign campaign) {
+    protected void setCampaign(SwrveInAppCampaign campaign) {
         this.campaign = campaign;
-    }
-
-    private SwrveMessageFormat createMessageFormat(SwrveMessage swrveMessage, JSONObject messageFormatData) throws JSONException {
-        int defaultBackgroundColor = campaignManager.getConfig().getDefaultBackgroundColor();
-        return new SwrveMessageFormat(swrveMessage, messageFormatData, defaultBackgroundColor);
-    }
-
-    public ISwrveCampaignManager getCampaignManager() {
-        return campaignManager;
     }
 
     /**

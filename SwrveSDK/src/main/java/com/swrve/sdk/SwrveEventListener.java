@@ -49,7 +49,7 @@ public class SwrveEventListener implements ISwrveEventListener {
                 }
                 SwrveMessage message = talkRef.getMessageForEvent(eventName, payload, deviceOrientation);
                 if (message != null) {
-                    messageListener.onMessage(message, true);
+                    messageListener.onMessage(message);
                 }
             }
         }

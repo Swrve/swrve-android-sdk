@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
@@ -484,36 +483,6 @@ public abstract class SwrveSDKBase {
     public static void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener) {
         checkInstanceCreated();
         instance.setCustomButtonListener(customButtonListener);
-    }
-
-    /**
-     * Get the custom dialog listener for Talk message dialogs
-     *
-     * @return buttonListener
-     */
-    public static ISwrveDialogListener getDialogListener() {
-        checkInstanceCreated();
-        return instance.getDialogListener();
-    }
-
-    /**
-     * Set the custom dialog listener for Talk message dialogs
-     *
-     * @param dialogListener
-     */
-    public static void setDialogListener(ISwrveDialogListener dialogListener) {
-        checkInstanceCreated();
-        instance.setDialogListener(dialogListener);
-    }
-
-    /**
-     * Get the context where the SDK is attached.
-     *
-     * @return activity or application context
-     */
-    public static Context getContext() {
-        checkInstanceCreated();
-        return instance.getContext();
     }
 
     /**

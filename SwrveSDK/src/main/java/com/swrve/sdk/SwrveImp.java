@@ -3,13 +3,15 @@ package com.swrve.sdk;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnDismissListener;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
@@ -27,19 +29,16 @@ import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveCampaign;
+import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
-import com.swrve.sdk.messaging.view.SwrveDialog;
-import com.swrve.sdk.messaging.view.SwrveMessageView;
-import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
-import com.swrve.sdk.messaging.view.SwrveMessageViewFactory;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.RESTClient;
@@ -112,15 +111,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 150;
     protected static long DEFAULT_MAX_SHOWS = 99999;
     protected static int DEFAULT_MIN_DELAY = 55;
-    protected static long MESSAGE_REAPPEAR_TIMEOUT = 1500;
-    protected static SwrveMessage messageDisplayed;
-    protected static long lastMessageDestroyed;
     private static String INSTALL_TIME_CATEGORY = "SwrveSDK.installTime";
-    protected final SimpleDateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss ZZZZ", Locale.US);
     protected final SimpleDateFormat installTimeFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
     protected WeakReference<Context> context;
     protected WeakReference<Activity> activityContext;
-    protected WeakReference<SwrveDialog> currentDialog;
     protected String appVersion;
     protected int appId;
     protected String apiKey;
@@ -133,7 +127,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected ISwrveConversationListener conversationListener;
     protected ISwrveInstallButtonListener installButtonListener;
     protected ISwrveCustomButtonListener customButtonListener;
-    protected ISwrveDialogListener dialogListener;
     protected ISwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
     protected String userInstallTime;
@@ -177,8 +170,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected String simOperatorCode;
     protected String androidId;
     protected int locationSegmentVersion;
-
-    protected int previousOrientation;
     protected SwrveQAUser qaUser;
 
     protected SwrveImp(Context context, int appId, String apiKey, C config) {
@@ -250,19 +241,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             this.language = SwrveHelper.toLanguageTag(Locale.getDefault());
         } else {
             this.language = config.getLanguage();
-        }
-    }
-
-    protected void showPreviousMessage() {
-        if (config.isTalkEnabled()) {
-            // Re-launch message that was displayed before
-            if (messageDisplayed != null && messageListener != null) {
-                long currentTime = getNow().getTime();
-                if (currentTime < (lastMessageDestroyed + MESSAGE_REAPPEAR_TIMEOUT)) {
-                    messageListener.onMessage(messageDisplayed, false);
-                }
-                messageDisplayed = null;
-            }
         }
     }
 
@@ -675,7 +653,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             if (messageListener != null && autoShowMessagesEnabled) {
                 SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
                 if (message != null && message.supportsOrientation(getDeviceOrientation())) {
-                    messageListener.onMessage(message, true);
+                    messageListener.onMessage(message);
                     autoShowMessagesEnabled = false;
                 }
             }
@@ -935,8 +913,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }));
     }
 
-    protected SwrveCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveCampaign(this, campaignDisplayer, campaignData, assetsQueue);
+    protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+        return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
     protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
@@ -1030,18 +1008,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    protected void noMessagesWereShown(String event, String reason) {
-        SwrveLogger.i(LOG_TAG, "Not showing message for " + event + ": " + reason);
-        if (qaUser != null) {
-            qaUser.triggerFailure(event, reason);
+    protected Context getContext() {
+        Context appCtx = context.get();
+        if(appCtx == null) {
+            return getActivityContext();
         }
+        return appCtx;
     }
 
-    protected void unbindAndShutdown(Activity callerActivity) {
+    protected void unbindAndShutdown() {
         // Reduce the references to the SDK
         int counter = bindCounter.decrementAndGet();
-
-        removeCurrentDialog(callerActivity);
 
         // Check if there are no more references to this object
         if (counter == 0) {
@@ -1049,50 +1026,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             if (mustCleanInstance) {
                 ((SwrveBase<?, ?>) this).shutdown();
             }
-        }
-    }
-
-    protected void removeCurrentDialog(Activity callerActivity) {
-        if (currentDialog != null) {
-            final SwrveDialog dialog = currentDialog.get();
-            if (dialog != null && dialog.isShowing()) {
-                Activity dialogActivity = dialog.getOwnerActivity();
-                if (callerActivity == null || callerActivity ==  dialogActivity) {
-                    messageDisplayed = dialog.getMessage();
-                    lastMessageDestroyed = (new Date()).getTime();
-                    Activity activity = dialogActivity;
-                    if (activity == null) {
-                        activity = getActivityContext();
-                    }
-
-                    if (activity != null) {
-                        // Call from activity UI thread
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismiss();
-                            }
-                        });
-                    } else {
-                        // Call from this thread
-                        dialog.dismiss();
-                    }
-                    currentDialog = null;
-                }
-            } else {
-                currentDialog = null;
-            }
-        }
-    }
-
-    protected void saveCurrentOrientation(Context ctx) {
-        try {
-            if (ctx != null) {
-                final Display display = ((WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-                previousOrientation = display.getRotation();
-            }
-        } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "Could not obtain device orientation", exp);
         }
     }
 
@@ -1364,73 +1297,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 SwrveLogger.e(LOG_TAG, "Parameter or payload data not encodable as JSON", je);
             } catch (Exception se) {
                 SwrveLogger.e(LOG_TAG, "Unable to insert into local storage", se);
-            }
-        }
-    }
-
-    protected class DisplayMessageRunnable implements Runnable {
-        private SwrveBase<?, ?> sdk;
-        private Activity activity;
-        private SwrveMessage message;
-        private boolean firstTime;
-
-        public DisplayMessageRunnable(SwrveBase<?, ?> sdk, Activity activity, SwrveMessage message, boolean firstTime) {
-            this.sdk = sdk;
-            this.activity = activity;
-            this.message = message;
-            this.firstTime = firstTime;
-        }
-
-        @Override
-        public void run() {
-            try {
-                SwrveLogger.d(LOG_TAG, "Called show dialog");
-                SwrveDialog dialog = (currentDialog == null) ? null : currentDialog.get();
-                if (dialog == null || !dialog.isShowing()) {
-
-                    SwrveOrientation deviceOrientation = getDeviceOrientation();
-                    SwrveLogger.d(LOG_TAG, "Trying to show dialog with orientation " + deviceOrientation);
-                    SwrveMessageView swrveMessageView = SwrveMessageViewFactory.getInstance().buildLayout(activity, message, deviceOrientation, previousOrientation,
-                            installButtonListener, customButtonListener, firstTime, config.getMinSampleSize());
-
-                    SwrveDialog newDialog = new SwrveDialog(activity, message, swrveMessageView, config.isHideToolbar());
-                    newDialog.setOnDismissListener(new OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            // Remove reference to the dialog on our side
-                            if (currentDialog != null) {
-                                SwrveDialog refDialog = currentDialog.get();
-                                if (refDialog == dialog) {
-                                    currentDialog = null;
-                                }
-                            }
-                        }
-                    });
-                    saveCurrentOrientation(activity);
-
-                    // Check if the customer wants to manage the dialog themselves
-                    if (dialogListener != null) {
-                        dialogListener.onDialog(newDialog);
-                    } else {
-                        // Save a reference to the dialog and display it now
-                        sdk.currentDialog = new WeakReference<SwrveDialog>(newDialog);
-                        newDialog.show();
-                    }
-                }
-
-                activity = null;
-                sdk = null;
-                message = null;
-            } catch (SwrveMessageViewBuildException e) {
-                Map<String, Object> parameters = new HashMap<String, Object>();
-                parameters.put("name", "Swrve.Messages.view_failed");
-                Map<String, String> errorReasonPayload = new HashMap<String, String>();
-                errorReasonPayload.put("reason", e.getMessage());
-                queueEvent("event", parameters, errorReasonPayload);
-
-                SwrveLogger.w(LOG_TAG, "Couldn't create a SwrveMessageView", e);
-            } catch (Exception e) {
-                SwrveLogger.w(LOG_TAG, "Couldn't create a SwrveMessageView", e);
             }
         }
     }

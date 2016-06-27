@@ -1,14 +1,11 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
 
 /**
  * Main object used to implement the Swrve SDK.
@@ -21,14 +18,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void beforeSendDeviceInfo(Context context) {
-    }
-
-    @Override
-    protected void afterInit() {
-    }
-
-    @Override
-    protected void afterBind() {
     }
 
     @Override

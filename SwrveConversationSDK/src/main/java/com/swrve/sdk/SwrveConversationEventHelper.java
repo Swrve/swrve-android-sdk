@@ -10,7 +10,7 @@ import java.util.Map;
 public class SwrveConversationEventHelper {
     private static final String LOG_TAG = "SwrveConversationSDK";
 
-    private ISwrveConversationSDK swrveConversationSDK;
+    protected ISwrveConversationSDK swrveConversationSDK;
 
     public SwrveConversationEventHelper() {
         this.swrveConversationSDK = (ISwrveConversationSDK) SwrveCommon.getInstance();

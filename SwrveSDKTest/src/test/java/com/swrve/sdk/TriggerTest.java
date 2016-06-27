@@ -1,10 +1,6 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveCampaign;
-import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.model.Arg;
 import com.swrve.sdk.messaging.model.Conditions;
 import com.swrve.sdk.messaging.model.Trigger;
@@ -14,56 +10,17 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class TriggerTest extends SwrveBaseTest {
-
-    private ISwrveCampaignManager testCampaignManger = new ISwrveCampaignManager() {
-        @Override
-        public Date getNow() {
-            return new Date();
-        }
-        @Override
-        public Date getInitialisedTime() {
-            return new Date();
-        }
-        @Override
-        public File getCacheDir() {
-            return new File("");
-        }
-        @Override
-        public Set<String> getAssetsOnDisk() {
-            Set<String> set = new HashSet<>();
-            set.add("asset1");
-            return set;
-        }
-        @Override
-        public SwrveConfigBase getConfig() {
-            return new SwrveConfig();
-        }
-        @Override
-        public String getAppStoreURLForApp(int appId) {
-            return "";
-        }
-        @Override
-        public void buttonWasPressedByUser(SwrveButton button) {
-            // empty
-        }
-        @Override
-        public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
-            // empty
-        }
-    };
 
     @Before
     public void setUp() throws Exception {
@@ -239,7 +196,7 @@ public class TriggerTest extends SwrveBaseTest {
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);
-        SwrveCampaign campaign = new SwrveCampaign(testCampaignManger, new SwrveCampaignDisplayer(null), jsonObject, new HashSet<String>());
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(null), jsonObject, new HashSet<String>());
         assertNotNull(campaign);
 
         Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults =  new HashMap<>();
