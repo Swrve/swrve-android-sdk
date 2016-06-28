@@ -10,9 +10,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
-        <activity android:name=".messaging.ui.SwrveInAppMessageActivity">
+        <activity
+            android:name=".messaging.ui.SwrveInAppMessageActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.InAppMessage">
         </activity>
-        
+
         <receiver
             android:name="com.swrve.sdk.SwrveInstallReferrerReceiver"
             android:exported="true" >
