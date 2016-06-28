@@ -248,10 +248,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         return;
                     }
 
-                    Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
-                    ctx.startActivity(intent);
+                    if (message.supportsOrientation(getDeviceOrientation())) {
+                        Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
+                        ctx.startActivity(intent);
+                    } else {
+                        SwrveLogger.i(LOG_TAG, "Can't display the in-app message as it doesn't support the current orientation");
+                    }
                 }
             }
         });
