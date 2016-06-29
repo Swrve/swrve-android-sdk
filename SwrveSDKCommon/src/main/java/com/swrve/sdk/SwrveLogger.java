@@ -128,6 +128,10 @@ public class SwrveLogger {
         error(LOG_TAG, message);
     }
 
+    public static void e(String message, Throwable t){
+        error(LOG_TAG, message, t);
+    }
+
     public static void e(String tag, String message){
         error(tag, message);
     }
@@ -147,7 +151,7 @@ public class SwrveLogger {
         Log.e(tag, message);
     }
 
-    public static void error(String tag, String message,  Throwable t){
+    public static void error(String tag, String message, Throwable t){
         if(!isActive){
             return;
         }
