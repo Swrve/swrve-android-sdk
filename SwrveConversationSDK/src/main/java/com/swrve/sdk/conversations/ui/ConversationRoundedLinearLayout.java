@@ -29,11 +29,7 @@ public class ConversationRoundedLinearLayout extends LinearLayout {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        path.reset();
-        rect.set(0, 0, w, h);
-        float radiusToApply = getWidth() >= maxModalWidthPx ? radius : 0;
-        path.addRoundRect(rect, radiusToApply, radiusToApply, Path.Direction.CW);
-        path.close();
+        drawRoundedCorners(w, h);
     }
 
     @Override
@@ -45,10 +41,21 @@ public class ConversationRoundedLinearLayout extends LinearLayout {
     }
 
     public void setRadius(float radius) {
-        this.radius = radius;
+        if(this.radius != radius) {
+            this.radius = radius;
+            drawRoundedCorners(getWidth(), getHeight());
+        }
     }
 
     public float getRadius() {
         return radius;
+    }
+
+    private void drawRoundedCorners(int w, int h) {
+        path.reset();
+        rect.set(0, 0, w, h);
+        float radiusToApply = getWidth() >= maxModalWidthPx ? radius : 0;
+        path.addRoundRect(rect, radiusToApply, radiusToApply, Path.Direction.CW);
+        path.close();
     }
 }
