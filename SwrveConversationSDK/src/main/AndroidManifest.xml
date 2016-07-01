@@ -13,6 +13,7 @@
         <activity
             android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
             android:hardwareAccelerated="true"
+            android:screenOrientation="sensor"
             android:theme="@style/Theme.Conversations">
         </activity>
 
