@@ -55,7 +55,7 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
     private void initRatingBar() {
         ratingBar = new RatingBar(getContext(), null, R.attr.conversationContentRatingBarStyle);
         ratingBar.setNumStars(5);
-        ratingBar.setStepSize(1.0f);
+        ratingBar.setStepSize(0.01f); // set a tiny increment and do the rounding in onRatingChanged method.
         ratingBar.setOnRatingBarChangeListener(this);
 
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -93,8 +93,14 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
 
     @Override
     public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+        if(!fromUser) {
+            return;
+        }
         if (rating < 1.0f) { // Once a star value is selected it can never be set to less than one
             ratingBar.setRating(1.0f);
+        } else {
+            float rounded = (float) Math.ceil(rating);
+            ratingBar.setRating(rounded);
         }
 
         if (inputChangedListener != null) {

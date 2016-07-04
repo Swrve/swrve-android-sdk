@@ -254,7 +254,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         assertThat(conversationRatingBar.getModel().getStarColor(), equalTo("#ff0000"));
         assertThat(conversationRatingBar.getModel().getValue(), equalTo("value0"));
         assertThat(conversationRatingBar.getRatingBar().getNumStars(), equalTo(5));
-        assertThat(conversationRatingBar.getRatingBar().getStepSize(), equalTo(1.0f));
+        assertThat(conversationRatingBar.getRatingBar().getStepSize(), equalTo(0.01f));
 
         // test less than zero selected but value only goes to 1.0
         conversationRatingBar.onRatingChanged(conversationRatingBar.getRatingBar(), 0.5f, true);
@@ -274,7 +274,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         assertThat(conversationRatingBar.getModel().getStarColor(), equalTo("#ff0000"));
         assertThat(conversationRatingBar.getModel().getValue(), equalTo("value0"));
         assertThat(conversationRatingBar.getRatingBar().getNumStars(), equalTo(5));
-        assertThat(conversationRatingBar.getRatingBar().getStepSize(), equalTo(1.0f));
+        assertThat(conversationRatingBar.getRatingBar().getStepSize(), equalTo(0.01f));
 
         // test less than zero selected but value only goes to 1.0
         conversationRatingBar.onRatingChanged(conversationRatingBar.getRatingBar(), 0.5f, true);
