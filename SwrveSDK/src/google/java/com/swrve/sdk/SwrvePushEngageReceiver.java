@@ -44,9 +44,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
-                        String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
-                        SwrveLogger.d(LOG_TAG, "GCM engaged, sending event:" + eventName);
-                        sendEngagedEvent(eventName);
+                        swrve.sendEngagedEvent(context, msgId);
                         if(msg.containsKey(SwrveGcmConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg);
                         } else {
@@ -59,20 +57,6 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     }
                 }
             }
-        }
-    }
-
-    private void sendEngagedEvent(String name) {
-        String eventString = "";
-        try {
-            ArrayList<String> events = new ArrayList<>();
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", name);
-            eventString = EventHelper.eventAsJSON("event", parameters, null, null);
-            events.add(eventString);
-            swrve.sendEventsWakefully(context, events);
-        } catch (JSONException e) {
-            SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Could not send the engaged event:" + eventString, e);
         }
     }
 

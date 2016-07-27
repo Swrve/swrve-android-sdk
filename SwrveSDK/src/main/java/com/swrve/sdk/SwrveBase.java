@@ -1635,7 +1635,22 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void sendEventsWakefully(Context context, ArrayList<String> events) {
+    public void sendEngagedEvent(Context context, String msgId) {
+        String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
+        SwrveLogger.d(LOG_TAG, "GCM engaged, sending event:" + eventName);
+        try {
+            ArrayList<String> events = new ArrayList<>();
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("name", name);
+            String eventString = EventHelper.eventAsJSON("event", parameters, null, null);
+            events.add(eventString);
+            swrve.sendEventsWakefully(context, events);
+        } catch (JSONException e) {
+            SwrveLogger.e(LOG_TAG, "Could not send the engaged event:" + eventString, e);
+        }
+    }
+
+    private void sendEventsWakefully(Context context, ArrayList<String> events) {
         Intent intent = new Intent(context, SwrveWakefulReceiver.class);
         intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);
         context.sendBroadcast(intent);
