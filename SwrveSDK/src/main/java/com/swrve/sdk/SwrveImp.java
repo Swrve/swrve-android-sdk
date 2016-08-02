@@ -946,7 +946,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     SwrveLogger.w(LOG_TAG, "Could not download assets because do not have write access to cacheDir:" + cacheDir + " WRITE_EXTERNAL_STORAGE permission granted:" + permission);
                 }
             }
-
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error downloading campaigns", e);
         } finally {
