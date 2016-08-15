@@ -12,7 +12,9 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowLog;
 
 @RunWith(RobolectricGradleTestRunner.class)
@@ -21,11 +23,13 @@ import org.robolectric.shadows.ShadowLog;
 public abstract class SwrveBaseTest {
 
     protected Activity mActivity;
+    protected ShadowActivity mShadowActivity;
 
     @Before
     public void setUp() throws Exception {
-        mActivity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
         ShadowLog.stream = System.out;
+        mActivity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
+        mShadowActivity = Shadows.shadowOf(mActivity);
     }
 
     @After
