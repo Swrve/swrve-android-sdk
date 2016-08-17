@@ -5,12 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Messenger;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -31,9 +26,9 @@ import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -1664,6 +1659,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public int getMaxEventsPerFlush() {
         return config.getMaxEventsPerFlush();
+    }
+
+    @Override
+    public synchronized int getNextSequenceNumber() {
+        String id = cachedLocalStorage.getSharedCacheEntry("seqnum");
+        int seqnum = 1;
+        if (!SwrveHelper.isNullOrEmpty(id)) {
+            seqnum = Integer.parseInt(id) + 1;
+        }
+        cachedLocalStorage.setAndFlushSharedEntry("seqnum", Integer.toString(seqnum));
+        return seqnum;
     }
 
     /***

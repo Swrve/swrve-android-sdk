@@ -3,15 +3,11 @@ package com.swrve.sdk;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
@@ -32,12 +28,10 @@ import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
@@ -1269,6 +1263,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
+    @Deprecated
     public String getAutoShowEventTrigger() {
         return SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER;
     }
@@ -1287,16 +1282,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         @Override
         public void run() {
             try {
-                String eventString = EventHelper.eventAsJSON(eventType, parameters, payload, cachedLocalStorage);
+                int seqNum = getNextSequenceNumber();
+                String eventString = EventHelper.eventAsJSON(eventType, parameters, payload, seqNum);
                 parameters = null;
                 payload = null;
                 cachedLocalStorage.addEvent(eventString);
                 SwrveLogger.i(LOG_TAG, eventType + " event queued");
-            } catch (JSONException je) {
-                SwrveLogger.e(LOG_TAG, "Parameter or payload data not encodable as JSON", je);
-            } catch (Exception se) {
-                SwrveLogger.e(LOG_TAG, "Unable to insert into local storage", se);
+            } catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Unable to insert QueueEvent into local storage.", e);
             }
         }
     }
+
+    abstract int getNextSequenceNumber();
+
 }
