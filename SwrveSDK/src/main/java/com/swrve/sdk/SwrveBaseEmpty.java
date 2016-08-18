@@ -6,7 +6,6 @@ import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveDialogListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
@@ -38,7 +37,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     private C config;
     private ISwrveCustomButtonListener customButtonListener;
     private ISwrveInstallButtonListener installButtonListener;
-    private ISwrveDialogListener dialogListener;
     private String language = "en-US";
     private String userId;
     private File cacheDir;
@@ -227,11 +225,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public Context getContext() {
-        return context.get();
-    }
-
-    @Override
     public C getConfig() {
         return config;
     }
@@ -273,16 +266,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener) {
         this.installButtonListener = installButtonListener;
-    }
-
-    @Override
-    public ISwrveDialogListener getDialogListener() {
-        return dialogListener;
-    }
-
-    @Override
-    public void setDialogListener(ISwrveDialogListener dialogListener) {
-        this.dialogListener = dialogListener;
     }
 
     @Override

@@ -5,6 +5,8 @@ import android.graphics.Point;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+
 /**
  * Base in-app message element widget class.
  */

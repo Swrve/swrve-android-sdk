@@ -10,7 +10,8 @@ public interface ISwrvePushNotificationListener {
 
     /**
      * This method will be called when a push notification is received by your app,
-     * after the user has reacted to it.
+     * after the user has reacted to it. This is executed in a broadcastreceiver and should not
+     * perform any long-running operations.
      * @param bundle push notification information including custom payloads.
      */
     void onPushNotification(Bundle bundle);

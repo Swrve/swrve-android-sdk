@@ -1,226 +1,269 @@
 package com.swrve.sdk.messaging.view;
 
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.util.AttributeSet;
-import android.view.Gravity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
+import android.view.Display;
 import android.view.MotionEvent;
-import android.view.ViewGroup;
-import android.view.ViewParent;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
-import android.view.animation.AnimationUtils;
-import android.view.animation.RotateAnimation;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.ImageView.ScaleType;
 import android.widget.RelativeLayout;
 
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveActionType;
+import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveImage;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Android view representing a Swrve message with a given format. It contains
- * the SwrveInnerMessageView that will render buttons and images specified
- * on the template.
+ * Android view representing a Swrve message with a given format.
+ * It layouts its children around its center and supports show and dismiss animations.
  */
 public class SwrveMessageView extends RelativeLayout {
     protected static final String LOG_TAG = "SwrveMessagingSDK";
 
-    // Container dialog that will display the message
-    protected Dialog containerDialog;
-    // Message being displayed
-    protected SwrveMessage message;
+    // Activity that contains this view
+    private final SwrveInAppMessageActivity activity;
+
     // Message format chosen to display message
-    protected SwrveMessageFormat format;
-    // Indicates if it is the first time this message is shown. It will be
-    // false if the orientation is changing and the same message is going to
-    // be redisplayed.
-    protected boolean firstTime = true;
-    // Indicates if the message has yet to be drawn
-    protected boolean firstDraw = true;
+    protected final SwrveMessageFormat format;
 
-    // Reference to inner message view that will render buttons and images
-    protected SwrveInnerMessageView innerMessageView;
+    // Scale to fit in the device
+    protected float scale;
 
-    // Native android animation ID to launch when showing message
-    protected int showAnimation;
-    // Native android animation ID to launch when dismissing message
-    protected int dismissAnimation;
+    // Minimum sample size to use when loading images
+    protected int minSampleSize = 1;
 
-    public SwrveMessageView(Context context) {
-        super(context);
-    }
+    // Default background color
+    protected int defaultBackgroundColor;
 
-    public SwrveMessageView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    // Bitmap cache
+    protected Set<WeakReference<Bitmap>> bitmapCache;
 
-    public SwrveMessageView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
-
-    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, boolean firstTime, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
-        this(context, message, format, null, null, firstTime, rotation, minSampleSize);
-    }
-
-    public SwrveMessageView(Context context, SwrveMessage message, SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener,
-                            ISwrveCustomButtonListener customButtonListener, boolean firstTime, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
-        super(context);
-        this.message = message;
+    public SwrveMessageView(SwrveInAppMessageActivity activity, SwrveMessage message,
+                            SwrveMessageFormat format, int minSampleSize,
+                            int defaultBackgroundColor) throws SwrveMessageViewBuildException {
+        super(activity);
+        this.activity = activity;
         this.format = format;
-        this.firstTime = firstTime;
-        initializeLayout(context, message, format, installButtonListener, customButtonListener, rotation, minSampleSize);
-    }
-
-    protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format, ISwrveInstallButtonListener installButtonListener,
-                                    ISwrveCustomButtonListener customButtonListener, int rotation, int minSampleSize) throws SwrveMessageViewBuildException {
-        innerMessageView = new SwrveInnerMessageView(context, this, message, format, installButtonListener, customButtonListener, minSampleSize);
-        setBackgroundColor(format.getBackgroundColor());
-        setGravity(Gravity.CENTER);
-        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        addView(innerMessageView);
-        setClipChildren(false);
-
-        if (rotation != 0) {
-            // Flip internal message so that it can still fit in the screen
-            RotateAnimation rotate = new RotateAnimation(0, rotation, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-            rotate.setFillAfter(true);
-            innerMessageView.startAnimation(rotate);
+        // Sample size has to be a power of two or 1
+        if (minSampleSize > 0 && (minSampleSize % 2) == 0) {
+            this.minSampleSize = minSampleSize;
         }
+        this.defaultBackgroundColor = defaultBackgroundColor;
+        initializeLayout(activity, message, format);
     }
 
-    /**
-     * @return the related message format.
-     */
-    public SwrveMessageFormat getFormat() {
-        return format;
+    private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and
+            // keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
     }
 
-    /**
-     * @return the show animation.
-     */
-    public int getShowAnimation() {
-        return showAnimation;
-    }
-
-    /**
-     * Set the message show animation.
-     *
-     * @param showAnimation
-     */
-    public void setShowAnimation(int showAnimation) {
-        this.showAnimation = showAnimation;
-    }
-
-    /**
-     * @return the dismiss animation.
-     */
-    public int getDismissAnimation() {
-        return dismissAnimation;
-    }
-
-    /**
-     * @param dismissAnimation dismiss animation.
-     */
-    public void setDismissAnimation(int dismissAnimation) {
-        this.dismissAnimation = dismissAnimation;
-    }
-
-    protected SwrveImageView createSwrveImage(Context context) {
-        return new SwrveImageView(context);
-    }
-
-    protected SwrveButtonView createSwrveButton(Context context, SwrveActionType type) {
-        return new SwrveButtonView(context, type);
-    }
-
-    /**
-     * Set the install button listener to process message element events.
-     *
-     * @param installButtonListener
-     */
-    public void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener) {
-        this.innerMessageView.setInstallButtonListener(installButtonListener);
-    }
-
-    /**
-     * Set the custom button listener to process message element events.
-     *
-     * @param customButtonListener
-     */
-    public void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener) {
-        this.innerMessageView.setCustomButtonListener(customButtonListener);
-    }
-
-    /**
-     * Starts the show animation if it has been specified. Note that you
-     * will have to add the view to a parent before calling this function.
-     */
-    public void startAnimation() {
+    private static BitmapResult decodeSampledBitmapFromFile(String filePath, int reqWidth, int reqHeight, int minSampleSize) {
         try {
-            if (this.showAnimation != 0) {
-                Animation animation = AnimationUtils.loadAnimation(getContext(), this.showAnimation);
-                animation.setStartOffset(0);
-                startAnimation(animation);
+            // First decode with inJustDecodeBounds=true to check dimensions
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(filePath, options);
+
+            int bitmapWidth = options.outWidth;
+            int bitmapHeight = options.outHeight;
+
+            // Calculate inSampleSize
+            options.inSampleSize = Math.max(calculateInSampleSize(options, reqWidth,
+                    reqHeight), minSampleSize);
+
+            // Decode bitmap with inSampleSize set
+            options.inJustDecodeBounds = false;
+            return new BitmapResult(BitmapFactory.decodeFile(filePath, options), bitmapWidth, bitmapHeight);
+        } catch (OutOfMemoryError exp) {
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
+        } catch (Exception exp) {
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
+        }
+
+        return null;
+    }
+
+    protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
+        List<String> loadErrorReasons = new ArrayList<String>();
+        try {
+            // Create bitmap cache
+            bitmapCache = new HashSet<WeakReference<Bitmap>>();
+
+            // Get device screen metrics
+            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            int screenWidth = display.getWidth();
+            int screenHeight = display.getHeight();
+
+            // Set background
+            Integer backgroundColor = format.getBackgroundColor();
+            if (backgroundColor == null) {
+                backgroundColor = defaultBackgroundColor;
+            }
+            setBackgroundColor(backgroundColor);
+
+            // Construct layout
+            scale = format.getScale();
+            setMinimumWidth(format.getSize().x);
+            setMinimumHeight(format.getSize().y);
+            setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+            for (final SwrveImage image : format.getImages()) {
+                String filePath = message.getCacheDir().getAbsolutePath() + "/" + image.getFile();
+                if(!SwrveHelper.hasFileAccess(filePath)) {
+                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
+                    continue;
+                }
+
+                // Load background image
+                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
+                if (backgroundImage != null && backgroundImage.getBitmap() != null) {
+                    Bitmap imageBitmap = backgroundImage.getBitmap();
+                    SwrveImageView imageView = new SwrveImageView(context);
+                    bitmapCache.add(new WeakReference<Bitmap>(imageBitmap));
+                    // Position
+                    RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
+                    lparams.leftMargin = image.getPosition().x;
+                    lparams.topMargin = image.getPosition().y;
+                    lparams.width = backgroundImage.getWidth();
+                    lparams.height = backgroundImage.getHeight();
+                    imageView.setLayoutParams(lparams);
+                    imageView.setImageBitmap(imageBitmap);
+                    imageView.setScaleType(ScaleType.FIT_XY);
+                    // Add to parent
+                    addView(imageView);
+                } else {
+                    loadErrorReasons.add("Could not decode bitmap from file:" + filePath);
+                    break;
+                }
+            }
+
+            for (final SwrveButton button : format.getButtons()) {
+                String filePath = message.getCacheDir().getAbsolutePath() + "/" + button.getImage();
+                if(!SwrveHelper.hasFileAccess(filePath)) {
+                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
+                    continue;
+                }
+
+                // Load button image
+                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
+                if (backgroundImage != null && backgroundImage.getBitmap() != null) {
+                    Bitmap imageBitmap = backgroundImage.getBitmap();
+                    SwrveButtonView buttonView = new SwrveButtonView(context, button.getActionType());
+                    bitmapCache.add(new WeakReference<Bitmap>(imageBitmap));
+                    // Position
+                    RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
+                    lparams.leftMargin = button.getPosition().x;
+                    lparams.topMargin = button.getPosition().y;
+                    lparams.width = backgroundImage.getWidth();
+                    lparams.height = backgroundImage.getHeight();
+                    buttonView.setLayoutParams(lparams);
+                    buttonView.setImageBitmap(imageBitmap);
+                    buttonView.setScaleType(ScaleType.FIT_XY);
+                    buttonView.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View buttonView) {
+                            try {
+                                dismiss();
+
+                                if (button.getActionType() == SwrveActionType.Install) {
+                                    activity.notifyOfInstallButtonPress(button);
+                                } else if (button.getActionType() == SwrveActionType.Custom) {
+                                    activity.notifyOfCustomButtonPress(button);
+                                }
+                            } catch (Exception e) {
+                                SwrveLogger.e(LOG_TAG, "Error in onClick handler.", e);
+                            }
+                        }
+                    });
+                    // Add to parent
+                    addView(buttonView);
+                } else {
+                    loadErrorReasons.add("Could not decode bitmap from file:" + filePath);
+                    break;
+                }
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error while showing message", e);
+            SwrveLogger.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
+            loadErrorReasons.add("Error while initializing SwrveMessageView layout:" + e.getMessage());
+        } catch (OutOfMemoryError e) {
+            SwrveLogger.e(LOG_TAG, "OutOfMemoryError while initializing SwrveMessageView layout", e);
+            loadErrorReasons.add("OutOfMemoryError while initializing SwrveMessageView layout:" + e.getMessage());
+        }
+
+        if (loadErrorReasons.size() > 0) {
+            Map<String, String> errorReasonPayload = new HashMap<String, String>();
+            errorReasonPayload.put("reason", loadErrorReasons.toString());
+            destroy();
+            throw new SwrveMessageViewBuildException("There was an error creating the view caused by:\n" + loadErrorReasons.toString());
         }
     }
 
-    /**
-     * Hide the message by removing it from its parent. If a dismiss animation has
-     * been specified the message will be removed from the parent when the animation
-     * finishes.
-     * NOTE: The parent has to be an instance of ViewGroup or otherwise the view
-     * will have to be removed manually.
-     */
-    public void dismiss() {
+    private void dismiss() {
+        Context ctx = getContext();
+        if (ctx instanceof Activity) {
+            ((Activity)ctx).finish();
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
         try {
-            if (this.dismissAnimation != 0) {
-                // Animate the message
-                Animation animation = AnimationUtils.loadAnimation(getContext(), this.dismissAnimation);
-                animation.setStartOffset(0);
-                animation.setAnimationListener(new AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation anim) {
-                    }
+            int count = getChildCount();
+            int centerx = (int) (l + (r - l) / 2.0);
+            int centery = (int) (t + (b - t) / 2.0);
 
-                    @Override
-                    public void onAnimationRepeat(Animation anim) {
-                    }
+            for (int i = 0; i < count; i++) {
+                View child = getChildAt(i);
+                if (child.getVisibility() != GONE) {
+                    RelativeLayout.LayoutParams st = (RelativeLayout.LayoutParams) child.getLayoutParams();
+                    int cCenterX = st.width / 2;
+                    int cCenterY = st.height / 2;
 
-                    @Override
-                    public void onAnimationEnd(Animation anim) {
-                        dismissView();
+                    if (scale != 1f) {
+                        child.layout((int) (scale * (st.leftMargin - cCenterX)) + centerx, (int) (scale * (st.topMargin - cCenterY)) + centery, (int) (scale * (st.leftMargin + cCenterX)) + centerx, (int) (scale * (st.topMargin + cCenterY)) + centery);
+                    } else {
+                        child.layout(st.leftMargin - cCenterX + centerx, st.topMargin - cCenterY + centery, st.leftMargin + cCenterX + centerx, st.topMargin + cCenterY + centery);
                     }
-                });
-                startAnimation(animation);
-            } else {
-                dismissView();
+                }
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error while dismissing message", e);
+            SwrveLogger.e(LOG_TAG, "Error while onLayout in SwrveMessageView", e);
         }
-    }
-
-    private void dismissView() {
-        final ViewParent parent = getParent();
-        if (containerDialog == null) {
-            removeView(parent);
-        } else {
-            containerDialog.dismiss();
-        }
-    }
-
-    protected void removeView(ViewParent parent) {
-        if (parent != null) {
-            ((ViewGroup) parent).removeView(SwrveMessageView.this);
-        }
-        destroy();
     }
 
     @Override
@@ -228,24 +271,34 @@ public class SwrveMessageView extends RelativeLayout {
         return true;
     }
 
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
-
+    public void destroy() {
         try {
-            if (firstTime && firstDraw) {
-                firstDraw = false;
-                message.getCampaignManager().messageWasShownToUser(format);
+            if (bitmapCache != null) {
+                // Iterate through all the bitmaps to recycle them
+                Iterator<WeakReference<Bitmap>> bitmapIt = bitmapCache.iterator();
+                while (bitmapIt.hasNext()) {
+                    WeakReference<Bitmap> weakBitmap = bitmapIt.next();
+                    Bitmap b = weakBitmap.get();
+                    if (b != null) {
+                        if (!b.isRecycled()) {
+                            b.recycle();
+                        }
+                        b = null;
+                    }
+                    weakBitmap = null;
+                }
+
+                bitmapCache.clear();
+                bitmapCache = null;
             }
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error while processing first impression", e);
+            System.gc();
+        } catch (Exception exp) {
+            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
         }
     }
 
-    public void destroy() {
-        if (innerMessageView != null) {
-            innerMessageView.destroy();
-        }
+    public SwrveMessageFormat getFormat() {
+        return format;
     }
 
     @Override
@@ -260,7 +313,27 @@ public class SwrveMessageView extends RelativeLayout {
         destroy();
     }
 
-    public void setContainerDialog(Dialog dialog) {
-        this.containerDialog = dialog;
+    private static class BitmapResult {
+        private Bitmap bitmap;
+        private int width;
+        private int height;
+
+        public BitmapResult(Bitmap bitmap, int width, int height) {
+            this.bitmap = bitmap;
+            this.width = width;
+            this.height = height;
+        }
+
+        public Bitmap getBitmap() {
+            return bitmap;
+        }
+
+        public int getWidth() {
+            return width;
+        }
+
+        public int getHeight() {
+            return height;
+        }
     }
 }

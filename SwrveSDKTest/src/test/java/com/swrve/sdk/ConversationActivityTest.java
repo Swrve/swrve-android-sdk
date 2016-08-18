@@ -57,27 +57,27 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        ActivityController<ConversationActivity> conversationActivityController = Robolectric.buildActivity(ConversationActivity.class);
+        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class);
         Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("conversation", conversation);
-        ConversationActivity conversationActivity = conversationActivityController.withIntent(intent).create().start().visible().get();
-        assertNotNull(conversationActivity);
+        ConversationActivity activity = activityController.withIntent(intent).create().start().visible().get();
+        assertNotNull(activity);
 
-        conversationActivityController.resume();
+        activityController.resume();
 
-        assertFalse(conversationActivity.isFinishing());
-        conversationActivityController.pause().stop().destroy();
+        assertFalse(activity.isFinishing());
+        activityController.pause().stop().destroy();
     }
 
     @Test
     public void testCreateActivityWithNoConvAndFinishes() throws Exception {
 
-        ActivityController<ConversationActivity> conversationActivityController = Robolectric.buildActivity(ConversationActivity.class);
+        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class);
         Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
-        ConversationActivity conversationActivity = conversationActivityController.withIntent(intent).create().start().visible().get();
-        assertNotNull(conversationActivity);
-        assertTrue(conversationActivity.isFinishing());
+        ConversationActivity activity = activityController.withIntent(intent).create().start().visible().get();
+        assertNotNull(activity);
+        assertTrue(activity.isFinishing());
     }
 
     @Test
@@ -86,16 +86,16 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        ActivityController<ConversationActivity> conversationActivityController = Robolectric.buildActivity(ConversationActivity.class);
+        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class);
         Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("conversation", conversation);
-        ConversationActivity conversationActivity = conversationActivityController.withIntent(intent).create().start().visible().get();
-        assertNotNull(conversationActivity);
+        ConversationActivity activity = activityController.withIntent(intent).create().start().visible().get();
+        assertNotNull(activity);
 
-        assertFalse(conversationActivity.isFinishing());
-        conversationActivity.onBackPressed();
-        assertTrue(conversationActivity.isFinishing());
+        assertFalse(activity.isFinishing());
+        activity.onBackPressed();
+        assertTrue(activity.isFinishing());
     }
 
     @Test
@@ -104,30 +104,30 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        ActivityController<ConversationActivity> conversationActivityController1 = Robolectric.buildActivity(ConversationActivity.class);
+        ActivityController<ConversationActivity> activityController1 = Robolectric.buildActivity(ConversationActivity.class);
         Intent intent1 = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
         intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent1.putExtra("conversation", conversation);
-        conversationActivityController1.withIntent(intent1).create().start().visible();
-        ConversationActivity conversationActivityOrientation1 = conversationActivityController1.get();
-        assertNotNull(conversationActivityOrientation1);
+        activityController1.withIntent(intent1).create().start().visible();
+        ConversationActivity activityOrientation1 = activityController1.get();
+        assertNotNull(activityOrientation1);
 
         // toggle orientation
-        int currentOrientation = conversationActivityOrientation1.getResources().getConfiguration().orientation;
+        int currentOrientation = activityOrientation1.getResources().getConfiguration().orientation;
         boolean isPortraitOrUndefined = currentOrientation == Configuration.ORIENTATION_PORTRAIT || currentOrientation == Configuration.ORIENTATION_UNDEFINED;
         int toOrientation = isPortraitOrUndefined ? Configuration.ORIENTATION_LANDSCAPE : Configuration.ORIENTATION_PORTRAIT;
         RuntimeEnvironment.application.getResources().getConfiguration().orientation = toOrientation;
 
         Bundle bundle = new Bundle();
-        conversationActivityController1.saveInstanceState(bundle).pause().stop().destroy();
+        activityController1.saveInstanceState(bundle).pause().stop().destroy();
 
-        ActivityController<ConversationActivity> conversationActivityController2 = Robolectric.buildActivity(ConversationActivity.class);
+        ActivityController<ConversationActivity> activityController2 = Robolectric.buildActivity(ConversationActivity.class);
         Intent intent2 = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
         intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent2.putExtra("conversation", conversation);
-        conversationActivityController2.withIntent(intent2).create(bundle).start().visible().restoreInstanceState(bundle).resume();
-        ConversationActivity conversationActivityOrientation2 = conversationActivityController2.get();
-        assertNotNull(conversationActivityOrientation2);
+        activityController2.withIntent(intent2).create(bundle).start().visible().restoreInstanceState(bundle).resume();
+        ConversationActivity activityOrientation2 = activityController2.get();
+        assertNotNull(activityOrientation2);
     }
 
     @Test
@@ -158,14 +158,14 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        ActivityController<ConversationActivity> conversationActivityController = Robolectric.buildActivity(ConversationActivity.class);
+        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class);
         Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("conversation", conversation);
-        ConversationActivity conversationActivity = conversationActivityController.withIntent(intent).create().start().visible().get();
-        assertNotNull(conversationActivity);
+        ConversationActivity activity = activityController.withIntent(intent).create().start().visible().get();
+        assertNotNull(activity);
 
-        ConversationFragment fragment = conversationActivity.getConversationFragment();
+        ConversationFragment fragment = activity.getConversationFragment();
         assertTrue(fragment.getView() instanceof ConversationRelativeLayout);
         ConversationRelativeLayout conversationRelativeLayout = (ConversationRelativeLayout)fragment.getView();
 

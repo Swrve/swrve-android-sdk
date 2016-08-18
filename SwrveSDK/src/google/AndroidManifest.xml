@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.swrve.sdk.conversations"
+    package="com.swrve.sdk"
     android:versionCode="2"
     android:versionName="2.8">
 
@@ -10,12 +10,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
-        <activity
-            android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
-            android:hardwareAccelerated="true"
-            android:screenOrientation="sensor"
-            android:theme="@style/Theme.Conversations">
-        </activity>
+
+        <receiver
+            android:name="com.swrve.sdk.SwrvePushEngageReceiver"
+            android:exported="true" />
 
     </application>
 </manifest>

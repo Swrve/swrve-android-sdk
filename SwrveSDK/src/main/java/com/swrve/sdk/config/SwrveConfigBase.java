@@ -59,7 +59,7 @@ public abstract class SwrveConfigBase {
      */
     private URL contentUrl = null;
     private URL defaultContentUrl = null;
-    private boolean useHttpsForContentUrl = false;
+    private boolean useHttpsForContentUrl = true;
 
     /**
      * Session timeout time.

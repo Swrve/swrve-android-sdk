@@ -11,9 +11,9 @@
 
     <application>
         <activity
-            android:name="com.swrve.sdk.conversations.ui.ConversationActivity"
-            android:hardwareAccelerated="true"
-            android:theme="@style/Theme.Conversations">
+            android:name=".messaging.ui.SwrveInAppMessageActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.InAppMessage">
         </activity>
 
         <receiver

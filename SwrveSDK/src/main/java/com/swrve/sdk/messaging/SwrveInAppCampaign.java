@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -23,7 +24,7 @@ import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_NOT_DO
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
  */
-public class SwrveCampaign extends SwrveBaseCampaign {
+public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected List<SwrveMessage> messages;
 
@@ -36,7 +37,7 @@ public class SwrveCampaign extends SwrveBaseCampaign {
      * @param assetsQueue  Set where to save the resources to be loaded
      * @throws JSONException
      */
-    public SwrveCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
         this.messages = new ArrayList<SwrveMessage>();
 
@@ -44,10 +45,11 @@ public class SwrveCampaign extends SwrveBaseCampaign {
             JSONArray jsonMessages = campaignData.getJSONArray("messages");
             for (int k = 0, t = jsonMessages.length(); k < t; k++) {
                 JSONObject messageData = jsonMessages.getJSONObject(k);
-                SwrveMessage message = createMessage(campaignManager, this, messageData);
+                SwrveMessage message = createMessage(this, messageData, campaignManager.getCacheDir());
 
                 // If the message has some format
-                if (message.getFormats().size() > 0) {
+                List<SwrveMessageFormat> formats = message.getFormats();
+                if (formats != null && formats.size() > 0) {
                     // Add assets to queue
                     if (assetsQueue != null) {
                         for (SwrveMessageFormat format : message.getFormats()) {
@@ -65,10 +67,6 @@ public class SwrveCampaign extends SwrveBaseCampaign {
                             }
                         }
                     }
-                }
-
-                // Only add message if it has any format
-                if (message.getFormats().size() > 0) {
                     addMessage(message);
                 }
             }
@@ -163,8 +161,8 @@ public class SwrveCampaign extends SwrveBaseCampaign {
         return null;
     }
 
-    protected SwrveMessage createMessage(ISwrveCampaignManager campaignManager, SwrveCampaign swrveCampaign, JSONObject messageData) throws JSONException {
-        return new SwrveMessage(swrveCampaign, messageData, campaignManager);
+    protected SwrveMessage createMessage(SwrveInAppCampaign swrveCampaign, JSONObject messageData, File cacheDir) throws JSONException {
+        return new SwrveMessage(swrveCampaign, messageData, cacheDir);
     }
 
     /**

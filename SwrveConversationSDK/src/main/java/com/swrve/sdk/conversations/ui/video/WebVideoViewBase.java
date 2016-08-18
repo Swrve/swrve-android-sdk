@@ -22,7 +22,6 @@ public abstract class WebVideoViewBase extends WebView implements IConversationC
     protected static final String LOG_TAG = "SwrveSDK";
     protected static final String PLAYER_VIDEO_VIMEO = "vimeo";
     protected static final String PLAYER_VIDEO_YOUTUBE = "youtube";
-    protected static final String EXTERNAL_MARKER = "&swrveexternal";
     protected String url;
     protected int height;
     // This is a link to the video to be displayed in case the video is not visible to the customers
@@ -45,7 +44,7 @@ public abstract class WebVideoViewBase extends WebView implements IConversationC
         String aStyle = "style='font-size: 0.6875em; color: #666; width:100%;'";
         String pStyle = "style='text-align:center; margin-top:8px'";
 
-        errorHtml = ("<p " + pStyle + ">") + ("<a " + aStyle + " href='" + url.toString() + EXTERNAL_MARKER + "'>") + ("Can't see the video?</a>");
+        errorHtml = ("<p " + pStyle + ">") + ("<a " + aStyle + " href='" + url.toString() + "'>") + ("Can't see the video?</a>");
 
         if (SwrveHelper.isNullOrEmpty(url)) {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
@@ -67,14 +66,11 @@ public abstract class WebVideoViewBase extends WebView implements IConversationC
     protected class SwrveVideoWebViewClient extends WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            // Check if link has to be opened with an intent
-            if(url.contains(EXTERNAL_MARKER)){
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setData(Uri.parse(url.replace(EXTERNAL_MARKER, "")));
-                getContext().startActivity(i);
-                return true;
-            }
-            return false;
+            // Open links using an intent
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            getContext().startActivity(i);
+            return true;
         }
 
         @Override
