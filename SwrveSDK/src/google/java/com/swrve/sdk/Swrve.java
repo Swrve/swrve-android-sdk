@@ -176,6 +176,26 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     @Override
+    public void setRegistrationId(String regId) {
+        try {
+            if (registrationId == null || !registrationId.equals(regId)) {
+                registrationId = regId;
+                if (qaUser != null) {
+                    qaUser.updateDeviceInfo();
+                }
+
+                // Store registration id and app version
+                cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
+                cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
+                // Re-send data now
+                queueDeviceInfoNow(true);
+            }
+        } catch (Exception ex) {
+            SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
+        }
+    }
+
+    @Override
     public void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
         SwrveIAPRewards rewards = new SwrveIAPRewards();
         this.iapPlay(productId, productPrice, currency, rewards, purchaseData, dataSignature);
@@ -211,25 +231,5 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     @Deprecated
     public void processIntent(Intent intent) {
         SwrveLogger.e(LOG_TAG, "The processIntent method is Deprecated and should not be used anymore");
-    }
-
-    @Override
-    public void setRegistrationId(String regId) {
-        try {
-            if (registrationId == null || !registrationId.equals(regId)) {
-                registrationId = regId;
-                if (qaUser != null) {
-                    qaUser.updateDeviceInfo();
-                }
-
-                // Store registration id and app version
-                cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
-                cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
-                // Re-send data now
-                queueDeviceInfoNow(true);
-            }
-        } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
-        }
     }
 }
