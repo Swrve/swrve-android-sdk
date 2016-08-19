@@ -1,8 +1,10 @@
 package com.swrve.sdk.gcm;
 
 import com.swrve.sdk.SwrveSDK;
+import com.swrve.sdk.SwrveTestUtils;
 import com.swrve.sdk.test.BuildConfig;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +23,11 @@ public class SwrveGcmInstanceIDListenerServiceTest {
     public void setUp() throws Exception {
         ShadowLog.stream = System.out;
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test

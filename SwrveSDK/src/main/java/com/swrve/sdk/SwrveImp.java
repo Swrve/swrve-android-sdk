@@ -23,7 +23,6 @@ import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
-import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
@@ -175,8 +174,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.installTimeLatch = new CountDownLatch(1);
         this.destroyed = false;
         this.autoShowExecutor = Executors.newSingleThreadExecutor();
-        this.storageExecutor = createStorageExecutor();
-        this.restClientExecutor = createRESTClientExecutor();
+        this.storageExecutor = Executors.newSingleThreadExecutor();
+        this.restClientExecutor = Executors.newSingleThreadExecutor();
         this.restClient = createRESTClient();
         this.bindCounter = new AtomicInteger();
         this.autoShowMessagesEnabled = true;
@@ -350,24 +349,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    protected ILocalStorage createLocalStorage() {
-        return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
-    }
-
     protected IRESTClient createRESTClient() {
         return new RESTClient(config.getHttpTimeout());
     }
 
     protected MemoryCachedLocalStorage createCachedLocalStorage() {
         return new MemoryCachedLocalStorage(new MemoryLocalStorage(), null);
-    }
-
-    protected ExecutorService createStorageExecutor() {
-        return Executors.newSingleThreadExecutor();
-    }
-
-    protected ExecutorService createRESTClientExecutor() {
-        return Executors.newSingleThreadExecutor();
     }
 
     protected String getDeviceName() {
@@ -1295,5 +1282,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     abstract int getNextSequenceNumber();
+
+    abstract ILocalStorage createLocalStorage();
 
 }
