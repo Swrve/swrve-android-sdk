@@ -877,7 +877,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     private boolean supportsDeviceFilter(String requirement) {
-        return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase());
+        return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
     }
 
     protected void downloadAssets(final Set<String> assetsQueue) {
