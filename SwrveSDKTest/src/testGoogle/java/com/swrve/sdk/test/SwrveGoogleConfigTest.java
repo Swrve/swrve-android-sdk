@@ -45,9 +45,9 @@ public class SwrveGoogleConfigTest {
     @Test
     public void testObtainRegistrationId() {
         SwrveConfig swrveConfig = new SwrveConfig();
-        assertEquals(true, swrveConfig.isAutomaticPushRegistration());
+        assertEquals(true, swrveConfig.isPushRegistrationAutomatic());
 
-        swrveConfig.setAutomaticPushRegistration(false);
-        assertEquals(false, swrveConfig.isAutomaticPushRegistration());
+        swrveConfig.setPushRegistrationAutomatic(false);
+        assertEquals(false, swrveConfig.isPushRegistrationAutomatic());
     }
 }
