@@ -19,6 +19,7 @@ import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.ILocalStorage;
+import com.swrve.sdk.localstorage.IMemoryLocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
@@ -1663,12 +1664,27 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public synchronized int getNextSequenceNumber() {
-        String id = cachedLocalStorage.getSharedCacheEntry("seqnum");
+        IMemoryLocalStorage memoryLocalStorage = cachedLocalStorage;
+        if(memoryLocalStorage == null) {
+            try {
+                memoryLocalStorage = createCachedLocalStorage();
+                return getNextSequenceNumber(memoryLocalStorage);
+            } catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Error getting getNextSequenceNumber", e);
+            } finally {
+                if (memoryLocalStorage != null) memoryLocalStorage.close();
+            }
+        }
+        return getNextSequenceNumber(memoryLocalStorage);
+    }
+
+    private int getNextSequenceNumber(IMemoryLocalStorage storage) {
+        String id = storage.getSharedCacheEntry("seqnum");
         int seqnum = 1;
         if (!SwrveHelper.isNullOrEmpty(id)) {
             seqnum = Integer.parseInt(id) + 1;
         }
-        cachedLocalStorage.setAndFlushSharedEntry("seqnum", Integer.toString(seqnum));
+        storage.setAndFlushSharedEntry("seqnum", Integer.toString(seqnum));
         return seqnum;
     }
 
