@@ -68,7 +68,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             ArrayList<String> events = new ArrayList<>();
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", name);
-            eventString = EventHelper.eventAsJSON("event", parameters, null, null);
+            eventString = EventHelper.eventAsJSON("event", parameters, swrve.getNextSequenceNumber());
             events.add(eventString);
             swrve.sendEventsWakefully(context, events);
         } catch (JSONException e) {
