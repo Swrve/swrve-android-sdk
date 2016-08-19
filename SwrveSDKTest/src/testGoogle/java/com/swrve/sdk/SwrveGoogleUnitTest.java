@@ -44,20 +44,14 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
-        removeSingletonInstance();
+        SwrveTestUtils.removeSwrveSDKSingletonInstance();
         activity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
         ShadowLog.stream = System.out;
     }
 
     @After
     public void tearDown() throws Exception {
-        removeSingletonInstance();
-    }
-
-    private void removeSingletonInstance() throws Exception {
-        Field singleton = SwrveSDKBase.class.getDeclaredField("instance");
-        singleton.setAccessible(true);
-        singleton.set(null, null);
+        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
