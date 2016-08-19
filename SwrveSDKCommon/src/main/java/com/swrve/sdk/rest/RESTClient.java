@@ -16,6 +16,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
@@ -79,7 +80,7 @@ public class RESTClient implements IRESTClient {
                 in = urlConnection.getInputStream();
                 String encoding = urlConnection.getContentEncoding();
 
-                if (encoding != null && encoding.toLowerCase().indexOf("gzip") != -1) {
+                if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).indexOf("gzip") != -1) {
                     in = new GZIPInputStream(in);
                 } else {
                     in = new BufferedInputStream(in);

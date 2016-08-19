@@ -18,6 +18,8 @@ import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.ui.IConversationContent;
 import com.swrve.sdk.conversations.ui.ConversationFullScreenVideoFrame;
 
+import java.util.Locale;
+
 public abstract class WebVideoViewBase extends WebView implements IConversationContent {
     protected static final String LOG_TAG = "SwrveSDK";
     protected static final String PLAYER_VIDEO_VIMEO = "vimeo";
@@ -49,7 +51,7 @@ public abstract class WebVideoViewBase extends WebView implements IConversationC
         if (SwrveHelper.isNullOrEmpty(url)) {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = "<p>Sorry, a malformed URL was detected. This video cannot be played.</p> ";
-        } else if (url.toLowerCase().contains(PLAYER_VIDEO_YOUTUBE) || url.toLowerCase().contains(PLAYER_VIDEO_VIMEO)) {
+        } else if (url.toLowerCase(Locale.ENGLISH).contains(PLAYER_VIDEO_YOUTUBE) || url.toLowerCase(Locale.ENGLISH).contains(PLAYER_VIDEO_VIMEO)) {
             videoHtml = "<iframe type='text/html' width='100%' height='" + height + "' src=" + url + " frameborder='0' webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>" + errorHtml;
         } else {
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
