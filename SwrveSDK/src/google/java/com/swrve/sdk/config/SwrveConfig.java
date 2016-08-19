@@ -15,7 +15,7 @@ public class SwrveConfig extends SwrveConfigBase {
     /**
      * Automatically get the Google Cloud Messaging Registration ID.
      */
-    private boolean obtainRegistrationIdEnabled = true;
+    private boolean automaticPushRegistration = true;
 
     /**
      * Automatically log Google's Advertising Id as "swrve.GAID".
@@ -71,14 +71,14 @@ public class SwrveConfig extends SwrveConfigBase {
     /**
      * @return if it will automatically obtain the Google Cloud Messaging Registration ID.
      */
-    public boolean isObtainRegistrationIdEnabled() {
-        return obtainRegistrationIdEnabled;
+    public boolean isAutomaticPushRegistration() {
+        return automaticPushRegistration;
     }
 
     /**
      * @param enabled to automatically obtain the Google Cloud Messaging Registration ID.
      */
-    public void setObtainRegistrationIdEnabled(boolean enabled) {
-        this.obtainRegistrationIdEnabled = enabled;
+    public void setAutomaticPushRegistration(boolean enabled) {
+        this.automaticPushRegistration = enabled;
     }
 }

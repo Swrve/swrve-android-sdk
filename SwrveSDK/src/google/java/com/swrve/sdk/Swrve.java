@@ -41,7 +41,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
         // Push notification configured for this app
-        if (config.isPushEnabled() && config.isObtainRegistrationIdEnabled()) {
+        if (config.isPushEnabled() && config.isAutomaticPushRegistration()) {
             try {
                 // Check device for Play Services APK.
                 if (isGooglePlayServicesAvailable()) {

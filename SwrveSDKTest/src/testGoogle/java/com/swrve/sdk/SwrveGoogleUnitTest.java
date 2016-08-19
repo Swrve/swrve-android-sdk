@@ -84,7 +84,7 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
         SwrveConfig config = new SwrveConfig();
         initLocalHttpServer(activity, config);
         config.setSenderId("12345");
-        config.setObtainRegistrationIdEnabled(false);
+        config.setAutomaticPushRegistration(false);
         Swrve swrve = (Swrve) SwrveSDK.createInstance(activity, 1, "apiKey", config);
         swrve.onCreate(activity);
         swrve.setRegistrationId("manual_reg_id");
