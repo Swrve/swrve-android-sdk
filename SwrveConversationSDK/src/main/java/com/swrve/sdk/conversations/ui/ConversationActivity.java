@@ -17,7 +17,7 @@ public class ConversationActivity extends FragmentActivity {
     private ConversationFragment conversationFragment;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         if (intent != null) {
