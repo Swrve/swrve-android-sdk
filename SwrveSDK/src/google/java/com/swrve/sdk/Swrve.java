@@ -41,7 +41,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
         // Push notification configured for this app
-        if (config.isPushEnabled()) {
+        if (config.isPushEnabled() && config.isPushRegistrationAutomatic()) {
             try {
                 // Check device for Play Services APK.
                 if (isGooglePlayServicesAvailable()) {
@@ -131,23 +131,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      */
     protected void registerInBackground(final Context context) {
         new AsyncTask<Void, Integer, Void>() {
-            private void setRegistrationId(String regId) {
-                try {
-                    registrationId = regId;
-                    if (qaUser != null) {
-                        qaUser.updateDeviceInfo();
-                    }
-
-                    // Store registration id and app version
-                    cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
-                    cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
-                    // Re-send data now
-                    queueDeviceInfoNow(true);
-                } catch (Exception ex) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
-                }
-            }
-
             @Override
             protected Void doInBackground(Void... params) {
                 // Try to obtain the GCM registration id from Google Play
@@ -190,6 +173,26 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             return "";
         }
         return registrationIdRaw;
+    }
+
+    @Override
+    public void setRegistrationId(String regId) {
+        try {
+            if (registrationId == null || !registrationId.equals(regId)) {
+                registrationId = regId;
+                if (qaUser != null) {
+                    qaUser.updateDeviceInfo();
+                }
+
+                // Store registration id and app version
+                cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
+                cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
+                // Re-send data now
+                queueDeviceInfoNow(true);
+            }
+        } catch (Exception ex) {
+            SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
+        }
     }
 
     @Override

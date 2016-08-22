@@ -28,6 +28,7 @@ public abstract class SwrveBaseTest {
     protected Activity mActivity;
     protected ShadowActivity mShadowActivity;
 
+
     @Before
     public void setUp() throws Exception {
         ShadowLog.stream = System.out;
@@ -40,5 +41,4 @@ public abstract class SwrveBaseTest {
     public void tearDown() throws Exception {
         // empty
     }
-
 }

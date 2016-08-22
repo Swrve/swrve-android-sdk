@@ -34,4 +34,8 @@ public class SwrveEmpty extends SwrveBaseEmpty<ISwrve, SwrveConfig> implements I
     @Override
     public void processIntent(Intent intent) {
     }
+
+    @Override
+    public void setRegistrationId(String regId) {
+    }
 }

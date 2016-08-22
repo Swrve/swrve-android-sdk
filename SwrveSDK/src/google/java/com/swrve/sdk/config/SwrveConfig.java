@@ -13,6 +13,11 @@ public class SwrveConfig extends SwrveConfigBase {
     private String senderId;
 
     /**
+     * Automatically get the Google Cloud Messaging Registration ID.
+     */
+    private boolean pushRegistrationAutomatic = true;
+
+    /**
      * Automatically log Google's Advertising Id as "swrve.GAID".
      */
     private boolean gAIDLoggingEnabled;
@@ -35,7 +40,7 @@ public class SwrveConfig extends SwrveConfigBase {
     }
 
     /**
-     * @param senderId the Google Cloud Messaging sender id to set
+     * @param senderId the Google Cloud Messaging Sender ID for your app.
      */
     public SwrveConfig setSenderId(String senderId) {
         this.senderId = senderId;
@@ -61,5 +66,19 @@ public class SwrveConfig extends SwrveConfigBase {
      */
     public void setGAIDLoggingEnabled(boolean enabled) {
         this.gAIDLoggingEnabled = enabled;
+    }
+
+    /**
+     * @return if it will automatically obtain the Google Cloud Messaging Registration ID.
+     */
+    public boolean isPushRegistrationAutomatic() {
+        return pushRegistrationAutomatic;
+    }
+
+    /**
+     * @param enabled to automatically obtain the Google Cloud Messaging Registration ID.
+     */
+    public void setPushRegistrationAutomatic(boolean enabled) {
+        this.pushRegistrationAutomatic = enabled;
     }
 }
