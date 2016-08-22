@@ -225,6 +225,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         return true;
     }
 
+    /**
+     * @deprecated Swrve engaged events are automatically sent, so this is no longer needed.
+     */
     @Deprecated
     public void processIntent(Intent intent) {
         SwrveLogger.e(LOG_TAG, "The processIntent method is Deprecated and should not be used anymore");
