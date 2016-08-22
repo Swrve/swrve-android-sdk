@@ -15,8 +15,6 @@ import org.mockito.Mockito;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.manifest.BroadcastReceiverData;
-import org.robolectric.shadows.ShadowActivity;
-import org.robolectric.shadows.ShadowApplication;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -28,21 +26,24 @@ import static org.junit.Assert.assertTrue;
 
 public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
 
-    private ShadowApplication shadowApplication;
-    private ShadowActivity shadowActivity;
     private Swrve swrveSpy;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
         shadowApplication = Shadows.shadowOf(RuntimeEnvironment.application);
-        shadowActivity = Shadows.shadowOf(mActivity);
         SwrveConfig config = new SwrveConfig();
         config.setSenderId("12345");
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveCommon.setSwrveCommon(swrveSpy);
 
+        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
+        Mockito.doReturn(false).when(swrveSpy).isGooglePlayServicesAvailable(); // disable getting the regID
+
+        // do not init the sdk, as SwrvePushEngageReceiver can/will be executed cold
     }
 
     @After
@@ -97,12 +98,11 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
         SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
-        Intent nextIntent = shadowApplication.peekNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(Intent.ACTION_VIEW, nextIntent.getAction());
-        assertEquals("swrve://deeplink/campaigns", nextIntent.getData().toString());
-        assertTrue(nextIntent.hasExtra("customdata"));
-        assertEquals("customdata_value", nextIntent.getStringExtra("customdata"));
+        Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
+        assertNotNull(nextStartedActivity);
+        assertEquals("swrve://deeplink/campaigns", nextStartedActivity.getData().toString());
+        assertTrue(nextStartedActivity.hasExtra("customdata"));
+        assertEquals("customdata_value", nextStartedActivity.getStringExtra("customdata"));
 
         List<String> events = assertEventCount(1);
         assertEngagedEvent(events.get(0), "Swrve.Messages.Push-4567.engaged");
@@ -110,7 +110,7 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
 
     private List<String> assertEventCount(int count) {
         List<String> events = null;
-        List<Intent> broadcastIntents = shadowActivity.getBroadcastIntents();
+        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
         if (count == 0) {
             assertEquals(0, broadcastIntents.size());
         } else {
@@ -128,12 +128,13 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
         Type type = new TypeToken<Map<String, String>>() {
         }.getType();
         Map<String, String> event = gson.fromJson(eventJson, type);
-        assertEquals(3, event.size());
+        assertEquals(4, event.size());
         assertTrue(event.containsKey("type"));
         assertEquals("event", event.get("type"));
         assertTrue(event.containsKey("name"));
         assertEquals(eventName, event.get("name"));
         assertTrue(event.containsKey("time"));
+        assertTrue(event.containsKey("seqnum"));
     }
 
 }
