@@ -70,4 +70,6 @@ interface ISwrveCommon
 
     JSONObject getDeviceInfo() throws JSONException;
 
+    int getNextSequenceNumber();
+
 }

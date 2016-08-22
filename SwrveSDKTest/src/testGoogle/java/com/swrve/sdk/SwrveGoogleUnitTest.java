@@ -10,9 +10,7 @@ import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.SwrveGcmConstants;
 import com.swrve.sdk.test.BuildConfig;
 import com.swrve.sdk.test.MainActivity;
-import com.swrve.sdk.utils.TestHttpServer;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -25,11 +23,6 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowLog;
-
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -82,41 +75,13 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
     @Test
     public void testManualRegistrationId() throws InterruptedException, JSONException {
         SwrveConfig config = new SwrveConfig();
-        initLocalHttpServer(activity, config);
         config.setSenderId("12345");
         config.setPushRegistrationAutomatic(false);
         Swrve swrve = (Swrve) SwrveSDK.createInstance(activity, 1, "apiKey", config);
         swrve.onCreate(activity);
         swrve.setRegistrationId("manual_reg_id");
-
-        // Find a POST with device info where we sent the right new sender ID
-        boolean foundPost = false;
-        int retries = 10;
-        while(!foundPost && (retries--) > 0) {
-            Iterator<TestHttpServer.TestHttpPostRequest> it = httpEventServer.postRequests.iterator();
-            while(it.hasNext()) {
-                TestHttpServer.TestHttpPostRequest request = it.next();
-                if (request.body.contains("swrve.gcm_token")) {
-                    JSONArray jsonEvents = request.getEventsJSON();
-                    if (jsonEvents != null && jsonEvents.length() > 0) {
-                        for (int i = 0; i < jsonEvents.length() && !foundPost; i++) {
-                            JSONObject jsonEvent = jsonEvents.getJSONObject(i);
-                            if (jsonEvent.get("type").equals("user")) {
-                                JSONObject jsonAttributes = jsonEvent.getJSONObject("attributes");
-                                if (jsonAttributes.has("swrve.gcm_token")) {
-                                    foundPost = jsonAttributes.get("swrve.gcm_token").equals("manual_reg_id");
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!foundPost) {
-                Thread.sleep(1000);
-            }
-        }
-        assertTrue(foundPost);
+        JSONObject deviceValuesToSend = swrve.getDeviceInfo();
+        assertEquals("manual_reg_id", deviceValuesToSend.get("swrve.gcm_token"));
         swrve.onDestroy(activity);
     }
 }

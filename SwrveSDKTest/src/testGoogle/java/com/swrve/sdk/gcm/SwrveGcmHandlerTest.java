@@ -10,10 +10,12 @@ import android.os.Bundle;
 import com.google.common.base.Optional;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveSDK;
+import com.swrve.sdk.SwrveTestUtils;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.test.BuildConfig;
 
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,6 +46,11 @@ public class SwrveGcmHandlerTest {
         ShadowLog.stream = System.out;
         swrveGcmService = new SwrveGcmIntentService();
         swrveGcmService.onCreate();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test

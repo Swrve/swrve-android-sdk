@@ -27,27 +27,20 @@ final class EventHelper {
         }
     }
 
-    private synchronized static int getNextSequenceNumber(IMemoryLocalStorage storage) {
-        String id = storage.getSharedCacheEntry("seqnum");
-        int seqnum = 1;
-        if (!SwrveHelper.isNullOrEmpty(id)) {
-            seqnum = Integer.parseInt(id) + 1;
-        }
-        storage.setAndFlushSharedEntry("seqnum", Integer.toString(seqnum));
-        return seqnum;
+    public static String eventAsJSON(String type, Map<String, Object> parameters, int seqnum) throws JSONException {
+        return eventAsJSON(type, parameters, null, seqnum);
     }
 
     /*
      * Generate JSON to be stored in EventLocalStorage and eventually sent to
      * the batch API to inform Swrve of these events.
      */
-    public static String eventAsJSON(String type, Map<String, Object> parameters,
-                                     Map<String, String> payload, IMemoryLocalStorage storage) throws JSONException {
+    public static String eventAsJSON(String type, Map<String, Object> parameters, Map<String, String> payload, int seqnum) throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put("type", type);
         obj.put("time", System.currentTimeMillis());
-        if (storage != null) {
-            obj.put("seqnum", getNextSequenceNumber(storage));
+        if (seqnum > 0) {
+            obj.put("seqnum", seqnum);
         }
         if (parameters != null) {
             for (Map.Entry<String, Object> entry : parameters.entrySet()) {
