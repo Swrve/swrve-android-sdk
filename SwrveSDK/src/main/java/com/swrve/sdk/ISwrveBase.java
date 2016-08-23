@@ -72,6 +72,10 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     String getLanguage();
 
+    /**
+     * Set the current language
+     * @deprecated use {@link #setLanguage(Locale)} instead
+     */
     @Deprecated
     void setLanguage(String language);
 
@@ -83,9 +87,21 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void refreshCampaignsAndResources();
 
+    /**
+     * @deprecated In-App-Messages's are now started in their own Activity, so the onPause of your
+     * Activity will execute before IAM displays. Use this to pause any resources instead of checking
+     * for a SwrveMessage by event. The getMessageForEvent will continue to work for now but will be
+     * removed in 5.0.
+     */
     @Deprecated
     SwrveMessage getMessageForEvent(String event);
 
+    /**
+     * @deprecated In-App-Messages's are now started in their own Activity, so the onPause of your
+     * Activity will execute before IAM displays. Use this to pause any resources instead of checking
+     * for a SwrveMessage by id. The getMessageForId will continue to work for now but will be
+     * removed in 5.0.
+     */
     @Deprecated
     SwrveMessage getMessageForId(int messageId);
 

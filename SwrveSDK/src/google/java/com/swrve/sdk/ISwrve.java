@@ -16,6 +16,9 @@ public interface ISwrve extends ISwrveBase<ISwrve, SwrveConfig> {
 
     void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature);
 
+    /**
+     * @deprecated Swrve engaged events are automatically sent, so this is no longer needed.
+     */
     @Deprecated
     void processIntent(Intent intent);
 

@@ -1250,6 +1250,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
+    /**
+     * @deprecated use {@link #SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER} instead
+     */
     @Deprecated
     public String getAutoShowEventTrigger() {
         return SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER;
