@@ -22,7 +22,5 @@ public interface ISwrve extends ISwrveBase<ISwrve, SwrveConfig> {
     @Deprecated
     void processIntent(Intent intent);
 
-    void setRegistrationId(String registrationId);
-
     void onTokenRefreshed();
 }

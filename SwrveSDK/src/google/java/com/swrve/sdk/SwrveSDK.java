@@ -126,14 +126,4 @@ public class SwrveSDK extends SwrveSDKBase {
         checkInstanceCreated();
         ((ISwrve) instance).processIntent(intent);
     }
-
-    /**
-     * Set the registration Id from external sources.
-     *
-     * @param registrationId The registration ID obtained from the GCM libs.
-     */
-    public static void setRegistrationId(String registrationId) {
-        checkInstanceCreated();
-        ((ISwrve) instance).setRegistrationId(registrationId);
-    }
 }

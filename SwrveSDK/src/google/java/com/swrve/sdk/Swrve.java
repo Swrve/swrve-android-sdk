@@ -41,7 +41,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
         // Push notification configured for this app
-        if (config.isPushEnabled() && config.isPushRegistrationAutomatic()) {
+        if (config.isPushEnabled()) {
             try {
                 // Check device for Play Services APK.
                 if (isGooglePlayServicesAvailable()) {
@@ -175,8 +175,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         return registrationIdRaw;
     }
 
-    @Override
-    public void setRegistrationId(String regId) {
+    private void setRegistrationId(String regId) {
         try {
             if (registrationId == null || !registrationId.equals(regId)) {
                 registrationId = regId;
