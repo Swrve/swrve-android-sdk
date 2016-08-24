@@ -20,17 +20,4 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
     public void tearDown() throws Exception {
         SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
-
-    @Test
-    public void testManualRegistrationId() throws Exception {
-        SwrveConfig config = new SwrveConfig();
-        config.setSenderId("12345");
-        config.setPushRegistrationAutomatic(false);
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
-        swrve.onCreate(mActivity);
-        swrve.setRegistrationId("manual_reg_id");
-        JSONObject deviceValuesToSend = swrve.getDeviceInfo();
-        assertEquals("manual_reg_id", deviceValuesToSend.get("swrve.gcm_token"));
-        swrve.onDestroy(mActivity);
-    }
 }
