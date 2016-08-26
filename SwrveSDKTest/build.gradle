@@ -25,6 +25,7 @@ android {
     productFlavors {
         core {}
         google {}
+        amazon {}
     }
 
     lintOptions {
