@@ -173,6 +173,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected SwrveQAUser qaUser;
 
     protected SwrveImp(Context context, int appId, String apiKey, C config) {
+        if (appId <= 0 || SwrveHelper.isNullOrEmpty(apiKey)) {
+            SwrveHelper.logAndThrowException("Please setup a correct appId and apiKey");
+        }
+
         this.appId = appId;
         this.apiKey = apiKey;
         this.config = config;
