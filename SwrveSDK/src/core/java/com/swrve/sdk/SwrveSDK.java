@@ -5,7 +5,7 @@ import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
 
-public class SwrveSDK extends SwrveSDKBase{
+public class SwrveSDK extends SwrveSDKBase {
 
     /**
      * Create a single Swrve SDK instance.
@@ -29,8 +29,6 @@ public class SwrveSDK extends SwrveSDKBase{
     public static ISwrve createInstance(final Context context, final int appId, final String apiKey, final SwrveConfig config) {
         if (context == null) {
             SwrveHelper.logAndThrowException("Context not specified");
-        } else if (SwrveHelper.isNullOrEmpty(apiKey)) {
-            SwrveHelper.logAndThrowException("Api key not specified");
         }
 
         if (!SwrveHelper.sdkAvailable()) {

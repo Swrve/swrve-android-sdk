@@ -11,6 +11,9 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 interface ISwrveGcmHandler {
 
+    /**
+     * @deprecated Use {@link #onMessageReceived} instead.
+     */
     @Deprecated
     boolean onHandleIntent(Intent intent, GoogleCloudMessaging gcm);
 

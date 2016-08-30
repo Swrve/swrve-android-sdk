@@ -31,8 +31,6 @@ public class SwrveSDK extends SwrveSDKBase {
     public static synchronized ISwrve createInstance(final Context context, final int appId, final String apiKey, final SwrveConfig config) {
         if (context == null) {
             SwrveHelper.logAndThrowException("Context not specified");
-        } else if (SwrveHelper.isNullOrEmpty(apiKey)) {
-            SwrveHelper.logAndThrowException("Api key not specified");
         }
 
         if (!SwrveHelper.sdkAvailable()) {
@@ -118,10 +116,8 @@ public class SwrveSDK extends SwrveSDKBase {
     }
 
     /**
-     * Process the push notification received from GCM that opened the app. This should be called on
-     * the Activity's onCreate that was opened from a push notification.
-     *
      * @param intent The intent that opened the activity
+     * @deprecated Swrve engaged events are automatically sent, so this is no longer needed.
      */
     @Deprecated
     public static void processIntent(Intent intent) {

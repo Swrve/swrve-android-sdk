@@ -35,7 +35,7 @@ public class SwrveConfig extends SwrveConfigBase {
     }
 
     /**
-     * @param senderId the Google Cloud Messaging sender id to set
+     * @param senderId the Google Cloud Messaging Sender ID for your app.
      */
     public SwrveConfig setSenderId(String senderId) {
         this.senderId = senderId;
@@ -62,4 +62,5 @@ public class SwrveConfig extends SwrveConfigBase {
     public void setGAIDLoggingEnabled(boolean enabled) {
         this.gAIDLoggingEnabled = enabled;
     }
+
 }

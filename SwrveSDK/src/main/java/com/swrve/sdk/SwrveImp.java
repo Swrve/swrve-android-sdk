@@ -3,15 +3,11 @@ package com.swrve.sdk;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
@@ -27,17 +23,14 @@ import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.ILocalStorage;
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.MemoryLocalStorage;
-import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
@@ -86,7 +79,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.5.1";
+    protected static String version = "4.7";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
     protected static final String CAMPAIGNS_STATE_CATEGORY = "SwrveCampaignSettings";
@@ -155,7 +148,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected Date campaignsAndResourcesLastRefreshed;
     protected boolean campaignsAndResourcesInitialized = false;
     protected boolean eventsWereSent = false;
-    protected String cdnRoot = "http://content-cdn.swrve.com/messaging/message_image/";
+    protected String cdnRoot = "https://content-cdn.swrve.com/messaging/message_image/";
     protected boolean initialised = false;
     protected boolean mustCleanInstance;
     protected Date initialisedTime;
@@ -173,6 +166,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected SwrveQAUser qaUser;
 
     protected SwrveImp(Context context, int appId, String apiKey, C config) {
+        if (appId <= 0 || SwrveHelper.isNullOrEmpty(apiKey)) {
+            SwrveHelper.logAndThrowException("Please setup a correct appId and apiKey");
+        }
+
         this.appId = appId;
         this.apiKey = apiKey;
         this.config = config;
@@ -181,8 +178,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.installTimeLatch = new CountDownLatch(1);
         this.destroyed = false;
         this.autoShowExecutor = Executors.newSingleThreadExecutor();
-        this.storageExecutor = createStorageExecutor();
-        this.restClientExecutor = createRESTClientExecutor();
+        this.storageExecutor = Executors.newSingleThreadExecutor();
+        this.restClientExecutor = Executors.newSingleThreadExecutor();
         this.restClient = createRESTClient();
         this.bindCounter = new AtomicInteger();
         this.autoShowMessagesEnabled = true;
@@ -356,24 +353,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    protected ILocalStorage createLocalStorage() {
-        return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
-    }
-
     protected IRESTClient createRESTClient() {
         return new RESTClient(config.getHttpTimeout());
     }
 
     protected MemoryCachedLocalStorage createCachedLocalStorage() {
         return new MemoryCachedLocalStorage(new MemoryLocalStorage(), null);
-    }
-
-    protected ExecutorService createStorageExecutor() {
-        return Executors.newSingleThreadExecutor();
-    }
-
-    protected ExecutorService createRESTClientExecutor() {
-        return Executors.newSingleThreadExecutor();
     }
 
     protected String getDeviceName() {
@@ -883,7 +868,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     private boolean supportsDeviceFilter(String requirement) {
-        return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase());
+        return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
     }
 
     protected void downloadAssets(final Set<String> assetsQueue) {
@@ -946,7 +931,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     SwrveLogger.w(LOG_TAG, "Could not download assets because do not have write access to cacheDir:" + cacheDir + " WRITE_EXTERNAL_STORAGE permission granted:" + permission);
                 }
             }
-
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error downloading campaigns", e);
         } finally {
@@ -1270,6 +1254,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
+    /**
+     * @deprecated use {@link #SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER} instead
+     */
+    @Deprecated
     public String getAutoShowEventTrigger() {
         return SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER;
     }
@@ -1288,16 +1276,20 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         @Override
         public void run() {
             try {
-                String eventString = EventHelper.eventAsJSON(eventType, parameters, payload, cachedLocalStorage);
+                int seqNum = getNextSequenceNumber();
+                String eventString = EventHelper.eventAsJSON(eventType, parameters, payload, seqNum);
                 parameters = null;
                 payload = null;
                 cachedLocalStorage.addEvent(eventString);
                 SwrveLogger.i(LOG_TAG, eventType + " event queued");
-            } catch (JSONException je) {
-                SwrveLogger.e(LOG_TAG, "Parameter or payload data not encodable as JSON", je);
-            } catch (Exception se) {
-                SwrveLogger.e(LOG_TAG, "Unable to insert into local storage", se);
+            } catch (Exception e) {
+                SwrveLogger.e(LOG_TAG, "Unable to insert QueueEvent into local storage.", e);
             }
         }
     }
+
+    abstract int getNextSequenceNumber();
+
+    abstract ILocalStorage createLocalStorage();
+
 }

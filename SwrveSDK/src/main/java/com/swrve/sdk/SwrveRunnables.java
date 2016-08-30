@@ -1,7 +1,5 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.SwrveLogger;
-
 /**
  * User internally to assure exceptions won't bubble up when executing a runnable
  * in an executor.

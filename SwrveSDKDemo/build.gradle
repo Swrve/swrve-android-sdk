@@ -17,6 +17,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    productFlavors {
+        core {}
+        google {}
+    }
 }
 
 dependencies {
@@ -24,10 +29,10 @@ dependencies {
     compile 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
 
     // In your app please include the SDK using one of the following dependencies (swrve or swrve-google)
-//  compile 'com.swrve.sdk.android:swrve:4.5.1' // No Google Services push
-//  compile 'com.swrve.sdk.android:swrve-google:4.5.1' // Google GCM push version
+//  coreCompile 'com.swrve.sdk.android:swrve:4.7.0' // No Google Services push
+//  googleCompile 'com.swrve.sdk.android:swrve-google:4.7.0' // Google GCM push version
 
     // Use the SDK source shipped with this demo
-//  compile project(path: ':SwrveSDK', configuration: 'coreDebug') // No Google Services push
-    compile project(path: ':SwrveSDK', configuration: 'googleDebug') // Google GCM push version
+    coreCompile project(path: ':SwrveSDK', configuration: 'coreDebug') // No Google Services push
+    googleCompile project(path: ':SwrveSDK', configuration: 'googleDebug') // Google GCM push version
 }
