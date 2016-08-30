@@ -5,7 +5,7 @@ import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
 
-public class SwrveSDK extends SwrveSDKBase{
+public class SwrveSDK extends SwrveSDKBase {
 
     /**
      * Create a single Swrve SDK instance.

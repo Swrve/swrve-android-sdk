@@ -126,7 +126,7 @@ public class SwrveCampaignDisplayer {
 
     protected boolean canTrigger(SwrveBaseCampaign swrveCampaign, String eventName, Map<String, String> payload, Map<Integer, Result> campaignDisplayResults) {
         if (swrveCampaign.getTriggers() == null || swrveCampaign.getTriggers().size() == 0) {
-            String resultText = "Campaign [" + swrveCampaign.getId() + "], invalid triggers. Skipping this campaign.";
+            String resultText = "Campaign [" + swrveCampaign.getId() + "], no triggers (could be message centre). Skipping this campaign.";
             logAndAddReason(swrveCampaign, campaignDisplayResults, DisplayResult.ERROR_INVALID_TRIGGERS, resultText);
             return false;
         }

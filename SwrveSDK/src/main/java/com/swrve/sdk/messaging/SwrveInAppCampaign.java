@@ -48,7 +48,8 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                 SwrveMessage message = createMessage(this, messageData, campaignManager.getCacheDir());
 
                 // If the message has some format
-                if (message.getFormats().size() > 0) {
+                List<SwrveMessageFormat> formats = message.getFormats();
+                if (formats != null && formats.size() > 0) {
                     // Add assets to queue
                     if (assetsQueue != null) {
                         for (SwrveMessageFormat format : message.getFormats()) {
@@ -66,10 +67,6 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                             }
                         }
                     }
-                }
-
-                // Only add message if it has any format
-                if (message.getFormats().size() > 0) {
                     addMessage(message);
                 }
             }

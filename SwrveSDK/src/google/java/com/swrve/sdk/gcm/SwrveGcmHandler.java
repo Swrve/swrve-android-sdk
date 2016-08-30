@@ -33,6 +33,9 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
         this.swrveGcmService = swrveGcmService;
     }
 
+    /**
+     * @deprecated Use {@link #onMessageReceived} instead.
+     */
     @Deprecated
     @Override
     public boolean onHandleIntent(Intent intent, GoogleCloudMessaging gcm) {

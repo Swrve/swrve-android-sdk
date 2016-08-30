@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 
 import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
@@ -308,7 +307,6 @@ public abstract class SwrveSDKBase {
 
     /**
      * Set the current language
-     *
      * @deprecated use {@link #setLanguage(Locale)} instead
      */
     @Deprecated
