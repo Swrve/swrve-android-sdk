@@ -1,15 +1,14 @@
-package com.swrve.sdk.sample;
+package com.swrve.sdk.demo;
 
 import android.app.Application;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
 
-public class SampleApplication extends Application {
+public class DemoApplication extends Application {
 
-    private static final String LOG_TAG = "SwrveSample";
+    private static final String LOG_TAG = "SwrveDemo";
     private int YOUR_APP_ID = -1;
     private String YOUR_API_KEY = "api_key";
 
