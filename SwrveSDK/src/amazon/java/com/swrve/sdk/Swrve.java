@@ -1,6 +1,9 @@
 package com.swrve.sdk;
 
 import android.content.Context;
+import android.content.Intent;
+
+import com.amazon.device.messaging.development.ADMManifest;
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.json.JSONException;
@@ -28,9 +31,16 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
+        try {
+            ADMManifest.checkManifestAuthoredProperly(context);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+
         // Push notification configured for this app
         if (config.isPushEnabled()) {
             try {
+
                 // Check device for Play Services APK.
                 /*if (isGooglePlayServicesAvailable()) {
                     String newRegistrationId = getRegistrationId();
@@ -127,5 +137,19 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         } catch (Exception ex) {
             SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
         }
+    }
+
+
+    public void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
+        //TODO
+        SwrveLogger.e(LOG_TAG, "iapPlay TODO");
+    }
+
+    /**
+     * @deprecated Swrve engaged events are automatically sent, so this is no longer needed.
+     */
+    @Deprecated
+    public void processIntent(Intent intent) {
+        SwrveLogger.e(LOG_TAG, "The processIntent method is Deprecated and should not be used anymore");
     }
 }
