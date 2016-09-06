@@ -19,6 +19,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected String registrationId;
     //protected ISwrvePushNotificationListener pushNotificationListener;
     protected String lastProcessedMessage;
+    protected boolean admAvailable = false;
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);
@@ -31,28 +32,37 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
+        //TODO remove this.
         try {
             ADMManifest.checkManifestAuthoredProperly(context);
         } catch(Exception ex) {
             ex.printStackTrace();
         }
 
-        // Push notification configured for this app
-        if (config.isPushEnabled()) {
-            try {
+        //Check for class.
+        try {
+            Class.forName( "com.amazon.device.messaging.ADM" );
+            admAvailable = true ;
+        } catch (ClassNotFoundException e) {
+            // Handle the exception.
+            SwrveLogger.w(LOG_TAG, "ADM message class not found. Is manifest enable-feature for com.amazon.device.messaging set to false?", e);
+        }
 
+        //if (config.isPushEnabled()) { //TODO restore this
+        if (true) {
+            try {
                 // Check device for Play Services APK.
-                /*if (isGooglePlayServicesAvailable()) {
+                if (admAvailable) {
                     String newRegistrationId = getRegistrationId();
                     if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                        registerInBackground(getContext());
+                        //registerInBackground(getContext());
                     } else {
                         registrationId = newRegistrationId;
                     }
-                }*/
+                }
             } catch (Throwable exp) {
                 // Don't trust Amazon and all the moving parts to work as expected
-                SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration id for the device", exp);
+                SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration key for the device", exp);
             }
         }
     }
@@ -60,14 +70,14 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     /*@Override
     public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         this.pushNotificationListener = pushNotificationListener;
-    }
+    }*/
 
     /**
      * Registers the application with Amazon servers asynchronously.
      *
      * Stores the registration ID and app version
-     * /
-    protected void registerInBackground(final Context context) {
+     **/
+    /*protected void registerInBackground(final Context context) {
         new AsyncTask<Void, Integer, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
