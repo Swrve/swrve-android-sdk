@@ -13,7 +13,7 @@ public final class SwrveIntentHelper {
     private static final String LOG_TAG = "SwrveSDK";
 
     public static void openDialer(Uri telUri, Activity activity) {
-        Intent dialNum = new Intent(Intent.ACTION_DIAL, telUri);
+        Intent dialNum = new Intent(Intent.ACTION_VIEW, telUri);
         activity.startActivity(dialNum);
     }
 
