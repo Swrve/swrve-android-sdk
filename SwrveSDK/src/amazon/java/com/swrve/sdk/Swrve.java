@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import android.content.Context;
 import android.content.Intent;
 
+import com.amazon.device.messaging.ADM;
 import com.amazon.device.messaging.development.ADMManifest;
 import com.swrve.sdk.config.SwrveConfig;
 
@@ -17,7 +18,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String SWRVE_AMAZON_TOKEN = "swrve.adm_token";
 
     protected String registrationId;
-    //protected ISwrvePushNotificationListener pushNotificationListener;
+    protected ISwrvePushNotificationListener pushNotificationListener;
     protected String lastProcessedMessage;
     protected boolean admAvailable = false;
 
@@ -25,10 +26,14 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         super(context, appId, apiKey, config);
     }
 
-    /*@Override
-    public void onTokenRefreshed() {
-        registerInBackground(getContext());
-    }*/
+    //ADM callbacks
+    @Override
+    public void onRegistrationIdReceived(String registrationId) {
+        //Record the registrationId.
+        if (!SwrveHelper.isNullOrEmpty(registrationId)) {
+            setRegistrationId(registrationId);
+        }
+    }
 
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
@@ -50,55 +55,28 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
         //if (config.isPushEnabled()) { //TODO restore this
         if (true) {
-            try {
-                // Check device for Play Services APK.
-                if (admAvailable) {
-                    String newRegistrationId = getRegistrationId();
+            if (admAvailable == true) {
+                try {
+                    final ADM adm = new ADM(context);
+                    String newRegistrationId = adm.getRegistrationId();
                     if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                        //registerInBackground(getContext());
+                        adm.startRegister();
                     } else {
                         registrationId = newRegistrationId;
                     }
+                } catch (Throwable exp) {
+                    // Don't trust Amazon and all the moving parts to work as expected
+                    SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration key for the device.", exp);
                 }
-            } catch (Throwable exp) {
-                // Don't trust Amazon and all the moving parts to work as expected
-                SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration key for the device", exp);
+
             }
         }
     }
 
-    /*@Override
+    @Override
     public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         this.pushNotificationListener = pushNotificationListener;
-    }*/
-
-    /**
-     * Registers the application with Amazon servers asynchronously.
-     *
-     * Stores the registration ID and app version
-     **/
-    /*protected void registerInBackground(final Context context) {
-        new AsyncTask<Void, Integer, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                // Try to obtain the registration id from Amazon
-                try {
-                    InstanceID instanceID = InstanceID.getInstance(context);
-                    String gcmRegistrationId = instanceID.getToken(config.getSenderId(), null);
-                    if (!SwrveHelper.isNullOrEmpty(gcmRegistrationId)) {
-                        setRegistrationId(gcmRegistrationId);
-                    }
-                } catch (Exception ex) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't obtain the GCM registration id for the device", ex);
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void v) {
-            }
-        }.execute(null, null, null);
-    }*/
+    }
 
     @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {

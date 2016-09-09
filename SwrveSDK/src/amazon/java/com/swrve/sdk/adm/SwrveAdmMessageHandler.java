@@ -1,34 +1,38 @@
 package com.swrve.sdk.adm;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import android.annotation.TargetApi;
-import android.content.Intent;
-import android.os.Build;
-import android.os.Bundle;
-import android.util.Log;
-import android.content.Context;
 import android.app.Notification;
-import android.app.Notification.Builder;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
-import com.amazon.device.messaging.ADMConstants;
 import com.amazon.device.messaging.ADMMessageHandlerBase;
 import com.amazon.device.messaging.ADMMessageReceiver;
+import com.swrve.sdk.ISwrveBase;
+import com.swrve.sdk.Swrve;
+import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrvePushEngageReceiver;
+import com.swrve.sdk.SwrveSDK;
+import com.swrve.sdk.qa.SwrveQAUser;
 
-/**
- * Created by johnokane on 02/09/16.
- */
+import java.util.Date;
+import java.util.Iterator;
+
 public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
     /** Tag for logs. */
     private final static String TAG = "SwrveAdm";
 
-    //SwrveMessageAlertReceiver listens for messages from ADM
-    public static class SwrveMessageAlertReceiver extends ADMMessageReceiver {
-        public SwrveMessageAlertReceiver() {
+    //SwrveMessageReceiver listens for messages from ADM
+    public static class SwrveAdmMessageReceiver extends ADMMessageReceiver {
+        public SwrveAdmMessageReceiver() {
             super(SwrveAdmMessageHandler.class);
         }
     }
@@ -37,8 +41,7 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
         super(SwrveAdmMessageHandler.class.getName());
     }
 
-    public SwrveAdmMessageHandler(final String className)
-    {
+    public SwrveAdmMessageHandler(final String className) {
         super(className);
     }
 
@@ -46,46 +49,137 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
     protected void onMessage(final Intent intent) {
         Log.i(TAG, "SwrveAdmMessageHandler:onMessage");
 
-        /* String to access message field from data JSON. */
-        final String msgKey = SwrveAdmConstants.JSON_DATA_MSG_KEY;
-
-        /* String to access timeStamp field from data JSON. */
-        final String timeKey = SwrveAdmConstants.JSON_DATA_TIME_KEY;
-
-        /* Intent action that will be triggered in onMessage() callback. */
-        final String intentAction = SwrveAdmConstants.INTENT_MSG_ACTION;
-
-        /* Extras that were included in the intent. */
         final Bundle extras = intent.getExtras();
-
         verifyMD5Checksum(extras);
 
-        /* Extract message from the extras in the intent. */
-        final String msg = extras.getString(msgKey);
-        final String time = extras.getString(timeKey);
+        if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
+            SwrveLogger.i(TAG, "Received ADM notification: " + extras.toString());
+            processRemoteNotification(extras);
+        }
+    }
 
-        if (msg == null || time == null) {
-            Log.w(TAG, "SwrveAdmMessageHandler:onMessage Unable to extract message data." +
-                    "Make sure that msgKey and timeKey values match data elements of your JSON message");
+    private void processRemoteNotification(Bundle msg) {
+        if (isSwrveRemoteNotification(msg)) {
+            // Notify bound clients
+            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+            Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
+            String msgId = (rawId != null) ? rawId.toString() : null;
+            while (iter.hasNext()) {
+                SwrveQAUser sdkListener = iter.next();
+                sdkListener.pushNotification(msgId, msg);
+            }
+            processNotification(msg);
+        } else {
+            SwrveLogger.i(TAG, "ADM notification: but not processing as it's missing " + SwrveAdmConstants.SWRVE_TRACKING_KEY);
+        }
+    }
+
+    private boolean isSwrveRemoteNotification(final Bundle msg) {
+        Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
+        String msgId = (rawId != null) ? rawId.toString() : null;
+        return !SwrveHelper.isNullOrEmpty(msgId);
+    }
+
+    public void processNotification(final Bundle msg) {
+        boolean mustShowNotification = mustShowNotification();
+        if (mustShowNotification) {
+            try {
+                // Put the message into a notification and post it.
+                Context context = getApplicationContext();
+                final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                final PendingIntent contentIntent = createPendingIntent(msg);
+                if (contentIntent != null) {
+                    final Notification notification = createNotification(msg, contentIntent);
+                    if (notification != null) {
+                        showNotification(mNotificationManager, notification);
+                    }
+                }
+            } catch (Exception ex) {
+                SwrveLogger.e(TAG, "Error processing ADM push notification", ex);
+            }
+        } else {
+            SwrveLogger.i(TAG, "ADM notification: not processing as mustShowNotification is false.");
+        }
+    }
+
+    public boolean mustShowNotification() {
+        return true;
+    }
+
+    private int generateTimestampId() {
+        return (int)(new Date().getTime() % Integer.MAX_VALUE);
+    }
+
+    public int showNotification(NotificationManager notificationManager, Notification notification) {
+        int id = generateTimestampId();
+        notificationManager.notify(id, notification);
+        return id;
+    }
+
+    public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
+        String msgText = msg.getString("text");
+        if (!SwrveHelper.isNullOrEmpty(msgText)) {
+            // Build notification
+            NotificationCompat.Builder mBuilder = createNotificationBuilder(msgText, msg);
+            mBuilder.setContentIntent(contentIntent);
+            return mBuilder.build();
         }
 
-        /* Create a notification with message data. */
-        /* This is required to test cases where the app or device may be off. */
-        //Code in sample.
-        //postNotification(msgKey, timeKey, intentAction, msg, time);
+        return null;
+    }
 
-        /* Intent category that will be triggered in onMessage() callback. */
-        final String msgCategory = SwrveAdmConstants.INTENT_MSG_CATEGORY;
+    public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
+        Context context = getApplicationContext();
+        SwrveAdmNotification notificationHelper = SwrveAdmNotification.getInstance(context);
+        boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
+        int iconResource = (materialDesignIcon && notificationHelper.iconMaterialDrawableId >= 0) ? notificationHelper.iconMaterialDrawableId : notificationHelper.iconDrawableId;
 
-        /* Broadcast an intent to update the app UI with the message. */
-        /* The broadcast receiver will only catch this intent if the app is within the onResume state of its lifecycle. */
-        /* User will see a notification otherwise. */
-        final Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(intentAction);
-        broadcastIntent.addCategory(msgCategory);
-        broadcastIntent.putExtra(msgKey, msg);
-        broadcastIntent.putExtra(timeKey, time);
-        this.sendBroadcast(broadcastIntent);
+        // Build notification
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
+                .setSmallIcon(iconResource)
+                .setTicker(msgText)
+                .setContentTitle(notificationHelper.notificationTitle)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(msgText))
+                .setContentText(msgText)
+                .setAutoCancel(true);
+
+        if (notificationHelper.largeIconDrawable != null) {
+            mBuilder.setLargeIcon(notificationHelper.largeIconDrawable);
+        }
+
+        if (notificationHelper.accentColor >= 0) {
+            mBuilder.setColor(ContextCompat.getColor(context, notificationHelper.accentColor));
+        }
+
+        String msgSound = msg.getString("sound");
+        if (!SwrveHelper.isNullOrEmpty(msgSound)) {
+            Uri soundUri;
+            if (msgSound.equalsIgnoreCase("default")) {
+                soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            } else {
+                String packageName = context.getApplicationContext().getPackageName();
+                soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + msgSound);
+            }
+            mBuilder.setSound(soundUri);
+        }
+        return mBuilder;
+    }
+
+    public PendingIntent createPendingIntent(Bundle msg) {
+        Intent intent = createIntent(msg);
+        if (intent != null) {
+            Context context = getApplicationContext();
+            return PendingIntent.getBroadcast(context, generateTimestampId(), intent,PendingIntent.FLAG_CANCEL_CURRENT);
+        }
+        return null;
+    }
+
+    public Intent createIntent(Bundle msg) {
+        Context context = getApplicationContext();
+        Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
+        intent.putExtra(SwrveAdmConstants.ADM_BUNDLE, msg);
+        return intent;
     }
 
     private void verifyMD5Checksum(final Bundle extras) {
@@ -94,13 +188,19 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
 
     @Override
     protected void onRegistrationError(final String string) {
+        //This is fatal for ADM
         Log.e(TAG, "SwrveAdmMessageHandler:onRegistrationError " + string);
     }
 
     @Override
     protected void onRegistered(final String registrationId) {
-        Log.i(TAG, "SwrveAdmMessageHandler:onRegistered");
-        Log.i(TAG, registrationId);
+        Log.i(TAG, "registrationId:" + registrationId);
+        ISwrveBase sdk = SwrveSDK.getInstance();
+        if (sdk != null && sdk instanceof Swrve) {
+            ((Swrve) sdk).onRegistrationIdReceived(registrationId);
+        } else {
+            SwrveLogger.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
+        }
     }
 
     @Override

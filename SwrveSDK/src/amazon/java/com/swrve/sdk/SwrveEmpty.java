@@ -16,9 +16,9 @@ public class SwrveEmpty extends SwrveBaseEmpty<ISwrve, SwrveConfig> implements I
         super(context, apiKey);
     }
 
-    //@Override
-    //public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
-    //}
+    @Override
+    public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
+    }
 
     @Override
     public void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
@@ -26,5 +26,9 @@ public class SwrveEmpty extends SwrveBaseEmpty<ISwrve, SwrveConfig> implements I
 
     @Override
     public void processIntent(Intent intent) {
+    }
+
+    @Override
+    public void onRegistrationIdReceived(String registrationId) {
     }
 }
