@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 
 import com.amazon.device.messaging.ADMMessageHandlerBase;
 import com.amazon.device.messaging.ADMMessageReceiver;
@@ -27,7 +26,6 @@ import java.util.Date;
 import java.util.Iterator;
 
 public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
-    /** Tag for logs. */
     private final static String TAG = "SwrveAdm";
 
     //SwrveMessageReceiver listens for messages from ADM
@@ -47,10 +45,10 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
 
     @Override
     protected void onMessage(final Intent intent) {
-        Log.i(TAG, "SwrveAdmMessageHandler:onMessage");
-
         final Bundle extras = intent.getExtras();
-        verifyMD5Checksum(extras);
+
+        //TODO decide if using or not
+        //verifyMD5Checksum(extras);
 
         if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
             SwrveLogger.i(TAG, "Received ADM notification: " + extras.toString());
@@ -125,7 +123,6 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
             mBuilder.setContentIntent(contentIntent);
             return mBuilder.build();
         }
-
         return null;
     }
 
@@ -182,19 +179,15 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
         return intent;
     }
 
-    private void verifyMD5Checksum(final Bundle extras) {
-        //TODO
-    }
-
     @Override
     protected void onRegistrationError(final String string) {
-        //This is fatal for ADM
-        Log.e(TAG, "SwrveAdmMessageHandler:onRegistrationError " + string);
+        //This is considered fatal for ADM
+        SwrveLogger.e(TAG, "ADM Registration Error. Error string: " + string);
     }
 
     @Override
     protected void onRegistered(final String registrationId) {
-        Log.i(TAG, "registrationId:" + registrationId);
+        SwrveLogger.i(TAG, "ADM Registered. RegistrationId: " + registrationId);
         ISwrveBase sdk = SwrveSDK.getInstance();
         if (sdk != null && sdk instanceof Swrve) {
             ((Swrve) sdk).onRegistrationIdReceived(registrationId);
@@ -205,7 +198,7 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
 
     @Override
     protected void onUnregistered(final String registrationId) {
-        Log.i(TAG, "SwrveAdmMessageHandler:onUnregistered");
+        SwrveLogger.i(TAG, "ADM Unregistered. RegistrationId: " + registrationId);
     }
 }
 
