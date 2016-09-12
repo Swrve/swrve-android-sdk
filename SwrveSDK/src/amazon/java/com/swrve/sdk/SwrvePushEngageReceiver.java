@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SwrvePushEngageReceiver extends BroadcastReceiver {
-    private static final String LOG_TAG = "SwrveGcm";
+    private static final String LOG_TAG = "SwrveAdm";
 
     private Context context;
     private Swrve swrve;
@@ -38,14 +38,13 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
                 Bundle msg = extras.getBundle(SwrveAdmConstants.ADM_BUNDLE);
-                //if (msg != null && SwrveSDK.getConfig().isPushEnabled()) {
-                if (msg != null && true) {//todo remove
+                if (msg != null && SwrveSDK.getConfig().isPushEnabled()) {
                     // Obtain push id
                     Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
-                        SwrveLogger.d(LOG_TAG, "GCM engaged, sending event:" + eventName);
+                        SwrveLogger.d(LOG_TAG, "ADM engaged, sending event:" + eventName);
                         sendEngagedEvent(eventName);
                         if (msg.containsKey(SwrveAdmConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg);
@@ -78,7 +77,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
 
     private void openDeeplink(Bundle msg) {
         String uri = msg.getString(SwrveAdmConstants.DEEPLINK_KEY);
-        SwrveLogger.d(LOG_TAG, "Found GCM deeplink. Will attempt to open:" + uri);
+        SwrveLogger.d(LOG_TAG, "Found ADM deeplink. Will attempt to open:" + uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
         msgBundleCopy.remove(SwrveAdmConstants.SWRVE_TRACKING_KEY);
         msgBundleCopy.remove(SwrveAdmConstants.DEEPLINK_KEY);

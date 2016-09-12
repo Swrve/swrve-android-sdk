@@ -46,8 +46,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             SwrveLogger.w(LOG_TAG, "ADM message class not found.", e);
         }
 
-        //if (config.isPushEnabled()) { //TODO restore this
-        if (true) {
+        if (config.isPushEnabled()) {
             if (admAvailable == true) {
                 //TODO remove this.
                 try {
@@ -68,7 +67,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     // Don't trust Amazon and all the moving parts to work as expected
                     SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration key for the device.", exp);
                 }
-
             }
         }
     }
