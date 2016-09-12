@@ -57,8 +57,8 @@ public class SwrveSDK extends SwrveSDKBase {
      *
      * @param pushNotificationListener
      */
-    /*public static void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
+    public static void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
         ((ISwrve) instance).setPushNotificationListener(pushNotificationListener);
-    }*/
+    }
 }
