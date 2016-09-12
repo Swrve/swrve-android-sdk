@@ -37,25 +37,25 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
-        //TODO remove this.
-        try {
-            ADMManifest.checkManifestAuthoredProperly(context);
-        } catch(Exception ex) {
-            ex.printStackTrace();
-        }
-
         //Check for class.
         try {
             Class.forName( "com.amazon.device.messaging.ADM" );
             admAvailable = true ;
         } catch (ClassNotFoundException e) {
-            // Handle the exception.
-            SwrveLogger.w(LOG_TAG, "ADM message class not found. Is manifest enable-feature for com.amazon.device.messaging set to false?", e);
+            // Log the exception.
+            SwrveLogger.w(LOG_TAG, "ADM message class not found.", e);
         }
 
         //if (config.isPushEnabled()) { //TODO restore this
         if (true) {
             if (admAvailable == true) {
+                //TODO remove this.
+                try {
+                    ADMManifest.checkManifestAuthoredProperly(context);
+                } catch(Exception ex) {
+                    ex.printStackTrace();
+                }
+
                 try {
                     final ADM adm = new ADM(context);
                     String newRegistrationId = adm.getRegistrationId();
