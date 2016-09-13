@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.support.v4.content.ContextCompat;
 
 import com.amazon.device.messaging.ADMMessageHandlerBase;
 import com.amazon.device.messaging.ADMMessageReceiver;
+import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.ISwrveBase;
 import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveHelper;
@@ -22,11 +24,17 @@ import com.swrve.sdk.SwrvePushEngageReceiver;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.qa.SwrveQAUser;
 
+import com.google.gson.Gson;
+
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
     private final static String TAG = "SwrveAdm";
+    private final static String AMAZON_RECENT_PUSH_IDS = "recent_push_notification_ids";
+    private final static String AMAZON_PREFENCES = "swrve_amazon_pref";
+    private final int MAX_ID_CACHE_ITEMS = 16;
 
     //SwrveMessageReceiver listens for messages from ADM
     public static class SwrveAdmMessageReceiver extends ADMMessageReceiver {
@@ -58,18 +66,56 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
 
     private void processRemoteNotification(Bundle msg) {
         if (isSwrveRemoteNotification(msg)) {
-            // Notify bound clients
-            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+            //Get tracking key
             Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
             String msgId = (rawId != null) ? rawId.toString() : null;
-            while (iter.hasNext()) {
-                SwrveQAUser sdkListener = iter.next();
-                sdkListener.pushNotification(msgId, msg);
+
+            //Check for duplicates
+            LinkedList<String> recentIds = getRecentNotificationIdCache();
+            if (recentIds.contains(msgId)) {
+                //Found a duplicate
+                SwrveLogger.i(TAG, "ADM notification: but not processing because duplicate: " + msgId);
+            } else {
+                //No duplicate found. Update the cache.
+                updateRecentNotificationIdCache(recentIds, msgId, MAX_ID_CACHE_ITEMS);
+
+                // Notify bound clients
+                Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+                while (iter.hasNext()) {
+                    SwrveQAUser sdkListener = iter.next();
+                    sdkListener.pushNotification(msgId, msg);
+                }
+                processNotification(msg);
             }
-            processNotification(msg);
         } else {
             SwrveLogger.i(TAG, "ADM notification: but not processing as it's missing " + SwrveAdmConstants.SWRVE_TRACKING_KEY);
         }
+    }
+
+    private LinkedList<String> getRecentNotificationIdCache() {
+        Context context = getApplicationContext();
+        SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFENCES, Context.MODE_PRIVATE);
+        String jsonString = sharedPreferences.getString(AMAZON_RECENT_PUSH_IDS, "");
+        Gson gson = new Gson();
+        LinkedList<String> recentIds = gson.fromJson(jsonString, new TypeToken<LinkedList<String>>() {}.getType());
+        recentIds = recentIds == null ? new LinkedList<String>() : recentIds;
+        return recentIds;
+    }
+
+    private void updateRecentNotificationIdCache(LinkedList<String> recentIds, String newId, int maxCacheItems) {
+        //Update queue
+        recentIds.add(newId);
+        //Maintain cache size limit
+        while (recentIds.size() > MAX_ID_CACHE_ITEMS) {
+            recentIds.remove();
+        }
+
+        //Store latest queue to shared preferences
+        Context context = getApplicationContext();
+        Gson gson = new Gson();
+        String recentNotificationsJson = gson.toJson(recentIds);
+        SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFENCES, Context.MODE_PRIVATE);
+        sharedPreferences.edit().putString(AMAZON_RECENT_PUSH_IDS, recentNotificationsJson).apply();
     }
 
     private boolean isSwrveRemoteNotification(final Bundle msg) {
