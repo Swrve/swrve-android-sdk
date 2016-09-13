@@ -14,10 +14,9 @@ import org.json.JSONObject;
  * Main implementation of the Amazon Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
-    protected static final String AMAZON_REGISTRATION_ID_CATEGORY = "AmazonRegistrationId";
     protected static final String SWRVE_AMAZON_TOKEN = "swrve.adm_token";
 
-    protected String registrationId;
+    protected String admRegistrationId;
     protected ISwrvePushNotificationListener pushNotificationListener;
     protected String lastProcessedMessage;
     protected boolean admAvailable = false;
@@ -29,9 +28,16 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     //ADM callbacks
     @Override
     public void onRegistrationIdReceived(String registrationId) {
-        //Record the registrationId.
-        if (!SwrveHelper.isNullOrEmpty(registrationId)) {
-            setRegistrationId(registrationId);
+        try {
+            admRegistrationId = registrationId;
+            if (qaUser != null) {
+                qaUser.updateDeviceInfo();
+            }
+
+            // Re-send data now
+            queueDeviceInfoNow(true);
+        } catch (Exception ex) {
+            SwrveLogger.e(LOG_TAG, "Couldn't update the ADM registration id for the device", ex);
         }
     }
 
@@ -57,11 +63,13 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
                 try {
                     final ADM adm = new ADM(context);
-                    String newRegistrationId = adm.getRegistrationId();
-                    if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+                    //Adm stored value.
+                    admRegistrationId = adm.getRegistrationId();
+
+                    //Always trigger if adm is null
+                    if (SwrveHelper.isNullOrEmpty(admRegistrationId)) {
+                        //This will call back and set value eventually.
                         adm.startRegister();
-                    } else {
-                        registrationId = newRegistrationId;
                     }
                 } catch (Throwable exp) {
                     // Don't trust Amazon and all the moving parts to work as expected
@@ -78,50 +86,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {
-        if (config.isPushEnabled() && !SwrveHelper.isNullOrEmpty(registrationId)) {
-            deviceInfo.put(SWRVE_AMAZON_TOKEN, registrationId);
-        }
-    }
-
-    /**
-     * Gets the current registration ID for application on GCM service.
-     * If result is empty, the app needs to register.
-     *
-     * @return registration ID, or empty string if there is no existing
-     * registration ID.
-     */
-    protected String getRegistrationId() {
-        // Try to get registration id from storage
-        String registrationIdRaw = cachedLocalStorage.getSharedCacheEntry(AMAZON_REGISTRATION_ID_CATEGORY);
-        if (SwrveHelper.isNullOrEmpty(registrationIdRaw)) {
-            return "";
-        }
-        // Check if app was updated; if so, it must clear the registration ID
-        // since the existing regID is not guaranteed to work with the new
-        // app version.
-        String registeredVersion = cachedLocalStorage.getSharedCacheEntry(APP_VERSION_CATEGORY);
-        if (!SwrveHelper.isNullOrEmpty(registeredVersion) && !registeredVersion.equals(appVersion)) {
-            return "";
-        }
-        return registrationIdRaw;
-    }
-
-    private void setRegistrationId(String regId) {
-        try {
-            if (registrationId == null || !registrationId.equals(regId)) {
-                registrationId = regId;
-                if (qaUser != null) {
-                    qaUser.updateDeviceInfo();
-                }
-
-                // Store registration id and app version
-                cachedLocalStorage.setAndFlushSharedEntry(AMAZON_REGISTRATION_ID_CATEGORY, registrationId);
-                cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
-                // Re-send data now
-                queueDeviceInfoNow(true);
-            }
-        } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
+        if (config.isPushEnabled() && !SwrveHelper.isNullOrEmpty(admRegistrationId)) {
+            deviceInfo.put(SWRVE_AMAZON_TOKEN, admRegistrationId);
         }
     }
 
