@@ -1,0 +1,95 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+    buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
+
+    defaultConfig {
+        minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
+        targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+
+    buildTypes {
+        debug {}
+        release { }
+    }
+
+    productFlavors {
+        google {}
+        amazon {}
+    }
+
+    lintOptions {
+        abortOnError true
+    }
+}
+
+dependencies {
+    compile 'com.google.code.gson:gson:2.2.+'
+    compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    compile project(':SwrveSDKCommon')
+    amazonProvided files('provided_libs/amazon-device-messaging-1.0.1.jar')
+}
+
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+publishing {
+    repositories {
+        maven {
+            url "$buildDir/../publish" // SwrveNotificationSDK/publish
+        }
+    }
+
+    publications {
+        main(MavenPublication) {
+
+            artifactId project.SWRVE_NOTIFICATION_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidNotificationJavadocsJar, androidNotificationSourcesJar]
+
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                configurations.compile.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    if (it.name == 'SwrveSDKCommon') {
+                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                        dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                        dependencyNode.appendNode('scope', 'compile')
+                    } else {
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', 'compile')
+                    }
+                }
+            }
+
+        }
+    }
+}
+
+task androidNotificationJavadoc(type: Javadoc) {
+    description "Generates Javadoc for Notification."
+    source = files(android.sourceSets.main.java.srcDirs)
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(android.libraryVariants.javaCompile.classpath.files) + files(ext.androidJar)
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+    exclude '**/README.md'
+    failOnError false
+}
+task androidNotificationJavadocsJar(type: Jar) {
+    description "Package Javadoc for Notification."
+    classifier = 'javadoc'
+    from androidNotificationJavadoc
+}
+task androidNotificationSourcesJar(type: Jar) {
+    description "Package sources for Notification."
+    classifier = 'source'
+    from files(android.sourceSets.main.java.srcDirs)
+}

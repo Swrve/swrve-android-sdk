@@ -1,4 +1,4 @@
-package com.swrve.sdk.adm;
+package com.swrve.sdk;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -7,11 +7,8 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import com.swrve.sdk.SwrveLogger;
 
-import com.swrve.sdk.SwrveHelper;
-
-public class SwrveAdmNotification {
+public class SwrveNotification {
 
     private static final String TAG = "SwrveAdm";
 
@@ -22,7 +19,7 @@ public class SwrveAdmNotification {
     private static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
     private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
 
-    private static SwrveAdmNotification instance;
+    private static SwrveNotification instance;
 
     protected final Class<?> activityClass;
     protected final int iconDrawableId;
@@ -31,7 +28,7 @@ public class SwrveAdmNotification {
     protected final int accentColor;
     protected final String notificationTitle;
 
-    private SwrveAdmNotification(Class<?> activityClass, int iconDrawableId, int iconMaterialDrawableId, Bitmap largeIconDrawable, int accentColor, String notificationTitle) {
+    private SwrveNotification(Class<?> activityClass, int iconDrawableId, int iconMaterialDrawableId, Bitmap largeIconDrawable, int accentColor, String notificationTitle) {
         this.activityClass = activityClass;
         this.iconDrawableId = iconDrawableId;
         this.iconMaterialDrawableId = iconMaterialDrawableId;
@@ -40,15 +37,15 @@ public class SwrveAdmNotification {
         this.notificationTitle = notificationTitle;
     }
 
-    public static SwrveAdmNotification getInstance(Context context) {
+    public static SwrveNotification getInstance(Context context) {
         if (instance == null) {
             instance = createNotificationFromMetaData(context);
         }
         return instance;
     }
 
-    protected static SwrveAdmNotification createNotificationFromMetaData(Context context) {
-        SwrveAdmNotification swrveAdmNotification = null;
+    protected static SwrveNotification createNotificationFromMetaData(Context context) {
+        SwrveNotification swrveAdmNotification = null;
         try {
             PackageManager packageManager = context.getPackageManager();
             ApplicationInfo app = packageManager.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
@@ -119,7 +116,7 @@ public class SwrveAdmNotification {
                 }
             }
 
-            swrveAdmNotification = new SwrveAdmNotification(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
+            swrveAdmNotification = new SwrveNotification(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
         } catch (Exception ex) {
             SwrveLogger.e(TAG, "Error creating push notification from metadata", ex);
         }
@@ -140,3 +137,4 @@ public class SwrveAdmNotification {
         return activityClass;
     }
 }
+

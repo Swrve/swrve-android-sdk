@@ -6,8 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.swrve.sdk.adm.SwrveAdmConstants;
-import com.swrve.sdk.adm.SwrveAdmNotification;
+import com.swrve.sdk.notification.SwrveNotificationImp;
 
 import org.json.JSONException;
 
@@ -17,19 +16,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SwrvePushEngageReceiver extends BroadcastReceiver {
-    private static final String LOG_TAG = "SwrveAdm";
+    private static final String TAG = "SwrveNotification";
 
     private Context context;
-    private Swrve swrve;
+    private ISwrveCommon swrveCommon;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         try {
             this.context = context;
-            swrve = (Swrve) SwrveSDK.getInstance();
+            swrveCommon = SwrveCommon.getInstance();
             processIntent(intent);
         } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Error processing intent. Intent:" + intent, ex);
+            SwrveLogger.e(TAG, "SwrvePushEngageReceiver. Error processing intent. Intent:" + intent, ex);
         }
     }
 
@@ -37,23 +36,25 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
-                Bundle msg = extras.getBundle(SwrveAdmConstants.ADM_BUNDLE);
-                if (msg != null && SwrveSDK.getConfig().isPushEnabled()) {
+                Bundle msg = extras.getBundle(SwrveNotificationConstants.NOTIFICATION_BUNDLE);
+                //if (msg != null && SwrveSDK.getConfig().isPushEnabled()) {
+                if (msg != null && SwrveNotificationImp.getInstance().isPushEnabled()) {
                     // Obtain push id
-                    Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
+                    Object rawId = msg.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
-                        SwrveLogger.d(LOG_TAG, "ADM engaged, sending event:" + eventName);
+                        SwrveLogger.d(TAG, "Notification engaged, sending event:" + eventName);
                         sendEngagedEvent(eventName);
-                        if (msg.containsKey(SwrveAdmConstants.DEEPLINK_KEY)) {
+                        if (msg.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg);
                         } else {
                             openActivity(msg);
                         }
 
-                        if (swrve.pushNotificationListener != null) {
-                            swrve.pushNotificationListener.onPushNotification(msg);
+                        SwrveNotificationImp imp = SwrveNotificationImp.getInstance();
+                        if (imp != null) {
+                            imp.onPushEngaged(msg);
                         }
                     }
                 }
@@ -67,20 +68,20 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             ArrayList<String> events = new ArrayList<>();
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", name);
-            eventString = EventHelper.eventAsJSON("event", parameters, swrve.getNextSequenceNumber());
+            eventString = EventHelper.eventAsJSON("event", parameters, swrveCommon.getNextSequenceNumber());
             events.add(eventString);
-            swrve.sendEventsWakefully(context, events);
+            swrveCommon.sendEventsWakefully(context, events);
         } catch (JSONException e) {
-            SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Could not send the engaged event:" + eventString, e);
+            SwrveLogger.e(TAG, "SwrvePushEngageReceiver. Could not send the engaged event:" + eventString, e);
         }
     }
 
     private void openDeeplink(Bundle msg) {
-        String uri = msg.getString(SwrveAdmConstants.DEEPLINK_KEY);
-        SwrveLogger.d(LOG_TAG, "Found ADM deeplink. Will attempt to open:" + uri);
+        String uri = msg.getString(SwrveNotificationConstants.DEEPLINK_KEY);
+        SwrveLogger.d(TAG, "Found Notification deeplink. Will attempt to open:" + uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
-        msgBundleCopy.remove(SwrveAdmConstants.SWRVE_TRACKING_KEY);
-        msgBundleCopy.remove(SwrveAdmConstants.DEEPLINK_KEY);
+        msgBundleCopy.remove(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+        msgBundleCopy.remove(SwrveNotificationConstants.DEEPLINK_KEY);
         SwrveIntentHelper.openDeepLink(context, uri, msgBundleCopy);
     }
 
@@ -91,16 +92,16 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             PendingIntent pi = PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             pi.send();
         } catch (PendingIntent.CanceledException e) {
-            SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Could open activity with intent:" + intent, e);
+            SwrveLogger.e(TAG, "SwrvePushEngageReceiver. Could open activity with intent:" + intent, e);
         }
     }
 
     private Intent getActivityIntent(Bundle msg) {
         Intent intent = null;
-        Class<?> clazz = SwrveAdmNotification.getInstance(context).getActivityClass();
+        Class<?> clazz = SwrveNotification.getInstance(context).getActivityClass();
         if (clazz != null) {
             intent = new Intent(context, clazz);
-            intent.putExtra(SwrveAdmConstants.ADM_BUNDLE, msg);
+            intent.putExtra(SwrveNotificationConstants.NOTIFICATION_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;
@@ -110,3 +111,4 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 }
+
