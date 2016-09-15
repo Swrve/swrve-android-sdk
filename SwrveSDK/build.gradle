@@ -1,5 +1,10 @@
 apply plugin: 'com.android.library'
 
+configurations {
+    amazonDebugCompile
+    amazonReleaseCompile
+}
+
 android {
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
     buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
@@ -29,10 +34,12 @@ android {
     }
 }
 
+
 dependencies {
     compile project(':SwrveSDKCommon')
     compile project(':SwrveConversationSDK')
-    compile project(':SwrveNotificationSDK')
+    amazonDebugCompile project(path: ':SwrveNotificationSDK', configuration: 'amazonDebug')
+    amazonReleaseCompile project(path: ':SwrveNotificationSDK', configuration: 'amazonRelease')
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
     compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION

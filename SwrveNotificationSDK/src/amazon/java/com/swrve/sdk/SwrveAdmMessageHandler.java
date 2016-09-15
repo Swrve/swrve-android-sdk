@@ -1,4 +1,4 @@
-package com.swrve.sdk.notification;
+package com.swrve.sdk;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,9 +10,6 @@ import com.amazon.device.messaging.ADMMessageReceiver;
 import com.google.gson.reflect.TypeToken;
 
 import com.google.gson.Gson;
-import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.SwrveNotificationConstants;
 
 import java.util.LinkedList;
 
@@ -20,7 +17,6 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
     private final static String TAG = "SwrveAdm";
     private final static String AMAZON_RECENT_PUSH_IDS = "recent_push_notification_ids";
     private final static String AMAZON_PREFENCES = "swrve_amazon_pref";
-    //private final static String ADM_BUNDLE = "notification";
     private final int MAX_ID_CACHE_ITEMS = 16;
 
     //SwrveMessageReceiver listens for messages from ADM

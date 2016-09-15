@@ -1,14 +1,10 @@
-package com.swrve.sdk.notification;
+package com.swrve.sdk;
 
 import android.content.Context;
 import android.os.Bundle;
 
 import com.amazon.device.messaging.ADM;
 import com.amazon.device.messaging.development.ADMManifest;
-
-import com.swrve.sdk.ISwrveNotificationListener;
-import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.SwrveHelper;
 
 public class SwrveNotificationImp {
     private static final String TAG = "SwrveAdm";

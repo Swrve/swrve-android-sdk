@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfig;
-//import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 
 
 /**

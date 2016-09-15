@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.ISwrveNotificationListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;

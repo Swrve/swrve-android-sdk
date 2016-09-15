@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.swrve.sdk.notification.SwrveNotificationImp;
-
 import org.json.JSONException;
 
 import java.util.ArrayList;

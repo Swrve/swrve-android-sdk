@@ -14,8 +14,6 @@ import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
 
-import com.swrve.sdk.notification.SwrveNotificationImp;
-
 import java.util.Date;
 
 public class SwrveNotificationSDK implements ISwrveNotificationSDK {
