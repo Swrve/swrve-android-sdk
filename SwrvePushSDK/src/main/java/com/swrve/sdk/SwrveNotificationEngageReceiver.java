@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SwrvePushEngageReceiver extends BroadcastReceiver {
+public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
     private static final String TAG = "SwrveNotification";
 
     private Context context;
@@ -34,25 +34,24 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
-                Bundle msg = extras.getBundle(SwrveNotificationConstants.NOTIFICATION_BUNDLE);
-                //if (msg != null && SwrveSDK.getConfig().isPushEnabled()) {
-                if (msg != null && SwrveNotificationImp.getInstance().isPushEnabled()) {
+                Bundle msg = extras.getBundle(SwrvePushSDKConstants.NOTIFICATION_BUNDLE);
+                if (msg != null && SwrvePushSDKImp.getInstance().isPushEnabled()) {
                     // Obtain push id
-                    Object rawId = msg.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+                    Object rawId = msg.get(SwrvePushSDKConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
                         SwrveLogger.d(TAG, "Notification engaged, sending event:" + eventName);
                         sendEngagedEvent(eventName);
-                        if (msg.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
+                        if (msg.containsKey(SwrvePushSDKConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg);
                         } else {
                             openActivity(msg);
                         }
 
-                        SwrveNotificationImp imp = SwrveNotificationImp.getInstance();
+                        SwrvePushSDKImp imp = SwrvePushSDKImp.getInstance();
                         if (imp != null) {
-                            imp.onPushEngaged(msg);
+                            imp.onNotifcationEnaged(msg);
                         }
                     }
                 }
@@ -75,11 +74,11 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
     }
 
     private void openDeeplink(Bundle msg) {
-        String uri = msg.getString(SwrveNotificationConstants.DEEPLINK_KEY);
+        String uri = msg.getString(SwrvePushSDKConstants.DEEPLINK_KEY);
         SwrveLogger.d(TAG, "Found Notification deeplink. Will attempt to open:" + uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
-        msgBundleCopy.remove(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
-        msgBundleCopy.remove(SwrveNotificationConstants.DEEPLINK_KEY);
+        msgBundleCopy.remove(SwrvePushSDKConstants.SWRVE_TRACKING_KEY);
+        msgBundleCopy.remove(SwrvePushSDKConstants.DEEPLINK_KEY);
         SwrveIntentHelper.openDeepLink(context, uri, msgBundleCopy);
     }
 
@@ -99,7 +98,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         Class<?> clazz = SwrveNotification.getInstance(context).getActivityClass();
         if (clazz != null) {
             intent = new Intent(context, clazz);
-            intent.putExtra(SwrveNotificationConstants.NOTIFICATION_BUNDLE, msg);
+            intent.putExtra(SwrvePushSDKConstants.NOTIFICATION_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;

@@ -5,14 +5,17 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfig;
+import com.swrve.sdk.qa.SwrveQAUser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
+
 /**
  * Main implementation of the Amazon Swrve SDK.
  */
-public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve, ISwrveNotificationListener {
+public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve, ISwrvePushSDKListener {
     protected static final String SWRVE_AMAZON_TOKEN = "swrve.adm_token";
 
     protected String admRegistrationId;
@@ -24,17 +27,12 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve, ISw
     }
 
     @Override
-    public void onRegistrationIdReceived(String registrationId) {
-        //TODO remove not needed.
-    }
-
-    @Override
     protected void beforeSendDeviceInfo(final Context context) {
         try {
-            ISwrveNotificationSDK notificationSDK = SwrveNotificationSDK.getInstance();
-            if (notificationSDK != null) {
-                notificationSDK.setNotificationListener(this);
-                notificationSDK.initialiseNotificationSDK(context);
+            ISwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+            if (pushSDK != null) {
+                pushSDK.setPushSDKListener(this);
+                admRegistrationId = pushSDK.initialisePushSDK(context);
             } else {
                 SwrveLogger.e(LOG_TAG, "SwrveNotificationSDK is null");
             }
@@ -84,16 +82,23 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve, ISw
     }
 
     @Override
-    public void onMessageReceived(Bundle msg) {
+    public void onMessageReceived(String msgId, Bundle msg) {
+        //// Notify bound clients
+        Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+        while (iter.hasNext()) {
+            SwrveQAUser sdkListener = iter.next();
+            sdkListener.pushNotification(msgId, msg);
+        }
+
         //Just call back into the notification sdk to show it for now.
-        ISwrveNotificationSDK notificationSDK = SwrveNotificationSDK.getInstance();
-        if (notificationSDK != null) {
-            notificationSDK.showNotification(getContext(), msg);
+        ISwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+        if (pushSDK != null) {
+            pushSDK.showNotification(getContext(), msg);
         }
     }
 
     @Override
-    public void onPushEngaged(Bundle msg) {
+    public void onNotificationEngaged(Bundle msg) {
         //Push has been engaged, let listener know
         if (pushNotificationListener != null) {
             pushNotificationListener.onPushNotification(msg);

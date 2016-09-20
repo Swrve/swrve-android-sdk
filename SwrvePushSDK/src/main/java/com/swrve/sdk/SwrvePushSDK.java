@@ -16,21 +16,21 @@ import android.net.Uri;
 
 import java.util.Date;
 
-public class SwrveNotificationSDK implements ISwrveNotificationSDK {
-    private final static String TAG = "SwrveNotification";
-    private static SwrveNotificationSDK instance;
+public class SwrvePushSDK implements ISwrvePushSDK {
+    private final static String TAG = "SwrvePush";
+    private static SwrvePushSDK instance;
 
-    public SwrveNotificationSDK() {
+    public SwrvePushSDK() {
     }
 
     @Override
-    public String initialiseNotificationSDK(Context context) {
-        return SwrveNotificationImp.getInstance().initialiseNotificationSDK(context);
+    public String initialisePushSDK(Context context) {
+        return SwrvePushSDKImp.getInstance().initialiseNotificationSDK(context);
     }
 
     @Override
-    public void setNotificationListener(ISwrveNotificationListener listener) {
-        SwrveNotificationImp.getInstance().setNotificationListener(listener);
+    public void setPushSDKListener(ISwrvePushSDKListener listener) {
+        SwrvePushSDKImp.getInstance().setPushSDKListener(listener);
     }
 
     @Override
@@ -126,14 +126,14 @@ public class SwrveNotificationSDK implements ISwrveNotificationSDK {
     }
 
     public Intent createIntent(Context context, Bundle msg) {
-        Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
-        intent.putExtra(SwrveNotificationConstants.NOTIFICATION_BUNDLE, msg);
+        Intent intent = new Intent(context, SwrveNotificationEngageReceiver.class);
+        intent.putExtra(SwrvePushSDKConstants.NOTIFICATION_BUNDLE, msg);
         return intent;
     }
 
-    public static ISwrveNotificationSDK getInstance() throws RuntimeException {
+    public static ISwrvePushSDK getInstance() throws RuntimeException {
         if (instance == null) {
-            instance = new SwrveNotificationSDK();
+            instance = new SwrvePushSDK();
         }
         return instance;
     }

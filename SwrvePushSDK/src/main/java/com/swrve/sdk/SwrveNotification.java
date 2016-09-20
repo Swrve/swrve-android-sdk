@@ -10,7 +10,7 @@ import android.os.Bundle;
 
 public class SwrveNotification {
 
-    private static final String TAG = "SwrveAdm";
+    private static final String TAG = "SwrveNotification";
 
     private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
     private static final String SWRVE_PUSH_ICON_MATERIAL_METADATA = "SWRVE_PUSH_ICON_MATERIAL";

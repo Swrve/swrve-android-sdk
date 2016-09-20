@@ -37,7 +37,7 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
     @Override
     protected void onRegistered(final String registrationId) {
         SwrveLogger.i(TAG, "ADM Registered. RegistrationId: " + registrationId);
-        SwrveNotificationImp.getInstance().onRegistered(registrationId);
+        SwrvePushSDKImp.getInstance().onRegistered(registrationId);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
     private void processRemoteNotification(Bundle msg) {
         if (isSwrveRemoteNotification(msg)) {
             //Get tracking key
-            Object rawId = msg.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+            Object rawId = msg.get(SwrvePushSDKConstants.SWRVE_TRACKING_KEY);
             String msgId = (rawId != null) ? rawId.toString() : null;
 
             //Check for duplicates
@@ -66,18 +66,10 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
                 updateRecentNotificationIdCache(recentIds, msgId, MAX_ID_CACHE_ITEMS);
 
                 //Inform swrve notification
-                SwrveNotificationImp.getInstance().onMessage(msg);
-
-                //// Notify bound clients
-                //Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-                //while (iter.hasNext()) {
-                //    SwrveQAUser sdkListener = iter.next();
-                //    sdkListener.pushNotification(msgId, msg);
-                //}
-                //processNotification(msg);
+                SwrvePushSDKImp.getInstance().onMessage(msgId, msg);
             }
         } else {
-            SwrveLogger.i(TAG, "ADM notification: but not processing as it's missing " + SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+            SwrveLogger.i(TAG, "ADM notification: but not processing as it's missing " + SwrvePushSDKConstants.SWRVE_TRACKING_KEY);
         }
     }
 
@@ -108,7 +100,7 @@ public class SwrveAdmMessageHandler extends ADMMessageHandlerBase {
     }
 
     private boolean isSwrveRemoteNotification(final Bundle msg) {
-        Object rawId = msg.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+        Object rawId = msg.get(SwrvePushSDKConstants.SWRVE_TRACKING_KEY);
         String msgId = (rawId != null) ? rawId.toString() : null;
         return !SwrveHelper.isNullOrEmpty(msgId);
     }

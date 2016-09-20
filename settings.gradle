@@ -1,4 +1,4 @@
-include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveNotificationSDK', ':SwrveSDK', ':SwrveSDKDemo', ':SwrveSDKTest', ':AdvancedPushNotifications'
+include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrvePushSDK', ':SwrveSDK', ':SwrveSDKDemo', ':SwrveSDKTest', ':AdvancedPushNotifications'
 
 include ':MultipleGCMProviders'
 project(":MultipleGCMProviders").projectDir = file("samples/MultipleGCMProviders")

@@ -6,16 +6,16 @@ import android.os.Bundle;
 import com.amazon.device.messaging.ADM;
 import com.amazon.device.messaging.development.ADMManifest;
 
-public class SwrveNotificationImp {
+public class SwrvePushSDKImp {
     private static final String TAG = "SwrveAdm";
 
     boolean admAvailable = false;
 
-    private ISwrveNotificationListener listener;
+    private ISwrvePushSDKListener listener;
 
-    private static SwrveNotificationImp instance;
+    private static SwrvePushSDKImp instance;
 
-    public SwrveNotificationImp() {
+    public SwrvePushSDKImp() {
     }
 
     public boolean isPushEnabled() {
@@ -60,28 +60,30 @@ public class SwrveNotificationImp {
         return admRegistrationId;
     }
 
-    public void setNotificationListener(ISwrveNotificationListener listener) {
+    public void setPushSDKListener(ISwrvePushSDKListener listener) {
         this.listener = listener;
     }
 
-    //Beware called from background thread
-    void onMessage(Bundle msg) {
-        listener.onMessageReceived(msg);
+    //Beware called from message handler on background thread
+    void onMessage(String msgId, Bundle msg) {
+        listener.onMessageReceived(msgId, msg);
     }
 
-    //Beware called from background thread
+    //Beware called from message handler on background thread
     void onRegistered(String registrationId) {
         listener.onRegistrationIdUpdated(registrationId);
     }
 
-    public void onPushEngaged(Bundle bundle) {
-        listener.onPushEngaged(bundle);
+    //Called from notification engage receiver handling intent
+    public void onNotifcationEnaged(Bundle bundle) {
+        listener.onNotificationEngaged(bundle);
     }
 
-    public static SwrveNotificationImp getInstance() throws RuntimeException {
+    public static SwrvePushSDKImp getInstance() throws RuntimeException {
         if (instance == null) {
-            instance = new SwrveNotificationImp();
+            instance = new SwrvePushSDKImp();
         }
         return instance;
     }
 }
+
