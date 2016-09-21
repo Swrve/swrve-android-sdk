@@ -25,7 +25,7 @@ public class SwrvePushSDK implements ISwrvePushSDK {
 
     @Override
     public String initialisePushSDK(Context context) {
-        return SwrvePushSDKImp.getInstance().initialiseNotificationSDK(context);
+        return SwrvePushSDKImp.getInstance().initialisePushSDK(context);
     }
 
     @Override

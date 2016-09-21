@@ -22,8 +22,13 @@ public class SwrvePushSDKImp {
         return true;
     }
 
-    public String initialiseNotificationSDK(Context context) {
+    public String initialisePushSDK(Context context) {
         String admRegistrationId = "";
+
+        if (!isPushEnabled()) {
+            SwrveLogger.i(TAG, "isPushEnabled returned false.");
+            return null;
+        }
 
         //Check for class.
         try {

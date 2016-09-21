@@ -34,6 +34,7 @@ dependencies {
     compile project(':SwrveSDKCommon')
     compile project(':SwrveConversationSDK')
     amazonCompile project(path: ':SwrvePushSDK', configuration: 'amazonRelease')
+    googleCompile project(path: ':SwrvePushSDK', configuration: 'googleRelease')
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
     compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION

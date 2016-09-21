@@ -28,16 +28,18 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve, ISw
 
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
-        try {
-            ISwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
-            if (pushSDK != null) {
-                pushSDK.setPushSDKListener(this);
-                admRegistrationId = pushSDK.initialisePushSDK(context);
-            } else {
-                SwrveLogger.e(LOG_TAG, "SwrveNotificationSDK is null");
+        if (config.isPushEnabled()) {
+            try {
+                ISwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+                if (pushSDK != null) {
+                    pushSDK.setPushSDKListener(this);
+                    admRegistrationId = pushSDK.initialisePushSDK(context);
+                } else {
+                    SwrveLogger.e(LOG_TAG, "SwrvePushSDK is null");
+                }
+            } catch (Exception ex) {
+                SwrveLogger.e(LOG_TAG, "Unable to initialise push sdk: " + ex.toString());
             }
-        } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "Unable to initialise notification sdk: " + ex.toString());
         }
     }
 
