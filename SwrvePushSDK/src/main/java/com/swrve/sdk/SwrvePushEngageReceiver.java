@@ -9,11 +9,10 @@ import android.os.Bundle;
 import org.json.JSONException;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
+public class SwrvePushEngageReceiver extends BroadcastReceiver {
     private static final String TAG = "SwrveNotification";
 
     private Context context;
@@ -34,25 +33,22 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
-                Bundle msg = extras.getBundle(SwrvePushSDKConstants.NOTIFICATION_BUNDLE);
-                if (msg != null && SwrvePushSDKImp.getInstance().isPushEnabled()) {
+                Bundle msg = extras.getBundle(SwrvePushConstants.NOTIFICATION_BUNDLE);
+                SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+                if (msg != null && pushSDK != null && pushSDK.isInitialised()) {
                     // Obtain push id
-                    Object rawId = msg.get(SwrvePushSDKConstants.SWRVE_TRACKING_KEY);
+                    Object rawId = msg.get(SwrvePushConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
                         SwrveLogger.d(TAG, "Notification engaged, sending event:" + eventName);
                         sendEngagedEvent(eventName);
-                        if (msg.containsKey(SwrvePushSDKConstants.DEEPLINK_KEY)) {
+                        if (msg.containsKey(SwrvePushConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg);
                         } else {
                             openActivity(msg);
                         }
-
-                        SwrvePushSDKImp imp = SwrvePushSDKImp.getInstance();
-                        if (imp != null) {
-                            imp.onNotifcationEnaged(msg);
-                        }
+                        pushSDK.onNotificationEngaged(msg);
                     }
                 }
             }
@@ -74,11 +70,11 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
     }
 
     private void openDeeplink(Bundle msg) {
-        String uri = msg.getString(SwrvePushSDKConstants.DEEPLINK_KEY);
+        String uri = msg.getString(SwrvePushConstants.DEEPLINK_KEY);
         SwrveLogger.d(TAG, "Found Notification deeplink. Will attempt to open:" + uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
-        msgBundleCopy.remove(SwrvePushSDKConstants.SWRVE_TRACKING_KEY);
-        msgBundleCopy.remove(SwrvePushSDKConstants.DEEPLINK_KEY);
+        msgBundleCopy.remove(SwrvePushConstants.SWRVE_TRACKING_KEY);
+        msgBundleCopy.remove(SwrvePushConstants.DEEPLINK_KEY);
         SwrveIntentHelper.openDeepLink(context, uri, msgBundleCopy);
     }
 
@@ -86,7 +82,7 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
         Intent intent = null;
         try {
             intent = getActivityIntent(msg);
-            PendingIntent pi = PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pi = PendingIntent.getActivity(context, SwrvePushHelper.generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             pi.send();
         } catch (PendingIntent.CanceledException e) {
             SwrveLogger.e(TAG, "SwrvePushEngageReceiver. Could open activity with intent:" + intent, e);
@@ -98,14 +94,10 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
         Class<?> clazz = SwrveNotification.getInstance(context).getActivityClass();
         if (clazz != null) {
             intent = new Intent(context, clazz);
-            intent.putExtra(SwrvePushSDKConstants.NOTIFICATION_BUNDLE, msg);
+            intent.putExtra(SwrvePushConstants.NOTIFICATION_BUNDLE, msg);
             intent.setAction("openActivity");
         }
         return intent;
-    }
-
-    private int generateTimestampId() {
-        return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 }
 

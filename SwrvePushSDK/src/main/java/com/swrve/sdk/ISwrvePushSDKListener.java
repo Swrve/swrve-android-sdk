@@ -4,7 +4,7 @@ import android.os.Bundle;
 
 public interface ISwrvePushSDKListener {
 
-    void onRegistrationIdUpdated(String registrationId);
+    void onPushTokenUpdated(String pushToken);
 
     void onMessageReceived(String msgId, Bundle msg);
 

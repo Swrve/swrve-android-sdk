@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-
 import com.google.android.gms.gcm.GcmListenerService;
 
 /**
@@ -108,3 +107,4 @@ public class SwrveGcmIntentService extends GcmListenerService {
         return handler.createIntent(msg);
     }
 }
+

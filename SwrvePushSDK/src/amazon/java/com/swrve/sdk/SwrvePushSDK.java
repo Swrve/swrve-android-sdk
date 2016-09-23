@@ -6,38 +6,38 @@ import android.os.Bundle;
 import com.amazon.device.messaging.ADM;
 import com.amazon.device.messaging.development.ADMManifest;
 
-public class SwrvePushSDKImp {
+public class SwrvePushSDK implements ISwrvePushSDK {
     private static final String TAG = "SwrveAdm";
 
-    boolean admAvailable = false;
-
     private ISwrvePushSDKListener listener;
+    private static SwrvePushSDK instance;
 
-    private static SwrvePushSDKImp instance;
-
-    public SwrvePushSDKImp() {
+    public SwrvePushSDK() {
     }
 
-    public boolean isPushEnabled() {
-        return true;
+    public boolean isInitialised() {
+        return listener != null;
     }
 
-    public String initialisePushSDK(Context context) {
-        String admRegistrationId = "";
-
-        if (!isPushEnabled()) {
-            SwrveLogger.i(TAG, "isPushEnabled returned false.");
+    @Override
+    public String initialisePushSDK(Context context, ISwrvePushSDKListener listener, String senderId) {
+        if ((context == null) || (listener == null)) {
+            SwrveLogger.e(TAG, "Unable to initalise push sdk. Context or listener are null");
             return null;
         }
 
-        //Check for class.
+        //Check for ADM class.
+        boolean admAvailable = false;
         try {
             Class.forName( "com.amazon.device.messaging.ADM" );
             admAvailable = true ;
         } catch (ClassNotFoundException e) {
             // Log the exception.
-            SwrveLogger.w(TAG, "ADM message class not found.", e);
+            SwrveLogger.e(TAG, "ADM message class not found.", e);
         }
+
+        this.listener = listener;
+        String pushToken = "";
 
         if (admAvailable == true) {
             //TODO remove this.
@@ -50,10 +50,10 @@ public class SwrvePushSDKImp {
             try {
                 final ADM adm = new ADM(context);
                 //Adm stored value.
-                admRegistrationId = adm.getRegistrationId();
+                pushToken = adm.getRegistrationId();
 
                 //Always trigger if adm is null
-                if (SwrveHelper.isNullOrEmpty(admRegistrationId)) {
+                if (SwrveHelper.isNullOrEmpty(pushToken)) {
                     //This will call back and set value eventually.
                     adm.startRegister();
                 }
@@ -62,31 +62,39 @@ public class SwrvePushSDKImp {
                 SwrveLogger.e(TAG, "Couldn't obtain the registration key for the device.", exp);
             }
         }
-        return admRegistrationId;
-    }
-
-    public void setPushSDKListener(ISwrvePushSDKListener listener) {
-        this.listener = listener;
+        return pushToken;
     }
 
     //Beware called from message handler on background thread
-    void onMessage(String msgId, Bundle msg) {
-        listener.onMessageReceived(msgId, msg);
+    void onPushTokenUpdated(String pushToken) {
+        if (listener != null) {
+            listener.onPushTokenUpdated(pushToken);
+        } else {
+            SwrveLogger.e(TAG, "listener is null.");
+        }
     }
 
     //Beware called from message handler on background thread
-    void onRegistered(String registrationId) {
-        listener.onRegistrationIdUpdated(registrationId);
+    public void onMessage(String msgId, Bundle msg) {
+        if (listener != null) {
+            listener.onMessageReceived(msgId, msg);
+        } else {
+            SwrveLogger.e(TAG, "listener is null.");
+        }
     }
 
     //Called from notification engage receiver handling intent
-    public void onNotifcationEnaged(Bundle bundle) {
-        listener.onNotificationEngaged(bundle);
+    public void onNotificationEngaged(Bundle bundle) {
+        if (listener != null) {
+            listener.onNotificationEngaged(bundle);
+        } else {
+            SwrveLogger.e(TAG, "listener is null.");
+        }
     }
 
-    public static SwrvePushSDKImp getInstance() throws RuntimeException {
+    public static SwrvePushSDK getInstance() throws RuntimeException {
         if (instance == null) {
-            instance = new SwrvePushSDKImp();
+            instance = new SwrvePushSDK();
         }
         return instance;
     }

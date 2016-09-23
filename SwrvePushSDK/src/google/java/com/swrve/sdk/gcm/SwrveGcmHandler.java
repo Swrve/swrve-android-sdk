@@ -3,11 +3,8 @@ package com.swrve.sdk.gcm;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
@@ -15,11 +12,9 @@ import android.support.v4.content.ContextCompat;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.SwrvePushEngageReceiver;
-import com.swrve.sdk.qa.SwrveQAUser;
-
-import java.util.Date;
-import java.util.Iterator;
+import com.swrve.sdk.SwrvePushConstants;
+import com.swrve.sdk.SwrvePushHelper;
+import com.swrve.sdk.SwrvePushSDK;
 
 public class SwrveGcmHandler implements ISwrveGcmHandler {
 
@@ -28,7 +23,7 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     private Context context;
     private SwrveGcmIntentService swrveGcmService;
 
-    protected SwrveGcmHandler (Context context, SwrveGcmIntentService swrveGcmService) {
+    protected SwrveGcmHandler(Context context, SwrveGcmIntentService swrveGcmService) {
         this.context = context;
         this.swrveGcmService = swrveGcmService;
     }
@@ -44,38 +39,31 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     @Override
     public boolean onMessageReceived(String from, Bundle data) {
-        boolean gcmHandled = false;
+        boolean handled = false;
         if (data != null && !data.isEmpty()) {  // has effect of unparcelling Bundle
             SwrveLogger.i(TAG, "Received GCM notification: " + data.toString());
-            gcmHandled = processRemoteNotification(data);
+            handled = processRemoteNotification(data);
         }
-        return gcmHandled;
+        return handled;
     }
 
     private boolean processRemoteNotification(Bundle msg) {
-        boolean gcmHandled = false;
-        if (isSwrveRemoteNotification(msg)) {
-            // Notify bound clients
-            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-            Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
+        boolean handled = false;
+        if (SwrvePushHelper.isSwrveRemoteNotification(msg)) {
+            //Get tracking key
+            Object rawId = msg.get(SwrvePushConstants.SWRVE_TRACKING_KEY);
             String msgId = (rawId != null) ? rawId.toString() : null;
-            while (iter.hasNext()) {
-                SwrveQAUser sdkListener = iter.next();
-                sdkListener.pushNotification(msgId, msg);
-            }
 
             swrveGcmService.processNotification(msg);
-            gcmHandled = true;
-        } else {
-            SwrveLogger.i(TAG, "GCM notification: but not processing as its missing the " + SwrveGcmConstants.SWRVE_TRACKING_KEY);
-        }
-        return gcmHandled;
-    }
 
-    protected boolean isSwrveRemoteNotification(final Bundle msg) {
-        Object rawId = msg.get(SwrveGcmConstants.SWRVE_TRACKING_KEY);
-        String msgId = (rawId != null) ? rawId.toString() : null;
-        return !SwrveHelper.isNullOrEmpty(msgId);
+            //Inform swrve push sdk
+            SwrvePushSDK.getInstance().onMessage(msgId, msg);
+
+            handled = true;
+        } else {
+            SwrveLogger.i(TAG, "GCM notification: but not processing as its missing the " + SwrvePushConstants.SWRVE_TRACKING_KEY);
+        }
+        return handled;
     }
 
     @Override
@@ -108,50 +96,14 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
 
     @Override
     public int showNotification(NotificationManager notificationManager, Notification notification) {
-        int id = generateTimestampId();
+        int id = SwrvePushHelper.generateTimestampId();
         notificationManager.notify(id, notification);
         return id;
     }
 
-    private int generateTimestampId() {
-        return (int)(new Date().getTime() % Integer.MAX_VALUE);
-    }
-
     @Override
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
-        SwrveGcmNotification notificationHelper = SwrveGcmNotification.getInstance(context);
-        boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
-        int iconResource = (materialDesignIcon && notificationHelper.iconMaterialDrawableId >= 0) ? notificationHelper.iconMaterialDrawableId : notificationHelper.iconDrawableId;
-
-        // Build notification
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
-                .setSmallIcon(iconResource)
-                .setTicker(msgText)
-                .setContentTitle(notificationHelper.notificationTitle)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(msgText))
-                .setContentText(msgText)
-                .setAutoCancel(true);
-
-        if (notificationHelper.largeIconDrawable != null) {
-            mBuilder.setLargeIcon(notificationHelper.largeIconDrawable);
-        }
-
-        if (notificationHelper.accentColor >= 0) {
-            mBuilder.setColor(ContextCompat.getColor(context, notificationHelper.accentColor));
-        }
-
-        String msgSound = msg.getString("sound");
-        if (!SwrveHelper.isNullOrEmpty(msgSound)) {
-            Uri soundUri;
-            if (msgSound.equalsIgnoreCase("default")) {
-                soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            } else {
-                String packageName = context.getApplicationContext().getPackageName();
-                soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + msgSound);
-            }
-            mBuilder.setSound(soundUri);
-        }
-        return mBuilder;
+        return SwrvePushHelper.createNotificationBuilder(context, msgText, msg);
     }
 
     @Override
@@ -163,7 +115,6 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
             mBuilder.setContentIntent(contentIntent);
             return mBuilder.build();
         }
-
         return null;
     }
 
@@ -171,16 +122,13 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
     public PendingIntent createPendingIntent(Bundle msg) {
         Intent intent = swrveGcmService.createIntent(msg);
         if (intent != null) {
-            return PendingIntent.getBroadcast(context, generateTimestampId(), intent,PendingIntent.FLAG_CANCEL_CURRENT);
+            return PendingIntent.getBroadcast(context, SwrvePushHelper.generateTimestampId(), intent,PendingIntent.FLAG_CANCEL_CURRENT);
         }
         return null;
     }
 
     @Override
     public Intent createIntent(Bundle msg) {
-        Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
-        intent.putExtra(SwrveGcmConstants.GCM_BUNDLE, msg);
-        return intent;
+        return SwrvePushHelper.createPushEngagedIntent(context, msg);
     }
-
 }

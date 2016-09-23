@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 
 public class SwrveSDK extends SwrveSDKBase {
 
@@ -107,14 +106,6 @@ public class SwrveSDK extends SwrveSDKBase {
     public static void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature) {
         checkInstanceCreated();
         ((ISwrve) instance).iapPlay(productId, productPrice, currency, rewards, purchaseData, dataSignature);
-    }
-
-    /**
-     * Used internally from the GCM ID listener to get notified that a new token is available.
-     */
-    public static void onTokenRefreshed() {
-        checkInstanceCreated();
-        ((ISwrve) instance).onTokenRefreshed();
     }
 
     /**
