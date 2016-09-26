@@ -28,7 +28,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve, ISw
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
         try {
-            ISwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+            ISwrvePushSDK pushSDK = SwrvePushSDK.createInstance();
             if (pushSDK != null) {
                 pushToken = pushSDK.initialisePushSDK(context, this, "");
             } else {

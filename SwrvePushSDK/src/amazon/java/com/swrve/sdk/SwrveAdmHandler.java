@@ -55,7 +55,12 @@ public class SwrveAdmHandler {
                 processNotification(msg);
 
                 //Inform swrve notification
-                SwrvePushSDK.getInstance().onMessage(msgId, msg);
+                SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+                if (pushSDK != null) {
+                    pushSDK.onMessage(msgId, msg);
+                } else {
+                    SwrveLogger.e(TAG, "Unable to send msg to pushSDK from ADM Handler.");
+                }
 
                 handled = true;
             }

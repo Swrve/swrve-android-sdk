@@ -57,7 +57,12 @@ public class SwrveGcmHandler implements ISwrveGcmHandler {
             swrveGcmService.processNotification(msg);
 
             //Inform swrve push sdk
-            SwrvePushSDK.getInstance().onMessage(msgId, msg);
+            SwrvePushSDK pushSdk = SwrvePushSDK.getInstance();
+            if (pushSdk != null) {
+                pushSdk.onMessage(msgId, msg);
+            } else {
+                SwrveLogger.e(TAG, "Unable to send msg to pushSDK from GCM Handler.");
+            }
 
             handled = true;
         } else {

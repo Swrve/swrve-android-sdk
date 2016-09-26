@@ -178,9 +178,16 @@ public class SwrvePushSDK implements ISwrvePushSDK {
         }
     }
 
-    public static SwrvePushSDK getInstance() throws RuntimeException {
+    public static SwrvePushSDK createInstance() {
         if (instance == null) {
             instance = new SwrvePushSDK();
+        }
+        return instance;
+    }
+
+    public static SwrvePushSDK getInstance() throws RuntimeException {
+        if (instance == null) {
+            SwrveLogger.e(TAG, "Instance is null. This should be already created as a part of SwrveSDK:beforeSendDevice().");
         }
         return instance;
     }

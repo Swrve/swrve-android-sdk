@@ -34,7 +34,12 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     @Override
     protected void onRegistered(final String registrationId) {
         SwrveLogger.i(TAG, "ADM Registered. RegistrationId: " + registrationId);
-        SwrvePushSDK.getInstance().onPushTokenUpdated(registrationId);
+        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+        if (pushSDK != null) {
+            pushSDK.onPushTokenUpdated(registrationId);
+        } else {
+            SwrveLogger.e(TAG, "Could not notify Push SDK of a new token.");
+        }
     }
 
     @Override
