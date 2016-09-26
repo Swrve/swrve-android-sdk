@@ -12,10 +12,6 @@
 
     </style>
 
-    <style name="cio__mvl_spinner" parent="Widget.AppCompat.Spinner">
-
-    </style>
-
     <style name="cio__conversation_content_box">
         <!-- If we ever make the content section editable, this is where we would do it. -->
     </style>
