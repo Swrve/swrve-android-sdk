@@ -838,7 +838,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    private void downloadAssets(final Set<String> assetsQueue ) {
+    protected void downloadAssets(final Set<String> assetsQueue ) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
