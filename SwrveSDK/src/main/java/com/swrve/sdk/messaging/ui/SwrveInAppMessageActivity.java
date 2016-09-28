@@ -6,8 +6,6 @@ import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
-import android.view.Window;
-import android.view.WindowManager;
 
 import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveBase;
@@ -85,8 +83,7 @@ public class SwrveInAppMessageActivity extends Activity {
 
         try {
             // Create view and add as root of the activity
-            SwrveMessageView view = new SwrveMessageView(this, message,
-                    format, minSampleSize, defaultBackgroundColor);
+            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize, defaultBackgroundColor);
             setContentView(view);
             if(savedInstanceState == null) {
                 notifyOfImpression(format);
