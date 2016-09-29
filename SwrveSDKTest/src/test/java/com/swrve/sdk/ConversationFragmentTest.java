@@ -70,8 +70,8 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         super.setUp();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
-        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         assertNotNull(swrveSpy.campaigns);

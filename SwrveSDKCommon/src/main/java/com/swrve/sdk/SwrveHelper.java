@@ -35,7 +35,7 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public final class SwrveHelper {
 
-    private static final String LOG_TAG = "SwrveSDK";
+    public static final String LOG_TAG = "SwrveSDK";
     private static final String CHARSET = "UTF-8";
 
     public static boolean isNullOrEmpty(String val) {
