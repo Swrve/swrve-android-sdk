@@ -5,5 +5,6 @@ import android.os.Bundle;
 
 interface ISwrvePushSDK {
     String initialisePushSDK(Context context, ISwrvePushSDKListener listener, String senderId);
+    String getPushTokenUserPropertyName();
 }
 

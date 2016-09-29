@@ -30,7 +30,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve, ISw
         try {
             ISwrvePushSDK pushSDK = SwrvePushSDK.createInstance();
             if (pushSDK != null) {
-                pushToken = pushSDK.initialisePushSDK(context, this, "");
+                SwrveNotificationDetail detail = SwrveNotification.createNotificationFromMetaData(context);
+                pushToken = pushSDK.initialisePushSDK(context, this, detail, "");
             } else {
                 SwrveLogger.e(LOG_TAG, "SwrvePushSDK is null");
             }

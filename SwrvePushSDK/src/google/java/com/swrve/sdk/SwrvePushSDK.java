@@ -23,7 +23,7 @@ public class SwrvePushSDK implements ISwrvePushSDK {
     boolean init = false;
     String senderId;
 
-    public SwrvePushSDK() {
+    private SwrvePushSDK() {
     }
 
     public void onPushTokenRefreshed() {
@@ -187,7 +187,7 @@ public class SwrvePushSDK implements ISwrvePushSDK {
 
     public static SwrvePushSDK getInstance() throws RuntimeException {
         if (instance == null) {
-            SwrveLogger.e(TAG, "Instance is null. This should be already created as a part of SwrveSDK:beforeSendDevice().");
+            SwrveLogger.e(TAG, "Instance is null. This should be created during application onCreate().");
         }
         return instance;
     }

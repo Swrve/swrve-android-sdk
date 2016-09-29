@@ -12,7 +12,7 @@ public class SwrvePushSDK implements ISwrvePushSDK {
     private ISwrvePushSDKListener listener;
     private static SwrvePushSDK instance;
 
-    public SwrvePushSDK() {
+    private SwrvePushSDK() {
     }
 
     public boolean isInitialised() {
@@ -101,7 +101,7 @@ public class SwrvePushSDK implements ISwrvePushSDK {
 
     public static SwrvePushSDK getInstance() throws RuntimeException {
         if (instance == null) {
-            SwrveLogger.e(TAG, "Instance is null. This should be already created as a part of SwrveSDK:beforeSendDevice().");
+            SwrveLogger.e(TAG, "Instance is null. This should be created during application onCreate().");
         }
         return instance;
     }
