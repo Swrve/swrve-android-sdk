@@ -24,7 +24,6 @@ import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
-import org.robolectric.shadows.ShadowIntent;
 import org.robolectric.shadows.ShadowView;
 import org.robolectric.util.ActivityController;
 import org.robolectric.util.Pair;
@@ -50,7 +49,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
-        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
         swrveSpy.init(mActivity);
     }
@@ -264,8 +263,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity(); // for some reason this line is needed before calling peekNextStartedActivity?
         assertNotNull(nextStartedActivity);
         Intent nextIntent = mShadowActivity.peekNextStartedActivity();
-        ShadowIntent shadowIntent = Shadows.shadowOf(nextIntent);
-        assertEquals(expectedUrl, shadowIntent.getDataString());
+        assertEquals(expectedUrl, nextIntent.getDataString());
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<String, Object>();
@@ -368,9 +366,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity(); // for some reason this line is needed before calling peekNextStartedActivity?
         assertNotNull(nextStartedActivity);
         Intent nextIntent = mShadowActivity.peekNextStartedActivity();
-        ShadowIntent shadowIntent = Shadows.shadowOf(nextIntent);
-        assertEquals("custom_action", shadowIntent.getDataString());
-
+        assertEquals("custom_action", nextIntent.getDataString());
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<String, Object>();

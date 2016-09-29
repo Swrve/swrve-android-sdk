@@ -39,7 +39,7 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
 
-        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
         Mockito.doReturn(false).when(swrveSpy).isGooglePlayServicesAvailable(); // disable getting the regID
 

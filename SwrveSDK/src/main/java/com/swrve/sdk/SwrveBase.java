@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -118,7 +119,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             appStoreURLs = new SparseArray<String>();
 
             // Find cache folder
-            findCacheFolder(activity);
+            initCacheFolder(activity);
 
             // Open access to local storage
             openLocalStorageConnection();
@@ -232,6 +233,26 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e(LOG_TAG, "Swrve init failed", exp);
         }
         return (T) this;
+    }
+
+    private void initCacheFolder(Activity activity) {
+        File cacheDir = config.getCacheDir();
+
+        if (cacheDir == null) {
+            cacheDir = activity.getCacheDir();
+        } else {
+            if (!checkPermissionGranted(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                final String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                requestPermissions(activity, permissions);
+                cacheDir = activity.getCacheDir(); // fall back to internal cache until permission granted.
+            }
+
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs();
+            }
+        }
+        swrveAssetsManager.setStorageDir(cacheDir);
+        SwrveLogger.d(LOG_TAG, "Using cache directory at " + cacheDir.getPath());
     }
 
     private void setDefaultMessageListener() {
@@ -1050,7 +1071,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected File _getCacheDir() {
-        return cacheDir;
+        return swrveAssetsManager.getStorageDir();
     }
 
     protected void _setMessageListener(ISwrveMessageListener messageListener) {
