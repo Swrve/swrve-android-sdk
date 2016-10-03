@@ -38,7 +38,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
                 Bundle msg = extras.getBundle(SwrveAdmConstants.ADM_BUNDLE);
-                if (msg != null && SwrveSDK.getConfig().isPushEnabled()) {
+                if (msg != null) {
                     // Obtain push id
                     Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;

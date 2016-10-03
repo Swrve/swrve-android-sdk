@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 import android.content.Context;
-import android.content.Intent;
 
 import com.amazon.device.messaging.ADM;
 import com.amazon.device.messaging.development.ADMManifest;
@@ -46,27 +45,25 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             SwrveLogger.w(LOG_TAG, "ADM message class not found.", e);
         }
 
-        if (config.isPushEnabled()) {
-            if (admAvailable == true) {
-                //TODO remove this.
-                try {
-                    ADMManifest.checkManifestAuthoredProperly(context);
-                } catch(Exception ex) {
-                    ex.printStackTrace();
-                }
+        if (admAvailable == true) {
+            //TODO remove this (ADM documentation says this is not for final release).
+            try {
+                ADMManifest.checkManifestAuthoredProperly(context);
+            } catch(Exception e) {
+                SwrveLogger.w(LOG_TAG, "ADM Manifest is not authored properly:", e);
+            }
 
-                try {
-                    final ADM adm = new ADM(context);
-                    String newRegistrationId = adm.getRegistrationId();
-                    if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                        adm.startRegister();
-                    } else {
-                        registrationId = newRegistrationId;
-                    }
-                } catch (Throwable exp) {
-                    // Don't trust Amazon and all the moving parts to work as expected
-                    SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration key for the device.", exp);
+            try {
+                final ADM adm = new ADM(context);
+                String newRegistrationId = adm.getRegistrationId();
+                if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+                    adm.startRegister();
+                } else {
+                    registrationId = newRegistrationId;
                 }
+            } catch (Throwable exp) {
+                // Don't trust Amazon and all the moving parts to work as expected
+                SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration key for the device.", exp);
             }
         }
     }
@@ -78,7 +75,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {
-        if (config.isPushEnabled() && !SwrveHelper.isNullOrEmpty(registrationId)) {
+        if (!SwrveHelper.isNullOrEmpty(registrationId)) {
             deviceInfo.put(SWRVE_AMAZON_TOKEN, registrationId);
         }
     }
@@ -123,19 +120,5 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         } catch (Exception ex) {
             SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
         }
-    }
-
-
-    public void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
-        //TODO
-        SwrveLogger.e(LOG_TAG, "iapPlay TODO");
-    }
-
-    /**
-     * @deprecated Swrve engaged events are automatically sent, so this is no longer needed.
-     */
-    @Deprecated
-    public void processIntent(Intent intent) {
-        SwrveLogger.e(LOG_TAG, "The processIntent method is Deprecated and should not be used anymore");
     }
 }

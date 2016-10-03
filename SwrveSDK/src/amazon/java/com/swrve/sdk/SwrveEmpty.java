@@ -21,14 +21,6 @@ public class SwrveEmpty extends SwrveBaseEmpty<ISwrve, SwrveConfig> implements I
     }
 
     @Override
-    public void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
-    }
-
-    @Override
-    public void processIntent(Intent intent) {
-    }
-
-    @Override
     public void onRegistrationIdReceived(String registrationId) {
     }
 }
