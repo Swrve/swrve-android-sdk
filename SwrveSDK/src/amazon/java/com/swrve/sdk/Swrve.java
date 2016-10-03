@@ -42,7 +42,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             admAvailable = true ;
         } catch (ClassNotFoundException e) {
             // Log the exception.
-            SwrveLogger.w(LOG_TAG, "ADM message class not found.", e);
+            SwrveLogger.e(LOG_TAG, "ADM message class not found.", e);
         }
 
         if (admAvailable == true) {
