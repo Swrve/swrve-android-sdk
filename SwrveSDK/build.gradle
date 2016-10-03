@@ -34,9 +34,9 @@ dependencies {
     compile project(':SwrveConversationSDK')
     compile 'com.google.code.gson:gson:2.2.+'
     compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
     googleCompile 'com.google.android.gms:play-services-gcm:' + project.GOOGLE_GMS_TOOLS_VERSION
     googleCompile 'com.google.android.gms:play-services-ads:' + project.GOOGLE_GMS_TOOLS_VERSION
+    amazonProvided files('provided_libs/amazon-device-messaging-1.0.1.jar')
 }
 
 apply plugin: 'maven-publish'
