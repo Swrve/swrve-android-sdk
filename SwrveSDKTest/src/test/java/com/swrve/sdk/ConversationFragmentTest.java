@@ -649,7 +649,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
                 ArrayList<ChoiceInputItem> list = new ArrayList<ChoiceInputItem>() {
                     {
                         for (int j = 0; j < num; j++) {
-                            add(new ChoiceInputItem("answer_id" + j, "answer_text" + j));
+                            add(new ChoiceInputItem("answer_id" + j, "answer_text" + j, null));
                         }
                     }
                 };

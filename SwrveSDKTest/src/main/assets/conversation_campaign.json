@@ -46,20 +46,59 @@
                   "fg": {
                     "type": "color",
                     "value": "#9bf000"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "text_size": "123"
                 },
                 "values": [
                   {
                     "answer_id": "13654815-option",
-                    "answer_text": "Option 1"
+                    "answer_text": "Option 1",
+                    "style": {
+                      "bg": {
+                        "type": "transparent"
+                      },
+                      "fg": {
+                        "type": "color",
+                        "value": "#9bf000"
+                      },
+                      "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                      "font_family": "my_awesome_font_0",
+                      "text_size": "0"
+                    }
                   },
                   {
                     "answer_id": "82037856-option",
-                    "answer_text": "Option 2"
+                    "answer_text": "Option 2",
+                    "style": {
+                      "bg": {
+                        "type": "transparent"
+                      },
+                      "fg": {
+                        "type": "color",
+                        "value": "#9bf000"
+                      },
+                      "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                      "font_family": "my_awesome_font_1",
+                      "text_size": "1"
+                    }
                   },
                   {
                     "answer_id": "37240198-option",
-                    "answer_text": "Option 3"
+                    "answer_text": "Option 3",
+                    "style": {
+                      "bg": {
+                        "type": "transparent"
+                      },
+                      "fg": {
+                        "type": "color",
+                        "value": "#9bf000"
+                      },
+                      "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                      "font_family": "my_awesome_font_2",
+                      "text_size": "2"
+                    }
                   }
                 ],
                 "tag": "1427192631272-fragment"
@@ -74,7 +113,13 @@
                   "fg": {
                     "type": "color",
                     "value": "#9bf000"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "text_size": "123",
+                  "padding": [1, 2, 3, 4],
+                  "line_space": "789",
+                  "alignment": "left"
                 },
                 "tag": "1427199673126-fragment"
               },
@@ -88,7 +133,13 @@
                   "fg": {
                     "type": "color",
                     "value": "#9bf000"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "text_size": "123",
+                  "padding": [1, 2, 3, 4],
+                  "line_space": "789",
+                  "alignment": "left"
                 },
                 "tag": "1427199673126-star-rating",
                 "stuff": "hello",
@@ -142,7 +193,11 @@
                   "fg": {
                     "type": "color",
                     "value": "#cc8534"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "text_size": "123",
+                  "alignment": "left"
                 },
                 "target": "",
                 "action": {
@@ -161,7 +216,11 @@
                   "fg": {
                     "type": "color",
                     "value": "#cc8534"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "text_size": "123",
+                  "alignment": "left"
                 },
                 "target": "1427305771170-2Button"
               }
