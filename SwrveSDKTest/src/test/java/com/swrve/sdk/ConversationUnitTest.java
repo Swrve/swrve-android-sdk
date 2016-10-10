@@ -45,7 +45,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
         super.setUp();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
-        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
         swrveSpy.init(mActivity);
     }
 
@@ -104,7 +104,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
         }
         assertTrue(assetDownloaded);
 
-        swrveSpy.assetsOnDisk.clear();
+        swrveSpy.swrveAssetsManager.getAssetsOnDisk().clear();
         assertFalse(conversation.areAssetsReady(swrveSpy.getAssetsOnDisk()));
     }
 
