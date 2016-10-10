@@ -106,9 +106,11 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
                 fileStream.write(fileContents); // Save to file
                 fileStream.close();
                 success = true;
+            } else {
+                SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetPath + ". Did not match sha:" + sha1File);
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error downloading campaigns", e);
+            SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetPath, e);
         } finally {
             if (inputStream != null) {
                 try {
