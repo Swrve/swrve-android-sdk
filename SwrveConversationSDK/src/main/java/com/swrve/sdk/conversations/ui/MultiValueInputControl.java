@@ -4,11 +4,9 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
@@ -23,6 +21,7 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -58,12 +57,18 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
      * @param model
      * @return mutli value input control
      */
-    public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model) {
+    public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model, int conversationVersion) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
         MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.swrve__multiinput, parentContainer, false);
         control.descLbl = (TextView) control.findViewById(R.id.swrve__MIV_Header);
         control.descLbl.setText(model.getDescription());
         int textColorInt =  model.getStyle().getTextColorInt();
+        control.descLbl.setTextColor(textColorInt);
+        ConversationStyle style = model.getStyle();
+        if (conversationVersion >= 4) { // text/font styling added in v4
+            SwrveConversationHelper.setTypeface(control.descLbl, model.getStyle());
+            control.descLbl.setTextSize(TypedValue.COMPLEX_UNIT_PX, style.getTextSize());
+        }
 
         control.model = model;
         control.radioButtons = new ArrayList<RadioButton>();
@@ -72,13 +77,23 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             RadioButton rb = new RadioButton(context);
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             rb.setLayoutParams(lp);
-            rb.setText(model.getValues().get(i).getAnswerText());
-            rb.setTextColor(textColorInt);
+            ChoiceInputItem item = model.getValues().get(i);
+            rb.setText(item.getAnswerText());
+            if (conversationVersion >= 4) { // text/font styling added in v4
+                rb.setTextColor(item.getStyle().getTextColorInt());
+                SwrveConversationHelper.setTypeface(rb, item.getStyle());
+                rb.setTextSize(TypedValue.COMPLEX_UNIT_PX, item.getStyle().getTextSize());
+                MultiValueInputControl.setTint(rb, item.getStyle().getTextColorInt());
+            } else {
+                rb.setTextColor(textColorInt);
+                MultiValueInputControl.setTint(rb, textColorInt);
+            }
+
             rb.setChecked(i == control.selectedIndex);
             if (!control.isInEditMode()) {
                 rb.setTag(R.string.swrve__indexTag, i);
             }
-            MultiValueInputControl.setTint(rb, textColorInt);
+
             control.addView(rb);
             rb.setOnCheckedChangeListener(control);
             control.radioButtons.add(rb);

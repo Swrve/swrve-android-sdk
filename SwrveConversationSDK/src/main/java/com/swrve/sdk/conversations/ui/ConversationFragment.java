@@ -58,6 +58,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
     private SwrveBaseConversation swrveConversation;
+    private int conversationVersion;
     private ConversationPage page;
     private SwrveConversationEventHelper eventHelper;
     private HashMap<String, UserInputResult> userInteractionData;
@@ -78,9 +79,10 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         this.userInteractionData = userInteractionData;
     }
 
-    public static ConversationFragment create(SwrveBaseConversation swrveConversation) {
+    public static ConversationFragment create(SwrveBaseConversation swrveConversation, int conversationVersion) {
         ConversationFragment f = new ConversationFragment();
         f.swrveConversation = swrveConversation;
+        f.conversationVersion = conversationVersion;
         f.eventHelper = new SwrveConversationEventHelper();
         return f;
     }
@@ -202,7 +204,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         int numControls = page.getControls().size();
         for (int i = 0; i < numControls; i++) {
             ButtonControl ctrl = page.getControls().get(i);
-            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle);
+            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle, conversationVersion);
             LayoutParams buttonLP;
             if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
                 buttonLP = new LayoutParams(controlLp);
@@ -278,7 +280,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     contentLayout.addView(view);
                 }
             } else if (content instanceof MultiValueInput) {
-                MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
+                MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content, conversationVersion);
                 input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                 input.setTag(content.getTag());
                 input.setContentChangedListener(this);

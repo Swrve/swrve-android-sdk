@@ -4,13 +4,18 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
+import android.widget.TextView;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.conversations.R;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
+
+import java.io.File;
 
 /**
  * Internal Swrve helper class for conversations.
@@ -79,6 +84,20 @@ class SwrveConversationHelper {
         drawables[1] = rectShapeDrawable;
         drawables[0] = fillDrawable;
         return new LayerDrawable(drawables);
+    }
+
+    /**
+     * Sets the typeface for a given TextView using a custom font.
+     * @param textView a Button/Option/Textview on which to configure the typeface
+     * @param style Contains the typeface details.
+     */
+    public static void setTypeface(TextView textView, ConversationStyle style) {
+        if (SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
+            File fontFile = new File(textView.getContext().getCacheDir(), style.getFontFile()); // todo cache dir could be from the config
+            if (fontFile.exists()) {
+                textView.setTypeface(Typeface.createFromFile(fontFile));
+            }
+        }
     }
 
 }

@@ -186,18 +186,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         public void onMessage(final SwrveConversation conversation) {
                             // Start a Conversation activity to display the campaign
                             if (SwrveBase.this.context != null) {
-                                final Context ctx = SwrveBase.this.context.get();
-                                if (ctx == null) {
-                                    SwrveLogger.e(LOG_TAG, "Can't display a conversation without a context");
-                                    return;
-                                }
-
-                                Intent intent = new Intent(ctx, ConversationActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                intent.putExtra("conversation", conversation);
-                                ctx.startActivity(intent);
-                                // Report that the conversation was shown to the user
-                                conversation.getCampaign().messageWasShownToUser();
+                                ConversationActivity.showConversation(SwrveBase.this.context.get(), conversation, conversation.getCampaign().getConversationVersion());
+                                conversation.getCampaign().messageWasShownToUser(); // Report that the conversation was shown to the user
                             }
                         }
                     });

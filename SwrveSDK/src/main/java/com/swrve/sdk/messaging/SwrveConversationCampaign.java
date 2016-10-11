@@ -22,6 +22,7 @@ import java.util.Set;
 public class SwrveConversationCampaign extends SwrveBaseCampaign implements Serializable {
 
     protected SwrveConversation conversation;
+    protected int conversationVersion;
 
     /**
      * Load a campaign from JSON data.
@@ -43,6 +44,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
                 }
             }
         }
+        this.conversationVersion = campaignData.getInt("conversation_version");
     }
 
     public SwrveConversation getConversation() {
@@ -51,6 +53,10 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
 
     protected void setConversation(SwrveConversation conversation) {
         this.conversation = conversation;
+    }
+
+    public int getConversationVersion() {
+        return conversationVersion;
     }
 
     /**

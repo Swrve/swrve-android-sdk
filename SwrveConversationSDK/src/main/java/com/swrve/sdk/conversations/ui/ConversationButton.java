@@ -8,8 +8,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 public class ConversationButton extends android.widget.Button implements IConversationControl {
     private ButtonControl model;
@@ -19,7 +22,7 @@ public class ConversationButton extends android.widget.Button implements IConver
     private int backgroundColorPressed;
     private float borderRadius;
 
-    public ConversationButton(Context context, ButtonControl model, int defStyle) {
+    public ConversationButton(Context context, ButtonControl model, int defStyle, int conversationVersion) {
         super(context, null, defStyle);
         if (model != null) {
             this.model = model;
@@ -31,6 +34,11 @@ public class ConversationButton extends android.widget.Button implements IConver
         initBackgroundColorStates();
         setLines(1);
         setEllipsize(TextUtils.TruncateAt.END);
+        if (conversationVersion >= 4) { // text/font styling added in v4
+            SwrveConversationHelper.setTypeface(this, model.getStyle());
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, model.getStyle().getTextSize());
+            initAlignment();
+        }
     }
 
     private void initColors() {
@@ -76,6 +84,16 @@ public class ConversationButton extends android.widget.Button implements IConver
         states.addState(new int[]{android.R.attr.state_focused}, focusedDrawable);
         states.addState(new int[]{}, normalDrawable);
         return states;
+    }
+
+    private void initAlignment() {
+        if (model.getStyle().getAlignment() == ConversationStyle.ALIGNMENT.LEFT) {
+            setGravity(Gravity.CENTER | Gravity.LEFT);
+        } else if (model.getStyle().getAlignment() == ConversationStyle.ALIGNMENT.CENTER) {
+            setGravity(Gravity.CENTER | Gravity.CENTER);
+        } else if (model.getStyle().getAlignment() == ConversationStyle.ALIGNMENT.RIGHT) {
+            setGravity(Gravity.CENTER | Gravity.RIGHT);
+        }
     }
 
     @Override
