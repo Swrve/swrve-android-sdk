@@ -33,7 +33,7 @@ import java.util.LinkedList;
 public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     private final static String TAG = "SwrveAdm";
     private final static String AMAZON_RECENT_PUSH_IDS = "recent_push_ids";
-    private final static String AMAZON_PREFENCES = "swrve_amazon_pref";
+    private final static String AMAZON_PREFERENCES = "swrve_amazon_pref";
     private final int MAX_ID_CACHE_ITEMS = 16;
 
     //SwrveMessageReceiver listens for messages from ADM
@@ -109,7 +109,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
 
     private LinkedList<String> getRecentNotificationIdCache() {
         Context context = getApplicationContext();
-        SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFENCES, Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFERENCES, Context.MODE_PRIVATE);
         String jsonString = sharedPreferences.getString(AMAZON_RECENT_PUSH_IDS, "");
         Gson gson = new Gson();
         LinkedList<String> recentIds = gson.fromJson(jsonString, new TypeToken<LinkedList<String>>() {}.getType());
@@ -129,7 +129,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         Context context = getApplicationContext();
         Gson gson = new Gson();
         String recentNotificationsJson = gson.toJson(recentIds);
-        SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFENCES, Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFERENCES, Context.MODE_PRIVATE);
         sharedPreferences.edit().putString(AMAZON_RECENT_PUSH_IDS, recentNotificationsJson).apply();
     }
 
@@ -140,30 +140,21 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     }
 
     public void processNotification(final Bundle msg) {
-        boolean mustShowNotification = mustShowNotification();
-        if (mustShowNotification) {
-            try {
-                // Put the message into a notification and post it.
-                Context context = getApplicationContext();
-                final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        try {
+            // Put the message into a notification and post it.
+            Context context = getApplicationContext();
+            final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-                final PendingIntent contentIntent = createPendingIntent(msg);
-                if (contentIntent != null) {
-                    final Notification notification = createNotification(msg, contentIntent);
-                    if (notification != null) {
-                        showNotification(mNotificationManager, notification);
-                    }
+            final PendingIntent contentIntent = createPendingIntent(msg);
+            if (contentIntent != null) {
+                final Notification notification = createNotification(msg, contentIntent);
+                if (notification != null) {
+                    showNotification(mNotificationManager, notification);
                 }
-            } catch (Exception ex) {
-                SwrveLogger.e(TAG, "Error processing ADM push notification", ex);
             }
-        } else {
-            SwrveLogger.i(TAG, "ADM notification: not processing as mustShowNotification is false.");
+        } catch (Exception ex) {
+            SwrveLogger.e(TAG, "Error processing ADM push notification", ex);
         }
-    }
-
-    public boolean mustShowNotification() {
-        return true;
     }
 
     private int generateTimestampId() {

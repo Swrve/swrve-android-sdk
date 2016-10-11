@@ -46,13 +46,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
 
         if (admAvailable == true) {
-            //TODO remove this (ADM documentation says this is not for final release).
-            try {
-                ADMManifest.checkManifestAuthoredProperly(context);
-            } catch(Exception e) {
-                SwrveLogger.w(LOG_TAG, "ADM Manifest is not authored properly:", e);
-            }
-
             try {
                 final ADM adm = new ADM(context);
                 String newRegistrationId = adm.getRegistrationId();
