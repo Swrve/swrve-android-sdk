@@ -44,7 +44,9 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
                 }
             }
         }
-        this.conversationVersion = campaignData.getInt("conversation_version");
+        if(campaignData.has("conversation_version")) {
+            this.conversationVersion = campaignData.getInt("conversation_version");
+        }
     }
 
     public SwrveConversation getConversation() {

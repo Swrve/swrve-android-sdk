@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -48,6 +47,8 @@ import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.swrve.sdk.conversations.ui.SwrveConversationHelper.setBackgroundDrawable;
 
 public class ConversationFragment extends Fragment implements OnClickListener, ConversationInputChangedListener {
     private static final String LOG_TAG = "SwrveSDK";
@@ -159,10 +160,6 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         root.requestFocus();
     }
 
-    protected int getSDKBuildVersion() {
-        return Build.VERSION.SDK_INT;
-    }
-
     private void initLayout() {
         ConversationRoundedLinearLayout modalLayout = (ConversationRoundedLinearLayout) root.findViewById(R.id.swrve__conversation_modal);
         float pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
@@ -180,7 +177,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
             controlLayout.removeAllViews();
         }
 
-        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             controlLp = new LayoutParams(root.getLayoutParams());
         } else {
             controlLp = new LayoutParams(root.getLayoutParams().width, root.getLayoutParams().height);
@@ -204,9 +201,9 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         int numControls = page.getControls().size();
         for (int i = 0; i < numControls; i++) {
             ButtonControl ctrl = page.getControls().get(i);
-            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle, conversationVersion);
+            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle, conversationVersion, swrveConversation.getCacheDir());
             LayoutParams buttonLP;
-            if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 buttonLP = new LayoutParams(controlLp);
             } else {
                 buttonLP = new LayoutParams(controlLp.width, controlLp.height);
@@ -234,7 +231,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     if(SwrveHelper.hasFileAccess(filePath)) {
-                        ConversationImageView iv = iv = new ConversationImageView(activity, modelContent);
+                        ConversationImageView iv = new ConversationImageView(activity, modelContent);
                         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                         iv.setTag(content.getTag());
                         iv.setImageBitmap(bitmap);
@@ -280,12 +277,10 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     contentLayout.addView(view);
                 }
             } else if (content instanceof MultiValueInput) {
-                MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content, conversationVersion);
+                MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content, conversationVersion, swrveConversation.getCacheDir());
                 input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                 input.setTag(content.getTag());
                 input.setContentChangedListener(this);
-                setBackgroundDrawable(input, colorStyle.getPrimaryDrawable());
-                input.setTextColor(conversationStyle.getTextColorInt());
                 contentLayout.addView(input);
             } else if (content instanceof StarRating) {
                 ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
@@ -298,7 +293,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     @SuppressLint("NewApi")
     private LayoutParams getContentLayoutParams(int width, int height) {
         LayoutParams layoutParams;
-        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             layoutParams = new LayoutParams(controlLp);
         } else {
             layoutParams = new LayoutParams(controlLp.width, controlLp.height);
@@ -487,15 +482,6 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
             result.pageTag = pageTag;
             result.result = data.get(k);
             userInteractionData.put(key, result);
-        }
-    }
-
-    @SuppressLint("NewApi")
-    private void setBackgroundDrawable(View view, Drawable drawable) {
-        if (getSDKBuildVersion() < Build.VERSION_CODES.JELLY_BEAN) {
-            view.setBackgroundDrawable(drawable);
-        } else {
-            view.setBackground(drawable);
         }
     }
 

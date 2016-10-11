@@ -1,5 +1,6 @@
 package com.swrve.sdk.conversations.ui;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Paint;
@@ -9,6 +10,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
+import android.os.Build;
+import android.view.View;
 import android.widget.TextView;
 
 import com.swrve.sdk.SwrveHelper;
@@ -91,13 +94,21 @@ class SwrveConversationHelper {
      * @param textView a Button/Option/Textview on which to configure the typeface
      * @param style Contains the typeface details.
      */
-    public static void setTypeface(TextView textView, ConversationStyle style) {
+    public static void setTypeface(TextView textView, ConversationStyle style, File cacheDir) {
         if (SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
-            File fontFile = new File(textView.getContext().getCacheDir(), style.getFontFile()); // todo cache dir could be from the config
+            File fontFile = new File(cacheDir, style.getFontFile());
             if (fontFile.exists()) {
                 textView.setTypeface(Typeface.createFromFile(fontFile));
             }
         }
     }
 
+    @SuppressLint("NewApi")
+    public static void setBackgroundDrawable(View view, Drawable drawable) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+            view.setBackgroundDrawable(drawable);
+        } else {
+            view.setBackground(drawable);
+        }
+    }
 }

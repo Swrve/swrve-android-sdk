@@ -3,7 +3,6 @@ package com.swrve.sdk.conversations.ui;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.view.ViewGroup;
@@ -48,7 +47,7 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
         htmlSnippetView.setBackgroundColor(Color.TRANSPARENT);
         ConversationStyle conversationStyle = model.getStyle();
         ConversationColorStyle conversationStyleBg = conversationStyle.getBg();
-        setBackgroundDrawable(htmlSnippetView, conversationStyleBg.getPrimaryDrawable());
+        SwrveConversationHelper.setBackgroundDrawable(htmlSnippetView, conversationStyleBg.getPrimaryDrawable());
         addView(htmlSnippetView);
     }
 
@@ -68,14 +67,6 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
         container.setLayoutParams(containerParams);
         container.addView(ratingBar);
         addView(container);
-    }
-
-    private void setBackgroundDrawable(HtmlSnippetView view, Drawable drawable) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            view.setBackgroundDrawable(drawable);
-        } else {
-            view.setBackground(drawable);
-        }
     }
 
     private void setStarColor(int color) {

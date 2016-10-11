@@ -17,6 +17,7 @@
           "conditions": {}
         }
       ],
+      "conversation_version": 3,
       "conversation": {
         "id": 82,
         "name": "Choose one",

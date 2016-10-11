@@ -1,6 +1,5 @@
 package com.swrve.sdk.conversations.ui;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -14,6 +13,8 @@ import android.view.Gravity;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
+import java.io.File;
+
 public class ConversationButton extends android.widget.Button implements IConversationControl {
     private ButtonControl model;
     private int textColor;
@@ -22,7 +23,7 @@ public class ConversationButton extends android.widget.Button implements IConver
     private int backgroundColorPressed;
     private float borderRadius;
 
-    public ConversationButton(Context context, ButtonControl model, int defStyle, int conversationVersion) {
+    public ConversationButton(Context context, ButtonControl model, int defStyle, int conversationVersion, File cacheDir) {
         super(context, null, defStyle);
         if (model != null) {
             this.model = model;
@@ -35,7 +36,7 @@ public class ConversationButton extends android.widget.Button implements IConver
         setLines(1);
         setEllipsize(TextUtils.TruncateAt.END);
         if (conversationVersion >= 4) { // text/font styling added in v4
-            SwrveConversationHelper.setTypeface(this, model.getStyle());
+            SwrveConversationHelper.setTypeface(this, model.getStyle(), cacheDir);
             setTextSize(TypedValue.COMPLEX_UNIT_PX, model.getStyle().getTextSize());
             initAlignment();
         }
@@ -75,7 +76,7 @@ public class ConversationButton extends android.widget.Button implements IConver
             Drawable pressedDrawable = SwrveConversationHelper.createRoundedDrawableWithBorder(backgroundColorPressed, textColorPressed, radii);
             backgroundStates = getStateListDrawable(pressedDrawable, pressedDrawable, drawable);
         }
-        setBackgroundForOs(backgroundStates);
+        SwrveConversationHelper.setBackgroundDrawable(this, backgroundStates);
     }
 
     private StateListDrawable getStateListDrawable(Drawable pressedDrawable, Drawable focusedDrawable, Drawable normalDrawable) {
@@ -99,16 +100,6 @@ public class ConversationButton extends android.widget.Button implements IConver
     @Override
     public ButtonControl getModel() {
         return model;
-    }
-
-    @SuppressLint("NewApi")
-    private void setBackgroundForOs(Drawable drawable) {
-        int sdk = android.os.Build.VERSION.SDK_INT;
-        if (sdk < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            setBackgroundDrawable(drawable); // Deprecated but still in use for now
-        } else {
-            setBackground(drawable); // Requires minimum api level 16
-        }
     }
 
     private int lerpColor(int color, int to, float amount) {

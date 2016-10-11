@@ -23,6 +23,7 @@ import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
      * @param model
      * @return mutli value input control
      */
-    public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model, int conversationVersion) {
+    public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model, int conversationVersion, File cacheDir) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
         MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.swrve__multiinput, parentContainer, false);
         control.descLbl = (TextView) control.findViewById(R.id.swrve__MIV_Header);
@@ -65,8 +66,9 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         int textColorInt =  model.getStyle().getTextColorInt();
         control.descLbl.setTextColor(textColorInt);
         ConversationStyle style = model.getStyle();
+        SwrveConversationHelper.setBackgroundDrawable(control, style.getBg().getPrimaryDrawable());
         if (conversationVersion >= 4) { // text/font styling added in v4
-            SwrveConversationHelper.setTypeface(control.descLbl, model.getStyle());
+            SwrveConversationHelper.setTypeface(control.descLbl, model.getStyle(), cacheDir);
             control.descLbl.setTextSize(TypedValue.COMPLEX_UNIT_PX, style.getTextSize());
         }
 
@@ -81,7 +83,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             rb.setText(item.getAnswerText());
             if (conversationVersion >= 4) { // text/font styling added in v4
                 rb.setTextColor(item.getStyle().getTextColorInt());
-                SwrveConversationHelper.setTypeface(rb, item.getStyle());
+                SwrveConversationHelper.setTypeface(rb, item.getStyle(), cacheDir);
                 rb.setTextSize(TypedValue.COMPLEX_UNIT_PX, item.getStyle().getTextSize());
                 MultiValueInputControl.setTint(rb, item.getStyle().getTextColorInt());
             } else {
@@ -106,10 +108,6 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             radioButton.setButtonTintList(ColorStateList.valueOf(color));
         }
-    }
-
-    public void setTextColor(int colorInt){
-        descLbl.setTextColor(colorInt);
     }
 
     @Override

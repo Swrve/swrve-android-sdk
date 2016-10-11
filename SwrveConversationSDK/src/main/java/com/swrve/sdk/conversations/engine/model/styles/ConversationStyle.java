@@ -32,9 +32,9 @@ public class ConversationStyle implements Serializable {
     private String font_file;
     private String font_family;
     private int text_size;
+    private ALIGNMENT alignment;
     private List<Integer> padding;
     private String line_space;
-    private ALIGNMENT alignment;
 
     public ConversationStyle() { // empty constructor needed for gson
     }
@@ -45,6 +45,20 @@ public class ConversationStyle implements Serializable {
         this.bg = bg;
         this.fg = fg;
         this.lb = lb;
+    }
+
+    public ConversationStyle(int border_radius, String type, ConversationColorStyle bg, ConversationColorStyle fg, ConversationColorStyle lb, String font_file, String font_family, int text_size, ALIGNMENT alignment) {
+        this.border_radius = border_radius;
+        this.type = type;
+        this.bg = bg;
+        this.fg = fg;
+        this.lb = lb;
+        this.font_file = font_file;
+        this.font_family = font_family;
+        this.text_size = text_size;
+        this.alignment = alignment;
+        this.padding = padding;
+        this.line_space = line_space;
     }
 
     public int getBorderRadius() {
