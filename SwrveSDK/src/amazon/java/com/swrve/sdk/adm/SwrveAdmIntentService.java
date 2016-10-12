@@ -53,15 +53,38 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
 
     @Override
     protected void onMessage(final Intent intent) {
+        if (intent == null) {
+            SwrveLogger.w(TAG, "Unexpected null intent");
+            return;
+        }
+
         final Bundle extras = intent.getExtras();
-
-        //TODO decide if using or not
-        //verifyMD5Checksum(extras);
-
         if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
             SwrveLogger.i(TAG, "Received ADM notification: " + extras.toString());
             processRemoteNotification(extras);
         }
+    }
+
+    @Override
+    protected void onRegistrationError(final String string) {
+        //This is considered fatal for ADM
+        SwrveLogger.e(TAG, "ADM Registration Error. Error string: " + string);
+    }
+
+    @Override
+    protected void onRegistered(final String registrationId) {
+        SwrveLogger.i(TAG, "ADM Registered. RegistrationId: " + registrationId);
+        ISwrveBase sdk = SwrveSDK.getInstance();
+        if (sdk != null && sdk instanceof Swrve) {
+            ((Swrve) sdk).onRegistrationIdReceived(registrationId);
+        } else {
+            SwrveLogger.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
+        }
+    }
+
+    @Override
+    protected void onUnregistered(final String registrationId) {
+        SwrveLogger.i(TAG, "ADM Unregistered. RegistrationId: " + registrationId);
     }
 
     private void processRemoteNotification(Bundle msg) {
@@ -133,13 +156,13 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         sharedPreferences.edit().putString(AMAZON_RECENT_PUSH_IDS, recentNotificationsJson).apply();
     }
 
-    private boolean isSwrveRemoteNotification(final Bundle msg) {
+    protected boolean isSwrveRemoteNotification(final Bundle msg) {
         Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
         String msgId = (rawId != null) ? rawId.toString() : null;
         return !SwrveHelper.isNullOrEmpty(msgId);
     }
 
-    public void processNotification(final Bundle msg) {
+    private void processNotification(final Bundle msg) {
         try {
             // Put the message into a notification and post it.
             Context context = getApplicationContext();
@@ -161,13 +184,13 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 
-    public int showNotification(NotificationManager notificationManager, Notification notification) {
+    private int showNotification(NotificationManager notificationManager, Notification notification) {
         int id = generateTimestampId();
         notificationManager.notify(id, notification);
         return id;
     }
 
-    public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
+    private Notification createNotification(Bundle msg, PendingIntent contentIntent) {
         String msgText = msg.getString("text");
         if (!SwrveHelper.isNullOrEmpty(msgText)) {
             // Build notification
@@ -178,7 +201,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return null;
     }
 
-    public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
+    private NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         Context context = getApplicationContext();
         SwrveAdmNotification notificationHelper = SwrveAdmNotification.getInstance(context);
         boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
@@ -215,7 +238,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return mBuilder;
     }
 
-    public PendingIntent createPendingIntent(Bundle msg) {
+    private PendingIntent createPendingIntent(Bundle msg) {
         Intent intent = createIntent(msg);
         if (intent != null) {
             Context context = getApplicationContext();
@@ -224,33 +247,11 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return null;
     }
 
-    public Intent createIntent(Bundle msg) {
+    private Intent createIntent(Bundle msg) {
         Context context = getApplicationContext();
         Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
         intent.putExtra(SwrveAdmConstants.ADM_BUNDLE, msg);
         return intent;
-    }
-
-    @Override
-    protected void onRegistrationError(final String string) {
-        //This is considered fatal for ADM
-        SwrveLogger.e(TAG, "ADM Registration Error. Error string: " + string);
-    }
-
-    @Override
-    protected void onRegistered(final String registrationId) {
-        SwrveLogger.i(TAG, "ADM Registered. RegistrationId: " + registrationId);
-        ISwrveBase sdk = SwrveSDK.getInstance();
-        if (sdk != null && sdk instanceof Swrve) {
-            ((Swrve) sdk).onRegistrationIdReceived(registrationId);
-        } else {
-            SwrveLogger.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
-        }
-    }
-
-    @Override
-    protected void onUnregistered(final String registrationId) {
-        SwrveLogger.i(TAG, "ADM Unregistered. RegistrationId: " + registrationId);
     }
 }
 
