@@ -890,15 +890,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 } finally {
                     resourceDownloadExecutor.shutdownNow();
                 }
-                downloadFontAssetSynchronously();
             }
         }));
-
-        downloadFontAssetSynchronously();
     }
-
-
-
 
     protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
         return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue);
@@ -935,55 +929,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             }
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error downloading campaigns", e);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    SwrveLogger.e(LOG_TAG, "Error closing assets stream.", e);
-                }
-            }
-        }
-
-        return false;
-    }
-
-    protected boolean downloadFontAssetSynchronously() {
-
-        String cdnRoot = "http://content-cdn.swrve.com/messaging/fonts/";
-        String assetPath = "040843601e697027b119f93a3fdb2c9c04d1ea63.otf";
-
-        File file = new File(cacheDir, assetPath);
-        if (file.exists()) {
-            synchronized (assetsOnDisk) {
-                assetsOnDisk.add(assetPath);
-            }
-            return true;
-        }
-
-        String url = cdnRoot + assetPath;
-        InputStream inputStream = null;
-        try {
-            URLConnection openConnection = new URL(url).openConnection();
-            inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[2048];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                stream.write(buffer, 0, bytesRead);
-            }
-            byte[] fileContents = stream.toByteArray();
-            if (cacheDir.canWrite()) {
-                FileOutputStream fileStream = new FileOutputStream(new File(cacheDir, assetPath));
-                fileStream.write(fileContents); // Save to file
-                fileStream.close();
-                return true;
-            } else {
-                boolean permission = checkPermissionGranted(context.get(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                SwrveLogger.w(LOG_TAG, "Could not download assets because do not have write access to cacheDir:" + cacheDir + " WRITE_EXTERNAL_STORAGE permission granted:" + permission);
-            }
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error downloading FONT campaigns", e);
         } finally {
             if (inputStream != null) {
                 try {
