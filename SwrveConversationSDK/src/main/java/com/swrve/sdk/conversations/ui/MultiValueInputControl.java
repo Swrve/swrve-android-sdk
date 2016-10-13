@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Typeface;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -31,10 +30,6 @@ import java.util.Map;
 
 
 public class MultiValueInputControl extends LinearLayout implements Serializable, IConversationInput, OnCheckedChangeListener {
-
-    private static final float DEFAULT_TITLE_TEXT_SIZE_SP   = 22;
-    private static final Typeface DEFAULT_TYPEFACE          = Typeface.defaultFromStyle(Typeface.BOLD);
-    private static final float DEFAULT_PADDING              = 10;
 
     private MultiValueInput model;
     private int selectedIndex = -1; // default to none selected

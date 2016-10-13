@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
 import com.swrve.sdk.SwrveBaseConversation;
-import com.swrve.sdk.SwrveConversationConstants;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
@@ -14,6 +13,9 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
+    private static final String EXTRA_CONVERSATION_KEY = "conversation";
+    private static final String EXTRA_CONVERSATION_VERSION_KEY = "conversation_version";
+
     private static final String LOG_TAG = "SwrveSDK";
     private SwrveBaseConversation localConversation;
     private int conversationVersion;
@@ -28,8 +30,8 @@ public class ConversationActivity extends FragmentActivity {
 
         Intent intent = new Intent(context, ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(SwrveConversationConstants.EXTRA_CONVERSATION_KEY, conversation);
-        intent.putExtra(SwrveConversationConstants.EXTRA_CONVERSATION_VERSION_KEY, conversationVersion);
+        intent.putExtra(EXTRA_CONVERSATION_KEY, conversation);
+        intent.putExtra(EXTRA_CONVERSATION_VERSION_KEY, conversationVersion);
         context.startActivity(intent);
     }
 
@@ -40,8 +42,8 @@ public class ConversationActivity extends FragmentActivity {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                this.localConversation = (SwrveBaseConversation) extras.getSerializable(SwrveConversationConstants.EXTRA_CONVERSATION_KEY);
-                this.conversationVersion = extras.getInt(SwrveConversationConstants.EXTRA_CONVERSATION_VERSION_KEY);
+                this.localConversation = (SwrveBaseConversation) extras.getSerializable(EXTRA_CONVERSATION_KEY);
+                this.conversationVersion = extras.getInt(EXTRA_CONVERSATION_VERSION_KEY);
             }
         }
 
