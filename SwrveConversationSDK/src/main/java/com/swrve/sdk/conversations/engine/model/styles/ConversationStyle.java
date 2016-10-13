@@ -36,9 +36,9 @@ public class ConversationStyle implements Serializable {
     private String font_file;
     private String font_family;
     private int text_size;
-    private ALIGNMENT alignment;
     private List<Integer> padding;
-    private String line_space;
+    private float line_space;
+    private ALIGNMENT alignment;
 
     public ConversationStyle() { // empty constructor needed for gson
     }
@@ -149,7 +149,7 @@ public class ConversationStyle implements Serializable {
         this.padding = padding;
     }
 
-    public String getLineSpace() {
+    public float getLineSpace() {
         return line_space;
     }
 

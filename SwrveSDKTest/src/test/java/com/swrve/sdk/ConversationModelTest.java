@@ -64,7 +64,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         assertThat(page1.getContent().size(), equalTo(4));
         assertNotNull(page1.getControls());
         assertThat(page1.getControls().size(), equalTo(2));
-        assertStyle(page1.getStyle(), 44, null, null, 0, null, null, null); // page style does not have any text styling
+        assertStyle(page1.getStyle(), 44, null, null, 0, null, 0, null); // page style does not have any text styling
 
         ConversationAtom content1 = page1.getContent().get(0);
         assertNotNull(content1);
@@ -73,11 +73,11 @@ public class ConversationModelTest extends SwrveBaseTest {
         assertThat(content1 instanceof MultiValueInput, equalTo(true));
         MultiValueInput multiValueInput = (MultiValueInput) content1;
         assertThat(multiValueInput.getDescription(), equalTo("Please select an answer from the radio buttons below 1:"));
-        assertStyle(multiValueInput.getStyle(), 0, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font", 123, null, null, null);
+        assertStyle(multiValueInput.getStyle(), 0, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font", 123, null, 0, null);
         assertThat(multiValueInput.getValues().size(), equalTo(3));
         for (int i = 0; i < multiValueInput.getValues().size(); i++) {
             ChoiceInputItem item = multiValueInput.getValues().get(i);
-            assertStyle(item.getStyle(), 0, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font_" + i, i, null, null, null);
+            assertStyle(item.getStyle(), 0, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font_" + i, i, null, 0, null);
         }
 
         ConversationAtom content2 = page1.getContent().get(2);
@@ -86,7 +86,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         assertThat(starRating.getValue(), equalTo("<h1>Customer Service</h1>"));
         assertThat(starRating.getStarColor(), equalTo("#F8F8F8"));
         assertThat(starRating.getTag(), equalTo("1427199673126-star-rating"));
-        assertStyle(content2.getStyle(), 0, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font", 123, padding, "789", LEFT);
+        assertStyle(content2.getStyle(), 0, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font", 123, padding, 789, LEFT);
 
         ConversationAtom controls1 = page1.getControls().get(0);
         assertNotNull(controls1);
@@ -95,7 +95,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         assertThat(buttonControl.getDescription(), equalTo("Call a number"));
         assertNotNull(buttonControl.getTag());
         assertThat(controls1.getStyle().getBorderRadius(), equalTo(50));
-        assertStyle(controls1.getStyle(), 50, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font", 123, null, null, LEFT);
+        assertStyle(controls1.getStyle(), 50, "2617fb3c279e30dd7c180de8679a2e2d33cf3552", "my_awesome_font", 123, null, 0, LEFT);
 
         ConversationPage page2 = conversation.getPages().get(1);
         assertThat(page2.getTitle(), equalTo("Page 2 of x"));
@@ -118,7 +118,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         assertThat(page2.getStyle().getLb().getValue(), equalTo(ConversationStyle.DEFAULT_LB_COLOR));
     }
 
-    private void assertStyle(ConversationStyle style, int borderRadius, String fontFile, String fontFamily, int textSize, List<Integer> padding, String lineSpace, ConversationStyle.ALIGNMENT alignment) {
+    private void assertStyle(ConversationStyle style, int borderRadius, String fontFile, String fontFamily, int textSize, List<Integer> padding, float lineSpace, ConversationStyle.ALIGNMENT alignment) {
         assertThat("border radius is wrong", style.getBorderRadius(), equalTo(borderRadius));
         assertThat("font file is wrong", style.getFontFile(), equalTo(fontFile));
         assertThat("font family is wrong", style.getFontFamily(), equalTo(fontFamily));
