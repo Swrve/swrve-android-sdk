@@ -10,42 +10,46 @@ import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 
+import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
-import java.io.File;
-
 public class ConversationButton extends android.widget.Button implements IConversationControl {
     private ButtonControl model;
+    private ConversationStyle style;
     private int textColor;
     private int textColorPressed;
     private int backgroundColor;
     private int backgroundColorPressed;
     private float borderRadius;
 
-    public ConversationButton(Context context, ButtonControl model, int defStyle, int conversationVersion, File cacheDir) {
-        super(context, null, defStyle);
-        if (model != null) {
-            this.model = model;
-            setText(model.getDescription());
-        }
-        this.borderRadius = SwrveConversationHelper.getRadiusInPixels(context, model.getStyle().getBorderRadius());
+    public ConversationButton(Context context, ButtonControl model) {
+        super(context);
+        this.model = model;
+        this.style = model.getStyle();
+        setText(model.getDescription());
+
+        this.borderRadius = SwrveConversationHelper.getRadiusInPixels(context, style.getBorderRadius());
         initColors();
         initTextColorStates();
         initBackgroundColorStates();
         setLines(1);
         setEllipsize(TextUtils.TruncateAt.END);
-        if (conversationVersion >= 4) { // text/font styling added in v4
-            SwrveConversationHelper.setTypeface(this, model.getStyle(), cacheDir);
-            setTextSize(TypedValue.COMPLEX_UNIT_PX, model.getStyle().getTextSize());
-            initAlignment();
-        }
+
+        int padding = context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_padding);
+        setPadding(padding, padding, padding, padding);
+
+        setMinHeight(context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_min_height));
+
+        setTypeface(style.getTypeface());
+        setTextSize(TypedValue.COMPLEX_UNIT_PX, style.getTextSize());
+        initAlignment();
     }
 
     private void initColors() {
-        textColor = model.getStyle().getTextColorInt();
+        textColor = style.getTextColorInt();
         textColorPressed = lerpColor(textColor, (isLight(textColor)) ? Color.BLACK : Color.WHITE, 0.3f);
-        backgroundColor = model.getStyle().getBgColorInt();
+        backgroundColor = style.getBgColorInt();
         backgroundColorPressed = lerpColor(backgroundColor, (isLight(backgroundColor)) ? Color.BLACK : Color.WHITE, 0.3f);
     }
 
@@ -67,11 +71,11 @@ public class ConversationButton extends android.widget.Button implements IConver
     private void initBackgroundColorStates() {
         float radii[] = {borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius, borderRadius};
         Drawable backgroundStates = new ColorDrawable();
-        if (model.getStyle().isSolidStyle()) {
+        if (style.isSolidStyle()) {
             Drawable backgroundDrawable = SwrveConversationHelper.createRoundedDrawable(backgroundColor, radii);
             Drawable backgroundDrawablePressed = SwrveConversationHelper.createRoundedDrawable(backgroundColorPressed, radii);
             backgroundStates = getStateListDrawable(backgroundDrawablePressed, backgroundDrawablePressed, backgroundDrawable);
-        } else if (model.getStyle().isOutlineStyle()) {
+        } else if (style.isOutlineStyle()) {
             Drawable drawable = SwrveConversationHelper.createRoundedDrawableWithBorder(backgroundColor, textColor, radii);
             Drawable pressedDrawable = SwrveConversationHelper.createRoundedDrawableWithBorder(backgroundColorPressed, textColorPressed, radii);
             backgroundStates = getStateListDrawable(pressedDrawable, pressedDrawable, drawable);
@@ -88,11 +92,11 @@ public class ConversationButton extends android.widget.Button implements IConver
     }
 
     private void initAlignment() {
-        if (model.getStyle().getAlignment() == ConversationStyle.ALIGNMENT.LEFT) {
+        if (style.getAlignment() == ConversationStyle.ALIGNMENT.LEFT) {
             setGravity(Gravity.CENTER | Gravity.LEFT);
-        } else if (model.getStyle().getAlignment() == ConversationStyle.ALIGNMENT.CENTER) {
+        } else if (style.getAlignment() == ConversationStyle.ALIGNMENT.CENTER) {
             setGravity(Gravity.CENTER | Gravity.CENTER);
-        } else if (model.getStyle().getAlignment() == ConversationStyle.ALIGNMENT.RIGHT) {
+        } else if (style.getAlignment() == ConversationStyle.ALIGNMENT.RIGHT) {
             setGravity(Gravity.CENTER | Gravity.RIGHT);
         }
     }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -23,7 +24,6 @@ import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,10 +31,15 @@ import java.util.Map;
 
 
 public class MultiValueInputControl extends LinearLayout implements Serializable, IConversationInput, OnCheckedChangeListener {
+
+    private static final float DEFAULT_TITLE_TEXT_SIZE_SP   = 22;
+    private static final Typeface DEFAULT_TYPEFACE          = Typeface.defaultFromStyle(Typeface.BOLD);
+    private static final float DEFAULT_PADDING              = 10;
+
     private MultiValueInput model;
     private int selectedIndex = -1; // default to none selected
     private ConversationInputChangedListener inputChangedListener;
-    private TextView descLbl;
+    private TextView titleTextView;
     private ArrayList<RadioButton> radioButtons;
 
     @SuppressLint("NewApi")
@@ -58,19 +63,19 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
      * @param model
      * @return mutli value input control
      */
-    public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model, int conversationVersion, File cacheDir) {
+    public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
         MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.swrve__multiinput, parentContainer, false);
-        control.descLbl = (TextView) control.findViewById(R.id.swrve__MIV_Header);
-        control.descLbl.setText(model.getDescription());
-        int textColorInt =  model.getStyle().getTextColorInt();
-        control.descLbl.setTextColor(textColorInt);
-        ConversationStyle style = model.getStyle();
-        SwrveConversationHelper.setBackgroundDrawable(control, style.getBg().getPrimaryDrawable());
-        if (conversationVersion >= 4) { // text/font styling added in v4
-            SwrveConversationHelper.setTypeface(control.descLbl, model.getStyle(), cacheDir);
-            control.descLbl.setTextSize(TypedValue.COMPLEX_UNIT_PX, style.getTextSize());
-        }
+        control.titleTextView = (TextView) control.findViewById(R.id.swrve__MIV_Header);
+        control.titleTextView.setText(model.getDescription());
+        ConversationStyle titleStyle = model.getStyle();
+        int titleTextColorInt =  titleStyle.getTextColorInt();
+        SwrveConversationHelper.setBackgroundDrawable(control, titleStyle.getBg().getPrimaryDrawable());
+        control.titleTextView.setTextColor(titleTextColorInt);
+        control.titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, titleStyle.getTextSize());
+        control.titleTextView.setTypeface(titleStyle.getTypeface());
+        int padding = context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_padding);
+        control.titleTextView.setPadding(padding, padding, padding, padding);
 
         control.model = model;
         control.radioButtons = new ArrayList<RadioButton>();
@@ -81,15 +86,10 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             rb.setLayoutParams(lp);
             ChoiceInputItem item = model.getValues().get(i);
             rb.setText(item.getAnswerText());
-            if (conversationVersion >= 4) { // text/font styling added in v4
-                rb.setTextColor(item.getStyle().getTextColorInt());
-                SwrveConversationHelper.setTypeface(rb, item.getStyle(), cacheDir);
-                rb.setTextSize(TypedValue.COMPLEX_UNIT_PX, item.getStyle().getTextSize());
-                MultiValueInputControl.setTint(rb, item.getStyle().getTextColorInt());
-            } else {
-                rb.setTextColor(textColorInt);
-                MultiValueInputControl.setTint(rb, textColorInt);
-            }
+            rb.setTypeface(item.getStyle().getTypeface());
+            rb.setTextSize(TypedValue.COMPLEX_UNIT_PX, item.getStyle().getTextSize());
+            rb.setTextColor(item.getStyle().getTextColorInt());
+            MultiValueInputControl.setTint(rb, item.getStyle().getTextColorInt());
 
             rb.setChecked(i == control.selectedIndex);
             if (!control.isInEditMode()) {

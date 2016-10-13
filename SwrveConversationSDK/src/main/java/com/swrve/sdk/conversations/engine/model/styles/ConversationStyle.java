@@ -1,9 +1,12 @@
 package com.swrve.sdk.conversations.engine.model.styles;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 
 import com.google.gson.annotations.SerializedName;
+import com.swrve.sdk.SwrveHelper;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
@@ -29,6 +32,7 @@ public class ConversationStyle implements Serializable {
     private ConversationColorStyle bg;
     private ConversationColorStyle fg;
     private ConversationColorStyle lb = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, DEFAULT_LB_COLOR);
+    private Typeface typeface; // not generated from json
     private String font_file;
     private String font_family;
     private int text_size;
@@ -73,6 +77,10 @@ public class ConversationStyle implements Serializable {
         return fg;
     }
 
+    public void setFg(ConversationColorStyle fg) {
+        this.fg = fg;
+    }
+
     public ConversationColorStyle getLb() {
         return lb;
     }
@@ -99,6 +107,24 @@ public class ConversationStyle implements Serializable {
         return this.type.equalsIgnoreCase(TYPE_OUTLINE);
     }
 
+    public Typeface getTypeface() {
+        return typeface;
+    }
+
+    public void setTypeface(Typeface typeface) {
+        this.typeface = typeface;
+    }
+
+    public Typeface getTypeface(File cacheDir, Typeface defaultTypeface) {
+        if (SwrveHelper.isNotNullOrEmpty(font_file)) {
+            File fontFile = new File(cacheDir, font_file);
+            if (fontFile.exists()) {
+                return Typeface.createFromFile(fontFile);
+            }
+        }
+        return defaultTypeface;
+    }
+
     public String getFontFile() {
         return font_file;
     }
@@ -111,8 +137,16 @@ public class ConversationStyle implements Serializable {
         return text_size;
     }
 
+    public void setTextSize(int text_size) {
+        this.text_size = text_size;
+    }
+
     public List<Integer> getPadding() {
         return padding;
+    }
+
+    public void setPadding(List<Integer> padding) {
+        this.padding = padding;
     }
 
     public String getLineSpace() {

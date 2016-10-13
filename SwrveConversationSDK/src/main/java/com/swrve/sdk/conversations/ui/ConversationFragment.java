@@ -2,10 +2,10 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
@@ -23,12 +23,14 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBaseConversation;
+import com.swrve.sdk.SwrveConversationConstants;
 import com.swrve.sdk.SwrveConversationEventHelper;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveIntentHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
+import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlActions;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
@@ -44,6 +46,7 @@ import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
 import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -195,13 +198,13 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
 
     @SuppressLint("NewApi")
     private void renderControls(Activity activity) {
-        TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[]{R.attr.conversationControlLayoutMargin});
-        int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
+        int controlLayoutMarginInPixels = getResources().getDimensionPixelSize(R.dimen.swrve__control_tray_item_margin);
 
         int numControls = page.getControls().size();
         for (int i = 0; i < numControls; i++) {
             ButtonControl ctrl = page.getControls().get(i);
-            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle, conversationVersion, swrveConversation.getCacheDir());
+            applyButtonStyles(ctrl.getStyle());
+            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl);
             LayoutParams buttonLP;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 buttonLP = new LayoutParams(controlLp);
@@ -217,6 +220,15 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
             ctrlConversationButton.setLayoutParams(buttonLP);
             controlLayout.addView(ctrlConversationButton);
             ctrlConversationButton.setOnClickListener(this);
+        }
+    }
+
+    private void applyButtonStyles(ConversationStyle style) {
+        Typeface typeface = getTypeface(style, SwrveConversationConstants.DEFAULT_BUTTON_TYPEFACE);
+        style.setTypeface(typeface);
+
+        if(conversationVersion < 4) {
+            style.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_default_text_size));
         }
     }
 
@@ -277,7 +289,8 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     contentLayout.addView(view);
                 }
             } else if (content instanceof MultiValueInput) {
-                MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content, conversationVersion, swrveConversation.getCacheDir());
+                applyMultiValueInputStyles((MultiValueInput) content);
+                MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
                 input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                 input.setTag(content.getTag());
                 input.setContentChangedListener(this);
@@ -286,6 +299,28 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
                 conversationRatingBar.setContentChangedListener(this);
                 contentLayout.addView(conversationRatingBar);
+            }
+        }
+    }
+
+    private void applyMultiValueInputStyles(MultiValueInput content) {
+        ConversationStyle titleStyle = content.getStyle();
+        Typeface titleTypeface = getTypeface(titleStyle, SwrveConversationConstants.DEFAULT_MVI_TITLE_TYPEFACE);
+        titleStyle.setTypeface(titleTypeface);
+        if (conversationVersion < 4) {
+            titleStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_title_default_text_size));
+        }
+
+        for (ChoiceInputItem item : content.getValues()) {
+            Typeface itemTypeface = getTypeface(titleStyle, SwrveConversationConstants.DEFAULT_MVI_OPTION_TYPEFACE);
+            if (conversationVersion < 4) {
+                ConversationStyle itemStyle = new ConversationStyle(0, "", titleStyle.getBg(), titleStyle.getFg(), null);
+                itemStyle.setFg(titleStyle.getFg());
+                itemStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_option_default_text_size));
+                itemStyle.setTypeface(itemTypeface);
+                item.setStyle(itemStyle);
+            } else {
+                item.getStyle().setTypeface(itemTypeface);
             }
         }
     }
@@ -492,5 +527,15 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         } else if(content instanceof StarRating) {
             stashStarRatingInputData(page.getTag(), content.getTag(), contentChanged);
         }
+    }
+
+    private Typeface getTypeface(ConversationStyle style, Typeface defaultTypeface) {
+        if (conversationVersion > 3 && SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
+            File fontFile = new File(swrveConversation.getCacheDir(), style.getFontFile());
+            if (fontFile.exists()) {
+                return Typeface.createFromFile(fontFile);
+            }
+        }
+        return defaultTypeface;
     }
 }

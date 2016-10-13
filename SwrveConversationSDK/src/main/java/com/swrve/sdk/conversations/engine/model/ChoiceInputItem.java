@@ -27,9 +27,12 @@ public class ChoiceInputItem implements Serializable {
         return style;
     }
 
+    public void setStyle(ConversationStyle style) {
+        this.style = style;
+    }
+
     @Override
-    // This guy is important for how he is displayed to the user
     public String toString() {
-        return getAnswerText();
+        return getAnswerText(); // This is displayed to the user
     }
 }

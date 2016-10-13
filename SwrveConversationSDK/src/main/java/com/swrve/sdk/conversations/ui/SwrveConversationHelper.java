@@ -2,23 +2,16 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 import android.os.Build;
 import android.view.View;
-import android.widget.TextView;
 
-import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.conversations.R;
-import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
-
-import java.io.File;
 
 /**
  * Internal Swrve helper class for conversations.
@@ -33,11 +26,8 @@ class SwrveConversationHelper {
      */
     public static float getRadiusInPixels(Context context, int borderRadiusPerCent) {
         float borderRadius;
-        int[] attrs = {android.R.attr.minHeight};
-        TypedArray ta = context.obtainStyledAttributes(R.style.cio__control_button, attrs);
-        String height = ta.getString(0);
-        height = height.contains("dip") ? height.substring(0, height.indexOf("dip")) : height;
-        float maxRadius = SwrveHelper.convertDipToPixels(context, Float.parseFloat(height))/2; // maxRadius is height divide by two
+        int height = context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_min_height);
+        float maxRadius = height / 2; // maxRadius is height divide by two
         if (borderRadiusPerCent >= 100) {
             borderRadius = maxRadius;
         } else {
@@ -87,20 +77,6 @@ class SwrveConversationHelper {
         drawables[1] = rectShapeDrawable;
         drawables[0] = fillDrawable;
         return new LayerDrawable(drawables);
-    }
-
-    /**
-     * Sets the typeface for a given TextView using a custom font.
-     * @param textView a Button/Option/Textview on which to configure the typeface
-     * @param style Contains the typeface details.
-     */
-    public static void setTypeface(TextView textView, ConversationStyle style, File cacheDir) {
-        if (SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
-            File fontFile = new File(cacheDir, style.getFontFile());
-            if (fontFile.exists()) {
-                textView.setTypeface(Typeface.createFromFile(fontFile));
-            }
-        }
     }
 
     @SuppressLint("NewApi")
