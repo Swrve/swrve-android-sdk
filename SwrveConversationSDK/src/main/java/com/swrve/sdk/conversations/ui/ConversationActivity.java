@@ -14,14 +14,12 @@ import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
     private static final String EXTRA_CONVERSATION_KEY = "conversation";
-    private static final String EXTRA_CONVERSATION_VERSION_KEY = "conversation_version";
 
     private static final String LOG_TAG = "SwrveSDK";
     private SwrveBaseConversation localConversation;
-    private int conversationVersion;
     private ConversationFragment conversationFragment;
 
-    public static void showConversation(Context context, SwrveBaseConversation conversation, int conversationVersion) {
+    public static void showConversation(Context context, SwrveBaseConversation conversation) {
 
         if (context == null) {
             SwrveLogger.e(LOG_TAG, "Can't display ConversationActivity without a context.");
@@ -31,7 +29,6 @@ public class ConversationActivity extends FragmentActivity {
         Intent intent = new Intent(context, ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRA_CONVERSATION_KEY, conversation);
-        intent.putExtra(EXTRA_CONVERSATION_VERSION_KEY, conversationVersion);
         context.startActivity(intent);
     }
 
@@ -43,13 +40,12 @@ public class ConversationActivity extends FragmentActivity {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 this.localConversation = (SwrveBaseConversation) extras.getSerializable(EXTRA_CONVERSATION_KEY);
-                this.conversationVersion = extras.getInt(EXTRA_CONVERSATION_VERSION_KEY);
             }
         }
 
         try {
             if (localConversation != null) {
-                conversationFragment = ConversationFragment.create(localConversation, conversationVersion);
+                conversationFragment = ConversationFragment.create(localConversation);
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
             } else {
                 SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
@@ -72,7 +68,7 @@ public class ConversationActivity extends FragmentActivity {
     protected void onRestoreInstanceState(Bundle savedState) {
         super.onRestoreInstanceState(savedState);
         if (savedState != null && localConversation != null) {
-            conversationFragment = ConversationFragment.create(localConversation, conversationVersion);
+            conversationFragment = ConversationFragment.create(localConversation);
             ConversationPage page = (ConversationPage) savedState.getSerializable("page");
             HashMap<String, UserInputResult> userData = (HashMap<String, UserInputResult>) savedState.getSerializable("userdata");
 

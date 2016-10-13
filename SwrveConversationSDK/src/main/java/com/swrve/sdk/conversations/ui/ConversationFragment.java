@@ -62,7 +62,6 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     private ConversationFullScreenVideoFrame fullScreenFrame;
     private LayoutParams controlLp;
     private SwrveBaseConversation swrveConversation;
-    private int conversationVersion;
     private ConversationPage page;
     private SwrveConversationEventHelper eventHelper;
     private HashMap<String, UserInputResult> userInteractionData;
@@ -83,10 +82,9 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         this.userInteractionData = userInteractionData;
     }
 
-    public static ConversationFragment create(SwrveBaseConversation swrveConversation, int conversationVersion) {
+    public static ConversationFragment create(SwrveBaseConversation swrveConversation) {
         ConversationFragment f = new ConversationFragment();
         f.swrveConversation = swrveConversation;
-        f.conversationVersion = conversationVersion;
         f.eventHelper = new SwrveConversationEventHelper();
         return f;
     }
@@ -227,7 +225,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         Typeface typeface = getTypeface(style, SwrveConversationConstants.DEFAULT_BUTTON_TYPEFACE);
         style.setTypeface(typeface);
 
-        if(conversationVersion < 4) {
+        if (style.getTextSize() == 0) { // v1,v2, v3 of conversations have no text size
             style.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_default_text_size));
         }
     }
@@ -307,13 +305,13 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         ConversationStyle titleStyle = content.getStyle();
         Typeface titleTypeface = getTypeface(titleStyle, SwrveConversationConstants.DEFAULT_MVI_TITLE_TYPEFACE);
         titleStyle.setTypeface(titleTypeface);
-        if (conversationVersion < 4) {
-            titleStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_title_default_text_size));
+        if (titleStyle.getTextSize() == 0) { // v1,v2, v3 of conversations have no text size
+            titleStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_default_text_size));
         }
 
         for (ChoiceInputItem item : content.getValues()) {
             Typeface itemTypeface = getTypeface(titleStyle, SwrveConversationConstants.DEFAULT_MVI_OPTION_TYPEFACE);
-            if (conversationVersion < 4) {
+            if (item.getStyle() == null) { // v1,v2, v3 of conversations have no ChoiceInputItem styles
                 ConversationStyle itemStyle = new ConversationStyle(0, "", titleStyle.getBg(), titleStyle.getFg(), null);
                 itemStyle.setFg(titleStyle.getFg());
                 itemStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_option_default_text_size));
@@ -530,7 +528,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     }
 
     private Typeface getTypeface(ConversationStyle style, Typeface defaultTypeface) {
-        if (conversationVersion > 3 && SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
+        if (SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
             File fontFile = new File(swrveConversation.getCacheDir(), style.getFontFile());
             if (fontFile.exists()) {
                 return Typeface.createFromFile(fontFile);
