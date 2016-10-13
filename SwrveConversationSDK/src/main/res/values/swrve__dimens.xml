@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="swrve__control_tray_top_margin">0dp</dimen>
-    <dimen name="swrve__content_tray_bottom_margin">10dp</dimen>
     <dimen name="swrve__control_tray_item_margin">5dp</dimen>
     <dimen name="swrve__conversation_max_modal_width">365dp</dimen>
     <dimen name="swrve__conversation_min_modal_top_bottom_padding">25dp</dimen>
+    <dimen name="swrve__conversation_control_padding">4dp</dimen>
+    <dimen name="swrve__conversation_control_default_text_size">18sp</dimen>
+    <dimen name="swrve__conversation_control_min_height">50dp</dimen>
+
+    <dimen name="swrve__conversation_mvi_title_default_text_size">22sp</dimen>
+    <dimen name="swrve__conversation_mvi_option_default_text_size">15sp</dimen>
+    <dimen name="swrve__conversation_mvi_padding">10dp</dimen>
 </resources>

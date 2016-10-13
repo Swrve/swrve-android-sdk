@@ -20,6 +20,7 @@ import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -154,6 +155,24 @@ public class SwrveTestUtils {
                 // empty
             }
         };
+    }
+
+    public static void writeFileToCache(File cache, String filename) {
+        File file = new File(cache, filename);
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(file, false);
+            fileWriter.write("empty");
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fileWriter != null) fileWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static void disableAssetsManager(Swrve swrve) {

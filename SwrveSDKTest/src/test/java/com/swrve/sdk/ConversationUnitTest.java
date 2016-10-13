@@ -249,8 +249,9 @@ public class ConversationUnitTest extends SwrveBaseTest {
     public void testSwrveConversationVersionFiltered() throws Exception {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_versions.json");
         assertNotNull(swrveSpy.campaigns);
-        // One campaign with no version (defaulted to 1), another campaign with v1, v4 is not loaded
-        assertThat(swrveSpy.campaigns.size(), equalTo(2));
+        // One campaign with no version (defaulted to 1), another campaign with v1, and another high version is not loaded
+        assertThat("Only 2 valid conversations can be parsed in this test. The raw json used in this test should contain one conversation that should not be parsed.\n " +
+                "If current feature increments the version, then be sure the raw json in this test gets incremented also.", swrveSpy.campaigns.size(), equalTo(2));
     }
 
     @Test

@@ -49,10 +49,6 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         return conversation;
     }
 
-    protected void setConversation(SwrveConversation conversation) {
-        this.conversation = conversation;
-    }
-
     /**
      * Search for a conversation related to the given trigger event at the given
      * time. This function will return null if too many messages were dismissed,
