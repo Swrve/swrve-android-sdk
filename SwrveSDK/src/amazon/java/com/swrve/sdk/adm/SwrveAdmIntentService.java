@@ -87,12 +87,19 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         SwrveLogger.i(TAG, "ADM Unregistered. RegistrationId: " + registrationId);
     }
 
+    protected boolean isSwrveRemoteNotification(final Bundle msg) {
+        Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
+        String msgId = (rawId != null) ? rawId.toString() : null;
+        return !SwrveHelper.isNullOrEmpty(msgId);
+    }
+
     private void processRemoteNotification(Bundle msg) {
         if (!isSwrveRemoteNotification(msg)) {
             SwrveLogger.i(TAG, "ADM notification: but not processing as it's missing " + SwrveAdmConstants.SWRVE_TRACKING_KEY);
             return;
         }
 
+        //Deduplicate notification
         //Get tracking key
         Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
         String msgId = (rawId != null) ? rawId.toString() : null;
@@ -156,12 +163,6 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         sharedPreferences.edit().putString(AMAZON_RECENT_PUSH_IDS, recentNotificationsJson).apply();
     }
 
-    protected boolean isSwrveRemoteNotification(final Bundle msg) {
-        Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
-        String msgId = (rawId != null) ? rawId.toString() : null;
-        return !SwrveHelper.isNullOrEmpty(msgId);
-    }
-
     private void processNotification(final Bundle msg) {
         try {
             // Put the message into a notification and post it.
@@ -169,25 +170,32 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
             final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
             final PendingIntent contentIntent = createPendingIntent(msg);
-            if (contentIntent != null) {
-                final Notification notification = createNotification(msg, contentIntent);
-                if (notification != null) {
-                    showNotification(mNotificationManager, notification);
-                }
+            if (contentIntent == null) {
+                SwrveLogger.e(TAG, "Error processing ADM push notification. Unable to create intent");
+                return;
             }
+            
+            final Notification notification = createNotification(msg, contentIntent);
+            if (notification == null) {
+                SwrveLogger.e(TAG, "Error processing ADM push notification. Unable to create notification.");
+                return;
+            }
+
+            //Time to show notification
+            showNotification(mNotificationManager, notification);
         } catch (Exception ex) {
             SwrveLogger.e(TAG, "Error processing ADM push notification", ex);
         }
-    }
-
-    private int generateTimestampId() {
-        return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 
     private int showNotification(NotificationManager notificationManager, Notification notification) {
         int id = generateTimestampId();
         notificationManager.notify(id, notification);
         return id;
+    }
+
+    private int generateTimestampId() {
+        return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 
     private Notification createNotification(Bundle msg, PendingIntent contentIntent) {
