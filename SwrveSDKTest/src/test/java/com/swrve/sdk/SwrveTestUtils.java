@@ -16,6 +16,7 @@ import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 
 import org.json.JSONObject;
+import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -82,7 +83,7 @@ public class SwrveTestUtils {
             for(String asset : imageAssets) {
                 assetsOnDisk.add(asset);
             }
-            swrve.assetsOnDisk = assetsOnDisk;
+            ((SwrveAssetsManagerImp)swrve.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
         }
     }
 
@@ -172,5 +173,11 @@ public class SwrveTestUtils {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static void disableAssetsManager(Swrve swrve) {
+        SwrveAssetsManager swrveAssetsManagerSpy = Mockito.spy(swrve.swrveAssetsManager);
+        Mockito.doNothing().when(swrveAssetsManagerSpy).downloadAssets(Mockito.anySet(), Mockito.any(SwrveAssetsCompleteCallback.class));
+        swrve.swrveAssetsManager = swrveAssetsManagerSpy;
     }
 }

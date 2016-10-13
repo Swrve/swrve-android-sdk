@@ -1,8 +1,7 @@
 package com.swrve.sdk;
 
 /**
- * User internally to assure exceptions won't bubble up when executing a runnable
- * in an executor.
+ * Used internally to assure exceptions won't bubble up when executing a runnable in an executor.
  */
 final class SwrveRunnables {
 
