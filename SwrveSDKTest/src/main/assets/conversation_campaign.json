@@ -49,7 +49,7 @@
                   },
                   "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                   "font_family": "my_awesome_font",
-                  "text_size": "123"
+                  "text_size": 123
                 },
                 "values": [
                   {
@@ -65,7 +65,7 @@
                       },
                       "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                       "font_family": "my_awesome_font_0",
-                      "text_size": "0"
+                      "text_size": 0
                     }
                   },
                   {
@@ -81,7 +81,7 @@
                       },
                       "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                       "font_family": "my_awesome_font_1",
-                      "text_size": "1"
+                      "text_size": 1
                     }
                   },
                   {
@@ -97,7 +97,7 @@
                       },
                       "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                       "font_family": "my_awesome_font_2",
-                      "text_size": "2"
+                      "text_size": 2
                     }
                   }
                 ],
@@ -116,9 +116,9 @@
                   },
                   "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                   "font_family": "my_awesome_font",
-                  "text_size": "123",
+                  "text_size": 123,
                   "padding": [1, 2, 3, 4],
-                  "line_space": "789",
+                  "line_space": 789,
                   "alignment": "left"
                 },
                 "tag": "1427199673126-fragment"
@@ -136,9 +136,9 @@
                   },
                   "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                   "font_family": "my_awesome_font",
-                  "text_size": "123",
+                  "text_size": 123,
                   "padding": [1, 2, 3, 4],
-                  "line_space": "789",
+                  "line_space": 789,
                   "alignment": "left"
                 },
                 "tag": "1427199673126-star-rating",
@@ -196,7 +196,7 @@
                   },
                   "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                   "font_family": "my_awesome_font",
-                  "text_size": "123",
+                  "text_size": 123,
                   "alignment": "left"
                 },
                 "target": "",
@@ -219,7 +219,7 @@
                   },
                   "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
                   "font_family": "my_awesome_font",
-                  "text_size": "123",
+                  "text_size": 123,
                   "alignment": "left"
                 },
                 "target": "1427305771170-2Button"
