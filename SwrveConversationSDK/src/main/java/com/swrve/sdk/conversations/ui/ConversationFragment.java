@@ -2,12 +2,11 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,12 +23,14 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.swrve.sdk.SwrveBaseConversation;
+import com.swrve.sdk.SwrveConversationConstants;
 import com.swrve.sdk.SwrveConversationEventHelper;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveIntentHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
+import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlActions;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
@@ -45,9 +46,12 @@ import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 import com.swrve.sdk.conversations.ui.video.WebVideoViewBase;
 import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.swrve.sdk.conversations.ui.SwrveConversationHelper.setBackgroundDrawable;
 
 public class ConversationFragment extends Fragment implements OnClickListener, ConversationInputChangedListener {
     private static final String LOG_TAG = "SwrveSDK";
@@ -157,10 +161,6 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         root.requestFocus();
     }
 
-    protected int getSDKBuildVersion() {
-        return Build.VERSION.SDK_INT;
-    }
-
     private void initLayout() {
         ConversationRoundedLinearLayout modalLayout = (ConversationRoundedLinearLayout) root.findViewById(R.id.swrve__conversation_modal);
         float pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
@@ -178,7 +178,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
             controlLayout.removeAllViews();
         }
 
-        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             controlLp = new LayoutParams(root.getLayoutParams());
         } else {
             controlLp = new LayoutParams(root.getLayoutParams().width, root.getLayoutParams().height);
@@ -196,15 +196,15 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
 
     @SuppressLint("NewApi")
     private void renderControls(Activity activity) {
-        TypedArray margins = activity.getTheme().obtainStyledAttributes(new int[]{R.attr.conversationControlLayoutMargin});
-        int controlLayoutMarginInPixels = margins.getDimensionPixelSize(0, 0);
+        int controlLayoutMarginInPixels = getResources().getDimensionPixelSize(R.dimen.swrve__control_tray_item_margin);
 
         int numControls = page.getControls().size();
         for (int i = 0; i < numControls; i++) {
             ButtonControl ctrl = page.getControls().get(i);
-            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl, R.attr.conversationControlButtonStyle);
+            applyButtonStyles(ctrl.getStyle());
+            ConversationButton ctrlConversationButton = new ConversationButton(activity, ctrl);
             LayoutParams buttonLP;
-            if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 buttonLP = new LayoutParams(controlLp);
             } else {
                 buttonLP = new LayoutParams(controlLp.width, controlLp.height);
@@ -221,6 +221,15 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         }
     }
 
+    private void applyButtonStyles(ConversationStyle style) {
+        Typeface typeface = getTypeface(style, SwrveConversationConstants.DEFAULT_BUTTON_TYPEFACE);
+        style.setTypeface(typeface);
+
+        if (style.getTextSize() == 0) { // v1,v2, v3 of conversations have no text size
+            style.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_default_text_size));
+        }
+    }
+
     private void renderContent(Activity activity) {
         for (ConversationAtom content : page.getContent()) {
             ConversationStyle conversationStyle = content.getStyle();
@@ -232,7 +241,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     if(SwrveHelper.hasFileAccess(filePath)) {
-                        ConversationImageView iv = iv = new ConversationImageView(activity, modelContent);
+                        ConversationImageView iv = new ConversationImageView(activity, modelContent);
                         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                         iv.setTag(content.getTag());
                         iv.setImageBitmap(bitmap);
@@ -278,12 +287,11 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     contentLayout.addView(view);
                 }
             } else if (content instanceof MultiValueInput) {
+                applyMultiValueInputStyles((MultiValueInput) content);
                 MultiValueInputControl input = MultiValueInputControl.inflate(activity, contentLayout, (MultiValueInput) content);
                 input.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                 input.setTag(content.getTag());
                 input.setContentChangedListener(this);
-                setBackgroundDrawable(input, colorStyle.getPrimaryDrawable());
-                input.setTextColor(conversationStyle.getTextColorInt());
                 contentLayout.addView(input);
             } else if (content instanceof StarRating) {
                 ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
@@ -293,10 +301,32 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         }
     }
 
+    private void applyMultiValueInputStyles(MultiValueInput content) {
+        ConversationStyle titleStyle = content.getStyle();
+        Typeface titleTypeface = getTypeface(titleStyle, SwrveConversationConstants.DEFAULT_MVI_TITLE_TYPEFACE);
+        titleStyle.setTypeface(titleTypeface);
+        if (titleStyle.getTextSize() == 0) { // v1,v2, v3 of conversations have no text size
+            titleStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_default_text_size));
+        }
+
+        for (ChoiceInputItem item : content.getValues()) {
+            Typeface itemTypeface = getTypeface(titleStyle, SwrveConversationConstants.DEFAULT_MVI_OPTION_TYPEFACE);
+            if (item.getStyle() == null) { // v1,v2, v3 of conversations have no ChoiceInputItem styles
+                ConversationStyle itemStyle = new ConversationStyle(0, "", titleStyle.getBg(), titleStyle.getFg(), null);
+                itemStyle.setFg(titleStyle.getFg());
+                itemStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_option_default_text_size));
+                itemStyle.setTypeface(itemTypeface);
+                item.setStyle(itemStyle);
+            } else {
+                item.getStyle().setTypeface(itemTypeface);
+            }
+        }
+    }
+
     @SuppressLint("NewApi")
     private LayoutParams getContentLayoutParams(int width, int height) {
         LayoutParams layoutParams;
-        if (getSDKBuildVersion() >= Build.VERSION_CODES.KITKAT) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             layoutParams = new LayoutParams(controlLp);
         } else {
             layoutParams = new LayoutParams(controlLp.width, controlLp.height);
@@ -488,15 +518,6 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         }
     }
 
-    @SuppressLint("NewApi")
-    private void setBackgroundDrawable(View view, Drawable drawable) {
-        if (getSDKBuildVersion() < Build.VERSION_CODES.JELLY_BEAN) {
-            view.setBackgroundDrawable(drawable);
-        } else {
-            view.setBackground(drawable);
-        }
-    }
-
     @Override
     public void onContentChanged(Map<String, Object> contentChanged, ConversationAtom content) {
         if(content instanceof MultiValueInput) {
@@ -504,5 +525,15 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         } else if(content instanceof StarRating) {
             stashStarRatingInputData(page.getTag(), content.getTag(), contentChanged);
         }
+    }
+
+    private Typeface getTypeface(ConversationStyle style, Typeface defaultTypeface) {
+        if (SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
+            File fontFile = new File(swrveConversation.getCacheDir(), style.getFontFile());
+            if (fontFile.exists()) {
+                return Typeface.createFromFile(fontFile);
+            }
+        }
+        return defaultTypeface;
     }
 }

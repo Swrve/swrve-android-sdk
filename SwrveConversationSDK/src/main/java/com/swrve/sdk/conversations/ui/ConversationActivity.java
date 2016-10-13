@@ -1,5 +1,6 @@
 package com.swrve.sdk.conversations.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -12,9 +13,24 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
+    private static final String EXTRA_CONVERSATION_KEY = "conversation";
+
     private static final String LOG_TAG = "SwrveSDK";
     private SwrveBaseConversation localConversation;
     private ConversationFragment conversationFragment;
+
+    public static void showConversation(Context context, SwrveBaseConversation conversation) {
+
+        if (context == null) {
+            SwrveLogger.e(LOG_TAG, "Can't display ConversationActivity without a context.");
+            return;
+        }
+
+        Intent intent = new Intent(context, ConversationActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(EXTRA_CONVERSATION_KEY, conversation);
+        context.startActivity(intent);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,7 +39,7 @@ public class ConversationActivity extends FragmentActivity {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                this.localConversation = (SwrveBaseConversation) extras.getSerializable("conversation");
+                this.localConversation = (SwrveBaseConversation) extras.getSerializable(EXTRA_CONVERSATION_KEY);
             }
         }
 

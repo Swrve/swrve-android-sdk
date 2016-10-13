@@ -1,9 +1,12 @@
 package com.swrve.sdk.conversations.engine.model.styles;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 
 import com.google.gson.annotations.SerializedName;
+import com.swrve.sdk.SwrveHelper;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
@@ -29,6 +32,7 @@ public class ConversationStyle implements Serializable {
     private ConversationColorStyle bg;
     private ConversationColorStyle fg;
     private ConversationColorStyle lb = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, DEFAULT_LB_COLOR);
+    private Typeface typeface; // not generated from json
     private String font_file;
     private String font_family;
     private int text_size;
@@ -47,6 +51,20 @@ public class ConversationStyle implements Serializable {
         this.lb = lb;
     }
 
+    public ConversationStyle(int border_radius, String type, ConversationColorStyle bg, ConversationColorStyle fg, ConversationColorStyle lb, String font_file, String font_family, int text_size, ALIGNMENT alignment) {
+        this.border_radius = border_radius;
+        this.type = type;
+        this.bg = bg;
+        this.fg = fg;
+        this.lb = lb;
+        this.font_file = font_file;
+        this.font_family = font_family;
+        this.text_size = text_size;
+        this.alignment = alignment;
+        this.padding = padding;
+        this.line_space = line_space;
+    }
+
     public int getBorderRadius() {
         return border_radius;
     }
@@ -57,6 +75,10 @@ public class ConversationStyle implements Serializable {
 
     public ConversationColorStyle getFg() {
         return fg;
+    }
+
+    public void setFg(ConversationColorStyle fg) {
+        this.fg = fg;
     }
 
     public ConversationColorStyle getLb() {
@@ -85,6 +107,24 @@ public class ConversationStyle implements Serializable {
         return this.type.equalsIgnoreCase(TYPE_OUTLINE);
     }
 
+    public Typeface getTypeface() {
+        return typeface;
+    }
+
+    public void setTypeface(Typeface typeface) {
+        this.typeface = typeface;
+    }
+
+    public Typeface getTypeface(File cacheDir, Typeface defaultTypeface) {
+        if (SwrveHelper.isNotNullOrEmpty(font_file)) {
+            File fontFile = new File(cacheDir, font_file);
+            if (fontFile.exists()) {
+                return Typeface.createFromFile(fontFile);
+            }
+        }
+        return defaultTypeface;
+    }
+
     public String getFontFile() {
         return font_file;
     }
@@ -97,8 +137,16 @@ public class ConversationStyle implements Serializable {
         return text_size;
     }
 
+    public void setTextSize(int text_size) {
+        this.text_size = text_size;
+    }
+
     public List<Integer> getPadding() {
         return padding;
+    }
+
+    public void setPadding(List<Integer> padding) {
+        this.padding = padding;
     }
 
     public float getLineSpace() {

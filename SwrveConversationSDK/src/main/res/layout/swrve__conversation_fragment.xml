@@ -28,7 +28,6 @@
 
                 <LinearLayout
                     android:id="@+id/swrve__content"
-                    style="?conversationContentStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
@@ -37,10 +36,9 @@
 
             <LinearLayout
                 android:id="@+id/swrve__controls"
-                style="?conversationControlTrayStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="?conversationControlTrayTopMargin"
+                android:layout_marginTop="@dimen/swrve__control_tray_top_margin"
                 android:layout_weight="0"
                 android:orientation="horizontal" />
         </LinearLayout>

@@ -42,6 +42,10 @@ public final class SwrveHelper {
         return (val == null || val.length() == 0);
     }
 
+    public static boolean isNotNullOrEmpty(String val) {
+        return !isNullOrEmpty(val);
+    }
+
     public static String generateSessionToken(String apiKey, int appId, String userId) {
         String timestamp = Long.toString((new Date().getTime()) / 1000);
 
