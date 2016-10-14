@@ -69,7 +69,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         ConversationAtom content1 = page1.getContent().get(0);
         assertNotNull(content1);
         assertNotNull(content1.getTag());
-        assertThat(content1.getType(), equalTo(ConversationAtom.TYPE_INPUT_MULTIVALUE));
+        assertThat(content1.getType(), equalTo(ConversationAtom.TYPE.INPUT_MULTIVALUE));
         assertThat(content1 instanceof MultiValueInput, equalTo(true));
         MultiValueInput multiValueInput = (MultiValueInput) content1;
         assertThat(multiValueInput.getDescription(), equalTo("Please select an answer from the radio buttons below 1:"));
@@ -81,7 +81,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         }
 
         ConversationAtom content2 = page1.getContent().get(2);
-        assertThat(content2.getType(), equalTo(ConversationAtom.TYPE_INPUT_STARRATING));
+        assertThat(content2.getType(), equalTo(ConversationAtom.TYPE.INPUT_STARRATING));
         StarRating starRating = (StarRating)content2;
         assertThat(starRating.getValue(), equalTo("<h1>Customer Service</h1>"));
         assertThat(starRating.getStarColor(), equalTo("#F8F8F8"));

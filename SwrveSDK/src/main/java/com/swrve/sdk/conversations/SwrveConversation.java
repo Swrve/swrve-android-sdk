@@ -48,32 +48,35 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
 
                 // check font and images from content
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
-                    if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        Content modelContent = (Content) conversationAtom;
-                        if (!isAssetInCache(assetsOnDisk, modelContent.getValue())) {
-                            SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
-                            return false;
-                        }
-                    } else if (ConversationAtom.TYPE_CONTENT_HTML.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        if (!isFontAssetInCache(assetsOnDisk, conversationAtom.getStyle())) {
-                            return false;
-                        }
-                    } else if (ConversationAtom.TYPE_INPUT_STARRATING.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        if (!isFontAssetInCache(assetsOnDisk, conversationAtom.getStyle())) {
-                            return false;
-                        }
-                    } else if (ConversationAtom.TYPE_INPUT_MULTIVALUE.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
-                        ConversationStyle style = multiValueInput.getStyle();
-                        if (!isFontAssetInCache(assetsOnDisk, multiValueInput.getStyle())) {
-                            return false;
-                        }
-                        // iterate through options
-                        for (ChoiceInputItem item : multiValueInput.getValues()) {
-                            if (!isFontAssetInCache(assetsOnDisk, item.getStyle())) {
+                    switch (conversationAtom.getType()) {
+                        case CONTENT_IMAGE:
+                            Content modelContent = (Content) conversationAtom;
+                            if (!isAssetInCache(assetsOnDisk, modelContent.getValue())) {
+                                SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
                                 return false;
                             }
-                        }
+                            break;
+                        case CONTENT_HTML:
+                        case INPUT_STARRATING:
+                            if (!isFontAssetInCache(assetsOnDisk, conversationAtom.getStyle())) {
+                                return false;
+                            }
+                            break;
+                        case INPUT_MULTIVALUE:
+                            MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
+                            ConversationStyle style = multiValueInput.getStyle();
+                            if (!isFontAssetInCache(assetsOnDisk, multiValueInput.getStyle())) {
+                                return false;
+                            }
+                            // iterate through options
+                            for (ChoiceInputItem item : multiValueInput.getValues()) {
+                                if (!isFontAssetInCache(assetsOnDisk, item.getStyle())) {
+                                    return false;
+                                }
+                            }
+                            break;
+                        case UNKNOWN:
+                            break;
                     }
                 }
 

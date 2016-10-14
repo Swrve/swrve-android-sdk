@@ -178,7 +178,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
         boolean assetDownloaded = false;
         for (ConversationPage conversationPage : conversation.getPages()) {
             for (ConversationAtom conversationAtom : conversationPage.getContent()) {
-                if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
+                if (ConversationAtom.TYPE.CONTENT_IMAGE == conversationAtom.getType()) {
                     Content modelContent = (Content) conversationAtom;
                     String filePath = conversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     Bitmap bitmap = BitmapFactory.decodeFile(filePath);

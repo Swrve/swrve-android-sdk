@@ -50,7 +50,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     }
 
     @Override
-    public Set<String> getAssetsOnDisk() { // todo what happens here?
+    public Set<String> getAssetsOnDisk() {
         synchronized (assetsOnDisk) {
             return this.assetsOnDisk;
         }

@@ -32,7 +32,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * Load a campaign from JSON data.
      */
     public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData,
-                                     Set<String> assetImages, Set<String> assetFonts) throws JSONException {
+                                     Set<String> assetImageQueue, Set<String> assetFontQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
 
         if(campaignData.has("conversation")) {
@@ -43,34 +43,40 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
 
                 // Add image and font assets to queue from content
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
-                    if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) { // todo
-                        Content modelContent = (Content) conversationAtom;
-                        assetImages.add(modelContent.getValue());
-                    } else if (ConversationAtom.TYPE_CONTENT_HTML.equalsIgnoreCase(conversationAtom.getType().toString())) { // todo
-                        addFontAsset(assetFonts, conversationAtom.getStyle());
-                    } else if (ConversationAtom.TYPE_INPUT_STARRATING.equalsIgnoreCase(conversationAtom.getType().toString())) { // todo
-                        addFontAsset(assetFonts, conversationAtom.getStyle());
-                    } else if (ConversationAtom.TYPE_INPUT_MULTIVALUE.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
-                        addFontAsset(assetFonts, multiValueInput.getStyle());
-                        // iterate through options
-                        for (ChoiceInputItem item : multiValueInput.getValues()) {
-                            addFontAsset(assetFonts, item.getStyle());
-                        }
+                    switch (conversationAtom.getType()) {
+                        case CONTENT_IMAGE:
+                            queueImageAsset(assetImageQueue, (Content) conversationAtom);
+                            break;
+                        case CONTENT_HTML:
+                        case INPUT_STARRATING:
+                            queueFontAsset(assetFontQueue, conversationAtom.getStyle());
+                            break;
+                        case INPUT_MULTIVALUE:
+                            MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
+                            queueFontAsset(assetFontQueue, multiValueInput.getStyle());
+                            // iterate through options
+                            for (ChoiceInputItem item : multiValueInput.getValues()) {
+                                queueFontAsset(assetFontQueue, item.getStyle());
+                            }
+                            break;
                     }
                 }
 
                 // Add font assets to queue from button control
                 for (ButtonControl buttonControl : conversationPage.getControls()) {
-                    addFontAsset(assetFonts, buttonControl.getStyle());
+                    queueFontAsset(assetFontQueue, buttonControl.getStyle());
                 }
             }
         }
     }
 
-    private void addFontAsset(Set<String> assetFonts, ConversationStyle style) {
+    private void queueImageAsset(Set<String> assetQueue, Content content) {
+        assetQueue.add(content.getValue());
+    }
+
+    private void queueFontAsset(Set<String> assetQueue, ConversationStyle style) {
         if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
-            assetFonts.add(style.getFontFile());
+            assetQueue.add(style.getFontFile());
         }
     }
 
