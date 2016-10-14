@@ -57,8 +57,24 @@ public class ConversationUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSwrveConversation() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+    public void testCdnRootV3() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_v3.json");
+        String cdnRoot = ((SwrveAssetsManagerImp)swrveSpy.swrveAssetsManager).cdnImages;
+        assertThat("Version 3 might be already cached, so need to make sure it does not fail", cdnRoot, equalTo("http://fake_cdn_root.com/someurl/image/"));
+    }
+
+    @Test
+    public void testCdnPaths() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json");
+        String cdnImages = ((SwrveAssetsManagerImp) swrveSpy.swrveAssetsManager).cdnImages;
+        assertThat("cdnImages is not being read correctly", cdnImages, equalTo("http://fake_cdn_root.com/someurl/image/"));
+        String cdnFonts = ((SwrveAssetsManagerImp) swrveSpy.swrveAssetsManager).cdnFonts;
+        assertThat("cdnFonts is not being read correctly", cdnFonts, equalTo("http://fake_cdn_root.com/someurl/font/"));
+    }
+
+    @Test
+    public void testConversationLoads() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
         assertThat(conversation.getPages().size(), equalTo(3));
@@ -69,8 +85,77 @@ public class ConversationUnitTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testConversationMissingAssets() throws Exception {
+
+        String fontMVITitle = "2617fb3c279e30dd7c180de8679a2e2d33cf3551";
+        String fontMVIOption1 = "2617fb3c279e30dd7c180de8679a2e2d33cf3552";
+        String fontMVIOption2 = "2617fb3c279e30dd7c180de8679a2e2d33cf3553";
+        String fontHtmlFrag = "2617fb3c279e30dd7c180de8679a2e2d33cf3554";
+        String fontStarRating = "2617fb3c279e30dd7c180de8679a2e2d33cf3555";
+        String fontButton1 = "2617fb3c279e30dd7c180de8679a2e2d33cf3556";
+        String fontButton2 = "2617fb3c279e30dd7c180de8679a2e2d33cf3557";
+
+        // missing all assets
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json");
+        assertNull(conversation);
+
+        // contains all assets
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption1, fontMVIOption2, fontHtmlFrag, fontStarRating, fontButton1, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNotNull(conversation);
+
+        // missing fontButton2 asset
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption1, fontMVIOption2, fontHtmlFrag, fontStarRating, fontButton1);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+
+        // missing fontButton1 asset
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption1, fontMVIOption2, fontHtmlFrag, fontStarRating, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+
+        // missing fontStarRating asset
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption1, fontMVIOption2, fontHtmlFrag, fontButton1, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+
+        // missing fontHtmlFrag asset
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption1, fontMVIOption2, fontStarRating, fontButton1, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+
+        // missing fontMVIOption2 asset
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption1, fontHtmlFrag, fontStarRating, fontButton1, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+
+        // missing fontMVIOption1 asset
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption2, fontHtmlFrag, fontStarRating, fontButton1, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+
+        // missing fontMVITitle asset
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVIOption1, fontMVIOption2, fontHtmlFrag, fontStarRating, fontButton1, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+
+        // contains all assets
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_with_diff_fonts.json", fontMVITitle, fontMVIOption1, fontMVIOption2, fontHtmlFrag, fontStarRating, fontButton1, fontButton2);
+        conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNotNull(conversation);
+    }
+
+    @Test
+    public void testSwrveConversationMissingAssets() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json"); // missing asset on purpose
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNull(conversation);
+    }
+
+    @Test
     public void testGetConversationForEvent() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
 
         assertNull(swrveSpy.getConversationForEvent("some_trigger_that_doesn't_exist", new HashMap<String, String>()));
 
@@ -81,7 +166,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
 
     @Test
     public void testConversationAssetsDownload() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
 
         SwrveBaseCampaign swrveCampaign = swrveSpy.campaigns.get(0);
         assertTrue(swrveCampaign instanceof SwrveConversationCampaign);

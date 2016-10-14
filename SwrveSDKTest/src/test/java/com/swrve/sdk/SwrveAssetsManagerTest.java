@@ -40,21 +40,20 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
 
     @Test
     public void testFilesAlreadyDownloaded() throws Exception {
-        SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity, "http://www.fakecdn.com/");
+        SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity);
         assetsManager.setStorageDir(mActivity.getCacheDir());
         SwrveAssetsManagerImp assetsManagerSpy = Mockito.spy(assetsManager);
 
         writeFileToCache("asset1");
         writeFileToCache("asset2");
 
-        Set<String> assetsQueue = new HashSet<>();
-        assetsQueue.add("asset1");
-        assetsQueue.add("asset2");
+        Set<String> assetsQueueImages = new HashSet<>();
+        assetsQueueImages.add("asset1");
+        assetsQueueImages.add("asset2");
 
-        assetsManagerSpy.downloadAssets(assetsQueue, null);
+        assetsManagerSpy.downloadAssets(assetsQueueImages, null, null);
 
-        ArgumentCaptor<String> assetPathCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(assetsManagerSpy, Mockito.never()).downloadAsset(assetPathCaptor.capture());
+        Mockito.verify(assetsManagerSpy, Mockito.never()).downloadAsset(Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -80,7 +79,9 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         server.start();
         String cdnPath = server.url("/").toString();
 
-        SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity, cdnPath);
+        SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity);
+        assetsManager.setCdnImages(cdnPath);
+        assetsManager.setCdnFonts(cdnPath);
         assetsManager.setStorageDir(mActivity.getCacheDir());
         SwrveAssetsManagerImp assetsManagerSpy = Mockito.spy(assetsManager);
 
@@ -95,10 +96,10 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assertCacheFileDoesNotExist(asset2);
         assertCacheFileDoesNotExist(asset3);
 
-        assetsManagerSpy.downloadAssets(assetsQueue, null); // null callback on purpose
+        assetsManagerSpy.downloadAssets(assetsQueue, null, null); // null callback on purpose
 
         ArgumentCaptor<String> assetPathCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAsset(assetPathCaptor.capture());
+        Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAsset(assetPathCaptor.capture(), Mockito.anyString());
         assertEquals(2, assetPathCaptor.getAllValues().size());
         assertTrue("An attempt to download asset2 did not occur", assetPathCaptor.getAllValues().contains(asset2));
         assertTrue("An attempt to download asset3 did not occur", assetPathCaptor.getAllValues().contains(asset3));
@@ -116,7 +117,9 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         server.start();
         String cdnPath = server.url("/").toString();
 
-        SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity, cdnPath);
+        SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity);
+        assetsManager.setCdnImages(cdnPath);
+        assetsManager.setCdnFonts(cdnPath);
         assetsManager.setStorageDir(mActivity.getCacheDir());
 
         Set<String> assetsQueue = new HashSet<>();
@@ -129,7 +132,7 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
             }
         };
         SwrveAssetsCompleteCallback callbackSpy = Mockito.spy(callback);
-        assetsManager.downloadAssets(assetsQueue, callbackSpy);
+        assetsManager.downloadAssets(assetsQueue, null, callbackSpy);
 
         Mockito.verify(callbackSpy, Mockito.atLeastOnce()).complete();
     }

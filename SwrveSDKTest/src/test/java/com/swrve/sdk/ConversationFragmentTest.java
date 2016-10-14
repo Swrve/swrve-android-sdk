@@ -75,7 +75,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
         swrveSpy.init(mActivity);
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
         assertNotNull(swrveSpy.campaigns);
         SwrveConversation realSwrveConversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(realSwrveConversation);

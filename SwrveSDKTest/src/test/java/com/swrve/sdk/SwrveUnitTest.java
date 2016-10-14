@@ -1,23 +1,17 @@
 package com.swrve.sdk;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.os.Build;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.test.BuildConfig;
-import com.swrve.sdk.test.MainActivity;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowLog;
-
-import java.lang.reflect.Field;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -26,26 +20,17 @@ import static org.junit.Assert.assertNotSame;
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class, sdk=21)
 @TargetApi(Build.VERSION_CODES.GINGERBREAD)
-public class SwrveUnitTest {
-
-    private Activity mActivity;
+public class SwrveUnitTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
-        removeSingletonInstance();
-        mActivity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
-        ShadowLog.stream = System.out;
+        super.setUp();
     }
 
     @After
     public void tearDown() throws Exception {
-        removeSingletonInstance();
-    }
-
-    private void removeSingletonInstance() throws Exception{
-        Field instance = SwrveSDKBase.class.getDeclaredField("instance");
-        instance.setAccessible(true);
-        instance.set(null, null);
+        super.tearDown();
+        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
@@ -75,7 +60,7 @@ public class SwrveUnitTest {
         String userId = swrve.getUserId();
         assertNotNull(userId);
 
-        removeSingletonInstance();
+        SwrveTestUtils.removeSwrveSDKSingletonInstance();
 
         SwrveConfig config = new SwrveConfig();
         config.setUserId("custom_user_id");
@@ -91,7 +76,7 @@ public class SwrveUnitTest {
         String userId = swrve.getUserId();
         assertNotNull(userId);
 
-        removeSingletonInstance();
+        SwrveTestUtils.removeSwrveSDKSingletonInstance();
 
         swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey");
         String userId2 = swrve.getUserId();
