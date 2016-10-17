@@ -52,7 +52,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         padding.add(3);
         padding.add(4);
 
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
         assertThat(conversation.getPages().size(), equalTo(3));
@@ -69,7 +69,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         ConversationAtom content1 = page1.getContent().get(0);
         assertNotNull(content1);
         assertNotNull(content1.getTag());
-        assertThat(content1.getType(), equalTo(ConversationAtom.TYPE_INPUT_MULTIVALUE));
+        assertThat(content1.getType(), equalTo(ConversationAtom.TYPE.INPUT_MULTIVALUE));
         assertThat(content1 instanceof MultiValueInput, equalTo(true));
         MultiValueInput multiValueInput = (MultiValueInput) content1;
         assertThat(multiValueInput.getDescription(), equalTo("Please select an answer from the radio buttons below 1:"));
@@ -81,7 +81,7 @@ public class ConversationModelTest extends SwrveBaseTest {
         }
 
         ConversationAtom content2 = page1.getContent().get(2);
-        assertThat(content2.getType(), equalTo(ConversationAtom.TYPE_INPUT_STARRATING));
+        assertThat(content2.getType(), equalTo(ConversationAtom.TYPE.INPUT_STARRATING));
         StarRating starRating = (StarRating)content2;
         assertThat(starRating.getValue(), equalTo("<h1>Customer Service</h1>"));
         assertThat(starRating.getStarColor(), equalTo("#F8F8F8"));
@@ -103,7 +103,7 @@ public class ConversationModelTest extends SwrveBaseTest {
 
     @Test
     public void test12887LightBoxRadius() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
         assertThat(conversation.getPages().size(), equalTo(3));

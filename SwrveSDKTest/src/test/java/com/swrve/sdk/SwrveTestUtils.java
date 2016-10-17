@@ -71,16 +71,16 @@ public class SwrveTestUtils {
      * Loads the campaigns from json file into swrve sdk
      * @param swrve sdk
      * @param campaignFileName the cfile name in assets folder containing the campaign json
-     * @param imageAssets an array of downloaded assets so campaign is eligible
+     * @param assets an array of downloaded assets so campaign is eligible (font or image)
      * @throws Exception
      */
-    public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... imageAssets) throws Exception {
+    public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... assets) throws Exception {
         String json = SwrveTestUtils.getAssetAsText(context, campaignFileName);
         JSONObject jsonObject = new JSONObject(json);
         swrve.loadCampaignsFromJSON(jsonObject, swrve.campaignsState);
-        if (imageAssets.length > 0) {
+        if (assets.length > 0) {
             Set<String> assetsOnDisk = new HashSet<>();
-            for(String asset : imageAssets) {
+            for(String asset : assets) {
                 assetsOnDisk.add(asset);
             }
             ((SwrveAssetsManagerImp)swrve.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
@@ -177,7 +177,7 @@ public class SwrveTestUtils {
 
     public static void disableAssetsManager(Swrve swrve) {
         SwrveAssetsManager swrveAssetsManagerSpy = Mockito.spy(swrve.swrveAssetsManager);
-        Mockito.doNothing().when(swrveAssetsManagerSpy).downloadAssets(Mockito.anySet(), Mockito.any(SwrveAssetsCompleteCallback.class));
+        Mockito.doNothing().when(swrveAssetsManagerSpy).downloadAssets(Mockito.anySet(), Mockito.anySet(), Mockito.any(SwrveAssetsCompleteCallback.class));
         swrve.swrveAssetsManager = swrveAssetsManagerSpy;
     }
 }

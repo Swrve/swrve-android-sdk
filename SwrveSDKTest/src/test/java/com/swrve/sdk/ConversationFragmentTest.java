@@ -75,7 +75,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
         swrveSpy.init(mActivity);
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
         assertNotNull(swrveSpy.campaigns);
         SwrveConversation realSwrveConversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(realSwrveConversation);
@@ -93,7 +93,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testControls0Button() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 0, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 0, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         assertThat(controls.getVisibility(), equalTo(View.VISIBLE));
@@ -104,7 +104,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testControls1Button() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         assertThat(controls.getVisibility(), equalTo(View.VISIBLE));
@@ -117,7 +117,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testControls2Button() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 2, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 2, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         assertThat(controls.getVisibility(), equalTo(View.VISIBLE));
@@ -133,7 +133,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testControls3Button() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         assertThat(controls.getVisibility(), equalTo(View.VISIBLE));
@@ -152,7 +152,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testControls3ButtonV4() {
         int conversationVersation = 4;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersation, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersation, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         assertThat(controls.getVisibility(), equalTo(View.VISIBLE));
@@ -180,25 +180,25 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testCurvedButton() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 10));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 10));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         ConversationButton conversationButton = (ConversationButton) controls.getChildAt(1);
         assertThat(conversationButton.getBorderRadius(), equalTo(2.5f));
 
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(1, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "outline", 20));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(1, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "outline", 20));
         fragment = createConversationFragment(partialMockSwrveConversation);
         controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         conversationButton = (ConversationButton) controls.getChildAt(1);
         assertThat(conversationButton.getBorderRadius(), equalTo(5.0f));
 
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(1, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "outline", 100));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(1, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "outline", 100));
         fragment = createConversationFragment(partialMockSwrveConversation);
         controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         conversationButton = (ConversationButton) controls.getChildAt(1);
         assertThat(conversationButton.getBorderRadius(), equalTo(25.0f));
 
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(1, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "outline", 200));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(1, 1, 3, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "outline", 200));
         fragment = createConversationFragment(partialMockSwrveConversation);
         controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         conversationButton = (ConversationButton) controls.getChildAt(1);
@@ -208,7 +208,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testRoundedPage() {
         int conversationVersion = 0;
-        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50);
+        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50);
         ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
         ConversationColorStyle lbStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#5f68a3");
         ConversationStyle pageStyle0 = new ConversationStyle(20, ConversationStyle.TYPE_SOLID, bgStyle, null, lbStyle); // border 20
@@ -224,7 +224,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testContentImage() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
@@ -235,7 +235,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testContentHtml() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_HTML, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_HTML, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
@@ -246,7 +246,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testContentVideo() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_VIDEO, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_VIDEO, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
@@ -257,7 +257,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testContentSpacer() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_SPACER, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_SPACER, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
@@ -268,7 +268,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testMultiValue() {
         int conversationVersation = 3;
-        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersation, 1, ConversationAtom.TYPE_INPUT_MULTIVALUE, "solid"));
+        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersation, 1, ConversationAtom.TYPE.INPUT_MULTIVALUE, "solid"));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
@@ -289,7 +289,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testMultiValueV4() {
         int conversationVersation = 4;
-        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersation, 1, ConversationAtom.TYPE_INPUT_MULTIVALUE, "solid"));
+        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersation, 1, ConversationAtom.TYPE.INPUT_MULTIVALUE, "solid"));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(content.getVisibility(), equalTo(View.VISIBLE));
@@ -313,7 +313,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testStarRatingKitKat() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE_INPUT_STARRATING, "solid"));
+        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE.INPUT_STARRATING, "solid"));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout contentLinearLayout = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(contentLinearLayout.getChildCount(), equalTo(1));
@@ -334,7 +334,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testStarRating() {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE_INPUT_STARRATING, "solid"));
+        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE.INPUT_STARRATING, "solid"));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout contentLinearLayout = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(contentLinearLayout.getChildCount(), equalTo(1));
@@ -356,7 +356,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testLightboxDefaultColor() {
         int conversationVersion = 0;
-        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 2, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50);
+        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 2, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50);
         partialMockSwrveConversation.setPages(pages);
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
 
@@ -383,7 +383,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testLightboxColor() {
         int conversationVersion = 0;
-        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 2, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50);
+        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 2, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50);
         ConversationColorStyle bgStyle0 = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
         ConversationColorStyle lbStyle0 = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#5f68a3");
         ConversationStyle pageStyle0 = new ConversationStyle(0, ConversationStyle.TYPE_SOLID, bgStyle0, null, lbStyle0);
@@ -418,7 +418,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testOnResume() {
         int conversationVersion = 0;
-        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 2, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50);
+        ArrayList<ConversationPage> pages = getMockContentConversationPages(conversationVersion, 2, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50);
         partialMockSwrveConversation.setPages(pages);
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         // first page0
@@ -435,7 +435,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testOnResumeWithMultiValueInput() {
         int conversationVersion = 0;
-        ArrayList<ConversationPage> pages = getMockInputConversationPages(conversationVersion, 2, ConversationAtom.TYPE_INPUT_MULTIVALUE, "solid");
+        ArrayList<ConversationPage> pages = getMockInputConversationPages(conversationVersion, 2, ConversationAtom.TYPE.INPUT_MULTIVALUE, "solid");
         partialMockSwrveConversation.setPages(pages);
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         ConversationPage page0 = pages.get(0);
@@ -466,7 +466,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testOnResumeWithRatingBar() {
         int conversationVersion = 0;
-        ArrayList<ConversationPage> pages = getMockInputConversationPages(conversationVersion, 2, ConversationAtom.TYPE_INPUT_STARRATING, "solid");
+        ArrayList<ConversationPage> pages = getMockInputConversationPages(conversationVersion, 2, ConversationAtom.TYPE.INPUT_STARRATING, "solid");
         partialMockSwrveConversation.setPages(pages);
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         ConversationPage page0 = pages.get(0);
@@ -494,7 +494,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testOnBackPressed() throws Exception{
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE_INPUT_MULTIVALUE, "solid"));
+        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE.INPUT_MULTIVALUE, "solid"));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
 
         HashMap<String, UserInputResult> userData = new HashMap<String, UserInputResult>();
@@ -514,7 +514,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testButtonClickWithActionCall() throws Exception {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         ConversationButton conversationButton = (ConversationButton)controls.getChildAt(0);
@@ -536,7 +536,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testButtonClickWithActionVisit() throws Exception {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.VISIT_URL_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.VISIT_URL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         ConversationButton conversationButton = (ConversationButton)controls.getChildAt(0);
@@ -560,7 +560,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testButtonClickWithActionDeepLink() throws Exception {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.DEEPLINK_ACTION, ConversationAtom.TYPE_CONTENT_IMAGE, "solid", 50));
+        partialMockSwrveConversation.setPages(getMockContentConversationPages(conversationVersion, 1, 1, ControlActions.DEEPLINK_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout controls = (LinearLayout) fragment.getView().findViewById(R.id.swrve__controls);
         ConversationButton conversationButton = (ConversationButton)controls.getChildAt(0);
@@ -582,7 +582,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testCommitMultiInputValueToEvents() throws Exception {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 2, ConversationAtom.TYPE_INPUT_MULTIVALUE, "solid"));
+        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 2, ConversationAtom.TYPE.INPUT_MULTIVALUE, "solid"));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
 
         LinearLayout content = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
@@ -612,7 +612,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Test
     public void testCommitRatingBarToEvents() throws Exception {
         int conversationVersion = 0;
-        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE_INPUT_STARRATING, "solid"));
+        partialMockSwrveConversation.setPages(getMockInputConversationPages(conversationVersion, 1, ConversationAtom.TYPE.INPUT_STARRATING, "solid"));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout contentLinearLayout = (LinearLayout) fragment.getView().findViewById(R.id.swrve__content);
         assertThat(contentLinearLayout.getChildCount(), equalTo(1));
@@ -645,7 +645,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     }
 
     // Mock pages of type CONTENT
-    private ArrayList<ConversationPage> getMockContentConversationPages(final int conversationVersion, int numPages, final int numButtonControls, final Object action, String contentType,
+    private ArrayList<ConversationPage> getMockContentConversationPages(final int conversationVersion, int numPages, final int numButtonControls, final Object action, ConversationAtom.TYPE contentType,
                                                                         final String buttonType, final int cornerRadiusPerCent) {
         ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
         ConversationColorStyle lbStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, ConversationStyle.DEFAULT_LB_COLOR);
@@ -706,7 +706,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     }
 
     // Mock pages of type INPUT
-    private ArrayList<ConversationPage> getMockInputConversationPages(final int conversationVersion, final int num, String contentType, final String buttonType) {
+    private ArrayList<ConversationPage> getMockInputConversationPages(final int conversationVersion, final int num, ConversationAtom.TYPE contentType, final String buttonType) {
         ConversationColorStyle bgStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, "#ffffff");
         ConversationColorStyle lbStyle = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, ConversationStyle.DEFAULT_LB_COLOR);
         ConversationStyle pageStyle = new ConversationStyle(0, ConversationStyle.TYPE_SOLID, bgStyle, null, lbStyle);
@@ -731,7 +731,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
             }
 
             ArrayList<ConversationAtom> contents = new ArrayList<>();
-            if (contentType.equals(ConversationAtom.TYPE_INPUT_MULTIVALUE)) {
+            if (contentType.equals(ConversationAtom.TYPE.INPUT_MULTIVALUE)) {
                 MultiValueInput inputBase = mock(MultiValueInput.class);
                 when(inputBase.getType()).thenReturn(contentType);
                 when(inputBase.getDescription()).thenReturn("description" + i);

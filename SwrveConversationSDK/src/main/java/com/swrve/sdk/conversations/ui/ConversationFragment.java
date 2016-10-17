@@ -237,8 +237,8 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
 
             if (content instanceof Content) {
                 Content modelContent = (Content) content;
-                String modelType = modelContent.getType().toString();
-                if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_IMAGE)) {
+                ConversationAtom.TYPE modelType = modelContent.getType();
+                if (modelType == ConversationAtom.TYPE.CONTENT_IMAGE) {
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     if(SwrveHelper.hasFileAccess(filePath)) {
                         ConversationImageView iv = new ConversationImageView(activity, modelContent);
@@ -252,14 +252,14 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     } else {
                         SwrveLogger.e(LOG_TAG, "Could not render conversation asset image because there is no read access to:" + filePath);
                     }
-                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_HTML)) {
+                } else if (modelType == ConversationAtom.TYPE.CONTENT_HTML) {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
                     view.setTag(content.getTag());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     view.setBackgroundColor(Color.TRANSPARENT);
                     setBackgroundDrawable(view, colorStyle.getPrimaryDrawable());
                     contentLayout.addView(view);
-                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_VIDEO)) {
+                } else if (modelType == ConversationAtom.TYPE.CONTENT_VIDEO) {
                     YoutubeVideoView view = new YoutubeVideoView(activity, modelContent, fullScreenFrame);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);
@@ -277,7 +277,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                         }
                     });
                     contentLayout.addView(view);
-                } else if (modelType.equalsIgnoreCase(ConversationAtom.TYPE_CONTENT_SPACER)) {
+                } else if (modelType == ConversationAtom.TYPE.CONTENT_SPACER) {
                     View view = new View(activity);
                     view.setTag(content.getTag());
                     view.setBackgroundColor(Color.TRANSPARENT);

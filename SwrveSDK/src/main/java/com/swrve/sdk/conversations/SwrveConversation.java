@@ -3,11 +3,15 @@ package com.swrve.sdk.conversations;
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.conversations.engine.model.ButtonControl;
+import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.conversations.engine.model.MultiValueInput;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 
 import org.json.JSONException;
@@ -35,28 +39,70 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
         this.campaign = campaign;
     }
 
-    protected boolean assetInCache(Set<String> assetsOnDisk, String asset) {
-        return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
-    }
-
     /**
      * @return has the conversation been downloaded fully yet
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
         if (this.pages != null) {
             for (ConversationPage conversationPage : pages) {
+
+                // check font and images from content
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
-                    if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        Content modelContent = (Content) conversationAtom;
-                        if (!this.assetInCache(assetsOnDisk, modelContent.getValue())) {
-                            SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
-                            return false;
-                        }
+                    switch (conversationAtom.getType()) {
+                        case CONTENT_IMAGE:
+                            Content modelContent = (Content) conversationAtom;
+                            if (!isAssetInCache(assetsOnDisk, modelContent.getValue())) {
+                                SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
+                                return false;
+                            }
+                            break;
+                        case CONTENT_HTML:
+                        case INPUT_STARRATING:
+                            if (!isFontAssetInCache(assetsOnDisk, conversationAtom.getStyle())) {
+                                return false;
+                            }
+                            break;
+                        case INPUT_MULTIVALUE:
+                            MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
+                            ConversationStyle style = multiValueInput.getStyle();
+                            if (!isFontAssetInCache(assetsOnDisk, multiValueInput.getStyle())) {
+                                return false;
+                            }
+                            // iterate through options
+                            for (ChoiceInputItem item : multiValueInput.getValues()) {
+                                if (!isFontAssetInCache(assetsOnDisk, item.getStyle())) {
+                                    return false;
+                                }
+                            }
+                            break;
+                        case UNKNOWN:
+                            break;
+                    }
+                }
+
+                // check font asset in button
+                for (ButtonControl buttonControl : conversationPage.getControls()) {
+                    if (!isFontAssetInCache(assetsOnDisk, buttonControl.getStyle())) {
+                        return false;
                     }
                 }
             }
         }
 
+        return true;
+    }
+
+    private boolean isAssetInCache(Set<String> assetsOnDisk, String asset) {
+        return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
+    }
+
+    private boolean isFontAssetInCache(Set<String> assetsOnDisk, ConversationStyle style) {
+        if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
+            if (!isAssetInCache(assetsOnDisk, style.getFontFile())) {
+                SwrveLogger.i(LOG_TAG, "Conversation font asset not yet downloaded: " + style.getFontFile());
+                return false;
+            }
+        }
         return true;
     }
 

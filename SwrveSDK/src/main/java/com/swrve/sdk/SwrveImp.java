@@ -78,7 +78,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
-    protected static final String DEFAULT_CDN_ROOT = "https://content-cdn.swrve.com/messaging/message_image/";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
     protected static final String RESOURCES_CACHE_CATEGORY = "srcngt2"; // Saved securely
@@ -168,7 +167,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.restClient = createRESTClient();
         this.bindCounter = new AtomicInteger();
         this.autoShowMessagesEnabled = true;
-        this.swrveAssetsManager = new SwrveAssetsManagerImp(context, DEFAULT_CDN_ROOT);
+        this.swrveAssetsManager = new SwrveAssetsManagerImp(context);
         this.newSessionInterval = config.getNewSessionInterval();
 
         initContext(context);
@@ -671,10 +670,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 return;
             }
 
-            // CDN
-            String cdnRoot = json.getString("cdn_root");
-            swrveAssetsManager.setCdnPath(cdnRoot);
-            SwrveLogger.i(LOG_TAG, "CDN URL " + cdnRoot);
+            updateCdnPaths(json);
 
             // App Data
             JSONObject gamesData = json.getJSONObject("game_data");
@@ -761,12 +757,14 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             }
 
             boolean mustLoadPreviousState = (wasPreviouslyQAUser || qaUser == null || !qaUser.isResetDevice());
-            List<SwrveBaseCampaign> newCampaigns = new ArrayList<SwrveBaseCampaign>();
-            Set<String> assetsQueue = new HashSet<String>();
+            List<SwrveBaseCampaign> newCampaigns = new ArrayList<>();
+            Set<String> assetsQueueImages = new HashSet<>();
+            Set<String> assetsQueueFonts = new HashSet<>();
             for (int i = 0, j = jsonCampaigns.length(); i < j; i++) {
                 JSONObject campaignData = jsonCampaigns.getJSONObject(i);
                 // Load campaign and get assets to be loaded
-                Set<String> campaignAssetsQueue = new HashSet<String>();
+                Set<String> campaignAssetQueueImages = new HashSet<>();
+                Set<String> campaignAssetQueueFonts = new HashSet<>();
 
                 // Check filters (permission requests, platform)
                 boolean passesAllFilters = true;
@@ -784,16 +782,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     if (campaignData.has("conversation")) {
                         int conversationVersionDownloaded = campaignData.optInt("conversation_version", 1);
                         if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
-                            campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
+                            campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetQueueImages, campaignAssetQueueFonts);
                         } else {
                             SwrveLogger.i(LOG_TAG, "Conversation version " + conversationVersionDownloaded + " cannot be loaded with this SDK version");
                         }
                     } else {
-                        campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
+                        campaign = loadCampaignFromJSON(campaignData, campaignAssetQueueImages);
                     }
 
                     if (campaign != null) {
-                        assetsQueue.addAll(campaignAssetsQueue);
+                        assetsQueueImages.addAll(campaignAssetQueueImages);
+                        assetsQueueFonts.addAll(campaignAssetQueueFonts);
 
                         // Check if we need to reset the device for QA, otherwise load campaign state
                         if (mustLoadPreviousState) {
@@ -824,7 +823,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
             // Launch load assets, then add to active campaigns
             // Note that campaign is also added to campaigns list in this function
-            downloadAssets(assetsQueue);
+            downloadAssets(assetsQueueImages, assetsQueueFonts);
 
             // Update current list of campaigns with new ones
             this.campaigns = new ArrayList<SwrveBaseCampaign>(newCampaigns);
@@ -833,11 +832,26 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
+    private void updateCdnPaths(JSONObject json) throws JSONException {
+        if(json.has("cdn_root")) {
+            String cdnRoot = json.getString("cdn_root");
+            swrveAssetsManager.setCdnImages(cdnRoot);
+            SwrveLogger.i(LOG_TAG, "CDN URL " + cdnRoot);
+        } else if(json.has("cdn_paths")) {
+            JSONObject cdnPaths = json.getJSONObject("cdn_paths");
+            String cdnImages = cdnPaths.getString("message_images");
+            String cdnFonts = cdnPaths.getString("message_fonts");
+            swrveAssetsManager.setCdnImages(cdnImages);
+            swrveAssetsManager.setCdnFonts(cdnFonts);
+            SwrveLogger.i(LOG_TAG, "CDN URL images:" + cdnImages + " fonts:" + cdnFonts);
+        }
+    }
+
     private boolean supportsDeviceFilter(String requirement) {
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
     }
 
-    protected void downloadAssets(final Set<String> assetsQueue) {
+    protected void downloadAssets(final Set<String> assetsQueueImages, final Set<String> assetsQueueFonts) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
@@ -850,7 +864,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             executorService.execute(SwrveRunnables.withoutExceptions(new Runnable() {
                 @Override
                 public void run() {
-                    swrveAssetsManager.downloadAssets(assetsQueue, callback);
+                    swrveAssetsManager.downloadAssets(assetsQueueImages, assetsQueueFonts, callback);
                 }
             }));
         } finally {
@@ -862,8 +876,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
-    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
-        return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetsQueue);
+    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetQueueImages, Set<String> assetQueueFonts) throws JSONException {
+        return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetQueueImages, assetQueueFonts);
     }
 
     protected void saveCampaignsState() {

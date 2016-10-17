@@ -21,17 +21,22 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     protected Set<String> assetsOnDisk = new HashSet<>();
 
     protected final Context context;
-    protected String cdnPath;
+    protected String cdnImages;
+    protected String cdnFonts;
     protected File storageDir;
 
-    protected SwrveAssetsManagerImp(Context context, String cdnPath) {
+    protected SwrveAssetsManagerImp(Context context) {
         this.context = context;
-        this.cdnPath = cdnPath;
     }
 
     @Override
-    public void setCdnPath(String cdnPath) {
-        this.cdnPath = cdnPath;
+    public void setCdnImages(String cdnImages) {
+        this.cdnImages = cdnImages;
+    }
+
+    @Override
+    public void setCdnFonts(String cdnFonts) {
+        this.cdnFonts = cdnFonts;
     }
 
     @Override
@@ -52,22 +57,36 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     }
 
     @Override
-    public void downloadAssets(Set<String> assetsQueue, SwrveAssetsCompleteCallback callback) {
-        Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
-        if (assetsToDownload.size() > 0 && !storageDir.canWrite()) {
+    public void downloadAssets(Set<String> assetsQueueImages, Set<String> assetsQueueFonts, SwrveAssetsCompleteCallback callback) {
+
+        if (!storageDir.canWrite()) {
             SwrveLogger.e(LOG_TAG, "Could not download assets because do not have write access to storageDir:" + storageDir);
         } else {
-            for (String asset : assetsToDownload) {
-                boolean success = downloadAsset(asset);
-                if (success) {
-                    synchronized (assetsOnDisk) {
-                        assetsOnDisk.add(asset);
-                    }
-                }
-            }
+            downloadAssets(assetsQueueImages, cdnImages);
+            downloadAssets(assetsQueueFonts, cdnFonts);
         }
         if (callback != null) {
             callback.complete();
+        }
+    }
+
+    protected void downloadAssets(final Set<String> assetsQueue, final String cdnRoot) {
+        if (SwrveHelper.isNullOrEmpty(cdnRoot)) {
+            SwrveLogger.e(LOG_TAG, "Error downloading assets. No cdnRoot url.");
+            return;
+        }
+        if(assetsQueue == null) {
+            return;
+        }
+
+        Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
+        for (String asset : assetsToDownload) {
+            boolean success = downloadAsset(asset, cdnRoot);
+            if (success) {
+                synchronized (assetsOnDisk) {
+                    assetsOnDisk.add(asset);
+                }
+            }
         }
     }
 
@@ -86,9 +105,9 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         return assetsQueue;
     }
 
-    protected boolean downloadAsset(final String assetPath) {
+    protected boolean downloadAsset(final String assetPath, final String cdnRoot) {
         boolean success = false;
-        String url = cdnPath + assetPath;
+        String url = cdnRoot + assetPath;
         InputStream inputStream = null;
         try {
             URLConnection openConnection = new URL(url).openConnection();

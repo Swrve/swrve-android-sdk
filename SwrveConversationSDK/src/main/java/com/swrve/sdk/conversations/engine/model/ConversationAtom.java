@@ -1,23 +1,28 @@
 package com.swrve.sdk.conversations.engine.model;
 
 
+import com.google.gson.annotations.SerializedName;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import java.io.Serializable;
 
 public abstract class ConversationAtom implements Serializable {
-    public static final String TYPE_CONTENT_HTML = "html-fragment";
-    public static final String TYPE_CONTENT_IMAGE = "image";
-    public static final String TYPE_CONTENT_VIDEO = "video";
-    public static final String TYPE_CONTENT_SPACER = "spacer";
-    public static final String TYPE_INPUT_MULTIVALUE = "multi-value-input";
-    public static final String TYPE_INPUT_STARRATING = "star-rating";
+
+    public enum TYPE {
+        @SerializedName("html-fragment")        CONTENT_HTML,
+        @SerializedName("image")                CONTENT_IMAGE,
+        @SerializedName("spacer")               CONTENT_SPACER,
+        @SerializedName("video")                CONTENT_VIDEO,
+        @SerializedName("multi-value-input")    INPUT_MULTIVALUE,
+        @SerializedName("star-rating")          INPUT_STARRATING,
+        UNKNOWN
+    }
 
     protected String tag;
-    protected String type;
+    protected TYPE type;
     protected ConversationStyle style;
 
-    public static ConversationAtom create(String tag, String type) {
+    public static ConversationAtom create(String tag, TYPE type) {
         BareConversationAtom bca = new BareConversationAtom();
         bca.tag = tag;
         bca.type = type;
@@ -28,11 +33,11 @@ public abstract class ConversationAtom implements Serializable {
         return tag;
     }
 
-    public ConversationStyle getStyle(){
+    public ConversationStyle getStyle() {
         return this.style;
     }
 
-    public String getType() {
+    public TYPE getType() {
         return type;
     }
 
