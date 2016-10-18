@@ -16,12 +16,13 @@ public class HtmlSnippetView extends WebView {
 
     private static final String FONT_FACE_TEMPLATE = "@font-face '{' font-family: ''{0}''; src: url(''{1}'');'}'";
 
+    private File cacheDir;
     private String css = "";
     private String fontFace = "";
 
-    public HtmlSnippetView(Context context, Content model) {
+    public HtmlSnippetView(Context context, Content model, File cacheDir) {
         super(context);
-
+        this.cacheDir = cacheDir;
         initCss();
         initFont(model);
         initHtml(model);
@@ -47,7 +48,7 @@ public class HtmlSnippetView extends WebView {
         }
         ConversationStyle style = model.getStyle();
         if (SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
-            File fontFile = new File(getContext().getCacheDir(), style.getFontFile()); // todo get cache dir from sdk config
+            File fontFile = new File(cacheDir, style.getFontFile());
             if (fontFile.exists()) {
                 fontFace = MessageFormat.format(FONT_FACE_TEMPLATE, model.getStyle().getFontFamily(), "file://" + fontFile.getAbsolutePath());
             }

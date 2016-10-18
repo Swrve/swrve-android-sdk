@@ -253,7 +253,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                         SwrveLogger.e(LOG_TAG, "Could not render conversation asset image because there is no read access to:" + filePath);
                     }
                 } else if (modelType == ConversationAtom.TYPE.CONTENT_HTML) {
-                    HtmlSnippetView view = new HtmlSnippetView(activity, modelContent);
+                    HtmlSnippetView view = new HtmlSnippetView(activity, modelContent, swrveConversation.getCacheDir());
                     view.setTag(content.getTag());
                     view.setLayoutParams(getContentLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                     view.setBackgroundColor(Color.TRANSPARENT);
@@ -294,7 +294,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 input.setContentChangedListener(this);
                 contentLayout.addView(input);
             } else if (content instanceof StarRating) {
-                ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content);
+                ConversationRatingBar conversationRatingBar = new ConversationRatingBar(activity, (StarRating)content, swrveConversation.getCacheDir());
                 conversationRatingBar.setContentChangedListener(this);
                 contentLayout.addView(conversationRatingBar);
             }
