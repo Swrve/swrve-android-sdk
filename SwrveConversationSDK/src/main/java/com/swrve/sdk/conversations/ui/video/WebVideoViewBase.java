@@ -3,7 +3,6 @@ package com.swrve.sdk.conversations.ui.video;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import com.swrve.sdk.SwrveLogger;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
@@ -12,15 +11,13 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import com.swrve.sdk.SwrveHelper;
-
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.Content;
-import com.swrve.sdk.conversations.engine.model.ConversationAtom;
-import com.swrve.sdk.conversations.ui.IConversationContent;
 import com.swrve.sdk.conversations.ui.ConversationFullScreenVideoFrame;
 
 import java.util.Locale;
 
-public abstract class WebVideoViewBase extends WebView implements IConversationContent {
+public abstract class WebVideoViewBase extends WebView {
     protected static final String LOG_TAG = "SwrveSDK";
     protected static final String PLAYER_VIDEO_VIMEO = "vimeo";
     protected static final String PLAYER_VIDEO_YOUTUBE = "youtube";
@@ -57,12 +54,6 @@ public abstract class WebVideoViewBase extends WebView implements IConversationC
             Toast.makeText(this.getContext(), "Unknown Video Player Detected", Toast.LENGTH_SHORT).show();
             videoHtml = errorHtml;
         }
-    }
-
-
-    @Override
-    public ConversationAtom getModel() {
-        return model;
     }
 
     protected class SwrveVideoWebViewClient extends WebViewClient {

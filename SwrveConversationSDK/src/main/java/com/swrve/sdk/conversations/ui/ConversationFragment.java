@@ -241,7 +241,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                 if (modelType == ConversationAtom.TYPE.CONTENT_IMAGE) {
                     String filePath = swrveConversation.getCacheDir().getAbsolutePath() + "/" + modelContent.getValue();
                     if(SwrveHelper.hasFileAccess(filePath)) {
-                        ConversationImageView iv = new ConversationImageView(activity, modelContent);
+                        ConversationImageView iv = new ConversationImageView(activity);
                         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
                         iv.setTag(content.getTag());
                         iv.setImageBitmap(bitmap);

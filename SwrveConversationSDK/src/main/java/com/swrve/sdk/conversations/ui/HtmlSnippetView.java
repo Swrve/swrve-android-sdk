@@ -1,51 +1,62 @@
 package com.swrve.sdk.conversations.ui;
 
 import android.content.Context;
-import android.os.Build;
-import android.util.Log;
-import android.view.View;
 import android.webkit.WebView;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.engine.model.Content;
-import com.swrve.sdk.conversations.engine.model.ConversationAtom;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.InputStream;
+import java.text.MessageFormat;
 
-public class HtmlSnippetView extends WebView implements IConversationContent {
-    private Content model;
-    private static String DEFAULT_CSS = null;
+public class HtmlSnippetView extends WebView {
+
+    private static final String FONT_FACE_TEMPLATE = "@font-face '{' font-family: ''{0}''; src: url(''{1}'');'}'";
+
+    private String css = "";
+    private String fontFace = "";
 
     public HtmlSnippetView(Context context, Content model) {
         super(context);
 
-        if (DEFAULT_CSS == null) {
-            // Load CSS reset and default values
-            try {
-                InputStream is = context.getAssets().open("swrve__css_defaults.css");
-                if (is != null) {
-                    DEFAULT_CSS = SwrveHelper.readStringFromInputStream(is);
-                }
-            } catch (IOException e) {
-                SwrveLogger.e(Log.getStackTraceString(e));
-            }
-            if (SwrveHelper.isNullOrEmpty(DEFAULT_CSS)) {
-                DEFAULT_CSS = "";
-            }
-        }
-        init(model);
+        initCss();
+        initFont(model);
+        initHtml(model);
     }
 
-    protected void init(Content model) {
-        this.model = model;
-        String safeHtml = "<html><head><style>" + DEFAULT_CSS + "</style></head><body><div style='max-width:100%; overflow: hidden; word-wrap: break-word;'>" + model.getValue() + "</div></body></html>";
+    private void initCss() {
+        try {
+            InputStream is = getContext().getAssets().open("swrve__css_defaults.css");
+            if (is != null) {
+                css = SwrveHelper.readStringFromInputStream(is);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Error init'ing default css", e);
+        }
+        if (SwrveHelper.isNullOrEmpty(css)) {
+            css = "";
+        }
+    }
+
+    private void initFont(Content model) {
+        if (model.getStyle() == null) {
+            return;
+        }
+        ConversationStyle style = model.getStyle();
+        if (SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
+            File fontFile = new File(getContext().getCacheDir(), style.getFontFile()); // todo get cache dir from sdk config
+            if (fontFile.exists()) {
+                fontFace = MessageFormat.format(FONT_FACE_TEMPLATE, model.getStyle().getFontFamily(), "file://" + fontFile.getAbsolutePath());
+            }
+        }
+    }
+
+    protected void initHtml(Content model) {
+        String safeHtml = "<html><head><style>" + fontFace + css + "</style></head><body><div style='max-width:100%; overflow: hidden; word-wrap: break-word;'>" + model.getValue() + "</div></body></html>";
         this.loadDataWithBaseURL(null, safeHtml, "text/html", "UTF-8", null);
     }
 
-    @Override
-    public ConversationAtom getModel() {
-        return model;
-    }
 }

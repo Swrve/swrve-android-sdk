@@ -12,6 +12,7 @@ import android.widget.RelativeLayout;
 
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.Content;
+import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
@@ -38,10 +39,8 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
     }
 
     private void initHtmlSnippetView() {
-        Content content = new Content();
-        content.setValue(model.getValue());
+        Content content = new Content(model.getTag(), ConversationAtom.TYPE.CONTENT_HTML, model.getStyle(), model.getValue(), "");
         htmlSnippetView = new HtmlSnippetView(getContext(), content);
-        htmlSnippetView.setTag(content.getTag());
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         htmlSnippetView.setLayoutParams(layoutParams);
         htmlSnippetView.setBackgroundColor(Color.TRANSPARENT);

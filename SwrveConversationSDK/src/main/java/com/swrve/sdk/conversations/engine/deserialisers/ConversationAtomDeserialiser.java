@@ -38,7 +38,7 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
             case UNKNOWN:
             default:
                 String caTag = (obj.has("tag") ? obj.get("tag").getAsString() : null);
-                conversationAtom = ConversationAtom.create(caTag, caType);
+                conversationAtom = new ConversationAtom(caTag, caType, null);
         }
         return conversationAtom;
     }
