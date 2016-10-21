@@ -46,8 +46,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             final ADM adm = new ADM(context);
             String newRegistrationId = adm.getRegistrationId();
             if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+                SwrveLogger.i(LOG_TAG, "adm.getRegistrationId() returned null. Will call adm.startRegister().");
                 adm.startRegister();
             } else {
+                SwrveLogger.i(LOG_TAG, "adm.getRegistrationId() returned: " + newRegistrationId);
                 registrationId = newRegistrationId;
             }
         } catch (Throwable exp) {
