@@ -1,5 +1,6 @@
 package com.swrve.sdk.test;
 
+import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.junit.Test;
@@ -9,6 +10,7 @@ import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class, sdk=21)
@@ -40,5 +42,11 @@ public class SwrveGoogleConfigTest {
 
         swrveConfig.setAndroidIdLoggingEnabled(true);
         assertEquals(true, swrveConfig.isAndroidIdLoggingEnabled());
+    }
+
+    @Test
+    public void testSDKAppStore() throws Exception {
+        SwrveConfig swrveConfig = new SwrveConfig();
+        assertTrue(swrveConfig.getAppStore() == SwrveAppStore.Google);
     }
 }

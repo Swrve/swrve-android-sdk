@@ -21,6 +21,7 @@ android {
     productFlavors {
         core {}
         google {}
+        amazon {}
     }
 
     lintOptions {
@@ -35,6 +36,11 @@ dependencies {
     compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
     googleCompile 'com.google.android.gms:play-services-gcm:' + project.GOOGLE_GMS_TOOLS_VERSION
     googleCompile 'com.google.android.gms:play-services-ads:' + project.GOOGLE_GMS_TOOLS_VERSION
+
+    //This file is not distributed with Swrve source code.
+    //If compiling amazon flavour from source you should download
+    //the adm jar from the Amazon Developer portal: https://developer.amazon.com/device-messaging
+    amazonProvided files('providedLibs/amazon-device-messaging-1.0.1.jar')
 }
 
 apply plugin: 'maven-publish'
@@ -147,6 +153,55 @@ publishing {
                 }
             }
         }
+        amazon(MavenPublication) {
+            artifactId project.SWRVE_AMAZON_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = [androidAmazonJavadocsJar, "$buildDir/outputs/aar/${project.name}-amazon-release.aar", androidAmazonSourcesJar]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.compile.allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrveConversationSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+
+                configurations.amazonCompile.allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', 'compile')
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -190,4 +245,25 @@ task androidGoogleSourcesJar(type: Jar) {
     description "Package sources for Google."
     classifier = 'source'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.google.java.srcDirs)
+}
+
+task androidAmazonJavadoc(type: Javadoc) {
+    description "Generates Javadoc for Amazon."
+    source = files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(android.libraryVariants.amazon.javaCompile.classpath.files) + files(ext.androidJar)
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+    exclude '**/README.md'
+    failOnError false
+}
+task androidAmazonJavadocsJar(type: Jar) {
+    description "Package Javadoc for Amazon."
+    classifier = 'javadoc'
+    from androidGoogleJavadoc
+}
+task androidAmazonSourcesJar(type: Jar) {
+    description "Package sources for Amazon."
+    classifier = 'source'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
 }
