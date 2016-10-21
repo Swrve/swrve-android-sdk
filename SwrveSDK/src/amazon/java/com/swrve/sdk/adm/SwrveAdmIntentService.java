@@ -54,7 +54,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     @Override
     protected void onMessage(final Intent intent) {
         if (intent == null) {
-            SwrveLogger.w(TAG, "Unexpected null intent");
+            SwrveLogger.e(TAG, "Unexpected null intent");
             return;
         }
 
@@ -95,9 +95,12 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
 
     private void processRemoteNotification(Bundle msg) {
         if (!isSwrveRemoteNotification(msg)) {
-            SwrveLogger.i(TAG, "ADM notification: but not processing as it's missing " + SwrveAdmConstants.SWRVE_TRACKING_KEY);
+            SwrveLogger.i(TAG, "ADM notification: but not processing as it doesn't contain: " + SwrveAdmConstants.SWRVE_TRACKING_KEY);
             return;
         }
+
+        //Get the context
+        Context context = getApplicationContext();
 
         //Deduplicate notification
         //Get tracking key
@@ -116,7 +119,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         //tracking id are possible in some scenarios from Swrve).
         //Id is concatenation of tracking key and timestamp "$_p:$_s.t"
         String curId = msgId + ":" + timestamp;
-        LinkedList<String> recentIds = getRecentNotificationIdCache();
+        LinkedList<String> recentIds = getRecentNotificationIdCache(context);
         if (recentIds.contains(curId)) {
             //Found a duplicate
             SwrveLogger.i(TAG, "ADM notification: but not processing because duplicate Id: " + curId);
@@ -124,7 +127,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         }
 
         //No duplicate found. Update the cache.
-        updateRecentNotificationIdCache(recentIds, curId, MAX_ID_CACHE_ITEMS);
+        updateRecentNotificationIdCache(recentIds, curId, MAX_ID_CACHE_ITEMS, context);
 
         // Notify bound clients
         Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
@@ -134,11 +137,10 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         }
 
         //Process
-        processNotification(msg);
+        processNotification(msg, context);
     }
 
-    private LinkedList<String> getRecentNotificationIdCache() {
-        Context context = getApplicationContext();
+    private LinkedList<String> getRecentNotificationIdCache(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFERENCES, Context.MODE_PRIVATE);
         String jsonString = sharedPreferences.getString(AMAZON_RECENT_PUSH_IDS, "");
         Gson gson = new Gson();
@@ -147,7 +149,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return recentIds;
     }
 
-    private void updateRecentNotificationIdCache(LinkedList<String> recentIds, String newId, int maxCacheItems) {
+    private void updateRecentNotificationIdCache(LinkedList<String> recentIds, String newId, int maxCacheItems, Context context) {
         //Update queue
         recentIds.add(newId);
         //Maintain cache size limit
@@ -156,26 +158,24 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         }
 
         //Store latest queue to shared preferences
-        Context context = getApplicationContext();
         Gson gson = new Gson();
         String recentNotificationsJson = gson.toJson(recentIds);
         SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFERENCES, Context.MODE_PRIVATE);
         sharedPreferences.edit().putString(AMAZON_RECENT_PUSH_IDS, recentNotificationsJson).apply();
     }
 
-    private void processNotification(final Bundle msg) {
+    private void processNotification(final Bundle msg, Context context) {
         try {
             // Put the message into a notification and post it.
-            Context context = getApplicationContext();
             final NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-            final PendingIntent contentIntent = createPendingIntent(msg);
+            final PendingIntent contentIntent = createPendingIntent(msg, context);
             if (contentIntent == null) {
                 SwrveLogger.e(TAG, "Error processing ADM push notification. Unable to create intent");
                 return;
             }
             
-            final Notification notification = createNotification(msg, contentIntent);
+            final Notification notification = createNotification(msg, contentIntent, context);
             if (notification == null) {
                 SwrveLogger.e(TAG, "Error processing ADM push notification. Unable to create notification.");
                 return;
@@ -198,19 +198,18 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return (int)(new Date().getTime() % Integer.MAX_VALUE);
     }
 
-    private Notification createNotification(Bundle msg, PendingIntent contentIntent) {
+    private Notification createNotification(Bundle msg, PendingIntent contentIntent, Context context) {
         String msgText = msg.getString("text");
         if (!SwrveHelper.isNullOrEmpty(msgText)) {
             // Build notification
-            NotificationCompat.Builder mBuilder = createNotificationBuilder(msgText, msg);
+            NotificationCompat.Builder mBuilder = createNotificationBuilder(msgText, msg, context);
             mBuilder.setContentIntent(contentIntent);
             return mBuilder.build();
         }
         return null;
     }
 
-    private NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
-        Context context = getApplicationContext();
+    private NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg, Context context) {
         SwrveAdmNotification notificationHelper = SwrveAdmNotification.getInstance(context);
         boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && notificationHelper.iconMaterialDrawableId >= 0) ? notificationHelper.iconMaterialDrawableId : notificationHelper.iconDrawableId;
@@ -246,17 +245,15 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return mBuilder;
     }
 
-    private PendingIntent createPendingIntent(Bundle msg) {
-        Intent intent = createIntent(msg);
+    private PendingIntent createPendingIntent(Bundle msg, Context context) {
+        Intent intent = createIntent(msg, context);
         if (intent != null) {
-            Context context = getApplicationContext();
             return PendingIntent.getBroadcast(context, generateTimestampId(), intent,PendingIntent.FLAG_CANCEL_CURRENT);
         }
         return null;
     }
 
-    private Intent createIntent(Bundle msg) {
-        Context context = getApplicationContext();
+    private Intent createIntent(Bundle msg, Context context) {
         Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
         intent.putExtra(SwrveAdmConstants.ADM_BUNDLE, msg);
         return intent;

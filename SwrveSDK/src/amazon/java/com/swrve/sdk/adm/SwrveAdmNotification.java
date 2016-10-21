@@ -13,7 +13,7 @@ import com.swrve.sdk.SwrveHelper;
 
 public class SwrveAdmNotification {
 
-    private static final String TAG = "SwrveGcm";
+    private static final String TAG = "SwrveAdm";
 
     private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
     private static final String SWRVE_PUSH_ICON_MATERIAL_METADATA = "SWRVE_PUSH_ICON_MATERIAL";
@@ -48,7 +48,7 @@ public class SwrveAdmNotification {
     }
 
     protected static SwrveAdmNotification createNotificationFromMetaData(Context context) {
-        SwrveAdmNotification swrveGcmNotification = null;
+        SwrveAdmNotification swrveAdmNotification = null;
         try {
             PackageManager packageManager = context.getPackageManager();
             ApplicationInfo app = packageManager.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
@@ -119,11 +119,11 @@ public class SwrveAdmNotification {
                 }
             }
 
-            swrveGcmNotification = new SwrveAdmNotification(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
+            swrveAdmNotification = new SwrveAdmNotification(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
         } catch (Exception ex) {
             SwrveLogger.e(TAG, "Error creating push notification from metadata", ex);
         }
-        return swrveGcmNotification;
+        return swrveAdmNotification;
     }
 
     private static Class<?> getClassForActivityClassName(Context context, String className) throws ClassNotFoundException {
