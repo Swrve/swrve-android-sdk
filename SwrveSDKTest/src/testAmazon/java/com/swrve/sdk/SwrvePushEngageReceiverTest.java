@@ -168,7 +168,7 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
         public Bundle receivedBundle = null;
 
         @Override
-        public void onPushEngaged(Bundle bundle) {
+        public void onPushNotification(Bundle bundle) {
             pushEngaged = true;
             receivedBundle = bundle;
         }

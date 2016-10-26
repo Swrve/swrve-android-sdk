@@ -14,5 +14,5 @@ public interface ISwrvePushNotificationListener {
      * perform any long-running operations.
      * @param bundle push notification information including custom payloads.
      */
-    void onPushEngaged(Bundle bundle);
+    void onPushNotification(Bundle bundle);
 }

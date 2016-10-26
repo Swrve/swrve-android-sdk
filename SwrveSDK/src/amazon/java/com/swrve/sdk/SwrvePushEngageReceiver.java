@@ -53,7 +53,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                         }
 
                         if (swrve.pushNotificationListener != null) {
-                            swrve.pushNotificationListener.onPushEngaged(msg);
+                            swrve.pushNotificationListener.onPushNotification(msg);
                         }
                     }
                 }
