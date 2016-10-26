@@ -14,7 +14,6 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
 import com.amazon.device.messaging.ADMMessageHandlerBase;
-import com.amazon.device.messaging.ADMMessageReceiver;
 import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.ISwrveBase;
 import com.swrve.sdk.Swrve;
@@ -35,13 +34,6 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     private final static String AMAZON_RECENT_PUSH_IDS = "recent_push_ids";
     private final static String AMAZON_PREFERENCES = "swrve_amazon_pref";
     private final int MAX_ID_CACHE_ITEMS = 16;
-
-    //SwrveMessageReceiver listens for messages from ADM
-    public static class SwrveAdmMessageReceiver extends ADMMessageReceiver {
-        public SwrveAdmMessageReceiver() {
-            super(SwrveAdmIntentService.class);
-        }
-    }
 
     public SwrveAdmIntentService() {
         super(SwrveAdmIntentService.class.getName());
