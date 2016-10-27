@@ -317,37 +317,41 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
             // When a control is clicked, a navigation event or action event occurs. We then send all the queued SwrveEvents which have been queued for this page
             commitUserInputsToEvents();
 
-            if (v instanceof ConversationButton) {
-                ConversationReply reply = new ConversationReply();
-                ConversationButton convButton = (ConversationButton) v;
-                ButtonControl model = convButton.getModel();
-                if (((IConversationControl) v).getModel().hasActions()) {
-                    ControlActions actions = ((IConversationControl) v).getModel().getActions();
-                    if (actions.isCall()) {
+            try {
+                if (v instanceof ConversationButton) {
+                    ConversationReply reply = new ConversationReply();
+                    ConversationButton convButton = (ConversationButton) v;
+                    ButtonControl model = convButton.getModel();
+                    if (((IConversationControl) v).getModel().hasActions()) {
+                        ControlActions actions = ((IConversationControl) v).getModel().getActions();
+                        if (actions.isCall()) {
+                            sendReply(model, reply);
+                            sendCallActionEvent(page.getTag(), model);
+                            SwrveIntentHelper.openDialer(actions.getCallUri(), activity);
+                        } else if (actions.isVisit()) {
+                            HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
+                            String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
+                            String referrer = visitUriDetails.get(ControlActions.VISIT_URL_REFERER_KEY);
+                            Uri uri = Uri.parse(urlStr);
+                            sendReply(model, reply);
+                            sendLinkVisitActionEvent(page.getTag(), model);
+                            SwrveIntentHelper.openIntentWebView(uri, activity, referrer);
+                        } else if (actions.isDeepLink()) {
+                            HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
+                            String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
+                            sendReply(model, reply);
+                            sendDeepLinkActionEvent(page.getTag(), model);
+                            SwrveIntentHelper.openDeepLink(activity, urlStr);
+                        }
+                    } else {
+                        // There are no actions associated with Button. Send a normal reply
                         sendReply(model, reply);
-                        sendCallActionEvent(page.getTag(), model);
-                        SwrveIntentHelper.openDialer(actions.getCallUri(), activity);
-                    } else if (actions.isVisit()) {
-                        HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
-                        String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
-                        String referrer = visitUriDetails.get(ControlActions.VISIT_URL_REFERER_KEY);
-                        Uri uri = Uri.parse(urlStr);
-                        sendReply(model, reply);
-                        sendLinkVisitActionEvent(page.getTag(), model);
-                        SwrveIntentHelper.openIntentWebView(uri, activity, referrer);
-                    } else if (actions.isDeepLink()) {
-                        HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
-                        String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
-                        sendReply(model, reply);
-                        sendDeepLinkActionEvent(page.getTag(), model);
-                        SwrveIntentHelper.openDeepLink(activity, urlStr);
                     }
                 } else {
-                    // There are no actions associated with Button. Send a normal reply
-                    sendReply(model, reply);
+                    // Unknown button type was clicked
                 }
-            } else {
-                // Unknown button type was clicked
+            } catch (Exception exp) {
+                SwrveLogger.e(LOG_TAG, "Could not process button action", exp);
             }
         }
     }
