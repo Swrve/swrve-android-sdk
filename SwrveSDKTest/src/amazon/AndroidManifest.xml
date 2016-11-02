@@ -8,7 +8,6 @@
     <uses-sdk
         tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.locationcampaigns"/>
 
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application>
