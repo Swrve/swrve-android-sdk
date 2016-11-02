@@ -6,7 +6,7 @@ import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import java.io.Serializable;
 
-public abstract class ConversationAtom implements Serializable {
+public class ConversationAtom implements Serializable {
 
     public enum TYPE {
         @SerializedName("html-fragment")        CONTENT_HTML,
@@ -22,11 +22,10 @@ public abstract class ConversationAtom implements Serializable {
     protected TYPE type;
     protected ConversationStyle style;
 
-    public static ConversationAtom create(String tag, TYPE type) {
-        BareConversationAtom bca = new BareConversationAtom();
-        bca.tag = tag;
-        bca.type = type;
-        return bca;
+    public ConversationAtom(String tag, TYPE type, ConversationStyle style) {
+        this.tag = tag;
+        this.type = type;
+        this.style = style;
     }
 
     public String getTag() {
@@ -39,8 +38,5 @@ public abstract class ConversationAtom implements Serializable {
 
     public TYPE getType() {
         return type;
-    }
-
-    private static class BareConversationAtom extends ConversationAtom {
     }
 }

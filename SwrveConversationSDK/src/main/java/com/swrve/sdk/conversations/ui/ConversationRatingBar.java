@@ -12,12 +12,14 @@ import android.widget.RelativeLayout;
 
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.Content;
+import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationColorStyle;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,20 +30,18 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
     private RatingBar ratingBar;
     private ConversationInputChangedListener inputChangedListener;
 
-    public ConversationRatingBar(Context context, StarRating model) {
+    public ConversationRatingBar(Context context, StarRating model, File cacheDir) {
         super(context);
         this.model = model;
         setOrientation(LinearLayout.VERTICAL);
         setTag(model.getTag());
-        initHtmlSnippetView();
+        initHtmlSnippetView(cacheDir);
         initRatingBar();
     }
 
-    private void initHtmlSnippetView() {
-        Content content = new Content();
-        content.setValue(model.getValue());
-        htmlSnippetView = new HtmlSnippetView(getContext(), content);
-        htmlSnippetView.setTag(content.getTag());
+    private void initHtmlSnippetView(File cacheDir) {
+        Content content = new Content(model.getTag(), ConversationAtom.TYPE.CONTENT_HTML, model.getStyle(), model.getValue(), "");
+        htmlSnippetView = new HtmlSnippetView(getContext(), content, cacheDir);
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         htmlSnippetView.setLayoutParams(layoutParams);
         htmlSnippetView.setBackgroundColor(Color.TRANSPARENT);
