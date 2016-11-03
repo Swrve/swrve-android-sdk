@@ -11,15 +11,12 @@ import com.swrve.sdk.rest.RESTResponse;
 import org.json.JSONException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class SwrveEventsManager {
 
     private static final String LOG_TAG = "SwrveSDK";
-    private static final Object lock = new Object();
 
     private final SwrveConfigBase config;
     private final IRESTClient restClient;
@@ -44,7 +41,7 @@ public class SwrveEventsManager {
         if (eventsJson == null || (eventsJson != null && eventsJson.size() == 0)) {
             return 0;
         }
-        synchronized(lock) {
+        synchronized(MemoryCachedLocalStorage.EVENT_LOCK) {
             LinkedHashMap<Long, String> storedEvents = storeEvents(eventsJson, sqLiteLocalStorage);
             LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = new LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>>();
             combinedEvents.put(memoryCachedLocalStorage, storedEvents);
@@ -67,7 +64,7 @@ public class SwrveEventsManager {
      * Attempts to sends events from local storage and deletes them if successful. Number of events sent configured from config.
      */
     protected int sendStoredEvents(MemoryCachedLocalStorage cachedLocalStorage) {
-        synchronized(lock) {
+        synchronized(MemoryCachedLocalStorage.EVENT_LOCK) {
             final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
             return sendEvents(combinedEvents);
         }
