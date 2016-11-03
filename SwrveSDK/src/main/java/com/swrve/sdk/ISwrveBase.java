@@ -40,7 +40,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void userUpdate(Map<String, String> attributes);
 
-    void userUpdateDate(String name, Date date);
+    void userUpdate(String name, Date date);
 
     void iap(int quantity, String productId, double productPrice, String currency);
 

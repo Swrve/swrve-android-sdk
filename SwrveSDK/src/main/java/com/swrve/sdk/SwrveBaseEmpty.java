@@ -91,7 +91,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void userUpdateDate(String name, Date date) {
+    public void userUpdate(String name, Date date) {
     }
 
     @Override

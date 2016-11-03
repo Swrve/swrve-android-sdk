@@ -320,30 +320,21 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         queueEvent("user", parameters, null);
     }
 
-    protected void _userUpdateDate (Map<String, Date> attributes) {
+    protected void _userUpdate (String name, Date date) {
         Map<String, Object> parameters = new HashMap<String, Object>();
         Map<String, String> resultAttributes = new HashMap<String, String>();
 
-        for(String key : attributes.keySet()) {
-            Date object = attributes.get(key);
-            String resultantDate = getStringFromDate(object);
-            resultAttributes.put(key, resultantDate);
-        }
+        String resultantDate = getStringFromDate(date);
+        resultAttributes.put(name, resultantDate);
 
         try {
             parameters.put("attributes", new JSONObject(resultAttributes));
         }catch (NullPointerException ex) {
             SwrveLogger.e(LOG_TAG, "JSONException when encoding user attributes", ex);
+            return;
         }
 
         queueEvent("user", parameters, null);
-    }
-
-    protected void _userUpdateDate (String name, Date date) {
-
-        Map<String, Date> dateAttributes = new HashMap<String, Date>();
-        dateAttributes.put(name, date);
-        _userUpdateDate(dateAttributes);
     }
 
     private String getStringFromDate(Date date) {
@@ -1224,9 +1215,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void userUpdateDate(String name, Date date) {
+    public void userUpdate(String name, Date date) {
         try {
-            _userUpdateDate(name, date);
+            _userUpdate(name, date);
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
