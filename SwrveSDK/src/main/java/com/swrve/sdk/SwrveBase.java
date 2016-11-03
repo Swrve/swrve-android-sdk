@@ -45,6 +45,8 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -55,6 +57,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_WRONG_ORIENTATION;
@@ -315,6 +318,32 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         queueEvent("user", parameters, null);
+    }
+
+    protected void _userUpdate (String name, Date date) {
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, String> resultAttributes = new HashMap<String, String>();
+
+        String resultantDate = getStringFromDate(date);
+        resultAttributes.put(name, resultantDate);
+
+        try {
+            parameters.put("attributes", new JSONObject(resultAttributes));
+        }catch (NullPointerException ex) {
+            SwrveLogger.e(LOG_TAG, "JSONException when encoding user attributes", ex);
+            return;
+        }
+
+        queueEvent("user", parameters, null);
+    }
+
+    private String getStringFromDate(Date date) {
+
+        TimeZone timezone = TimeZone.getTimeZone("UTC");
+        DateFormat dateformat = new SimpleDateFormat("yyyy-dd-MM'T'HH:mm:ss.SSS'Z'");
+        dateformat.setTimeZone(timezone);
+
+        return dateformat.format(date);
     }
 
     protected void _iap(int quantity, String productId, double productPrice, String currency) {
@@ -1180,6 +1209,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void userUpdate(Map<String, String> attributes) {
         try {
             _userUpdate(attributes);
+        } catch (Exception e) {
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
+    public void userUpdate(String name, Date date) {
+        try {
+            _userUpdate(name, date);
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
