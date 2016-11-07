@@ -1277,7 +1277,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 parameters = null;
                 payload = null;
                 cachedLocalStorage.addEvent(eventString);
-                SwrveLogger.i(LOG_TAG, eventType + " event queued");
+                SwrveLogger.i(LOG_TAG, "Event queued of type: " + eventType + " and seqNum:" + seqNum);
             } catch (Exception e) {
                 SwrveLogger.e(LOG_TAG, "Unable to insert QueueEvent into local storage.", e);
             }
