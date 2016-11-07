@@ -114,6 +114,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId); // Generate session token
 
             cachedLocalStorage = createCachedLocalStorage();
+            short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
+            swrveEventsManager = new SwrveEventsManagerImp(config, restClient, userId, appVersion, sessionToken, deviceId);
 
             appStoreURLs = new SparseArray<String>();
 
@@ -415,8 +417,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             restClientExecutorExecute(new Runnable() {
                 @Override
                 public void run() {
-                    short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
-                    SwrveEventsManager swrveEventsManager = new SwrveEventsManager(config, restClient, userId, appVersion, sessionToken, deviceId);
                     swrveEventsManager.sendStoredEvents(cachedLocalStorage);
                     eventsWereSent = true;
                 }

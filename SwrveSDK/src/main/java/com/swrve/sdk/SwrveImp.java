@@ -164,6 +164,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected String androidId;
     protected int locationSegmentVersion;
     protected SwrveQAUser qaUser;
+    protected SwrveEventsManager swrveEventsManager;
 
     protected SwrveImp(Context context, int appId, String apiKey, C config) {
         if (appId <= 0 || SwrveHelper.isNullOrEmpty(apiKey)) {
