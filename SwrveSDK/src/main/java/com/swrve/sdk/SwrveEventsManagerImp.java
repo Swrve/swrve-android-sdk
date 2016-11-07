@@ -114,12 +114,12 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
             public void onResponse(RESTResponse response) {
                 boolean deleteEvents = true;
                 if (SwrveHelper.userErrorResponseCode(response.responseCode)) {
-                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
+                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve. responseCode: " + response.responseCode + "\tresponseBody:" + response.responseBody);
                 } else if (SwrveHelper.successResponseCode(response.responseCode)) {
                     SwrveLogger.i(LOG_TAG, "Events sent to Swrve");
                 } else if (SwrveHelper.serverErrorResponseCode(response.responseCode)) {
                     deleteEvents = false;
-                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve: " + response.responseBody);
+                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve. Wil retry. responseCode: " + response.responseCode + "\tresponseBody:" + response.responseBody);
                 }
 
                 // Resend if we got a server error (5XX)
