@@ -59,6 +59,6 @@ public class SwrveWakefulService extends IntentService {
         IRESTClient restClient = new RESTClient(swrve.config.getHttpTimeout());
         short deviceId = EventHelper.getDeviceId(memoryCachedLocalStorage);
         String sessionToken = SwrveHelper.generateSessionToken(swrve.apiKey, swrve.appId, swrve.userId);
-        return new SwrveEventsManager(swrve.config, restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
+        return new SwrveEventsManagerImp(swrve.config, restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
     }
 }

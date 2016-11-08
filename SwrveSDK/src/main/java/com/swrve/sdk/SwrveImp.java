@@ -80,6 +80,7 @@ import java.util.concurrent.atomic.AtomicLong;
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager {
     protected static final String PLATFORM = "Android ";
     protected static String version = "4.7";
+    protected static String version = "4.6.2";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
     protected static final String CAMPAIGNS_STATE_CATEGORY = "SwrveCampaignSettings";
@@ -1281,7 +1282,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 parameters = null;
                 payload = null;
                 cachedLocalStorage.addEvent(eventString);
-                SwrveLogger.i(LOG_TAG, eventType + " event queued");
+                SwrveLogger.i(LOG_TAG, "Event queued of type: " + eventType + " and seqNum:" + seqNum);
             } catch (Exception e) {
                 SwrveLogger.e(LOG_TAG, "Unable to insert QueueEvent into local storage.", e);
             }
