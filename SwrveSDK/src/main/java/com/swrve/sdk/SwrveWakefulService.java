@@ -5,8 +5,6 @@ import android.content.Intent;
 
 import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
-import com.swrve.sdk.rest.IRESTClient;
-import com.swrve.sdk.rest.RESTClient;
 
 import java.util.ArrayList;
 
@@ -56,9 +54,8 @@ public class SwrveWakefulService extends IntentService {
     }
 
     private SwrveEventsManager getSendEventsManager(MemoryCachedLocalStorage memoryCachedLocalStorage){
-        IRESTClient restClient = new RESTClient(swrve.config.getHttpTimeout());
         short deviceId = EventHelper.getDeviceId(memoryCachedLocalStorage);
         String sessionToken = SwrveHelper.generateSessionToken(swrve.apiKey, swrve.appId, swrve.userId);
-        return new SwrveEventsManagerImp(swrve.config, restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
+        return new SwrveEventsManagerImp(swrve.config, swrve.restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
     }
 }
