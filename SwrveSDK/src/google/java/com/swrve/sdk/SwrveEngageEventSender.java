@@ -18,18 +18,6 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
     private static final String LOG_TAG = "SwrveGcm";
     private Context context;
 
-    /**
-     * Called to process the engaged event and send to Swrve
-     *
-     * @param context android context
-     * @param pushId  The push id for engagement
-     */
-    public static void send(Context context, String pushId) {
-        Intent intent = new Intent(context, SwrveEngageEventSender.class);
-        intent.putExtra(SwrveGcmConstants.SWRVE_TRACKING_KEY, pushId);
-        context.sendBroadcast(intent);
-    }
-
     @Override
     public void onReceive(Context context, Intent intent) {
         try {
