@@ -19,21 +19,17 @@ import java.util.Map;
 public class SwrvePushEngageReceiver extends BroadcastReceiver {
     private static final String LOG_TAG = "SwrveAdm";
 
-    private Context context;
-    private Swrve swrve;
-
     @Override
     public void onReceive(Context context, Intent intent) {
         try {
-            this.context = context;
-            swrve = (Swrve) SwrveSDK.getInstance();
-            processIntent(intent);
+            Swrve swrve = (Swrve) SwrveSDK.getInstance();
+            processIntent(intent, context, swrve);
         } catch (Exception ex) {
             SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Error processing intent. Intent:" + intent, ex);
         }
     }
 
-    private void processIntent(Intent intent) {
+    private void processIntent(Intent intent, Context context, Swrve swrve) {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
@@ -45,11 +41,11 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
                         SwrveLogger.d(LOG_TAG, "ADM engaged, sending event:" + eventName);
-                        sendEngagedEvent(eventName);
+                        sendEngagedEvent(eventName, context, swrve);
                         if (msg.containsKey(SwrveAdmConstants.DEEPLINK_KEY)) {
-                            openDeeplink(msg);
+                            openDeeplink(msg, context);
                         } else {
-                            openActivity(msg);
+                            openActivity(msg, context);
                         }
 
                         if (swrve.pushNotificationListener != null) {
@@ -61,7 +57,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         }
     }
 
-    private void sendEngagedEvent(String name) {
+    private void sendEngagedEvent(String name, Context context, Swrve swrve) {
         String eventString = "";
         try {
             ArrayList<String> events = new ArrayList<>();
@@ -75,7 +71,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         }
     }
 
-    private void openDeeplink(Bundle msg) {
+    private void openDeeplink(Bundle msg, Context context) {
         String uri = msg.getString(SwrveAdmConstants.DEEPLINK_KEY);
         SwrveLogger.d(LOG_TAG, "Found ADM deeplink. Will attempt to open:" + uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
@@ -84,10 +80,10 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         SwrveIntentHelper.openDeepLink(context, uri, msgBundleCopy);
     }
 
-    private void openActivity(Bundle msg) {
+    private void openActivity(Bundle msg, Context context) {
         Intent intent = null;
         try {
-            intent = getActivityIntent(msg);
+            intent = getActivityIntent(msg, context);
             PendingIntent pi = PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             pi.send();
         } catch (PendingIntent.CanceledException e) {
@@ -95,7 +91,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         }
     }
 
-    private Intent getActivityIntent(Bundle msg) {
+    private Intent getActivityIntent(Bundle msg, Context context) {
         Intent intent = null;
         Class<?> clazz = SwrveAdmNotification.getInstance(context).getActivityClass();
         if (clazz != null) {
