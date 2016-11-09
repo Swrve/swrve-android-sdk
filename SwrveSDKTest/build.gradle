@@ -50,7 +50,6 @@ dependencies {
     testCompile 'org.mockito:mockito-core:1.9.0'
     testCompile 'org.robolectric:shadows-support-v4:3.0'
     testCompile 'org.robolectric:shadows-httpclient:3.0'
-    testCompile group: 'com.google.guava', name: 'guava', version: '18.0'
 
     // Roboelectric tests
     testCompile 'junit:junit:4.12'

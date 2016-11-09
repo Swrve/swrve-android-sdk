@@ -49,4 +49,13 @@ public class SwrveGoogleConfigTest {
         SwrveConfig swrveConfig = new SwrveConfig();
         assertTrue(swrveConfig.getAppStore() == SwrveAppStore.Google);
     }
+
+    @Test
+    public void testObtainRegistrationId() {
+        SwrveConfig swrveConfig = new SwrveConfig();
+        assertEquals(true, swrveConfig.isPushRegistrationAutomatic());
+
+        swrveConfig.setPushRegistrationAutomatic(false);
+        assertEquals(false, swrveConfig.isPushRegistrationAutomatic());
+    }
 }
