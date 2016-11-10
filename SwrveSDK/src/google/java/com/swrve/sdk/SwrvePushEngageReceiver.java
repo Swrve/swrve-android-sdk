@@ -40,7 +40,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         SwrveLogger.d(LOG_TAG, "Found engaged event:" + msgId);
-                        SwrveEngageEventSender.send(context, msgId);
+                        SwrveSDK.send(context, msgId);
 
                         if(msg.containsKey(SwrveGcmConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg);
