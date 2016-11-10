@@ -493,7 +493,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
 
-        queueDeviceInfoNow(false);
         long currentTime = getSessionTime();
         // Session management
         if (currentTime > lastSessionTick) {
