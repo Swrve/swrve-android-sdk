@@ -31,8 +31,6 @@ public class SwrveSDK extends SwrveSDKBase {
     public static synchronized ISwrve createInstance(final Context context, final int appId, final String apiKey, final SwrveConfig config) {
         if (context == null) {
             SwrveHelper.logAndThrowException("Context not specified");
-        } else if (SwrveHelper.isNullOrEmpty(apiKey)) {
-            SwrveHelper.logAndThrowException("Api key not specified");
         }
 
         if (!SwrveHelper.sdkAvailable()) {
@@ -125,5 +123,15 @@ public class SwrveSDK extends SwrveSDKBase {
     public static void processIntent(Intent intent) {
         checkInstanceCreated();
         ((ISwrve) instance).processIntent(intent);
+    }
+
+    /**
+     * Set the registration Id from external sources.
+     *
+     * @param registrationId The registration ID obtained from the GCM libs.
+     */
+    public static void setRegistrationId(String registrationId) {
+        checkInstanceCreated();
+        ((ISwrve) instance).setRegistrationId(registrationId);
     }
 }

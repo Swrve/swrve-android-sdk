@@ -11,6 +11,9 @@ import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 public class SampleApplication extends Application {
 
     private static final String LOG_TAG = "SwrveSample";
+    private int YOUR_APP_ID = -1;
+    private String YOUR_API_KEY = "api_key";
+    private String YOUR_SENDER_ID = "sender_id";
 
     @Override
     public void onCreate() {
