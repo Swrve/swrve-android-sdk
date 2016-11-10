@@ -137,12 +137,12 @@ public class SwrveSDK extends SwrveSDKBase {
     }
 
     /**
-     * Called to process the engaged event and send to Swrve
+     * Called to send the push engaged event to Swrve.
      *
      * @param context android context
      * @param pushId  The push id for engagement
      */
-    public static void send(Context context, String pushId) {
+    public static void sendPushEngagedEvent(Context context, String pushId) {
         checkInstanceCreated();
         Intent intent = new Intent(context, SwrveEngageEventSender.class);
         intent.putExtra(SwrveGcmConstants.SWRVE_TRACKING_KEY, pushId);

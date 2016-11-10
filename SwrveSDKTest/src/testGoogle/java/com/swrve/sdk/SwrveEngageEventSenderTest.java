@@ -65,7 +65,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testReceiverOpenDeeplink() throws Exception {
+    public void testEventQueued() throws Exception {
         Intent intent = new Intent();
         intent.putExtra(SwrveGcmConstants.SWRVE_TRACKING_KEY, "4567");
 
