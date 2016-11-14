@@ -19,7 +19,6 @@ import org.robolectric.shadows.ShadowLog;
 import org.robolectric.shadows.ShadowNotification;
 import org.robolectric.shadows.ShadowPendingIntent;
 
-import com.google.common.base.Optional;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.SwrveTestUtils;
@@ -63,7 +62,7 @@ public class SwrveAdmIntentServiceTest {
     public void testOnMessageService() throws Exception {
         //Check null scenario
         swrveAdmService.onMessage(null);
-        assertFalse(swrveAdmService.isSwrveRemoteNotificationReturn.isPresent());
+        assertEquals(0, swrveAdmService.isSwrveRemoteNotificationExecuted);
 
         //Check no payload scenario
         Intent intent = new Intent();
@@ -71,9 +70,7 @@ public class SwrveAdmIntentServiceTest {
         missingTrackingKey.putString("text", "");
         intent.putExtras(missingTrackingKey);
         swrveAdmService.onMessage(intent);
-
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.isPresent());
-        assertFalse(swrveAdmService.isSwrveRemoteNotificationReturn.get());
+        assertEquals(2, swrveAdmService.isSwrveRemoteNotificationExecuted);
 
         //Check no timestamp scenario
         Bundle noTimestamp = new Bundle();
@@ -82,8 +79,7 @@ public class SwrveAdmIntentServiceTest {
         intent.putExtras(noTimestamp);
         swrveAdmService.onMessage(intent);
 
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.isPresent());
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.get());
+        assertEquals(1, swrveAdmService.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(0);
 
         //Check good scenario
@@ -98,7 +94,7 @@ public class SwrveAdmIntentServiceTest {
         swrveAdmService.onMessage(intent);
 
         assertNotification("validBundle", "content://settings/system/notification_sound", extras);
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.get());
+        assertEquals(1, swrveAdmService.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         //Try sending duplicate
@@ -140,8 +136,7 @@ public class SwrveAdmIntentServiceTest {
         validBundleCustomSound.putString(SwrveAdmConstants.SWRVE_TRACKING_KEY, "1");
         intent.putExtras(validBundleCustomSound);
         swrveAdmService.onMessage(intent);
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.isPresent());
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.get());
+        assertEquals(1, swrveAdmService.isSwrveRemoteNotificationExecuted);
         assertNotification("validBundleCustomSound", "android.resource://com.swrve.sdk.test/raw/customSound", validBundleCustomSound);
     }
 
@@ -159,8 +154,7 @@ public class SwrveAdmIntentServiceTest {
         validBundle.putString(SwrveAdmConstants.SWRVE_TRACKING_KEY, "1");
         intent.putExtras(validBundle);
         swrveAdmService.onMessage(intent);
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.isPresent());
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.get());
+        assertEquals(1, swrveAdmService.isSwrveRemoteNotificationExecuted);
         assertNotification("hello there", null, validBundle);
     }
 
@@ -174,8 +168,7 @@ public class SwrveAdmIntentServiceTest {
         deeplinkBundle.putString(SwrveAdmConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
         intent.putExtras(deeplinkBundle);
         swrveAdmService.onMessage(intent);
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.isPresent());
-        assertTrue(swrveAdmService.isSwrveRemoteNotificationReturn.get());
+        assertEquals(1, swrveAdmService.isSwrveRemoteNotificationExecuted);
         assertNotification("deeplinkBundle", null, deeplinkBundle);
     }
 
@@ -225,13 +218,13 @@ public class SwrveAdmIntentServiceTest {
     }
 
     class TestableSwrveAdmIntentService extends SwrveAdmIntentService {
-
-        Optional<Boolean> isSwrveRemoteNotificationReturn = Optional.absent();
+        int isSwrveRemoteNotificationExecuted = 0;
 
         @Override
         protected boolean isSwrveRemoteNotification(final Bundle msg) {
-            isSwrveRemoteNotificationReturn = Optional.of(super.isSwrveRemoteNotification(msg));
-            return isSwrveRemoteNotificationReturn.get();
+            boolean isSwrveRemoteNotification = super.isSwrveRemoteNotification(msg);
+            isSwrveRemoteNotificationExecuted = isSwrveRemoteNotification ? 1 : 2;
+            return isSwrveRemoteNotification;
         }
     }
 }
