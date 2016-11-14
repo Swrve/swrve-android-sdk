@@ -260,7 +260,7 @@ task androidAmazonJavadoc(type: Javadoc) {
 task androidAmazonJavadocsJar(type: Jar) {
     description "Package Javadoc for Amazon."
     classifier = 'javadoc'
-    from androidGoogleJavadoc
+    from androidAmazonJavadoc
 }
 task androidAmazonSourcesJar(type: Jar) {
     description "Package sources for Amazon."
