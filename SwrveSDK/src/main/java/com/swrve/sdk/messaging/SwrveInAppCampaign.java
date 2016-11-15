@@ -1,7 +1,5 @@
 package com.swrve.sdk.messaging;
 
-import android.annotation.SuppressLint;
-
 import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
@@ -27,7 +25,6 @@ import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_NOT_DO
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
  */
-@SuppressLint("NewApi")
 public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected List<SwrveMessage> messages;
