@@ -13,5 +13,9 @@
         <receiver
             android:name="com.swrve.sdk.SwrvePushEngageReceiver"
             android:exported="true" />
+
+        <receiver
+            android:name="com.swrve.sdk.SwrveEngageEventSender"
+            android:exported="true" />
     </application>
 </manifest>

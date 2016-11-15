@@ -9,12 +9,7 @@ import android.os.Bundle;
 import com.swrve.sdk.adm.SwrveAdmConstants;
 import com.swrve.sdk.adm.SwrveAdmNotification;
 
-import org.json.JSONException;
-
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SwrvePushEngageReceiver extends BroadcastReceiver {
     private static final String LOG_TAG = "SwrveAdm";
@@ -39,9 +34,9 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     Object rawId = msg.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
-                        String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
-                        SwrveLogger.d(LOG_TAG, "ADM engaged, sending event:" + eventName);
-                        sendEngagedEvent(eventName, context, swrve);
+                        SwrveLogger.d(LOG_TAG, "Found ADM engaged event:" + msgId);
+                        SwrveSDK.sendPushEngagedEvent(context, msgId);
+
                         if (msg.containsKey(SwrveAdmConstants.DEEPLINK_KEY)) {
                             openDeeplink(msg, context);
                         } else {
@@ -54,20 +49,6 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     }
                 }
             }
-        }
-    }
-
-    private void sendEngagedEvent(String name, Context context, Swrve swrve) {
-        String eventString = "";
-        try {
-            ArrayList<String> events = new ArrayList<>();
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", name);
-            eventString = EventHelper.eventAsJSON("event", parameters, swrve.getNextSequenceNumber());
-            events.add(eventString);
-            swrve.sendEventsWakefully(context, events);
-        } catch (JSONException e) {
-            SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Could not send the engaged event:" + eventString, e);
         }
     }
 
