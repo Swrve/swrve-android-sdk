@@ -13,6 +13,8 @@ import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +48,9 @@ public class ConversationUnitTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        IRESTClient restClientSpy = Mockito.spy(swrveSpy.restClient);
+        swrveSpy.restClient = restClientSpy;
+        Mockito.doNothing().when(restClientSpy).post(Mockito.anyString(), Mockito.anyString(), Mockito.any(IRESTResponseListener.class), Mockito.anyString());
         swrveSpy.init(mActivity);
     }
 
