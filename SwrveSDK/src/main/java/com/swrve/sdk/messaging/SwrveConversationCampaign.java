@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -32,7 +33,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * Load a campaign from JSON data.
      */
     public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData,
-                                     Set<String> assetImageQueue, Set<String> assetFontQueue) throws JSONException {
+                                     Set<SwrveAssetsQueueItem> assetImageQueue, Set<SwrveAssetsQueueItem> assetFontQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
 
         if(campaignData.has("conversation")) {
@@ -45,18 +46,18 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
                     switch (conversationAtom.getType()) {
                         case CONTENT_IMAGE:
-                            queueImageAsset(assetImageQueue, (Content) conversationAtom);
+                            addImageToQ(assetImageQueue, (Content) conversationAtom);
                             break;
                         case CONTENT_HTML:
                         case INPUT_STARRATING:
-                            queueFontAsset(assetFontQueue, conversationAtom.getStyle());
+                            addFontToQ(assetFontQueue, conversationAtom.getStyle());
                             break;
                         case INPUT_MULTIVALUE:
                             MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
-                            queueFontAsset(assetFontQueue, multiValueInput.getStyle());
+                            addFontToQ(assetFontQueue, multiValueInput.getStyle());
                             // iterate through options
                             for (ChoiceInputItem item : multiValueInput.getValues()) {
-                                queueFontAsset(assetFontQueue, item.getStyle());
+                                addFontToQ(assetFontQueue, item.getStyle());
                             }
                             break;
                     }
@@ -64,19 +65,19 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
 
                 // Add font assets to queue from button control
                 for (ButtonControl buttonControl : conversationPage.getControls()) {
-                    queueFontAsset(assetFontQueue, buttonControl.getStyle());
+                    addFontToQ(assetFontQueue, buttonControl.getStyle());
                 }
             }
         }
     }
 
-    private void queueImageAsset(Set<String> assetQueue, Content content) {
-        assetQueue.add(content.getValue());
+    private void addImageToQ(Set<SwrveAssetsQueueItem> assetQueue, Content content) {
+        assetQueue.add(new SwrveAssetsQueueItem(content.getValue(), content.getValue()));
     }
 
-    private void queueFontAsset(Set<String> assetQueue, ConversationStyle style) {
-        if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
-            assetQueue.add(style.getFontFile());
+    private void addFontToQ(Set<SwrveAssetsQueueItem> assetQueue, ConversationStyle style) {
+        if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile()) && SwrveHelper.isNotNullOrEmpty(style.getFontDigest())) {
+            assetQueue.add(new SwrveAssetsQueueItem(style.getFontFile(), style.getFontDigest()));
         }
     }
 

@@ -1,6 +1,9 @@
 package com.swrve.sdk.messaging;
 
+import android.annotation.SuppressLint;
+
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveCampaignDisplayer.Result;
 import com.swrve.sdk.SwrveHelper;
@@ -24,6 +27,7 @@ import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_NOT_DO
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
  */
+@SuppressLint("NewApi")
 public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected List<SwrveMessage> messages;
@@ -37,7 +41,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
      * @param assetsQueue  Set where to save the resources to be loaded
      * @throws JSONException
      */
-    public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
         this.messages = new ArrayList<SwrveMessage>();
 
@@ -56,13 +60,13 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                             // Add all images to the download queue
                             for (SwrveButton button : format.getButtons()) {
                                 if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
-                                    assetsQueue.add(button.getImage());
+                                    assetsQueue.add(new SwrveAssetsQueueItem(button.getImage(), button.getImage()));
                                 }
                             }
 
                             for (SwrveImage image : format.getImages()) {
                                 if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
-                                    assetsQueue.add(image.getFile());
+                                    assetsQueue.add(new SwrveAssetsQueueItem(image.getFile(), image.getFile()));
                                 }
                             }
                         }

@@ -786,7 +786,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         }
         String fontFile = "my_funky_font";
         SwrveTestUtils.writeFileToCache(mActivity.getCacheDir(), fontFile);
-        return new ConversationStyle(cornerRadiusPerCent, type, bgStyle, fgStyle, null, fontFile, "my_funky_family", 123, alignment);
+        return new ConversationStyle(cornerRadiusPerCent, type, bgStyle, fgStyle, null, fontFile, fontFile, "my_funky_family", 123, alignment);
     }
 
 }

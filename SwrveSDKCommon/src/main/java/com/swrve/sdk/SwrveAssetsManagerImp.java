@@ -57,7 +57,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     }
 
     @Override
-    public void downloadAssets(Set<String> assetsQueueImages, Set<String> assetsQueueFonts, SwrveAssetsCompleteCallback callback) {
+    public void downloadAssets(Set<SwrveAssetsQueueItem> assetsQueueImages, Set<SwrveAssetsQueueItem> assetsQueueFonts, SwrveAssetsCompleteCallback callback) {
 
         if (!storageDir.canWrite()) {
             SwrveLogger.e(LOG_TAG, "Could not download assets because do not have write access to storageDir:" + storageDir);
@@ -70,7 +70,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         }
     }
 
-    protected void downloadAssets(final Set<String> assetsQueue, final String cdnRoot) {
+    protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue, final String cdnRoot) {
         if (SwrveHelper.isNullOrEmpty(cdnRoot)) {
             SwrveLogger.e(LOG_TAG, "Error downloading assets. No cdnRoot url.");
             return;
@@ -79,35 +79,35 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             return;
         }
 
-        Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
-        for (String asset : assetsToDownload) {
-            boolean success = downloadAsset(asset, cdnRoot);
+        Set<SwrveAssetsQueueItem> assetsToDownload = filterExistingFiles(assetsQueue);
+        for (SwrveAssetsQueueItem assetItem : assetsToDownload) {
+            boolean success = downloadAsset(assetItem, cdnRoot);
             if (success) {
                 synchronized (assetsOnDisk) {
-                    assetsOnDisk.add(asset);
+                    assetsOnDisk.add(assetItem.getName()); // store the font name
                 }
             }
         }
     }
 
-    protected Set<String> filterExistingFiles(Set<String> assetsQueue) {
-        Iterator<String> itDownloadQueue = assetsQueue.iterator();
+    protected Set<SwrveAssetsQueueItem> filterExistingFiles(Set<SwrveAssetsQueueItem> assetsQueue) {
+        Iterator<SwrveAssetsQueueItem> itDownloadQueue = assetsQueue.iterator();
         while (itDownloadQueue.hasNext()) {
-            String assetPath = itDownloadQueue.next();
-            File file = new File(storageDir, assetPath);
+            SwrveAssetsQueueItem item = itDownloadQueue.next();
+            File file = new File(storageDir, item.getName());
             if (file.exists()) {
                 itDownloadQueue.remove();
                 synchronized (assetsOnDisk) {
-                    assetsOnDisk.add(assetPath);
+                    assetsOnDisk.add(item.getName()); // store the font name
                 }
             }
         }
         return assetsQueue;
     }
 
-    protected boolean downloadAsset(final String assetPath, final String cdnRoot) {
+    protected boolean downloadAsset(final SwrveAssetsQueueItem assetItem, final String cdnRoot) {
         boolean success = false;
-        String url = cdnRoot + assetPath;
+        String url = cdnRoot + assetItem.getName();
         InputStream inputStream = null;
         try {
             URLConnection openConnection = new URL(url).openConnection();
@@ -120,16 +120,16 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             }
             byte[] fileContents = stream.toByteArray();
             String sha1File = SwrveHelper.sha1(stream.toByteArray());
-            if (assetPath.equals(sha1File)) {
-                FileOutputStream fileStream = new FileOutputStream(new File(storageDir, assetPath));
+            if (assetItem.getDigest().equals(sha1File)) {
+                FileOutputStream fileStream = new FileOutputStream(new File(storageDir, assetItem.getName()));
                 fileStream.write(fileContents); // Save to file
                 fileStream.close();
                 success = true;
             } else {
-                SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetPath + ". Did not match sha:" + sha1File);
+                SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetItem + ". Did not match sha:" + sha1File);
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetPath, e);
+            SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetItem, e);
         } finally {
             if (inputStream != null) {
                 try {
