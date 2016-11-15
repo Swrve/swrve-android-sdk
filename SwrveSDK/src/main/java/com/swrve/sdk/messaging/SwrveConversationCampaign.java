@@ -46,18 +46,18 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
                     switch (conversationAtom.getType()) {
                         case CONTENT_IMAGE:
-                            addImageToQ(assetImageQueue, (Content) conversationAtom);
+                            queueImageAsset(assetImageQueue, (Content) conversationAtom);
                             break;
                         case CONTENT_HTML:
                         case INPUT_STARRATING:
-                            addFontToQ(assetFontQueue, conversationAtom.getStyle());
+                            queueFontAsset(assetFontQueue, conversationAtom.getStyle());
                             break;
                         case INPUT_MULTIVALUE:
                             MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
-                            addFontToQ(assetFontQueue, multiValueInput.getStyle());
+                            queueFontAsset(assetFontQueue, multiValueInput.getStyle());
                             // iterate through options
                             for (ChoiceInputItem item : multiValueInput.getValues()) {
-                                addFontToQ(assetFontQueue, item.getStyle());
+                                queueFontAsset(assetFontQueue, item.getStyle());
                             }
                             break;
                     }
@@ -65,17 +65,17 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
 
                 // Add font assets to queue from button control
                 for (ButtonControl buttonControl : conversationPage.getControls()) {
-                    addFontToQ(assetFontQueue, buttonControl.getStyle());
+                    queueFontAsset(assetFontQueue, buttonControl.getStyle());
                 }
             }
         }
     }
 
-    private void addImageToQ(Set<SwrveAssetsQueueItem> assetQueue, Content content) {
+    private void queueImageAsset(Set<SwrveAssetsQueueItem> assetQueue, Content content) {
         assetQueue.add(new SwrveAssetsQueueItem(content.getValue(), content.getValue()));
     }
 
-    private void addFontToQ(Set<SwrveAssetsQueueItem> assetQueue, ConversationStyle style) {
+    private void queueFontAsset(Set<SwrveAssetsQueueItem> assetQueue, ConversationStyle style) {
         if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile()) && SwrveHelper.isNotNullOrEmpty(style.getFontDigest())) {
             assetQueue.add(new SwrveAssetsQueueItem(style.getFontFile(), style.getFontDigest()));
         }

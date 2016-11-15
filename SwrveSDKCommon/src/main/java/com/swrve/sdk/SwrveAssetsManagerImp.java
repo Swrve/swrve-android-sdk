@@ -126,7 +126,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
                 fileStream.close();
                 success = true;
             } else {
-                SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetItem + ". Did not match sha:" + sha1File);
+                SwrveLogger.e(LOG_TAG, "Error downloading assetItem:" + assetItem + ". Did not match digest:" + sha1File);
             }
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetItem, e);
