@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class SwrveEngageEventSender extends BroadcastReceiver {
 
-    private static final String LOG_TAG = "SwrveGcm";
+    private static final String LOG_TAG = "SwrveAdm";
     private Context context;
 
     @Override
