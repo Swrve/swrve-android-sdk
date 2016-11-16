@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -32,7 +33,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * Load a campaign from JSON data.
      */
     public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData,
-                                     Set<String> assetImageQueue, Set<String> assetFontQueue) throws JSONException {
+                                     Set<SwrveAssetsQueueItem> assetImageQueue, Set<SwrveAssetsQueueItem> assetFontQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
 
         if(campaignData.has("conversation")) {
@@ -70,13 +71,13 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         }
     }
 
-    private void queueImageAsset(Set<String> assetQueue, Content content) {
-        assetQueue.add(content.getValue());
+    private void queueImageAsset(Set<SwrveAssetsQueueItem> assetQueue, Content content) {
+        assetQueue.add(new SwrveAssetsQueueItem(content.getValue(), content.getValue()));
     }
 
-    private void queueFontAsset(Set<String> assetQueue, ConversationStyle style) {
-        if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
-            assetQueue.add(style.getFontFile());
+    private void queueFontAsset(Set<SwrveAssetsQueueItem> assetQueue, ConversationStyle style) {
+        if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile()) && SwrveHelper.isNotNullOrEmpty(style.getFontDigest())) {
+            assetQueue.add(new SwrveAssetsQueueItem(style.getFontFile(), style.getFontDigest()));
         }
     }
 

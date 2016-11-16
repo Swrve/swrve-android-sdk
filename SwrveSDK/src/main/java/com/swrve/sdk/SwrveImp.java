@@ -758,13 +758,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
             boolean mustLoadPreviousState = (wasPreviouslyQAUser || qaUser == null || !qaUser.isResetDevice());
             List<SwrveBaseCampaign> newCampaigns = new ArrayList<>();
-            Set<String> assetsQueueImages = new HashSet<>();
-            Set<String> assetsQueueFonts = new HashSet<>();
+            Set<SwrveAssetsQueueItem> assetsQueueImages = new HashSet<>();
+            Set<SwrveAssetsQueueItem> assetsQueueFonts = new HashSet<>();
             for (int i = 0, j = jsonCampaigns.length(); i < j; i++) {
                 JSONObject campaignData = jsonCampaigns.getJSONObject(i);
                 // Load campaign and get assets to be loaded
-                Set<String> campaignAssetQueueImages = new HashSet<>();
-                Set<String> campaignAssetQueueFonts = new HashSet<>();
+                Set<SwrveAssetsQueueItem> campaignAssetQueueImages = new HashSet<>();
+                Set<SwrveAssetsQueueItem> campaignAssetQueueFonts = new HashSet<>();
 
                 // Check filters (permission requests, platform)
                 boolean passesAllFilters = true;
@@ -851,7 +851,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
     }
 
-    protected void downloadAssets(final Set<String> assetsQueueImages, final Set<String> assetsQueueFonts) {
+    protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueueImages, final Set<SwrveAssetsQueueItem> assetsQueueFonts) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
@@ -872,11 +872,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
-    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetQueueImages, Set<String> assetQueueFonts) throws JSONException {
+    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetQueueImages, Set<SwrveAssetsQueueItem> assetQueueFonts) throws JSONException {
         return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetQueueImages, assetQueueFonts);
     }
 

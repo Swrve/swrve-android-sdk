@@ -44,6 +44,6 @@ interface SwrveAssetsManager {
      * @param assetsQueueFonts A collection of asset fonts to download.
      * @param callback Executed when assets are downloaded. Not executed if there's an error.
      */
-    void downloadAssets(final Set<String> assetsQueueImages, final Set<String> assetsQueueFonts, final SwrveAssetsCompleteCallback callback);
+    void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueueImages, final Set<SwrveAssetsQueueItem> assetsQueueFonts, final SwrveAssetsCompleteCallback callback);
 
 }

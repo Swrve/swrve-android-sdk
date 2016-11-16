@@ -44,33 +44,33 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assetsManager.setStorageDir(mActivity.getCacheDir());
         SwrveAssetsManagerImp assetsManagerSpy = Mockito.spy(assetsManager);
 
-        writeFileToCache("asset1");
-        writeFileToCache("asset2");
+        writeFileToCache("asset1", "digest1");
+        writeFileToCache("asset2", "digest2");
 
-        Set<String> assetsQueueImages = new HashSet<>();
-        assetsQueueImages.add("asset1");
-        assetsQueueImages.add("asset2");
+        Set<SwrveAssetsQueueItem> assetsQueueImages = new HashSet<>();
+        assetsQueueImages.add(new SwrveAssetsQueueItem("asset1", "digest1"));
+        assetsQueueImages.add(new SwrveAssetsQueueItem("asset2", "digest2"));
 
         assetsManagerSpy.downloadAssets(assetsQueueImages, null, null);
 
-        Mockito.verify(assetsManagerSpy, Mockito.never()).downloadAsset(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(assetsManagerSpy, Mockito.never()).downloadAsset(Mockito.any(SwrveAssetsQueueItem.class), Mockito.anyString());
     }
 
     @Test
     public void testSomeFilesAlreadyDownloaded() throws Exception {
 
-        final String asset1 = SwrveHelper.sha1("asset1".getBytes()); // this should already exist (as part of this setup)
-        final String asset2 = SwrveHelper.sha1("asset2".getBytes()); // this does not exist in cache at start and should be downloaded
-        final String asset3 = SwrveHelper.sha1("asset3".getBytes()); // this does not exist in cache at start and should be downloaded
+        final String digest1 = SwrveHelper.sha1("digest1".getBytes()); // this should already exist (as part of this setup)
+        final String digest2 = SwrveHelper.sha1("digest2".getBytes()); // this does not exist in cache at start and should be downloaded
+        final String digest3 = SwrveHelper.sha1("digest3".getBytes()); // this does not exist in cache at start and should be downloaded
 
         server = new MockWebServer();
         final Dispatcher dispatcher = new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains(asset2)){
-                    return new MockResponse().setResponseCode(200).setBody("asset2");
-                } else if (request.getPath().contains(asset3)){
-                    return new MockResponse().setResponseCode(200).setBody("asset3");
+                if (request.getPath().contains("asset2")){
+                    return new MockResponse().setResponseCode(200).setBody("digest2");
+                } else if (request.getPath().contains("asset3")){
+                    return new MockResponse().setResponseCode(200).setBody("digest3");
                 }
                 return new MockResponse().setResponseCode(404);
             }
@@ -85,28 +85,31 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assetsManager.setStorageDir(mActivity.getCacheDir());
         SwrveAssetsManagerImp assetsManagerSpy = Mockito.spy(assetsManager);
 
-        writeFileToCache(asset1);
+        writeFileToCache("asset1", digest1);
 
-        Set<String> assetsQueue = new HashSet<>();
-        assetsQueue.add(asset1);
-        assetsQueue.add(asset2);
-        assetsQueue.add(asset3);
+        Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
+        SwrveAssetsQueueItem item1 = new SwrveAssetsQueueItem("asset1", digest1);
+        SwrveAssetsQueueItem item2 = new SwrveAssetsQueueItem("asset2", digest2);
+        SwrveAssetsQueueItem item3 = new SwrveAssetsQueueItem("asset3", digest3);
+        assetsQueue.add(item1);
+        assetsQueue.add(item2);
+        assetsQueue.add(item3);
 
-        assertCacheFileExists(asset1);
-        assertCacheFileDoesNotExist(asset2);
-        assertCacheFileDoesNotExist(asset3);
+        assertCacheFileExists("asset1");
+        assertCacheFileDoesNotExist(digest2);
+        assertCacheFileDoesNotExist(digest3);
 
         assetsManagerSpy.downloadAssets(assetsQueue, null, null); // null callback on purpose
 
-        ArgumentCaptor<String> assetPathCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<SwrveAssetsQueueItem> assetPathCaptor = ArgumentCaptor.forClass(SwrveAssetsQueueItem.class);
         Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAsset(assetPathCaptor.capture(), Mockito.anyString());
         assertEquals(2, assetPathCaptor.getAllValues().size());
-        assertTrue("An attempt to download asset2 did not occur", assetPathCaptor.getAllValues().contains(asset2));
-        assertTrue("An attempt to download asset3 did not occur", assetPathCaptor.getAllValues().contains(asset3));
+        assertTrue("An attempt to download asset2 did not occur", assetPathCaptor.getAllValues().contains(item2));
+        assertTrue("An attempt to download asset3 did not occur", assetPathCaptor.getAllValues().contains(item3));
 
-        assertCacheFileExists(asset1);
-        assertCacheFileExists(asset2);
-        assertCacheFileExists(asset3);
+        assertCacheFileExists("asset1");
+        assertCacheFileExists("asset2");
+        assertCacheFileExists("asset3");
     }
 
     @Test
@@ -122,8 +125,8 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assetsManager.setCdnFonts(cdnPath);
         assetsManager.setStorageDir(mActivity.getCacheDir());
 
-        Set<String> assetsQueue = new HashSet<>();
-        assetsQueue.add("someAsset");
+        Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
+        assetsQueue.add(new SwrveAssetsQueueItem("someAsset", "someAsset"));
 
         SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
             @Override
@@ -137,10 +140,10 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         Mockito.verify(callbackSpy, Mockito.atLeastOnce()).complete();
     }
 
-    private void writeFileToCache(String filename) throws Exception {
+    private void writeFileToCache(String filename, String text) throws Exception {
         File file = new File(mActivity.getCacheDir(), filename);
         FileWriter fileWriter = new FileWriter(file, false);
-        fileWriter.write("empty");
+        fileWriter.write(text);
         fileWriter.close();
     }
 

@@ -34,6 +34,7 @@ public class ConversationStyle implements Serializable {
     private ConversationColorStyle lb = new ConversationColorStyle(ConversationColorStyle.TYPE_COLOR, DEFAULT_LB_COLOR);
     private Typeface typeface; // not generated from json
     private String font_file;
+    private String font_digest;
     private String font_family;
     private int text_size;
     private List<Integer> padding;
@@ -51,13 +52,14 @@ public class ConversationStyle implements Serializable {
         this.lb = lb;
     }
 
-    public ConversationStyle(int border_radius, String type, ConversationColorStyle bg, ConversationColorStyle fg, ConversationColorStyle lb, String font_file, String font_family, int text_size, ALIGNMENT alignment) {
+    public ConversationStyle(int border_radius, String type, ConversationColorStyle bg, ConversationColorStyle fg, ConversationColorStyle lb, String font_file, String font_digest, String font_family, int text_size, ALIGNMENT alignment) {
         this.border_radius = border_radius;
         this.type = type;
         this.bg = bg;
         this.fg = fg;
         this.lb = lb;
         this.font_file = font_file;
+        this.font_digest = font_digest;
         this.font_family = font_family;
         this.text_size = text_size;
         this.alignment = alignment;
@@ -127,6 +129,10 @@ public class ConversationStyle implements Serializable {
 
     public String getFontFile() {
         return font_file;
+    }
+
+    public String getFontDigest() {
+        return font_digest;
     }
 
     public String getFontFamily() {
