@@ -33,7 +33,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     private final static String TAG = "SwrveAdm";
     private final static String AMAZON_RECENT_PUSH_IDS = "recent_push_ids";
     private final static String AMAZON_PREFERENCES = "swrve_amazon_pref";
-    private final int MAX_ID_CACHE_ITEMS = 16;
+    protected final int DEFAULT_PUSH_ID_CACHE_SIZE = 16;
 
     public SwrveAdmIntentService() {
         super(SwrveAdmIntentService.class.getName());
@@ -46,7 +46,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     @Override
     protected void onMessage(final Intent intent) {
         if (intent == null) {
-            SwrveLogger.e(TAG, "Unexpected null intent");
+            SwrveLogger.e(TAG, "ADM messaging runtimes have called onMessage() with unexpected null intent.");
             return;
         }
 
@@ -113,13 +113,15 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         String curId = msgId + ":" + timestamp;
         LinkedList<String> recentIds = getRecentNotificationIdCache(context);
         if (recentIds.contains(curId)) {
-            //Found a duplicate
             SwrveLogger.i(TAG, "ADM notification: but not processing because duplicate Id: " + curId);
             return;
         }
 
+        //Try get de-dupe cache size
+        int pushIdCacheSize = msg.getInt(SwrveAdmConstants.PUSH_ID_CACHE_SIZE_KEY, DEFAULT_PUSH_ID_CACHE_SIZE);
+
         //No duplicate found. Update the cache.
-        updateRecentNotificationIdCache(recentIds, curId, MAX_ID_CACHE_ITEMS, context);
+        updateRecentNotificationIdCache(recentIds, curId, pushIdCacheSize, context);
 
         // Notify bound clients
         Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
@@ -132,7 +134,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         processNotification(msg, context);
     }
 
-    private LinkedList<String> getRecentNotificationIdCache(Context context) {
+    protected LinkedList<String> getRecentNotificationIdCache(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(AMAZON_PREFERENCES, Context.MODE_PRIVATE);
         String jsonString = sharedPreferences.getString(AMAZON_RECENT_PUSH_IDS, "");
         Gson gson = new Gson();
@@ -141,11 +143,15 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         return recentIds;
     }
 
-    private void updateRecentNotificationIdCache(LinkedList<String> recentIds, String newId, int maxCacheItems, Context context) {
+    protected void updateRecentNotificationIdCache(LinkedList<String> recentIds, String newId, int maxCacheSize, Context context) {
         //Update queue
         recentIds.add(newId);
+
+        //This must be at least zero;
+        maxCacheSize = Math.max(0, maxCacheSize);
+
         //Maintain cache size limit
-        while (recentIds.size() > MAX_ID_CACHE_ITEMS) {
+        while (recentIds.size() > maxCacheSize) {
             recentIds.remove();
         }
 

@@ -12,11 +12,10 @@ import org.json.JSONObject;
  * Main implementation of the Amazon Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
-    protected static final String SWRVE_AMAZON_TOKEN = "swrve.adm_token";
+    protected static final String SWRVE_ADM_TOKEN = "swrve.adm_token";
 
     protected String registrationId;
     protected ISwrvePushNotificationListener pushNotificationListener;
-    protected String lastProcessedMessage;
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);
@@ -25,7 +24,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     //ADM callbacks
     @Override
     public void onRegistrationIdReceived(String registrationId) {
-        //Record the registrationId.
         if (!SwrveHelper.isNullOrEmpty(registrationId)) {
             setRegistrationId(registrationId);
         }
@@ -33,11 +31,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected void beforeSendDeviceInfo(final Context context) {
-        //Check for class.
+        //Check for existence of ADM messaging class.
         try {
             Class.forName( "com.amazon.device.messaging.ADM" );
         } catch (ClassNotFoundException e) {
-            // Log the exception.
             SwrveLogger.e(LOG_TAG, "ADM message class not found.", e);
             return;
         }
@@ -52,9 +49,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 SwrveLogger.i(LOG_TAG, "adm.getRegistrationId() returned: " + newRegistrationId);
                 registrationId = newRegistrationId;
             }
-        } catch (Throwable exp) {
-            // Don't trust Amazon and all the moving parts to work as expected
-            SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration key for the device.", exp);
+        } catch (Exception exp) {
+            SwrveLogger.e(LOG_TAG, "Exception when trying to obtain the registration key for the device.", exp);
         }
     }
 
@@ -66,7 +62,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     @Override
     protected void extraDeviceInfo(JSONObject deviceInfo) throws JSONException {
         if (!SwrveHelper.isNullOrEmpty(registrationId)) {
-            deviceInfo.put(SWRVE_AMAZON_TOKEN, registrationId);
+            deviceInfo.put(SWRVE_ADM_TOKEN, registrationId);
         }
     }
 

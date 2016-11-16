@@ -11,6 +11,5 @@ public interface ISwrve extends ISwrveBase<ISwrve, SwrveConfig> {
 
     void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener);
 
-    //ADM callbacks
     void onRegistrationIdReceived(String registrationId);
 }
