@@ -606,7 +606,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Whether the SDK will hide the toolbar when displaying in-app messages.
+     * @return Whether the SDK will hide the toolbar when displaying in-app messages and conversations.
      */
     public boolean isHideToolbar() {
         return hideToolbar;
