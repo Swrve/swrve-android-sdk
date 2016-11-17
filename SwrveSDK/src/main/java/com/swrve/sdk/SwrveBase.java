@@ -194,8 +194,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                                 Intent intent = new Intent(ctx, ConversationActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                intent.putExtra("conversation", conversation);
-                                intent.putExtra("hide_toolbar", config.isHideToolbar());
+                                intent.putExtra(ConversationActivity.CONVERSATION_KEY, conversation);
+                                intent.putExtra(ConversationActivity.HIDE_TOOLBAR_KEY, config.isHideToolbar());
                                 ctx.startActivity(intent);
                                 // Report that the conversation was shown to the user
                                 conversation.getCampaign().messageWasShownToUser();

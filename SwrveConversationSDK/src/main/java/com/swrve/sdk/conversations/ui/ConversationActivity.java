@@ -15,6 +15,10 @@ import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
     private static final String LOG_TAG = "SwrveSDK";
+
+    public static final String CONVERSATION_KEY = "conversation";
+    public static final String HIDE_TOOLBAR_KEY = "hide_toolbar";
+
     private SwrveBaseConversation localConversation;
     private ConversationFragment conversationFragment;
     private boolean hideToolbar = false;
@@ -27,8 +31,8 @@ public class ConversationActivity extends FragmentActivity {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                this.localConversation = (SwrveBaseConversation) extras.getSerializable("conversation");
-                this.hideToolbar = extras.getBoolean("hide_toolbar");
+                this.localConversation = (SwrveBaseConversation) extras.getSerializable(CONVERSATION_KEY);
+                this.hideToolbar = extras.getBoolean(HIDE_TOOLBAR_KEY);
             }
         }
 
