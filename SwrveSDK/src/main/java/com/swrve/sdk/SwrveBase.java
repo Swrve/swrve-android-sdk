@@ -340,7 +340,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     private String getStringFromDate(Date date) {
 
         TimeZone timezone = TimeZone.getTimeZone("UTC");
-        DateFormat dateformat = new SimpleDateFormat("yyyy-dd-MM'T'HH:mm:ss.SSS'Z'");
+        DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         dateformat.setTimeZone(timezone);
 
         return dateformat.format(date);
