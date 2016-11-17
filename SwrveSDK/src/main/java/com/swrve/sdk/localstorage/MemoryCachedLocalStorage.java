@@ -18,7 +18,8 @@ public class MemoryCachedLocalStorage implements IMemoryLocalStorage {
     private ILocalStorage cache;
     private ILocalStorage secondaryStorage;
 
-    private Object eventLock = new Object();
+    public static final Object EVENT_LOCK = new Object();
+
     private Object cacheLock = new Object();
 
     public MemoryCachedLocalStorage(ILocalStorage cache, ILocalStorage secondaryStorage) {
@@ -85,7 +86,7 @@ public class MemoryCachedLocalStorage implements IMemoryLocalStorage {
     }
 
     public LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> getCombinedFirstNEvents(Integer n) {
-        synchronized (eventLock) {
+        synchronized (EVENT_LOCK) {
             LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> result = new LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>>();
             int eventCount = 0;
             if (secondaryStorage != null) {
@@ -110,21 +111,21 @@ public class MemoryCachedLocalStorage implements IMemoryLocalStorage {
 
     @Override
     public void addEvent(String eventJSON) throws Exception {
-        synchronized (eventLock) {
+        synchronized (EVENT_LOCK) {
             cache.addEvent(eventJSON);
         }
     }
 
     @Override
     public void removeEventsById(Collection<Long> ids) {
-        synchronized (eventLock) {
+        synchronized (EVENT_LOCK) {
             cache.removeEventsById(ids);
         }
     }
 
     @Override
     public LinkedHashMap<Long, String> getFirstNEvents(Integer ids) {
-        synchronized (eventLock) {
+        synchronized (EVENT_LOCK) {
             return cache.getFirstNEvents(ids);
         }
     }
@@ -184,7 +185,7 @@ public class MemoryCachedLocalStorage implements IMemoryLocalStorage {
         if (cache != secondaryStorage && cache instanceof IFlushableLocalStorage && secondaryStorage instanceof IFastInsertLocalStorage) {
             IFlushableLocalStorage flushableStorage = ((IFlushableLocalStorage) cache);
             IFastInsertLocalStorage targetStorage = ((IFastInsertLocalStorage) secondaryStorage);
-            synchronized (eventLock) {
+            synchronized (EVENT_LOCK) {
                 flushableStorage.flushEvents(targetStorage);
             }
             synchronized (cacheLock) {

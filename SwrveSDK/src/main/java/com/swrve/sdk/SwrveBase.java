@@ -426,7 +426,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 @Override
                 public void run() {
                     short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
-                    SwrveEventsManager swrveEventsManager = new SwrveEventsManager(config, restClient, userId, appVersion, sessionToken, deviceId);
+                    SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(config, restClient, userId, appVersion, sessionToken, deviceId);
                     swrveEventsManager.sendStoredEvents(cachedLocalStorage);
                     eventsWereSent = true;
                 }
@@ -474,7 +474,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
 
-        queueDeviceInfoNow(false);
         long currentTime = getSessionTime();
         // Session management
         if (currentTime > lastSessionTick) {

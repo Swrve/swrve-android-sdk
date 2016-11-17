@@ -6,6 +6,7 @@ import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
+import com.swrve.sdk.gcm.SwrveGcmConstants;
 
 public class SwrveSDK extends SwrveSDKBase {
 
@@ -31,8 +32,6 @@ public class SwrveSDK extends SwrveSDKBase {
     public static synchronized ISwrve createInstance(final Context context, final int appId, final String apiKey, final SwrveConfig config) {
         if (context == null) {
             SwrveHelper.logAndThrowException("Context not specified");
-        } else if (SwrveHelper.isNullOrEmpty(apiKey)) {
-            SwrveHelper.logAndThrowException("Api key not specified");
         }
 
         if (!SwrveHelper.sdkAvailable()) {
@@ -125,5 +124,28 @@ public class SwrveSDK extends SwrveSDKBase {
     public static void processIntent(Intent intent) {
         checkInstanceCreated();
         ((ISwrve) instance).processIntent(intent);
+    }
+
+    /**
+     * Set the registration Id from external sources.
+     *
+     * @param registrationId The registration ID obtained from the GCM libs.
+     */
+    public static void setRegistrationId(String registrationId) {
+        checkInstanceCreated();
+        ((ISwrve) instance).setRegistrationId(registrationId);
+    }
+
+    /**
+     * Called to send the push engaged event to Swrve.
+     *
+     * @param context android context
+     * @param pushId  The push id for engagement
+     */
+    public static void sendPushEngagedEvent(Context context, String pushId) {
+        checkInstanceCreated();
+        Intent intent = new Intent(context, SwrveEngageEventSender.class);
+        intent.putExtra(SwrveGcmConstants.SWRVE_TRACKING_KEY, pushId);
+        context.sendBroadcast(intent);
     }
 }

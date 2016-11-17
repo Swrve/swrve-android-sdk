@@ -13,6 +13,8 @@ import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
 
 import org.junit.After;
 import org.junit.Before;

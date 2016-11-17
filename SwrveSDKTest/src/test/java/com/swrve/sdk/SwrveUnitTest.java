@@ -10,6 +10,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+<<<<<<< HEAD
+=======
+import org.mockito.Mockito;
+import org.robolectric.Robolectric;
+>>>>>>> release-4_7
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -89,5 +94,20 @@ public class SwrveUnitTest extends SwrveBaseTest {
         config.setUserId("forced");
         ISwrve swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
         assertEquals("forced", swrve.getUserId());
+    }
+
+    @Test
+    public void testDeviceInfoQueued() {
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveSpy = Mockito.spy(swrveReal);
+        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info not queued
+        swrveSpy.onCreate(mActivity);
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued once upon init
+
+        swrveSpy.onCreate(mActivity);
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+
+        swrveSpy.onResume(mActivity);
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info not queued, because sdk already initialised
     }
 }
