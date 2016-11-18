@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.swrve.sdk.test"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk
+        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.locationcampaigns"/>
+
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application>
+        <!-- Use android:value instead of android:resource for Robolectric test (bug in robolectric) -->
+        <meta-data
+            android:name="SWRVE_PUSH_ICON"
+            android:value="1234" />
+        <meta-data
+            android:name="SWRVE_PUSH_ACTIVITY"
+            android:value="com.swrve.sdk.test.MainActivity" />
+        <meta-data
+            android:name="SWRVE_PUSH_TITLE"
+            android:value="Android Test App" />
+        <meta-data
+            android:name="SWRVE_PUSH_ICON_MATERIAL"
+            android:value="1" />
+        <meta-data
+            android:name="SWRVE_PUSH_ICON_LARGE"
+            android:value="1" />
+        <meta-data
+            android:name="SWRVE_PUSH_ACCENT_COLOR"
+            android:value="17170443" />
+        <activity
+            android:name="com.swrve.sdk.test.MainActivity"
+            android:windowSoftInputMode="stateAlwaysHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
