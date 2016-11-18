@@ -10,11 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-<<<<<<< HEAD
-=======
 import org.mockito.Mockito;
-import org.robolectric.Robolectric;
->>>>>>> release-4_7
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
