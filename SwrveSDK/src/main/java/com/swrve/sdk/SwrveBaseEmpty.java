@@ -91,6 +91,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void userUpdate(String name, Date date) {
+    }
+
+    @Override
     public void iap(int quantity, String productId, double productPrice, String currency) {
     }
 
