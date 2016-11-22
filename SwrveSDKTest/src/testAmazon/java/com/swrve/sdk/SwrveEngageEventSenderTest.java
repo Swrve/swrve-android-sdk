@@ -37,7 +37,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
 
-        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet(), Mockito.anySet()); // assets are manually mocked
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
 
         // do not init the sdk, as SwrvePushEngageReceiver can/will be executed cold
