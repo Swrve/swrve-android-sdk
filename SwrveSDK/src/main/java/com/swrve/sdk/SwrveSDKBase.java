@@ -122,6 +122,20 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Add Swrve.user event to the event queue specifying a date. This event would typically be
+     * added to the queue after session_start and at points where properties of
+     * your users change - for example, registration date or check-in date.
+     *
+     * @param name key for the Swrve.user event
+     * @param date date value for the Swrve.user event
+     *
+     */
+    public static void userUpdate(String name, Date date) {
+        checkInstanceCreated();
+        instance.userUpdate(name, date);
+    }
+
+    /**
      * Add a Swrve.iap event to the event queue. This event should be added for
      * unvalidated real money transactions where a single item was purchased.
      * (i.e where no in-app currency or bundle was purchased)
