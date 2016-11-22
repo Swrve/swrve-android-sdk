@@ -108,7 +108,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Add a Swrve.user event to the event queue. This event would typically be
+     * Add a group of custom user properties to the event queue. This event would typically be
      * added to the queue after session_start and at points where properties of
      * your users change - for example, levelUp.
      *
@@ -119,6 +119,20 @@ public abstract class SwrveSDKBase {
     public static void userUpdate(Map<String, String> attributes) {
         checkInstanceCreated();
         instance.userUpdate(attributes);
+    }
+
+    /**
+     * Add a single custom user property to the event queue specifying a date. This event
+     * would typically be added to the queue after session_start and at points where
+     * properties of your users change - for example, registration date or check-in date.
+     *
+     * @param name key for the custom user property
+     * @param date date value for the custom user property
+     *
+     */
+    public static void userUpdate(String name, Date date) {
+        checkInstanceCreated();
+        instance.userUpdate(name, date);
     }
 
     /**
