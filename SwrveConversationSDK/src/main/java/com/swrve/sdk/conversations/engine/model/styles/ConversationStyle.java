@@ -4,9 +4,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 
 import com.google.gson.annotations.SerializedName;
-import com.swrve.sdk.SwrveHelper;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
@@ -115,16 +113,6 @@ public class ConversationStyle implements Serializable {
 
     public void setTypeface(Typeface typeface) {
         this.typeface = typeface;
-    }
-
-    public Typeface getTypeface(File cacheDir, Typeface defaultTypeface) {
-        if (SwrveHelper.isNotNullOrEmpty(font_file)) {
-            File fontFile = new File(cacheDir, font_file);
-            if (fontFile.exists()) {
-                return Typeface.createFromFile(fontFile);
-            }
-        }
-        return defaultTypeface;
     }
 
     public String getFontFile() {
