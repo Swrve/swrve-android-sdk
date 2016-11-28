@@ -310,14 +310,14 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         }
 
         for (ChoiceInputItem item : content.getValues()) {
-            Typeface itemTypeface = getTypeface(titleStyle, SwrveConversationConstants.DEFAULT_MVI_OPTION_TYPEFACE);
             if (item.getStyle() == null) { // v1,v2, v3 of conversations have no ChoiceInputItem styles
                 ConversationStyle itemStyle = new ConversationStyle(0, "", titleStyle.getBg(), titleStyle.getFg(), null);
                 itemStyle.setFg(titleStyle.getFg());
                 itemStyle.setTextSize(getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_option_default_text_size));
-                itemStyle.setTypeface(itemTypeface);
+                itemStyle.setTypeface(titleTypeface); // use the same typeface as title
                 item.setStyle(itemStyle);
             } else {
+                Typeface itemTypeface = getTypeface(item.getStyle(), SwrveConversationConstants.DEFAULT_MVI_OPTION_TYPEFACE);
                 item.getStyle().setTypeface(itemTypeface);
             }
         }
