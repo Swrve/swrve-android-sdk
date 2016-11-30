@@ -42,7 +42,7 @@ public class ConversationButton extends android.widget.Button implements IConver
         setMinHeight(context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_min_height));
 
         setTypeface(style.getTypeface());
-        setTextSize(TypedValue.COMPLEX_UNIT_PX, style.getTextSize());
+        setTextSize(TypedValue.COMPLEX_UNIT_DIP, style.getTextSize());
         initAlignment();
     }
 

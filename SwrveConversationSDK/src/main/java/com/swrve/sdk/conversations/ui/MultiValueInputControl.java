@@ -67,7 +67,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         int titleTextColorInt =  titleStyle.getTextColorInt();
         SwrveConversationHelper.setBackgroundDrawable(control, titleStyle.getBg().getPrimaryDrawable());
         control.titleTextView.setTextColor(titleTextColorInt);
-        control.titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, titleStyle.getTextSize());
+        control.titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, titleStyle.getTextSize());
         control.titleTextView.setTypeface(titleStyle.getTypeface());
         int padding = context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_padding);
         control.titleTextView.setPadding(padding, padding, padding, padding);
@@ -82,7 +82,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             ChoiceInputItem item = model.getValues().get(i);
             rb.setText(item.getAnswerText());
             rb.setTypeface(item.getStyle().getTypeface());
-            rb.setTextSize(TypedValue.COMPLEX_UNIT_PX, item.getStyle().getTextSize());
+            rb.setTextSize(TypedValue.COMPLEX_UNIT_DIP, item.getStyle().getTextSize());
             rb.setTextColor(item.getStyle().getTextColorInt());
             MultiValueInputControl.setTint(rb, item.getStyle().getTextColorInt());
 
