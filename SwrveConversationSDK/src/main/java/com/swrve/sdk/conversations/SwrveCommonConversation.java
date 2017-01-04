@@ -1,13 +1,8 @@
 package com.swrve.sdk.conversations;
 
-import com.swrve.sdk.SwrveBase;
-import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ControlBase;
-import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
-import com.swrve.sdk.messaging.SwrveConversationCampaign;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,27 +11,31 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Set;
 
-public class SwrveConversation extends SwrveCommonConversation implements Serializable {
+// This class has to be extended by the SwrveSDK to add campaign and the other commented code
+public class SwrveCommonConversation implements Serializable {
     private final String LOG_TAG = "SwrveConversation";
-    // SwrveSDK reference
-    protected transient SwrveBase<?, ?> controller;
-    // Parent in-app campaign
-    protected transient SwrveConversationCampaign campaign;
+    // Swrve SDK reference
+    protected transient ISwrveConversationsSDK conversationController;
+    // Identifies the message in a campaign
+    protected int id;
+    // Customer defined name of the conversation as it appears in the web app
+    protected String name;
+    // Each of the conversations pages
+    protected ArrayList<ConversationPage> pages;
+    // Location of the images and button resources
+    protected File cacheDir;
 
     /**
      * Load message from JSON data.
      *
      * @param controller       SwrveTalk object that will manage the data from the campaign.
-     * @param campaign         Related campaign.
      * @param conversationData JSON data containing the message details.
      * @throws JSONException
      */
-    public SwrveConversation(SwrveBase<?, ?> controller, SwrveConversationCampaign campaign, JSONObject conversationData) throws JSONException {
-        super(controller, conversationData);
-        this.controller = controller;
-        this.campaign = campaign;
+    public SwrveCommonConversation(ISwrveConversationsSDK controller, JSONObject conversationData) throws JSONException {
+        //READD ON EXTENDED CLASSthis(controller, campaign);
+        setConversationController(controller);
 
         try {
             setId(conversationData.getInt("id"));
@@ -60,15 +59,23 @@ public class SwrveConversation extends SwrveCommonConversation implements Serial
         setPages(pages);
     }
 
+    protected void setConversationController(ISwrveConversationsSDK conversationController) {
+        this.conversationController = conversationController;
+        if (conversationController != null) {
+            setCacheDir(conversationController.getCacheDir());
+        }
+    }
+
+    /*//READD ON EXTENDED CLASS
     protected boolean assetInCache(String asset) {
-        Set<String> assetsOnDisk = controller.getAssetsOnDisk();
+        Set<String> assetsOnDisk = conversationController.getAssetsOnDisk();
         return !SwrveHelper.isNullOrEmpty(asset) && assetsOnDisk.contains(asset);
     }
 
     /**
      * @return has the conversation been downloaded fully yet
-     */
-    public boolean areAssetsReady() {
+     * /
+    public boolean isDownloaded() {
         if (this.pages != null) {
             for (ConversationPage conversationPage : pages) {
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
@@ -84,7 +91,7 @@ public class SwrveConversation extends SwrveCommonConversation implements Serial
         }
 
         return true;
-    }
+    }*/
 
     /**
      * @return the first ConversationPage (Page)
@@ -108,9 +115,46 @@ public class SwrveConversation extends SwrveCommonConversation implements Serial
     }
 
     /**
-     * @return the related campaign.
+     * @return the message id.
      */
-    public SwrveConversationCampaign getCampaign() {
-        return campaign;
+    public int getId() {
+        return id;
+    }
+
+    protected void setId(int id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the message name.
+     */
+    public String getName() {
+        return name;
+    }
+
+    protected void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the directory where resources will be saved.
+     */
+    public File getCacheDir() {
+        return cacheDir;
+    }
+
+    protected void setCacheDir(File cacheDir) {
+        this.cacheDir = cacheDir;
+    }
+
+    /**
+     * @return the related pages in the conversation.
+     */
+    public ArrayList<ConversationPage> getPages() {
+        return pages;
+    }
+
+    public void setPages(ArrayList<ConversationPage> pages) {
+        this.pages = pages;
     }
 }
