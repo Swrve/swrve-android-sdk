@@ -3,9 +3,11 @@ package com.swrve.sdk.conversations.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.view.Window;
 
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
@@ -13,18 +15,30 @@ import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
     private static final String LOG_TAG = "SwrveSDK";
+
+    public static final String CONVERSATION_KEY = "conversation";
+    public static final String HIDE_TOOLBAR_KEY = "hide_toolbar";
+
     private SwrveBaseConversation localConversation;
     private ConversationFragment conversationFragment;
+    private boolean hideToolbar = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                this.localConversation = (SwrveBaseConversation) extras.getSerializable("conversation");
+                this.localConversation = (SwrveBaseConversation) extras.getSerializable(CONVERSATION_KEY);
+                this.hideToolbar = extras.getBoolean(HIDE_TOOLBAR_KEY);
             }
+        }
+
+        // Hide the status bar if configured that way
+        if (!hideToolbar) {
+            setTheme(R.style.Theme_ConversationsWithToolbar);
         }
 
         try {
