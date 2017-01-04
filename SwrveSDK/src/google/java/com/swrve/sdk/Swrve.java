@@ -13,6 +13,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
+import com.swrve.sdk.gcm.ISwrveSilentPushNotificationListener;
 import com.swrve.sdk.gcm.SwrveGcmConstants;
 
 import org.json.JSONException;
@@ -30,6 +31,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected String advertisingId;
     protected boolean isAdvertisingLimitAdTrackingEnabled;
     protected ISwrvePushNotificationListener pushNotificationListener;
+    protected ISwrveSilentPushNotificationListener silentPushNotificationListener;
     protected String lastProcessedMessage;
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
@@ -115,6 +117,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         this.pushNotificationListener = pushNotificationListener;
+    }
+
+    public void setSilentPushNotificationListener(ISwrveSilentPushNotificationListener silentPushNotificationListener) {
+        this.silentPushNotificationListener = silentPushNotificationListener;
     }
 
     /**
@@ -301,5 +307,11 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     @Override
     public void onNewIntent(Intent intent) {
         processIntent(intent);
+    }
+
+    public void processSilentPush(Bundle msg) {
+        if (silentPushNotificationListener != null) {
+            silentPushNotificationListener.onSilentPushNotification(msg);
+        }
     }
 }

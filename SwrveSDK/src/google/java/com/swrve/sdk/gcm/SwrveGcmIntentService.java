@@ -25,6 +25,7 @@ public class SwrveGcmIntentService extends GcmListenerService {
     public void onMessageReceived(String from, Bundle data) {
         handler.onMessageReceived(from, data);
     }
+
     /**
      * Override this function to process notifications in a different way.
      *
