@@ -3,22 +3,10 @@
 
     <style name="Theme.BaseConversations" parent="android:Theme.Light">
         <item name="android:windowNoTitle">true</item>
+        <item name="android:listChoiceIndicatorSingle">@drawable/abc_btn_radio_material</item>
     </style>
 
     <style name="Theme.Conversations" parent="Theme.BaseConversations">
-        <item name="conversationControlTrayStyle">@style/cio__button_tray</item>
-        <item name="conversationControlTrayTopMargin">@dimen/swrve__control_tray_top_margin</item>
-        <item name="conversationControlLayoutMargin">@dimen/swrve__control_tray_item_margin</item>
-        <item name="conversationControlButtonStyle">@style/cio__control_button</item>
-        <item name="conversationContentStyle">@style/cio__conversation_content_box</item>
-        <item name="conversationContentTrayBottomMargin">@dimen/swrve__content_tray_bottom_margin</item>
-        <item name="conversationContentDescriptionStyle">@style/cio__description_item</item>
-        <item name="conversationInputTextBoxDefaultStyle">@style/cio__edit_box</item>
-        <item name="conversationTextContentDefaultStyle">@style/cio__content_textview</item>
-        <item name="conversationDialogContentDefaultStyle">@style/cio__dialog_textview</item>
-        <item name="conversationDialogButtonDefaultStyle">@style/cio__dialog_button</item>
-        <item name="conversationInputMultiValueItemStyle">@style/cio__mv_item</item>
-        <item name="conversationInputMultiValueDescriptionStyle">@style/cio__mv_description_item</item>
         <item name="conversationContentRatingBarStyle">@style/cio__rating_bar</item>
         <item name="conversationContentRatingBarContainerStyle">@style/cio__rating_bar_container</item>
     </style>

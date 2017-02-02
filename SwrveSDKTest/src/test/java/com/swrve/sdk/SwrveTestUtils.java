@@ -15,19 +15,28 @@ import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 
+import junit.framework.Assert;
+
 import org.json.JSONObject;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static junit.framework.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class SwrveTestUtils {
@@ -69,19 +78,19 @@ public class SwrveTestUtils {
      * Loads the campaigns from json file into swrve sdk
      * @param swrve sdk
      * @param campaignFileName the cfile name in assets folder containing the campaign json
-     * @param imageAssets an array of downloaded assets so campaign is eligible
+     * @param assets an array of downloaded assets so campaign is eligible (font or image)
      * @throws Exception
      */
-    public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... imageAssets) throws Exception {
+    public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... assets) throws Exception {
         String json = SwrveTestUtils.getAssetAsText(context, campaignFileName);
         JSONObject jsonObject = new JSONObject(json);
         swrve.loadCampaignsFromJSON(jsonObject, swrve.campaignsState);
-        if (imageAssets.length > 0) {
+        if (assets.length > 0) {
             Set<String> assetsOnDisk = new HashSet<>();
-            for(String asset : imageAssets) {
+            for(String asset : assets) {
                 assetsOnDisk.add(asset);
             }
-            swrve.assetsOnDisk = assetsOnDisk;
+            ((SwrveAssetsManagerImp)swrve.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
         }
     }
 
@@ -154,4 +163,101 @@ public class SwrveTestUtils {
             }
         };
     }
+
+    public static void writeFileToCache(File cache, String filename) {
+        File file = new File(cache, filename);
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(file, false);
+            fileWriter.write("empty");
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fileWriter != null) fileWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void disableAssetsManager(Swrve swrve) {
+        SwrveAssetsManager swrveAssetsManagerSpy = Mockito.spy(swrve.swrveAssetsManager);
+        Mockito.doNothing().when(swrveAssetsManagerSpy).downloadAssets(Mockito.anySet(), Mockito.any(SwrveAssetsCompleteCallback.class));
+        swrve.swrveAssetsManager = swrveAssetsManagerSpy;
+    }
+
+    /*
+     * Using Mockito to verify events are sent to the queueEvent method.
+     * Call Mockito.reset(swrveSpy) before doing the test but can't be guaranteed that this is the only event
+     * captured to the queueEvent method, so a search is done.
+     */
+    public static void assertQueueEvent(Swrve swrveSpy, String expectedEventType, Map<String, Object> expectedParameters, Map<String, Object> expectedPayload) {
+        ArgumentCaptor<String> eventTypeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Map> parametersCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map> payloadCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Boolean> triggerEventListenerCaptor = ArgumentCaptor.forClass(Boolean.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).queueEvent(eventTypeCaptor.capture(), parametersCaptor.capture(), payloadCaptor.capture(), triggerEventListenerCaptor.capture());
+
+        List<String> capturedEventTypes = eventTypeCaptor.getAllValues();
+        List<Map> capturedParameters = parametersCaptor.getAllValues();
+        List<Map> capturedPayload = payloadCaptor.getAllValues();
+
+        // assert eventtype
+        assertTrue("Asserting eventType: " + expectedEventType + " in capturedEventTypes:" + capturedEventTypes, capturedEventTypes.contains(expectedEventType));
+
+        // find the indices at which they were found so rest of parameters and payloads can be eliminated.
+        List<Integer> matchedIndices = new ArrayList<>();
+        for (int i = 0; i < capturedEventTypes.size(); i++) {
+            String capturedEventType = capturedEventTypes.get(i);
+            if (capturedEventType.equals(expectedEventType)) {
+                matchedIndices.add(i);
+            }
+        }
+
+        // assert parameters
+        if (expectedParameters != null && expectedParameters.size() > 0) {
+            boolean hasMatches = filterMatchesFromListMap(matchedIndices, expectedParameters, capturedParameters);
+            assertTrue("Asserting expectedParameters:" + expectedParameters + " in:" + capturedParameters, hasMatches);
+        }
+
+        // assert payload
+        if (expectedPayload != null && expectedPayload.size() > 0) {
+            boolean hasMatches = filterMatchesFromListMap(matchedIndices, expectedPayload, capturedPayload);
+            assertTrue("Asserting expectedPayload:" + expectedPayload + " in:" + capturedPayload, hasMatches);
+        }
+
+        if (matchedIndices.size() == 0) {
+            Assert.fail("Event not queued. eventType:" + expectedEventType + "\nparameters:" + expectedParameters + "\npayload:" + expectedPayload);
+        }
+    }
+
+    private static boolean filterMatchesFromListMap(List<Integer> matchedIndices, Map<String, Object> expected, List<Map> actual) {
+        List<Integer> indicesToRemove = new ArrayList<>();
+        for (Integer index : matchedIndices) { // only iterate through the known matched indices
+            Map capturedParameterMap = actual.get(index);
+            for (int i = 0; i < actual.size(); i++) {
+                boolean matchesAll = true;
+                for (Map.Entry<String, Object> entry : expected.entrySet()) { // iterate through expected results
+                    String expectedKey = entry.getKey();
+                    Object expectedValue = entry.getValue();
+                    if (!capturedParameterMap.containsKey(expectedKey)) {
+                        matchesAll = false;
+                        break;
+                    } else if (!capturedParameterMap.get(expectedKey).toString().equals(expectedValue.toString())) {
+                        matchesAll = false;
+                        break;
+                    }
+                }
+                if (!matchesAll) {
+                    indicesToRemove.add(index);
+                    break;
+                }
+            }
+        }
+        matchedIndices.removeAll(indicesToRemove);
+        return matchedIndices.size() > 0;
+    }
+
 }

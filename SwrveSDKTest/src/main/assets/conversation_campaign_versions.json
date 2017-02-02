@@ -124,7 +124,7 @@
       "triggers": [
         "Swrve.Messages.showAtSessionStart"
       ],
-      "conversation_version": 4,
+      "conversation_version": 5,
       "conversation": {
         "id": 88,
         "name": "Choose one",

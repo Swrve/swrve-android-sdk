@@ -1,12 +1,18 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.engine.model.ButtonControl;
+import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
+import com.swrve.sdk.conversations.engine.model.MultiValueInput;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,31 +32,56 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     /**
      * Load a campaign from JSON data.
      */
-    public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
 
         if(campaignData.has("conversation")) {
             JSONObject conversationData = campaignData.getJSONObject("conversation");
             this.conversation = createConversation(this, conversationData, campaignManager);
 
-            // Add assets to queue
             for (ConversationPage conversationPage : conversation.getPages()) {
+
+                // Add image and font assets to queue from content
                 for (ConversationAtom conversationAtom : conversationPage.getContent()) {
-                    if (ConversationAtom.TYPE_CONTENT_IMAGE.equalsIgnoreCase(conversationAtom.getType().toString())) {
-                        Content modelContent = (Content) conversationAtom;
-                        assetsQueue.add(modelContent.getValue());
+                    switch (conversationAtom.getType()) {
+                        case CONTENT_IMAGE:
+                            queueImageAsset(assetsQueue, (Content) conversationAtom);
+                            break;
+                        case CONTENT_HTML:
+                        case INPUT_STARRATING:
+                            queueFontAsset(assetsQueue, conversationAtom.getStyle());
+                            break;
+                        case INPUT_MULTIVALUE:
+                            MultiValueInput multiValueInput = (MultiValueInput) conversationAtom;
+                            queueFontAsset(assetsQueue, multiValueInput.getStyle());
+                            // iterate through options
+                            for (ChoiceInputItem item : multiValueInput.getValues()) {
+                                queueFontAsset(assetsQueue, item.getStyle());
+                            }
+                            break;
                     }
+                }
+
+                // Add font assets to queue from button control
+                for (ButtonControl buttonControl : conversationPage.getControls()) {
+                    queueFontAsset(assetsQueue, buttonControl.getStyle());
                 }
             }
         }
     }
 
-    public SwrveConversation getConversation() {
-        return conversation;
+    private void queueImageAsset(Set<SwrveAssetsQueueItem> assetQueue, Content content) {
+        assetQueue.add(new SwrveAssetsQueueItem(content.getValue(), content.getValue(), true));
     }
 
-    protected void setConversation(SwrveConversation conversation) {
-        this.conversation = conversation;
+    private void queueFontAsset(Set<SwrveAssetsQueueItem> assetQueue, ConversationStyle style) {
+        if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile()) && SwrveHelper.isNotNullOrEmpty(style.getFontDigest()) && !style.isSystemFont()) {
+            assetQueue.add(new SwrveAssetsQueueItem(style.getFontFile(), style.getFontDigest(), false));
+        }
+    }
+
+    public SwrveConversation getConversation() {
+        return conversation;
     }
 
     /**

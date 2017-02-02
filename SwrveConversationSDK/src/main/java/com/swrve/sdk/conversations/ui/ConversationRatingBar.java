@@ -3,9 +3,9 @@ package com.swrve.sdk.conversations.ui;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
+import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
@@ -13,12 +13,14 @@ import android.widget.RelativeLayout;
 
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.Content;
+import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.StarRating;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationColorStyle;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,26 +31,24 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
     private RatingBar ratingBar;
     private ConversationInputChangedListener inputChangedListener;
 
-    public ConversationRatingBar(Context context, StarRating model) {
+    public ConversationRatingBar(Context context, StarRating model, File cacheDir) {
         super(context);
         this.model = model;
         setOrientation(LinearLayout.VERTICAL);
         setTag(model.getTag());
-        initHtmlSnippetView();
+        initHtmlSnippetView(cacheDir);
         initRatingBar();
     }
 
-    private void initHtmlSnippetView() {
-        Content content = new Content();
-        content.setValue(model.getValue());
-        htmlSnippetView = new HtmlSnippetView(getContext(), content);
-        htmlSnippetView.setTag(content.getTag());
+    private void initHtmlSnippetView(File cacheDir) {
+        Content content = new Content(model.getTag(), ConversationAtom.TYPE.CONTENT_HTML, model.getStyle(), model.getValue(), "");
+        htmlSnippetView = new HtmlSnippetView(getContext(), content, cacheDir);
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         htmlSnippetView.setLayoutParams(layoutParams);
         htmlSnippetView.setBackgroundColor(Color.TRANSPARENT);
         ConversationStyle conversationStyle = model.getStyle();
         ConversationColorStyle conversationStyleBg = conversationStyle.getBg();
-        setBackgroundDrawable(htmlSnippetView, conversationStyleBg.getPrimaryDrawable());
+        SwrveConversationHelper.setBackgroundDrawable(htmlSnippetView, conversationStyleBg.getPrimaryDrawable());
         addView(htmlSnippetView);
     }
 
@@ -58,7 +58,8 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
         ratingBar.setStepSize(0.01f); // set a tiny increment and do the rounding in onRatingChanged method.
         ratingBar.setOnRatingBarChangeListener(this);
 
-        LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
         ratingBar.setLayoutParams(layoutParams);
 
         setStarColor(Color.parseColor(model.getStarColor()));
@@ -70,25 +71,11 @@ public class ConversationRatingBar extends LinearLayout implements RatingBar.OnR
         addView(container);
     }
 
-    private void setBackgroundDrawable(HtmlSnippetView view, Drawable drawable) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            view.setBackgroundDrawable(drawable);
-        } else {
-            view.setBackground(drawable);
-        }
-    }
-
     private void setStarColor(int color) {
         LayerDrawable stars = (LayerDrawable) ratingBar.getProgressDrawable();
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            stars.getDrawable(0).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-            stars.getDrawable(1).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-            stars.getDrawable(2).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-        } else {
-            stars.getDrawable(0).setTint(color);
-            stars.getDrawable(1).setTint(color);
-            stars.getDrawable(2).setTint(color);
-        }
+        stars.getDrawable(0).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        stars.getDrawable(1).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        stars.getDrawable(2).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
     }
 
     @Override

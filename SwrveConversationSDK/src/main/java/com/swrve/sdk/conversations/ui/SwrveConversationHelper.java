@@ -1,15 +1,16 @@
 package com.swrve.sdk.conversations.ui;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
+import android.os.Build;
+import android.view.View;
 
-import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.conversations.R;
 
 /**
@@ -25,11 +26,8 @@ class SwrveConversationHelper {
      */
     public static float getRadiusInPixels(Context context, int borderRadiusPerCent) {
         float borderRadius;
-        int[] attrs = {android.R.attr.minHeight};
-        TypedArray ta = context.obtainStyledAttributes(R.style.cio__control_button, attrs);
-        String height = ta.getString(0);
-        height = height.contains("dip") ? height.substring(0, height.indexOf("dip")) : height;
-        float maxRadius = SwrveHelper.convertDipToPixels(context, Float.parseFloat(height))/2; // maxRadius is height divide by two
+        int height = context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_control_height);
+        float maxRadius = height / 2; // maxRadius is height divide by two
         if (borderRadiusPerCent >= 100) {
             borderRadius = maxRadius;
         } else {
@@ -81,4 +79,12 @@ class SwrveConversationHelper {
         return new LayerDrawable(drawables);
     }
 
+    @SuppressLint("NewApi")
+    public static void setBackgroundDrawable(View view, Drawable drawable) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+            view.setBackgroundDrawable(drawable);
+        } else {
+            view.setBackground(drawable);
+        }
+    }
 }

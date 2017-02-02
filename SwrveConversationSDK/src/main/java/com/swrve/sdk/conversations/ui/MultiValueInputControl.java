@@ -9,6 +9,7 @@ import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
@@ -23,6 +24,7 @@ import com.swrve.sdk.conversations.engine.model.ChoiceInputResponse;
 import com.swrve.sdk.conversations.engine.model.ConversationInputChangedListener;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -31,10 +33,11 @@ import java.util.Map;
 
 
 public class MultiValueInputControl extends LinearLayout implements Serializable, IConversationInput, OnCheckedChangeListener {
+
     private MultiValueInput model;
     private int selectedIndex = -1; // default to none selected
     private ConversationInputChangedListener inputChangedListener;
-    private TextView descLbl;
+    private TextView titleTextView;
     private ArrayList<RadioButton> radioButtons;
 
     @SuppressLint("NewApi")
@@ -61,9 +64,16 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
     public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
         MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.swrve__multiinput, parentContainer, false);
-        control.descLbl = (TextView) control.findViewById(R.id.swrve__MIV_Header);
-        control.descLbl.setText(model.getDescription());
-        int textColorInt =  model.getStyle().getTextColorInt();
+        control.titleTextView = (TextView) control.findViewById(R.id.swrve__MIV_Header);
+        control.titleTextView.setText(model.getDescription());
+        ConversationStyle titleStyle = model.getStyle();
+        int titleTextColorInt =  titleStyle.getTextColorInt();
+        SwrveConversationHelper.setBackgroundDrawable(control, titleStyle.getBg().getPrimaryDrawable());
+        control.titleTextView.setTextColor(titleTextColorInt);
+        control.titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, titleStyle.getTextSize());
+        control.titleTextView.setTypeface(titleStyle.getTypeface());
+        int padding = context.getResources().getDimensionPixelSize(R.dimen.swrve__conversation_mvi_padding);
+        control.titleTextView.setPadding(padding, padding, padding, padding);
 
         control.model = model;
         control.radioButtons = new ArrayList<RadioButton>();
@@ -72,13 +82,18 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
             RadioButton rb = new RadioButton(context);
             LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
             rb.setLayoutParams(lp);
-            rb.setText(model.getValues().get(i).getAnswerText());
-            rb.setTextColor(textColorInt);
+            ChoiceInputItem item = model.getValues().get(i);
+            rb.setText(item.getAnswerText());
+            rb.setTypeface(item.getStyle().getTypeface());
+            rb.setTextSize(TypedValue.COMPLEX_UNIT_DIP, item.getStyle().getTextSize());
+            rb.setTextColor(item.getStyle().getTextColorInt());
+            MultiValueInputControl.setTint(rb, item.getStyle().getTextColorInt());
+
             rb.setChecked(i == control.selectedIndex);
             if (!control.isInEditMode()) {
                 rb.setTag(R.string.swrve__indexTag, i);
             }
-            MultiValueInputControl.setTint(rb, textColorInt);
+
             control.addView(rb);
             rb.setOnCheckedChangeListener(control);
             control.radioButtons.add(rb);
@@ -90,11 +105,19 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
     private static void setTint(RadioButton radioButton, int color) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             radioButton.setButtonTintList(ColorStateList.valueOf(color));
+        } else {
+            int[][] states = new int[][] {
+                new int[] { android.R.attr.state_enabled}, // enabled
+                new int[] {-android.R.attr.state_enabled}, // disabled
+                new int[] {-android.R.attr.state_checked}, // unchecked
+                new int[] { android.R.attr.state_pressed}  // pressed
+            };
+            int[] colors = new int[]{color, color, color, color};
+            ColorStateList colorStateList = new ColorStateList(states, colors);
+            Drawable drawable = DrawableCompat.wrap(ContextCompat.getDrawable(radioButton.getContext(), R.drawable.abc_btn_radio_material));
+            DrawableCompat.setTintList(drawable, colorStateList);
+            radioButton.setButtonDrawable(drawable);
         }
-    }
-
-    public void setTextColor(int colorInt){
-        descLbl.setTextColor(colorInt);
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.adm.SwrveAdmConstants;
 
 import org.junit.After;
@@ -28,13 +27,12 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
     public void setUp() throws Exception {
         super.setUp();
         shadowApplication = Shadows.shadowOf(RuntimeEnvironment.application);
-        SwrveConfig config = new SwrveConfig();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
 
-        Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
 
         // do not init the sdk, as SwrvePushEngageReceiver can/will be executed cold

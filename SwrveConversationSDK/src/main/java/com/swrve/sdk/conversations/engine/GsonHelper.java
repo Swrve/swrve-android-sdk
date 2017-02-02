@@ -5,8 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.swrve.sdk.conversations.engine.deserialisers.ControlActionsDeserialiser;
 import com.swrve.sdk.conversations.engine.deserialisers.ConversationAtomDeserialiser;
-import com.swrve.sdk.conversations.engine.deserialisers.MultiValueItemDeserialiser;
-import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
 import com.swrve.sdk.conversations.engine.model.ControlActions;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 
@@ -20,7 +18,6 @@ public class GsonHelper {
 
         db.registerTypeAdapter(ConversationAtom.class, new ConversationAtomDeserialiser());
         db.registerTypeAdapter(ControlActions.class, new ControlActionsDeserialiser());
-        db.registerTypeAdapter(ChoiceInputItem.class, new MultiValueItemDeserialiser());
 
         return db.create();
     }

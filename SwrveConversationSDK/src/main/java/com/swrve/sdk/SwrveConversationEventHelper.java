@@ -66,7 +66,7 @@ public class SwrveConversationEventHelper {
     }
 
     public void conversationDeeplinkActionCalledByUser(SwrveBaseConversation conversation, String fromPageTag, String toActionTag) {
-        queueEventPageAction(conversation, "visit", fromPageTag, "deeplink", toActionTag);
+        queueEventPageAction(conversation, "deeplink", fromPageTag, "control", toActionTag);
     }
 
     public void conversationWasFinishedByUser(SwrveBaseConversation conversation, String endPageTag, String endControlTag) {

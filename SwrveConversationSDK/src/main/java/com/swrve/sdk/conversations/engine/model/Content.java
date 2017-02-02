@@ -1,5 +1,7 @@
 package com.swrve.sdk.conversations.engine.model;
 
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -8,6 +10,12 @@ public class Content extends ConversationAtom {
 
     protected String value;
     protected String height;
+
+    public Content(String tag, TYPE type, ConversationStyle style, String value, String height) {
+        super(tag, type, style);
+        this.value = value;
+        this.height = height;
+    }
 
     public String getValue() {
         return value;

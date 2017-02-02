@@ -17,6 +17,7 @@
           "conditions": {}
         }
       ],
+      "conversation_version": 4,
       "conversation": {
         "id": 82,
         "name": "Choose one",
@@ -46,20 +47,67 @@
                   "fg": {
                     "type": "color",
                     "value": "#9bf000"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "font_postscript_name": "my_awesome_font_postscript_name",
+                  "font_native_style": "",
+                  "text_size": 123
                 },
                 "values": [
                   {
                     "answer_id": "13654815-option",
-                    "answer_text": "Option 1"
+                    "answer_text": "Option 1",
+                    "style": {
+                      "bg": {
+                        "type": "transparent"
+                      },
+                      "fg": {
+                        "type": "color",
+                        "value": "#9bf000"
+                      },
+                      "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                      "font_family": "my_awesome_font_0",
+                      "font_postscript_name": "my_awesome_font_postscript_name_0",
+                      "font_native_style": "",
+                      "text_size": 0
+                    }
                   },
                   {
                     "answer_id": "82037856-option",
-                    "answer_text": "Option 2"
+                    "answer_text": "Option 2",
+                    "style": {
+                      "bg": {
+                        "type": "transparent"
+                      },
+                      "fg": {
+                        "type": "color",
+                        "value": "#9bf000"
+                      },
+                      "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                      "font_family": "my_awesome_font_1",
+                      "font_postscript_name": "my_awesome_font_postscript_name_1",
+                      "font_native_style": "",
+                      "text_size": 1
+                    }
                   },
                   {
                     "answer_id": "37240198-option",
-                    "answer_text": "Option 3"
+                    "answer_text": "Option 3",
+                    "style": {
+                      "bg": {
+                        "type": "transparent"
+                      },
+                      "fg": {
+                        "type": "color",
+                        "value": "#9bf000"
+                      },
+                      "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                      "font_family": "my_awesome_font_2",
+                      "font_postscript_name": "my_awesome_font_postscript_name_2",
+                      "font_native_style": "",
+                      "text_size": 2
+                    }
                   }
                 ],
                 "tag": "1427192631272-fragment"
@@ -74,7 +122,15 @@
                   "fg": {
                     "type": "color",
                     "value": "#9bf000"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "font_postscript_name": "my_awesome_font_postscript_name",
+                  "font_native_style": "",
+                  "text_size": 123,
+                  "padding": [1, 2, 3, 4],
+                  "line_space": 789,
+                  "alignment": "left"
                 },
                 "tag": "1427199673126-fragment"
               },
@@ -88,44 +144,19 @@
                   "fg": {
                     "type": "color",
                     "value": "#9bf000"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "font_postscript_name": "my_awesome_font_postscript_name",
+                  "font_native_style": "",
+                  "text_size": 123,
+                  "padding": [1, 2, 3, 4],
+                  "line_space": 789,
+                  "alignment": "left"
                 },
                 "tag": "1427199673126-star-rating",
                 "stuff": "hello",
                 "star_color": "#F8F8F8"
-              },
-              {
-                "type": "multi-value-input",
-                "description": "Title",
-                "style": {
-                  "bg": {
-                    "type": "transparent"
-                  },
-                  "fg": {
-                    "type": "color",
-                    "value": "#9bf000"
-                  }
-                },
-                "values": [
-                  {
-                    "answer_id": "94974061-option",
-                    "answer_text": "Mr"
-                  },
-                  {
-                    "answer_id": "98215530-option",
-                    "answer_text": "Mrs"
-                  },
-                  {
-                    "answer_id": "52489097-option",
-                    "answer_text": "Dr"
-                  },
-                  {
-                    "answer_id": "71815901-option",
-                    "answer_text": "other"
-                  }
-                ],
-                "tag": "1427199713875-fragment",
-                "optional": true
               }
             ],
             "controls": [
@@ -142,7 +173,13 @@
                   "fg": {
                     "type": "color",
                     "value": "#cc8534"
-                  }
+                  },
+                  "font_file": "_system_font_",
+                  "font_family": "",
+                  "font_postscript_name": "",
+                  "font_native_style": "BoldItalic",
+                  "text_size": 123,
+                  "alignment": "left"
                 },
                 "target": "",
                 "action": {
@@ -161,171 +198,15 @@
                   "fg": {
                     "type": "color",
                     "value": "#cc8534"
-                  }
+                  },
+                  "font_file": "2617fb3c279e30dd7c180de8679a2e2d33cf3552",
+                  "font_family": "my_awesome_font",
+                  "font_postscript_name": "my_awesome_font_postscript_name",
+                  "font_native_style": "",
+                  "text_size": 123,
+                  "alignment": "left"
                 },
                 "target": "1427305771170-2Button"
-              }
-            ]
-          },
-          {
-            "tag": "1427305771170-2Button",
-            "title": "Page 2 of x",
-            "style": {
-              "bg": {
-                "type": "color",
-                "value": "#666666"
-              }
-            },
-            "content": [
-              {
-                "value": "8d4f969706e6bf2aa344d6690496ecfdefc89f1f",
-                "src": "http://fake_cdn_root.com/someurl/image/8d4f969706e6bf2aa344d6690496ecfdefc89f1f",
-                "style": {
-                  "bg": {
-                    "type": "transparent"
-                  },
-                  "fg": {
-                    "type": "color",
-                    "value": "#9bf000"
-                  }
-                },
-                "type": "image",
-                "tag": "1427305774817-fragment",
-                "css_class": "user-uploaded-image"
-              }
-            ],
-            "controls": [
-              {
-                "tag": "1427305771170-Button-1",
-                "description": "Go to web page",
-                "style": {
-                  "type": "solid",
-                  "bg": {
-                    "type": "color",
-                    "value": "#7C8D97"
-                  },
-                  "border_radius": 50,
-                  "fg": {
-                    "type": "color",
-                    "value": "#cc8534"
-                  }
-                },
-                "target": "",
-                "action": {
-                  "visit": {
-                    "url": "http://en.wikipedia.org/wiki/Sun"
-                  }
-                }
-              },
-              {
-                "tag": "1427305771170-Button-2",
-                "description": "Next",
-                "style": {
-                  "type": "solid",
-                  "bg": {
-                    "type": "color",
-                    "value": "#7C8D97"
-                  },
-                  "fg": {
-                    "type": "color",
-                    "value": "#cc8534"
-                  }
-                },
-                "target": "1427305795105-2Button"
-              }
-            ]
-          },
-          {
-            "tag": "1427305795105-2Button",
-            "title": "New page",
-            "style": {
-              "bg": {
-                "type": "color",
-                "value": "#666666"
-              }
-            },
-            "content": [
-              {
-                "type": "multi-value-input",
-                "description": "Question text here...",
-                "style": {
-                  "bg": {
-                    "type": "transparent"
-                  },
-                  "fg": {
-                    "type": "color",
-                    "value": "#9bf000"
-                  }
-                },
-                "values": [
-                  {
-                    "answer_id": "10417438-option",
-                    "answer_text": "Option 1"
-                  },
-                  {
-                    "answer_id": "31102851-option",
-                    "answer_text": "Option 2"
-                  },
-                  {
-                    "answer_id": "71741945-option",
-                    "answer_text": "Option 3"
-                  }
-                ],
-                "tag": "1427305801160-fragment"
-              },
-              {
-                "value": "<div style=\"text-align: center; font-size: 12pt; text-shadow: rgb(255, 255, 255) 0px -1px 0px; position: relative;\" class=\"editable cke_editable cke_editable_inline cke_contents_ltr cke_focus cke_show_borders\" contenteditable=\"false\" id=\"textedit-1427305806432-fragment\" tabindex=\"0\" spellcheck=\"false\" role=\"textbox\" aria-label=\"Rich Text Editor, textedit-1427305806432-fragment\" title=\"Rich Text Editor, textedit-1427305806432-fragment\" aria-describedby=\"cke_115\">blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah&nbsp;blah blah​&nbsp;blah blah</div>",
-                "type": "html-fragment",
-                "style": {
-                  "bg": {
-                    "type": "transparent"
-                  },
-                  "fg": {
-                    "type": "color",
-                    "value": "#9bf000"
-                  }
-                },
-                "tag": "1427305806432-fragment"
-              }
-            ],
-            "controls": [
-              {
-                "tag": "1427305795105-Button-1",
-                "description": "Go to deep link",
-                "style": {
-                  "type": "solid",
-                  "bg": {
-                    "type": "color",
-                    "value": "#7C8D97"
-                  },
-                  "border_radius": 50,
-                  "fg": {
-                    "type": "color",
-                    "value": "#cc8534"
-                  }
-                },
-                "target": "",
-                "action": {
-                  "deeplink": {
-                    "url": "http://en.wikipedia.org/wiki/Sun"
-                  }
-                }
-              },
-              {
-                "tag": "1427305795105-Button-2",
-                "description": "End",
-                "style": {
-                  "type": "solid",
-                  "bg": {
-                    "type": "color",
-                    "value": "#7C8D97"
-                  },
-                  "fg": {
-                    "type": "color",
-                    "value": "#cc8534"
-                  }
-                },
-                "target": ""
               }
             ]
           }
@@ -334,6 +215,9 @@
     }
   ],
   "rules": {},
-  "cdn_root": "http://fake_cdn_root.com/someurl/image/",
+  "cdn_paths": {
+    "message_images": "http://fake_cdn_root.com/someurl/image/",
+    "message_fonts": "http://fake_cdn_root.com/someurl/font/"
+  },
   "version": 2
 }

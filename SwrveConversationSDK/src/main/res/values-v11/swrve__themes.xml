@@ -4,5 +4,7 @@
     <style name="Theme.BaseConversations" parent="android:Theme.Light">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
+        <item name="android:listChoiceIndicatorSingle">@drawable/abc_btn_radio_material</item>
     </style>
+
 </resources>

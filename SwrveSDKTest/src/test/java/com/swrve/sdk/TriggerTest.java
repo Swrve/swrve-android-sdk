@@ -196,7 +196,7 @@ public class TriggerTest extends SwrveBaseTest {
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);
-        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(null), jsonObject, new HashSet<String>());
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(null), jsonObject, new HashSet<SwrveAssetsQueueItem>());
         assertNotNull(campaign);
 
         Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults =  new HashMap<>();

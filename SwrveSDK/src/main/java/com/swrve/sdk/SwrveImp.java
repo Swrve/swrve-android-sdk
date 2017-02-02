@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -35,22 +34,14 @@ import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.RESTClient;
-import com.swrve.sdk.rest.SwrveFilterInputStream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,7 +70,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "4.7";
+    protected static String version = "4.8";
     protected static final String CAMPAIGN_CATEGORY = "CMCC2"; // Saved securely
     protected static final String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
     protected static final String CAMPAIGNS_STATE_CATEGORY = "SwrveCampaignSettings";
@@ -138,8 +129,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected List<SwrveBaseCampaign> campaigns;
     protected SwrveCampaignDisplayer campaignDisplayer;
     protected Map<Integer, SwrveCampaignState> campaignsState;
-    protected Set<String> assetsOnDisk;
-    protected boolean assetsCurrentlyDownloading;
+    protected SwrveAssetsManager swrveAssetsManager;
     protected SparseArray<String> appStoreURLs;
     protected boolean autoShowMessagesEnabled;
     protected Integer campaignsAndResourcesFlushFrequency;
@@ -148,11 +138,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected Date campaignsAndResourcesLastRefreshed;
     protected boolean campaignsAndResourcesInitialized = false;
     protected boolean eventsWereSent = false;
-    protected String cdnRoot = "https://content-cdn.swrve.com/messaging/message_image/";
     protected boolean initialised = false;
     protected boolean mustCleanInstance;
     protected Date initialisedTime;
-    protected File cacheDir;
     protected int deviceWidth;
     protected int deviceHeight;
     protected float deviceDpi;
@@ -183,8 +171,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.restClient = createRESTClient();
         this.bindCounter = new AtomicInteger();
         this.autoShowMessagesEnabled = true;
-        this.assetsOnDisk = new HashSet<String>();
-        this.assetsCurrentlyDownloading = false;
+        this.swrveAssetsManager = new SwrveAssetsManagerImp(context);
         this.newSessionInterval = config.getNewSessionInterval();
 
         initContext(context);
@@ -538,25 +525,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return new AndroidTelephonyManagerWrapper(context);
     }
 
-    protected void findCacheFolder(Activity activity) {
-        cacheDir = config.getCacheDir();
-
-        if (cacheDir == null) {
-            cacheDir = activity.getCacheDir();
-        } else {
-            if (!checkPermissionGranted(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                final String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                requestPermissions(activity, permissions);
-                cacheDir = activity.getCacheDir(); // fall back to internal cache until permission granted.
-            }
-
-            if (!cacheDir.exists()) {
-                cacheDir.mkdirs();
-            }
-        }
-        SwrveLogger.d(LOG_TAG, "Using cache directory at " + cacheDir.getPath());
-    }
-
     protected boolean checkPermissionGranted(Context context, String permission) {
         return ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
@@ -706,9 +674,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 return;
             }
 
-            // CDN
-            this.cdnRoot = json.getString("cdn_root");
-            SwrveLogger.i(LOG_TAG, "CDN URL " + this.cdnRoot);
+            updateCdnPaths(json);
 
             // App Data
             JSONObject gamesData = json.getJSONObject("game_data");
@@ -795,12 +761,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             }
 
             boolean mustLoadPreviousState = (wasPreviouslyQAUser || qaUser == null || !qaUser.isResetDevice());
-            List<SwrveBaseCampaign> newCampaigns = new ArrayList<SwrveBaseCampaign>();
-            Set<String> assetsQueue = new HashSet<String>();
+            List<SwrveBaseCampaign> newCampaigns = new ArrayList<>();
+            Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
             for (int i = 0, j = jsonCampaigns.length(); i < j; i++) {
                 JSONObject campaignData = jsonCampaigns.getJSONObject(i);
                 // Load campaign and get assets to be loaded
-                Set<String> campaignAssetsQueue = new HashSet<String>();
+                Set<SwrveAssetsQueueItem> campaignAssetQueue = new HashSet<>();
 
                 // Check filters (permission requests, platform)
                 boolean passesAllFilters = true;
@@ -818,16 +784,16 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     if (campaignData.has("conversation")) {
                         int conversationVersionDownloaded = campaignData.optInt("conversation_version", 1);
                         if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
-                            campaign = loadConversationCampaignFromJSON(campaignData, campaignAssetsQueue);
+                            campaign = loadConversationCampaignFromJSON(campaignData, assetsQueue);
                         } else {
                             SwrveLogger.i(LOG_TAG, "Conversation version " + conversationVersionDownloaded + " cannot be loaded with this SDK version");
                         }
                     } else {
-                        campaign = loadCampaignFromJSON(campaignData, campaignAssetsQueue);
+                        campaign = loadCampaignFromJSON(campaignData, campaignAssetQueue);
                     }
 
                     if (campaign != null) {
-                        assetsQueue.addAll(campaignAssetsQueue);
+                        assetsQueue.addAll(campaignAssetQueue);
 
                         // Check if we need to reset the device for QA, otherwise load campaign state
                         if (mustLoadPreviousState) {
@@ -867,98 +833,52 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
+    private void updateCdnPaths(JSONObject json) throws JSONException {
+        if(json.has("cdn_root")) {
+            String cdnRoot = json.getString("cdn_root");
+            swrveAssetsManager.setCdnImages(cdnRoot);
+            SwrveLogger.i(LOG_TAG, "CDN URL " + cdnRoot);
+        } else if(json.has("cdn_paths")) {
+            JSONObject cdnPaths = json.getJSONObject("cdn_paths");
+            String cdnImages = cdnPaths.getString("message_images");
+            String cdnFonts = cdnPaths.getString("message_fonts");
+            swrveAssetsManager.setCdnImages(cdnImages);
+            swrveAssetsManager.setCdnFonts(cdnFonts);
+            SwrveLogger.i(LOG_TAG, "CDN URL images:" + cdnImages + " fonts:" + cdnFonts);
+        }
+    }
+
     private boolean supportsDeviceFilter(String requirement) {
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
     }
 
-    protected void downloadAssets(final Set<String> assetsQueue) {
-        assetsCurrentlyDownloading = true;
-        final ExecutorService resourceDownloadExecutor = Executors.newSingleThreadExecutor();
-        resourceDownloadExecutor.execute(SwrveRunnables.withoutExceptions(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Set<String> assetsToDownload = filterExistingFiles(assetsQueue);
-                    for (String asset : assetsToDownload) {
-                        boolean success = downloadAssetSynchronously(asset);
-                        if (success) {
-                            synchronized (assetsOnDisk) {
-                                assetsOnDisk.add(asset);
-                            }
-                        }
-                    }
-                    assetsCurrentlyDownloading = false;
+    protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+        try {
+            final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
+                @Override
+                public void complete() {
                     autoShowMessages();
-                } catch (SecurityException e) {
-                    SwrveLogger.e(LOG_TAG, "Error downloading assets", e);
-                } finally {
-                    resourceDownloadExecutor.shutdownNow();
                 }
-            }
-        }));
+
+            };
+            executorService.execute(SwrveRunnables.withoutExceptions(new Runnable() {
+                @Override
+                public void run() {
+                    swrveAssetsManager.downloadAssets(assetsQueue, callback);
+                }
+            }));
+        } finally {
+            executorService.shutdown();
+        }
     }
 
-    protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
-    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<String> assetsQueue) throws JSONException {
+    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetsQueue);
-    }
-
-    protected boolean downloadAssetSynchronously(final String assetPath) {
-        String url = cdnRoot + assetPath;
-        InputStream inputStream = null;
-        try {
-            URLConnection openConnection = new URL(url).openConnection();
-            inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[2048];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                stream.write(buffer, 0, bytesRead);
-            }
-            byte[] fileContents = stream.toByteArray();
-            String sha1File = SwrveHelper.sha1(stream.toByteArray());
-            if (assetPath.equals(sha1File)) {
-                if (cacheDir.canWrite()) {
-                    FileOutputStream fileStream = new FileOutputStream(new File(cacheDir, assetPath));
-                    fileStream.write(fileContents); // Save to file
-                    fileStream.close();
-                    return true;
-                } else {
-                    boolean permission = checkPermissionGranted(context.get(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                    SwrveLogger.w(LOG_TAG, "Could not download assets because do not have write access to cacheDir:" + cacheDir + " WRITE_EXTERNAL_STORAGE permission granted:" + permission);
-                }
-            }
-        } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error downloading campaigns", e);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    SwrveLogger.e(LOG_TAG, "Error closing assets stream.", e);
-                }
-            }
-        }
-
-        return false;
-    }
-
-    protected Set<String> filterExistingFiles(Set<String> assetsQueue) {
-        Iterator<String> itDownloadQueue = assetsQueue.iterator();
-        while (itDownloadQueue.hasNext()) {
-            String assetPath = itDownloadQueue.next();
-            File file = new File(cacheDir, assetPath);
-            if (file.exists()) {
-                itDownloadQueue.remove();
-                synchronized (assetsOnDisk) {
-                    assetsOnDisk.add(assetPath);
-                }
-            }
-        }
-        return assetsQueue;
     }
 
     protected void saveCampaignsState() {
@@ -1249,9 +1169,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     @Override
     public Set<String> getAssetsOnDisk() {
-        synchronized (assetsOnDisk) {
-            return this.assetsOnDisk;
-        }
+        return swrveAssetsManager == null ? new HashSet<String>() : swrveAssetsManager.getAssetsOnDisk();
     }
 
     /**

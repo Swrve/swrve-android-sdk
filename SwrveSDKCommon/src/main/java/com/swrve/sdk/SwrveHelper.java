@@ -35,11 +35,15 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public final class SwrveHelper {
 
-    private static final String LOG_TAG = "SwrveSDK";
+    public static final String LOG_TAG = "SwrveSDK";
     private static final String CHARSET = "UTF-8";
 
     public static boolean isNullOrEmpty(String val) {
         return (val == null || val.length() == 0);
+    }
+
+    public static boolean isNotNullOrEmpty(String val) {
+        return !isNullOrEmpty(val);
     }
 
     public static String generateSessionToken(String apiKey, int appId, String userId) {
