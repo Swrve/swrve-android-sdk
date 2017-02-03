@@ -8,3 +8,7 @@ project(":MessageCenter").projectDir = file("samples/MessageCenter")
 
 include ':AdvancedPushNotifications'
 project(':AdvancedPushNotifications').projectDir = new File("samples/AdvancedPushNotifications")
+
+include ':ChangeUserID'
+project(':ChangeUserID').projectDir = new File("samples/ChangeUserID")
+
