@@ -9,8 +9,8 @@ Have a look at the quick integration guide at http://docs.swrve.com/developer-do
 
 Requirements
 ------------
-### Android 2.3.3+
-The SDK supports Android 2.3.3+ but will handle older versions with a dummy SDK.
+### Android 14+
+The SDK supports Android API 14+ but will handle older versions with a dummy SDK.
 
 ### Gradle (distributed with the SDK)
 Used to build the SDK and its dependencies.

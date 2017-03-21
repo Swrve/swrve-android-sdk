@@ -15,10 +15,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String SWRVE_ADM_TOKEN = "swrve.adm_token";
 
     protected String registrationId;
-    protected ISwrvePushNotificationListener pushNotificationListener;
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);
+        SwrvePushSDK.createInstance(context);
     }
 
     //ADM callbacks
@@ -52,11 +52,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         } catch (Exception exp) {
             SwrveLogger.e(LOG_TAG, "Exception when trying to obtain the registration key for the device.", exp);
         }
-    }
-
-    @Override
-    public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
-        this.pushNotificationListener = pushNotificationListener;
     }
 
     @Override

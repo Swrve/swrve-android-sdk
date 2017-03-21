@@ -5,7 +5,6 @@ import android.content.Intent;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.gcm.SwrveGcmConstants;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,13 +25,12 @@ import static org.junit.Assert.assertTrue;
 public class SwrveEngageEventSenderTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
-
+    
     @Before
     public void setUp() throws Exception {
         super.setUp();
         shadowApplication = Shadows.shadowOf(RuntimeEnvironment.application);
         SwrveConfig config = new SwrveConfig();
-        config.setSenderId("12345");
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -40,7 +38,6 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
 
         Mockito.doNothing().when(swrveSpy).downloadAssets(Mockito.anySet()); // assets are manually mocked
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
-        Mockito.doReturn(false).when(swrveSpy).isGooglePlayServicesAvailable(); // disable getting the regID
 
         // do not init the sdk, as SwrvePushEngageReceiver can/will be executed cold
     }
@@ -50,7 +47,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         swrveSpy.shutdown();
         SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
-
+    
     @Test
     public void testReceiverInManifest() throws Exception {
         List<BroadcastReceiverData> receiverDataList = shadowApplication.getAppManifest().getBroadcastReceivers();
@@ -67,7 +64,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
     @Test
     public void testEventQueued() throws Exception {
         Intent intent = new Intent();
-        intent.putExtra(SwrveGcmConstants.SWRVE_TRACKING_KEY, "4567");
+        intent.putExtra(SwrvePushConstants.SWRVE_TRACKING_KEY, "4567");
 
         SwrveEngageEventSender engageEventSender = new SwrveEngageEventSender();
         engageEventSender.onReceive(mActivity, intent);

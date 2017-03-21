@@ -35,6 +35,8 @@ interface ISwrveCommon
     String SWRVE_SIM_OPERATOR_CODE          = "swrve.sim_operator.code";
     String SWRVE_DEVICE_REGION              = "swrve.device_region";
     String SWRVE_ANDROID_ID                 = "swrve.android_id";
+    String SWRVE_NOTIFICATIONS_ENABLED      = "swrve.permission.notifications_enabled";
+    String SWRVE_NOTIFICATIONS_IMPORTANCE   = "swrve.permission.notifications_importance";
 
     String getApiKey();
 

@@ -2,11 +2,16 @@ package com.swrve.sdk.conversations.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
 import com.swrve.sdk.SwrveBaseConversation;
+import com.swrve.sdk.SwrveConversationEventHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.messaging.SwrveOrientation;
+import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
 import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
@@ -14,32 +19,58 @@ import java.util.HashMap;
 
 public class ConversationActivity extends FragmentActivity {
     private static final String EXTRA_CONVERSATION_KEY = "conversation";
+    private static final String EXTRA_ORIENTATION_KEY = "orientation";
 
     private static final String LOG_TAG = "SwrveSDK";
     private SwrveBaseConversation localConversation;
     private ConversationFragment conversationFragment;
 
-    public static void showConversation(Context context, SwrveBaseConversation conversation) {
-
+    public static boolean showConversation(Context context, SwrveBaseConversation conversation, SwrveOrientation orientation) {
         if (context == null) {
             SwrveLogger.e(LOG_TAG, "Can't display ConversationActivity without a context.");
-            return;
+            return false;
+        } else if (hasUnknownContentAtoms(conversation)) {
+            SwrveLogger.e(LOG_TAG, "This sdk cannot display Conversations with Unknown Atoms. Conversation.id:" + conversation.getId());
+            new SwrveConversationEventHelper().conversationEncounteredError(conversation, "UNKNOWN_ATOM", null);
+            return false;
         }
 
         Intent intent = new Intent(context, ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRA_CONVERSATION_KEY, conversation);
+        intent.putExtra(EXTRA_ORIENTATION_KEY, orientation);
         context.startActivity(intent);
+
+        return true;
+    }
+
+    protected static boolean hasUnknownContentAtoms(SwrveBaseConversation conversation) {
+        boolean hasUnknownContentAtoms = false;
+        for (ConversationPage conversationPage : conversation.getPages()) {
+            for (ConversationAtom conversationAtom : conversationPage.getContent()) {
+                switch (conversationAtom.getType()) {
+                    case UNKNOWN:
+                        hasUnknownContentAtoms = true;
+                        break;
+                }
+            }
+            if (hasUnknownContentAtoms) {
+                break;
+            }
+        }
+        return hasUnknownContentAtoms;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
+        SwrveOrientation orientation = SwrveOrientation.Both;
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 this.localConversation = (SwrveBaseConversation) extras.getSerializable(EXTRA_CONVERSATION_KEY);
+                orientation = (SwrveOrientation) extras.getSerializable(EXTRA_ORIENTATION_KEY);
             }
         }
 
@@ -54,6 +85,23 @@ public class ConversationActivity extends FragmentActivity {
         } catch (Exception ge) {
             SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity.", ge);
             this.finish();
+        }
+
+        // Used by Unity too - Force the orientation based on the app configuration
+        if (orientation != SwrveOrientation.Both) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                if (orientation == SwrveOrientation.Landscape) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+                } else if (orientation == SwrveOrientation.Portrait) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+                }
+            } else {
+                if (orientation == SwrveOrientation.Landscape) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                } else if (orientation == SwrveOrientation.Portrait) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                }
+            }
         }
     }
 

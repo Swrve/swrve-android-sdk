@@ -3,20 +3,17 @@ package com.swrve.sdk;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 
-import com.swrve.sdk.test.BuildConfig;
 import com.swrve.sdk.test.MainActivity;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
-import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLog;
+import org.robolectric.util.IntentServiceController;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -27,9 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 21)
-public class SwrveWakefulTest {
+public class SwrveWakefulTest extends SwrveBaseTest {
 
     private ShadowApplication shadowApplication;
     private MainActivity activity;
@@ -128,9 +123,10 @@ public class SwrveWakefulTest {
         ArrayList<Integer> messageIds = new ArrayList<Integer>();
         messageIds.add(99);
         intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);
-        SwrveWakefulServiceWrapper service = new SwrveWakefulServiceWrapper();
-        service.onCreate();
-        service.onHandleIntent(intent);
+        IntentServiceController<SwrveWakefulServiceWrapper> serviceController = IntentServiceController.of(Robolectric.getShadowsAdapter(), new SwrveWakefulServiceWrapper(), intent);
+        serviceController.create();
+        serviceController.handleIntent();
+        SwrveWakefulServiceWrapper service = serviceController.get();
         assertTrue(service.handleSendEventsCalled);
         assertEquals(3, service.eventsSent);
     }

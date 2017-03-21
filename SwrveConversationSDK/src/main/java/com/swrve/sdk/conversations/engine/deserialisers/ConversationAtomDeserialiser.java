@@ -9,6 +9,7 @@ import com.swrve.sdk.conversations.engine.model.Content;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.MultiValueInput;
 import com.swrve.sdk.conversations.engine.model.StarRating;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
 import java.lang.reflect.Type;
 
@@ -38,7 +39,7 @@ public class ConversationAtomDeserialiser implements JsonDeserializer<Conversati
             case UNKNOWN:
             default:
                 String caTag = (obj.has("tag") ? obj.get("tag").getAsString() : null);
-                conversationAtom = new ConversationAtom(caTag, caType, null);
+                conversationAtom = new ConversationAtom(caTag, caType, new ConversationStyle());
         }
         return conversationAtom;
     }

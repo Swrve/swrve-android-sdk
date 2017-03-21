@@ -6,15 +6,20 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.GZIPOutputStream;
 
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okio.Buffer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -138,6 +143,54 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assetsManager.downloadAssets(assetsQueue, callbackSpy);
 
         Mockito.verify(callbackSpy, Mockito.atLeastOnce()).complete();
+    }
+
+    @Test
+    public void testGZIPSupport() throws Exception {
+        final String body2 = "digest2";
+        final String digest2 = SwrveHelper.sha1(body2.getBytes()); // this does not exist in cache at start and should be downloaded
+
+        // Compress text sample into gzip
+        final ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+        OutputStreamWriter body = new OutputStreamWriter(new GZIPOutputStream(bodyBytes),
+                Charset.forName("UTF-8"));
+        body.write(body2);
+        body.close();
+        final Buffer responseBuffer = new Buffer().write(bodyBytes.toByteArray());
+
+        server = new MockWebServer();
+        final Dispatcher dispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+                if (request.getPath().contains("asset2")){
+                    return new MockResponse().setResponseCode(200).setBody(responseBuffer).setHeader("Content-Encoding", "gzip");
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+        server.setDispatcher(dispatcher);
+        server.start();
+        String cdnPath = server.url("/").toString();
+
+        SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity);
+        assetsManager.setCdnImages(cdnPath);
+        assetsManager.setCdnFonts(cdnPath);
+        assetsManager.setStorageDir(mActivity.getCacheDir());
+        SwrveAssetsManagerImp assetsManagerSpy = Mockito.spy(assetsManager);
+
+        Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
+        SwrveAssetsQueueItem item2 = new SwrveAssetsQueueItem("asset2", digest2, true);
+        assetsQueue.add(item2);
+
+        assertCacheFileDoesNotExist(digest2);
+
+        assetsManagerSpy.downloadAssets(assetsQueue, null); // null callback on purpose
+
+        ArgumentCaptor<SwrveAssetsQueueItem> assetPathCaptor = ArgumentCaptor.forClass(SwrveAssetsQueueItem.class);
+        Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAsset(assetPathCaptor.capture());
+        assertEquals(1, assetPathCaptor.getAllValues().size());
+        assertTrue("An attempt to download asset2 did not occur", assetPathCaptor.getAllValues().contains(item2));
+        assertCacheFileExists("asset2");
     }
 
     private void writeFileToCache(String filename, String text) throws Exception {

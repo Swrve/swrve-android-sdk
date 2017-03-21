@@ -1,22 +1,16 @@
 package com.swrve.sdk;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.test.BuildConfig;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class, sdk=21)
-public class SwrveAmazonConfigTest {
+public class SwrveAmazonConfigTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {

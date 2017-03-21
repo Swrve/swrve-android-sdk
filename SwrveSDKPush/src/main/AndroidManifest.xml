@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.swrve.sdk.push"
+    android:versionCode="2"
+    android:versionName="2.8">
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="22" />
+
+    <application>
+        <receiver
+            android:name="com.swrve.sdk.SwrvePushEngageReceiver"
+            android:exported="true" />
+
+        <receiver
+            android:name="com.swrve.sdk.SwrveEngageEventSender"
+            android:exported="true" />
+    </application>
+
+</manifest>

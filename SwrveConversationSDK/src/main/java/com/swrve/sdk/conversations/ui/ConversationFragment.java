@@ -152,9 +152,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         } catch (Exception e) {
             SwrveLogger.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
             sendErrorNavigationEvent(page.getTag(), e);
-            if (activity != null) {
-                activity.finish();
-            }
+            activity.finish();
             return;
         }
 
@@ -362,7 +360,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                             sendCallActionEvent(page.getTag(), model);
                             SwrveIntentHelper.openDialer(actions.getCallUri(), activity);
                         } else if (actions.isVisit()) {
-                            HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getVisitDetails();
+                            HashMap<String, String> visitUriDetails = actions.getVisitDetails();
                             String urlStr = visitUriDetails.get(ControlActions.VISIT_URL_URI_KEY);
                             String referrer = visitUriDetails.get(ControlActions.VISIT_URL_REFERER_KEY);
                             Uri uri = Uri.parse(urlStr);
@@ -370,7 +368,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                             sendLinkVisitActionEvent(page.getTag(), model);
                             SwrveIntentHelper.openIntentWebView(uri, activity, referrer);
                         } else if (actions.isDeepLink()) {
-                            HashMap<String, String> visitUriDetails = (HashMap<String, String>) actions.getDeepLinkDetails();
+                            HashMap<String, String> visitUriDetails = actions.getDeepLinkDetails();
                             String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
                             sendReply(model, reply);
                             sendDeepLinkActionEvent(page.getTag(), model);
@@ -403,6 +401,12 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         userInteractionData.clear(); // Remove all events stored locally so that they don't get resubmitted during another commit.
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        eventHelper.sendQueuedEvents();
+    }
+
     /**
      * Kick off sending reply. The input tree will be traversed and responses gathered. If additional data needs to be included, include in the reply before passing in.
      *
@@ -415,6 +419,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         ConversationPage nextPage = swrveConversation.getPageForControl(control);
         if (nextPage != null) {
             sendTransitionPageEvent(page.getTag(), control.getTarget(), control.getTag());
+            eventHelper.sendQueuedEvents();
             openConversationOnPage(nextPage);
         } else if (control.hasActions()) {
             SwrveLogger.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");

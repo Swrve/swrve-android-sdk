@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.support.v4.app.NotificationManagerCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -189,7 +190,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         public void onMessage(final SwrveConversation conversation) {
                             // Start a Conversation activity to display the campaign
                             if (SwrveBase.this.context != null) {
-                                ConversationActivity.showConversation(SwrveBase.this.context.get(), conversation);
+                                ConversationActivity.showConversation(SwrveBase.this.context.get(), conversation, config.getOrientation());
                                 conversation.getCampaign().messageWasShownToUser(); // Report that the conversation was shown to the user
                             }
                         }
@@ -664,6 +665,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             if (!SwrveHelper.isNullOrEmpty(userInstallTime)) {
                 deviceInfo.put(SWRVE_INSTALL_DATE, userInstallTime);
             }
+
+            NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(contextRef);
+            boolean notificationsEnabled = notificationManagerCompat.areNotificationsEnabled();
+            deviceInfo.put(SWRVE_NOTIFICATIONS_ENABLED, notificationsEnabled);
+            int notificationsImportance = notificationManagerCompat.getImportance();
+            deviceInfo.put(SWRVE_NOTIFICATIONS_IMPORTANCE, notificationsImportance);
         }
 
         extraDeviceInfo(deviceInfo);

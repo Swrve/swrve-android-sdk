@@ -27,6 +27,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -58,18 +59,27 @@ public class SwrveTestUtils {
     }
 
     public static String getAssetAsText(Context context, String assetName) {
-        AssetManager assetManager = context.getAssets();
-        InputStream in;
+        InputStream in = null;
         String result = null;
         try {
-            in = assetManager.open(assetName);
-            assertNotNull(in);
+            URL resource = context.getClassLoader().getResource(assetName);
+            Assert.assertNotNull(resource);
+            in = resource.openStream();
+            Assert.assertNotNull(in);
             java.util.Scanner s = new java.util.Scanner(in).useDelimiter("\\A");
             result = s.hasNext() ? s.next() : "";
-            assertFalse(result.length() == 0);
+            Assert.assertFalse(result.length() == 0);
         } catch (IOException ex) {
             SwrveLogger.e("SwrveSDKTest", "Error getting asset as text:" + assetName, ex);
             fail("Error getting asset as text:" + assetName);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return result;
     }
@@ -229,7 +239,7 @@ public class SwrveTestUtils {
         }
 
         if (matchedIndices.size() == 0) {
-            Assert.fail("Event not queued. eventType:" + expectedEventType + "\nparameters:" + expectedParameters + "\npayload:" + expectedPayload);
+            fail("Event not queued. eventType:" + expectedEventType + "\nparameters:" + expectedParameters + "\npayload:" + expectedPayload);
         }
     }
 

@@ -3,7 +3,6 @@
 local.properties
 findbugs-results.html
 packages/
-SwrveSDK/providedLibs
 
 # Android Studio
 .idea

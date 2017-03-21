@@ -3,8 +3,8 @@
     package="com.swrve.sdk.demo">
 
     <uses-sdk
-        android:minSdkVersion="10"
-        android:targetSdkVersion="23" />
+        android:minSdkVersion="14"
+        android:targetSdkVersion="25" />
 
     <!-- Add this to your AndroidManifest.xml if you want to support push notifications -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -21,8 +21,6 @@
         android:theme="@style/AppTheme" >
 
         <!-- Add this to your AndroidManifest.xml if you want to support push notifications  -->
-        <!-- Specifies the Google Play Services version that the app was compiled with -->
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
         <!-- Configure the aspect of the UI -->
         <meta-data android:name="SWRVE_PUSH_ICON" android:resource="@mipmap/ic_launcher"/>
         <meta-data android:name="SWRVE_PUSH_ICON_MATERIAL" android:resource="@mipmap/ic_launcher_material"/>

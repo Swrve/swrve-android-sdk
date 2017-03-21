@@ -24,10 +24,10 @@
             android:value="Android Test App" />
         <meta-data
             android:name="SWRVE_PUSH_ICON_MATERIAL"
-            android:value="1" />
+            android:resource="@drawable/ic_launcher" />
         <meta-data
             android:name="SWRVE_PUSH_ICON_LARGE"
-            android:value="1" />
+            android:resource="@drawable/ic_launcher" />
         <meta-data
             android:name="SWRVE_PUSH_ACCENT_COLOR"
             android:value="17170443" />

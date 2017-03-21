@@ -192,8 +192,8 @@ public final class SwrveHelper {
     }
 
     public static boolean sdkAvailable() {
-        // Returns true if current SDK is higher or equal than 2.3.3 (API 10)
-        return (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.GINGERBREAD_MR1);
+        // Returns true if current SDK is higher or equal than 4.X (API 14)
+        return (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH);
     }
 
     public static boolean hasFileAccess(String filePath) {

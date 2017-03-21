@@ -8,7 +8,7 @@ import com.swrve.sdk.SwrveSDK;
 
 public class SwrveGcmInstanceIDListenerService extends InstanceIDListenerService {
 
-    protected static final String TAG = "SwrveGcm";
+    protected static final String TAG = "SwrvePush";
 
     @Override
     public void onTokenRefresh() {
@@ -16,7 +16,7 @@ public class SwrveGcmInstanceIDListenerService extends InstanceIDListenerService
         if (sdk != null && sdk instanceof Swrve) {
             ((Swrve)sdk).onTokenRefreshed();
         } else {
-            SwrveLogger.e(TAG, "Could not notify the SDK of a new token. Consider using the shared instance.");
+            SwrveLogger.e(TAG, "Could not notify the SDK of a new token.");
         }
     }
 }

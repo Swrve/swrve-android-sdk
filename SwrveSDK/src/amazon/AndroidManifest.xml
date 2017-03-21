@@ -4,18 +4,9 @@
     android:versionName="2.8">
 
     <uses-sdk
-        android:minSdkVersion="8"
-        android:targetSdkVersion="24" />
+        android:minSdkVersion="14"
+        android:targetSdkVersion="25" />
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application>
-        <receiver
-            android:name="com.swrve.sdk.SwrvePushEngageReceiver"
-            android:exported="true" />
-
-        <receiver
-            android:name="com.swrve.sdk.SwrveEngageEventSender"
-            android:exported="true" />
-    </application>
 </manifest>
