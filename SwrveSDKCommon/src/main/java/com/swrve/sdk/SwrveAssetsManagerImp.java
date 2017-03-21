@@ -12,7 +12,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import static com.swrve.sdk.SwrveHelper.LOG_TAG;
 
@@ -112,7 +114,16 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         InputStream inputStream = null;
         try {
             URLConnection openConnection = new URL(url).openConnection();
+            openConnection.setRequestProperty("Accept-Encoding", "gzip");
+
             inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
+
+            // Support gzip if possible
+            String encoding = openConnection.getContentEncoding();
+            if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).indexOf("gzip") != -1) {
+                inputStream = new GZIPInputStream(inputStream);
+            }
+
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             byte[] buffer = new byte[2048];
             int bytesRead;
@@ -120,7 +131,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
                 stream.write(buffer, 0, bytesRead);
             }
             byte[] fileContents = stream.toByteArray();
-            String sha1File = SwrveHelper.sha1(stream.toByteArray());
+            String sha1File = SwrveHelper.sha1(fileContents);
             if (assetItem.getDigest().equals(sha1File)) {
                 FileOutputStream fileStream = new FileOutputStream(new File(storageDir, assetItem.getName()));
                 fileStream.write(fileContents); // Save to file

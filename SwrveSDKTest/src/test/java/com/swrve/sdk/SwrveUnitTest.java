@@ -1,19 +1,12 @@
 package com.swrve.sdk;
 
-import android.annotation.TargetApi;
-import android.os.Build;
-
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.test.BuildConfig;
 
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricGradleTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,9 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class, sdk=21)
-@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 public class SwrveUnitTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;

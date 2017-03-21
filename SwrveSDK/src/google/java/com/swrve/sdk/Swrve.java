@@ -10,7 +10,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.iid.InstanceID;
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,11 +25,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected String registrationId;
     protected String advertisingId;
     protected boolean isAdvertisingLimitAdTrackingEnabled;
-    protected ISwrvePushNotificationListener pushNotificationListener;
-    protected String lastProcessedMessage;
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);
+        SwrvePushSDK.createInstance(context);
     }
 
     @Override
@@ -96,11 +94,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (config.isGAIDLoggingEnabled() && !SwrveHelper.isNullOrEmpty(advertisingId)) {
             deviceInfo.put(SWRVE_GOOGLE_ADVERTISING_ID, advertisingId);
         }
-    }
-
-    @Override
-    public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
-        this.pushNotificationListener = pushNotificationListener;
     }
 
     /**

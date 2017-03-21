@@ -39,8 +39,9 @@ public class ConversationRelativeLayout extends RelativeLayout {
                 lparams.bottomMargin = lparams.topMargin = topBottomPaddingPx;
                 conversationLayoutModal.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
             } else {
-                conversationLayoutModal.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
-                conversationLayoutModal.setPadding(0, 0, 0, 0);
+                LayoutParams lparams = (LayoutParams) conversationLayoutModal.getLayoutParams();
+                lparams.bottomMargin = lparams.topMargin = 0;
+                lparams.height = ViewGroup.LayoutParams.MATCH_PARENT;
             }
         }
         super.onLayout(changed, l, t, r, b);

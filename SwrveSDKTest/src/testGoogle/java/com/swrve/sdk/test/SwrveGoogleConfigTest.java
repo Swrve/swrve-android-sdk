@@ -1,20 +1,16 @@
 package com.swrve.sdk.test;
 
 import com.swrve.sdk.SwrveAppStore;
+import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricGradleTestRunner;
-import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class, sdk=21)
-public class SwrveGoogleConfigTest {
+public class SwrveGoogleConfigTest extends SwrveBaseTest {
 
     @Test
     public void testSenderId() throws Exception {

@@ -27,9 +27,9 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Empty implementation of the Swrve SDK. Will be returned when the SDK is used from an unsupported runtime version (< 2.3.3).
+ * Empty implementation of the Swrve SDK. Will be returned when the SDK is used from an unsupported runtime version.
  */
-public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<T, C> {
+public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<T, C>, ISwrveCommon {
 
     protected WeakReference<Context> context;
     protected String apiKey;
@@ -46,6 +46,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
         this.context = new WeakReference<Context>(context.getApplicationContext());
         this.apiKey = apiKey;
         this.config = (C) new SwrveConfigBaseImp();
+        SwrveCommon.setSwrveCommon(this);
     }
 
     @SuppressWarnings("unchecked")
@@ -88,6 +89,26 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void userUpdate(Map<String, String> attributes) {
+    }
+
+    @Override
+    public void sendEventsWakefully(Context context, ArrayList<String> events) {
+
+    }
+
+    @Override
+    public String getEventsServer() {
+        return null;
+    }
+
+    @Override
+    public int getHttpTimeout() {
+        return 0;
+    }
+
+    @Override
+    public int getMaxEventsPerFlush() {
+        return 0;
     }
 
     @Override
@@ -175,6 +196,21 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public String getSessionKey() {
+        return null;
+    }
+
+    @Override
+    public short getDeviceId() {
+        return 0;
+    }
+
+    @Override
+    public int getAppId() {
+        return 0;
+    }
+
+    @Override
     public String getUserId() {
         if (SwrveHelper.isNullOrEmpty(userId)) {
             return "unsupported_version";
@@ -183,8 +219,43 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public String getAppVersion() {
+        return null;
+    }
+
+    @Override
+    public String getUniqueKey() {
+        return null;
+    }
+
+    @Override
+    public String getBatchURL() {
+        return null;
+    }
+
+    @Override
+    public String getCachedData(String userId, String key) {
+        return null;
+    }
+
+    @Override
+    public void setLocationSegmentVersion(int locationSegmentVersion) {
+
+    }
+
+    @Override
+    public String getSwrveSDKVersion() {
+        return SwrveBase.getVersion();
+    }
+
+    @Override
     public JSONObject getDeviceInfo() throws JSONException {
         return new JSONObject();
+    }
+
+    @Override
+    public int getNextSequenceNumber() {
+        return 0;
     }
 
     @Override

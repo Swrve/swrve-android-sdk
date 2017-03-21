@@ -4,10 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
-import android.view.Window;
-import android.view.WindowManager;
 
 import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveBase;
@@ -71,10 +70,18 @@ public class SwrveInAppMessageActivity extends Activity {
         }
 
         if (message.getFormats().size() == 1) {
-            if (format.getOrientation() == SwrveOrientation.Landscape) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                if (format.getOrientation() == SwrveOrientation.Landscape) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+                } else {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+                }
             } else {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                if (format.getOrientation() == SwrveOrientation.Landscape) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                } else {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                }
             }
         }
 

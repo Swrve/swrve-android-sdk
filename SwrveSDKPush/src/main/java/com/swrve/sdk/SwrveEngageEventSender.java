@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.swrve.sdk.adm.SwrveAdmConstants;
-
 import org.json.JSONException;
 
 import java.util.ArrayList;
@@ -15,8 +13,14 @@ import java.util.Map;
 
 public class SwrveEngageEventSender extends BroadcastReceiver {
 
-    private static final String LOG_TAG = "SwrveAdm";
+    private static final String LOG_TAG = "SwrvePush";
     private Context context;
+
+    public static void sendPushEngagedEvent(Context context, String pushId) {
+        Intent intent = new Intent(context, SwrveEngageEventSender.class);
+        intent.putExtra(SwrvePushConstants.SWRVE_TRACKING_KEY, pushId);
+        context.sendBroadcast(intent);
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -24,7 +28,7 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
             this.context = context;
             Bundle extras = intent.getExtras();
             if (extras != null && !extras.isEmpty()) {
-                Object rawId = extras.get(SwrveAdmConstants.SWRVE_TRACKING_KEY);
+                Object rawId = extras.get(SwrvePushConstants.SWRVE_TRACKING_KEY);
                 String msgId = (rawId != null) ? rawId.toString() : null;
                 if (!SwrveHelper.isNullOrEmpty(msgId)) {
                     String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
@@ -38,7 +42,7 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
     }
 
     private void sendEngagedEvent(String name) throws JSONException {
-        Swrve swrve = (Swrve) SwrveSDK.getInstance();
+        ISwrveCommon swrve = SwrveCommon.getInstance();
         ArrayList<String> events = new ArrayList<>();
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", name);

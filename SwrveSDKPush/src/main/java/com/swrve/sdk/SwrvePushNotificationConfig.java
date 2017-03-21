@@ -1,19 +1,24 @@
-package com.swrve.sdk.adm;
+package com.swrve.sdk;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
-import com.swrve.sdk.SwrveLogger;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 
-import com.swrve.sdk.SwrveHelper;
+/**
+ * Used internally to build a local notification from a push notification.
+ */
+public class SwrvePushNotificationConfig {
 
-public class SwrveAdmNotification {
-
-    private static final String TAG = "SwrveAdm";
+    private static final String TAG = "SwrvePush";
 
     private static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
     private static final String SWRVE_PUSH_ICON_MATERIAL_METADATA = "SWRVE_PUSH_ICON_MATERIAL";
@@ -22,16 +27,17 @@ public class SwrveAdmNotification {
     private static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
     private static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
 
-    private static SwrveAdmNotification instance;
+    private static SwrvePushNotificationConfig instance;
 
-    protected final Class<?> activityClass;
-    protected final int iconDrawableId;
-    protected final int iconMaterialDrawableId;
-    protected final Bitmap largeIconDrawable;
-    protected final int accentColor;
-    protected final String notificationTitle;
+    private final Class<?> activityClass;
+    private final int iconDrawableId;
+    private final int iconMaterialDrawableId;
+    private final Bitmap largeIconDrawable;
+    private final Integer accentColor;
+    private final String notificationTitle;
 
-    private SwrveAdmNotification(Class<?> activityClass, int iconDrawableId, int iconMaterialDrawableId, Bitmap largeIconDrawable, int accentColor, String notificationTitle) {
+    // Called by Unity Swrve SDK
+    public SwrvePushNotificationConfig(Class<?> activityClass, int iconDrawableId, int iconMaterialDrawableId, Bitmap largeIconDrawable, Integer accentColor, String notificationTitle) {
         this.activityClass = activityClass;
         this.iconDrawableId = iconDrawableId;
         this.iconMaterialDrawableId = iconMaterialDrawableId;
@@ -40,15 +46,16 @@ public class SwrveAdmNotification {
         this.notificationTitle = notificationTitle;
     }
 
-    public static SwrveAdmNotification getInstance(Context context) {
+    // Called by Swrve SDK Native
+    public static SwrvePushNotificationConfig getInstance(Context context) {
         if (instance == null) {
             instance = createNotificationFromMetaData(context);
         }
         return instance;
     }
 
-    protected static SwrveAdmNotification createNotificationFromMetaData(Context context) {
-        SwrveAdmNotification swrveAdmNotification = null;
+    private static SwrvePushNotificationConfig createNotificationFromMetaData(Context context) {
+        SwrvePushNotificationConfig swrvePushNotificationConfig = null;
         try {
             PackageManager packageManager = context.getPackageManager();
             ApplicationInfo app = packageManager.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
@@ -78,10 +85,13 @@ public class SwrveAdmNotification {
                 largeIconBitmap = BitmapFactory.decodeResource(context.getResources(), largeIconBitmapId);
             }
 
-            int accentColor = metaData.getInt(SWRVE_PUSH_ACCENT_COLOR_METADATA, -1);
-            if (accentColor < 0) {
+            int accentColorResourceId = metaData.getInt(SWRVE_PUSH_ACCENT_COLOR_METADATA, -1);
+            Integer accentColor = null;
+            if (accentColorResourceId < 0) {
                 // No accent color specified in the metadata
                 SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ACCENT_COLOR_METADATA + " specified. We recommend setting an accent color for your notifications");
+            } else {
+                accentColor = ContextCompat.getColor(context, accentColorResourceId);
             }
 
             Class<?> pushActivityClass = null;
@@ -119,11 +129,11 @@ public class SwrveAdmNotification {
                 }
             }
 
-            swrveAdmNotification = new SwrveAdmNotification(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
+            swrvePushNotificationConfig = new SwrvePushNotificationConfig(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
         } catch (Exception ex) {
             SwrveLogger.e(TAG, "Error creating push notification from metadata", ex);
         }
-        return swrveAdmNotification;
+        return swrvePushNotificationConfig;
     }
 
     private static Class<?> getClassForActivityClassName(Context context, String className) throws ClassNotFoundException {
@@ -136,7 +146,42 @@ public class SwrveAdmNotification {
         return null;
     }
 
-    public Class<?> getActivityClass() {
+    Class<?> getActivityClass() {
         return activityClass;
+    }
+
+    public NotificationCompat.Builder createNotificationBuilder(Context context, String msgText, Bundle msg) {
+        boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
+        int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
+
+        // Build notification
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
+                .setSmallIcon(iconResource)
+                .setTicker(msgText)
+                .setContentTitle(notificationTitle)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(msgText))
+                .setContentText(msgText)
+                .setAutoCancel(true);
+
+        if (largeIconDrawable != null) {
+            mBuilder.setLargeIcon(largeIconDrawable);
+        }
+
+        if (accentColor >= 0) {
+            mBuilder.setColor(accentColor);
+        }
+
+        String msgSound = msg.getString("sound");
+        if (!SwrveHelper.isNullOrEmpty(msgSound)) {
+            Uri soundUri;
+            if (msgSound.equalsIgnoreCase("default")) {
+                soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            } else {
+                String packageName = context.getApplicationContext().getPackageName();
+                soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + msgSound);
+            }
+            mBuilder.setSound(soundUri);
+        }
+        return mBuilder;
     }
 }

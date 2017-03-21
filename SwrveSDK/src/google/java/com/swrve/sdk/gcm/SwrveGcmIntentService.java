@@ -8,30 +8,46 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
 import com.google.android.gms.gcm.GcmListenerService;
+import com.swrve.sdk.SwrvePushSDK;
+import com.swrve.sdk.SwrvePushService;
+import com.swrve.sdk.qa.SwrveQAUser;
+
+import java.util.Iterator;
 
 /**
  * Used internally to process push notifications inside for your app.
  */
-public class SwrveGcmIntentService extends GcmListenerService {
-    protected ISwrveGcmHandler handler;
+public class SwrveGcmIntentService extends GcmListenerService implements SwrvePushService {
+
+    private SwrvePushSDK pushSDK;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        handler = new SwrveGcmHandler(getApplicationContext(), this);
+        pushSDK = SwrvePushSDK.getInstance();
+        pushSDK.setService(this);
     }
 
     @Override
     public void onMessageReceived(String from, Bundle data) {
-        handler.onMessageReceived(from, data);
+        pushSDK.processRemoteNotification(data, false);
     }
+
     /**
      * Override this function to process notifications in a different way.
      *
      * @param msg
      */
+    @Override
     public void processNotification(final Bundle msg) {
-        handler.processNotification(msg);
+        pushSDK.processNotification(msg);
+
+        // Notify bound clients
+        Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+        while (iter.hasNext()) {
+            SwrveQAUser sdkListener = iter.next();
+            sdkListener.pushNotification(pushSDK.getSwrveId(msg), msg);
+        }
     }
 
     /**
@@ -39,8 +55,9 @@ public class SwrveGcmIntentService extends GcmListenerService {
      *
      * @return true when you want to display notifications.
      */
+    @Override
     public boolean mustShowNotification() {
-        return handler.mustShowNotification();
+        return true;
     }
 
     /**
@@ -50,8 +67,9 @@ public class SwrveGcmIntentService extends GcmListenerService {
      * @param notification
      * @return the notification id so that it can be dismissed by other UI elements.
      */
+    @Override
     public int showNotification(NotificationManager notificationManager, Notification notification) {
-        return handler.showNotification(notificationManager, notification);
+        return pushSDK.showNotification(notificationManager, notification);
     }
 
     /**
@@ -61,8 +79,9 @@ public class SwrveGcmIntentService extends GcmListenerService {
      * @param msg
      * @return the notification builder.
      */
+    @Override
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
-        return handler.createNotificationBuilder(msgText, msg);
+        return pushSDK.createNotificationBuilder(msgText, msg);
     }
 
     /**
@@ -72,8 +91,9 @@ public class SwrveGcmIntentService extends GcmListenerService {
      * @param contentIntent
      * @return the notification that will be displayed.
      */
+    @Override
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
-        return handler.createNotification(msg, contentIntent);
+        return pushSDK.createNotification(msg, contentIntent);
     }
 
     /**
@@ -88,8 +108,9 @@ public class SwrveGcmIntentService extends GcmListenerService {
      * @param msg push message payload
      * @return pending intent.
      */
+    @Override
     public PendingIntent createPendingIntent(Bundle msg) {
-        return handler.createPendingIntent(msg);
+        return pushSDK.createPendingIntent(msg);
     }
 
     /**
@@ -104,7 +125,8 @@ public class SwrveGcmIntentService extends GcmListenerService {
      * @param msg
      * @return the notification intent.
      */
+    @Override
     public Intent createIntent(Bundle msg) {
-        return handler.createIntent(msg);
+        return pushSDK.createIntent(msg);
     }
 }

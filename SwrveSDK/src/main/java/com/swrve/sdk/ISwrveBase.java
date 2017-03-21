@@ -9,9 +9,9 @@ import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
 import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
 import org.json.JSONObject;

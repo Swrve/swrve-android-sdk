@@ -9,6 +9,9 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.engine.model.ConversationAtom;
+import com.swrve.sdk.conversations.engine.model.ConversationPage;
+import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.conversations.ui.ConversationFragment;
 import com.swrve.sdk.conversations.ui.ConversationRelativeLayout;
@@ -18,13 +21,17 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.util.ActivityController;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -42,6 +49,7 @@ public class ConversationActivityTest extends SwrveBaseTest {
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         swrveSpy.init(mActivity);
+        SwrveCommon.setSwrveCommon(swrveSpy);
     }
 
     @After
@@ -72,7 +80,6 @@ public class ConversationActivityTest extends SwrveBaseTest {
 
     @Test
     public void testCreateActivityWithNoConvAndFinishes() throws Exception {
-
         ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class);
         Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
         ConversationActivity activity = activityController.withIntent(intent).create().start().visible().get();
@@ -96,6 +103,34 @@ public class ConversationActivityTest extends SwrveBaseTest {
         assertFalse(activity.isFinishing());
         activity.onBackPressed();
         assertTrue(activity.isFinishing());
+    }
+
+    @Test
+    public void testOnPauseSendsQueuedEvents() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNotNull(conversation);
+
+
+        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("conversation", conversation);
+        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
+        ConversationActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        final AtomicInteger countCalls = new AtomicInteger();
+        Mockito.doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                countCalls.incrementAndGet();
+                return null;
+            }
+        }).when(swrveSpy).sendQueuedEvents();
+
+        activityController.resume().pause();
+        // Events should have been sent at least once
+        assertTrue(countCalls.intValue() >= 1);
     }
 
     @Test
@@ -165,13 +200,16 @@ public class ConversationActivityTest extends SwrveBaseTest {
         ConversationActivity activity = activityController.withIntent(intent).create().start().visible().get();
         assertNotNull(activity);
 
+        int maxModalWidthPx = mActivity.getResources().getDimensionPixelSize(com.swrve.sdk.conversations.R.dimen.swrve__conversation_max_modal_width);
+
         ConversationFragment fragment = activity.getConversationFragment();
         assertTrue(fragment.getView() instanceof ConversationRelativeLayout);
         ConversationRelativeLayout conversationRelativeLayout = (ConversationRelativeLayout)fragment.getView();
 
+        // Set width to less than the max for modal activation and refresh the layout
         ViewGroup.LayoutParams outsideParams = conversationRelativeLayout.getLayoutParams();
-        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, outsideParams.width);
-        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, outsideParams.height);
+        outsideParams.width = maxModalWidthPx/2;
+        conversationRelativeLayout.requestLayout();
 
         View conversationLayoutModal = conversationRelativeLayout.findViewById(com.swrve.sdk.conversations.R.id.swrve__conversation_modal);
         RelativeLayout.LayoutParams modalParams = (RelativeLayout.LayoutParams) conversationLayoutModal.getLayoutParams();
@@ -179,7 +217,6 @@ public class ConversationActivityTest extends SwrveBaseTest {
         assertEquals(0, modalParams.bottomMargin);
 
         // increase the width to over the max and refresh the layout
-        int maxModalWidthPx = mActivity.getResources().getDimensionPixelSize(com.swrve.sdk.conversations.R.dimen.swrve__conversation_max_modal_width);
         outsideParams.width = maxModalWidthPx + 1;
         conversationRelativeLayout.requestLayout();
 
@@ -190,5 +227,42 @@ public class ConversationActivityTest extends SwrveBaseTest {
         assertEquals(topBottomPaddingPx, modalParams.bottomMargin);
         assertEquals(365, modalParams.width);
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, modalParams.height);
+    }
+
+    @Test
+    public void testShowConversation() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
+        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
+        assertNotNull(conversation);
+
+        boolean success = ConversationActivity.showConversation(mActivity, conversation, null);
+        assertTrue("Failed to show conversation. Check logs.", success);
+        Intent intent = mShadowActivity.getNextStartedActivity();
+        assertEquals(intent.getComponent().getClassName(), "com.swrve.sdk.conversations.ui.ConversationActivity");
+
+        ConversationAtom unknownAtom = new ConversationAtom("tag", ConversationAtom.TYPE.UNKNOWN, new ConversationStyle());
+
+        // Add an unknown atom to first page
+        ArrayList<ConversationAtom> conversationAtoms = conversation.getFirstPage().getContent();
+        conversationAtoms.add(unknownAtom);
+        success = ConversationActivity.showConversation(mActivity, conversation, null);
+        assertFalse("Conversation should not be shown with UNKNOWN atoms", success);
+
+        // Remove unknown atom and test again
+        conversationAtoms.remove(conversationAtoms.size() - 1);
+        success = ConversationActivity.showConversation(mActivity, conversation, null);
+        assertTrue("Failed to show conversation. Check logs.", success);
+        intent = mShadowActivity.getNextStartedActivity();
+        assertEquals(intent.getComponent().getClassName(), "com.swrve.sdk.conversations.ui.ConversationActivity");
+
+        // Add to a new page with unknown content and test again
+        ConversationPage newPage = new ConversationPage();
+        ArrayList<ConversationAtom> contentList = new ArrayList<>();
+        contentList.add(unknownAtom);
+        newPage.setContent(contentList);
+        conversation.getPages().add(newPage);
+        success = ConversationActivity.showConversation(mActivity, conversation, null);
+        assertFalse("Conversation should not be shown with UNKNOWN atoms", success);
+
     }
 }

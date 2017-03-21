@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.gcm.ISwrvePushNotificationListener;
-import com.swrve.sdk.gcm.SwrveGcmConstants;
 
 public class SwrveSDK extends SwrveSDKBase {
 
@@ -35,7 +33,7 @@ public class SwrveSDK extends SwrveSDKBase {
         }
 
         if (!SwrveHelper.sdkAvailable()) {
-            return new SwrveEmpty(context, apiKey);
+            instance =  new SwrveEmpty(context, apiKey);
         }
         if (instance == null) {
             instance = new Swrve(context, appId, apiKey, config);
@@ -60,7 +58,10 @@ public class SwrveSDK extends SwrveSDKBase {
      */
     public static void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
-        ((ISwrve) instance).setPushNotificationListener(pushNotificationListener);
+        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+        if (pushSDK != null) {
+            pushSDK.setPushNotificationListener(pushNotificationListener);
+        }
     }
 
     /**
@@ -144,8 +145,6 @@ public class SwrveSDK extends SwrveSDKBase {
      */
     public static void sendPushEngagedEvent(Context context, String pushId) {
         checkInstanceCreated();
-        Intent intent = new Intent(context, SwrveEngageEventSender.class);
-        intent.putExtra(SwrveGcmConstants.SWRVE_TRACKING_KEY, pushId);
-        context.sendBroadcast(intent);
+        SwrveEngageEventSender.sendPushEngagedEvent(context, pushId);
     }
 }

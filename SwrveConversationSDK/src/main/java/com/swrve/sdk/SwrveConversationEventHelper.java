@@ -130,4 +130,10 @@ public class SwrveConversationEventHelper {
             SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e2);
         }
     }
+
+    public void sendQueuedEvents() {
+        if (swrveConversationSDK != null) {
+            swrveConversationSDK.sendQueuedEvents();
+        }
+    }
 }

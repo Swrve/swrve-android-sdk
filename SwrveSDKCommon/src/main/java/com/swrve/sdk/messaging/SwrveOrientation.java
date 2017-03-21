@@ -31,9 +31,11 @@ public enum SwrveOrientation {
     public static SwrveOrientation parse(String orientation) {
         if (orientation.equalsIgnoreCase("portrait")) {
             return SwrveOrientation.Portrait;
+        } else if (orientation.equalsIgnoreCase("landscape")) {
+            return SwrveOrientation.Landscape;
         } else if (orientation.equalsIgnoreCase("both")) {
-            return SwrveOrientation.Both;
-        }
+        return SwrveOrientation.Both;
+    }
 
         return SwrveOrientation.Landscape;
     }

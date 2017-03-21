@@ -1,11 +1,16 @@
 package com.swrve.sdk;
 
+import android.content.Intent;
+import android.os.Bundle;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.robolectric.RuntimeEnvironment;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class SwrveGoogleUnitTest extends SwrveBaseTest {
 
@@ -41,6 +46,80 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
         swrveSpy.setRegistrationId("reg2");
         assertEquals("reg2", swrveSpy.getRegistrationId());
         Mockito.verify(swrveSpy, Mockito.atMost(3)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued again because the regId has changed so atMost== 3
+    }
+
+    @Test
+    public void testDeprectedPushListener() throws Exception {
+        SwrveGoogleUnitTest.TestDeprecatedPushListener deprecatedPushListener = new SwrveGoogleUnitTest.TestDeprecatedPushListener();
+
+        Intent intent = new Intent();
+        Bundle extras = new Bundle();
+        extras.putString("text", "validBundle");
+        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1234");
+        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+
+        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+
+        assertTrue(deprecatedPushListener.pushEngaged == false);
+        assertTrue(deprecatedPushListener.receivedBundle == null);
+
+        //Set listener and generate another message
+        SwrveSDK.setPushNotificationListener(deprecatedPushListener);
+
+        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+
+        //Expect bundle to have been received
+        assertTrue(deprecatedPushListener.pushEngaged == true);
+        assertTrue(deprecatedPushListener.receivedBundle != null);
+    }
+
+    class TestDeprecatedPushListener implements com.swrve.sdk.gcm.ISwrvePushNotificationListener {
+        public boolean pushEngaged = false;
+        public Bundle receivedBundle = null;
+
+        @Override
+        public void onPushNotification(Bundle bundle) {
+            pushEngaged = true;
+            receivedBundle = bundle;
+        }
+    }
+
+    @Test
+    public void testPushListener() throws Exception {
+        TestPushListener pushListener = new TestPushListener();
+
+        Intent intent = new Intent();
+        Bundle extras = new Bundle();
+        extras.putString("text", "validBundle");
+        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1234");
+        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+
+        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+
+        assertTrue(pushListener.pushEngaged == false);
+        assertTrue(pushListener.receivedBundle == null);
+
+        //Set listener and generate another message
+        SwrveSDK.setPushNotificationListener(pushListener);
+
+        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+
+        //Expect bundle to have been received
+        assertTrue(pushListener.pushEngaged == true);
+        assertTrue(pushListener.receivedBundle != null);
+    }
+
+    class TestPushListener implements com.swrve.sdk.ISwrvePushNotificationListener {
+        public boolean pushEngaged = false;
+        public Bundle receivedBundle = null;
+
+        @Override
+        public void onPushNotification(Bundle bundle) {
+            pushEngaged = true;
+            receivedBundle = bundle;
+        }
     }
 
 }

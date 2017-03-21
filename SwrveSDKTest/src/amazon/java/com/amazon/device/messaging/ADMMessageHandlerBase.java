@@ -1,23 +1,31 @@
 package com.amazon.device.messaging;
 
-//import android.app.IntentService;
 import android.app.IntentService;
 import android.content.Intent;
 
-//Mocked out ADM class, the .jars Amazon provides are just stub implementations.
-public abstract class ADMMessageHandlerBase extends IntentService {
-    public ADMMessageHandlerBase(String var1) {
-        super(var1);
+public class ADMMessageHandlerBase extends IntentService {
+
+    public ADMMessageHandlerBase(String className) {
+        super(className);
     }
 
-    protected final void onHandleIntent(Intent var1) {
+    @Override
+    protected void onHandleIntent(Intent intent) {
+
     }
 
-    protected abstract void onMessage(Intent var1);
+    protected void onMessage(final Intent intent) {
 
-    protected abstract void onRegistrationError(String var1);
+    }
 
-    protected abstract void onRegistered(String var1);
+    protected void onRegistrationError(final String string) {
 
-    protected abstract void onUnregistered(String var1);
+    }
+
+    protected void onRegistered(final String registrationId) {
+    }
+
+    protected void onUnregistered(final String registrationId) {
+
+    }
 }

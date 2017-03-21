@@ -8,4 +8,5 @@ import java.util.Map;
 interface ISwrveConversationSDK {
     int CONVERSATION_VERSION = 4;
     void queueConversationEvent(String eventParamName, String eventPayloadName, String page, int conversationId, Map<String, String> payload);
+    void sendQueuedEvents();
 }
