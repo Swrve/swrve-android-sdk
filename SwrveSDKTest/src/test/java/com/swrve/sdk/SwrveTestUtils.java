@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 import android.content.Context;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -28,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -35,8 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -214,7 +213,7 @@ public class SwrveTestUtils {
         List<Map> capturedParameters = parametersCaptor.getAllValues();
         List<Map> capturedPayload = payloadCaptor.getAllValues();
 
-        // assert eventtype
+        // assert event type
         assertTrue("Asserting eventType: " + expectedEventType + " in capturedEventTypes:" + capturedEventTypes, capturedEventTypes.contains(expectedEventType));
 
         // find the indices at which they were found so rest of parameters and payloads can be eliminated.
@@ -270,4 +269,14 @@ public class SwrveTestUtils {
         return matchedIndices.size() > 0;
     }
 
+    public static Date parseDate(String date){
+        Date parsed = new Date();
+        try {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+            parsed = simpleDateFormat.parse(date);
+        } catch (ParseException ex) {
+            SwrveLogger.e("Error parseDate:" + date, ex);
+        }
+        return parsed;
+    }
 }

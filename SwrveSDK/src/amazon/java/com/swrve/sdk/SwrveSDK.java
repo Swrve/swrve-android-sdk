@@ -53,13 +53,29 @@ public class SwrveSDK extends SwrveSDKBase {
     }
 
     /**
-     * Set the push notification listener. It is only called if the activity's intent is processed.
+     * Set the push notification listener.
      *
      * @param pushNotificationListener
      */
     public static void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
-        SwrvePushSDK.getInstance().setPushNotificationListener(pushNotificationListener);
+        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+        if (pushSDK != null) {
+            pushSDK.setPushNotificationListener(pushNotificationListener);
+        }
+    }
+
+    /**
+     * Set the silent push listener.
+     *
+     * @param silentPushListener
+     */
+    public static void setSilentPushListener(SwrveSilentPushListener silentPushListener) {
+        checkInstanceCreated();
+        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+        if (pushSDK != null) {
+            pushSDK.setSilentPushListener(silentPushListener);
+        }
     }
 
     /**

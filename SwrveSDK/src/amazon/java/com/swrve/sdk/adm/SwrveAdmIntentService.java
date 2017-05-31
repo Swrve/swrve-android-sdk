@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.VisibleForTesting;
 import android.support.v4.app.NotificationCompat;
 
 import com.amazon.device.messaging.ADMMessageHandlerBase;
@@ -36,11 +37,14 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase implements Swrv
     public void onCreate() {
         super.onCreate();
         pushSDK = SwrvePushSDK.getInstance();
-        pushSDK.setService(this);
+        if (pushSDK != null) {
+            pushSDK.setService(this);
+        }
     }
 
     @Override
-    protected void onMessage(final Intent intent) {
+    @VisibleForTesting
+    public void onMessage(final Intent intent) {
         if (!SwrveHelper.sdkAvailable()) {
             return;
         }
@@ -86,13 +90,16 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase implements Swrv
      */
     @Override
     public void processNotification(final Bundle msg) {
-        pushSDK.processNotification(msg);
+        if (pushSDK != null) {
+            pushSDK.processNotification(msg);
 
-        // Notify bound clients
-        Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-        while (iter.hasNext()) {
-            SwrveQAUser sdkListener = iter.next();
-            sdkListener.pushNotification(pushSDK.getSwrveId(msg), msg);
+            // Notify bound clients
+            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+            String pushId = SwrvePushSDK.getPushId(msg);
+            while (iter.hasNext()) {
+                SwrveQAUser sdkListener = iter.next();
+                sdkListener.pushNotification(pushId, msg);
+            }
         }
     }
 

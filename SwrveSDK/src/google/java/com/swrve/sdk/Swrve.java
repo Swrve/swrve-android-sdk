@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -29,6 +30,17 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);
         SwrvePushSDK.createInstance(context);
+    }
+
+    @Override
+    protected void _onResume(Activity ctx) {
+        super._onResume(ctx);
+
+        // Detect if user is influenced by a push notification
+        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
+        if (pushSDK != null) {
+            pushSDK.processInfluenceData(this);
+        }
     }
 
     @Override

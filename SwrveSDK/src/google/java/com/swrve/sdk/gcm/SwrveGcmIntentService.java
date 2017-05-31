@@ -25,12 +25,16 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
     public void onCreate() {
         super.onCreate();
         pushSDK = SwrvePushSDK.getInstance();
-        pushSDK.setService(this);
+        if (pushSDK != null) {
+            pushSDK.setService(this);
+        }
     }
 
     @Override
     public void onMessageReceived(String from, Bundle data) {
-        pushSDK.processRemoteNotification(data, false);
+        if (pushSDK != null) {
+            pushSDK.processRemoteNotification(data, false);
+        }
     }
 
     /**
@@ -40,13 +44,16 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
      */
     @Override
     public void processNotification(final Bundle msg) {
-        pushSDK.processNotification(msg);
+        if (pushSDK != null) {
+            pushSDK.processNotification(msg);
 
-        // Notify bound clients
-        Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-        while (iter.hasNext()) {
-            SwrveQAUser sdkListener = iter.next();
-            sdkListener.pushNotification(pushSDK.getSwrveId(msg), msg);
+            // Notify bound clients
+            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
+            String pushId = SwrvePushSDK.getPushId(msg);
+            while (iter.hasNext()) {
+                SwrveQAUser sdkListener = iter.next();
+                sdkListener.pushNotification(pushId, msg);
+            }
         }
     }
 

@@ -37,6 +37,9 @@ public class SwrvePushDeDuper {
         boolean isDupe = false;
 
         Object rawId = msg.get(SwrvePushConstants.SWRVE_TRACKING_KEY);
+        if (rawId == null) {
+            rawId = msg.get(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY);
+        }
         String msgId = (rawId != null) ? rawId.toString() : null;
 
         final String timestamp = msg.getString(SwrvePushConstants.TIMESTAMP_KEY);

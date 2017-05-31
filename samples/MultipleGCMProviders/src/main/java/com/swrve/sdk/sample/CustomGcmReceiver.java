@@ -8,7 +8,7 @@ import android.os.Bundle;
 import com.google.android.gms.gcm.GcmReceiver;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.SwrvePushConstants;
+import com.swrve.sdk.SwrvePushSDK;
 import com.swrve.sdk.gcm.SwrveGcmConstants;
 
 /*
@@ -25,8 +25,7 @@ public class CustomGcmReceiver extends GcmReceiver {
         if("com.google.android.c2dm.intent.RECEIVE".equals(intent.getAction())) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                Object rawId = extras.get(SwrvePushConstants.SWRVE_TRACKING_KEY);
-                String msgId = (rawId != null) ? rawId.toString() : null;
+                String msgId = SwrvePushSDK.getPushId(extras);
                 if (!SwrveHelper.isNullOrEmpty(msgId)) {
                     // It is a Swrve push!
                     SwrveLogger.d("Received Swrve push, starting " + SwrveGcmConstants.SWRVE_DEFAULT_INTENT_SERVICE + " instead");

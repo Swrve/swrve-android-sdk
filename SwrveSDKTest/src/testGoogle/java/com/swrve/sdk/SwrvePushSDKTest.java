@@ -11,15 +11,18 @@ import android.support.v4.app.NotificationCompat;
 
 import com.swrve.sdk.qa.SwrveQAUser;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowNotification;
 import org.robolectric.shadows.ShadowPendingIntent;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -36,7 +39,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
-        SwrvePushSDK.createInstance(RuntimeEnvironment.application);
+        super.setUp();
         swrvePushSDK = new TestableSwrvePushSDK(RuntimeEnvironment.application);
         setSwrvePushSDKInstance(swrvePushSDK);
         service = new GenericSwrvePushService("TEST");
@@ -45,6 +48,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @After
     public void tearDown() throws Exception {
+        super.tearDown();
         SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
@@ -54,6 +58,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testService() throws Exception {
+        service.checkDupes = true;
+
         //Check null scenario
         service.onHandleIntent(null);
         assertEquals(0, swrvePushSDK.isSwrveRemoteNotificationExecuted);
@@ -195,6 +201,84 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertNotification("deeplinkBundle", null, deeplinkBundle);
     }
 
+    private boolean listenerCalledWithRightParams;
+    @Test
+    public void testSilentPush() throws Exception {
+        Intent intent = new Intent();
+        listenerCalledWithRightParams = false;
+
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveSpy = Mockito.spy(swrveReal);
+
+        swrvePushSDK.setSilentPushListener(new SwrveSilentPushListener() {
+            @Override
+            public void onSilentPush(Context context, JSONObject payload) {
+                if (!listenerCalledWithRightParams) {
+                    try {
+                        listenerCalledWithRightParams = payload.getString("custom").equals("value1");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        // Send some valid silent pushes
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY, "1");
+        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrvePushConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value1\"}");
+        intent.putExtras(bundle);
+        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 0:00");
+        service.onHandleIntent(intent);
+        // Silent push 2
+        bundle.putString(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY, "2");
+        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrvePushConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value2\"}");
+        intent.putExtras(bundle);
+        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 10:00");
+        service.onHandleIntent(intent);
+        // Silent push 3
+        bundle.putString(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY, "3");
+        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrvePushConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value3\"}");
+        intent.putExtras(bundle);
+        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 11:00");
+        service.onHandleIntent(intent);
+
+        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        assertNumberOfNotifications(0);
+        assertTrue(listenerCalledWithRightParams);
+
+        // Init the SDK, should read influence data
+        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 13:00");
+        swrveReal.init(mActivity);
+        swrveReal.onPause();
+        swrveReal.onResume(mActivity);
+        assertEquals(1, swrvePushSDK.processInfluenceDataCallCount);
+        swrveReal.onPause();
+        swrveReal.onResume(mActivity);
+        assertEquals(2, swrvePushSDK.processInfluenceDataCallCount);
+
+        List<Intent> eventIntents = shadowApplication.getBroadcastIntents();
+        assertEquals(1, eventIntents.size());
+        Intent eventIntent = eventIntents.get(0);
+        ArrayList extras = (ArrayList) eventIntent.getExtras().get("swrve_wakeful_events");
+        assertEquals(2, extras.size());
+        JSONObject event1 = new JSONObject((String) extras.get(0));
+        assertEquals("generic_campaign_event", event1.get("type"));
+        assertEquals(2, event1.get("id"));
+        assertEquals("push", event1.get("campaignType"));
+        assertEquals("influenced", event1.get("actionType"));
+        JSONObject payload1 = event1.getJSONObject("payload");
+        assertEquals("540", payload1.get("delta"));
+
+        JSONObject event2 = new JSONObject((String) extras.get(1));
+        assertEquals(3, event2.get("id"));
+
+        swrveSpy.shutdown();
+    }
+
     private void assertNotification(String tickerText, String sound, Bundle extras)  {
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
@@ -226,16 +310,34 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     }
 
     class TestableSwrvePushSDK extends SwrvePushSDK {
+        public Date dateNow;
         int isSwrveRemoteNotificationExecuted = 0;
+        int processInfluenceDataCallCount = 0;
 
         public TestableSwrvePushSDK(Context context) {
             super(context);
+            // Set as the main instance
+            instance = this;
         }
 
         @Override
         public void processRemoteNotification(Bundle msg, boolean checkDupes) {
             super.processRemoteNotification(msg, checkDupes);
             isSwrveRemoteNotificationExecuted = SwrvePushSDK.isSwrveRemoteNotification(msg)? 1 : 2;
+        }
+
+        @Override
+        void processInfluenceData(ISwrveCommon sdk) {
+            processInfluenceDataCallCount++;
+            super.processInfluenceData(sdk);
+        }
+
+        @Override
+        protected Date getNow() {
+            if (dateNow != null) {
+                return dateNow;
+            }
+            return super.getNow();
         }
     }
 
@@ -248,6 +350,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     public class GenericSwrvePushService extends IntentService implements SwrvePushService {
 
         private SwrvePushSDK pushSDK;
+        public boolean checkDupes = false;
 
         public GenericSwrvePushService(String name) {
             super(name);
@@ -263,7 +366,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         @Override
         protected void onHandleIntent(Intent intent) {
             if(intent != null) {
-                pushSDK.processRemoteNotification(intent.getExtras(), true);
+                pushSDK.processRemoteNotification(intent.getExtras(), checkDupes);
             }
         }
 

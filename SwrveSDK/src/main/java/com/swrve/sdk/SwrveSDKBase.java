@@ -556,5 +556,4 @@ public abstract class SwrveSDKBase {
     public static ISwrveBase getInstance() {
         return instance;
     }
-
 }

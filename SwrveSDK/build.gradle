@@ -151,6 +151,12 @@ publishing {
                 configurations.googleCompile.allDependencies.each {
                     if (it.group == null || it.name == null || it.version == null) {
                         logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else if (it.name == 'SwrveSDKPush') {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                        dependencyNode.appendNode('artifactId', project.SWRVE_PUSH_ARTIFACT_ID)
+                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                        dependencyNode.appendNode('scope', 'compile')
                     } else {
                         def dependencyNode = dependenciesNode.appendNode('dependency')
                         dependencyNode.appendNode('groupId', it.group)
@@ -205,6 +211,12 @@ publishing {
                 configurations.amazonCompile.allDependencies.each {
                     if (it.group == null || it.name == null || it.version == null) {
                         logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else if (it.name == 'SwrveSDKPush') {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                        dependencyNode.appendNode('artifactId', project.SWRVE_PUSH_ARTIFACT_ID)
+                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                        dependencyNode.appendNode('scope', 'compile')
                     } else {
                         def dependencyNode = dependenciesNode.appendNode('dependency')
                         dependencyNode.appendNode('groupId', it.group)
