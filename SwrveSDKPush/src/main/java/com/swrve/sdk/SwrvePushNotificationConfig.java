@@ -33,16 +33,16 @@ public class SwrvePushNotificationConfig {
     private final int iconDrawableId;
     private final int iconMaterialDrawableId;
     private final Bitmap largeIconDrawable;
-    private final Integer accentColor;
+    private final Integer accentColorObject;
     private final String notificationTitle;
 
     // Called by Unity Swrve SDK
-    public SwrvePushNotificationConfig(Class<?> activityClass, int iconDrawableId, int iconMaterialDrawableId, Bitmap largeIconDrawable, Integer accentColor, String notificationTitle) {
+    public SwrvePushNotificationConfig(Class<?> activityClass, int iconDrawableId, int iconMaterialDrawableId, Bitmap largeIconDrawable, Integer accentColorObject, String notificationTitle) {
         this.activityClass = activityClass;
         this.iconDrawableId = iconDrawableId;
         this.iconMaterialDrawableId = iconMaterialDrawableId;
         this.largeIconDrawable = largeIconDrawable;
-        this.accentColor = accentColor;
+        this.accentColorObject = accentColorObject;
         this.notificationTitle = notificationTitle;
     }
 
@@ -86,12 +86,12 @@ public class SwrvePushNotificationConfig {
             }
 
             int accentColorResourceId = metaData.getInt(SWRVE_PUSH_ACCENT_COLOR_METADATA, -1);
-            Integer accentColor = null;
+            Integer accentColorObject = null;
             if (accentColorResourceId < 0) {
                 // No accent color specified in the metadata
                 SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ACCENT_COLOR_METADATA + " specified. We recommend setting an accent color for your notifications");
             } else {
-                accentColor = ContextCompat.getColor(context, accentColorResourceId);
+                accentColorObject = ContextCompat.getColor(context, accentColorResourceId);
             }
 
             Class<?> pushActivityClass = null;
@@ -129,7 +129,7 @@ public class SwrvePushNotificationConfig {
                 }
             }
 
-            swrvePushNotificationConfig = new SwrvePushNotificationConfig(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColor, pushTitle);
+            swrvePushNotificationConfig = new SwrvePushNotificationConfig(pushActivityClass, iconId, iconMaterialId, largeIconBitmap, accentColorObject, pushTitle);
         } catch (Exception ex) {
             SwrveLogger.e(TAG, "Error creating push notification from metadata", ex);
         }
@@ -167,8 +167,8 @@ public class SwrvePushNotificationConfig {
             mBuilder.setLargeIcon(largeIconDrawable);
         }
 
-        if (accentColor >= 0) {
-            mBuilder.setColor(accentColor);
+        if (accentColorObject != null ) {
+            mBuilder.setColor(accentColorObject);
         }
 
         String msgSound = msg.getString("sound");

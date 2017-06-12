@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import com.swrve.sdk.SwrveLogger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
