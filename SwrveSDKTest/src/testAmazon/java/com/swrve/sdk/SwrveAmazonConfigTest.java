@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import android.util.Log;
+
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.junit.After;
@@ -14,6 +16,7 @@ public class SwrveAmazonConfigTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
+        SwrveLogger.setLogLevel(Log.VERBOSE);
         ShadowLog.stream = System.out;
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
     }

@@ -25,7 +25,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowView;
-import org.robolectric.util.ActivityController;
+import org.robolectric.android.controller.ActivityController;
 import org.robolectric.util.Pair;
 
 import java.util.HashMap;

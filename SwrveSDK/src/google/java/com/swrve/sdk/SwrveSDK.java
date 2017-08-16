@@ -108,7 +108,7 @@ public class SwrveSDK extends SwrveSDKBase {
      * @param productId     Unique product identifier for the item bought. This should match the
      *                      Swrve resource name. Required, cannot be empty.
      * @param productPrice  price of the product in real money. Note that this is the price
-     *                      per product, not the total price of the transaction (when quantity > 1)
+     *                      per product, not the total price of the transaction (when quantity greater than 1)
      *                      A typical value would be 0.99. Must be greater or equal to zero.
      * @param currency      real world currency used for this transaction. This must be an
      *                      ISO currency code. A typical value would be "USD".

@@ -5,7 +5,7 @@ import com.swrve.sdk.SwrveHelper;
 /**
  * Configuration for the Swrve Google SDK.
  */
-public class SwrveConfig extends SwrveConfigBase {
+public class SwrveConfig extends SwrveConfigPushBase {
 
     /**
      * Android Google Cloud Messaging Sender id.

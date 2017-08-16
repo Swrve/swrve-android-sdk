@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.config.SwrveConfig;
 
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,8 +14,10 @@ import org.mockito.Mockito;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.manifest.BroadcastReceiverData;
+import org.robolectric.shadows.ShadowActivity;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -69,26 +72,48 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         SwrveEngageEventSender engageEventSender = new SwrveEngageEventSender();
         engageEventSender.onReceive(mActivity, intent);
 
-        List<String> events = assertEventCount(1);
+        List<String> events = assertEventCount(mShadowActivity, 1);
         assertEngagedEvent(events.get(0), "Swrve.Messages.Push-4567.engaged");
     }
 
-    private List<String> assertEventCount(int count) {
+    @Test
+    public void testButtonEngagedEventQueued() throws Exception {
+        Intent intent = new Intent();
+        intent.putExtra(SwrvePushConstants.SWRVE_TRACKING_KEY, "4567");
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, "2");
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TEXT, "btn3");
+
+        SwrveEngageEventSender engageEventSender = new SwrveEngageEventSender();
+        engageEventSender.onReceive(mActivity, intent);
+
+        List<String> events = assertEventCount(mShadowActivity, 2, 2);
+        assertButtonClickedEvent(events.get(0), "2");
+        assertEngagedEvent(events.get(1), "Swrve.Messages.Push-4567.engaged");
+    }
+
+    public static List<String> assertEventCount(ShadowActivity mShadowActivity, int count) {
+        return assertEventCount(mShadowActivity, count, 1);
+    }
+
+    public static List<String> assertEventCount(ShadowActivity mShadowActivity, int count, int broadcastCount) {
         List<String> events = null;
         List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
         if (count == 0) {
             assertEquals(0, broadcastIntents.size());
         } else {
-            assertEquals(1, broadcastIntents.size());
+            assertEquals(broadcastCount, broadcastIntents.size());
             assertEquals("com.swrve.sdk.SwrveWakefulReceiver", broadcastIntents.get(0).getComponent().getShortClassName());
-            events = (List) broadcastIntents.get(0).getExtras().get(SwrveWakefulService.EXTRA_EVENTS);
+            events = new ArrayList<>();
+            for (int i = 0; i < broadcastCount; i++) {
+                events.addAll((List) broadcastIntents.get(i).getExtras().get(SwrveWakefulService.EXTRA_EVENTS));
+            }
             assertNotNull(events);
             assertEquals(count, events.size());
         }
         return events;
     }
 
-    private void assertEngagedEvent(String eventJson, String eventName) {
+    public static void assertEngagedEvent(String eventJson, String eventName) {
         Gson gson = new Gson(); // eg: {"type":"event","time":1466519995192,"name":"Swrve.Messages.Push-1.engaged"}
         Type type = new TypeToken<Map<String, String>>() {
         }.getType();
@@ -98,6 +123,22 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         assertEquals("event", event.get("type"));
         assertTrue(event.containsKey("name"));
         assertEquals(eventName, event.get("name"));
+        assertTrue(event.containsKey("time"));
+        assertTrue(event.containsKey("seqnum"));
+    }
+
+    public static void assertButtonClickedEvent(String eventJson, String actionId) {
+        Gson gson = new Gson(); // eg: {"type":"generic_campaign_event","time":1499179867473,"seqnum":1,"actionType":"button_click","campaignType":"push","contextId":"0","id":"4567","payload":{"buttonText":"btn1"}}
+        Type type = new TypeToken<Map<String, Object>>() {
+        }.getType();
+        Map<String, String> event = gson.fromJson(eventJson, type);
+        assertEquals(8, event.size());
+        assertTrue(event.containsKey("type"));
+        assertEquals("generic_campaign_event", event.get("type"));
+        assertTrue(event.containsKey("id"));
+        assertEquals(actionId, event.get("contextId"));
+        assertEquals("push", event.get("campaignType"));
+        assertEquals("button_click", event.get("actionType"));
         assertTrue(event.containsKey("time"));
         assertTrue(event.containsKey("seqnum"));
     }

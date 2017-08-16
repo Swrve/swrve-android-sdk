@@ -13,6 +13,9 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
+import com.swrve.sdk.rest.RESTResponse;
 
 import junit.framework.Assert;
 
@@ -25,6 +28,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.text.ParseException;
@@ -278,5 +282,27 @@ public class SwrveTestUtils {
             SwrveLogger.e("Error parseDate:" + date, ex);
         }
         return parsed;
+    }
+
+    public static void setRestClientWithGetResponse(Swrve swrve, final String response) {
+        swrve.restClient = new IRESTClient() {
+            @Override
+            public void get(String endpoint, IRESTResponseListener callback) {
+                callback.onResponse(new RESTResponse(200, response, null));
+            }
+
+            @Override
+            public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) throws UnsupportedEncodingException {
+                callback.onResponse(new RESTResponse(200, response, null));
+            }
+
+            @Override
+            public void post(String endpoint, String encodedBody, IRESTResponseListener callback) {
+            }
+
+            @Override
+            public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
+            }
+        };
     }
 }

@@ -49,7 +49,7 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testDeprectedPushListener() throws Exception {
+    public void testDeprecatedPushListener() throws Exception {
         SwrveGoogleUnitTest.TestDeprecatedPushListener deprecatedPushListener = new SwrveGoogleUnitTest.TestDeprecatedPushListener();
 
         Intent intent = new Intent();

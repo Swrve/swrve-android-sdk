@@ -1,5 +1,9 @@
 package com.swrve.sdk;
 
+import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -7,11 +11,17 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+
+import com.swrve.sdk.model.PayloadExpanded;
+import com.swrve.sdk.model.PayloadMedia;
+import com.swrve.sdk.model.PushPayload;
 
 /**
  * Used internally to build a local notification from a push notification.
@@ -35,6 +45,9 @@ public class SwrvePushNotificationConfig {
     private final Bitmap largeIconDrawable;
     private final Integer accentColorObject;
     private final String notificationTitle;
+    private boolean usingFallbackDeeplink;
+    private PushPayload pushPayload;
+    protected SwrvePushMediaHelper mediaHelper;
 
     // Called by Unity Swrve SDK
     public SwrvePushNotificationConfig(Class<?> activityClass, int iconDrawableId, int iconMaterialDrawableId, Bitmap largeIconDrawable, Integer accentColorObject, String notificationTitle) {
@@ -44,6 +57,8 @@ public class SwrvePushNotificationConfig {
         this.largeIconDrawable = largeIconDrawable;
         this.accentColorObject = accentColorObject;
         this.notificationTitle = notificationTitle;
+        this.usingFallbackDeeplink = false;
+        this.mediaHelper = new SwrvePushMediaHelper();
     }
 
     // Called by Swrve SDK Native
@@ -151,15 +166,20 @@ public class SwrvePushNotificationConfig {
     }
 
     public NotificationCompat.Builder createNotificationBuilder(Context context, String msgText, Bundle msg) {
+
+        parsePushPayload(msg);
+
         boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
 
-        // Build notification
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
+        NotificationChannel defaultNotificationChannel = SwrvePushSDK.getInstance().getDefaultNotificationChannel();
+        String notificationChannelId = getNotificationChannelId(context, defaultNotificationChannel);
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, notificationChannelId)
                 .setSmallIcon(iconResource)
-                .setTicker(msgText)
                 .setContentTitle(notificationTitle)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(msgText))
+                .setTicker(msgText)
                 .setContentText(msgText)
                 .setAutoCancel(true);
 
@@ -167,7 +187,7 @@ public class SwrvePushNotificationConfig {
             mBuilder.setLargeIcon(largeIconDrawable);
         }
 
-        if (accentColorObject != null ) {
+        if (accentColorObject != null) {
             mBuilder.setColor(accentColorObject);
         }
 
@@ -182,6 +202,278 @@ public class SwrvePushNotificationConfig {
             }
             mBuilder.setSound(soundUri);
         }
+
+        if (pushPayload != null) {
+            mBuilder = getNotificationBuilderFromSwrvePayload(mBuilder, msg);
+        }
+
         return mBuilder;
+    }
+
+    private void parsePushPayload(Bundle msg){
+        String swrvePushPayload = msg.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY);
+        if (SwrveHelper.isNotNullOrEmpty(swrvePushPayload)) {
+            pushPayload = PushPayload.fromJson(swrvePushPayload);
+        }
+    }
+
+    @TargetApi(value = 26)
+    private String getNotificationChannelId(Context context, NotificationChannel defaultChannel) {
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return null;
+        }
+
+        String notificationChannelId = null;
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Check if the channelId came down in payload and use that if its valid.
+        if (pushPayload != null && SwrveHelper.isNotNullOrEmpty(pushPayload.getChannelId())) {
+            String payloadChannelId = pushPayload.getChannelId();
+            NotificationChannel payloadChannel = mNotificationManager.getNotificationChannel(payloadChannelId);
+            if (payloadChannel == null) {
+                SwrveLogger.w("Notification channel " + payloadChannel + " from push payload does not exist, using default from config.");
+            } else {
+                SwrveLogger.i("Notification channel " + payloadChannel + " from push payload will be used instead of config.");
+                notificationChannelId = payloadChannelId;
+            }
+        }
+
+        // Use the default from config if none available from payload
+        if (notificationChannelId == null && defaultChannel != null) {
+            NotificationChannel existingChannel = mNotificationManager.getNotificationChannel(defaultChannel.getId());
+            if (existingChannel == null) {
+                SwrveLogger.i("Notification channel " + defaultChannel.getId() + " does not exist, creating it");
+                mNotificationManager.createNotificationChannel(defaultChannel);
+            }
+            notificationChannelId = defaultChannel.getId();
+        }
+
+        if(notificationChannelId == null) {
+            SwrveLogger.e("Notification channel could not be found, the swrve notification cannot be shown.");
+        }
+
+        return notificationChannelId;
+    }
+
+    private NotificationCompat.Builder getNotificationBuilderFromSwrvePayload(NotificationCompat.Builder mBuilder, Bundle msg) {
+
+        if (pushPayload.getVersion() > SwrvePushConstants.SWRVE_PUSH_VERSION) {
+            // version number is beyond this SDK. return to default
+            return mBuilder;
+        }
+
+        // Base Title
+        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getTitle())) {
+            mBuilder.setContentTitle(pushPayload.getTitle());
+        }
+
+        // Base Subtitle
+        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getSubtitle())) {
+            mBuilder.setSubText(pushPayload.getSubtitle());
+        }
+
+        // Accent Color
+        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getAccent())) {
+            mBuilder.setColor(Color.parseColor(pushPayload.getAccent()));
+        }
+
+        // Icon
+        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getIconUrl())) {
+            Bitmap icon = mediaHelper.extractBitmapImageFromUrl(pushPayload.getIconUrl());
+            if (icon != null) {
+                mBuilder.setLargeIcon(icon);
+            }
+        }
+
+        // Visibility
+        if (pushPayload.getVisibility() != null) {
+            switch (pushPayload.getVisibility()) {
+                case PUBLIC:
+                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                    break;
+                case PRIVATE:
+                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE);
+                    break;
+                case SECRET:
+                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_SECRET);
+                    break;
+                default:
+                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                    break;
+            }
+        }
+
+        // Base Ticker
+        String ticker = pushPayload.getTicker();
+        if (SwrveHelper.isNotNullOrEmpty(ticker)) {
+            mBuilder.setTicker(ticker);
+        }
+
+        // Notification Priority
+        if (pushPayload.getPriority() != 0) {
+            // Checks if it's not zero since default doesn't need to be set
+            mBuilder.setPriority(pushPayload.getPriority());
+        }
+
+        // set Default style for extended content
+        mBuilder.setStyle(buildDefaultStyle(pushPayload));
+
+        // Media is present so apply a different template based on type
+        PayloadMedia media = pushPayload.getMedia();
+        if (media != null) {
+            if (media.getType() != null) {
+                // Notification Style Template
+                NotificationCompat.Style mediaStyle = buildNotificationStyle(media.getType(), false, pushPayload);
+                if (mediaStyle != null) {
+                    mBuilder.setStyle(mediaStyle);
+
+                    // Set media Text since style is set
+                    setMediaText(mBuilder, pushPayload);
+                    // If the image download failed and the fallback is a video
+
+                    if (usingFallbackDeeplink) {
+                        msg.putString(SwrvePushConstants.DEEPLINK_KEY, media.getFallbackSd());
+                    }
+                }
+
+            }
+        }
+        // Lock Screen Message
+        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
+            // Use the notification builder to build a copy of the private notification
+            // with different lock screen message text
+            String contentText = mBuilder.mContentText.toString();
+
+            // Create a public visible notification version
+            mBuilder.setTicker(pushPayload.getLockScreenMsg());
+            mBuilder.setContentText(pushPayload.getLockScreenMsg());
+            Notification lockScreenNotification = mBuilder.build();
+            lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
+            mBuilder.setPublicVersion(lockScreenNotification);
+
+            // Reset changed values
+            mBuilder.setContentText(contentText);
+            if (SwrveHelper.isNotNullOrEmpty(ticker)) {
+                mBuilder.setTicker(ticker);
+            } else {
+                mBuilder.setTicker(contentText);
+            }
+        }
+
+        return mBuilder;
+    }
+
+    private void setMediaText(NotificationCompat.Builder mBuilder, PushPayload payload) {
+
+        PayloadMedia media = payload.getMedia();
+        if(media != null){
+            // Media Title
+            if (SwrveHelper.isNotNullOrEmpty(media.getTitle())) {
+                mBuilder.setContentTitle(media.getTitle());
+            }
+
+            // Media Subtitle
+            if (SwrveHelper.isNotNullOrEmpty(media.getSubtitle())) {
+                mBuilder.setSubText(media.getSubtitle());
+            }
+
+            // Media Body
+            if (SwrveHelper.isNotNullOrEmpty(media.getBody())) {
+                mBuilder.setContentText(media.getBody());
+
+                // If ticker is not set from earlier, set the body to it
+                if (SwrveHelper.isNullOrEmpty(payload.getTicker())) {
+                    mBuilder.setTicker(media.getBody());
+                }
+            }
+        }
+    }
+
+    private NotificationCompat.Style buildNotificationStyle(PayloadMedia.MediaType type, Boolean fallback, PushPayload payload) {
+        NotificationCompat.Style responseStyle;
+        PayloadMedia media = payload.getMedia();
+        if (type == null) {
+            // Enters here in the case fallback is null. if there's no fallback type then media failed
+            return null;
+        }
+
+        switch (type) {
+            case IMAGE:
+                NotificationCompat.BigPictureStyle bigPictureStyle = new NotificationCompat.BigPictureStyle();
+
+                if (!fallback) {
+                    // Main Big Picture
+                    if (SwrveHelper.isNotNullOrEmpty(media.getUrl())) {
+
+                        Bitmap bigImage = mediaHelper.extractBitmapImageFromUrl(media.getUrl());
+                        if (bigImage != null) {
+                            bigPictureStyle.bigPicture(bigImage);
+                        } else {
+                            // If m_url failed to download, traverse the same switch with fallback type
+                            return buildNotificationStyle(media.getFallbackType(), true, payload);
+                        }
+                    } else {
+                        // Both have failed, return null.
+                        return null;
+                    }
+                } else {
+                    Bitmap fallbackImage = mediaHelper.extractBitmapImageFromUrl(media.getFallbackUrl());
+                    if (fallbackImage != null) {
+                        bigPictureStyle.bigPicture(fallbackImage);
+                    } else {
+                        // If m_fallback_url failed to download, revert to bigText
+                        return null;
+                    }
+
+                    if (media.getFallbackSd() != null) {
+                        // If there's a fallback deep link available and image bitmap is not null
+                        usingFallbackDeeplink = true;
+                    }
+                }
+
+                PayloadExpanded expanded = payload.getExpanded();
+                if (expanded != null) {
+                    // Expanded Icon
+                    if (SwrveHelper.isNotNullOrEmpty(expanded.getIconUrl())) {
+                        bigPictureStyle.bigLargeIcon(mediaHelper.extractBitmapImageFromUrl(expanded.getIconUrl()));
+                    }
+                    // Expanded Title
+                    if (SwrveHelper.isNotNullOrEmpty(expanded.getTitle())) {
+                        bigPictureStyle.setBigContentTitle(expanded.getTitle());
+                    }
+                    // Expanded Body
+                    if (SwrveHelper.isNotNullOrEmpty(expanded.getBody())) {
+                        // Summary Text in bigPicture places text in the same place as bigText
+                        // so it keeps the format consistent by placing expanded body here.
+                        bigPictureStyle.setSummaryText(expanded.getBody());
+                    }
+                }
+                responseStyle = bigPictureStyle;
+                break;
+            default:
+                responseStyle = buildDefaultStyle(payload);
+                break;
+        }
+        return responseStyle;
+    }
+
+    private NotificationCompat.Style buildDefaultStyle(PushPayload payload) {
+        NotificationCompat.Style responseStyle;
+        NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
+        PayloadExpanded exp = payload.getExpanded();
+        if (exp != null) {
+            // Expanded Title
+            if (SwrveHelper.isNotNullOrEmpty(exp.getTitle())) {
+                bigTextStyle.setBigContentTitle(exp.getTitle());
+            }
+
+            // Expanded Body
+            if (SwrveHelper.isNotNullOrEmpty(exp.getBody())) {
+                bigTextStyle.bigText(exp.getBody());
+            }
+        }
+        responseStyle = bigTextStyle;
+        return responseStyle;
     }
 }

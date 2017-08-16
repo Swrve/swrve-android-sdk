@@ -1,10 +1,11 @@
 package com.swrve.sdk.push;
 
 import android.content.Context;
+import android.util.Log;
 
+import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.SwrveTestUtils;
-import com.swrve.sdk.test.BuildConfig;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,6 +27,7 @@ public class SwrvePushDeDuperTest {
     @Before
     public void setUp() throws Exception {
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        SwrveLogger.setLogLevel(Log.VERBOSE);
         ShadowLog.stream = System.out;
     }
 

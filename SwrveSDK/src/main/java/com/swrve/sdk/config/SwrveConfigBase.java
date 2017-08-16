@@ -4,7 +4,6 @@ import android.graphics.Color;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import java.io.File;
@@ -138,6 +137,11 @@ public abstract class SwrveConfigBase {
     private boolean androidIdLoggingEnabled;
 
     /**
+     * Obtain information about the AB Tests a user is part of.
+     */
+    private boolean abTestDetailsEnabled;
+
+    /**
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
@@ -204,7 +208,6 @@ public abstract class SwrveConfigBase {
     /**
      * Set the stack prefix for the events and content url
      * @param stack The chosen stack of the app
-     * @return
      */
     public void setSelectedStack(SwrveStack stack){
         selectedStack = stack;
@@ -218,7 +221,6 @@ public abstract class SwrveConfigBase {
     private String getStackHostPrefix(){
         return (getSelectedStack() == SwrveStack.EU) ? "eu-" : "";
     }
-
 
     /**
      * Set the language of the app. If empty or null then
@@ -235,9 +237,11 @@ public abstract class SwrveConfigBase {
 
     /**
      * Check if the SwrveLogger is enabled
+     * @deprecated This is redundant and will be removed in next major release. Returning true hardcoded.
      */
+    @Deprecated
     public boolean isLoggerEnabled() {
-        return SwrveLogger.isActive();
+        return true;
     }
 
     /**
@@ -624,5 +628,19 @@ public abstract class SwrveConfigBase {
      */
     public void setAndroidIdLoggingEnabled(boolean enabled) {
         this.androidIdLoggingEnabled = enabled;
+    }
+
+    /**
+     * @return if the SDK will request information about the AB Tests a user is part of.
+     */
+    public boolean isABTestDetailsEnabled() {
+        return abTestDetailsEnabled;
+    }
+
+    /**
+     * @param enabled to obtain information about the AB Tests a user is part of.
+     */
+    public void setABTestDetailsEnabled(boolean enabled) {
+        this.abTestDetailsEnabled = enabled;
     }
 }

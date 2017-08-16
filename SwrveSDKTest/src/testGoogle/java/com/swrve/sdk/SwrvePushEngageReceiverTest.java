@@ -3,9 +3,13 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.swrve.sdk.model.PayloadButton;
+import com.swrve.sdk.model.PushPayload;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
@@ -62,8 +66,9 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
 
         List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
         assertNotNull(broadcastIntents);
-        assertEquals(1, broadcastIntents.size());
+        assertEquals(2, broadcastIntents.size());
         assertEquals("com.swrve.sdk.SwrveEngageEventSender", broadcastIntents.get(0).getComponent().getShortClassName());
+        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(1).getAction());
         String pushId = (String) broadcastIntents.get(0).getExtras().get(SwrvePushConstants.SWRVE_TRACKING_KEY);
         assertNotNull(pushId);
         assertEquals("1234", pushId);
@@ -89,5 +94,48 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
         assertEquals("swrve://deeplink/campaigns", nextStartedActivity.getData().toString());
         assertTrue(nextStartedActivity.hasExtra("customdata"));
         assertEquals("customdata_value", nextStartedActivity.getStringExtra("customdata"));
+    }
+
+    @Test
+    public void testReceiverPressedUrlAction() throws Exception {
+        Intent intent = new Intent();
+        Bundle extras = new Bundle();
+        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "4567");
+        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+        intent.putExtra(SwrvePushConstants.PUSH_NOTIFICATION_ID, 1);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, PayloadButton.ActionType.OPEN_URL);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, "1");
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_URL_KEY, "swrve://deeplink/campaigns");
+
+        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+
+        Robolectric.flushBackgroundThreadScheduler();
+        Robolectric.flushForegroundThreadScheduler();
+
+        Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
+        assertNotNull(nextStartedActivity);
+        assertEquals("swrve://deeplink/campaigns", nextStartedActivity.getData().toString());
+    }
+
+    @Test
+    public void testReceiverPressedActionClosedNotification() throws Exception {
+        Intent intent = new Intent();
+        Bundle extras = new Bundle();
+        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "4567");
+        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, PayloadButton.ActionType.OPEN_URL);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, "1");
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_URL_KEY, "swrve://deeplink/campaigns");
+        intent.putExtra(SwrvePushConstants.PUSH_NOTIFICATION_ID, 1);
+
+        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        SwrvePushEngageReceiver receiverSpy = Mockito.spy(pushEngageReceiver);
+        Mockito.doNothing().when(receiverSpy).closeNotification(1); // assets are manually mocked
+        receiverSpy.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        Mockito.verify(receiverSpy).closeNotification(1);
+
+        Robolectric.flushBackgroundThreadScheduler();
+        Robolectric.flushForegroundThreadScheduler();
     }
 }

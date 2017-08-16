@@ -113,8 +113,7 @@ public abstract class SwrveSDKBase {
      * your users change - for example, levelUp.
      *
      * @param attributes key-value pairs of properties of the user. Typical values
-     *                   would be level => number, referrer => channel, coin balance =>
-     *                   number.
+     *                   would be level = number, referrer = channel, coin balance = number.
      */
     public static void userUpdate(Map<String, String> attributes) {
         checkInstanceCreated();
@@ -159,7 +158,7 @@ public abstract class SwrveSDKBase {
      * Add a Swrve.iap event to the event queue. This event should be added for
      * unvalidated real money transactions where in-app currency was purchased
      * or where multiple items and/or currencies were purchased.
-     * <p/>
+     *
      * To create the rewards object, create an instance of SwrveIAPRewards and
      * use addItem() and addCurrency() to add the individual rewards
      *
@@ -168,7 +167,7 @@ public abstract class SwrveSDKBase {
      *                     match the Swrve resource name. Required, cannot be empty.
      * @param productPrice price of the product in real money. Note that this is the
      *                     price per product, not the total price of the transaction
-     *                     (when quantity > 1) A typical value would be 0.99. Must be
+     *                     (when quantity greater than 1) A typical value would be 0.99. Must be
      *                     greater than or equal to zero.
      * @param currency     real world currency used for this transaction. This must be an
      *                     ISO currency code. A typical value would be "USD". Required,
@@ -204,7 +203,7 @@ public abstract class SwrveSDKBase {
      * any applicable AB Tests have been applied. This request is executed on a
      * background thread, which will call methods on the user-provided listener
      * parameter.
-     * <p/>
+     *
      * If no user id has been specified this function raises a
      * NoUserIdSwrveException exception to the listener object.
      *
@@ -219,7 +218,7 @@ public abstract class SwrveSDKBase {
      * Request all applicable AB-Tested resources for the user. This request is
      * executed on a background thread, which will call methods on the
      * user-provided listener parameter.
-     * <p/>
+     *
      * If no user id has been specified this function raises a
      * NoUserIdSwrveException exception to the listener object.
      *
@@ -295,7 +294,7 @@ public abstract class SwrveSDKBase {
 
     /**
      * Shutdown the SDK. This instance will be unusable after shutdown.
-     * <p/>
+     *
      * Note: All the background jobs will try to stop when this happens.
      */
     public static void shutdown() {
@@ -501,7 +500,7 @@ public abstract class SwrveSDKBase {
      * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the current orientation.
-     * <p>
+     *
      * To obtain all MessageCenter campaigns independent of their orientation support
      * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
      *
@@ -548,7 +547,7 @@ public abstract class SwrveSDKBase {
 
     protected static void checkInstanceCreated() throws RuntimeException {
         if (instance == null) {
-            SwrveLogger.e(SwrveImp.LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
+            SwrveLogger.e("Please call SwrveSDK.createInstance first in your Application class.");
             throw new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
         }
     }

@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -9,6 +10,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
+import com.swrve.sdk.model.PayloadButton;
+import com.swrve.sdk.model.PushPayload;
 import com.swrve.sdk.push.SwrvePushDeDuper;
 
 import org.json.JSONException;
@@ -28,6 +31,7 @@ public class SwrvePushSDK {
     public static final String INFLUENCED_PREFS = "swrve.influenced_data";
 
     protected static SwrvePushSDK instance;
+    private NotificationChannel defaultNotificationChannel;
 
     public static synchronized SwrvePushSDK createInstance(Context context) {
         if (instance == null) {
@@ -40,6 +44,7 @@ public class SwrvePushSDK {
     private ISwrvePushNotificationListener pushNotificationListener;
     private SwrveSilentPushListener silentPushListener;
     private SwrvePushService service;
+    private int notificationId;
 
     protected SwrvePushSDK(Context context) {
         this.context = context;
@@ -67,11 +72,11 @@ public class SwrvePushSDK {
 
     public void processRemoteNotification(Bundle msg, boolean checkDupes) {
         if (!isSwrveRemoteNotification(msg)) {
-            SwrveLogger.i(TAG, "Received Push: but not processing as it doesn't contain: " + SwrvePushConstants.SWRVE_TRACKING_KEY + " or " + SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY);
+            SwrveLogger.i("Received Push: but not processing as it doesn't contain: %s or %s", SwrvePushConstants.SWRVE_TRACKING_KEY, SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY);
             return;
         }
 
-        if(!(checkDupes && new SwrvePushDeDuper(context).isDupe(msg))) {
+        if (!(checkDupes && new SwrvePushDeDuper(context).isDupe(msg))) {
             service.processNotification(msg);
         }
     }
@@ -99,13 +104,17 @@ public class SwrvePushSDK {
     }
 
     public void processNotification(final Bundle msg) {
+        // Attempt to save influence data for Push Notification
+        if (msg.containsKey(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY)) {
+            String influencePushID = getPushId(msg);
+            if( SwrveHelper.isNotNullOrEmpty(influencePushID)) {
+                // Save the date and push id for tracking influenced users
+                saveInfluencedCampaign(context, influencePushID, msg.getString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY), getNow());
+            }
+        }
         // Process silent notifications
         String silentId = getSilentPushId(msg);
         if (!SwrveHelper.isNullOrEmpty(silentId)) {
-            if (msg.containsKey(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY)) {
-                // Save the date and push id for tracking influenced users
-                saveInfluencedCampaign(context, silentId, msg.getString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY), getNow());
-            }
             if (this.silentPushListener != null) {
                 try {
                     // Obtain the _s.SilentPayload key and decode it to pass it to customers
@@ -117,16 +126,16 @@ public class SwrvePushSDK {
                         payload = new JSONObject();
                     }
                     this.silentPushListener.onSilentPush(context, payload);
-                } catch(Exception exp) {
-                    SwrveLogger.e(TAG, "Swrve silent push listener launched an exception: ", exp);
+                } catch (Exception exp) {
+                    SwrveLogger.e("Swrve silent push listener launched an exception: ", exp);
                 }
             } else {
-                SwrveLogger.i(TAG, "Swrve silent push received but there was no listener assigned.");
+                SwrveLogger.i("Swrve silent push received but there was no listener assigned.");
             }
         } else {
             // Process visual notification
             if (!service.mustShowNotification()) {
-                SwrveLogger.i(TAG, "Not processing as mustShowNotification is false.");
+                SwrveLogger.i("Not processing as mustShowNotification is false.");
                 return;
             }
 
@@ -134,22 +143,25 @@ public class SwrvePushSDK {
                 // Put the message into a notification and post it.
                 final NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
+                // Set the NotificationId
+                notificationId = produceNotificationId(msg);
+
                 final PendingIntent contentIntent = service.createPendingIntent(msg);
                 if (contentIntent == null) {
-                    SwrveLogger.e(TAG, "Error processing push notification. Unable to create intent");
+                    SwrveLogger.e("Error processing push notification. Unable to create intent");
                     return;
                 }
 
                 final Notification notification = service.createNotification(msg, contentIntent);
                 if (notification == null) {
-                    SwrveLogger.e(TAG, "Error processing push. Unable to create notification.");
+                    SwrveLogger.e("Error processing push. Unable to create notification.");
                     return;
                 }
 
                 // Time to show notification
                 service.showNotification(mNotificationManager, notification);
             } catch (Exception ex) {
-                SwrveLogger.e(TAG, "Error processing push.", ex);
+                SwrveLogger.e("Error processing push.", ex);
             }
         }
     }
@@ -158,7 +170,7 @@ public class SwrvePushSDK {
     public static List<InfluenceData> readSavedInfluencedData(SharedPreferences prefs) {
         Set<String> keys = prefs.getAll().keySet();
         ArrayList<InfluenceData> influencedData = new ArrayList<InfluenceData>();
-        for(String trackingId : keys) {
+        for (String trackingId : keys) {
             long maxInfluenceMillis = prefs.getLong(trackingId, 0);
             if (maxInfluenceMillis > 0) {
                 influencedData.add(new InfluenceData(trackingId, maxInfluenceMillis));
@@ -191,13 +203,19 @@ public class SwrvePushSDK {
         edit.commit();
     }
 
+    public void removeInfluenceCampaign(Context context, String trackingId) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        edit.remove(trackingId).commit();
+    }
+
     void processInfluenceData(ISwrveCommon sdk) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
         List<InfluenceData> influencedArray = readSavedInfluencedData(sharedPreferences);
         if (!influencedArray.isEmpty()) {
             ArrayList<String> influencedEvents = new ArrayList<String>();
             long nowMillis = getNow().getTime();
-            for(InfluenceData influenceData : influencedArray) {
+            for (InfluenceData influenceData : influencedArray) {
                 try {
                     long deltaMillis = influenceData.maxInfluencedMillis - nowMillis;
                     if (deltaMillis >= 0 && influenceData.maxInfluencedMillis > 0) {
@@ -208,7 +226,7 @@ public class SwrvePushSDK {
                         parameters.put("actionType", "influenced");
                         Map<String, String> payload = new HashMap<String, String>();
                         // Add delta time in minutes
-                        payload.put("delta", String.valueOf(deltaMillis/(1000*60)));
+                        payload.put("delta", String.valueOf(deltaMillis / (1000 * 60)));
 
                         String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, sdk.getNextSequenceNumber());
                         influencedEvents.add(eventAsJSON);
@@ -227,13 +245,24 @@ public class SwrvePushSDK {
     }
 
     public int showNotification(NotificationManager notificationManager, Notification notification) {
-        int id = generateTimestampId();
-        notificationManager.notify(id, notification);
-        return id;
+        notificationManager.notify(notificationId, notification);
+        return notificationId;
+    }
+
+    private int produceNotificationId (Bundle msg) {
+        // checks for the existence of an update id in the payload and sets it
+        String swrvePayloadJSON = msg.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY);
+        if(SwrveHelper.isNotNullOrEmpty(swrvePayloadJSON)){
+            PushPayload pushPayload = PushPayload.fromJson(swrvePayloadJSON);
+            if(pushPayload.getNotificationId() > 0){
+                return pushPayload.getNotificationId();
+            }
+        }
+        return generateTimestampId();
     }
 
     private int generateTimestampId() {
-        return (int)(getNow().getTime() % Integer.MAX_VALUE);
+        return (int) (getNow().getTime() % Integer.MAX_VALUE);
     }
 
     public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
@@ -246,9 +275,59 @@ public class SwrvePushSDK {
         return null;
     }
 
+    public List<NotificationCompat.Action> getNotificationActions(Bundle msg) {
+        String swrvePayloadKey = msg.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY);
+
+        if(SwrveHelper.isNullOrEmpty(swrvePayloadKey)){
+            // there's no payload available in the Bundle
+            return null;
+        }
+
+        PushPayload payload = PushPayload.fromJson(swrvePayloadKey);
+        if (payload == null) {
+            //payload cannot be parsed
+            return null;
+        }
+
+        if(payload.getVersion() > SwrvePushConstants.SWRVE_PUSH_VERSION) {
+            // push version isn't correct, don't render anything
+            return null;
+        }
+
+        List<NotificationCompat.Action> actions = new ArrayList<NotificationCompat.Action>();
+        List<PayloadButton> buttons = payload.getButtons();
+        if(buttons != null && !buttons.isEmpty()){
+            for(int index = 0; index < buttons.size(); index++){
+                PayloadButton button = buttons.get(index);
+                actions.add(createNotificationAction(msg, button.getTitle(), SwrvePushConstants.NO_ACTION_ICON, ""+index, button.getActionType(), button.getAction()));
+            }
+        }
+        return actions;
+    }
+
+    private NotificationCompat.Action createNotificationAction(Bundle msg, String buttonText, int icon, String actionKey, PayloadButton.ActionType actionType, String actionUrl) {
+        Intent intent = service.createIntent(msg);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, actionKey);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, actionType);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_URL_KEY, actionUrl);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TEXT, buttonText);
+        PendingIntent pIntendButton = PendingIntent.getBroadcast(context, generateTimestampId(), intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        return new NotificationCompat.Action.Builder(icon, buttonText, pIntendButton).build();
+    }
+
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         SwrvePushNotificationConfig notificationHelper = SwrvePushNotificationConfig.getInstance(context);
-        return notificationHelper.createNotificationBuilder(context, msgText, msg);
+
+        NotificationCompat.Builder mBuilder = notificationHelper.createNotificationBuilder(context, msgText, msg);
+
+        List<NotificationCompat.Action> actions = getNotificationActions(msg);
+        if (actions != null && actions.size() > 0) {
+            for (NotificationCompat.Action item : actions) {
+                mBuilder.addAction(item);
+            }
+        }
+
+        return mBuilder;
     }
 
     public PendingIntent createPendingIntent(Bundle msg) {
@@ -262,11 +341,20 @@ public class SwrvePushSDK {
     public Intent createIntent(Bundle msg) {
         Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
         intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, msg);
+        intent.putExtra(SwrvePushConstants.PUSH_NOTIFICATION_ID, notificationId);
         return intent;
     }
 
     protected Date getNow() {
         return new Date();
+    }
+
+    public void setDefaultNotificationChannel(NotificationChannel defaultNotificationChannel) {
+        this.defaultNotificationChannel = defaultNotificationChannel;
+    }
+
+    public NotificationChannel getDefaultNotificationChannel() {
+        return defaultNotificationChannel;
     }
 
     public static class InfluenceData {
@@ -288,8 +376,8 @@ public class SwrvePushSDK {
                 result.put("trackingId", trackingId);
                 result.put("maxInfluencedMillis", maxInfluencedMillis);
                 return result;
-            } catch(Exception e) {
-                SwrveLogger.e(TAG, "Could not serialize influence data:", e);
+            } catch (Exception e) {
+                SwrveLogger.e("Could not serialize influence data:", e);
             }
             return null;
         }

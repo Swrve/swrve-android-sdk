@@ -18,9 +18,9 @@ public interface ISwrveUserResourcesDiffListener {
      * to call Swrve::getUserResourceDiffs().
      *
      * @param oldResourcesValues the old values of AB Tested resources represented as a map in
-     *                           the form uid->(attribute_name->attribute_value).
+     *                           the form uid=(attribute_name=attribute_value).
      * @param newResourcesValues the new values of AB Tested resources represented as a map in
-     *                           the form uid->(attribute_name->attribute_value).
+     *                           the form uid=(attribute_name=attribute_value).
      * @param resourcesAsJSON    the resources as JSON.
      */
     void onUserResourcesDiffSuccess(final Map<String, Map<String, String>> oldResourcesValues,

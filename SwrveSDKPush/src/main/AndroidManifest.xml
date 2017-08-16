@@ -15,6 +15,7 @@
         <receiver
             android:name="com.swrve.sdk.SwrveEngageEventSender"
             android:exported="true" />
+
     </application>
 
 </manifest>

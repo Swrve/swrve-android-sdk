@@ -1,16 +1,17 @@
 package com.swrve.sdk;
 
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.swrve.sdk.model.PayloadButton;
+
 import java.util.Date;
 
 public class SwrvePushEngageReceiver extends BroadcastReceiver {
-
-    private static final String LOG_TAG = "SwrvePush";
 
     private Context context;
     private SwrvePushSDK pushSDK;
@@ -21,12 +22,12 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             this.context = context;
             this.pushSDK = SwrvePushSDK.getInstance();
             if(pushSDK == null) {
-                SwrveLogger.e(LOG_TAG, "SwrvePushSDK is null");
+                SwrveLogger.e("SwrvePushSDK is null");
             } else {
                 processIntent(intent);
             }
         } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Error processing intent. Intent:" + intent, ex);
+            SwrveLogger.e("SwrvePushEngageReceiver. Error processing intent. Intent: %s", intent.toString(), ex);
         }
     }
 
@@ -40,13 +41,37 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     Object rawId = msg.get(SwrvePushConstants.SWRVE_TRACKING_KEY);
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
-                        SwrveLogger.d(LOG_TAG, "Found engaged event:" + msgId);
-                        SwrveEngageEventSender.sendPushEngagedEvent(context, msgId);
+                        // Clear the influence data for this push
+                        pushSDK.removeInfluenceCampaign(context, msgId);
 
-                        if(msg.containsKey(SwrvePushConstants.DEEPLINK_KEY)) {
-                            openDeeplink(msg);
+                        String actionKey = extras.getString(SwrvePushConstants.PUSH_ACTION_KEY);
+                        if (SwrveHelper.isNotNullOrEmpty(actionKey)) {
+                            SwrveLogger.d("Found engaged event: %s, with actionId: %s", (Object)msgId, actionKey);
+                            // Send events and resolve the button action
+                            SwrveEngageEventSender.sendPushButtonEngagedEvent(context, msgId, actionKey, extras.getString(SwrvePushConstants.PUSH_ACTION_TEXT));
+                            PayloadButton.ActionType type = (PayloadButton.ActionType) extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY);
+                            switch (type) {
+                                case OPEN_URL:
+                                    openDeeplink(msg, extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
+                                    break;
+                                case OPEN_APP:
+                                    openActivity(msg);
+                                    break;
+                                case DISMISS:
+                                    //Every action closes the notification
+                                    break;
+                            }
+
+                            // Button has been pressed, now close the notification
+                            closeNotification(extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
                         } else {
-                            openActivity(msg);
+                            SwrveLogger.d("Found engaged event: %s", (Object)msgId);
+                            SwrveEngageEventSender.sendPushEngagedEvent(context, msgId);
+                            if(msg.containsKey(SwrvePushConstants.DEEPLINK_KEY)) {
+                                openDeeplink(msg, msg.getString(SwrvePushConstants.DEEPLINK_KEY));
+                            } else {
+                                openActivity(msg);
+                            }
                         }
 
                         if (pushSDK.getPushNotificationListener() != null) {
@@ -58,9 +83,13 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         }
     }
 
-    private void openDeeplink(Bundle msg) {
-        String uri = msg.getString(SwrvePushConstants.DEEPLINK_KEY);
-        SwrveLogger.d(LOG_TAG, "Found push deeplink. Will attempt to open:" + uri);
+    protected void closeNotification(int notificationID) {
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.cancel(notificationID);
+    }
+
+    private void openDeeplink(Bundle msg, String uri) {
+        SwrveLogger.d("Found push deeplink. Will attempt to open: %s", (Object)uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
         msgBundleCopy.remove(SwrvePushConstants.SWRVE_TRACKING_KEY);
         msgBundleCopy.remove(SwrvePushConstants.DEEPLINK_KEY);
@@ -73,8 +102,12 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             intent = getActivityIntent(msg);
             PendingIntent pi = PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             pi.send();
+
+            // Close the notification bar
+            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+            context.sendBroadcast(it);
         } catch (PendingIntent.CanceledException e) {
-            SwrveLogger.e(LOG_TAG, "SwrvePushEngageReceiver. Could open activity with intent:" + intent, e);
+            SwrveLogger.e("SwrvePushEngageReceiver. Could open activity with intent: %s", intent.toString(), e);
         }
     }
 

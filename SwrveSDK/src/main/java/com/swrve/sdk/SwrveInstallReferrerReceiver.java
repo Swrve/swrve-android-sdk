@@ -15,7 +15,7 @@ public class SwrveInstallReferrerReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         String referrer = intent.getStringExtra(SwrveImp.REFERRER);
-        SwrveLogger.i(SwrveImp.LOG_TAG, "Received INSTALL_REFERRER broadcast with referrer:" + referrer);
+        SwrveLogger.i("Received INSTALL_REFERRER broadcast with referrer:" + referrer);
 
         if (!SwrveHelper.isNullOrEmpty(referrer)) {
             try {
@@ -23,7 +23,7 @@ public class SwrveInstallReferrerReceiver extends BroadcastReceiver {
                 SharedPreferences.Editor prefs = context.getSharedPreferences(SwrveImp.SDK_PREFS_NAME, 0).edit();
                 prefs.putString(SwrveImp.SWRVE_REFERRER_ID, decodedReferrer).apply();
             } catch (UnsupportedEncodingException e) {
-                SwrveLogger.e(SwrveImp.LOG_TAG, "Error decoding the referrer:" + referrer, e);
+                SwrveLogger.e("Error decoding the referrer:" + referrer, e);
             }
         }
     }

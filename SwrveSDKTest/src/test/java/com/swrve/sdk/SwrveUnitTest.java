@@ -213,5 +213,4 @@ public class SwrveUnitTest extends SwrveBaseTest {
         parameters.put("attributes", new JSONObject(attributesJSON).toString());
         SwrveTestUtils.assertQueueEvent(swrveSpy, "user", parameters, null);
     }
-
 }

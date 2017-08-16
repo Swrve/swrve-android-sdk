@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
@@ -83,7 +82,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getVersion();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -130,7 +129,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Obtain extra device info
             beforeSendDeviceInfo(resolvedContext);
 
-            this.resourceManager = new SwrveResourceManager();
+            if (this.resourceManager == null) {
+                this.resourceManager = new SwrveResourceManager();
+            }
+
             if (preloadRandC) {
                 // Initialize resources from cache
                 initResources();
@@ -158,7 +160,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             if (!SwrveHelper.isNullOrEmpty(referrer)) {
                 Map<String, String> attributes = new HashMap<String, String>();
                 attributes.put(SWRVE_REFERRER_ID, referrer);
-                SwrveLogger.i(LOG_TAG, "Received install referrer, so sending userUpdate:" + attributes);
+                SwrveLogger.i("Received install referrer, so sending userUpdate:" + attributes);
                 userUpdate(attributes);
                 settings.edit().remove(SWRVE_REFERRER_ID).apply();
             }
@@ -198,6 +200,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
             }
 
+            if (preloadRandC && config.isABTestDetailsEnabled()) {
+                initABTestDetails();
+            }
+
             // Retrieve values for resource/campaigns flush frequencies and ETag
             campaignsAndResourcesFlushFrequency = settings.getInt("swrve_cr_flush_frequency", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
             campaignsAndResourcesFlushRefreshDelay = settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
@@ -215,15 +221,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         if (config.isTalkEnabled()) {
                             initCampaigns();
                         }
+                        if (config.isABTestDetailsEnabled()) {
+                            initABTestDetails();
+                        }
                     }
                 });
             }
 
             sendCrashlyticsMetadata();
 
-            SwrveLogger.i(LOG_TAG, "Init finished");
+            SwrveLogger.i("Init finished");
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "Swrve init failed", exp);
+            SwrveLogger.e("Swrve init failed", exp);
         }
         return (T) this;
     }
@@ -245,7 +254,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         }
         swrveAssetsManager.setStorageDir(cacheDir);
-        SwrveLogger.d(LOG_TAG, "Using cache directory at " + cacheDir.getPath());
+        SwrveLogger.d("Using cache directory at " + cacheDir.getPath());
     }
 
     private void setDefaultMessageListener() {
@@ -255,7 +264,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 if (SwrveBase.this.context != null) {
                     final Context ctx = SwrveBase.this.context.get();
                     if (ctx == null) {
-                        SwrveLogger.e(LOG_TAG, "Can't display a in-app message without a context");
+                        SwrveLogger.e("Can't display a in-app message without a context");
                         return;
                     }
 
@@ -265,7 +274,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
                         ctx.startActivity(intent);
                     } else {
-                        SwrveLogger.i(LOG_TAG, "Can't display the in-app message as it doesn't support the current orientation");
+                        SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
                     }
                 }
             }
@@ -325,7 +334,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             parameters.put("attributes", new JSONObject(attributes));
         } catch (NullPointerException ex) {
-            SwrveLogger.e(LOG_TAG, "JSONException when encoding user attributes", ex);
+            SwrveLogger.e("JSONException when encoding user attributes", ex);
         }
 
         queueEvent("user", parameters, null);
@@ -341,7 +350,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             parameters.put("attributes", new JSONObject(resultAttributes));
         }catch (NullPointerException ex) {
-            SwrveLogger.e(LOG_TAG, "JSONException when encoding user attributes", ex);
+            SwrveLogger.e("JSONException when encoding user attributes", ex);
             return;
         }
 
@@ -377,7 +386,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             cachedResources = cachedLocalStorage.getSecureCacheEntryForUser(userId, RESOURCES_CACHE_CATEGORY, getUniqueKey());
         } catch (SecurityException e) {
-            SwrveLogger.i(LOG_TAG, "Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
+            SwrveLogger.i("Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("name", "Swrve.signature_invalid");
             queueEvent("event", parameters, null, false);
@@ -418,11 +427,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("app_version", appVersion);
                     params.put("joined", String.valueOf(getOrWaitForInstallTime()));
                     try {
-                        SwrveLogger.i(LOG_TAG, "Contacting AB Test server " + config.getContentUrl());
+                        SwrveLogger.i("Contacting AB Test server " + config.getContentUrl());
                         restClient.get(config.getContentUrl() + USER_RESOURCES_DIFF_ACTION, params, new RESTCacheResponseListener(swrveReference, cachedLocalStorage, userId, RESOURCES_DIFF_CACHE_CATEGORY, EMPTY_JSON_ARRAY) {
                             @Override
                             public void onResponseCached(int responseCode, String responseBody) {
-                                SwrveLogger.i(LOG_TAG, "Got AB Test response code " + responseCode);
+                                SwrveLogger.i("Got AB Test response code " + responseCode);
                                 if (!SwrveHelper.isNullOrEmpty(responseBody)) {
                                     // Process data and launch listener
                                     processUserResourcesDiffData(responseBody, listener);
@@ -432,18 +441,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             @Override
                             public void onException(Exception exp) {
                                 // Launch exception
-                                SwrveLogger.e(LOG_TAG, "AB Test exception", exp);
+                                SwrveLogger.e("AB Test exception", exp);
                                 listener.onUserResourcesDiffError(exp);
                             }
                         });
                     } catch (Exception exp) {
                         // Launch exception
-                        SwrveLogger.e(LOG_TAG, "AB Test exception", exp);
+                        SwrveLogger.e("AB Test exception", exp);
                         listener.onUserResourcesDiffError(exp);
                     }
                 } else {
                     // No user specified...
-                    SwrveLogger.e(LOG_TAG, "Error: No user specified");
+                    SwrveLogger.e("Error: No user specified");
                     listener.onUserResourcesDiffError(new NoUserIdSwrveException());
                 }
             }
@@ -469,10 +478,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             @Override
             public void run() {
                 try {
-                    SwrveLogger.i(LOG_TAG, "Flushing to disk");
+                    SwrveLogger.i("Flushing to disk");
                     cachedLocalStorage.flush();
                 } catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Flush to disk failed", e);
+                    SwrveLogger.e("Flush to disk failed", e);
                 }
             }
         });
@@ -488,7 +497,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             mustCleanInstance = isActivityFinishing(activity);
         }
 
-        SwrveLogger.i(LOG_TAG, "onPause");
+        SwrveLogger.i("onPause");
         flushToDisk();
         // Session management
         generateNewSessionInterval();
@@ -497,7 +506,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _onResume(Activity ctx) {
-        SwrveLogger.i(LOG_TAG, "onResume");
+        SwrveLogger.i("onResume");
         if (ctx != null) {
             bindToContext(ctx);
         }
@@ -527,7 +536,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _shutdown() throws InterruptedException {
         if (!destroyed) {
-            SwrveLogger.i(LOG_TAG, "Shutting down the SDK");
+            SwrveLogger.i("Shutting down the SDK");
             destroyed = true;
 
             // Forget the initialised time
@@ -542,7 +551,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     qaUser.unbindToServices();
                 }
                 catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Exception occurred unbinding services from qaUser", e);
+                    SwrveLogger.e("Exception occurred unbinding services from qaUser", e);
                 }
                 qaUser = null;
             }
@@ -553,7 +562,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     restClientExecutor.shutdown();
                     restClientExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Exception occurred shutting down restClientExecutor", e);
+                    SwrveLogger.e("Exception occurred shutting down restClientExecutor", e);
                 }
             }
             if(storageExecutor != null) {
@@ -561,14 +570,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     storageExecutor.shutdown();
                     storageExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Exception occurred shutting down storageExecutor", e);
+                    SwrveLogger.e("Exception occurred shutting down storageExecutor", e);
                 }
             }
             if(campaignsAndResourcesExecutor != null) {
                 try {
                     campaignsAndResourcesExecutor.shutdown();
                 } catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Exception occurred shutting down campaignsAndResourcesExecutor", e);
+                    SwrveLogger.e("Exception occurred shutting down campaignsAndResourcesExecutor", e);
                 }
             }
 
@@ -576,7 +585,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 try {
                     cachedLocalStorage.close();
                 } catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Exception occurred closing cachedLocalStorage", e);
+                    SwrveLogger.e("Exception occurred closing cachedLocalStorage", e);
                 }
             }
         }
@@ -650,7 +659,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     deviceInfo.put(SWRVE_ANDROID_ID, androidId);
                 }
             } catch (Exception exp) {
-                SwrveLogger.e(LOG_TAG, "Get device screen info failed", exp);
+                SwrveLogger.e("Get device screen info failed", exp);
             }
             deviceInfo.put(SWRVE_LANGUAGE, SwrveBase.this.language);
             String deviceRegion = Locale.getDefault().getCountry();
@@ -671,6 +680,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceInfo.put(SWRVE_NOTIFICATIONS_ENABLED, notificationsEnabled);
             int notificationsImportance = notificationManagerCompat.getImportance();
             deviceInfo.put(SWRVE_NOTIFICATIONS_IMPORTANCE, notificationsImportance);
+
+            if(notificationsEnabled) {
+                // Rich Push Capabilities
+                deviceInfo.put(SWRVE_NOTIFICATIONS_BUTTONS, true);
+                deviceInfo.put(SWRVE_NOTIFICATIONS_ATTACHMENT, true);
+            }
         }
 
         extraDeviceInfo(deviceInfo);
@@ -684,7 +699,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             if (campaignsAndResourcesLastRefreshed != null) {
                 Date nextAllowedTime = new Date(campaignsAndResourcesLastRefreshed.getTime() + campaignsAndResourcesFlushFrequency);
                 if (now.compareTo(nextAllowedTime) < 0) {
-                    SwrveLogger.i(LOG_TAG, "Request to retrieve campaign and user resource data was rate-limited");
+                    SwrveLogger.i("Request to retrieve campaign and user resource data was rate-limited");
                     return;
                 }
             }
@@ -724,6 +739,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     params.put("location_version", String.valueOf(locationSegmentVersion));
                 }
 
+                if (config.isABTestDetailsEnabled()) {
+                    params.put("ab_test_details", "1");
+                }
+
                 // If we have a last ETag value, send that along with the request
                 if (!SwrveHelper.isNullOrEmpty(campaignsAndResourcesLastETag)) {
                     params.put("etag", campaignsAndResourcesLastETag);
@@ -745,7 +764,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 }
 
                                 try {
-                                    JSONObject responseJson = null;
+                                    JSONObject responseJson;
                                     try {
                                         responseJson = new JSONObject(response.responseBody);
                                     } catch(JSONException e) {
@@ -755,25 +774,25 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                                     if (responseJson.has("flush_frequency")) {
                                         Integer flushFrequency = responseJson.getInt("flush_frequency");
-                                        if (flushFrequency != null) {
-                                            campaignsAndResourcesFlushFrequency = flushFrequency;
-                                            settingsEditor.putInt("swrve_cr_flush_frequency", campaignsAndResourcesFlushFrequency);
-                                        }
+                                        campaignsAndResourcesFlushFrequency = flushFrequency;
+                                        settingsEditor.putInt("swrve_cr_flush_frequency", campaignsAndResourcesFlushFrequency);
                                     }
 
                                     if (responseJson.has("flush_refresh_delay")) {
                                         Integer flushDelay = responseJson.getInt("flush_refresh_delay");
-                                        if (flushDelay != null) {
-                                            campaignsAndResourcesFlushRefreshDelay = flushDelay;
-                                            settingsEditor.putInt("swrve_cr_flush_delay", campaignsAndResourcesFlushRefreshDelay);
-                                        }
+                                        campaignsAndResourcesFlushRefreshDelay = flushDelay;
+                                        settingsEditor.putInt("swrve_cr_flush_delay", campaignsAndResourcesFlushRefreshDelay);
                                     }
 
-                                    if (config.isTalkEnabled()) {
-                                        if (responseJson.has("campaigns")) {
-                                            JSONObject campaignJson = responseJson.getJSONObject("campaigns");
-                                            updateCampaigns(campaignJson, campaignsState);
+                                    if (responseJson.has("campaigns")) {
+                                        JSONObject campaignJson = responseJson.getJSONObject("campaigns");
+
+                                        if (config.isTalkEnabled() || config.isABTestDetailsEnabled()) {
                                             saveCampaignsInCache(campaignJson);
+                                        }
+
+                                        if (config.isTalkEnabled()) {
+                                            updateCampaigns(campaignJson, campaignsState);
                                             autoShowMessages();
 
                                             // Notify campaigns have been downloaded
@@ -791,9 +810,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                             parameters.put("name", "Swrve.Messages.campaigns_downloaded");
                                             queueEvent("event", parameters, payload, false);
                                         }
+
+                                        if (resourceManager != null && campaignJson.has("ab_test_details")) {
+                                            JSONObject abTestDetailsJson = campaignJson.optJSONObject("ab_test_details");
+                                            if (abTestDetailsJson != null) {
+                                                resourceManager.setABTestDetailsFromJSON(abTestDetailsJson);
+                                            }
+                                        }
                                     }
 
-                                    // If json contains lcoation campaigns then save it to sqlite cache to be used by the location sdk
+                                    // If json contains location campaigns then save it to sqlite cache to be used by the location sdk
                                     if (responseJson.has("location_campaigns")) {
                                         JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
                                         saveLocationCampaignsInCache(campaignJson);
@@ -811,7 +837,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         }
                                     }
                                 } catch (JSONException e) {
-                                    SwrveLogger.e(LOG_TAG, "Could not parse JSON for campaigns and resources", e);
+                                    SwrveLogger.e("Could not parse JSON for campaigns and resources", e);
                                 }
 
                                 settingsEditor.apply();
@@ -823,7 +849,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         @Override
                         public void onException(Exception e) {
                             this.firstRefreshFinished();
-                            SwrveLogger.e(LOG_TAG, "Error downloading resources and campaigns", e);
+                            SwrveLogger.e("Error downloading resources and campaigns", e);
                         }
 
                         public void firstRefreshFinished() {
@@ -841,7 +867,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         }
                     });
                 } catch (UnsupportedEncodingException e) {
-                    SwrveLogger.e(LOG_TAG, "Could not update resources and campaigns, invalid parameters", e);
+                    SwrveLogger.e("Could not update resources and campaigns, invalid parameters", e);
                 }
             }
         });
@@ -919,7 +945,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         if (result == null) {
-            SwrveLogger.w(LOG_TAG, "Not showing message: no candidate messages for " + event);
+            SwrveLogger.w("Not showing message: no candidate messages for " + event);
         } else {
             // Notify message has been returned
             Map<String, String> eventPayload = new HashMap<String, String>();
@@ -1018,7 +1044,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         if (result == null) {
-            SwrveLogger.w(LOG_TAG, "Not showing message: no candidate messages for " + event);
+            SwrveLogger.w("Not showing message: no candidate messages for " + event);
         } else {
             // Notify message has been returned
             Map<String, String> eventPayload = new HashMap<String, String>();
@@ -1047,7 +1073,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         if (result == null) {
-            SwrveLogger.i(LOG_TAG, "Not showing messages: no candidate messages");
+            SwrveLogger.i("Not showing messages: no candidate messages");
         }
 
         return result;
@@ -1056,7 +1082,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _buttonWasPressedByUser(SwrveButton button) {
         if (button.getActionType() != SwrveActionType.Dismiss) {
             String clickEvent = "Swrve.Messages.Message-" + button.getMessage().getId() + ".click";
-            SwrveLogger.i(LOG_TAG, "Sending click event: " + clickEvent + "(" + button.getName() + ")");
+            SwrveLogger.i("Sending click event: " + clickEvent + "(" + button.getName() + ")");
             Map<String, String> payload = new HashMap<String, String>();
             payload.put("name", button.getName());
             Map<String, Object> parameters = new HashMap<String, Object>();
@@ -1078,7 +1104,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             String viewEvent = "Swrve.Messages.Message-" + message.getId() + ".impression";
-            SwrveLogger.i(LOG_TAG, "Sending view event: " + viewEvent);
+            SwrveLogger.i("Sending view event: " + viewEvent);
             Map<String, String> payload = new HashMap<String, String>();
             payload.put("format", messageFormat.getName());
             payload.put("orientation", messageFormat.getOrientation().name());
@@ -1153,7 +1179,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _sessionStart();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1162,7 +1188,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _sessionEnd();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1173,7 +1199,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 _event(name);
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1184,7 +1210,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 _event(name, payload);
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1196,7 +1222,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         for(String restricted: restrictedNamesStartWith) {
             if(name==null || name.startsWith(restricted)) {
-                SwrveLogger.e(LOG_TAG, "Event names cannot begin with " + restricted + "* This event will not be sent. Eventname:" + name);
+                SwrveLogger.e("Event names cannot begin with " + restricted + "* This event will not be sent. Eventname:" + name);
                 return false;
             }
         }
@@ -1208,7 +1234,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _purchase(item, currency, cost, quantity);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1217,7 +1243,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _currencyGiven(givenCurrency, givenAmount);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1226,7 +1252,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _userUpdate(attributes);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1235,7 +1261,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _userUpdate(name, date);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1244,7 +1270,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _iap(quantity, productId, productPrice, currency);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1253,7 +1279,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _iap(quantity, productId, productPrice, currency, rewards);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1262,7 +1288,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getResourceManager();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1272,7 +1298,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _getUserResources(listener);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1281,7 +1307,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _getUserResourcesDiff(listener);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1290,7 +1316,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _sendQueuedEvents();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1299,7 +1325,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _flushToDisk();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1308,7 +1334,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _onPause();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1317,7 +1343,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _onResume(ctx);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1326,7 +1352,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _onLowMemory();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1339,7 +1365,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _onDestroy(ctx);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1348,7 +1374,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _shutdown();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1357,7 +1383,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _setLanguage(locale);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1366,7 +1392,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getLanguage();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1380,7 +1406,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _setLanguage(language);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1389,7 +1415,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getApiKey();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1399,7 +1425,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getUserId();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1409,7 +1435,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getDeviceInfo();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1419,7 +1445,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _refreshCampaignsAndResources();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1429,7 +1455,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return getMessageForEvent(event, new HashMap<String, String>(), SwrveOrientation.Both);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1438,7 +1464,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getMessageForEvent(event, payload, orientation);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1448,7 +1474,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getMessageForId(messageId);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1457,7 +1483,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getConversationForEvent(event, payload);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1467,7 +1493,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _buttonWasPressedByUser(button);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1476,7 +1502,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _messageWasShownToUser(messageFormat);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1485,7 +1511,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getAppStoreURLForApp(appId);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1495,7 +1521,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getCacheDir();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1505,7 +1531,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _setMessageListener(messageListener);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1513,7 +1539,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _setConversationListener(listener);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1522,7 +1548,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _setResourcesListener(resourcesListener);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1531,7 +1557,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getInitialisedTime();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1541,7 +1567,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getInstallButtonListener();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1551,7 +1577,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _setInstallButtonListener(installButtonListener);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1560,7 +1586,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getCustomButtonListener();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1570,7 +1596,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             _setCustomButtonListener(customButtonListener);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -1579,7 +1605,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             return _getConfig();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -1617,7 +1643,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 messageListener.onMessage(iamCampaign.getMessages().get(0));
                 return true;
             } else {
-                Log.e(LOG_TAG, "No in-app message or message listener.");
+                SwrveLogger.e("No in-app message or message listener.");
             }
         } else if (campaign instanceof SwrveConversationCampaign) {
             SwrveConversationCampaign conversationCampaign = (SwrveConversationCampaign)campaign;
@@ -1625,7 +1651,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 conversationListener.onMessage(conversationCampaign.getConversation());
                 return true;
             } else {
-                Log.e(LOG_TAG, "No conversation campaign or conversation listener.");
+                SwrveLogger.e("No conversation campaign or conversation listener.");
             }
         }
         return false;
@@ -1678,7 +1704,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             localStorage = createLocalStorage();
             return localStorage.getSecureCacheEntryForUser(userId, key, getUniqueKey());
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error getting cached data. userId:" + userId + " key:" + key, e);
+            SwrveLogger.e("Error getting cached data. userId:" + userId + " key:" + key, e);
         } finally {
             if (localStorage != null) localStorage.close();
         }
@@ -1727,7 +1753,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 memoryCachedLocalStorage.setSecondaryStorage(sqliteLocalStorage);
                 return getNextSequenceNumber(memoryCachedLocalStorage);
             } catch (Exception e) {
-                SwrveLogger.e(LOG_TAG, "Error getting getNextSequenceNumber", e);
+                SwrveLogger.e("Error getting getNextSequenceNumber", e);
             } finally {
                 if (memoryCachedLocalStorage != null) memoryCachedLocalStorage.close();
             }
@@ -1762,7 +1788,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         payload.put("conversation", Integer.toString(conversationId));
         payload.put("page", page);
 
-        SwrveLogger.d(LOG_TAG, "Sending view conversation event: " + eventParamName);
+        SwrveLogger.d("Sending view conversation event: " + eventParamName);
 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("name", eventParamName);

@@ -21,6 +21,8 @@ android {
     productFlavors {
         core {}
         google {}
+        amazon {}
+        firebase {}
     }
 }
 
@@ -28,11 +30,24 @@ dependencies {
     compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
     compile 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
 
-    // In your app please include the SDK using one of the following dependencies (swrve or swrve-google)
-//  coreCompile 'com.swrve.sdk.android:swrve:4.10.1' // No Google Services push
-//  googleCompile 'com.swrve.sdk.android:swrve-google:4.10.1' // Google GCM push version
+    
+// In your app please include the SDK using one of the following dependencies (swrve or swrve-google)
+//    coreCompile 'com.swrve.sdk.android:swrve:4.11.0' // No Google Services push
+//    googleCompile 'com.swrve.sdk.android:swrve-google:4.11.0' // Google GCM push version
+//    amazonCompile 'com.swrve.sdk.android:swrve-amazon:4.11.0' // Amazon push version
+//    firebaseCompile 'com.swrve.sdk.android:swrve-firebase:4.11.0' // Firebase push version
+    // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
+    // version is used instead. If compiling amazon flavour from source you should delete the
+    // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon
+    // Developer portal (https://developer.amazon.com/device-messaging).
+    amazonProvided fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
 
     // Use the SDK source shipped with this demo
     coreCompile project(path: ':SwrveSDK', configuration: 'coreDebug') // No Google Services push
     googleCompile project(path: ':SwrveSDK', configuration: 'googleDebug') // Google GCM push version
+    firebaseCompile project(path: ':SwrveSDK', configuration: 'firebaseDebug') // Firebase push version
+    amazonCompile project(path: ':SwrveSDK', configuration: 'amazonDebug') // Amazon version
 }
+
+// Uncomment in your Firebase app, also add com.google.gms:google-services to your buildscript dependencies.
+// apply plugin: 'com.google.gms.google-services'

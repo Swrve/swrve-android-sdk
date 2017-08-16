@@ -43,7 +43,7 @@ public class SwrveGoogleConfigTest extends SwrveBaseTest {
     @Test
     public void testSDKAppStore() throws Exception {
         SwrveConfig swrveConfig = new SwrveConfig();
-        assertTrue(swrveConfig.getAppStore() == SwrveAppStore.Google);
+        assertTrue(swrveConfig.getAppStore().equals(SwrveAppStore.Google));
     }
 
     @Test

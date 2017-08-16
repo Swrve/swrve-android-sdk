@@ -2,6 +2,7 @@ package com.swrve.sdk;
 
 import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.util.Log;
 
 import com.swrve.sdk.test.MainActivity;
 
@@ -13,7 +14,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLog;
-import org.robolectric.util.IntentServiceController;
+import org.robolectric.android.controller.IntentServiceController;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class SwrveWakefulTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
+        SwrveLogger.setLogLevel(Log.VERBOSE);
         ShadowLog.stream = System.out;
         activity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
         shadowApplication = Shadows.shadowOf(RuntimeEnvironment.application);

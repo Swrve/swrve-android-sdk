@@ -26,15 +26,11 @@ android {
         core {}
         google {}
         amazon {}
+        firebase {}
     }
 
     lintOptions {
         abortOnError false
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
     }
 
     useLibrary 'org.apache.http.legacy'
@@ -45,15 +41,16 @@ dependencies {
     coreCompile project(path: ':SwrveSDK', configuration: 'coreDebug')
     googleCompile project(path: ':SwrveSDK', configuration: 'googleDebug')
     amazonCompile project(path: ':SwrveSDK', configuration: 'amazonDebug')
+    firebaseCompile project(path: ':SwrveSDK', configuration: 'firebaseDebug')
 
     // Unit tests
     testCompile 'org.mockito:mockito-core:1.9.0'
-    testCompile 'org.robolectric:shadows-support-v4:3.2.2'
-    testCompile 'org.robolectric:shadows-httpclient:3.2.2'
+    testCompile 'org.robolectric:shadows-support-v4:3.4-rc2'
+    testCompile 'org.robolectric:shadows-httpclient:3.4-rc2'
 
     // Roboelectric tests
     testCompile 'junit:junit:4.12'
-    testCompile('org.robolectric:robolectric:3.2.2') {
+    testCompile('org.robolectric:robolectric:3.4.2') {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }

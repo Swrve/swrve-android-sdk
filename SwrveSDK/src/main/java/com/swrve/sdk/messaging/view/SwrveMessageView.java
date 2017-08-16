@@ -184,6 +184,9 @@ public class SwrveMessageView extends RelativeLayout {
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
                     SwrveButtonView buttonView = new SwrveButtonView(context, button.getActionType());
+                    //Mark the buttonView tag with the name of the button as found on the swrve dashboard.
+                    //Used primarily for testing.
+                    buttonView.setTag(button.getName());
                     bitmapCache.add(new WeakReference<Bitmap>(imageBitmap));
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());

@@ -1,12 +1,13 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.SwrveLogger;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,9 +17,11 @@ public class SwrveResourceManager {
 
     protected static final String LOG_TAG = "SwrveSDK";
     protected Map<String, SwrveResource> resources;
+    private List<ABTestDetails> abTestDetails;
 
     public SwrveResourceManager() {
         this.resources = new HashMap<String, SwrveResource>();
+        this.abTestDetails = new ArrayList<ABTestDetails>();
     }
 
     protected void _setResourcesFromJSON(JSONArray jsonResources) {
@@ -96,7 +99,7 @@ public class SwrveResourceManager {
 
     /**
      * Get the latest resources available.
-     * @return the latest resources available in the form of (uid->resource).
+     * @return the latest resources available.
      */
     public Map<String, SwrveResource> getResources() {
         try {
@@ -183,5 +186,35 @@ public class SwrveResourceManager {
             SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
+    }
+
+    /**
+     * Update the AB Test information for the user.
+     * @param abTestInfoCollectionJson
+     */
+    public void setABTestDetailsFromJSON(JSONObject abTestInfoCollectionJson) {
+        List<ABTestDetails> result = new ArrayList<ABTestDetails>();
+        try {
+            Iterator<String> it = abTestInfoCollectionJson.keys();
+            while(it.hasNext()) {
+                String id = it.next();
+                JSONObject abTestInfoJson = abTestInfoCollectionJson.getJSONObject(id);
+                String name = abTestInfoJson.getString("name");
+                int caseIndex = abTestInfoJson.getInt("case_index");
+                result.add(new ABTestDetails(id, name, caseIndex));
+            }
+        } catch (Exception e) {
+            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK, could not parse AB Test details", e);
+        }
+        abTestDetails = result;
+    }
+
+    /**
+     * Obtain information about the AB Tests a user is part of. To use this feature enable the
+     * flag abTestDetailsEnabled in your configuration.
+     * @return
+     */
+    public List<ABTestDetails> getABTestDetails() {
+        return this.abTestDetails;
     }
 }

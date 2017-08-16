@@ -22,6 +22,7 @@ android {
         core {}
         google {}
         amazon {}
+        firebase {}
     }
 
     lintOptions {
@@ -37,13 +38,15 @@ dependencies {
     googleCompile 'com.google.android.gms:play-services-gcm:' + project.GOOGLE_GMS_TOOLS_VERSION
     googleCompile 'com.google.android.gms:play-services-ads:' + project.GOOGLE_GMS_TOOLS_VERSION
     googleCompile project(':SwrveSDKPush')
-
     amazonCompile project(':SwrveSDKPush')
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead. If compiling amazon flavour from source you should delete the
     // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon
     // Developer portal (https://developer.amazon.com/device-messaging).
     amazonProvided fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
+    firebaseCompile project(':SwrveSDKPush')
+    firebaseCompile 'com.google.android.gms:play-services-base:' + project.FIREBASE_TOOLS_VERSION
+    firebaseCompile 'com.google.firebase:firebase-messaging:' + project.FIREBASE_TOOLS_VERSION
 }
 
 apply plugin: 'maven-publish'
@@ -227,6 +230,60 @@ publishing {
                 }
             }
         }
+        firebase(MavenPublication) {
+            artifactId project.SWRVE_FIREBASE_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = [androidFirebaseJavadocsJar, "$buildDir/outputs/aar/${project.name}-firebase-release.aar", androidFirebaseSourcesJar]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.compile.allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrveConversationSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrvePushSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_PUSH_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+
+                configurations.firebaseCompile.allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', 'compile')
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -291,4 +348,25 @@ task androidAmazonSourcesJar(type: Jar) {
     description "Package sources for Amazon."
     classifier = 'source'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
+}
+
+task androidFirebaseJavadoc(type: Javadoc) {
+    description "Generates Javadoc for Firebase."
+    source = files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath = files(android.libraryVariants.firebase.javaCompile.classpath.files) + files(ext.androidJar)
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+    exclude '**/README.md'
+    failOnError false
+}
+task androidFirebaseJavadocsJar(type: Jar) {
+    description "Package Javadoc for Firebase."
+    classifier = 'javadoc'
+    from androidFirebaseJavadoc
+}
+task androidFirebaseSourcesJar(type: Jar) {
+    description "Package sources for Firebase."
+    classifier = 'source'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
 }

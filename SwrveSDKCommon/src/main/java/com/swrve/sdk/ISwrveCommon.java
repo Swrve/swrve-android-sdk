@@ -37,6 +37,8 @@ interface ISwrveCommon
     String SWRVE_ANDROID_ID                 = "swrve.android_id";
     String SWRVE_NOTIFICATIONS_ENABLED      = "swrve.permission.notifications_enabled";
     String SWRVE_NOTIFICATIONS_IMPORTANCE   = "swrve.permission.notifications_importance";
+    String SWRVE_NOTIFICATIONS_BUTTONS      = "swrve.support.rich_buttons";
+    String SWRVE_NOTIFICATIONS_ATTACHMENT   = "swrve.support.rich_attachment";
 
     String getApiKey();
 

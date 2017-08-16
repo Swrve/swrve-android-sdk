@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.swrve.sdk.adm.SwrveAdmIntentService;
 
@@ -17,7 +18,7 @@ import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLog;
-import org.robolectric.util.IntentServiceController;
+import org.robolectric.android.controller.IntentServiceController;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class SwrveAdmIntentServiceTest extends SwrveBaseTest {
         SwrvePushSDK.createInstance(RuntimeEnvironment.application);
         swrvePushSDK = new TestableSwrvePushSDK(RuntimeEnvironment.application, true);
         setSwrvePushSDKInstance(swrvePushSDK);
+        SwrveLogger.setLogLevel(Log.VERBOSE);
         ShadowLog.stream = System.out;
         IntentServiceController<SwrveAdmIntentService> serviceController = IntentServiceController.of(Robolectric.getShadowsAdapter(), new SwrveAdmIntentService(), null);
         serviceController.create();

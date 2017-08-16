@@ -3,15 +3,13 @@ package com.swrve.sdk.qa;
 import android.os.Bundle;
 
 import com.swrve.sdk.SwrveCampaignDisplayer;
-import com.swrve.sdk.SwrveLogger;
-
-import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
-import com.swrve.sdk.rest.RESTClient;
 import com.swrve.sdk.rest.RESTResponse;
 
 import org.json.JSONArray;
@@ -37,10 +35,12 @@ public class SwrveQAUser {
     protected static final String LOG_TAG = "SwrveSDK";
     protected static final long REST_SESSION_INTERVAL = 1000;
     protected static final long REST_TRIGGER_INTERVAL = 500;
-    private static Set<WeakReference<SwrveQAUser>> bindedObjects = new HashSet<WeakReference<SwrveQAUser>>();
+    private static Set<WeakReference<SwrveQAUser>> bindedObjects = new HashSet<>();
     protected final SimpleDateFormat deviceTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
     protected ExecutorService restClientExecutor;
-    private SwrveBase<?, ?> swrve;
+    protected int appId;
+    protected String apiKey;
+    protected String userId;
     private IRESTClient restClient;
     private boolean resetDevice;
     private boolean logging;
@@ -48,19 +48,21 @@ public class SwrveQAUser {
     private long lastSessionRequestTime;
     private long lastTriggerRequestTime;
 
-    public SwrveQAUser(SwrveBase<?, ?> swrve, JSONObject jsonQa) {
-        this.swrve = swrve;
+    public SwrveQAUser(int appId, String apiKey, String userId, IRESTClient restClient, JSONObject jsonQa) {
+        this.appId = appId;
+        this.apiKey = apiKey;
+        this.userId = userId;
         this.resetDevice = jsonQa.optBoolean("reset_device_state", false);
         this.logging = jsonQa.optBoolean("logging", false);
         if (logging) {
-            restClientExecutor = Executors.newSingleThreadExecutor();
-            restClient = new RESTClient(swrve.getConfig().getHttpTimeout());
+            this.restClient = restClient;
+            this.restClientExecutor = Executors.newSingleThreadExecutor();
             this.loggingUrl = jsonQa.optString("logging_url", null);
         }
     }
 
     public static Set<SwrveQAUser> getBindedListeners() {
-        HashSet<SwrveQAUser> result = new HashSet<SwrveQAUser>();
+        HashSet<SwrveQAUser> result = new HashSet<>();
         Iterator<WeakReference<SwrveQAUser>> iter = bindedObjects.iterator();
         while (iter.hasNext()) {
             SwrveQAUser sdkListener = iter.next().get();
@@ -85,7 +87,7 @@ public class SwrveQAUser {
     public void talkSession(Map<Integer, String> campaignsDownloaded) {
         try {
             if (canMakeSessionRequest()) {
-                String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/session";
+                String endpoint = loggingUrl + "/talk/game/" + apiKey + "/user/" + userId + "/session";
                 JSONObject talkSessionJson = new JSONObject();
 
                 // Add campaigns (downloaded or not) to request
@@ -103,7 +105,7 @@ public class SwrveQAUser {
                 }
                 talkSessionJson.put("campaigns", campaignsJson);
                 // Add device info to request
-                JSONObject deviceJson = swrve.getDeviceInfo();
+                JSONObject deviceJson = SwrveSDK.getDeviceInfo();
                 talkSessionJson.put("device", deviceJson);
 
                 makeRequest(endpoint, talkSessionJson);
@@ -116,7 +118,7 @@ public class SwrveQAUser {
     public void triggerFailure(String event, String globalReason) {
         try {
             if (canMakeTriggerRequest()) {
-                String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/trigger";
+                String endpoint = loggingUrl + "/talk/game/" + apiKey + "/user/" + userId + "/trigger";
                 JSONObject triggerJson = new JSONObject();
                 triggerJson.put("trigger_name", event);
                 triggerJson.put("displayed", false);
@@ -131,10 +133,11 @@ public class SwrveQAUser {
     }
 
 
-    public void trigger(String event, SwrveConversation conversationShown, Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults, Map<Integer, Integer> campaignConversations) {
+    public void trigger(String event, SwrveConversation conversationShown, Map<Integer,
+            SwrveCampaignDisplayer.Result> campaignDisplayResults, Map<Integer, Integer> campaignConversations) {
         try {
             if (canMakeTriggerRequest()) {
-                String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/trigger";
+                String endpoint = loggingUrl + "/talk/game/" + apiKey + "/user/" + userId + "/trigger";
                 JSONObject triggerJson = new JSONObject();
                 triggerJson.put("trigger_name", event);
                 triggerJson.put("displayed", (conversationShown != null));
@@ -174,10 +177,11 @@ public class SwrveQAUser {
         }
     }
 
-    public void trigger(String event, SwrveMessage messageShown, Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults, Map<Integer, Integer> campaignMessages) {
+    public void trigger(String event, SwrveMessage messageShown, Map<Integer,
+            SwrveCampaignDisplayer.Result> campaignDisplayResults, Map<Integer, Integer> campaignMessages) {
         try {
             if (canMakeTriggerRequest()) {
-                String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/trigger";
+                String endpoint = loggingUrl + "/talk/game/" + apiKey + "/user/" + userId + "/trigger";
                 JSONObject triggerJson = new JSONObject();
                 triggerJson.put("trigger_name", event);
                 triggerJson.put("displayed", (messageShown != null));
@@ -217,11 +221,10 @@ public class SwrveQAUser {
         }
     }
 
-    public void updateDeviceInfo() {
+    public void logDeviceInfo(JSONObject deviceJson) {
         try {
             if (canMakeRequest()) {
-                String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/device_info";
-                JSONObject deviceJson = swrve.getDeviceInfo();
+                String endpoint = loggingUrl + "/talk/game/" + apiKey + "/user/" + userId + "/device_info";
                 makeRequest(endpoint, deviceJson);
             }
         } catch (Exception exp) {
@@ -233,7 +236,7 @@ public class SwrveQAUser {
         try {
             if (canMakeTriggerRequest()) {
                 if (!SwrveHelper.isNullOrEmpty(trackingId)) {
-                    String endpoint = loggingUrl + "/talk/game/" + swrve.getApiKey() + "/user/" + swrve.getUserId() + "/push";
+                    String endpoint = loggingUrl + "/talk/game/" + apiKey + "/user/" + userId + "/push";
                     JSONObject pushJson = new JSONObject();
                     pushJson.put("id", trackingId);
                     pushJson.put("alert", msg.getString("text"));
@@ -257,7 +260,7 @@ public class SwrveQAUser {
                 return;
             }
         }
-        bindedObjects.add(new WeakReference<SwrveQAUser>(this));
+        bindedObjects.add(new WeakReference<>(this));
     }
 
     public void unbindToServices() {
@@ -286,7 +289,7 @@ public class SwrveQAUser {
     }
 
     private boolean canMakeRequest() {
-        return (swrve != null && isLogging());
+        return isLogging();
     }
 
     private boolean canMakeSessionRequest() {

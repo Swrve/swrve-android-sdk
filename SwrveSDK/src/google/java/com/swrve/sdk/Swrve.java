@@ -29,7 +29,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);
-        SwrvePushSDK.createInstance(context);
+        SwrvePushSDK.createInstance(context)
+                .setDefaultNotificationChannel(config.getDefaultNotificationChannel());
     }
 
     @Override
@@ -64,7 +65,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 }
             } catch (Throwable exp) {
                 // Don't trust GCM and all the moving parts to work as expected
-                SwrveLogger.e(LOG_TAG, "Couldn't obtain the registration id for the device", exp);
+                SwrveLogger.e("Couldn't obtain the registration id for the device", exp);
             }
         }
 
@@ -86,7 +87,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                         cachedLocalStorage.setAndFlushSecureSharedEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY, advertisingId, getUniqueKey());
                         cachedLocalStorage.setAndFlushSecureSharedEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_LIMIT_AD_TRACKING_CATEGORY, Boolean.toString(isAdvertisingLimitAdTrackingEnabled), getUniqueKey());
                     } catch (Exception ex) {
-                        SwrveLogger.e(LOG_TAG, "Couldn't obtain Advertising Id", ex);
+                        SwrveLogger.e("Couldn't obtain Advertising Id", ex);
                     }
                     return null;
                 }
@@ -121,9 +122,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         }
         boolean resolveable = googleAPI.isUserResolvableError(resultCode);
         if (resolveable) {
-            SwrveLogger.e(LOG_TAG, "Google Play Services are not available, resolveable error code: " + resultCode + ". You can use getErrorDialog in your app to try to address this issue at runtime.");
+            SwrveLogger.e("Google Play Services are not available, resolveable error code: " + resultCode + ". You can use getErrorDialog in your app to try to address this issue at runtime.");
         } else {
-            SwrveLogger.e(LOG_TAG, "Google Play Services are not available. Error code: " + resultCode);
+            SwrveLogger.e("Google Play Services are not available. Error code: " + resultCode);
         }
 
         return false;
@@ -146,7 +147,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                         setRegistrationId(gcmRegistrationId);
                     }
                 } catch (Exception ex) {
-                    SwrveLogger.e(LOG_TAG, "Couldn't obtain the GCM registration id for the device", ex);
+                    SwrveLogger.e("Couldn't obtain the GCM registration id for the device", ex);
                 }
                 return null;
             }
@@ -186,7 +187,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             if (registrationId == null || !registrationId.equals(regId)) {
                 registrationId = regId;
                 if (qaUser != null) {
-                    qaUser.updateDeviceInfo();
+                    qaUser.logDeviceInfo(getDeviceInfo());
                 }
 
                 // Store registration id and app version
@@ -196,7 +197,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 queueDeviceInfoNow(true);
             }
         } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "Couldn't save the GCM registration id for the device", ex);
+            SwrveLogger.e("Couldn't save the GCM registration id for the device", ex);
         }
     }
 
@@ -217,17 +218,17 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                 this._iap(1, productId, productPrice, currency, rewards, purchaseData, dataSignature, "Google");
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "IAP Play event failed", exp);
+            SwrveLogger.e("IAP Play event failed", exp);
         }
     }
 
     protected boolean checkPlayStoreSpecificArguments(String purchaseData, String receiptSignature) throws IllegalArgumentException {
         if (SwrveHelper.isNullOrEmpty(purchaseData)) {
-            SwrveLogger.e(LOG_TAG, "IAP event illegal argument: receipt cannot be empty for Google Play store event");
+            SwrveLogger.e("IAP event illegal argument: receipt cannot be empty for Google Play store event");
             return false;
         }
         if (SwrveHelper.isNullOrEmpty(receiptSignature)) {
-            SwrveLogger.e(LOG_TAG, "IAP event illegal argument: receiptSignature cannot be empty for Google Play store event");
+            SwrveLogger.e("IAP event illegal argument: receiptSignature cannot be empty for Google Play store event");
             return false;
         }
         return true;
@@ -238,6 +239,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      */
     @Deprecated
     public void processIntent(Intent intent) {
-        SwrveLogger.e(LOG_TAG, "The processIntent method is Deprecated and should not be used anymore");
+        SwrveLogger.e("The processIntent method is Deprecated and should not be used anymore");
     }
 }

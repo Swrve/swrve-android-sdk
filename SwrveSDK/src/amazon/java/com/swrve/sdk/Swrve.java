@@ -19,7 +19,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
         super(context, appId, apiKey, config);
-        SwrvePushSDK.createInstance(context);
+        SwrvePushSDK.createInstance(context)
+                .setDefaultNotificationChannel(config.getDefaultNotificationChannel());
     }
 
     @Override
@@ -47,7 +48,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         try {
             Class.forName( "com.amazon.device.messaging.ADM" );
         } catch (ClassNotFoundException e) {
-            SwrveLogger.e(LOG_TAG, "ADM message class not found.", e);
+            SwrveLogger.e("ADM message class not found.", e);
             return;
         }
 
@@ -55,14 +56,14 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             final ADM adm = new ADM(context);
             String newRegistrationId = adm.getRegistrationId();
             if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                SwrveLogger.i(LOG_TAG, "adm.getRegistrationId() returned null. Will call adm.startRegister().");
+                SwrveLogger.i("adm.getRegistrationId() returned null. Will call adm.startRegister().");
                 adm.startRegister();
             } else {
-                SwrveLogger.i(LOG_TAG, "adm.getRegistrationId() returned: " + newRegistrationId);
+                SwrveLogger.i("adm.getRegistrationId() returned: " + newRegistrationId);
                 registrationId = newRegistrationId;
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "Exception when trying to obtain the registration key for the device.", exp);
+            SwrveLogger.e("Exception when trying to obtain the registration key for the device.", exp);
         }
     }
 
@@ -78,14 +79,14 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             if (registrationId == null || !registrationId.equals(regId)) {
                 registrationId = regId;
                 if (qaUser != null) {
-                    qaUser.updateDeviceInfo();
+                    qaUser.logDeviceInfo(getDeviceInfo());
                 }
 
                 // Re-send data now
                 queueDeviceInfoNow(true);
             }
         } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "Couldn't save the ADM registration id for the device", ex);
+            SwrveLogger.e("Couldn't save the ADM registration id for the device", ex);
         }
     }
 }

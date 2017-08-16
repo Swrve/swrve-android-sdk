@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:amazon="http://schemas.amazon.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.swrve.sdk.demo">
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="25"
+        tools:overrideLibrary="android.support.design, android.support.v7.appcompat, android.support.graphics.drawable, android.support.v7.recyclerview, android.support.v4, android.support.mediacompat, android.support.fragment, android.support.coreui, android.support.coreutils, android.support.compat"/>
+
+    <!-- Add this to your AndroidManifest.xml if you want to support push notifications -->
+    <!-- ADM uses WAKE_LOCK to keep the processor from sleeping when a message is received. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="com.amazon.device.messaging.permission.RECEIVE" />
+    <permission android:name="${packageName}.permission.RECEIVE_ADM_MESSAGE" android:protectionLevel="signature" />
+    <uses-permission android:name="${packageName}.permission.RECEIVE_ADM_MESSAGE" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:name="com.swrve.sdk.demo.DemoApplication"
+        android:theme="@style/AppTheme" >
+
+        <!-- Add this to your AndroidManifest.xml if you want to support push notifications  -->
+        <amazon:enable-feature android:name="com.amazon.device.messaging" android:required="true" />
+
+        <!-- Configure the aspect of the UI -->
+        <meta-data android:name="SWRVE_PUSH_ICON" android:resource="@mipmap/ic_launcher"/>
+        <meta-data android:name="SWRVE_PUSH_ICON_MATERIAL" android:resource="@mipmap/ic_launcher_material"/>
+        <meta-data android:name="SWRVE_PUSH_ICON_LARGE" android:resource="@mipmap/ic_launcher" />
+        <meta-data android:name="SWRVE_PUSH_ACCENT_COLOR" android:resource="@android:color/black" />
+        <meta-data android:name="SWRVE_PUSH_ACTIVITY" android:value=".MainActivity"/>
+        <meta-data android:name="SWRVE_PUSH_TITLE" android:value="Swrve Demo"/>
+
+        <service android:name="com.swrve.sdk.adm.SwrveAdmIntentService" android:exported="false" />
+
+        <receiver android:name="com.swrve.sdk.adm.SwrveAdmMessageReceiver"
+            android:permission="com.amazon.device.messaging.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.amazon.device.messaging.intent.REGISTRATION" />
+                <action android:name="com.amazon.device.messaging.intent.RECEIVE" />
+                <category android:name="com.swrve.sdk.demo" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

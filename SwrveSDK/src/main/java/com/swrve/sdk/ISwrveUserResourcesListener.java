@@ -18,7 +18,7 @@ public interface ISwrveUserResourcesListener {
      * to call Swrve::getUserResources().
      *
      * @param resources       the resources represented as a map in the form
-     *                        uid->(attribute_name->attribute_value).
+     *                        uid = (attribute_name=attribute_value).
      * @param resourcesAsJSON the resources as JSON.
      */
     void onUserResourcesSuccess(final Map<String, Map<String, String>> resources,

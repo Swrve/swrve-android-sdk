@@ -2,180 +2,203 @@ package com.swrve.sdk;
 
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import timber.log.Timber;
+
+/**
+ * A wrapper around Timber Logger.
+ */
 public class SwrveLogger {
 
-    private static final String LOG_TAG = "SWRVE";
+    private static final String LOG_TAG = "SwrveSDK";
 
-    // Config/Active/Inactive
-    private static boolean isActive = true;
+    private static final int LOG_LEVEL_DEFAULT = Log.WARN;
+    private static int logLevel = -1;
+    private static boolean logLevelSet = false;
+    private static boolean swrveLoggerPlanted = false;
 
-    /**
-     * Enable the Swrve logger which will allow the Swrve sdk to send messages to logcat.
-     */
+    private static synchronized void plantSwrveLogger() {
+        if (logLevelSet == false) {
+            logLevel = getLogLevelFromSystemProps();
+            logLevelSet = true;
+        }
+        if (swrveLoggerPlanted == false) {
+            Timber.plant(new SwrveLoggerTree());
+            swrveLoggerPlanted = true;
+        }
+    }
+
     public void enableLogging() {
-        SwrveLogger.setActive(true);
+        swrveLoggerPlanted = false;
     }
 
-    /**
-     * Disable the Swrve logger which will stop the Swrve sdk from sending messages to logcat.
-     */
     public void disableLogging() {
-        SwrveLogger.setActive(false);
+        Timber.uprootAll();
     }
 
-    public static boolean isActive() {
-        return SwrveLogger.isActive;
+    public static void v(String message, Object... args){
+        verbose(LOG_TAG, message, args);
     }
 
-    public static void setActive(boolean isActive) {
-        SwrveLogger.isActive = isActive;
+    public static void v(String tag, String message, Object... args){
+        verbose(tag, message, args);
     }
 
-    // Verbose
-    public static void v(String message){
-        verbose(message);
+    private static void verbose(String tag, String message, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.v(message, args);
     }
 
-    public static void v(String tag, String message){
-        verbose(tag, message);
+    public static void d(String message, Object... args){
+        debug(LOG_TAG, message, args);
     }
 
-    public static void verbose(String message){
-        verbose(LOG_TAG, message);
+    public static void d(String tag, String message, Object... args){
+        debug(tag, message, args);
     }
 
-    public static void verbose(String tag, String message){
-        if(!isActive){
-            return;
+    private static void debug(String tag, String message, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.d(message, args);
+    }
+
+    public static void i(String message, Object... args){
+        info(LOG_TAG, message, args);
+    }
+
+    public static void i(String tag, String message, Object... args){
+        info(tag, message, args);
+    }
+
+    private static void info(String tag, String message, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.i(message, args);
+    }
+
+    public static void w(String message, Object... args){
+        warn(LOG_TAG, message, args);
+    }
+
+    public static void w(String tag, String message, Object... args){
+        warn(tag, message, args);
+    }
+
+    private static void warn(String tag, String message, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.w(message, args);
+    }
+
+    public static void w(String tag, String message, Throwable t, Object... args){
+        warn(tag, message, t, args);
+    }
+
+    private static void warn(String tag, String message, Throwable t, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.w(t, message, args);
+    }
+
+    public static void e(String message, Object... args){
+        error(LOG_TAG, message, args);
+    }
+
+    public static void e(String tag, String message, Object... args){
+        error(tag, message, args);
+    }
+
+    private static void error(String tag, String message, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.e(message, args);
+    }
+
+    public static void e(String message, Throwable t, Object... args){
+        error(LOG_TAG, message, t, args);
+    }
+
+    public static void e(String tag, String message, Throwable t, Object... args){
+        error(tag, message, t, args);
+    }
+
+    private static void error(String tag, String message, Throwable t, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.e(t, message, args);
+    }
+
+    public static void wtf(String message, Object... args){
+        wtf(LOG_TAG, message, args);
+    }
+
+    public static void wtf(String tag, String message, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.wtf(message, args);
+    }
+
+    public static void wtf(String tag, String message, Throwable t, Object... args){
+        plantSwrveLogger();
+        Timber.tag(tag);
+        Timber.wtf(t, message, args);
+    }
+
+    public static int getLogLevel() {
+        return SwrveLogger.logLevel;
+    }
+
+    public static void setLogLevel(int logLevel) {
+        SwrveLogger.logLevel = logLevel;
+        SwrveLogger.logLevelSet = true;
+    }
+
+    protected static int getLogLevelFromSystemProps() {
+        int logLevel = LOG_LEVEL_DEFAULT;
+        String systemProp = getSystemProp("log.tag." + LOG_TAG);
+        if (SwrveHelper.isNotNullOrEmpty(systemProp)) {
+            try {
+                logLevel = Integer.valueOf(systemProp);
+            } catch (Exception ex) {
+                // using Android Log here instead of SwrveLogger
+                Log.e(LOG_TAG, "Found SwrveLogger system loglevel prop but failed to read it. systemProp:" + systemProp, ex);
+            }
         }
-        Log.v(tag, message);
+        return logLevel;
     }
 
-    // Debug
-    public static void d(String message){
-        debug(LOG_TAG, message);
-    }
-
-    public static void d(String tag, String message){
-        debug(tag, message);
-    }
-
-    public static void debug(String message){
-        debug(LOG_TAG, message);
-    }
-
-    public static void debug(String tag, String message){
-        if(!isActive){
-            return;
+    /*
+     * Note this is reading the native System Properties and not the java System properties.
+     * Hence it doesn't use System.getProperty.
+     */
+    private static String getSystemProp(String propName) {
+        String propValue = null;
+        InputStreamReader inputStreamReader = null;
+        BufferedReader bufferedReader = null;
+        try {
+            String command = "/system/bin/getprop";
+            Process process = Runtime.getRuntime().exec(new String[]{command, propName});
+            inputStreamReader = new InputStreamReader(process.getInputStream());
+            bufferedReader = new BufferedReader(inputStreamReader);
+            propValue = bufferedReader.readLine();
+        } catch (Exception e) {
+            // using Android Log here instead of SwrveLogger
+            Log.e(LOG_TAG, "Failure to read prop:" + propName, e);
+        } finally {
+            if (inputStreamReader != null) try { inputStreamReader.close(); } catch (Exception ex) { }
+            if (bufferedReader != null) try { bufferedReader.close(); } catch (Exception ex) { }
         }
-        Log.d(tag, message);
+        return propValue;
     }
 
-    // Info
-    public static void i(String message){
-        info(LOG_TAG, message);
-    }
-
-    public static void i(String tag, String message){
-        info(tag, message);
-    }
-
-    public static void info(String message){
-        info(LOG_TAG, message);
-    }
-
-    public static void info(String tag, String message){
-        if(!isActive){
-            return;
+    protected static class SwrveLoggerTree extends Timber.DebugTree {
+        @Override
+        protected boolean isLoggable(String tag, int priority) {
+            return priority >= logLevel;
         }
-        Log.i(tag, message);
     }
-
-    // Warn
-    public static void w(String message){
-        warn(LOG_TAG, message);
-    }
-
-    public static void w(String tag, String message){
-        warn(tag, message);
-    }
-
-    public static void w(String tag, String message, Throwable t){
-        warn(tag, message);
-    }
-
-
-    public static void warn(String message){
-        warn(LOG_TAG, message);
-    }
-
-    public static void warn(String tag, String message){
-        if(!isActive){
-            return;
-        }
-        Log.w(tag, message);
-    }
-
-    public static void warn(String tag, String message,  Throwable t){
-        if(!isActive){
-            return;
-        }
-        Log.w(tag, message, t);
-    }
-
-    // Error
-    public static void e(String message){
-        error(LOG_TAG, message);
-    }
-
-    public static void e(String message, Throwable t){
-        error(LOG_TAG, message, t);
-    }
-
-    public static void e(String tag, String message){
-        error(tag, message);
-    }
-
-    public static void e(String tag, String message, Throwable t){
-        error(tag, message, t);
-    }
-
-    public static void error(String message){
-        error(LOG_TAG, message);
-    }
-
-    public static void error(String tag, String message){
-        if(!isActive){
-            return;
-        }
-        Log.e(tag, message);
-    }
-
-    public static void error(String tag, String message, Throwable t){
-        if(!isActive){
-            return;
-        }
-        Log.e(tag, message, t);
-    }
-
-
-    public static void wtf(String message){
-        wtf(LOG_TAG, message);
-    }
-
-    public static void wtf(String tag, String message){
-        if(!isActive){
-            return;
-        }
-        Log.wtf(tag, message);
-    }
-
-    public static void wtf(String tag, String message,  Throwable t){
-        if(!isActive){
-            return;
-        }
-        Log.wtf(tag, message, t);
-    }
-
-
 }
