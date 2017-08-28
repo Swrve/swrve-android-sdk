@@ -28,6 +28,7 @@ interface ISwrveCommon
     String SWRVE_UTC_OFFSET_SECONDS         = "swrve.utc_offset_seconds";
     String SWRVE_TIMEZONE_NAME              = "swrve.timezone_name";
     String SWRVE_SDK_VERSION                = "swrve.sdk_version";
+    String SWRVE_SDK_FLAVOUR                = "swrve.sdk_flavour";
     String SWRVE_APP_STORE                  = "swrve.app_store";
     String SWRVE_INSTALL_DATE               = "swrve.install_date";
     String SWRVE_SIM_OPERATOR_NAME          = "swrve.sim_operator.name";

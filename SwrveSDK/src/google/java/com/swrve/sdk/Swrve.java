@@ -19,6 +19,7 @@ import org.json.JSONObject;
  * Main implementation of the Google Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
+    protected static final String FLAVOUR_NAME = "google";
     protected static final String REGISTRATION_ID_CATEGORY = "RegistrationId";
     protected static final String SWRVE_GCM_TOKEN = "swrve.gcm_token";
     protected static final String SWRVE_GOOGLE_ADVERTISING_ID = "swrve.GAID";

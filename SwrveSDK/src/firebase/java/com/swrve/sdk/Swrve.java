@@ -18,6 +18,7 @@ import org.json.JSONObject;
  * Main implementation of the Firebase Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
+    protected static final String FLAVOUR_NAME = "firebase";
     protected static final String REGISTRATION_ID_CATEGORY = "RegistrationId";
     protected static final String SWRVE_GOOGLE_ADVERTISING_ID = "swrve.GAID";
 

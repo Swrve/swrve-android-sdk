@@ -13,6 +13,7 @@ import org.json.JSONObject;
  * Main implementation of the Amazon Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
+    protected static final String FLAVOUR_NAME = "amazon";
     protected static final String SWRVE_ADM_TOKEN = "swrve.adm_token";
 
     protected String registrationId;

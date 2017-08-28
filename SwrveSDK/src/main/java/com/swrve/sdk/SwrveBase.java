@@ -666,6 +666,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceInfo.put(SWRVE_DEVICE_REGION, deviceRegion);
             deviceInfo.put(SWRVE_SDK_VERSION, PLATFORM + SwrveBase.version);
             deviceInfo.put(SWRVE_APP_STORE, config.getAppStore());
+            deviceInfo.put(SWRVE_SDK_FLAVOUR, Swrve.FLAVOUR_NAME);
 
             Calendar cal = new GregorianCalendar();
             deviceInfo.put(SWRVE_TIMEZONE_NAME, cal.getTimeZone().getID());
