@@ -15,7 +15,7 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.model.PayloadButton;
+import com.swrve.sdk.model.PushPayloadButton;
 import com.swrve.sdk.model.PushPayload;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.RESTClient;
@@ -136,6 +136,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(extras);
         service.onHandleIntent(intent);
+        //Let the notification manager do its thing
+        Thread.sleep(100);
 
         //Assert there are 18 notifications
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 2);
@@ -144,12 +146,16 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         extras.putInt(SwrvePushConstants.PUSH_ID_CACHE_SIZE_KEY, 1);
         intent.putExtras(extras);
         service.onHandleIntent(intent);
+        //Let the notification manager do its thing
+        Thread.sleep(100);
 
         //Assert there are 18 notifications
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 2);
 
         //Send again to make sure dedupe is happening with newest item.
         service.onHandleIntent(intent);
+        //Let the notification manager do its thing
+        Thread.sleep(100);
 
         //Assert there are 18 notifications
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 2);
@@ -158,6 +164,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(newTimestamp));
         intent.putExtras(extras);
         service.onHandleIntent(intent);
+        //Let the notification manager do its thing
+        Thread.sleep(100);
 
         //Assert there are 19 notifications
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 3);
@@ -166,6 +174,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(extras);
         service.onHandleIntent(intent);
+        //Let the notification manager do its thing
+        Thread.sleep(100);
 
         //Assert there are 20 notifications
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 4);
@@ -619,7 +629,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.extractBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
         config.mediaHelper = mockMedia;
 
         Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
@@ -687,8 +697,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.extractBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
-        when(mockMedia.extractBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(mockMedia.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
+        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
         config.mediaHelper = mockMedia;
 
         Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
@@ -764,8 +774,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.extractBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
-        when(mockMedia.extractBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(mockMedia.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
+        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
         config.mediaHelper = mockMedia;
 
         Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
@@ -831,7 +841,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
         SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
         SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
-        when(mockMedia.extractBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
+        when(mockMedia.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
         config.mediaHelper = mockMedia;
 
         Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
@@ -906,7 +916,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         Intent testIntent = getIntent(testAction.actionIntent);
         Bundle extras = testIntent.getExtras();
         assertEquals("0", extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals(PushPayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
         assertEquals("https://lovelyURL", extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
         assertEquals(221, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
     }
@@ -954,7 +964,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.extractBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
         config.mediaHelper = mockMedia;
 
         Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
@@ -986,7 +996,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         Intent testIntent = getIntent(testAction.actionIntent);
         Bundle extras = testIntent.getExtras();
         assertEquals("0", extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals(PushPayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
         assertEquals("https://lovelyURL", extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
         assertEquals(222, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
 
@@ -995,7 +1005,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         testIntent = getIntent(testAction.actionIntent);
         extras = testIntent.getExtras();
         assertEquals("1", extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PayloadButton.ActionType.OPEN_APP, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals(PushPayloadButton.ActionType.OPEN_APP, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
         assertNull(extras.get(SwrvePushConstants.PUSH_ACTION_URL_KEY));
         assertEquals(222, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
     }
@@ -1057,7 +1067,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         Intent testIntent = getIntent(testAction.actionIntent);
         Bundle extras = testIntent.getExtras();
         assertEquals("0",extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals(PushPayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
         assertEquals("https://lovelyURL", extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
         assertEquals(223, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
 
@@ -1066,7 +1076,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         testIntent = getIntent(testAction.actionIntent);
         extras = testIntent.getExtras();
         assertEquals("1",extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PayloadButton.ActionType.OPEN_APP, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals(PushPayloadButton.ActionType.OPEN_APP, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
         assertNull(extras.get(SwrvePushConstants.PUSH_ACTION_URL_KEY));
         assertEquals(223, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
 
@@ -1075,7 +1085,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         testIntent = getIntent(testAction.actionIntent);
         extras = testIntent.getExtras();
         assertEquals("2",extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PayloadButton.ActionType.DISMISS, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals(PushPayloadButton.ActionType.DISMISS, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
         assertNull(extras.get(SwrvePushConstants.PUSH_ACTION_URL_KEY));
         assertEquals(223, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
     }
@@ -1260,9 +1270,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
 
-        // There is a bug in Roboelectric which causes getChannelId to raise NoSuchMethodError
-        //assertEquals("swrve_channel", notification.getChannelId());
-        assertEquals("swrve_channel", getNotificationChannelId(notification));
+        assertEquals("swrve_channel", notification.getChannelId());
         // Check that the channel was created by our SDK
         assertNotNull(shadowOf(notificationManager).getNotificationChannel("swrve_channel"));
     }
@@ -1270,7 +1278,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     @Config(sdk = Build.VERSION_CODES.O)
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Test
-    public void testNotificationChannelFromPayload() throws Exception {
+    public void testNotificationChannelIdFromPayload() throws Exception {
 
         String channelId = "my_channel_id";
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -1310,16 +1318,60 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
 
-        // There is a bug in Roboelectric which causes getChannelId to raise NoSuchMethodError
-        //assertEquals("my_channel_id", notification.getChannelId());
-        assertEquals(channelId, getNotificationChannelId(notification));
+        assertEquals(channelId, notification.getChannelId());
     }
 
-    // There is a bug in Roboelectric which causes getChannelId to raise NoSuchMethodError
-    private String getNotificationChannelId(Notification notification) throws NoSuchFieldException, IllegalAccessException {
-        Field hack = Notification.class.getDeclaredField("mChannelId");
-        hack.setAccessible(true);
-        return (String)hack.get(notification);
+    @Config(sdk = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Test
+    public void testNotificationChannelFromPayload() throws Exception {
+
+        String channelId = "my_channel_id";
+        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        service.checkDupes = true;
+
+        Intent intent = new Intent();
+        // Send a valid Rich Payload
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        String json = "{\n" +
+                " \"title\": \"title\",\n" +
+                " \"subtitle\": \"subtitle\",\n" +
+                " \"channel_id\": \"not_found\",\n" +
+                " \"channel\": { \"id\": \"" + channelId + "\",\n" +
+                " \"name\": \"channel_name\",\n" +
+                " \"importance\": \"high\" },\n" +
+                " \"version\": 1\n" +
+                "}\n";
+        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString("text", "should be rich");
+        bundle.putString("customData", "some custom values");
+        bundle.putString("sound", "default");
+        int firstTimestamp = generateTimestampId();
+        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        intent.putExtras(bundle);
+
+        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
+        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
+        instanceField.setAccessible(true);
+        instanceField.set(null, config);
+
+        service.onHandleIntent(intent);
+        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        assertNumberOfNotifications(1);
+
+        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
+        assertEquals(1, notifications.size());
+        Notification notification = notifications.get(0);
+
+        assertEquals(channelId, notification.getChannelId());
+
+        // Check the created notification channel from the payload
+        NotificationChannel newChannel = notificationManager.getNotificationChannel(channelId);
+        assertEquals("channel_name", newChannel.getName());
+        assertEquals(NotificationManager.IMPORTANCE_HIGH, newChannel.getImportance());
     }
 
     private Notification assertNotification(String tickerText, String sound, Bundle extras)  {

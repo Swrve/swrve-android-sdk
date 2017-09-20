@@ -2,9 +2,7 @@ package com.swrve.sdk.model;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
-
-public class PayloadButton implements Serializable {
+public class PushPayloadButton {
 
     public enum ActionType {
         @SerializedName("open_url")

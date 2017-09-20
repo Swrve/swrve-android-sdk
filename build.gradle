@@ -16,5 +16,6 @@ allprojects {
             url  "http://dl.bintray.com/swrve-inc/android"
         }
         maven { url "https://maven.google.com" }
+        jcenter()
     }
 }

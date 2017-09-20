@@ -1,4 +1,5 @@
 package com.swrve.sdk.model;
+
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -6,10 +7,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import com.swrve.sdk.SwrveLogger;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class PushPayload implements Serializable {
+public class PushPayload {
 
     public static PushPayload fromJson(String json) {
 
@@ -54,13 +54,15 @@ public class PushPayload implements Serializable {
 
     private String lockScreenMsg;
 
-    private PayloadMedia media;
+    private PushPayloadMedia media;
 
-    private PayloadExpanded expanded;
+    private PushPayloadExpanded expanded;
 
-    private List<PayloadButton> buttons;
+    private List<PushPayloadButton> buttons;
 
     private String channelId;
+
+    private PushPayloadChannel channel;
 
     /** getters **/
 
@@ -104,19 +106,23 @@ public class PushPayload implements Serializable {
         return lockScreenMsg;
     }
 
-    public PayloadMedia getMedia() {
+    public PushPayloadMedia getMedia() {
         return media;
     }
 
-    public PayloadExpanded getExpanded() {
+    public PushPayloadExpanded getExpanded() {
         return expanded;
     }
 
-    public List<PayloadButton> getButtons() {
+    public List<PushPayloadButton> getButtons() {
         return buttons;
     }
 
     public String getChannelId() {
         return channelId;
+    }
+
+    public PushPayloadChannel getChannel() {
+        return channel;
     }
 }

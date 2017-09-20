@@ -4,8 +4,10 @@ import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -19,9 +21,15 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
-import com.swrve.sdk.model.PayloadExpanded;
-import com.swrve.sdk.model.PayloadMedia;
+import com.swrve.sdk.model.PushPayloadButton;
+import com.swrve.sdk.model.PushPayloadChannel;
+import com.swrve.sdk.model.PushPayloadExpanded;
+import com.swrve.sdk.model.PushPayloadMedia;
 import com.swrve.sdk.model.PushPayload;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Used internally to build a local notification from a push notification.
@@ -165,7 +173,7 @@ public class SwrvePushNotificationConfig {
         return activityClass;
     }
 
-    public NotificationCompat.Builder createNotificationBuilder(Context context, String msgText, Bundle msg) {
+    public NotificationCompat.Builder createNotificationBuilder(Context context, String msgText, Bundle msg, int notificationId) {
 
         parsePushPayload(msg);
 
@@ -207,6 +215,14 @@ public class SwrvePushNotificationConfig {
             mBuilder = getNotificationBuilderFromSwrvePayload(mBuilder, msg);
         }
 
+
+        List<NotificationCompat.Action> actions = getNotificationActions(context, msg, notificationId);
+        if (actions != null && actions.size() > 0) {
+            for (NotificationCompat.Action item : actions) {
+                mBuilder.addAction(item);
+            }
+        }
+
         return mBuilder;
     }
 
@@ -228,14 +244,29 @@ public class SwrvePushNotificationConfig {
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Check if the channelId came down in payload and use that if its valid.
-        if (pushPayload != null && SwrveHelper.isNotNullOrEmpty(pushPayload.getChannelId())) {
-            String payloadChannelId = pushPayload.getChannelId();
-            NotificationChannel payloadChannel = mNotificationManager.getNotificationChannel(payloadChannelId);
-            if (payloadChannel == null) {
-                SwrveLogger.w("Notification channel " + payloadChannel + " from push payload does not exist, using default from config.");
-            } else {
-                SwrveLogger.i("Notification channel " + payloadChannel + " from push payload will be used instead of config.");
-                notificationChannelId = payloadChannelId;
+        if (pushPayload != null) {
+            if (SwrveHelper.isNotNullOrEmpty(pushPayload.getChannelId())) {
+                String payloadChannelId = pushPayload.getChannelId();
+                NotificationChannel payloadChannel = mNotificationManager.getNotificationChannel(payloadChannelId);
+                if (payloadChannel == null) {
+                    SwrveLogger.w("Notification channel " + payloadChannelId + " from push payload does not exist, using params from payload or the default from config.");
+                } else {
+                    SwrveLogger.i("Notification channel " + payloadChannelId + " from push payload will be used instead of config.");
+                    notificationChannelId = payloadChannelId;
+                }
+            }
+
+            // If no channel has been selected and one was provided in the payload, create it from the payload attributes
+            PushPayloadChannel channelInfo = pushPayload.getChannel();
+            if (notificationChannelId == null && channelInfo != null) {
+                NotificationChannel payloadChannel = mNotificationManager.getNotificationChannel(channelInfo.getId());
+                notificationChannelId = channelInfo.getId();
+                if (payloadChannel != null) {
+                    SwrveLogger.i("Notification channel " + notificationChannelId + " from push payload already exists.");
+                } else {
+                    NotificationChannel newChannel = new NotificationChannel(channelInfo.getId(), channelInfo.getName(), channelInfo.getAndroidImportance());
+                    mNotificationManager.createNotificationChannel(newChannel);
+                }
             }
         }
 
@@ -280,7 +311,7 @@ public class SwrvePushNotificationConfig {
 
         // Icon
         if (SwrveHelper.isNotNullOrEmpty(pushPayload.getIconUrl())) {
-            Bitmap icon = mediaHelper.extractBitmapImageFromUrl(pushPayload.getIconUrl());
+            Bitmap icon = mediaHelper.downloadBitmapImageFromUrl(pushPayload.getIconUrl());
             if (icon != null) {
                 mBuilder.setLargeIcon(icon);
             }
@@ -320,7 +351,7 @@ public class SwrvePushNotificationConfig {
         mBuilder.setStyle(buildDefaultStyle(pushPayload));
 
         // Media is present so apply a different template based on type
-        PayloadMedia media = pushPayload.getMedia();
+        PushPayloadMedia media = pushPayload.getMedia();
         if (media != null) {
             if (media.getType() != null) {
                 // Notification Style Template
@@ -339,25 +370,28 @@ public class SwrvePushNotificationConfig {
 
             }
         }
-        // Lock Screen Message
-        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
-            // Use the notification builder to build a copy of the private notification
-            // with different lock screen message text
-            String contentText = mBuilder.mContentText.toString();
 
-            // Create a public visible notification version
-            mBuilder.setTicker(pushPayload.getLockScreenMsg());
-            mBuilder.setContentText(pushPayload.getLockScreenMsg());
-            Notification lockScreenNotification = mBuilder.build();
-            lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
-            mBuilder.setPublicVersion(lockScreenNotification);
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // Lock Screen Message
+            if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
+                // Use the notification builder to build a copy of the private notification
+                // with different lock screen message text
+                String contentText = mBuilder.mContentText.toString();
 
-            // Reset changed values
-            mBuilder.setContentText(contentText);
-            if (SwrveHelper.isNotNullOrEmpty(ticker)) {
-                mBuilder.setTicker(ticker);
-            } else {
-                mBuilder.setTicker(contentText);
+                // Create a public visible notification version
+                mBuilder.setTicker(pushPayload.getLockScreenMsg());
+                mBuilder.setContentText(pushPayload.getLockScreenMsg());
+                Notification lockScreenNotification = mBuilder.build();
+                lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
+                mBuilder.setPublicVersion(lockScreenNotification);
+
+                // Reset changed values
+                mBuilder.setContentText(contentText);
+                if (SwrveHelper.isNotNullOrEmpty(ticker)) {
+                    mBuilder.setTicker(ticker);
+                } else {
+                    mBuilder.setTicker(contentText);
+                }
             }
         }
 
@@ -366,7 +400,7 @@ public class SwrvePushNotificationConfig {
 
     private void setMediaText(NotificationCompat.Builder mBuilder, PushPayload payload) {
 
-        PayloadMedia media = payload.getMedia();
+        PushPayloadMedia media = payload.getMedia();
         if(media != null){
             // Media Title
             if (SwrveHelper.isNotNullOrEmpty(media.getTitle())) {
@@ -390,9 +424,9 @@ public class SwrvePushNotificationConfig {
         }
     }
 
-    private NotificationCompat.Style buildNotificationStyle(PayloadMedia.MediaType type, Boolean fallback, PushPayload payload) {
+    private NotificationCompat.Style buildNotificationStyle(PushPayloadMedia.MediaType type, Boolean fallback, PushPayload payload) {
         NotificationCompat.Style responseStyle;
-        PayloadMedia media = payload.getMedia();
+        PushPayloadMedia media = payload.getMedia();
         if (type == null) {
             // Enters here in the case fallback is null. if there's no fallback type then media failed
             return null;
@@ -406,7 +440,7 @@ public class SwrvePushNotificationConfig {
                     // Main Big Picture
                     if (SwrveHelper.isNotNullOrEmpty(media.getUrl())) {
 
-                        Bitmap bigImage = mediaHelper.extractBitmapImageFromUrl(media.getUrl());
+                        Bitmap bigImage = mediaHelper.downloadBitmapImageFromUrl(media.getUrl());
                         if (bigImage != null) {
                             bigPictureStyle.bigPicture(bigImage);
                         } else {
@@ -418,7 +452,7 @@ public class SwrvePushNotificationConfig {
                         return null;
                     }
                 } else {
-                    Bitmap fallbackImage = mediaHelper.extractBitmapImageFromUrl(media.getFallbackUrl());
+                    Bitmap fallbackImage = mediaHelper.downloadBitmapImageFromUrl(media.getFallbackUrl());
                     if (fallbackImage != null) {
                         bigPictureStyle.bigPicture(fallbackImage);
                     } else {
@@ -432,11 +466,11 @@ public class SwrvePushNotificationConfig {
                     }
                 }
 
-                PayloadExpanded expanded = payload.getExpanded();
+                PushPayloadExpanded expanded = payload.getExpanded();
                 if (expanded != null) {
                     // Expanded Icon
                     if (SwrveHelper.isNotNullOrEmpty(expanded.getIconUrl())) {
-                        bigPictureStyle.bigLargeIcon(mediaHelper.extractBitmapImageFromUrl(expanded.getIconUrl()));
+                        bigPictureStyle.bigLargeIcon(mediaHelper.downloadBitmapImageFromUrl(expanded.getIconUrl()));
                     }
                     // Expanded Title
                     if (SwrveHelper.isNotNullOrEmpty(expanded.getTitle())) {
@@ -461,7 +495,7 @@ public class SwrvePushNotificationConfig {
     private NotificationCompat.Style buildDefaultStyle(PushPayload payload) {
         NotificationCompat.Style responseStyle;
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
-        PayloadExpanded exp = payload.getExpanded();
+        PushPayloadExpanded exp = payload.getExpanded();
         if (exp != null) {
             // Expanded Title
             if (SwrveHelper.isNotNullOrEmpty(exp.getTitle())) {
@@ -475,5 +509,60 @@ public class SwrvePushNotificationConfig {
         }
         responseStyle = bigTextStyle;
         return responseStyle;
+    }
+
+    public List<NotificationCompat.Action> getNotificationActions(Context context, Bundle msg, int notificationId) {
+        String swrvePayloadKey = msg.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY);
+
+        if(SwrveHelper.isNullOrEmpty(swrvePayloadKey)){
+            // there's no payload available in the Bundle
+            return null;
+        }
+
+        PushPayload payload = PushPayload.fromJson(swrvePayloadKey);
+        if (payload == null) {
+            //payload cannot be parsed
+            return null;
+        }
+
+        if(payload.getVersion() > SwrvePushConstants.SWRVE_PUSH_VERSION) {
+            // push version isn't correct, don't render anything
+            return null;
+        }
+
+        List<NotificationCompat.Action> actions = new ArrayList<NotificationCompat.Action>();
+        List<PushPayloadButton> buttons = payload.getButtons();
+        if(buttons != null && !buttons.isEmpty()){
+            for(int index = 0; index < buttons.size(); index++){
+                PushPayloadButton button = buttons.get(index);
+                actions.add(createNotificationAction(context, msg, notificationId, button.getTitle(), SwrvePushConstants.NO_ACTION_ICON, "" + index, button.getActionType(), button.getAction()));
+            }
+        }
+        return actions;
+    }
+
+    private NotificationCompat.Action createNotificationAction(Context context, Bundle msg, int notificationId, String buttonText, int icon, String actionKey, PushPayloadButton.ActionType actionType, String actionUrl) {
+        Intent intent = createButtonIntent(context, msg, notificationId);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, actionKey);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, actionType);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_URL_KEY, actionUrl);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TEXT, buttonText);
+        PendingIntent pIntendButton = PendingIntent.getBroadcast(context, generateTimestampId(), intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        return new NotificationCompat.Action.Builder(icon, buttonText, pIntendButton).build();
+    }
+
+    public Intent createButtonIntent(Context context, Bundle msg, int notificationId) {
+        Intent intent = new Intent(context, SwrvePushEngageReceiver.class);
+        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, msg);
+        intent.putExtra(SwrvePushConstants.PUSH_NOTIFICATION_ID, notificationId);
+        return intent;
+    }
+
+    protected Date getNow() {
+        return new Date();
+    }
+
+    private int generateTimestampId() {
+        return (int) (getNow().getTime() % Integer.MAX_VALUE);
     }
 }

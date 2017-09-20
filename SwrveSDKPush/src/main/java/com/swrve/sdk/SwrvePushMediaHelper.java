@@ -12,7 +12,7 @@ public class SwrvePushMediaHelper {
     /**
      * Bitmap image media. Returns null if URL is broken
      **/
-    protected Bitmap extractBitmapImageFromUrl(final String mediaUrl) {
+    protected Bitmap downloadBitmapImageFromUrl(final String mediaUrl) {
         Bitmap bitmap = null;
         try {
             URL url = null;

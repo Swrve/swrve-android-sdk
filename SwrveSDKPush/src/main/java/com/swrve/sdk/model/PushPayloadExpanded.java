@@ -1,9 +1,6 @@
 package com.swrve.sdk.model;
 
-import java.io.Serializable;
-import com.google.gson.annotations.SerializedName;
-
-public class PayloadExpanded implements Serializable {
+public class PushPayloadExpanded {
 
     private String title;
 

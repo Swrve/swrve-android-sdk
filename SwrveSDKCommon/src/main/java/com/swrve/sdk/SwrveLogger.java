@@ -187,7 +187,7 @@ public class SwrveLogger {
             propValue = bufferedReader.readLine();
         } catch (Exception e) {
             // using Android Log here instead of SwrveLogger
-            Log.e(LOG_TAG, "Failure to read prop:" + propName, e);
+            Log.w(LOG_TAG, "Failure to read prop:" + propName + ". Using Swrve default log level:" + LOG_LEVEL_DEFAULT);
         } finally {
             if (inputStreamReader != null) try { inputStreamReader.close(); } catch (Exception ex) { }
             if (bufferedReader != null) try { bufferedReader.close(); } catch (Exception ex) { }

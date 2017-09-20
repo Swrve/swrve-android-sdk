@@ -1,8 +1,11 @@
 package com.swrve.sdk;
 
+import android.app.NotificationManager;
+
 import com.google.gson.JsonSyntaxException;
-import com.swrve.sdk.model.PayloadButton;
-import com.swrve.sdk.model.PayloadMedia;
+import com.swrve.sdk.model.PushPayloadButton;
+import com.swrve.sdk.model.PushPayloadChannel;
+import com.swrve.sdk.model.PushPayloadMedia;
 import com.swrve.sdk.model.PushPayload;
 
 import org.junit.After;
@@ -59,9 +62,9 @@ public class PushPayloadTest extends SwrveBaseTest {
         assertNotNull(payload.getMedia());
         assertEquals("[rich title]", payload.getMedia().getTitle());
         assertEquals("[rich body]", payload.getMedia().getBody());
-        assertEquals(PayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
+        assertEquals(PushPayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
         assertEquals("https://media.jpg", payload.getMedia().getUrl());
-        assertEquals(PayloadMedia.MediaType.IMAGE, payload.getMedia().getFallbackType());
+        assertEquals(PushPayloadMedia.MediaType.IMAGE, payload.getMedia().getFallbackType());
         assertEquals("https://fallback.jpg", payload.getMedia().getFallbackUrl());
         assertEquals("https://video.com", payload.getMedia().getFallbackSd());
 
@@ -74,9 +77,9 @@ public class PushPayloadTest extends SwrveBaseTest {
         assertEquals("[button text 1]", payload.getButtons().get(0).getTitle());
         assertEquals("[button text 2]", payload.getButtons().get(1).getTitle());
         assertEquals("[button text 3]", payload.getButtons().get(2).getTitle());
-        assertEquals(PayloadButton.ActionType.OPEN_URL, payload.getButtons().get(0).getActionType());
-        assertEquals(PayloadButton.ActionType.OPEN_APP, payload.getButtons().get(1).getActionType());
-        assertEquals(PayloadButton.ActionType.DISMISS, payload.getButtons().get(2).getActionType());
+        assertEquals(PushPayloadButton.ActionType.OPEN_URL, payload.getButtons().get(0).getActionType());
+        assertEquals(PushPayloadButton.ActionType.OPEN_APP, payload.getButtons().get(1).getActionType());
+        assertEquals(PushPayloadButton.ActionType.DISMISS, payload.getButtons().get(2).getActionType());
         assertEquals("https://lovelyURL", payload.getButtons().get(0).getAction());
     }
 
@@ -134,9 +137,9 @@ public class PushPayloadTest extends SwrveBaseTest {
         assertNotNull(payload.getMedia());
         assertEquals("[rich title]", payload.getMedia().getTitle());
         assertEquals("[rich body]", payload.getMedia().getBody());
-        assertEquals(PayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
+        assertEquals(PushPayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
         assertEquals("https://media.jpg", payload.getMedia().getUrl());
-        assertEquals(PayloadMedia.MediaType.IMAGE, payload.getMedia().getFallbackType());
+        assertEquals(PushPayloadMedia.MediaType.IMAGE, payload.getMedia().getFallbackType());
         assertEquals("https://fallback.jpg", payload.getMedia().getFallbackUrl());
         assertEquals("https://video.com", payload.getMedia().getFallbackSd());
 
@@ -173,9 +176,9 @@ public class PushPayloadTest extends SwrveBaseTest {
         assertNotNull(payload.getMedia());
         assertEquals("[rich title]", payload.getMedia().getTitle());
         assertEquals("[rich body]", payload.getMedia().getBody());
-        assertEquals(PayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
+        assertEquals(PushPayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
         assertEquals("https://media.jpg", payload.getMedia().getUrl());
-        assertEquals(PayloadMedia.MediaType.IMAGE, payload.getMedia().getFallbackType());
+        assertEquals(PushPayloadMedia.MediaType.IMAGE, payload.getMedia().getFallbackType());
         assertEquals("https://fallback.jpg", payload.getMedia().getFallbackUrl());
         assertEquals("https://video.com", payload.getMedia().getFallbackSd());
 
@@ -226,7 +229,7 @@ public class PushPayloadTest extends SwrveBaseTest {
         assertNotNull(payload.getMedia());
         assertEquals("[rich title]", payload.getMedia().getTitle());
         assertEquals("[rich body]", payload.getMedia().getBody());
-        assertEquals(PayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
+        assertEquals(PushPayloadMedia.MediaType.IMAGE, payload.getMedia().getType());
         assertEquals("https://media.jpg", payload.getMedia().getUrl());
 
         assertNotNull(payload.getExpanded());
@@ -259,5 +262,33 @@ public class PushPayloadTest extends SwrveBaseTest {
                 "}\n";
         PushPayload payload = PushPayload.fromJson(json);
         assertNull(payload);
+    }
+
+    @Test
+    public void testPushPayloadChannel() {
+        String[] importanceString = new String[]{"default", "high", "low", "max", "min", "none"};
+        int[] importanceInt = new int[]{NotificationManager.IMPORTANCE_DEFAULT, NotificationManager.IMPORTANCE_HIGH, NotificationManager.IMPORTANCE_LOW, NotificationManager.IMPORTANCE_MAX, NotificationManager.IMPORTANCE_MIN, NotificationManager.IMPORTANCE_NONE};
+
+        for (int i = 0; i < importanceString.length; i++) {
+            String importanceStringValue = importanceString[i];
+            int importanceIntValue = importanceInt[i];
+
+            String json = "{\n" +
+                    " \"channel\": { \n" +
+                    " \"id\": \"id_value\",\n" +
+                    " \"name\": \"name_value\",\n" +
+                    " \"importance\": \"" + importanceStringValue + "\"" +
+                    "} }\n";
+
+            PushPayload payload = PushPayload.fromJson(json);
+            assertNotNull(payload);
+            PushPayloadChannel channel = payload.getChannel();
+            assertNotNull(channel);
+
+            assertEquals("id_value", channel.getId());
+            assertEquals("name_value", channel.getName());
+            assertEquals(importanceStringValue, channel.getImportance().toString().toLowerCase());
+            assertEquals(importanceIntValue, channel.getAndroidImportance());
+        }
     }
 }

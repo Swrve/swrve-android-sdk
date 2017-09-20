@@ -3,7 +3,7 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.swrve.sdk.model.PayloadButton;
+import com.swrve.sdk.model.PushPayloadButton;
 import com.swrve.sdk.model.PushPayload;
 
 import org.junit.After;
@@ -103,7 +103,7 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
         extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "4567");
         intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
         intent.putExtra(SwrvePushConstants.PUSH_NOTIFICATION_ID, 1);
-        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, PayloadButton.ActionType.OPEN_URL);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, PushPayloadButton.ActionType.OPEN_URL);
         intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, "1");
         intent.putExtra(SwrvePushConstants.PUSH_ACTION_URL_KEY, "swrve://deeplink/campaigns");
 
@@ -124,7 +124,7 @@ public class SwrvePushEngageReceiverTest extends SwrveBaseTest {
         Bundle extras = new Bundle();
         extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "4567");
         intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
-        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, PayloadButton.ActionType.OPEN_URL);
+        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, PushPayloadButton.ActionType.OPEN_URL);
         intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, "1");
         intent.putExtra(SwrvePushConstants.PUSH_ACTION_URL_KEY, "swrve://deeplink/campaigns");
         intent.putExtra(SwrvePushConstants.PUSH_NOTIFICATION_ID, 1);

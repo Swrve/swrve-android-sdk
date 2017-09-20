@@ -2,9 +2,7 @@ package com.swrve.sdk.model;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
-
-public class PayloadMedia implements Serializable {
+public class PushPayloadMedia {
 
     public enum MediaType {
         @SerializedName("image")

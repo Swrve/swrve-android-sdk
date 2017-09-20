@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import com.swrve.sdk.SwrveLogger;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents a resource set up in the dashboard.
@@ -57,6 +58,13 @@ public class SwrveResource {
         return defaultValue;
     }
 
+    /**
+     * Get a resource attribute key set.
+     * @return value of the resource attribute keys.
+     */
+    public Set<String> getAttributeKeys() {
+        return attributes.keySet();
+    }
 
     /**
      * Get a resource attribute as a string, or a default value.

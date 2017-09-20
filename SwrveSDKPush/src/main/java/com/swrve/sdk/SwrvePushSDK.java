@@ -10,7 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
-import com.swrve.sdk.model.PayloadButton;
+import com.swrve.sdk.model.PushPayloadButton;
 import com.swrve.sdk.model.PushPayload;
 import com.swrve.sdk.push.SwrvePushDeDuper;
 
@@ -144,7 +144,7 @@ public class SwrvePushSDK {
                 final NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
                 // Set the NotificationId
-                notificationId = produceNotificationId(msg);
+                notificationId = createNotificationId(msg);
 
                 final PendingIntent contentIntent = service.createPendingIntent(msg);
                 if (contentIntent == null) {
@@ -249,7 +249,7 @@ public class SwrvePushSDK {
         return notificationId;
     }
 
-    private int produceNotificationId (Bundle msg) {
+    private int createNotificationId(Bundle msg) {
         // checks for the existence of an update id in the payload and sets it
         String swrvePayloadJSON = msg.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY);
         if(SwrveHelper.isNotNullOrEmpty(swrvePayloadJSON)){
@@ -274,60 +274,10 @@ public class SwrvePushSDK {
         }
         return null;
     }
-
-    public List<NotificationCompat.Action> getNotificationActions(Bundle msg) {
-        String swrvePayloadKey = msg.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY);
-
-        if(SwrveHelper.isNullOrEmpty(swrvePayloadKey)){
-            // there's no payload available in the Bundle
-            return null;
-        }
-
-        PushPayload payload = PushPayload.fromJson(swrvePayloadKey);
-        if (payload == null) {
-            //payload cannot be parsed
-            return null;
-        }
-
-        if(payload.getVersion() > SwrvePushConstants.SWRVE_PUSH_VERSION) {
-            // push version isn't correct, don't render anything
-            return null;
-        }
-
-        List<NotificationCompat.Action> actions = new ArrayList<NotificationCompat.Action>();
-        List<PayloadButton> buttons = payload.getButtons();
-        if(buttons != null && !buttons.isEmpty()){
-            for(int index = 0; index < buttons.size(); index++){
-                PayloadButton button = buttons.get(index);
-                actions.add(createNotificationAction(msg, button.getTitle(), SwrvePushConstants.NO_ACTION_ICON, ""+index, button.getActionType(), button.getAction()));
-            }
-        }
-        return actions;
-    }
-
-    private NotificationCompat.Action createNotificationAction(Bundle msg, String buttonText, int icon, String actionKey, PayloadButton.ActionType actionType, String actionUrl) {
-        Intent intent = service.createIntent(msg);
-        intent.putExtra(SwrvePushConstants.PUSH_ACTION_KEY, actionKey);
-        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TYPE_KEY, actionType);
-        intent.putExtra(SwrvePushConstants.PUSH_ACTION_URL_KEY, actionUrl);
-        intent.putExtra(SwrvePushConstants.PUSH_ACTION_TEXT, buttonText);
-        PendingIntent pIntendButton = PendingIntent.getBroadcast(context, generateTimestampId(), intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        return new NotificationCompat.Action.Builder(icon, buttonText, pIntendButton).build();
-    }
-
+    
     public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
         SwrvePushNotificationConfig notificationHelper = SwrvePushNotificationConfig.getInstance(context);
-
-        NotificationCompat.Builder mBuilder = notificationHelper.createNotificationBuilder(context, msgText, msg);
-
-        List<NotificationCompat.Action> actions = getNotificationActions(msg);
-        if (actions != null && actions.size() > 0) {
-            for (NotificationCompat.Action item : actions) {
-                mBuilder.addAction(item);
-            }
-        }
-
-        return mBuilder;
+        return notificationHelper.createNotificationBuilder(context, msgText, msg, notificationId);
     }
 
     public PendingIntent createPendingIntent(Bundle msg) {

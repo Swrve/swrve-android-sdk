@@ -7,7 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.swrve.sdk.model.PayloadButton;
+import com.swrve.sdk.model.PushPayloadButton;
 
 import java.util.Date;
 
@@ -49,7 +49,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                             SwrveLogger.d("Found engaged event: %s, with actionId: %s", (Object)msgId, actionKey);
                             // Send events and resolve the button action
                             SwrveEngageEventSender.sendPushButtonEngagedEvent(context, msgId, actionKey, extras.getString(SwrvePushConstants.PUSH_ACTION_TEXT));
-                            PayloadButton.ActionType type = (PayloadButton.ActionType) extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY);
+                            PushPayloadButton.ActionType type = (PushPayloadButton.ActionType) extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY);
                             switch (type) {
                                 case OPEN_URL:
                                     openDeeplink(msg, extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
