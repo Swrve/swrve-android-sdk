@@ -42,7 +42,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                     String msgId = (rawId != null) ? rawId.toString() : null;
                     if (!SwrveHelper.isNullOrEmpty(msgId)) {
                         // Clear the influence data for this push
-                        pushSDK.removeInfluenceCampaign(context, msgId);
+                        SwrvePushSDK.removeInfluenceCampaign(context, msgId);
 
                         String actionKey = extras.getString(SwrvePushConstants.PUSH_ACTION_KEY);
                         if (SwrveHelper.isNotNullOrEmpty(actionKey)) {

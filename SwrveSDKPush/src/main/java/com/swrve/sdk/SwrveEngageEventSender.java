@@ -39,10 +39,10 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
                 String msgId = (rawId != null) ? rawId.toString() : null;
                 if (!SwrveHelper.isNullOrEmpty(msgId)) {
                     String actionId = extras.getString(SwrvePushConstants.PUSH_ACTION_KEY);
-                    if(SwrveHelper.isNotNullOrEmpty(actionId)) {
+                    if (SwrveHelper.isNotNullOrEmpty(actionId)) {
                         SwrveLogger.d("SwrveEngageEventSender: Sending push button_click for push id:" + msgId + " and actionId:" + actionId);
                         String actionText = extras.getString(SwrvePushConstants.PUSH_ACTION_TEXT);
-                        if(SwrveHelper.isNotNullOrEmpty(actionText)){
+                        if (SwrveHelper.isNotNullOrEmpty(actionText)) {
                             sendButtonClickEvent(msgId, actionId, actionText);
                         }
                     }
@@ -67,19 +67,25 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
         swrve.sendEventsWakefully(context, events);
     }
 
+    // Also invoked by Unity
     private void sendButtonClickEvent(String msgId, String actionId, String actionText) throws JSONException {
-        // We are still inside the influence window
+        SwrveCommon.checkInstanceCreated(); // throws RuntimeException
+
         ISwrveCommon swrve = SwrveCommon.getInstance();
-        ArrayList<String> events = new ArrayList<>();
-        Map<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("id", msgId);
-        parameters.put("campaignType", "push");
-        parameters.put("actionType", "button_click");
-        parameters.put("contextId", actionId);
-        Map<String, String> payload = new HashMap<String, String>();
-        payload.put("buttonText", actionText);
-        String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, swrve.getNextSequenceNumber());
-        events.add(eventAsJSON);
-        swrve.sendEventsWakefully(context, events);
+        if (swrve != null) {
+            ArrayList<String> events = new ArrayList<>();
+            Map<String, Object> parameters = new HashMap<String, Object>();
+            parameters.put("id", msgId);
+            parameters.put("campaignType", "push");
+            parameters.put("actionType", "button_click");
+            parameters.put("contextId", actionId);
+            Map<String, String> payload = new HashMap<String, String>();
+            payload.put("buttonText", actionText);
+            String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, swrve.getNextSequenceNumber());
+            events.add(eventAsJSON);
+            swrve.sendEventsWakefully(context, events);
+        } else {
+            SwrveLogger.e("No SwrveSDK instance present");
+        }
     }
 }

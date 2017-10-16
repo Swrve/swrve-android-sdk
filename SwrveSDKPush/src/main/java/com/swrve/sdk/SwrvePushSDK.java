@@ -107,7 +107,7 @@ public class SwrvePushSDK {
         // Attempt to save influence data for Push Notification
         if (msg.containsKey(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY)) {
             String influencePushID = getPushId(msg);
-            if( SwrveHelper.isNotNullOrEmpty(influencePushID)) {
+            if(SwrveHelper.isNotNullOrEmpty(influencePushID)) {
                 // Save the date and push id for tracking influenced users
                 saveInfluencedCampaign(context, influencePushID, msg.getString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY), getNow());
             }
@@ -203,7 +203,7 @@ public class SwrvePushSDK {
         edit.commit();
     }
 
-    public void removeInfluenceCampaign(Context context, String trackingId) {
+    public static void removeInfluenceCampaign(Context context, String trackingId) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor edit = sharedPreferences.edit();
         edit.remove(trackingId).commit();

@@ -3,3 +3,4 @@
 -keepattributes *Annotation*
 -dontwarn sun.misc.Unsafe
 -keep class sun.misc.Unsafe { *; }
+-keep class com.swrve.sdk.model.** { *; }
