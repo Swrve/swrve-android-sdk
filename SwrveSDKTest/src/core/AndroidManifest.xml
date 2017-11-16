@@ -6,7 +6,7 @@
     android:versionName="1.0">
 
     <uses-sdk
-        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.locationcampaigns, com.android.support.v4, android.support.design, android.support.v7.appcompat, android.support.graphics.drawable, android.support.v7.recyclerview, android.support.v4, android.support.mediacompat, android.support.fragment, android.support.coreui, android.support.coreutils, android.support.compat"/>
+        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.locationcampaigns, com.android.support.v4, android.support.design, android.support.v7.appcompat, android.support.graphics.drawable, android.support.v7.recyclerview, android.support.v4, android.support.mediacompat, android.support.fragment, android.support.coreui, android.support.coreutils, android.support.compat, com.plotprojects.retail.android"/>
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />

@@ -96,14 +96,14 @@ public class SwrvePushNotificationConfig {
             int iconMaterialId = metaData.getInt(SWRVE_PUSH_ICON_MATERIAL_METADATA, -1);
             if (iconMaterialId < 0) {
                 // No material (Android L+) icon specified in the metadata
-                SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ICON_MATERIAL_METADATA + " specified. We recommend setting a special material icon for Android L+");
+                SwrveLogger.w("No %s specified. We recommend setting a special material icon for Android L+", SWRVE_PUSH_ICON_MATERIAL_METADATA);
             }
 
             Bitmap largeIconBitmap = null;
             int largeIconBitmapId = metaData.getInt(SWRVE_PUSH_ICON_LARGE_METADATA, -1);
             if (largeIconBitmapId < 0) {
                 // No large icon specified in the metadata
-                SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ICON_LARGE_METADATA + " specified. We recommend setting a large image for your notifications");
+                SwrveLogger.w("No %s specified. We recommend setting a large image for your notifications", SWRVE_PUSH_ICON_LARGE_METADATA);
             } else {
                 largeIconBitmap = BitmapFactory.decodeResource(context.getResources(), largeIconBitmapId);
             }
@@ -112,7 +112,7 @@ public class SwrvePushNotificationConfig {
             Integer accentColorObject = null;
             if (accentColorResourceId < 0) {
                 // No accent color specified in the metadata
-                SwrveLogger.w(TAG, "No " + SWRVE_PUSH_ACCENT_COLOR_METADATA + " specified. We recommend setting an accent color for your notifications");
+                SwrveLogger.w("No specified. We recommend setting an accent color for your notifications", SWRVE_PUSH_ACCENT_COLOR_METADATA);
             } else {
                 accentColorObject = ContextCompat.getColor(context, accentColorResourceId);
             }
@@ -180,8 +180,7 @@ public class SwrvePushNotificationConfig {
         boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
 
-        NotificationChannel defaultNotificationChannel = SwrvePushSDK.getInstance().getDefaultNotificationChannel();
-        String notificationChannelId = getNotificationChannelId(context, defaultNotificationChannel);
+        String notificationChannelId = getNotificationChannelId(context);
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, notificationChannelId)
                 .setSmallIcon(iconResource)
@@ -234,7 +233,7 @@ public class SwrvePushNotificationConfig {
     }
 
     @TargetApi(value = 26)
-    private String getNotificationChannelId(Context context, NotificationChannel defaultChannel) {
+    private String getNotificationChannelId(Context context) {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return null;
@@ -249,9 +248,9 @@ public class SwrvePushNotificationConfig {
                 String payloadChannelId = pushPayload.getChannelId();
                 NotificationChannel payloadChannel = mNotificationManager.getNotificationChannel(payloadChannelId);
                 if (payloadChannel == null) {
-                    SwrveLogger.w("Notification channel " + payloadChannelId + " from push payload does not exist, using params from payload or the default from config.");
+                    SwrveLogger.w("Notification channel %s from push payload does not exist, using params from payload or the default from config.", payloadChannelId);
                 } else {
-                    SwrveLogger.i("Notification channel " + payloadChannelId + " from push payload will be used instead of config.");
+                    SwrveLogger.i("Notification channel %s from push payload will be used instead of config.", payloadChannelId);
                     notificationChannelId = payloadChannelId;
                 }
             }
@@ -262,7 +261,7 @@ public class SwrvePushNotificationConfig {
                 NotificationChannel payloadChannel = mNotificationManager.getNotificationChannel(channelInfo.getId());
                 notificationChannelId = channelInfo.getId();
                 if (payloadChannel != null) {
-                    SwrveLogger.i("Notification channel " + notificationChannelId + " from push payload already exists.");
+                    SwrveLogger.i("Notification channel %s from push payload already exists.", notificationChannelId);
                 } else {
                     NotificationChannel newChannel = new NotificationChannel(channelInfo.getId(), channelInfo.getName(), channelInfo.getAndroidImportance());
                     mNotificationManager.createNotificationChannel(newChannel);
@@ -271,13 +270,18 @@ public class SwrvePushNotificationConfig {
         }
 
         // Use the default from config if none available from payload
-        if (notificationChannelId == null && defaultChannel != null) {
-            NotificationChannel existingChannel = mNotificationManager.getNotificationChannel(defaultChannel.getId());
-            if (existingChannel == null) {
-                SwrveLogger.i("Notification channel " + defaultChannel.getId() + " does not exist, creating it");
-                mNotificationManager.createNotificationChannel(defaultChannel);
+        SwrveCommon.checkInstanceCreated(); // throws RuntimeException
+        ISwrveCommon swrveCommon = SwrveCommon.getInstance();
+        if (notificationChannelId == null && swrveCommon != null) {
+            NotificationChannel defaultChannel = swrveCommon.getDefaultNotificationChannel();
+            if(defaultChannel!=null) {
+                NotificationChannel existingChannel = mNotificationManager.getNotificationChannel(defaultChannel.getId());
+                if (existingChannel == null) {
+                    SwrveLogger.i("Notification channel from default config[%s] does not exist, creating it", defaultChannel.getId());
+                    mNotificationManager.createNotificationChannel(defaultChannel);
+                }
+                notificationChannelId = defaultChannel.getId();
             }
-            notificationChannelId = defaultChannel.getId();
         }
 
         if(notificationChannelId == null) {

@@ -21,7 +21,9 @@ android {
     productFlavors {
         core {}
         google {}
-        amazon {}
+        amazon {
+            consumerProguardFiles 'amazon-proguard-rules.pro'
+        }
         firebase {}
     }
 

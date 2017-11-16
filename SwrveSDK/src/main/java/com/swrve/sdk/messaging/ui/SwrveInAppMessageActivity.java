@@ -23,7 +23,6 @@ import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
 
 public class SwrveInAppMessageActivity extends Activity {
 
-    protected static final String LOG_TAG = "SwrveMessagingSDK";
     public static final String MESSAGE_ID_KEY = "message_id";
 
     private SwrveBase sdk;
@@ -99,7 +98,7 @@ public class SwrveInAppMessageActivity extends Activity {
                 notifyOfImpression(format);
             }
         } catch (SwrveMessageViewBuildException e) {
-            SwrveLogger.e(LOG_TAG, "Error while creating the SwrveMessageView", e);
+            SwrveLogger.e("Error while creating the SwrveMessageView", e);
         }
     }
 
@@ -120,7 +119,7 @@ public class SwrveInAppMessageActivity extends Activity {
         // In case the install link was not set correctly log issue and return early
         // without calling the install button listener not starting the install intent
         if (SwrveHelper.isNullOrEmpty(appInstallLink)) {
-            SwrveLogger.e(LOG_TAG, "Could not launch install action as there was no app install link found. Please supply a valid app install link.");
+            SwrveLogger.e("Could not launch install action as there was no app install link found. Please supply a valid app install link.");
             return;
         }
         boolean freeEvent = true;
@@ -132,9 +131,9 @@ public class SwrveInAppMessageActivity extends Activity {
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appInstallLink)));
             } catch (android.content.ActivityNotFoundException anfe) {
-                SwrveLogger.e(LOG_TAG, "Couldn't launch install action. No activity found for: " + appInstallLink, anfe);
+                SwrveLogger.e("Couldn't launch install action. No activity found for: %s", anfe, appInstallLink);
             } catch (Exception exp) {
-                SwrveLogger.e(LOG_TAG, "Couldn't launch install action for: " + appInstallLink, exp);
+                SwrveLogger.e("Couldn't launch install action for: %s", exp, appInstallLink);
             }
         }
     }
@@ -152,7 +151,7 @@ public class SwrveInAppMessageActivity extends Activity {
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
             } catch (Exception e) {
-                SwrveLogger.e(LOG_TAG, "Couldn't launch default custom action: " + buttonAction, e);
+                SwrveLogger.e("Couldn't launch default custom action: %s", e, buttonAction);
             }
         }
     }

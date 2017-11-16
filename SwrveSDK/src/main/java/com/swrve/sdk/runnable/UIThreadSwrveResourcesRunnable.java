@@ -1,6 +1,6 @@
 package com.swrve.sdk.runnable;
 
-import com.swrve.sdk.ISwrveUserResourcesListener;
+import com.swrve.sdk.SwrveUserResourcesListener;
 
 import java.util.Map;
 
@@ -11,7 +11,7 @@ import java.util.Map;
  * Note: the callback method onResourcesSuccess will be called from the
  * same UI threat than the caller Activity.
  */
-public abstract class UIThreadSwrveResourcesRunnable extends UIThreadSwrveRunnable implements ISwrveUserResourcesListener {
+public abstract class UIThreadSwrveResourcesRunnable extends UIThreadSwrveRunnable implements SwrveUserResourcesListener {
     private Map<String, Map<String, String>> resources;
     private String resourcesAsJSON;
 

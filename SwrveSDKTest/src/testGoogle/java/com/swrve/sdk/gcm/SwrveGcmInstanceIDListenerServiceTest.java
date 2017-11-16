@@ -14,6 +14,7 @@ public class SwrveGcmInstanceIDListenerServiceTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
     }
 

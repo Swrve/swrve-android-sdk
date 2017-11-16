@@ -15,8 +15,8 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.model.PushPayloadButton;
 import com.swrve.sdk.model.PushPayload;
+import com.swrve.sdk.model.PushPayloadButton;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.RESTClient;
 
@@ -25,7 +25,6 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.mockito.Mockito;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
@@ -61,6 +60,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         service.onCreate();
     }
 
+    // TODO is this needed, or can we use the teardown in the super class
     @After
     public void tearDown() throws Exception {
         super.tearDown();
@@ -340,7 +340,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals("text", notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
         assertEquals("[expanded body]", shadowNotification.getBigText());
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         // assertEquals("subtitle", shadowNotification.getSubText());
     }
 
@@ -429,7 +429,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals("[expanded updated title]", shadowNotification.getBigContentTitle());
         assertEquals("[expanded update body]", shadowNotification.getBigText());
 
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         //assertEquals("update subtitle", shadowNotification.getSubText());
     }
 
@@ -649,7 +649,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         ShadowNotification shadowNotification = shadowOf(notification);
         assertEquals("[rich body]",  notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         // assertEquals("[rich subtitle]", shadowNotification.getSubText());
         assertNotNull(shadowNotification.getBigPicture());
         assertEquals(bmp, shadowNotification.getBigPicture());
@@ -715,7 +715,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
         assertEquals("[rich body]", notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         //assertEquals("[rich subtitle]", shadowNotification.getSubText());
         assertNotNull(shadowNotification.getBigPicture());
 
@@ -794,7 +794,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         ShadowNotification shadowNotification = shadowOf(notification);
         assertEquals("fallback body", shadowNotification.getContentText());
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         //assertEquals("[rich subtitle]", shadowNotification.getSubTitle());
 
         // Big text should be set instead
@@ -859,7 +859,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals("fallback body", notification.tickerText);
         ShadowNotification shadowNotification = shadowOf(notification);
         assertEquals("fallback title", shadowNotification.getBigContentTitle());
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         // assertEquals("[rich subtitle]", shadowNotification.getSubText());
 
         assertNull(shadowNotification.getBigPicture());
@@ -906,7 +906,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         ShadowNotification shadowNotification = shadowOf(notification);
         assertEquals("text", notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
-        assertEquals("[expanded body]", shadowNotification.getBigText());// Roboelectric does not give the ability to check the subtitle yet
+        assertEquals("[expanded body]", shadowNotification.getBigText());// Robolectric does not give the ability to check the subtitle yet
         // assertEquals("[rich subtitle]", shadowNotification.getSubText());
 
         Notification.Action[] actions = notification.actions;
@@ -984,7 +984,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         ShadowNotification shadowNotification = shadowOf(notification);
         assertEquals("[rich body]", notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         // assertEquals("[rich subtitle]", shadowNotification.getSubText());
         assertNotNull(shadowNotification.getBigPicture());
         assertEquals(bmp, shadowNotification.getBigPicture());
@@ -1057,7 +1057,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals("text", notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
         assertEquals("[expanded body]", shadowNotification.getBigText());
-        // Roboelectric does not give the ability to check the subtitle yet
+        // Robolectric does not give the ability to check the subtitle yet
         // assertEquals("[rich subtitle]", shadowNotification.getSubText());
 
         Notification.Action[] actions = notification.actions;
@@ -1095,7 +1095,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     @Test
     public void testButtonClickEvents() throws Exception {
         SwrveConfig config = new SwrveConfig();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveReal.init(mActivity);
 
         try {
@@ -1168,7 +1168,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     @Test
     public void testEngagedEvents() throws Exception {
         SwrveConfig config = new SwrveConfig();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveReal.init(mActivity);
 
         try {
@@ -1236,7 +1236,9 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
         NotificationChannel channel = new NotificationChannel("swrve_channel", "Swrve channel", NotificationManager.IMPORTANCE_LOW);
         channel.setDescription("All the news from Swrve");
-        swrvePushSDK.setDefaultNotificationChannel(channel);
+        ISwrveCommon mockSwrveCommon = Mockito.mock(ISwrveCommon.class);
+        when(mockSwrveCommon.getDefaultNotificationChannel()).thenReturn(channel);
+        SwrveCommon.setSwrveCommon(mockSwrveCommon);
 
         Intent intent = new Intent();
         // Send a valid Rich Payload
@@ -1326,6 +1328,9 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     @Test
     public void testNotificationChannelFromPayload() throws Exception {
 
+        ISwrveCommon mockSwrveCommon = Mockito.mock(ISwrveCommon.class);
+        SwrveCommon.setSwrveCommon(mockSwrveCommon);
+
         String channelId = "my_channel_id";
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -1404,7 +1409,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 if(extrasPPayload.getVersion() == SwrvePushConstants.SWRVE_PUSH_VERSION) {
                     if(extrasPPayload.getMedia() != null && extrasPPayload.getMedia().getType() != null){
                         assertEquals(extrasPPayload.getMedia().getTitle(), shadowNotification.getContentTitle());
-                        // Roboelectric still has to be give the ability to check for subText and body separately
+                        // Robolectric still has to be give the ability to check for subText and body separately
                         //assertEquals(extrasPPayload.getMedia().getSubtitle(), shadowNotification.getSubText());
                         assertEquals(extrasPPayload.getMedia().getBody(), notification.tickerText);
                     }

@@ -5,22 +5,11 @@ import com.swrve.sdk.SwrveHelper;
 /**
  * Configuration for the Swrve Google SDK.
  */
-public class SwrveConfig extends SwrveConfigPushBase {
+public class SwrveConfig extends SwrveConfigBase {
 
-    /**
-     * Android Google Cloud Messaging Sender id.
-     */
     private String senderId;
-
-    /**
-     * Automatically get the Google Cloud Messaging Registration ID.
-     */
     private boolean pushRegistrationAutomatic = true;
-
-    /**
-     * Automatically log Google's Advertising Id as "swrve.GAID".
-     */
-    private boolean gAIDLoggingEnabled;
+    private boolean gAIDLoggingEnabled; // Automatically log Google's Advertising Id as "swrve.GAID".
 
     /**
      * Returns an instance of SwrveConfig with the Sender id.

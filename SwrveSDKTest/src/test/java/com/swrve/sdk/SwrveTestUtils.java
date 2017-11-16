@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -10,6 +11,7 @@ import android.view.View;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.localstorage.LocalStorageTestUtils;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
@@ -31,10 +33,10 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,11 +47,20 @@ import static org.junit.Assert.fail;
 
 public class SwrveTestUtils {
 
+    public static void shutdownAndRemoveSwrveSDKSingletonInstance() throws Exception {
+        ISwrveBase swrve = SwrveSDK.getInstance();
+        if (swrve != null) {
+            swrve.shutdown();
+        }
+        removeSingleton(SwrveSDKBase.class, "instance");
+        LocalStorageTestUtils.removeSQLiteOpenHelperSingletonInstance();
+    }
+
     public static void removeSwrveSDKSingletonInstance() throws Exception{
         removeSingleton(SwrveSDKBase.class, "instance");
     }
 
-    public static void removeSingleton(Class clazz, String fieldName) throws Exception{
+    public static void removeSingleton(Class clazz, String fieldName) throws Exception {
         Field instance = clazz.getDeclaredField(fieldName);
         instance.setAccessible(true);
         instance.set(null, null);
@@ -97,7 +108,7 @@ public class SwrveTestUtils {
     public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... assets) throws Exception {
         String json = SwrveTestUtils.getAssetAsText(context, campaignFileName);
         JSONObject jsonObject = new JSONObject(json);
-        swrve.loadCampaignsFromJSON(jsonObject, swrve.campaignsState);
+        swrve.loadCampaignsFromJSON(swrve.getUserId(), jsonObject, swrve.campaignsState);
         if (assets.length > 0) {
             Set<String> assetsOnDisk = new HashSet<>();
             for(String asset : assets) {
@@ -207,15 +218,20 @@ public class SwrveTestUtils {
      * captured to the queueEvent method, so a search is done.
      */
     public static void assertQueueEvent(Swrve swrveSpy, String expectedEventType, Map<String, Object> expectedParameters, Map<String, Object> expectedPayload) {
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> eventTypeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Map> parametersCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<Map> payloadCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<Boolean> triggerEventListenerCaptor = ArgumentCaptor.forClass(Boolean.class);
-        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).queueEvent(eventTypeCaptor.capture(), parametersCaptor.capture(), payloadCaptor.capture(), triggerEventListenerCaptor.capture());
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).queueEvent(userIdCaptor.capture(), eventTypeCaptor.capture(), parametersCaptor.capture(), payloadCaptor.capture(), triggerEventListenerCaptor.capture());
 
+        List<String> userIds = userIdCaptor.getAllValues();
         List<String> capturedEventTypes = eventTypeCaptor.getAllValues();
         List<Map> capturedParameters = parametersCaptor.getAllValues();
         List<Map> capturedPayload = payloadCaptor.getAllValues();
+
+        // assert userId
+        assertTrue("Asserting userId: " + swrveSpy.getUserId() + " in userIds:" + userIds, userIds.contains(swrveSpy.getUserId()));
 
         // assert event type
         assertTrue("Asserting eventType: " + expectedEventType + " in capturedEventTypes:" + capturedEventTypes, capturedEventTypes.contains(expectedEventType));
@@ -273,12 +289,35 @@ public class SwrveTestUtils {
         return matchedIndices.size() > 0;
     }
 
+    public static IRESTClient createFakeRestClient(final int responseCode) {
+        return new IRESTClient() {
+            @Override
+            public void get(String endpoint, IRESTResponseListener callback) {
+                // unused
+            }
+            @Override
+            public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) throws UnsupportedEncodingException {
+                // unused
+            }
+            @Override
+            public void post(String endpoint, String encodedBody, IRESTResponseListener callback) {
+                RESTResponse response = new RESTResponse(responseCode, String.valueOf(responseCode), new HashMap<String, List<String>>());
+                callback.onResponse(response);
+            }
+            @Override
+            public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
+                RESTResponse response = new RESTResponse(responseCode, String.valueOf(responseCode), new HashMap<String, List<String>>());
+                callback.onResponse(response);
+            }
+        };
+    }
+
     public static Date parseDate(String date){
         Date parsed = new Date();
         try {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm");
             parsed = simpleDateFormat.parse(date);
-        } catch (ParseException ex) {
+        } catch (Exception ex) {
             SwrveLogger.e("Error parseDate:" + date, ex);
         }
         return parsed;
@@ -304,5 +343,9 @@ public class SwrveTestUtils {
             public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
             }
         };
+    }
+
+    public static void onCreate(ISwrve swrve, Activity activity) {
+        ((Swrve)swrve).onCreate(activity);
     }
 }

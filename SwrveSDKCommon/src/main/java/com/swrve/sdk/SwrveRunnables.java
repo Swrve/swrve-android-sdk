@@ -5,8 +5,6 @@ package com.swrve.sdk;
  */
 final class SwrveRunnables {
 
-    protected static final String LOG_TAG = "SwrveSDK";
-
     public static Runnable withoutExceptions(final Runnable r) {
         return new Runnable() {
             @Override
@@ -14,7 +12,7 @@ final class SwrveRunnables {
                 try {
                     r.run();
                 } catch (Exception exp) {
-                    SwrveLogger.e(LOG_TAG, "Error executing runnable: ", exp);
+                    SwrveLogger.e("Error executing runnable: ", exp);
                 }
             }
         };

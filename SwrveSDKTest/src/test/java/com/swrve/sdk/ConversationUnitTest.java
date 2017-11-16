@@ -12,10 +12,10 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,19 +39,12 @@ public class ConversationUnitTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         swrveSpy.init(mActivity);
-
         Mockito.reset(swrveSpy);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test

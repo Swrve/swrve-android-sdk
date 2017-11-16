@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Application;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
@@ -13,8 +14,8 @@ import org.json.JSONObject;
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String FLAVOUR_NAME = "core";
 
-    protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
-        super(context, appId, apiKey, config);
+    protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
+        super(application, appId, apiKey, config);
     }
 
     @Override

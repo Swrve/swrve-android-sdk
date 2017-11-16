@@ -17,8 +17,6 @@ import java.util.List;
  * In-app message format with a given language, size and orientation.
  */
 public class SwrveMessageFormat {
-    protected static final String LOG_TAG = "SwrveSDK";
-
     // Name of the format
     protected String name;
     // Language for the format
@@ -73,7 +71,7 @@ public class SwrveMessageFormat {
 
         setSize(getSizeFrom(messageFormatData.getJSONObject("size")));
 
-        SwrveLogger.i(LOG_TAG, "Format " + getName() + " Size: " + size.x + "x" + size.y + " scale " + scale);
+        SwrveLogger.i("Format name:%s size.x:%s size.y:%s scale:%s", getName(), size.x, size.y, scale);
         JSONArray jsonButtons = messageFormatData.getJSONArray("buttons");
         for (int i = 0, j = jsonButtons.length(); i < j; i++) {
             SwrveButton button = new SwrveButton(message, jsonButtons.getJSONObject(i));

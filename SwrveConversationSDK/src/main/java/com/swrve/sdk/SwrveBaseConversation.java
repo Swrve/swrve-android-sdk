@@ -13,7 +13,6 @@ import java.util.ArrayList;
 
 // This class has to be extended by the SwrveSDK to add campaign and the other commented code
 public class SwrveBaseConversation implements Serializable {
-    private final String LOG_TAG = "SwrveConversation";
     // Identifies the message in a campaign
     protected int id;
     // Customer defined name of the conversation as it appears in the web app
@@ -40,11 +39,11 @@ public class SwrveBaseConversation implements Serializable {
             try {
                 setId(Integer.valueOf(conversationData.getString("id")));
             } catch (Exception c) {
-                SwrveLogger.e(LOG_TAG, "Could not cast String into ID");
+                SwrveLogger.e("Could not cast String into ID");
             }
         }
 
-        setName(conversationData.getString("id"));
+        setName(conversationData.getString("name"));
 
         JSONArray pagesJson = conversationData.getJSONArray("pages");
         ArrayList<ConversationPage> pages = new ArrayList<ConversationPage>();

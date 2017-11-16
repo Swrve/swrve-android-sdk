@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SwrveConversationEventHelper {
-    private static final String LOG_TAG = "SwrveConversationSDK";
 
     protected ISwrveConversationSDK swrveConversationSDK;
 
@@ -41,7 +40,7 @@ public class SwrveConversationEventHelper {
 
             queueEvent(conversation, key, fromPageTag, payload);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e);
+            SwrveLogger.e("Exception thrown in SwrveConversationSDK", e);
         }
     }
 
@@ -96,10 +95,10 @@ public class SwrveConversationEventHelper {
                     swrveConversationSDK.queueConversationEvent(eventParamName, key, userInteraction.getPageTag(), userInteraction.getConversationId(), payload);
                 }
             } else {
-                SwrveLogger.e(LOG_TAG, "The SwrveConversationSDK is null, so cannot send events.");
+                SwrveLogger.e("The SwrveConversationSDK is null, so cannot send events.");
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK.", e);
+            SwrveLogger.e("Exception thrown in SwrveConversationSDK.", e);
         }
     }
 
@@ -112,7 +111,7 @@ public class SwrveConversationEventHelper {
 
             queueEvent(conversation, "navigation", fromPageTag, payload); // The page the user came on
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e);
+            SwrveLogger.e("Exception thrown in SwrveConversationSDK", e);
         }
     }
 
@@ -120,14 +119,14 @@ public class SwrveConversationEventHelper {
         try {
             String eventName = getEventForConversation(conversation, "error");
             if (e != null) {
-                SwrveLogger.e(LOG_TAG, "Sending error conversation event: " + eventName, e);
+                SwrveLogger.e("Sending error conversation event: %s", e, eventName);
             } else {
-                SwrveLogger.e(LOG_TAG, "Sending error conversations event: (No Exception) " + eventName);
+                SwrveLogger.e("Sending error conversations event: (No Exception) %s");
             }
 
             queueEvent(conversation, "error", currentPageTag);
         } catch (Exception e2) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in SwrveConversationSDK", e2);
+            SwrveLogger.e("Exception thrown in SwrveConversationSDK", e2);
         }
     }
 

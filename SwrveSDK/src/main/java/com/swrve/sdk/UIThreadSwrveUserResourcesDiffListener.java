@@ -14,7 +14,7 @@ import java.util.Map;
  * Note: the Runnable uiWork will be called from the context of
  * the Activity.
  */
-public class UIThreadSwrveUserResourcesDiffListener implements ISwrveUserResourcesDiffListener {
+public class UIThreadSwrveUserResourcesDiffListener implements SwrveUserResourcesDiffListener {
 
     private final WeakReference<Activity> context;
     private final UIThreadSwrveResourcesDiffRunnable uiWork;

@@ -38,13 +38,13 @@ import com.swrve.sdk.conversations.ui.HtmlSnippetView;
 import com.swrve.sdk.conversations.ui.MultiValueInputControl;
 import com.swrve.sdk.conversations.ui.video.YoutubeVideoView;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
@@ -64,7 +64,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-public class ConversationFragmentTest extends SwrveBaseTest{
+public class ConversationFragmentTest extends SwrveBaseTest {
 
     private SwrveConversation partialMockSwrveConversation;
     private Swrve swrveSpy;
@@ -72,8 +72,9 @@ public class ConversationFragmentTest extends SwrveBaseTest{
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
         swrveSpy.init(mActivity);
@@ -83,13 +84,6 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         assertNotNull(realSwrveConversation);
         partialMockSwrveConversation = spy(realSwrveConversation);
         doReturn(true).when(partialMockSwrveConversation).areAssetsReady(any(Set.class));
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
@@ -512,7 +506,7 @@ public class ConversationFragmentTest extends SwrveBaseTest{
         assertThat(nextIntent.getAction(), equalTo(Intent.ACTION_VIEW));
         assertThat(nextIntent.getDataString(), equalTo("http://www.swrve.com"));
         assertTrue(nextIntent.hasExtra(Browser.EXTRA_HEADERS));
-        // assertThat(nextIntent.getBundleExtra(Browser.EXTRA_HEADERS), equalTo("some referrer")); // TODO
+        // assertThat(nextIntent.getBundleExtra(Browser.EXTRA_HEADERS), equalTo("some referrer"));
     }
 
     @Ignore("Ignored for now. Threads issue. If you break after performClick it seems to work")

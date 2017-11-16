@@ -6,8 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.config.SwrveConfig;
 
-import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -34,7 +32,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         super.setUp();
         shadowApplication = Shadows.shadowOf(RuntimeEnvironment.application);
         SwrveConfig config = new SwrveConfig();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
@@ -43,12 +41,6 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
 
         // do not init the sdk, as SwrvePushEngageReceiver can/will be executed cold
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
     
     @Test
@@ -105,7 +97,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
             assertEquals("com.swrve.sdk.SwrveWakefulReceiver", broadcastIntents.get(0).getComponent().getShortClassName());
             events = new ArrayList<>();
             for (int i = 0; i < broadcastCount; i++) {
-                events.addAll((List) broadcastIntents.get(i).getExtras().get(SwrveWakefulService.EXTRA_EVENTS));
+                events.addAll((List) broadcastIntents.get(i).getExtras().get(SwrveBackgroundEventSender.EXTRA_EVENTS));
             }
             assertNotNull(events);
             assertEquals(count, events.size());

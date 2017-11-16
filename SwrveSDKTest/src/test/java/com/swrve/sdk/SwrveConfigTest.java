@@ -31,7 +31,6 @@ public class SwrveConfigTest extends SwrveBaseTest {
         config.generateUrls(101);
         assertEquals("https://101.api.swrve.com", config.getEventsUrl().toString());
         assertEquals("https://101.content.swrve.com", config.getContentUrl().toString());
-        assertEquals(true, config.isLoggerEnabled());
     }
 
     @Test

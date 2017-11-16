@@ -3,17 +3,7 @@ package com.swrve.sdk;
 import android.app.IntentService;
 import android.content.Intent;
 
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
-import com.swrve.sdk.localstorage.SQLiteLocalStorage;
-
-import java.util.ArrayList;
-
 public class SwrveWakefulService extends IntentService {
-
-    private static final String LOG_TAG = "SwrveWakeful";
-    public static final String EXTRA_EVENTS = "swrve_wakeful_events";
-
-    private Swrve swrve = (Swrve) SwrveSDKBase.getInstance();
 
     public SwrveWakefulService() {
         super("SwrveWakefulService");
@@ -22,40 +12,17 @@ public class SwrveWakefulService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            ArrayList<String> eventsExtras = intent.getExtras().getStringArrayList(EXTRA_EVENTS);
-            if (eventsExtras != null && eventsExtras.size() > 0) {
-                handleSendEvents(eventsExtras);
-            } else {
-                SwrveLogger.e(LOG_TAG, "SwrveWakefulService: Unknown intent received (extras: " + intent.getExtras() + ").");
-            }
+            SwrveBackgroundEventSender sender = getBackgroundEventSender();
+            sender.handleSendEvents(intent.getExtras());
         } catch (Exception ex) {
-            SwrveLogger.e(LOG_TAG, "SwrveWakefulService exception (intent: " + intent + ") :", ex);
+            SwrveLogger.e("SwrveWakefulService exception (intent: %s): ", ex, intent);
         } finally {
             SwrveWakefulReceiver.completeWakefulIntent(intent);
         }
     }
 
-    protected int handleSendEvents(ArrayList<String> eventsJson) throws Exception {
-        int eventsSent = 0;
-        MemoryCachedLocalStorage memoryCachedLocalStorage = null;
-        SQLiteLocalStorage sqLiteLocalStorage = null;
-        try {
-            sqLiteLocalStorage = new SQLiteLocalStorage(getApplicationContext(), swrve.config.getDbName(), swrve.config.getMaxSqliteDbSize());
-            memoryCachedLocalStorage = new MemoryCachedLocalStorage(sqLiteLocalStorage, null);
-
-            SwrveEventsManager swrveEventsManager = getSendEventsManager(memoryCachedLocalStorage);
-            eventsSent = swrveEventsManager.storeAndSendEvents(eventsJson, memoryCachedLocalStorage, sqLiteLocalStorage);
-        } finally {
-            if (sqLiteLocalStorage != null) sqLiteLocalStorage.close();
-            if (memoryCachedLocalStorage != null) memoryCachedLocalStorage.close();
-        }
-        SwrveLogger.i(LOG_TAG, "SwrveWakefulService:eventsSent:" + eventsSent);
-        return eventsSent;
-    }
-
-    private SwrveEventsManager getSendEventsManager(MemoryCachedLocalStorage memoryCachedLocalStorage){
-        short deviceId = EventHelper.getDeviceId(memoryCachedLocalStorage);
-        String sessionToken = SwrveHelper.generateSessionToken(swrve.apiKey, swrve.appId, swrve.userId);
-        return new SwrveEventsManagerImp(swrve.config, swrve.restClient, swrve.userId, swrve.appVersion, sessionToken, deviceId);
+    protected SwrveBackgroundEventSender getBackgroundEventSender() {
+        final Swrve swrve = (Swrve) SwrveSDKBase.getInstance();
+        return new SwrveBackgroundEventSender(swrve, getApplicationContext());
     }
 }

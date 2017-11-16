@@ -20,8 +20,6 @@ import java.util.Iterator;
  * Used internally to process push notifications inside for your app.
  */
 public class SwrveFirebaseMessagingService extends FirebaseMessagingService implements SwrvePushService {
-    private final static String TAG = "SwrveFirebase";
-
     private SwrvePushSDK pushSDK;
 
     @Override
@@ -35,7 +33,7 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService impl
 
     public void onMessageReceived(RemoteMessage remoteMessage) {
         if (remoteMessage.getData() != null) {
-            SwrveLogger.i(TAG, "Received Firebase notification: " + remoteMessage.getData().toString());
+            SwrveLogger.i("Received Firebase notification: %s" + remoteMessage.getData().toString());
 
             if (pushSDK != null) {
                 // Convert from map to Bundle

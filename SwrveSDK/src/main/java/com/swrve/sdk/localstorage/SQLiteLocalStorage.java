@@ -5,10 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -17,114 +15,118 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATEGORY;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVENT;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.SWRVE_DB_VERSION;
 
 /**
  * Used internally to provide a persistent storage of data on the device.
  */
-public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorage {
-    protected static final String LOG_TAG = "SQLite";
+public class SQLiteLocalStorage implements LocalStorage {
 
-    // Database
-    public static final int SWRVE_DB_VERSION = 1;
-
-    // Events JSON table
-    public static final String TABLE_EVENTS_JSON = "events";
-    public static final String COLUMN_ID = "_id";
-    public static final String COLUMN_EVENT = "event";
-
-    // Cache table
-    public static final String TABLE_CACHE = "server_cache";
-    public static final String COLUMN_USER_ID = "user_id";
-    public static final String COLUMN_CATEGORY = "category";
-    public static final String COLUMN_RAW_DATA = "raw_data";
-
-    private SQLiteDatabase database;
-    private SwrveSQLiteOpenHelper dbHelper;
-    private AtomicBoolean connectionOpen;
+    protected SQLiteDatabase database;
 
     public SQLiteLocalStorage(Context context, String dbName, long maxDbSize) {
-        this.dbHelper = new SwrveSQLiteOpenHelper(context, dbName);
-        this.database = dbHelper.getWritableDatabase();
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = SwrveSQLiteOpenHelper.getInstance(context, dbName, SWRVE_DB_VERSION);
+        this.database = sqLiteOpenHelper.getWritableDatabase();
         this.database.setMaximumSize(maxDbSize);
-        this.connectionOpen = new AtomicBoolean(true);
     }
 
-    public void addEvent(String eventJSON) throws SQLException {
-        addEventAndGetId(eventJSON);
-    }
-
-    public long addEventAndGetId(String eventJSON) throws SQLException {
+    @Override
+    public long addEvent(String userId, String eventJSON) throws SQLException {
         long rowId = 0;
-        if (connectionOpen.get()) {
+        if (database.isOpen()) {
             ContentValues values = new ContentValues();
-            values.put(COLUMN_EVENT, eventJSON);
-            rowId = database.insertOrThrow(TABLE_EVENTS_JSON, null, values);
+            values.put(EVENTS_COLUMN_USER_ID, userId);
+            values.put(EVENTS_COLUMN_EVENT, eventJSON);
+            rowId = database.insertOrThrow(EVENTS_TABLE_NAME, null, values);
         }
         return rowId;
     }
 
-    public void removeEventsById(Collection<Long> ids) {
-        if (connectionOpen.get()) {
-            List<String> values = new ArrayList<String>(ids.size());
-            for (long id : ids) {
-                values.add(Long.toString(id));
+    @Override
+    public synchronized void removeEvents(String userId, Collection<Long> ids) {
+        try {
+            // userId not needed here.
+            if (database.isOpen()) {
+                List<String> values = new ArrayList<>(ids.size());
+                for (long id : ids) {
+                    values.add(Long.toString(id));
+                }
+                database.delete(EVENTS_TABLE_NAME, EVENTS_COLUMN_ID + " IN (" + TextUtils.join(",  ", values) + ")", null);
             }
-
-            database.delete(TABLE_EVENTS_JSON, COLUMN_ID + " IN (" + TextUtils.join(",  ", values) + ")", null);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception deleting events for userId:" + userId + " id's:[" + ids + "]", e);
         }
     }
 
-    public LinkedHashMap<Long, String> getFirstNEvents(Integer n) {
-        LinkedHashMap<Long, String> events = new LinkedHashMap<Long, String>();
-
-        if (connectionOpen.get()) {
+    @Override
+    public LinkedHashMap<Long, String> getFirstNEvents(Integer n, String userId) {
+        LinkedHashMap<Long, String> events = new LinkedHashMap<>();
+        if (userId == null) {
+            SwrveLogger.e("Cannot use null value userId for getFirstNEvents. userId:%s.", userId);
+        } else if (database.isOpen()) {
             Cursor cursor = null;
             try {
-                // Select all entries
-                cursor = database.query(TABLE_EVENTS_JSON, new String[]{COLUMN_ID, COLUMN_EVENT}, null, null, null, null, COLUMN_ID, n == null ? null : Integer.toString(n));
-
+                String table = EVENTS_TABLE_NAME;
+                String[] columns = new String[]{EVENTS_COLUMN_ID, EVENTS_COLUMN_EVENT};
+                String whereClause = EVENTS_COLUMN_USER_ID + " = ?";
+                String[] whereArgs = {userId};
+                String groupBy = null, having = null;
+                String limit = (n == null ? null : Integer.toString(n));
+                cursor = database.query(table, columns, whereClause, whereArgs, groupBy, having, EVENTS_COLUMN_ID, limit);
                 cursor.moveToFirst();
                 while (!cursor.isAfterLast()) {
-                    // Create event out of row data
                     events.put(cursor.getLong(0), cursor.getString(1));
                     cursor.moveToNext();
                 }
             } catch (Exception ex) {
-                SwrveLogger.e(Log.getStackTraceString(ex));
+                SwrveLogger.e("Error getting " + n + " events for user:" + userId, ex);
             } finally {
                 if (cursor != null) {
                     cursor.close();
                 }
             }
         }
-
         return events;
     }
 
     @Override
-    public void setCacheEntryForUser(String userId, String category, String rawData) {
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_USER_ID, userId);
-        values.put(COLUMN_CATEGORY, category);
-        values.put(COLUMN_RAW_DATA, rawData);
-        insertOrUpdate(TABLE_CACHE, values, COLUMN_USER_ID + "= ? AND " + COLUMN_CATEGORY + "= ?", new String[]{userId, category});
+    public void setCacheEntry(String userId, String category, String rawData) {
+        if (userId == null || category == null || rawData == null) {
+            SwrveLogger.e("Cannot set null value in cache entry for userId:%s category:%s rawData:%s.", userId, category, rawData);
+            return;
+        }
+        try {
+            ContentValues values = new ContentValues();
+            values.put(CACHE_COLUMN_USER_ID, userId);
+            values.put(CACHE_COLUMN_CATEGORY, category);
+            values.put(CACHE_COLUMN_RAW_DATA, rawData);
+            insertOrUpdate(CACHE_TABLE_NAME, values, CACHE_COLUMN_USER_ID + "= ? AND " + CACHE_COLUMN_CATEGORY + "= ?", new String[]{userId, category});
+        } catch (Exception e) {
+            SwrveLogger.e("Exception setting cache for userId:" + userId + " category:" + category + " rawData:" + rawData, e);
+        }
     }
 
     @Override
     public void setSecureCacheEntryForUser(String userId, String category, String rawData, String signature) {
-        setCacheEntryForUser(userId, category, rawData);
-        setCacheEntryForUser(userId, category + SIGNATURE_SUFFIX, signature);
+        setCacheEntry(userId, category, rawData);
+        setCacheEntry(userId, category + SIGNATURE_SUFFIX, signature);
     }
 
     private void insertOrUpdate(String table, ContentValues values, String whereClause, String[] whereArgs) {
-        if (connectionOpen.get()) {
+        if (database.isOpen()) {
             int affectedRows = database.update(table, values, whereClause, whereArgs);
             if (affectedRows == 0) {
                 database.insertOrThrow(table, null, values);
@@ -133,22 +135,23 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
     }
 
     @Override
-    public String getCacheEntryForUser(String userId, String category) {
-        String resultJSON = null;
-
-        if (connectionOpen.get()) {
+    public SwrveCacheItem getCacheItem(String userId, String category) {
+        SwrveCacheItem cacheItem = null;
+        if (userId == null || category == null) {
+            SwrveLogger.e("Cannot use null value in getCacheItem. userId:%s category:%s rawData:%s.", userId, category);
+        } else if (database.isOpen()) {
             Cursor cursor = null;
             try {
-                cursor = database.query(TABLE_CACHE, new String[]{COLUMN_RAW_DATA}, COLUMN_USER_ID + "= \"" + userId + "\" AND " + COLUMN_CATEGORY + "= \"" + category + "\"", null, null, null, null, "1");
+                cursor = database.query(CACHE_TABLE_NAME, new String[]{CACHE_COLUMN_RAW_DATA}, CACHE_COLUMN_USER_ID + "= \"" + userId + "\" AND " + CACHE_COLUMN_CATEGORY + "= \"" + category + "\"", null, null, null, null, "1");
 
                 cursor.moveToFirst();
                 if (!cursor.isAfterLast()) {
-                    // Create event out of row data
-                    resultJSON = cursor.getString(0);
+                    String rawData = cursor.getString(0);
                     cursor.moveToNext();
+                    cacheItem = new SwrveCacheItem(userId, category, rawData);
                 }
-            } catch (Exception ex) {
-                SwrveLogger.e(Log.getStackTraceString(ex));
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred getting cache userId:" + userId + " category:" + category, e);
             } finally {
                 if (cursor != null) {
                     cursor.close();
@@ -156,16 +159,24 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
             }
         }
 
-        return resultJSON;
+        return cacheItem;
     }
 
     @Override
     public String getSecureCacheEntryForUser(String userId, String category, String uniqueKey) throws SecurityException {
-        String cachedContent = getCacheEntryForUser(userId, category);
+        SwrveCacheItem cacheItem = getCacheItem(userId, category);
+        if (cacheItem == null) {
+            return null;
+        }
+        String cachedContent = cacheItem.rawData;
         if(cachedContent == null) {
             return null;
         }
-        String cachedSignature = getCacheEntryForUser(userId, category + SIGNATURE_SUFFIX);
+        SwrveCacheItem cacheItemSignature = getCacheItem(userId, category + SIGNATURE_SUFFIX);
+        if (cacheItemSignature == null) {
+            return null;
+        }
+        String cachedSignature = cacheItemSignature.rawData;
         try {
             String computedSignature = SwrveHelper.createHMACWithMD5(cachedContent, uniqueKey);
 
@@ -179,131 +190,49 @@ public class SQLiteLocalStorage implements ILocalStorage, IFastInsertLocalStorag
         return cachedContent;
     }
 
-    public void reset() {
-        // Clean database
-        if (connectionOpen.get()) {
-            database.delete(TABLE_EVENTS_JSON, null, null);
-            database.delete(TABLE_CACHE, null, null);
-        }
-    }
-
-    @Override
-    public Map<Entry<String, String>, String> getAllCacheEntries() {
-        Map<Entry<String, String>, String> allCacheEntries = new HashMap<Entry<String, String>, String>();
-
-        if (connectionOpen.get()) {
-            Cursor cursor = null;
-            try {
-                cursor = database.query(TABLE_CACHE, new String[]{COLUMN_USER_ID, COLUMN_CATEGORY, COLUMN_RAW_DATA}, null, null, null, null, null);
-
-                cursor.moveToFirst();
-                while (!cursor.isAfterLast()) {
-                    // Create event out of row data
-                    allCacheEntries.put(new SimpleEntry<String, String>(cursor.getString(0), cursor.getString(1)), cursor.getString(2));
-                    cursor.moveToNext();
-                }
-            } catch (Exception ex) {
-                SwrveLogger.e(Log.getStackTraceString(ex));
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-        }
-
-        return allCacheEntries;
-    }
-
-    // Fast flush
-    @Override
-    public void addMultipleEvent(List<String> eventsJSON) throws SQLException {
-        if (connectionOpen.get()) {
-            String sql = "INSERT INTO " + TABLE_EVENTS_JSON + " (" + COLUMN_EVENT + ") VALUES (?)";
+    public void saveMultipleEventItems(List<SwrveEventItem> eventList) throws SQLException {
+        if (database.isOpen()) {
+            String sql = "INSERT INTO " + EVENTS_TABLE_NAME + " (" + EVENTS_COLUMN_EVENT + ", " + EVENTS_COLUMN_USER_ID + ") VALUES (?, ?)";
             database.beginTransaction();
-            SQLiteStatement stmt = null;
+            SQLiteStatement statement = null;
             try {
-                stmt = database.compileStatement(sql);
-                Iterator<String> eventsIt = eventsJSON.iterator();
-                while (eventsIt.hasNext()) {
-                    stmt.bindString(1, eventsIt.next());
-                    stmt.execute();
-                    stmt.clearBindings();
+                statement = database.compileStatement(sql);
+                Iterator<SwrveEventItem> iterator = eventList.iterator();
+                while (iterator.hasNext()) {
+                    SwrveEventItem eventItem = iterator.next();
+                    statement.bindString(1, eventItem.event);
+                    statement.bindString(2, eventItem.userId);
+                    statement.execute();
+                    statement.clearBindings();
                 }
                 database.setTransactionSuccessful(); // Commit
             } finally {
-                if (stmt != null) {
-                    stmt.close();
+                if (statement != null) {
+                    statement.close();
                 }
                 database.endTransaction();
             }
         }
     }
 
-    @Override
-    public void setMultipleCacheEntries(List<Entry<String, Entry<String, String>>> cacheEntries) throws SQLException {
-        if (connectionOpen.get()) {
+    public void saveMultipleCacheItems(Map<String, SwrveCacheItem> cacheItemMap) throws SQLException {
+        if (database.isOpen()) {
             database.beginTransaction();
             try {
-                Iterator<Entry<String, Entry<String, String>>> cacheIt = cacheEntries.iterator();
                 ContentValues values = new ContentValues();
-                while (cacheIt.hasNext()) {
-                    Entry<String, Entry<String, String>> cacheEntry = cacheIt.next();
-                    String userId = cacheEntry.getKey();
-                    String category = cacheEntry.getValue().getKey();
-                    values.put(COLUMN_USER_ID, userId);
-                    values.put(COLUMN_CATEGORY, category);
-                    values.put(COLUMN_RAW_DATA, cacheEntry.getValue().getValue());
-                    insertOrUpdate(TABLE_CACHE, values, COLUMN_USER_ID + "= ? AND " + COLUMN_CATEGORY + "= ?", new String[]{userId, category});
+                for (Map.Entry<String, SwrveCacheItem> itemEntry : cacheItemMap.entrySet()) {
+                    String userId = itemEntry.getValue().userId;
+                    String category = itemEntry.getValue().category;
+                    String rawData = itemEntry.getValue().rawData;
+                    values.put(CACHE_COLUMN_USER_ID, userId);
+                    values.put(CACHE_COLUMN_CATEGORY, category);
+                    values.put(CACHE_COLUMN_RAW_DATA, rawData);
+                    insertOrUpdate(CACHE_TABLE_NAME, values, CACHE_COLUMN_USER_ID + "= ? AND " + CACHE_COLUMN_CATEGORY + "= ?", new String[]{userId, category});
                 }
                 database.setTransactionSuccessful(); // Commit
             } finally {
                 database.endTransaction();
             }
         }
-    }
-
-    @Override
-    public void close() {
-        if(dbHelper != null) {
-            try {
-                dbHelper.close();
-            } catch (Exception e) {
-                SwrveLogger.e(LOG_TAG, "Exception occurred closing dbHelper", e);
-            }
-        }
-        if(database != null) {
-            try {
-                database.close();
-            } catch (Exception e) {
-                SwrveLogger.e(LOG_TAG, "Exception occurred closing database", e);
-            }
-        }
-        if(connectionOpen != null) {
-            try {
-                connectionOpen.set(false);
-            } catch (Exception e) {
-                SwrveLogger.e(LOG_TAG, "Exception occurred setting connectionOpen to false", e);
-            }
-        }
-    }
-
-    private static class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
-
-        public SwrveSQLiteOpenHelper(Context context, String dbName) {
-            super(context, dbName, null, SWRVE_DB_VERSION);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            db.execSQL("CREATE TABLE " + TABLE_EVENTS_JSON + " (" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_EVENT + " TEXT NOT NULL);");
-
-            db.execSQL("CREATE TABLE " + TABLE_CACHE + " (" + COLUMN_USER_ID + " TEXT NOT NULL, " + COLUMN_CATEGORY + " TEXT NOT NULL, " + COLUMN_RAW_DATA + " TEXT NOT NULL, " + "PRIMARY KEY (" + COLUMN_USER_ID + "," + COLUMN_CATEGORY + "));");
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            // no upgrade in first version
-        }
-
     }
 }

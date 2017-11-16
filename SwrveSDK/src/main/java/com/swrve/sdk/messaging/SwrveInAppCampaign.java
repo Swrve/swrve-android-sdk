@@ -105,7 +105,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
     public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, Result> campaignDisplayResult) {
         boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, campaignDisplayResult, messages.size());
         if (canShowCampaign) {
-            SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
+            SwrveLogger.i("%s matches a trigger in %s", event, id);
             return getNextMessage(campaignDisplayResult);
         }
         return null;
@@ -121,7 +121,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
     public SwrveMessage getMessageForId(int messageId) {
         int messagesCount = messages.size();
         if (messagesCount == 0) {
-            SwrveLogger.i(LOG_TAG, "No messages in campaign " + id);
+            SwrveLogger.i("No messages in campaign %s", id);
             return null;
         }
 
@@ -157,7 +157,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         if (campaignDisplayResult != null) {
             campaignDisplayResult.put(id, campaignDisplayer.buildResult(CAMPAIGN_NOT_DOWNLOADED, resultText));
         }
-        SwrveLogger.i(LOG_TAG, resultText);
+        SwrveLogger.i(resultText);
 
         return null;
     }
@@ -176,9 +176,9 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         if (!isRandomOrder()) {
             int nextMessage = (getNext() + 1) % getMessages().size();
             this.saveableState.next = nextMessage;
-            SwrveLogger.i(LOG_TAG, "Round Robin: Next message in campaign " + getId() + " is " + nextMessage);
+            SwrveLogger.i("Round Robin: Next message in campaign %s is %s", getId(), nextMessage);
         } else {
-            SwrveLogger.i(LOG_TAG, "Next message in campaign " + getId() + " is random");
+            SwrveLogger.i("Next message in campaign %s is random", getId());
         }
     }
     @Override

@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.NotificationChannel;
 import android.content.Context;
 
 import org.json.JSONException;
@@ -8,11 +9,21 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Map;
 
-interface ISwrveCommon
-{
-    String LOCATION_CAMPAIGN_CATEGORY = "LocationCampaign";
-    String SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY = "GoogleAdvertisingId";
-    String SWRVE_GOOGLE_ADVERTISING_LIMIT_AD_TRACKING_CATEGORY = "GoogleAdvertisingLimitAdTrackingEnabled";
+interface ISwrveCommon {
+
+    // cache constants
+    String CACHE_DEVICE_ID = "device_id";
+    String CACHE_CAMPAIGNS = "CMCC2";
+    String CACHE_RESOURCES = "srcngt2";
+    String CACHE_RESOURCES_DIFF = "rsdfngt2";
+    String CACHE_LOCATION_CAMPAIGNS = "LocationCampaign";
+    String CACHE_APP_VERSION = "AppVersion";
+    String CACHE_INSTALL_TIME = "SwrveSDK.installTime";
+    String CACHE_CAMPAIGNS_STATE = "SwrveCampaignSettings";
+    String CACHE_SEQNUM = "seqnum";
+    String CACHE_GOOGLE_ADVERTISING_ID = "GoogleAdvertisingId";
+    String CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT = "GoogleAdvertisingLimitAdTrackingEnabled";
+    String CACHE_REGISTRATION_ID = "RegistrationId";
 
     // device info
     String SWRVE_DEVICE_NAME                = "swrve.device_name";
@@ -53,7 +64,7 @@ interface ISwrveCommon
 
     String getAppVersion();
 
-    String getUniqueKey();
+    String getUniqueKey(String userId);
 
     String getBatchURL();
 
@@ -65,7 +76,7 @@ interface ISwrveCommon
 
     void userUpdate(Map<String, String> attributes);
 
-    void sendEventsWakefully(Context context, ArrayList<String> events);
+    void sendEventsInBackground(Context context, String userId, ArrayList<String> events);
 
     String getEventsServer();
 
@@ -77,4 +88,5 @@ interface ISwrveCommon
 
     int getNextSequenceNumber();
 
+    NotificationChannel getDefaultNotificationChannel();
 }

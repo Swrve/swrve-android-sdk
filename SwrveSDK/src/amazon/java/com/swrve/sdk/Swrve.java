@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 
 import com.amazon.device.messaging.ADM;
@@ -18,10 +19,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     protected String registrationId;
 
-    protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
-        super(context, appId, apiKey, config);
-        SwrvePushSDK.createInstance(context)
-                .setDefaultNotificationChannel(config.getDefaultNotificationChannel());
+    protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
+        super(application, appId, apiKey, config);
+        SwrvePushSDK.createInstance(application.getApplicationContext());
     }
 
     @Override
@@ -83,8 +83,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     qaUser.logDeviceInfo(getDeviceInfo());
                 }
 
-                // Re-send data now
-                queueDeviceInfoNow(true);
+                if (profileManager != null && profileManager.isLoggedIn()) {
+                    queueDeviceInfoNow(getUserId(), profileManager.getSessionToken(), true);
+                }
             }
         } catch (Exception ex) {
             SwrveLogger.e("Couldn't save the ADM registration id for the device", ex);

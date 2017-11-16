@@ -5,9 +5,6 @@ import android.app.Activity;
 import android.os.Build;
 import android.util.Log;
 
-import com.swrve.sdk.rest.IRESTClient;
-import com.swrve.sdk.rest.IRESTResponseListener;
-import com.swrve.sdk.rest.RESTResponse;
 import com.swrve.sdk.test.BuildConfig;
 import com.swrve.sdk.test.MainActivity;
 
@@ -22,9 +19,6 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLog;
-
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = Build.VERSION_CODES.LOLLIPOP)
@@ -46,6 +40,6 @@ public abstract class SwrveBaseTest {
 
     @After
     public void tearDown() throws Exception {
-        // empty
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
     }
 }

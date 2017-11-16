@@ -10,8 +10,6 @@ import android.provider.Browser;
 
 public final class SwrveIntentHelper {
 
-    private static final String LOG_TAG = "SwrveSDK";
-
     public static void openDialer(Uri telUri, Activity activity) {
         Intent dialNum = new Intent(Intent.ACTION_VIEW, telUri);
         activity.startActivity(dialNum);
@@ -40,7 +38,7 @@ public final class SwrveIntentHelper {
         try {
             context.startActivity(intent);
         } catch (ActivityNotFoundException ex) {
-            SwrveLogger.e(LOG_TAG, "Could not launch activity for uri: " + uriString + ". Possibly badly formatted deep link", ex);
+            SwrveLogger.e("Could not launch activity for uri: " + uriString + ". Possibly badly formatted deep link", ex);
         }
     }
 }

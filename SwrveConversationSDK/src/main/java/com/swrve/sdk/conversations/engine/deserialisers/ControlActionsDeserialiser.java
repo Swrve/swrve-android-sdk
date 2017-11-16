@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ControlActionsDeserialiser implements JsonDeserializer<ControlActions> {
-    private static final String LOG_TAG = "SwrveSDK";
 
     @Override
     public ControlActions deserialize(JsonElement element, Type arg1, JsonDeserializationContext arg2) throws JsonParseException {
@@ -62,8 +61,8 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
                     actions.includeAction(label, deeplinkURIDetails);
                 }
                 else {
-                    SwrveLogger.e(LOG_TAG, "Unrecognized Action in json");
-                    SwrveLogger.e(LOG_TAG, "JSON :: " + entry.getValue().getAsJsonObject().toString());
+                    SwrveLogger.e("Unrecognized Action in json");
+                    SwrveLogger.e("JSON: %s", entry.getValue().getAsJsonObject().toString());
                 }
             }
             return actions;

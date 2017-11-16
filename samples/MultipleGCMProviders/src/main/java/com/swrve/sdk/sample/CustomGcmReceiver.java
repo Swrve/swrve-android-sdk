@@ -1,6 +1,5 @@
 package com.swrve.sdk.sample;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +9,7 @@ import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrvePushSDK;
 import com.swrve.sdk.gcm.SwrveGcmConstants;
+import com.swrve.sdk.gcm.SwrveGcmIntentService;
 
 /*
  * Use this class when you have multiple push providers, that is, multiple GcmListenerServices.
@@ -28,11 +28,11 @@ public class CustomGcmReceiver extends GcmReceiver {
                 String msgId = SwrvePushSDK.getPushId(extras);
                 if (!SwrveHelper.isNullOrEmpty(msgId)) {
                     // It is a Swrve push!
-                    SwrveLogger.d("Received Swrve push, starting " + SwrveGcmConstants.SWRVE_DEFAULT_INTENT_SERVICE + " instead");
+                    SwrveLogger.d("Received Swrve push, starting %s instead", SwrveGcmConstants.SWRVE_DEFAULT_INTENT_SERVICE);
+                    SwrveGcmIntentService swrveIntent = new SwrveGcmIntentService();
+                    swrveIntent.onCreate();
+                    swrveIntent.onMessageReceived("CustomGcmReceiver", extras);
                     interceptedIntent = true;
-                    ComponentName comp = new ComponentName(context.getPackageName(), SwrveGcmConstants.SWRVE_DEFAULT_INTENT_SERVICE);
-                    intent = intent.setComponent(comp);
-                    context.startService(intent);
                 }
             }
         }

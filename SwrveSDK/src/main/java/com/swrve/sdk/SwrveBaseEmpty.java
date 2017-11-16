@@ -1,17 +1,15 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
+import android.app.NotificationChannel;
 import android.content.Context;
-import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
-import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -35,32 +33,24 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     protected String apiKey;
 
     private C config;
-    private ISwrveCustomButtonListener customButtonListener;
-    private ISwrveInstallButtonListener installButtonListener;
+    private SwrveCustomButtonListener customButtonListener;
+    private SwrveInstallButtonListener installButtonListener;
     private String language = "en-US";
     private String userId;
     private File cacheDir;
 
     protected SwrveBaseEmpty(Context context, String apiKey) {
         super();
-        this.context = new WeakReference<Context>(context.getApplicationContext());
+        this.context = new WeakReference<>(context.getApplicationContext());
         this.apiKey = apiKey;
         this.config = (C) new SwrveConfigBaseImp();
         SwrveCommon.setSwrveCommon(this);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public T onCreate(Activity activity) throws IllegalArgumentException {
-        this.context = new WeakReference<Context>(activity);
         this.language = config.getLanguage();
         this.userId = config.getUserId();
         cacheDir = config.getCacheDir();
         if (cacheDir == null) {
-            cacheDir = activity.getCacheDir();
+            cacheDir = context.getCacheDir();
         }
-
-        return (T) this;
     }
 
     @Override
@@ -92,8 +82,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void sendEventsWakefully(Context context, ArrayList<String> events) {
-
+    public void sendEventsInBackground(Context context, String userId, ArrayList<String> events) {
     }
 
     @Override
@@ -129,18 +118,18 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void setResourcesListener(ISwrveResourcesListener resourcesListener) {
+    public void setResourcesListener(SwrveResourcesListener resourcesListener) {
     }
 
     @Override
-    public void getUserResources(ISwrveUserResourcesListener listener) {
+    public void getUserResources(SwrveUserResourcesListener listener) {
         if (listener != null) {
             listener.onUserResourcesSuccess(new HashMap<String, Map<String, String>>(), null);
         }
     }
 
     @Override
-    public void getUserResourcesDiff(ISwrveUserResourcesDiffListener listener) {
+    public void getUserResourcesDiff(SwrveUserResourcesDiffListener listener) {
         if (listener != null) {
             listener.onUserResourcesDiffSuccess(new HashMap<String, Map<String, String>>(), new HashMap<String, Map<String, String>>(), null);
         }
@@ -155,26 +144,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void onPause() {
-    }
-
-    @Override
-    public void onResume(Activity ctx) {
-    }
-
-    @Override
-    public void onDestroy(Activity ctx) {
-    }
-
-    @Override
-    public void onLowMemory() {
-    }
-
-    @Override
-    public void onNewIntent(Intent intent) {
-    }
-
-    @Override
     public void setLanguage(Locale locale) {
         this.language = SwrveHelper.toLanguageTag(locale);
     }
@@ -182,12 +151,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public String getLanguage() {
         return this.language;
-    }
-
-    @Override
-    @Deprecated
-    public void setLanguage(String language) {
-        this.language = language;
     }
 
     @Override
@@ -224,7 +187,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public String getUniqueKey() {
+    public String getUniqueKey(String userId) {
         return null;
     }
 
@@ -259,17 +222,12 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public NotificationChannel getDefaultNotificationChannel() {
+        return config.getDefaultNotificationChannel();
+    }
+
+    @Override
     public void refreshCampaignsAndResources() {
-    }
-
-    @Override
-    public SwrveMessage getMessageForEvent(String event) {
-        return null;
-    }
-
-    @Override
-    public SwrveMessage getMessageForId(int messageId) {
-        return null;
     }
 
     @Override
@@ -291,7 +249,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void setMessageListener(ISwrveMessageListener messageListener) {
+    public void setMessageListener(SwrveMessageListener messageListener) {
     }
 
     @Override
@@ -306,12 +264,12 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
-        return new ArrayList<SwrveBaseCampaign>();
+        return new ArrayList<>();
     }
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
-        return new ArrayList<SwrveBaseCampaign>();
+        return new ArrayList<>();
     }
 
     @Override
@@ -324,22 +282,22 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public ISwrveCustomButtonListener getCustomButtonListener() {
+    public SwrveCustomButtonListener getCustomButtonListener() {
         return this.customButtonListener;
     }
 
     @Override
-    public void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener) {
+    public void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
         this.customButtonListener = customButtonListener;
     }
 
     @Override
-    public ISwrveInstallButtonListener getInstallButtonListener() {
+    public SwrveInstallButtonListener getInstallButtonListener() {
         return installButtonListener;
     }
 
     @Override
-    public void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener) {
+    public void setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
         this.installButtonListener = installButtonListener;
     }
 

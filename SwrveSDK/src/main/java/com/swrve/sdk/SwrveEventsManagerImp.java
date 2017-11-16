@@ -1,22 +1,19 @@
 package com.swrve.sdk;
 
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.localstorage.ILocalStorage;
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
-import com.swrve.sdk.localstorage.SQLiteLocalStorage;
+import com.swrve.sdk.localstorage.LocalStorage;
+import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
 import org.json.JSONException;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 public class SwrveEventsManagerImp implements SwrveEventsManager {
-
-    private static final String LOG_TAG = "SwrveSDK";
 
     private final SwrveConfigBase config;
     private final IRESTClient restClient;
@@ -38,26 +35,25 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
      * Stores the events passed in from ArrayList and attempts to send only these events. If successful, these events are removed from storage.
      */
     @Override
-    public int storeAndSendEvents(ArrayList<String> eventsJson, MemoryCachedLocalStorage memoryCachedLocalStorage, SQLiteLocalStorage sqLiteLocalStorage) throws Exception {
+    public int storeAndSendEvents(List<String> eventsJson, LocalStorage localStorage) throws Exception {
         if (eventsJson == null || (eventsJson != null && eventsJson.size() == 0)) {
             return 0;
         }
-        synchronized(MemoryCachedLocalStorage.EVENT_LOCK) {
-            LinkedHashMap<Long, String> storedEvents = storeEvents(eventsJson, sqLiteLocalStorage);
-            LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = new LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>>();
-            combinedEvents.put(memoryCachedLocalStorage, storedEvents);
+        synchronized(SwrveMultiLayerLocalStorage.EVENT_LOCK) {
+            LinkedHashMap<Long, String> storedEvents = storeEvents(eventsJson, localStorage);
+            LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = new LinkedHashMap<>();
+            combinedEvents.put(localStorage, storedEvents);
             return sendEvents(combinedEvents);
         }
     }
 
-    private LinkedHashMap<Long, String> storeEvents(ArrayList<String> eventsJson, SQLiteLocalStorage sqLiteLocalStorage) throws Exception {
-        LinkedHashMap<Long, String> storedEvents = new LinkedHashMap<Long, String>();
+    private LinkedHashMap<Long, String> storeEvents(List<String> eventsJson, LocalStorage localStorage) throws Exception {
+        LinkedHashMap<Long, String> storedEvents = new LinkedHashMap<>();
         // Store named events coming from the list
         for (String eventAsJSON : eventsJson) {
-            long id = sqLiteLocalStorage.addEventAndGetId(eventAsJSON);
+            long id = localStorage.addEvent(userId, eventAsJSON);
             storedEvents.put(id, eventAsJSON);
         }
-
         return storedEvents;
     }
 
@@ -65,43 +61,48 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
      * Attempts to sends events from local storage and deletes them if successful. Number of events sent configured from config.
      */
     @Override
-    public int sendStoredEvents(MemoryCachedLocalStorage cachedLocalStorage) {
-        synchronized(MemoryCachedLocalStorage.EVENT_LOCK) {
-            final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents = cachedLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush());
+    public int sendStoredEvents(SwrveMultiLayerLocalStorage multiLayerLocalStorage) {
+        synchronized(SwrveMultiLayerLocalStorage.EVENT_LOCK) {
+            final LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = multiLayerLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush(), userId);
             return sendEvents(combinedEvents);
         }
     }
 
-    private int sendEvents(final LinkedHashMap<ILocalStorage, LinkedHashMap<Long, String>> combinedEvents) {
+    /*
+     * Sends events stored from different LocalStorage (eg: some events stored in memory, some in sqlite)
+     * @param combinedEvents A collection of event ids to send. The local storage from where to get the event is contained
+     * @return total number of events that will be sent (if possible)
+     */
+    private int sendEvents(final LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents) {
         int eventsSent = 0;
-        final LinkedHashMap<Long, String> events = new LinkedHashMap<Long, String>();
+        final LinkedHashMap<Long, String> events = new LinkedHashMap<>();
         if (!combinedEvents.isEmpty()) {
-            SwrveLogger.i(LOG_TAG, "Sending queued events");
+            SwrveLogger.i("Sending queued events");
             try {
                 // Combine all events
-                Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
+                Iterator<LocalStorage> storageIt = combinedEvents.keySet().iterator();
                 while (storageIt.hasNext()) {
                     events.putAll(combinedEvents.get(storageIt.next()));
                 }
                 eventsSent = events.size();
                 String data = EventHelper.eventsAsBatch(events, userId, appVersion, sessionToken, deviceId);
-                SwrveLogger.i(LOG_TAG, "Sending " + events.size() + " events to Swrve");
+                SwrveLogger.i("Sending %s events to Swrve", events.size());
                 postBatchRequest(data, new IPostBatchRequestListener() {
                     public void onResponse(boolean shouldDelete) {
                         if (shouldDelete) {
                             // Remove events from where they came from
-                            Iterator<ILocalStorage> storageIt = combinedEvents.keySet().iterator();
+                            Iterator<LocalStorage> storageIt = combinedEvents.keySet().iterator();
                             while (storageIt.hasNext()) {
-                                ILocalStorage storage = storageIt.next();
-                                storage.removeEventsById(combinedEvents.get(storage).keySet());
+                                LocalStorage storage = storageIt.next();
+                                storage.removeEvents(userId, combinedEvents.get(storage).keySet());
                             }
                         } else {
-                            SwrveLogger.e(LOG_TAG, "Batch of events could not be sent, retrying");
+                            SwrveLogger.e("Batch of events could not be sent, retrying");
                         }
                     }
                 });
             } catch (JSONException je) {
-                SwrveLogger.e(LOG_TAG, "Unable to generate event batch, and send events", je);
+                SwrveLogger.e("Unable to generate event batch, and send events", je);
             }
         }
         return eventsSent;
@@ -114,12 +115,12 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
             public void onResponse(RESTResponse response) {
                 boolean deleteEvents = true;
                 if (SwrveHelper.userErrorResponseCode(response.responseCode)) {
-                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve. responseCode: " + response.responseCode + "\tresponseBody:" + response.responseBody);
+                    SwrveLogger.e("Error sending events to Swrve. responseCode: %s\tresponseBody:%s", response.responseCode, response.responseBody);
                 } else if (SwrveHelper.successResponseCode(response.responseCode)) {
-                    SwrveLogger.i(LOG_TAG, "Events sent to Swrve");
+                    SwrveLogger.i("Events sent to Swrve");
                 } else if (SwrveHelper.serverErrorResponseCode(response.responseCode)) {
                     deleteEvents = false;
-                    SwrveLogger.e(LOG_TAG, "Error sending events to Swrve. Wil retry. responseCode: " + response.responseCode + "\tresponseBody:" + response.responseBody);
+                    SwrveLogger.e("Error sending events to Swrve. Wil retry. responseCode: %s\tresponseBody:%s", response.responseCode, response.responseBody);
                 }
 
                 // Resend if we got a server error (5XX)
@@ -128,7 +129,7 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
 
             @Override
             public void onException(Exception ex) {
-                SwrveLogger.e(LOG_TAG, "Error posting batch of events. postData:" + postData, ex);
+                SwrveLogger.e("Error posting batch of events. postData:%s", ex, postData);
             }
         });
     }

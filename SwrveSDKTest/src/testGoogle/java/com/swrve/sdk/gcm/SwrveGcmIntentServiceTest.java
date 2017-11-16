@@ -6,7 +6,6 @@ import android.os.Bundle;
 
 import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.SwrvePushSDK;
-import com.swrve.sdk.SwrveTestUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -24,6 +23,7 @@ public class SwrveGcmIntentServiceTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         SwrvePushSDK.createInstance(RuntimeEnvironment.application);
         swrvePushSDK = new TestableSwrvePushSDK(RuntimeEnvironment.application);
         setSwrvePushSDKInstance(swrvePushSDK);
@@ -33,7 +33,7 @@ public class SwrveGcmIntentServiceTest extends SwrveBaseTest {
 
     @After
     public void tearDown() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        super.tearDown();
     }
 
     @Test

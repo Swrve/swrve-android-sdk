@@ -1,39 +1,24 @@
 package com.swrve.sdk.push;
 
 import android.content.Context;
-import android.util.Log;
 
-import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.SwrveSDK;
-import com.swrve.sdk.SwrveTestUtils;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowLog;
 
 import java.util.LinkedList;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk=21)
-public class SwrvePushDeDuperTest {
+public class SwrvePushDeDuperTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        SwrveLogger.setLogLevel(Log.VERBOSE);
-        ShadowLog.stream = System.out;
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test

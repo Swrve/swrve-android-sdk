@@ -19,7 +19,6 @@ import java.util.Map;
  */
 public class SwrveCampaignDisplayer {
 
-    private static final String LOG_TAG = "SwrveSDK";
     protected final SimpleDateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss ZZZZ", Locale.US);
 
     public enum DisplayResult {
@@ -219,11 +218,11 @@ public class SwrveCampaignDisplayer {
         if (campaignDisplayResults != null) {
             campaignDisplayResults.put(swrveCampaign.getId(), buildResult(resultCode, resultText));
         }
-        SwrveLogger.i(LOG_TAG, resultText);
+        SwrveLogger.i(resultText);
     }
 
     private void noMessagesWereShown(String event, String reason) {
-        SwrveLogger.i(LOG_TAG, "Not showing message for " + event + ": " + reason);
+        SwrveLogger.i("Not showing message for %s: %s", event, reason);
         if (qaUser != null) {
             qaUser.triggerFailure(event, reason);
         }

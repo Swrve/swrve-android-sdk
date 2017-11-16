@@ -1,4 +1,3 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.swrve.swrvesdkcommon">
+<manifest package="com.swrve.swrvesdkcommon">
     <application/>
 </manifest>

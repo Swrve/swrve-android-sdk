@@ -8,7 +8,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.shadows.ShadowLog;
 
 import static org.junit.Assert.assertTrue;
 
@@ -16,8 +15,7 @@ public class SwrveAmazonConfigTest extends SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
-        SwrveLogger.setLogLevel(Log.VERBOSE);
-        ShadowLog.stream = System.out;
+        super.setUp();
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
     }
 

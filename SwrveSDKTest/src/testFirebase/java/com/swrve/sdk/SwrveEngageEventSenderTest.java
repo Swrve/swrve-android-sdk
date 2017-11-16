@@ -31,7 +31,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         super.setUp();
         shadowApplication = Shadows.shadowOf(RuntimeEnvironment.application);
         SwrveConfig config = new SwrveConfig();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
@@ -81,7 +81,7 @@ public class SwrveEngageEventSenderTest extends SwrveBaseTest {
         } else {
             assertEquals(1, broadcastIntents.size());
             assertEquals("com.swrve.sdk.SwrveWakefulReceiver", broadcastIntents.get(0).getComponent().getShortClassName());
-            events = (List) broadcastIntents.get(0).getExtras().get(SwrveWakefulService.EXTRA_EVENTS);
+            events = (List) broadcastIntents.get(0).getExtras().get(SwrveBackgroundEventSender.EXTRA_EVENTS);
             assertNotNull(events);
             assertEquals(count, events.size());
         }

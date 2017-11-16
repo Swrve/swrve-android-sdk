@@ -20,7 +20,7 @@ public class SwrvePushMediaHelper {
                 try {
                     url = new URL(mediaUrl);
                     url.toURI();
-                    SwrveLogger.i("Downloading push image from: " + mediaUrl);
+                    SwrveLogger.i("Downloading push image from: %s", mediaUrl);
 
                 } catch (Exception ex) {
                     SwrveLogger.e("Push image from: %s is an invalid url: ", ex, mediaUrl);

@@ -1,5 +1,8 @@
 package com.swrve.sdk;
 
+import android.os.Build;
+
+import com.google.common.collect.Lists;
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.json.JSONObject;
@@ -7,13 +10,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.robolectric.RuntimeEnvironment;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 public class SwrveUnitTest extends SwrveBaseTest {
 
@@ -22,60 +28,62 @@ public class SwrveUnitTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
         swrveSpy.init(mActivity);
-
         Mockito.reset(swrveSpy);
     }
 
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveHelper.buildModel = Build.MODEL;
     }
 
     @Test
     public void testInitWithAppVersion() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
         String appVersion = "my_version";
         SwrveConfig config = new SwrveConfig();
         config.setAppVersion(appVersion);
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveTestUtils.setSDKInstance(swrve);
         assertEquals(appVersion, swrve.appVersion);
     }
 
     @Test
     public void testLanguage() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
-        String strangeLanguage = "strange_language";
-        String strangeLanguage2 = "strange_language_other";
+        Locale language1 = Locale.JAPANESE;
+        Locale language2 = Locale.CHINESE;
         SwrveConfig config = new SwrveConfig();
-        config.setLanguage(strangeLanguage);
-        ISwrve swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
-        assertEquals(strangeLanguage, swrve.getLanguage());
-        swrve.setLanguage(strangeLanguage2);
-        assertEquals(strangeLanguage2, swrve.getLanguage());
+        config.setLanguage(language1);
+        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveTestUtils.setSDKInstance(swrve);
+        assertEquals("ja", swrve.getLanguage());
+        swrve.setLanguage(language2);
+        assertEquals("zh", swrve.getLanguage());
     }
 
     @Test
     public void testInitialisationWithUserId() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
-        ISwrve swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        SwrveTestUtils.setSDKInstance(swrve);
         String userId = swrve.getUserId();
         assertNotNull(userId);
 
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
         SwrveConfig config = new SwrveConfig();
         config.setUserId("custom_user_id");
-        swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveTestUtils.setSDKInstance(swrve);
         String userId2 = swrve.getUserId();
         assertNotSame(userId, userId2);
         assertEquals("custom_user_id", userId2);
@@ -83,42 +91,49 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
     @Test
     public void testInitialisationWithNoId() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
-        ISwrve swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        SwrveTestUtils.setSDKInstance(swrve);
         String userId = swrve.getUserId();
         assertNotNull(userId);
 
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
-        swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        SwrveTestUtils.setSDKInstance(swrve);
         String userId2 = swrve.getUserId();
         assertEquals(userId, userId2);
     }
 
     @Test
     public void testGetUserIdForced() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+
         SwrveConfig config = new SwrveConfig();
         config.setUserId("forced");
-        ISwrve swrve = SwrveSDK.createInstance(mActivity, 1, "apiKey", config);
+        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveTestUtils.setSDKInstance(swrve);
         assertEquals("forced", swrve.getUserId());
     }
 
     @Test
     public void testDeviceInfoQueued() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         Swrve swrveSpy = Mockito.spy(swrveReal);
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info not queued
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+
+        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued once upon init
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
 
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
 
         swrveSpy.onResume(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
     }
 
     @Test
@@ -212,5 +227,31 @@ public class SwrveUnitTest extends SwrveBaseTest {
         attributesJSON.put("a0", "b0");
         parameters.put("attributes", new JSONObject(attributesJSON).toString());
         SwrveTestUtils.assertQueueEvent(swrveSpy, "user", parameters, null);
+    }
+
+    @Test
+    public void testModelBlacklist() throws Exception {
+        // Test default blacklist
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        SwrveHelper.buildModel = "Calypso AppCrawler";
+        ISwrve sdk = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        assertTrue(sdk instanceof SwrveEmpty);
+        assertNotNull(SwrveSDK.getInstance());
+
+        // Test custom blacklist
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        config = new SwrveConfig();
+        config.setModelBlackList(Lists.newArrayList("custom_model"));
+        SwrveHelper.buildModel = "custom_model";
+        sdk = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        assertTrue(sdk instanceof SwrveEmpty);
+        assertNotNull(SwrveSDK.getInstance());
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveHelper.buildModel = "not_custom_model";
+        sdk = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        assertTrue(sdk instanceof Swrve);
+        assertNotNull(SwrveSDK.getInstance());
     }
 }

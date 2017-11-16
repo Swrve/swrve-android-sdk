@@ -16,7 +16,6 @@ import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.conversations.ui.ConversationFragment;
 import com.swrve.sdk.conversations.ui.ConversationRelativeLayout;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -45,18 +44,12 @@ public class ConversationActivityTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         swrveSpy.init(mActivity);
         SwrveCommon.setSwrveCommon(swrveSpy);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test

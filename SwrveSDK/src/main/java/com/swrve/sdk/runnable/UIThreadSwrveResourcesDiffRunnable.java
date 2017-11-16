@@ -1,6 +1,6 @@
 package com.swrve.sdk.runnable;
 
-import com.swrve.sdk.ISwrveUserResourcesDiffListener;
+import com.swrve.sdk.SwrveUserResourcesDiffListener;
 
 import java.util.Map;
 
@@ -11,7 +11,7 @@ import java.util.Map;
  * Note: the callback method onResourceDiffsSuccess will be called from the
  * same UI threat than the caller Activity.
  */
-public abstract class UIThreadSwrveResourcesDiffRunnable extends UIThreadSwrveRunnable implements ISwrveUserResourcesDiffListener {
+public abstract class UIThreadSwrveResourcesDiffRunnable extends UIThreadSwrveRunnable implements SwrveUserResourcesDiffListener {
     private Map<String, Map<String, String>> oldResourcesValues;
     private Map<String, Map<String, String>> newResourcesValues;
     private String resourcesAsJSON;

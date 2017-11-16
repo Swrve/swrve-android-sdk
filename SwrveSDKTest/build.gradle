@@ -48,7 +48,7 @@ dependencies {
     testCompile 'org.robolectric:shadows-support-v4:3.4-rc2'
     testCompile 'org.robolectric:shadows-httpclient:3.4-rc2'
 
-    // Roboelectric tests
+    // Robolectric tests
     testCompile 'junit:junit:4.12'
     testCompile('org.robolectric:robolectric:3.4.2') {
         exclude group: 'commons-logging', module: 'commons-logging'

@@ -1,16 +1,16 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
-import com.swrve.sdk.localstorage.SQLiteLocalStorage;
+import com.swrve.sdk.localstorage.LocalStorage;
+import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Used internally to send events.
  */
 interface SwrveEventsManager {
 
-    int storeAndSendEvents(ArrayList<String> eventsJson, MemoryCachedLocalStorage memoryCachedLocalStorage, SQLiteLocalStorage sqLiteLocalStorage) throws Exception;
+    int storeAndSendEvents(List<String> eventsJson, LocalStorage localStorage) throws Exception;
 
-    int sendStoredEvents(MemoryCachedLocalStorage cachedLocalStorage);
+    int sendStoredEvents(SwrveMultiLayerLocalStorage cachedLocalStorage);
 }

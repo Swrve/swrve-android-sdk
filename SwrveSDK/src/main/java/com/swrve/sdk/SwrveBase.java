@@ -3,10 +3,13 @@ package com.swrve.sdk;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Application;
+import android.app.NotificationChannel;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
@@ -15,17 +18,15 @@ import android.view.WindowManager;
 
 import com.swrve.sdk.SwrveCampaignDisplayer.Result;
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.conversations.ISwrveConversationListener;
+import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
-import com.swrve.sdk.localstorage.ILocalStorage;
-import com.swrve.sdk.localstorage.IMemoryLocalStorage;
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
+import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
-import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
-import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveInstallButtonListener;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
@@ -69,8 +70,8 @@ import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.ELIGIBLE_BUT_OT
  */
 public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T, C> implements ISwrveBase<T, C>, ISwrveCommon, ISwrveConversationSDK {
 
-    protected SwrveBase(Context context, int appId, String apiKey, C config) {
-        super(context, appId, apiKey, config);
+    protected SwrveBase(Application application, int appId, String apiKey, C config) {
+        super(application, appId, apiKey, config);
         SwrveCommon.setSwrveCommon(this);
     }
 
@@ -87,8 +88,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    public T onCreate(final Activity activity) throws IllegalArgumentException {
+    protected T onCreate(final Activity activity) throws IllegalArgumentException {
         if (destroyed) {
             destroyed = initialised = false;
             bindCounter.set(0);
@@ -112,14 +112,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();
 
             // Save initialization time
+            final String userId = profileManager.getUserId();
             initialisedTime = getNow();
             initialised = true;
-            this.lastSessionTick = getSessionTime();
-            this.sessionToken = SwrveHelper.generateSessionToken(this.apiKey, this.appId, userId); // Generate session token
+            lastSessionTick = getSessionTime();
 
-            cachedLocalStorage = createCachedLocalStorage();
-
-            appStoreURLs = new SparseArray<String>();
+            appStoreURLs = new SparseArray<>();
 
             initCacheFolder(activity);
 
@@ -135,60 +133,49 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             if (preloadRandC) {
                 // Initialize resources from cache
-                initResources();
+                initResources(userId);
             }
 
-            // Send session start
             queueSessionStart();
             generateNewSessionInterval();
-
-            // If user is first installed
-            String savedInstallTime = getSavedInstallTime();
-            if (SwrveHelper.isNullOrEmpty(savedInstallTime)) {
-                // First time we see this user
-                _event("Swrve.first_session", null);
-                Date now = getNow();
-                userInstallTime = installTimeFormat.format(now);
-            }
-            // Get install time
-            installTime.set(getInstallTime());
-            installTimeLatch.countDown();
+            initInstallTimeAndCheckFirstSession();
 
             // Android referrer information
             SharedPreferences settings = activity.getSharedPreferences(SDK_PREFS_NAME, 0);
             String referrer = settings.getString(SWRVE_REFERRER_ID, null);
             if (!SwrveHelper.isNullOrEmpty(referrer)) {
-                Map<String, String> attributes = new HashMap<String, String>();
+                Map<String, String> attributes = new HashMap<>();
                 attributes.put(SWRVE_REFERRER_ID, referrer);
-                SwrveLogger.i("Received install referrer, so sending userUpdate:" + attributes);
+                SwrveLogger.i("Received install referrer, so sending userUpdate:%s", attributes);
                 userUpdate(attributes);
                 settings.edit().remove(SWRVE_REFERRER_ID).apply();
             }
 
             // Get device info
             getDeviceInfo(resolvedContext);
-            queueDeviceInfoNow(true);
+            queueDeviceInfoNow(userId, profileManager.getSessionToken(), true);
 
-            // Talk initialization
-            if (config.isTalkEnabled()) {
-                if (SwrveHelper.isNullOrEmpty(language)) {
-                    SwrveHelper.logAndThrowException("Language needed to use Talk");
-                } else if (SwrveHelper.isNullOrEmpty(config.getAppStore())) {
-                    SwrveHelper.logAndThrowException("App store needed to use Talk");
-                }
+            // Messaging initialization
 
-                if (preloadRandC) {
-                    initCampaigns(); // Initialize campaigns from cache
-                }
+            if (SwrveHelper.isNullOrEmpty(language)) {
+                SwrveHelper.logAndThrowException("Language needed to use Talk");
+            } else if (SwrveHelper.isNullOrEmpty(config.getAppStore())) {
+                SwrveHelper.logAndThrowException("App store needed to use Talk");
+            }
 
-                // Add default message listener
-                if (messageListener == null) {
-                    setDefaultMessageListener();
-                }
+            if (preloadRandC) {
+                initCampaigns(userId); // Initialize campaigns from cache
+            }
 
-                // Add custom conversation listener
-                if (conversationListener == null) {
-                    setConversationListener(new ISwrveConversationListener() {
+            // Add default message listener
+            if (messageListener == null) {
+                setDefaultMessageListener();
+            }
+
+
+            // Add custom conversation listener
+            if (conversationListener == null) {
+                setConversationListener(new SwrveConversationListener() {
                         public void onMessage(final SwrveConversation conversation) {
                             // Start a Conversation activity to display the campaign
                             if (SwrveBase.this.context != null) {
@@ -197,11 +184,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             }
                         }
                     });
-                }
             }
 
+
             if (preloadRandC && config.isABTestDetailsEnabled()) {
-                initABTestDetails();
+                initABTestDetails(userId);
             }
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
@@ -217,12 +204,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 storageExecutorExecute(new Runnable() {
                     @Override
                     public void run() {
-                        initResources();
-                        if (config.isTalkEnabled()) {
-                            initCampaigns();
-                        }
+                        initResources(userId);
+
+                        initCampaigns(userId);
+
                         if (config.isABTestDetailsEnabled()) {
-                            initABTestDetails();
+                            initABTestDetails(userId);
                         }
                     }
                 });
@@ -254,11 +241,23 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         }
         swrveAssetsManager.setStorageDir(cacheDir);
-        SwrveLogger.d("Using cache directory at " + cacheDir.getPath());
+        SwrveLogger.d("Using cache directory at %s", cacheDir.getPath());
+    }
+
+    private void initInstallTimeAndCheckFirstSession() {
+        String installTimeRaw = multiLayerLocalStorage.getCacheEntry(profileManager.getUserId(), CACHE_INSTALL_TIME);
+        if (SwrveHelper.isNullOrEmpty(installTimeRaw)) {
+            installTime = initialisedTime.getTime();
+            multiLayerLocalStorage.setCacheEntry(profileManager.getUserId(), CACHE_INSTALL_TIME, String.valueOf(installTime)); // Save to memory and secondary storage
+            _event("Swrve.first_session"); // First time we see this user
+            userInstallTime = installTimeFormat.format(initialisedTime);
+        } else {
+            installTime = Long.parseLong(installTimeRaw);
+        }
     }
 
     private void setDefaultMessageListener() {
-        setMessageListener(new ISwrveMessageListener() {
+        setMessageListener(new SwrveMessageListener() {
             public void onMessage(final SwrveMessage message) {
                 // Start a Conversation activity to display the campaign
                 if (SwrveBase.this.context != null) {
@@ -281,17 +280,28 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         });
     }
 
+    protected void openLocalStorageConnection() {
+        try {
+            SQLiteLocalStorage sqLiteLocalStorage = new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());;
+            multiLayerLocalStorage.setSecondaryStorage(sqLiteLocalStorage);
+        } catch (Exception exp) {
+            SwrveLogger.e("Error opening database", exp);
+        }
+    }
+
     protected abstract void beforeSendDeviceInfo(Context context);
 
     protected abstract void extraDeviceInfo(JSONObject deviceInfo) throws JSONException;
 
     protected void _sessionStart() {
         queueSessionStart();
+        final String userId = profileManager.getUserId();
+        final String sessionToken = profileManager.getSessionToken();
         // Send event after it has been queued
         storageExecutorExecute(new Runnable() {
             @Override
             public void run() {
-                sendQueuedEvents();
+                _sendQueuedEvents(userId, sessionToken);
             }
         });
     }
@@ -379,17 +389,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return this.resourceManager;
     }
 
-    protected void _getUserResources(final ISwrveUserResourcesListener listener) {
+    protected void _getUserResources(final SwrveUserResourcesListener listener) {
         String cachedResources = null;
 
         // Read cached resources
         try {
-            cachedResources = cachedLocalStorage.getSecureCacheEntryForUser(userId, RESOURCES_CACHE_CATEGORY, getUniqueKey());
+            cachedResources = multiLayerLocalStorage.getSecureCacheEntryForUser(profileManager.getUserId(), CACHE_RESOURCES, getUniqueKey(getUserId()));
         } catch (SecurityException e) {
-            SwrveLogger.i("Signature for " + RESOURCES_CACHE_CATEGORY + " invalid; could not retrieve data from cache");
-            Map<String, Object> parameters = new HashMap<String, Object>();
+
+            SwrveLogger.i("Signature for %s invalid; could not retrieve data from cache", CACHE_RESOURCES);
+            Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", "Swrve.signature_invalid");
-            queueEvent("event", parameters, null, false);
+            queueEvent(profileManager.getUserId(), "event", parameters, null, false);
             listener.onUserResourcesError(e);
         }
 
@@ -398,7 +409,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 // Parse raw response
                 JSONArray jsonResources = new JSONArray(cachedResources);
                 // Convert to map
-                Map<String, Map<String, String>> mapResources = new HashMap<String, Map<String, String>>();
+                Map<String, Map<String, String>> mapResources = new HashMap<>();
                 for (int i = 0, j = jsonResources.length(); i < j; i++) {
                     JSONObject resourceJSON = jsonResources.getJSONObject(i);
                     String uid = resourceJSON.getString("uid");
@@ -415,23 +426,24 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _getUserResourcesDiff(final ISwrveUserResourcesDiffListener listener) {
+    protected void _getUserResourcesDiff(final SwrveUserResourcesDiffListener listener) {
         final SwrveBase<?, ?> swrveReference = this;
+        final String userId = getUserId();
         restClientExecutorExecute(new Runnable() {
             @Override
             public void run() {
-                if (userId != null) {
-                    Map<String, String> params = new HashMap<String, String>();
+                if (profileManager.getUserId() != null) {
+                    Map<String, String> params = new HashMap<>();
                     params.put("api_key", apiKey);
-                    params.put("user", userId);
+                    params.put("user", profileManager.getUserId());
                     params.put("app_version", appVersion);
-                    params.put("joined", String.valueOf(getOrWaitForInstallTime()));
+                    params.put("joined", String.valueOf(installTime));
                     try {
-                        SwrveLogger.i("Contacting AB Test server " + config.getContentUrl());
-                        restClient.get(config.getContentUrl() + USER_RESOURCES_DIFF_ACTION, params, new RESTCacheResponseListener(swrveReference, cachedLocalStorage, userId, RESOURCES_DIFF_CACHE_CATEGORY, EMPTY_JSON_ARRAY) {
+                        SwrveLogger.i("Contacting AB Test server %s", config.getContentUrl());
+                        restClient.get(config.getContentUrl() + USER_RESOURCES_DIFF_ACTION, params, new RESTCacheResponseListener(swrveReference, multiLayerLocalStorage, userId, CACHE_RESOURCES_DIFF, EMPTY_JSON_ARRAY) {
                             @Override
                             public void onResponseCached(int responseCode, String responseBody) {
-                                SwrveLogger.i("Got AB Test response code " + responseCode);
+                                SwrveLogger.i("Got AB Test response code %s", responseCode);
                                 if (!SwrveHelper.isNullOrEmpty(responseBody)) {
                                     // Process data and launch listener
                                     processUserResourcesDiffData(responseBody, listener);
@@ -459,14 +471,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         });
     }
 
-    protected void _sendQueuedEvents() {
-        if (userId != null) {
+    protected void _sendQueuedEvents(final String userId, final String sessionToken) {
+        if (SwrveHelper.isNotNullOrEmpty(userId) && SwrveHelper.isNotNullOrEmpty(sessionToken)) {
             restClientExecutorExecute(new Runnable() {
                 @Override
                 public void run() {
-                    short deviceId = EventHelper.getDeviceId(cachedLocalStorage);
+                    short deviceId = getDeviceId();
                     SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(config, restClient, userId, appVersion, sessionToken, deviceId);
-                    swrveEventsManager.sendStoredEvents(cachedLocalStorage);
+                    swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
                     eventsWereSent = true;
                 }
             });
@@ -479,7 +491,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             public void run() {
                 try {
                     SwrveLogger.i("Flushing to disk");
-                    cachedLocalStorage.flush();
+                    if (multiLayerLocalStorage != null) {
+                        multiLayerLocalStorage.flush();
+                    }
                 } catch (Exception e) {
                     SwrveLogger.e("Flush to disk failed", e);
                 }
@@ -502,13 +516,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         // Session management
         generateNewSessionInterval();
         // Save campaign state if needed
-        saveCampaignsState();
+        saveCampaignsState(profileManager.getUserId());
     }
 
-    protected void _onResume(Activity ctx) {
+    protected void _onResume(Activity activity) {
         SwrveLogger.i("onResume");
-        if (ctx != null) {
-            bindToContext(ctx);
+        if (activity != null) {
+            bindToContext(activity);
         }
         startCampaignsAndResourcesTimer(true);
         disableAutoShowAfterDelay();
@@ -523,11 +537,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         }
         generateNewSessionInterval();
-    }
-
-    protected void _onLowMemory() {
-        // We should stop Talk from showing new messages
-        config.setTalkEnabled(false);
     }
 
     protected void _onDestroy(Activity ctx) {
@@ -580,24 +589,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     SwrveLogger.e("Exception occurred shutting down campaignsAndResourcesExecutor", e);
                 }
             }
-
-            if(cachedLocalStorage != null) {
-                try {
-                    cachedLocalStorage.close();
-                } catch (Exception e) {
-                    SwrveLogger.e("Exception occurred closing cachedLocalStorage", e);
-                }
-            }
         }
     }
 
     protected void _setLanguage(Locale locale) {
         this.language = SwrveHelper.toLanguageTag(locale);
-    }
-
-    @Deprecated
-    protected void _setLanguage(String language) {
-        this.language = language;
     }
 
     protected String _getLanguage() {
@@ -606,10 +602,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected String _getApiKey() {
         return this.apiKey;
-    }
-
-    protected String _getUserId() {
-        return this.userId;
     }
 
     protected JSONObject _getDeviceInfo() throws JSONException {
@@ -664,10 +656,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceInfo.put(SWRVE_LANGUAGE, SwrveBase.this.language);
             String deviceRegion = Locale.getDefault().getCountry();
             deviceInfo.put(SWRVE_DEVICE_REGION, deviceRegion);
-            deviceInfo.put(SWRVE_SDK_VERSION, PLATFORM + SwrveBase.version);
+            deviceInfo.put(SWRVE_SDK_VERSION, PLATFORM + version);
             deviceInfo.put(SWRVE_APP_STORE, config.getAppStore());
             deviceInfo.put(SWRVE_SDK_FLAVOUR, Swrve.FLAVOUR_NAME);
-
             Calendar cal = new GregorianCalendar();
             deviceInfo.put(SWRVE_TIMEZONE_NAME, cal.getTimeZone().getID());
             deviceInfo.put(SWRVE_UTC_OFFSET_SECONDS, cal.getTimeZone().getOffset(System.currentTimeMillis()) / 1000);
@@ -695,7 +686,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _refreshCampaignsAndResources() {
         // When campaigns need to be downloaded manually, enforce max. flush frequency
-        if (!config.isAutoDownloadCampaingsAndResources()) {
+        if (!config.isAutoDownloadCampaignsAndResources()) {
             Date now = getNow();
             if (campaignsAndResourcesLastRefreshed != null) {
                 Date nextAllowedTime = new Date(campaignsAndResourcesLastRefreshed.getTime() + campaignsAndResourcesFlushFrequency);
@@ -707,34 +698,35 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             campaignsAndResourcesLastRefreshed = now;
         }
 
+        final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
         restClientExecutorExecute(new Runnable() {
             @Override
             public void run() {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
 
                 // General params
                 params.put("api_key", apiKey);
                 params.put("user", userId);
                 params.put("app_version", appVersion);
-                params.put("joined", String.valueOf(getOrWaitForInstallTime()));
+                params.put("joined", String.valueOf(installTime));
 
-                if (config.isTalkEnabled()) {
-                    // Talk only params
-                    params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
-                    params.put("conversation_version", String.valueOf(ISwrveConversationSDK.CONVERSATION_VERSION));
-                    params.put("language", language);
-                    params.put("app_store", config.getAppStore());
 
-                    // Device info
-                    params.put("device_width", String.valueOf(deviceWidth));
-                    params.put("device_height", String.valueOf(deviceHeight));
-                    params.put("device_dpi", String.valueOf(deviceDpi));
-                    params.put("android_device_xdpi", String.valueOf(androidDeviceXdpi));
-                    params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
-                    params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
-                    params.put("device_name", getDeviceName());
-                    params.put("os_version", Build.VERSION.RELEASE);
-                }
+                // Talk only params
+                params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
+                params.put("conversation_version", String.valueOf(ISwrveConversationSDK.CONVERSATION_VERSION));
+                params.put("language", language);
+                params.put("app_store", config.getAppStore());
+
+                // Device info
+                params.put("device_width", String.valueOf(deviceWidth));
+                params.put("device_height", String.valueOf(deviceHeight));
+                params.put("device_dpi", String.valueOf(deviceDpi));
+                params.put("android_device_xdpi", String.valueOf(androidDeviceXdpi));
+                params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
+                params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
+                params.put("device_name", getDeviceName());
+                params.put("os_version", Build.VERSION.RELEASE);
+
 
                 if (locationSegmentVersion > 0) {
                     params.put("location_version", String.valueOf(locationSegmentVersion));
@@ -769,7 +761,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     try {
                                         responseJson = new JSONObject(response.responseBody);
                                     } catch(JSONException e) {
-                                        SwrveLogger.e("SwrveSDK unable to decode user_resources_and_campaigns JSON : \"" + response.responseBody + "\".");
+                                        SwrveLogger.e("SwrveSDK unable to decode user_resources_and_campaigns JSON : \"%s\".", response.responseBody);
                                         throw e;
                                     }
 
@@ -787,30 +779,25 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                                     if (responseJson.has("campaigns")) {
                                         JSONObject campaignJson = responseJson.getJSONObject("campaigns");
+                                        saveCampaignsInCache(campaignJson);
+                                        loadCampaignsFromJSON(userId, campaignJson, campaignsState);
+                                        autoShowMessages();
 
-                                        if (config.isTalkEnabled() || config.isABTestDetailsEnabled()) {
-                                            saveCampaignsInCache(campaignJson);
-                                        }
-
-                                        if (config.isTalkEnabled()) {
-                                            updateCampaigns(campaignJson, campaignsState);
-                                            autoShowMessages();
-
-                                            // Notify campaigns have been downloaded
-                                            Map<String, String> payload = new HashMap<String, String>();
-                                            StringBuilder campaignIds = new StringBuilder();
-                                            for (int i = 0; i < campaigns.size(); i++) {
-                                                if (i != 0) {
-                                                    campaignIds.append(',');
-                                                }
-                                                campaignIds.append(campaigns.get(i).getId());
+                                        // Notify campaigns have been downloaded
+                                        Map<String, String> payload = new HashMap<>();
+                                        StringBuilder campaignIds = new StringBuilder();
+                                        for (int i = 0; i < campaigns.size(); i++) {
+                                            if (i != 0) {
+                                                campaignIds.append(',');
                                             }
-                                            payload.put("ids", campaignIds.toString());
-                                            payload.put("count", String.valueOf(campaigns.size()));
-                                            Map<String, Object> parameters = new HashMap<String, Object>();
-                                            parameters.put("name", "Swrve.Messages.campaigns_downloaded");
-                                            queueEvent("event", parameters, payload, false);
+                                            campaignIds.append(campaigns.get(i).getId());
                                         }
+                                        payload.put("ids", campaignIds.toString());
+                                        payload.put("count", String.valueOf(campaigns.size()));
+                                        Map<String, Object> parameters = new HashMap<>();
+                                        parameters.put("name", "Swrve.Messages.campaigns_downloaded");
+                                        queueEvent(userId, "event", parameters, payload, false);
+
 
                                         if (resourceManager != null && campaignJson.has("ab_test_details")) {
                                             JSONObject abTestDetailsJson = campaignJson.optJSONObject("ab_test_details");
@@ -888,14 +875,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 return null;
             }
             if (qaUser != null) {
-                campaignDisplayResults = new HashMap<Integer, Result>();
-                campaignMessages = new HashMap<Integer, Integer>();
+                campaignDisplayResults = new HashMap<>();
+                campaignMessages = new HashMap<>();
             }
             synchronized (campaigns) {
-                List<SwrveConversation> availableConversations = new ArrayList<SwrveConversation>();
+                List<SwrveConversation> availableConversations = new ArrayList<>();
                 // Select messages with higher priority
                 int minPriority = Integer.MAX_VALUE;
-                List<SwrveConversation> candidateConversations = new ArrayList<SwrveConversation>();
+                List<SwrveConversation> candidateConversations = new ArrayList<>();
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
                     SwrveBaseCampaign nextCampaign = itCampaign.next();
@@ -946,14 +933,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         if (result == null) {
-            SwrveLogger.w("Not showing message: no candidate messages for " + event);
+            SwrveLogger.w("Not showing message: no candidate messages for %s", event);
         } else {
             // Notify message has been returned
-            Map<String, String> eventPayload = new HashMap<String, String>();
+            Map<String, String> eventPayload = new HashMap<>();
             eventPayload.put("id", String.valueOf(result.getId()));
-            Map<String, Object> parameters = new HashMap<String, Object>();
+            Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", "Swrve.Conversations.conversation_returned");
-            queueEvent("event", parameters, eventPayload, false);
+            queueEvent(profileManager.getUserId(), "event", parameters, eventPayload, false);
         }
 
         return result;
@@ -973,14 +960,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 return null;
             }
             if (qaUser != null) {
-                campaignDisplayResults = new HashMap<Integer, Result>();
-                campaignMessages = new HashMap<Integer, Integer>();
+                campaignDisplayResults = new HashMap<>();
+                campaignMessages = new HashMap<>();
             }
             synchronized (campaigns) {
-                List<SwrveMessage> availableMessages = new ArrayList<SwrveMessage>();
+                List<SwrveMessage> availableMessages = new ArrayList<>();
                 // Select messages with higher priority
                 int minPriority = Integer.MAX_VALUE;
-                List<SwrveMessage> candidateMessages = new ArrayList<SwrveMessage>();
+                List<SwrveMessage> candidateMessages = new ArrayList<>();
                 Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
                 while (itCampaign.hasNext()) {
                     SwrveBaseCampaign nextCampaign = itCampaign.next();
@@ -1045,14 +1032,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         if (result == null) {
-            SwrveLogger.w("Not showing message: no candidate messages for " + event);
+            SwrveLogger.w("Not showing message: no candidate messages for %s", event);
         } else {
             // Notify message has been returned
-            Map<String, String> eventPayload = new HashMap<String, String>();
+            Map<String, String> eventPayload = new HashMap<>();
             eventPayload.put("id", String.valueOf(result.getId()));
-            Map<String, Object> parameters = new HashMap<String, Object>();
+            Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", "Swrve.Messages.message_returned");
-            queueEvent("event", parameters, eventPayload, false);
+            queueEvent(profileManager.getUserId(), "event", parameters, eventPayload, false);
         }
 
         return result;
@@ -1083,12 +1070,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _buttonWasPressedByUser(SwrveButton button) {
         if (button.getActionType() != SwrveActionType.Dismiss) {
             String clickEvent = "Swrve.Messages.Message-" + button.getMessage().getId() + ".click";
-            SwrveLogger.i("Sending click event: " + clickEvent + "(" + button.getName() + ")");
-            Map<String, String> payload = new HashMap<String, String>();
+            SwrveLogger.i("Sending click event: %s(%s)", clickEvent, button.getName());
+            Map<String, String> payload = new HashMap<>();
             payload.put("name", button.getName());
-            Map<String, Object> parameters = new HashMap<String, Object>();
+            Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", clickEvent);
-            queueEvent("event", parameters, payload, false);
+            queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
         }
     }
 
@@ -1105,15 +1092,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             String viewEvent = "Swrve.Messages.Message-" + message.getId() + ".impression";
-            SwrveLogger.i("Sending view event: " + viewEvent);
-            Map<String, String> payload = new HashMap<String, String>();
+            SwrveLogger.i("Sending view event: %s" + viewEvent);
+            Map<String, String> payload = new HashMap<>();
             payload.put("format", messageFormat.getName());
             payload.put("orientation", messageFormat.getOrientation().name());
             payload.put("size", messageFormat.getSize().x + "x" + messageFormat.getSize().y);
-            Map<String, Object> parameters = new HashMap<String, Object>();
+            Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", viewEvent);
-            queueEvent("event", parameters, payload, false);
-            saveCampaignsState();
+            queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
+            saveCampaignsState(profileManager.getUserId());
         }
     }
 
@@ -1125,7 +1112,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return swrveAssetsManager.getStorageDir();
     }
 
-    protected void _setMessageListener(ISwrveMessageListener messageListener) {
+    protected void _setMessageListener(SwrveMessageListener messageListener) {
         this.messageListener = messageListener;
         if (messageListener != null) {
             eventListener = new SwrveEventListener(this, messageListener, conversationListener);
@@ -1134,7 +1121,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _setConversationListener(ISwrveConversationListener listener) {
+    protected void _setConversationListener(SwrveConversationListener listener) {
         this.conversationListener = listener;
         if (conversationListener != null) {
             eventListener = new SwrveEventListener(this, messageListener, conversationListener);
@@ -1144,7 +1131,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
 
-    protected void _setResourcesListener(ISwrveResourcesListener resourcesListener) {
+    protected void _setResourcesListener(SwrveResourcesListener resourcesListener) {
         this.resourcesListener = resourcesListener;
     }
 
@@ -1152,19 +1139,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return initialisedTime;
     }
 
-    protected void _setInstallButtonListener(ISwrveInstallButtonListener installButtonListener) {
+    protected void _setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
         this.installButtonListener = installButtonListener;
     }
 
-    protected ISwrveInstallButtonListener _getInstallButtonListener() {
+    protected SwrveInstallButtonListener _getInstallButtonListener() {
         return installButtonListener;
     }
 
-    protected void _setCustomButtonListener(ISwrveCustomButtonListener customButtonListener) {
+    protected void _setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
         this.customButtonListener = customButtonListener;
     }
 
-    protected ISwrveCustomButtonListener _getCustomButtonListener() {
+    protected SwrveCustomButtonListener _getCustomButtonListener() {
         return customButtonListener;
     }
 
@@ -1223,7 +1210,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         for(String restricted: restrictedNamesStartWith) {
             if(name==null || name.startsWith(restricted)) {
-                SwrveLogger.e("Event names cannot begin with " + restricted + "* This event will not be sent. Eventname:" + name);
+                SwrveLogger.e("Event names cannot begin with %s* This event will not be sent. Eventname:%s", restricted, name);
                 return false;
             }
         }
@@ -1295,7 +1282,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void getUserResources(final ISwrveUserResourcesListener listener) {
+    public void getUserResources(final SwrveUserResourcesListener listener) {
         try {
             _getUserResources(listener);
         } catch (Exception e) {
@@ -1304,7 +1291,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void getUserResourcesDiff(final ISwrveUserResourcesDiffListener listener) {
+    public void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener) {
         try {
             _getUserResourcesDiff(listener);
         } catch (Exception e) {
@@ -1315,7 +1302,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public void sendQueuedEvents() {
         try {
-            _sendQueuedEvents();
+            final String userId = profileManager.getUserId();
+            final String sessionToken = profileManager.getSessionToken();
+            _sendQueuedEvents(userId, sessionToken);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1330,8 +1319,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    @Override
-    public void onPause() {
+    protected void onPause() {
         try {
             _onPause();
         } catch (Exception e) {
@@ -1339,8 +1327,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    @Override
-    public void onResume(Activity ctx) {
+    protected void onResume(Activity ctx) {
         try {
             _onResume(ctx);
         } catch (Exception e) {
@@ -1348,21 +1335,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    @Override
-    public void onLowMemory() {
-        try {
-            _onLowMemory();
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void onNewIntent(Intent intent) {
-    }
-
-    @Override
-    public void onDestroy(Activity ctx) {
+    protected void onDestroy(Activity ctx) {
         try {
             _onDestroy(ctx);
         } catch (Exception e) {
@@ -1398,19 +1371,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    /**
-     * @deprecated use {@link #setLanguage(Locale)} instead
-     */
-    @Override
-    @Deprecated
-    public void setLanguage(String language) {
-        try {
-            _setLanguage(language);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-    }
-
     @Override
     public String getApiKey() {
         try {
@@ -1424,7 +1384,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public String getUserId() {
         try {
-            return _getUserId();
+            return this.profileManager.getUserId();
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1450,9 +1410,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    @Override
-    @Deprecated
-    public SwrveMessage getMessageForEvent(String event) {
+    protected SwrveMessage getMessageForEvent(String event) {
         try {
             return getMessageForEvent(event, new HashMap<String, String>(), SwrveOrientation.Both);
         } catch (Exception e) {
@@ -1470,7 +1428,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    @Override
     public SwrveMessage getMessageForId(int messageId) {
         try {
             return _getMessageForId(messageId);
@@ -1528,7 +1485,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setMessageListener(ISwrveMessageListener messageListener) {
+    public void setMessageListener(SwrveMessageListener messageListener) {
         try {
             _setMessageListener(messageListener);
         } catch (Exception e) {
@@ -1536,7 +1493,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    public void setConversationListener(ISwrveConversationListener listener) {
+    public void setConversationListener(SwrveConversationListener listener) {
         try {
             _setConversationListener(listener);
         } catch (Exception e) {
@@ -1545,7 +1502,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setResourcesListener(ISwrveResourcesListener resourcesListener) {
+    public void setResourcesListener(SwrveResourcesListener resourcesListener) {
         try {
             _setResourcesListener(resourcesListener);
         } catch (Exception e) {
@@ -1564,7 +1521,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public ISwrveInstallButtonListener getInstallButtonListener() {
+    public SwrveInstallButtonListener getInstallButtonListener() {
         try {
             return _getInstallButtonListener();
         } catch (Exception e) {
@@ -1574,7 +1531,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener) {
+    public void setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
         try {
             _setInstallButtonListener(installButtonListener);
         } catch (Exception e) {
@@ -1583,7 +1540,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public ISwrveCustomButtonListener getCustomButtonListener() {
+    public SwrveCustomButtonListener getCustomButtonListener() {
         try {
             return _getCustomButtonListener();
         } catch (Exception e) {
@@ -1593,7 +1550,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener) {
+    public void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
         try {
             _setCustomButtonListener(customButtonListener);
         } catch (Exception e) {
@@ -1661,7 +1618,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
         campaign.setStatus(SwrveCampaignState.Status.Deleted);
-        saveCampaignsState();
+        saveCampaignsState(getUserId());
     }
 
     /***
@@ -1676,11 +1633,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public String getAppVersion() {
         return appVersion;
-    }
-
-    @Override
-    protected ILocalStorage createLocalStorage() {
-        return new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
     }
 
     @Override
@@ -1700,33 +1652,37 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public String getCachedData(String userId, String key) {
-        ILocalStorage localStorage = null;
+        String data = null;
         try {
-            localStorage = createLocalStorage();
-            return localStorage.getSecureCacheEntryForUser(userId, key, getUniqueKey());
+            LocalStorage localStorage = new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
+            data = localStorage.getSecureCacheEntryForUser(userId, key, getUniqueKey(userId));
         } catch (Exception e) {
             SwrveLogger.e("Error getting cached data. userId:" + userId + " key:" + key, e);
-        } finally {
-            if (localStorage != null) localStorage.close();
         }
-        return null;
+        return data;
     }
 
     @Override
-    public void sendEventsWakefully(Context context, ArrayList<String> events) {
-        Intent intent = new Intent(context, SwrveWakefulReceiver.class);
-        intent.putStringArrayListExtra(SwrveWakefulService.EXTRA_EVENTS, events);
-        context.sendBroadcast(intent);
+    public void sendEventsInBackground(Context context, String userId, ArrayList<String> events) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            // Avoid using the deprecated wakeful receiver
+            SwrveEventSenderJobService.scheduleJob(context, userId, events);
+        } else {
+            Intent intent = new Intent(context, SwrveWakefulReceiver.class);
+            intent.putExtra(SwrveBackgroundEventSender.EXTRA_USER_ID, userId);
+            intent.putStringArrayListExtra(SwrveBackgroundEventSender.EXTRA_EVENTS, events);
+            context.sendBroadcast(intent);
+        }
     }
 
     @Override
     public String getSessionKey() {
-        return this.sessionToken;
+        return profileManager.getSessionToken();
     }
 
     @Override
     public short getDeviceId() {
-        return EventHelper.getDeviceId(cachedLocalStorage);
+        return SwrveLocalStorageUtil.getDeviceId(multiLayerLocalStorage);
     }
 
     @Override
@@ -1746,30 +1702,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public synchronized int getNextSequenceNumber() {
-        MemoryCachedLocalStorage memoryCachedLocalStorage = cachedLocalStorage;
-        if (memoryCachedLocalStorage == null) {
-            try {
-                memoryCachedLocalStorage = createCachedLocalStorage();
-                ILocalStorage sqliteLocalStorage = createLocalStorage();
-                memoryCachedLocalStorage.setSecondaryStorage(sqliteLocalStorage);
-                return getNextSequenceNumber(memoryCachedLocalStorage);
-            } catch (Exception e) {
-                SwrveLogger.e("Error getting getNextSequenceNumber", e);
-            } finally {
-                if (memoryCachedLocalStorage != null) memoryCachedLocalStorage.close();
-            }
-        }
-        return getNextSequenceNumber(memoryCachedLocalStorage);
+        return SwrveLocalStorageUtil.getNextSequenceNumber(context.get(), config, multiLayerLocalStorage, profileManager.getUserId());
     }
 
-    private int getNextSequenceNumber(IMemoryLocalStorage storage) {
-        String id = storage.getSharedCacheEntry("seqnum");
-        int seqnum = 1;
-        if (!SwrveHelper.isNullOrEmpty(id)) {
-            seqnum = Integer.parseInt(id) + 1;
-        }
-        storage.setAndFlushSharedEntry("seqnum", Integer.toString(seqnum));
-        return seqnum;
+    @Override
+    public NotificationChannel getDefaultNotificationChannel() {
+        return config.getDefaultNotificationChannel();
     }
 
     /***
@@ -1783,20 +1721,64 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public void queueConversationEvent(String eventParamName, String eventPayloadName, String page, int conversationId, Map<String, String> payload) {
         if (payload == null) {
-            payload = new HashMap<String, String>();
+            payload = new HashMap<>();
         }
         payload.put("event", eventPayloadName);
         payload.put("conversation", Integer.toString(conversationId));
         payload.put("page", page);
 
-        SwrveLogger.d("Sending view conversation event: " + eventParamName);
+        SwrveLogger.d("Sending view conversation event: %s", eventParamName);
 
         Map<String, Object> parameters = new HashMap<String, Object>();
         parameters.put("name", eventParamName);
-        queueEvent("event", parameters, payload);
+        String userId = profileManager.getUserId();
+        queueEvent(userId, "event", parameters, payload, false);
     }
 
     /***
      * eo ISwrveConversationSDK
+     */
+
+    /***
+     * Implementation of Application.ActivityLifecycleCallbacks methods
+     */
+
+    @Override
+    public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+        onCreate(activity);
+    }
+
+    @Override
+    public void onActivityStarted(Activity activity) {
+        // empty
+    }
+
+    @Override
+    public void onActivityResumed(Activity activity) {
+        onResume(activity);
+    }
+
+    @Override
+    public void onActivityPaused(Activity activity) {
+        onPause();
+    }
+
+    @Override
+    public void onActivityStopped(Activity activity) {
+        // empty
+    }
+
+    @Override
+    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+        // empty
+    }
+
+    @Override
+    public void onActivityDestroyed(Activity activity) {
+        onDestroy(activity);
+    }
+
+    /***
+     * eo Application.ActivityLifecycleCallbacks
      */
 }

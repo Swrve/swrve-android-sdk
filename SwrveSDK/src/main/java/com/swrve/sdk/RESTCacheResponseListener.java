@@ -1,8 +1,6 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.SwrveLogger;
-
-import com.swrve.sdk.localstorage.MemoryCachedLocalStorage;
+import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
@@ -15,13 +13,13 @@ import java.util.Map;
 abstract class RESTCacheResponseListener implements IRESTResponseListener {
 
     private String userId;
-    private MemoryCachedLocalStorage memorylocalStorage;
+    private SwrveMultiLayerLocalStorage multiLayerLocalStorage;
     private String cacheCategory;
     private String defaultValue;
     private SwrveBase<?, ?> swrve;
 
-    public RESTCacheResponseListener(SwrveBase<?, ?> swrve, MemoryCachedLocalStorage memoryLocalStorage, String userId, String cacheCategory, String defaultValue) {
-        this.memorylocalStorage = memoryLocalStorage;
+    public RESTCacheResponseListener(SwrveBase<?, ?> swrve, SwrveMultiLayerLocalStorage multiLayerLocalStorage, String userId, String cacheCategory, String defaultValue) {
+        this.multiLayerLocalStorage = multiLayerLocalStorage;
         this.userId = userId;
         this.cacheCategory = cacheCategory;
         this.defaultValue = defaultValue;
@@ -35,19 +33,19 @@ abstract class RESTCacheResponseListener implements IRESTResponseListener {
         if (SwrveHelper.successResponseCode(response.responseCode)) {
             rawResponse = response.responseBody;
             try {
-                memorylocalStorage.setAndFlushSecureSharedEntryForUser(userId, cacheCategory, response.responseBody, swrve.getUniqueKey());
+                multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, cacheCategory, response.responseBody, swrve.getUniqueKey(userId));
             } catch (Exception e) {
                 // If we cannot create a signature, we just won't cache the response
             }
         } else {
             try {
-                String cachedResponse = memorylocalStorage.getSecureCacheEntryForUser(userId, cacheCategory, swrve.getUniqueKey());
+                String cachedResponse = multiLayerLocalStorage.getSecureCacheEntryForUser(userId, cacheCategory, swrve.getUniqueKey(userId));
                 rawResponse = cachedResponse;
             } catch (SecurityException e) {
-                SwrveLogger.i("REST", "Signature for " + cacheCategory + " invalid; could not retrieve data from cache");
-                Map<String, Object> parameters = new HashMap<String, Object>();
+                SwrveLogger.i("Signature for %s invalid; could not retrieve data from cache", cacheCategory);
+                Map<String, Object> parameters = new HashMap<>();
                 parameters.put("name", "Swrve.signature_invalid");
-                swrve.queueEvent("event", parameters, null, false);
+                swrve.queueEvent(userId, "event", parameters, null, false);
             }
         }
 

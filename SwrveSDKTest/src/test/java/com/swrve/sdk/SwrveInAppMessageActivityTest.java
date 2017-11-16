@@ -6,8 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.swrve.sdk.conversations.ui.ConversationActivity;
-import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -16,7 +16,6 @@ import com.swrve.sdk.messaging.view.SwrveButtonView;
 import com.swrve.sdk.messaging.view.SwrveImageView;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -46,19 +45,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
         swrveSpy.init(mActivity);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
@@ -187,7 +179,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
-        swrveSpy.setInstallButtonListener(new ISwrveInstallButtonListener() {
+        swrveSpy.setInstallButtonListener(new SwrveInstallButtonListener() {
             @Override
             public boolean onAction(String appStoreUrl) {
                 testInstallButtonSuccess = appStoreUrl;
@@ -294,7 +286,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
-        swrveSpy.setCustomButtonListener(new ISwrveCustomButtonListener() {
+        swrveSpy.setCustomButtonListener(new SwrveCustomButtonListener() {
             @Override
             public void onAction(String customAction) {
                 testCustomButtonSuccess = customAction;
@@ -421,12 +413,14 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
      */
     private void assertQueueEvent(String eventName, Map<String, Object> parameters, Map<String, String> payload) {
 
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> eventTypeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Map> parametersCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<Map> payloadCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<Boolean> triggerEventListenerCaptor = ArgumentCaptor.forClass(Boolean.class);
-        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).queueEvent(eventTypeCaptor.capture(), parametersCaptor.capture(), payloadCaptor.capture(), triggerEventListenerCaptor.capture());
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).queueEvent(userIdCaptor.capture(), eventTypeCaptor.capture(), parametersCaptor.capture(), payloadCaptor.capture(), triggerEventListenerCaptor.capture());
 
+        List<String> userIds = userIdCaptor.getAllValues();
         List<String> capturedEventTypes = eventTypeCaptor.getAllValues();
         List<Map> capturedParameters = parametersCaptor.getAllValues();
         List<Map> capturedPayload = payloadCaptor.getAllValues();
@@ -445,6 +439,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
             }
         }
         assertTrue(index > -1);
+        assertEquals(swrveSpy.getUserId(), userIds.get(index));
         assertEquals("event", capturedEventTypes.get(index));
         Map capturedParametersMap = capturedParameters.get(index);
         assertEquals(parameters, capturedParametersMap);

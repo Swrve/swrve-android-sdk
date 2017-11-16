@@ -16,8 +16,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-import static com.swrve.sdk.SwrveHelper.LOG_TAG;
-
 class SwrveAssetsManagerImp implements SwrveAssetsManager {
 
     protected Set<String> assetsOnDisk = new HashSet<>();
@@ -62,7 +60,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     public void downloadAssets(Set<SwrveAssetsQueueItem> assetsQueue, SwrveAssetsCompleteCallback callback) {
 
         if (!storageDir.canWrite()) {
-            SwrveLogger.e(LOG_TAG, "Could not download assets because do not have write access to storageDir:" + storageDir);
+            SwrveLogger.e("Could not download assets because do not have write access to storageDir:%s", storageDir);
         } else {
             downloadAssets(assetsQueue);
         }
@@ -106,7 +104,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         boolean success = false;
         String cdnRoot = assetItem.isImage() ? cdnImages : cdnFonts;
         if (SwrveHelper.isNullOrEmpty(cdnRoot)) {
-            SwrveLogger.e(LOG_TAG, "Error downloading asset. No cdn url for " + assetItem);
+            SwrveLogger.e("Error downloading asset. No cdn url for %s", assetItem);
             return success;
         }
 
@@ -138,16 +136,16 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
                 fileStream.close();
                 success = true;
             } else {
-                SwrveLogger.e(LOG_TAG, "Error downloading assetItem:" + assetItem + ". Did not match digest:" + sha1File);
+                SwrveLogger.e("Error downloading assetItem:%s. Did not match digest:%s", assetItem, sha1File);
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error downloading asset:" + assetItem, e);
+            SwrveLogger.e("Error downloading asset:%s", e, assetItem);
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (Exception e) {
-                    SwrveLogger.e(LOG_TAG, "Error closing assets stream.", e);
+                    SwrveLogger.e("Error closing assets stream.", e);
                 }
             }
         }

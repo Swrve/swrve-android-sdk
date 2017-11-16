@@ -1,15 +1,11 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
-import android.content.Intent;
-
-import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
-import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
-import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -24,16 +20,6 @@ import java.util.Map;
 public abstract class SwrveSDKBase {
 
     protected static ISwrveBase instance;
-
-    /**
-     * Typically this function is called in your main activity's onCreate function.
-     *
-     * @param activity your activity
-     */
-    public static void onCreate(final Activity activity) {
-        checkInstanceCreated();
-        instance.onCreate(activity);
-    }
 
     /**
      * Add a Swrve.session.start event to the event queue. This event should typically be added in
@@ -193,7 +179,7 @@ public abstract class SwrveSDKBase {
      * The resourcesListener onResourcesUpdated() method is invoked when user resources in the SwrveResourceManager
      * have been initially loaded and each time user resources are updated.
      */
-    public static void setResourcesListener(ISwrveResourcesListener resourcesListener) {
+    public static void setResourcesListener(SwrveResourcesListener resourcesListener) {
         checkInstanceCreated();
         instance.setResourcesListener(resourcesListener);
     }
@@ -209,7 +195,7 @@ public abstract class SwrveSDKBase {
      *
      * @param listener
      */
-    public static void getUserResources(final ISwrveUserResourcesListener listener) {
+    public static void getUserResources(final SwrveUserResourcesListener listener) {
         checkInstanceCreated();
         instance.getUserResources(listener);
     }
@@ -224,7 +210,7 @@ public abstract class SwrveSDKBase {
      *
      * @param listener
      */
-    public static void getUserResourcesDiff(final ISwrveUserResourcesDiffListener listener) {
+    public static void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener) {
         checkInstanceCreated();
         instance.getUserResourcesDiff(listener);
     }
@@ -243,53 +229,6 @@ public abstract class SwrveSDKBase {
     public static void flushToDisk() {
         checkInstanceCreated();
         instance.flushToDisk();
-    }
-
-    /**
-     * Default SDK behavior for activity onPause(). Flush data to disk.
-     * Notify the SDK that the binded activity may be finishing.
-     */
-    public static void onPause() {
-        checkInstanceCreated();
-        instance.onPause();
-    }
-
-    /**
-     * Default SDK behavior for activity onResume(). Send events to Swrve.
-     *
-     * @param activity Activity that called this method
-     */
-    public static void onResume(Activity activity) {
-        checkInstanceCreated();
-        instance.onResume(activity);
-    }
-
-    /**
-     * Notify that the app is low on memory.
-     */
-    public static void onLowMemory() {
-        checkInstanceCreated();
-        instance.onLowMemory();
-    }
-
-    /**
-     * Notify the SDK that a new intent has been received.
-     *
-     * @param intent The intent received
-     */
-    public static void onNewIntent(Intent intent) {
-        checkInstanceCreated();
-        instance.onNewIntent(intent);
-    }
-
-    /**
-     * Notify that the app has closed.
-     *
-     * @param activity Activity that called this method
-     */
-    public static void onDestroy(Activity activity) {
-        checkInstanceCreated();
-        instance.onDestroy(activity);
     }
 
     /**
@@ -316,16 +255,6 @@ public abstract class SwrveSDKBase {
     public static String getLanguage() {
         checkInstanceCreated();
         return instance.getLanguage();
-    }
-
-    /**
-     * Set the current language
-     * @deprecated use {@link #setLanguage(Locale)} instead
-     */
-    @Deprecated
-    public static void setLanguage(String language) {
-        checkInstanceCreated();
-        instance.setLanguage(language);
     }
 
     /**
@@ -363,33 +292,6 @@ public abstract class SwrveSDKBase {
     public static void refreshCampaignsAndResources() {
         checkInstanceCreated();
         instance.refreshCampaignsAndResources();
-    }
-
-    /**
-     * Returns a message for a given trigger event. There may be messages for the trigger but the
-     * rules avoid a message from being displayed at some point.
-     *
-     * @param event trigger event
-     * @return SwrveMessage supported message from a campaign set up for the
-     * given trigger
-     */
-    @Deprecated
-    public static SwrveMessage getMessageForEvent(String event) {
-        checkInstanceCreated();
-        return instance.getMessageForEvent(event);
-    }
-
-    /**
-     * Returns a message for a given id. This function should be used for retrieving a known
-     * message that is being displayed when the device's orientation changes.
-     *
-     * @param messageId id of the message
-     * @return SwrveMessage message with the given id
-     */
-    @Deprecated
-    public static SwrveMessage getMessageForId(int messageId) {
-        checkInstanceCreated();
-        return instance.getMessageForId(messageId);
     }
 
     /**
@@ -441,7 +343,7 @@ public abstract class SwrveSDKBase {
      *
      * @param messageListener logic to listen for messages
      */
-    public static void setMessageListener(ISwrveMessageListener messageListener) {
+    public static void setMessageListener(SwrveMessageListener messageListener) {
         checkInstanceCreated();
         instance.setMessageListener(messageListener);
     }
@@ -461,7 +363,7 @@ public abstract class SwrveSDKBase {
      *
      * @return buttonListener
      */
-    public static ISwrveInstallButtonListener getInstallButtonListener() {
+    public static SwrveInstallButtonListener getInstallButtonListener() {
         checkInstanceCreated();
         return instance.getInstallButtonListener();
     }
@@ -471,8 +373,7 @@ public abstract class SwrveSDKBase {
      *
      * @param installButtonListener
      */
-    public static void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener) {
-        checkInstanceCreated();
+    public static void setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
         instance.setInstallButtonListener(installButtonListener);
     }
 
@@ -481,7 +382,7 @@ public abstract class SwrveSDKBase {
      *
      * @return the custom buttonListener
      */
-    public static ISwrveCustomButtonListener getCustomButtonListener() {
+    public static SwrveCustomButtonListener getCustomButtonListener() {
         checkInstanceCreated();
         return instance.getCustomButtonListener();
     }
@@ -491,7 +392,7 @@ public abstract class SwrveSDKBase {
      *
      * @param customButtonListener
      */
-    public static void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener) {
+    public static void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
         checkInstanceCreated();
         instance.setCustomButtonListener(customButtonListener);
     }

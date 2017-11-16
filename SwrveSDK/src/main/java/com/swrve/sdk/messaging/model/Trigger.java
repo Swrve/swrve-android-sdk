@@ -12,8 +12,6 @@ import java.util.List;
 
 public class Trigger {
 
-    private static final String LOG_TAG = "SwrveSDK";
-
     private String eventName;
     private Conditions conditions;
 
@@ -27,7 +25,7 @@ public class Trigger {
             triggers = gson.fromJson(json, listType);
             triggers = validateTriggers(triggers, id);
         }catch (JsonParseException ex) {
-            SwrveLogger.e(LOG_TAG, "Could not parse campaign[" + id + "] trigger json:" + json, ex);
+            SwrveLogger.e("Could not parse campaign[%s] trigger json:%s" + json, ex, id, json);
         }
         return triggers;
     }
@@ -36,29 +34,29 @@ public class Trigger {
         for (Trigger trigger : triggers) {
             Conditions conditions = trigger.getConditions();
             if (conditions == null) {
-                SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
+                SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                 return null;
             } else if (conditions.getOp() == null && conditions.getValue() == null && conditions.getKey() == null && conditions.getArgs() == null) {
                 continue; // no conditions is valid, check next trigger
             } else if (Conditions.Op.AND.equals(conditions.getOp())) {
                 if (conditions.getArgs() == null || conditions.getArgs().size() == 0) {
-                    SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
+                    SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                     return null;
                 } else {
                     for (Arg arg : conditions.getArgs()) {
                         if (arg.getKey() == null || arg.getOp() == null || !Arg.Op.EQ.equals(arg.getOp()) || arg.getValue() == null) {
-                            SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
+                            SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                             return null;
                         }
                     }
                 }
             } else if (Conditions.Op.EQ.equals(conditions.getOp())) {
                 if (conditions.getKey() == null || conditions.getValue() == null) {
-                    SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
+                    SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                     return null;
                 }
             } else {
-                SwrveLogger.e(LOG_TAG, "Invalid trigger in campaign[" + id + "] trigger:" + trigger);
+                SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                 return null;
             }
         }

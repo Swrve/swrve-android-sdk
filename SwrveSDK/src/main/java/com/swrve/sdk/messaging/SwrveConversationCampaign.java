@@ -100,7 +100,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         boolean shouldShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, campaignDisplayResult, 1);
         boolean canShowCampaign = shouldShowCampaign && conversation != null && conversation.areAssetsReady(campaignManager.getAssetsOnDisk());
         if (canShowCampaign) {
-            SwrveLogger.i(LOG_TAG, event + " matches a trigger in " + id);
+            SwrveLogger.i("%s matches a trigger in %s", event, id);
             return this.conversation;
         }
 

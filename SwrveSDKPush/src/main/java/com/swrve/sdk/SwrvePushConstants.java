@@ -9,6 +9,7 @@ public class SwrvePushConstants {
     public static final String PUSH_ID_CACHE_SIZE_KEY = "_s.c";
     public static final String PUSH_BUNDLE = "notification";
     public static final String SILENT_PAYLOAD_KEY = "_s.SilentPayload";
+    public static final String SWRVE_NESTED_JSON_PAYLOAD_KEY = "_s.JsonPayload";
     public static final String SWRVE_PAYLOAD_KEY = "_sw";
     public static final String PUSH_ACTION_KEY = "action_key";
     public static final String PUSH_ACTION_TYPE_KEY = "action_type";

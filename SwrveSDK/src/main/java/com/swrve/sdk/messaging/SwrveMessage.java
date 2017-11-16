@@ -17,8 +17,6 @@ import java.util.Set;
  * In-app message inside a campaign, with different formats.
  */
 public class SwrveMessage {
-    protected static final String LOG_TAG = "SwrveSDK";
-
     // Identifies the message in a campaign
     protected int id;
     // Name of the message
@@ -183,7 +181,7 @@ public class SwrveMessage {
                 while (itButtons.hasNext()) {
                     String buttonAsset = itButtons.next().getImage();
                     if (!this.assetInCache(assetsOnDisk, buttonAsset)) {
-                        SwrveLogger.i(LOG_TAG, "Button asset not yet downloaded: " + buttonAsset);
+                        SwrveLogger.i("Button asset not yet downloaded: %s", buttonAsset);
                         return false;
                     }
                 }
@@ -192,7 +190,7 @@ public class SwrveMessage {
                 while (itImages.hasNext()) {
                     String imageAsset = itImages.next().getFile();
                     if (!this.assetInCache(assetsOnDisk, imageAsset)) {
-                        SwrveLogger.i(LOG_TAG, "Image asset not yet downloaded: " + imageAsset);
+                        SwrveLogger.i("Image asset not yet downloaded: %s", imageAsset);
                         return false;
                     }
                 }

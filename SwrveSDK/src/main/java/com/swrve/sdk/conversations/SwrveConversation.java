@@ -21,7 +21,6 @@ import java.io.Serializable;
 import java.util.Set;
 
 public class SwrveConversation extends SwrveBaseConversation implements Serializable {
-    private final String LOG_TAG = "SwrveConversation";
 
     // Parent in-app campaign
     protected transient SwrveConversationCampaign campaign;
@@ -52,7 +51,7 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
                         case CONTENT_IMAGE:
                             Content modelContent = (Content) conversationAtom;
                             if (!isAssetInCache(assetsOnDisk, modelContent.getValue())) {
-                                SwrveLogger.i(LOG_TAG, "Conversation asset not yet downloaded: " + modelContent.getValue());
+                                SwrveLogger.i("Conversation asset not yet downloaded: %s", modelContent.getValue());
                                 return false;
                             }
                             break;
@@ -99,7 +98,7 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
         boolean isFontAssetReady = true;
         if(style != null && !style.isSystemFont() && SwrveHelper.isNotNullOrEmpty(style.getFontFile())) {
             if (!isAssetInCache(assetsOnDisk, style.getFontFile())) {
-                SwrveLogger.i(LOG_TAG, "Conversation font asset not yet downloaded: " + style.getFontFile());
+                SwrveLogger.i("Conversation font asset not yet downloaded: %s", style.getFontFile());
                 isFontAssetReady = false;
             }
         }

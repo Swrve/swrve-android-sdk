@@ -40,7 +40,7 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
                 if (!SwrveHelper.isNullOrEmpty(msgId)) {
                     String actionId = extras.getString(SwrvePushConstants.PUSH_ACTION_KEY);
                     if (SwrveHelper.isNotNullOrEmpty(actionId)) {
-                        SwrveLogger.d("SwrveEngageEventSender: Sending push button_click for push id:" + msgId + " and actionId:" + actionId);
+                        SwrveLogger.d("SwrveEngageEventSender: Sending push button_click for push id:%s and actionId:%s", msgId, actionId);
                         String actionText = extras.getString(SwrvePushConstants.PUSH_ACTION_TEXT);
                         if (SwrveHelper.isNotNullOrEmpty(actionText)) {
                             sendButtonClickEvent(msgId, actionId, actionText);
@@ -48,12 +48,12 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
                     }
 
                     String eventName = "Swrve.Messages.Push-" + msgId + ".engaged";
-                    SwrveLogger.d("SwrveEngageEventSender: Sending engaged event: " + eventName);
+                    SwrveLogger.d("SwrveEngageEventSender: Sending engaged event: %s", eventName);
                     sendEngagedEvent(eventName);
                 }
             }
         } catch (Exception ex) {
-            SwrveLogger.e("SwrveEngageEventSender. Error sending engaged event. Intent: %s", (Object)intent.toString(), ex);
+            SwrveLogger.e("SwrveEngageEventSender. Error sending engaged event. Intent: %s", ex, intent.toString());
         }
     }
 
@@ -62,9 +62,9 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
         ArrayList<String> events = new ArrayList<>();
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", name);
-        String eventString = EventHelper.eventAsJSON("event", parameters, swrve.getNextSequenceNumber());
+        String eventString = EventHelper.eventAsJSON("event", parameters, swrve.getNextSequenceNumber(), System.currentTimeMillis());
         events.add(eventString);
-        swrve.sendEventsWakefully(context, events);
+        swrve.sendEventsInBackground(context, swrve.getUserId(), events);
     }
 
     // Also invoked by Unity
@@ -81,9 +81,9 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
             parameters.put("contextId", actionId);
             Map<String, String> payload = new HashMap<String, String>();
             payload.put("buttonText", actionText);
-            String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, swrve.getNextSequenceNumber());
+            String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, swrve.getNextSequenceNumber(), System.currentTimeMillis());
             events.add(eventAsJSON);
-            swrve.sendEventsWakefully(context, events);
+            swrve.sendEventsInBackground(context, swrve.getUserId(), events);
         } else {
             SwrveLogger.e("No SwrveSDK instance present");
         }

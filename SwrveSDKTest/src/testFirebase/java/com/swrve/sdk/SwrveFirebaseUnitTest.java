@@ -12,6 +12,8 @@ import org.robolectric.RuntimeEnvironment;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.json.JSONObject;
+
 public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
@@ -19,7 +21,7 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         swrveSpy.init(mActivity);
     }
@@ -33,19 +35,19 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
     @Test
     public void testSetRegistrationId() throws Exception {
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued once upon init
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
 
         swrveSpy.setRegistrationId("reg1");
         assertEquals("reg1", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued again so atMost== 2
+        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued again so atMost== 2
 
         swrveSpy.setRegistrationId("reg1");
         assertEquals("reg1", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info NOT queued again because the regId has NOT changed so remains atMost== 2
+        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info NOT queued again because the regId has NOT changed so remains atMost== 2
 
         swrveSpy.setRegistrationId("reg2");
         assertEquals("reg2", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(3)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued again because the regId has changed so atMost== 3
+        Mockito.verify(swrveSpy, Mockito.atMost(3)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued again because the regId has changed so atMost== 3
     }
 
     @Test
@@ -62,27 +64,26 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
         assertTrue(pushListener.pushEngaged == false);
-        assertTrue(pushListener.receivedBundle == null);
+        assertTrue(pushListener.receivedPayload == null);
 
-        //Set listener and generate another message
+        // Set listener and generate another message
         SwrveSDK.setPushNotificationListener(pushListener);
 
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
-        //Expect bundle to have been received
+        // Expect bundle to have been received
         assertTrue(pushListener.pushEngaged == true);
-        assertTrue(pushListener.receivedBundle != null);
+        assertTrue(pushListener.receivedPayload != null);
     }
 
-    class TestPushListener implements com.swrve.sdk.ISwrvePushNotificationListener {
+    class TestPushListener implements SwrvePushNotificationListener {
         public boolean pushEngaged = false;
-        public Bundle receivedBundle = null;
+        public JSONObject receivedPayload = null;
 
         @Override
-        public void onPushNotification(Bundle bundle) {
+        public void onPushNotification(JSONObject payload) {
             pushEngaged = true;
-            receivedBundle = bundle;
+            receivedPayload = payload;
         }
     }
-
 }

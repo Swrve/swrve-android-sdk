@@ -35,8 +35,6 @@ import java.util.Set;
  * It layouts its children around its center and supports show and dismiss animations.
  */
 public class SwrveMessageView extends RelativeLayout {
-    protected static final String LOG_TAG = "SwrveMessagingSDK";
-
     // Activity that contains this view
     private final SwrveInAppMessageActivity activity;
 
@@ -109,9 +107,9 @@ public class SwrveMessageView extends RelativeLayout {
             options.inJustDecodeBounds = false;
             return new BitmapResult(BitmapFactory.decodeFile(filePath, options), bitmapWidth, bitmapHeight);
         } catch (OutOfMemoryError exp) {
-            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
+            SwrveLogger.e(Log.getStackTraceString(exp));
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
+            SwrveLogger.e(Log.getStackTraceString(exp));
         }
 
         return null;
@@ -143,7 +141,7 @@ public class SwrveMessageView extends RelativeLayout {
             for (final SwrveImage image : format.getImages()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + image.getFile();
                 if(!SwrveHelper.hasFileAccess(filePath)) {
-                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
                 }
@@ -174,7 +172,7 @@ public class SwrveMessageView extends RelativeLayout {
             for (final SwrveButton button : format.getButtons()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + button.getImage();
                 if(!SwrveHelper.hasFileAccess(filePath)) {
-                    SwrveLogger.e(LOG_TAG, "Do not have read access to message asset for:" + filePath);
+                    SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
                 }
@@ -209,7 +207,7 @@ public class SwrveMessageView extends RelativeLayout {
                                     activity.notifyOfCustomButtonPress(button);
                                 }
                             } catch (Exception e) {
-                                SwrveLogger.e(LOG_TAG, "Error in onClick handler.", e);
+                                SwrveLogger.e("Error in onClick handler.", e);
                             }
                         }
                     });
@@ -221,10 +219,10 @@ public class SwrveMessageView extends RelativeLayout {
                 }
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error while initializing SwrveMessageView layout", e);
+            SwrveLogger.e("Error while initializing SwrveMessageView layout", e);
             loadErrorReasons.add("Error while initializing SwrveMessageView layout:" + e.getMessage());
         } catch (OutOfMemoryError e) {
-            SwrveLogger.e(LOG_TAG, "OutOfMemoryError while initializing SwrveMessageView layout", e);
+            SwrveLogger.e("OutOfMemoryError while initializing SwrveMessageView layout", e);
             loadErrorReasons.add("OutOfMemoryError while initializing SwrveMessageView layout:" + e.getMessage());
         }
 
@@ -265,7 +263,7 @@ public class SwrveMessageView extends RelativeLayout {
                 }
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error while onLayout in SwrveMessageView", e);
+            SwrveLogger.e("Error while onLayout in SwrveMessageView", e);
         }
     }
 
@@ -296,7 +294,7 @@ public class SwrveMessageView extends RelativeLayout {
             }
             System.gc();
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, Log.getStackTraceString(exp));
+            SwrveLogger.e(Log.getStackTraceString(exp));
         }
     }
 

@@ -1,7 +1,5 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.SwrveLogger;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -10,7 +8,6 @@ import java.util.Set;
  */
 public class SwrveResource {
 
-    protected static final String LOG_TAG = "SwrveSDK";
     protected Map<String, String> attributes;
 
     public SwrveResource(Map<String, String> attributes) {
@@ -29,7 +26,7 @@ public class SwrveResource {
             try {
                 return Integer.parseInt(this.attributes.get(attributeId));
             } catch (NumberFormatException e) {
-                SwrveLogger.e(LOG_TAG, "Could not retrieve attribute " + attributeId + " as integer value, returning default value instead");
+                SwrveLogger.e("Could not retrieve attribute %s as integer value, returning default value instead", attributeId);
             }
         }
         return defaultValue;
@@ -40,7 +37,7 @@ public class SwrveResource {
             try {
                 return Float.parseFloat(this.attributes.get(attributeId));
             } catch (NumberFormatException e) {
-                SwrveLogger.e(LOG_TAG, "Could not retrieve attribute " + attributeId + " as float value, returning default value instead");
+                SwrveLogger.e("Could not retrieve attribute %s as float value, returning default value instead", attributeId);
             }
         }
         return defaultValue;
@@ -76,7 +73,7 @@ public class SwrveResource {
         try {
             return _getAttributeAsString(attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -91,7 +88,7 @@ public class SwrveResource {
         try {
             return _getAttributeAsInt(attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -106,7 +103,7 @@ public class SwrveResource {
         try {
             return _getAttributeAsFloat(attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -121,7 +118,7 @@ public class SwrveResource {
         try {
             return _getAttributeAsBoolean(attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }

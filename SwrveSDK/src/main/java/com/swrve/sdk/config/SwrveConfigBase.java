@@ -1,5 +1,6 @@
 package com.swrve.sdk.config;
 
+import android.app.NotificationChannel;
 import android.graphics.Color;
 
 import com.swrve.sdk.SwrveAppStore;
@@ -9,148 +10,74 @@ import com.swrve.sdk.messaging.SwrveOrientation;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
  * Configuration for the Swrve SDK.
  */
 public abstract class SwrveConfigBase {
-    /**
-     * Custom unique user id.
-     */
+
+    private NotificationChannel defaultNotificationChannel;
     private String userId;
-
-    /**
-     * Enable in-app messages.
-     */
-    private boolean talkEnabled = true;
-
-    /**
-     * Maximum size of the internal SQLite database.
-     */
-    private long maxSqliteDbSize = 1 * 1024 * 1024;
-
-    /**
-     * Maximum number of events to send per flush.
-     */
-    private int maxEventsPerFlush = 50;
-
-    /**
-     * Name of SQLite database to use for storage.
-     */
+    private long maxSqliteDbSize = 1 * 1024 * 1024; // Maximum size of the internal SQLite database.
+    private int maxEventsPerFlush = 50; // Maximum number of events to send per flush.
     private String dbName = "swrve.db";
-
-
-    /**
-     * Current selected stack by user. EU or US
-     */
     private SwrveStack selectedStack = SwrveStack.US;
-
-    /**
-     * Events end-point.
-     */
     private URL eventsUrl = null;
     private URL defaultEventsUrl = null;
     private boolean useHttpsForEventsUrl = true;
-
-    /**
-     * Content end-point.
-     */
     private URL contentUrl = null;
     private URL defaultContentUrl = null;
     private boolean useHttpsForContentUrl = true;
-
-    /**
-     * Session timeout time.
-     */
-    private long newSessionInterval = 30000;
-
-    /**
-     * App version.
-     */
+    private long newSessionInterval = 30000; // Session timeout time
     private String appVersion;
-
-    /**
-     * App Store where the app will be distributed.
-     */
-    private String appStore = SwrveAppStore.Google;
-
-    /**
-     * App language. If null it defaults to the value returned by Locale.getDefault().
-     */
-    private String language;
-
-    /**
-     * Orientation supported by the application.
-     */
+    private String appStore = SwrveAppStore.Google; // App Store where the app will be distributed.
+    private String language; // App language. If null it defaults to the value returned by Locale.getDefault().
     private SwrveOrientation orientation = SwrveOrientation.Both;
-
-    /**
-     * Automatically download campaigns and resources.
-     */
     private boolean autoDownloadCampaignsAndResources = true;
-
-    /**
-     * Sample size to use when loading in-app message images. Has to be a power
-     * of two.
-     */
-    private int minSampleSize = 1;
-
-    /**
-     * Cache folder used to save the in-app message images.
-     */
+    private int minSampleSize = 1; // Sample size to use when loading in-app message images. Has to be a power of two.
     private File cacheDir;
-
-    /**
-     * Automatically send events onResume.
-     */
     private boolean sendQueuedEventsOnResume = true;
-
-    /**
-     * Maximum delay for in-app messages to appear after initialization.
-     */
-    private long autoShowMessagesMaxDelay = 5000;
-
-    /**
-     * Will load the campaign and resources cache on the UI thread.
-     */
-    private boolean loadCachedCampaignsAndResourcesOnUIThread = true;
-
-    /**
-     * Default in-app background color used if none is specified in the template.
-     */
-    private int defaultBackgroundColor = Color.TRANSPARENT;
-
-    /**
-     * HTTP timeout used when contacting the Swrve APIs, in milliseconds.
-     */
-    private int httpTimeout = 60000;
-
-    /**
-     * Hide the toolbar when displaing in-app messages.
-     */
-    private boolean hideToolbar = true;
-
-    /**
-     * Automatically log Android ID as "swrve.android_id".
-     */
-    private boolean androidIdLoggingEnabled;
-
-    /**
-     * Obtain information about the AB Tests a user is part of.
-     */
-    private boolean abTestDetailsEnabled;
+    private long autoShowMessagesMaxDelay = 5000; // Maximum delay for in-app messages to appear after initialization.
+    private boolean loadCachedCampaignsAndResourcesOnUIThread = true; // Will load the campaign and resources cache on the UI thread.
+    private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
+    private int httpTimeout = 60000; // HTTP timeout used when contacting the Swrve APIs, in milliseconds.
+    private boolean hideToolbar = true; // Hide the toolbar when displaing in-app messages.
+    private boolean androidIdLoggingEnabled; // Automatically log Android ID as "swrve.android_id".
+    private boolean abTestDetailsEnabled; // Obtain information about the AB Tests a user is part of.
+    private List<String> modelBlackList;
 
     /**
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
+        modelBlackList = new ArrayList<String>();
+        modelBlackList.add("Calypso AppCrawler");
+    }
+
+    /**
+     * Set the default notification channel used to display notifications. This is required if you target Android O (API 26) or higher.
+     * We recommend that the channel is created before setting it in our config. Our SDK will attempt to create it if it doesn't exist.
+     *
+     * @param defaultNotificationChannel Default notification channel
+     */
+    public void setDefaultNotificationChannel(NotificationChannel defaultNotificationChannel) {
+        this.defaultNotificationChannel = defaultNotificationChannel;
+    }
+
+    /**
+     * @return default channel used to display notifications. This is required if you target Android O (API 26) or higher.
+     */
+    public NotificationChannel getDefaultNotificationChannel() {
+        return defaultNotificationChannel;
     }
 
     /**
      * @return Whether campaigns and resources will automatically be downloaded.
      */
-    public boolean isAutoDownloadCampaingsAndResources() {
+    public boolean isAutoDownloadCampaignsAndResources() {
         return this.autoDownloadCampaignsAndResources;
     }
 
@@ -220,28 +147,6 @@ public abstract class SwrveConfigBase {
      */
     private String getStackHostPrefix(){
         return (getSelectedStack() == SwrveStack.EU) ? "eu-" : "";
-    }
-
-    /**
-     * Set the language of the app. If empty or null then
-     * the default locale is used.
-     *
-     * @param language Language of the app.
-     * @deprecated Use {@link #setLanguage(Locale)} instead.
-     */
-    @Deprecated
-    public SwrveConfigBase setLanguage(String language) {
-        this.language = language;
-        return this;
-    }
-
-    /**
-     * Check if the SwrveLogger is enabled
-     * @deprecated This is redundant and will be removed in next major release. Returning true hardcoded.
-     */
-    @Deprecated
-    public boolean isLoggerEnabled() {
-        return true;
     }
 
     /**
@@ -459,21 +364,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Whether in-app messages are enabled.
-     */
-    public boolean isTalkEnabled() {
-        return this.talkEnabled;
-    }
-
-    /**
-     * @param enabled Enabled in-app messages.
-     */
-    public SwrveConfigBase setTalkEnabled(boolean enabled) {
-        this.talkEnabled = enabled;
-        return this;
-    }
-
-    /**
      * The sample size used when loading in-app message images.
      *
      * @return sample size
@@ -642,5 +532,19 @@ public abstract class SwrveConfigBase {
      */
     public void setABTestDetailsEnabled(boolean enabled) {
         this.abTestDetailsEnabled = enabled;
+    }
+
+    /**
+     * @return list of Android models where the SDK won't run, for example the 'Calypso AppCrawler'.
+     */
+    public List<String> getModelBlackList() {
+        return modelBlackList;
+    }
+
+    /**
+     * @param modelBlackList list of Android models where the SDK won't run, for example 'Calypso AppCrawler'.
+     */
+    public void setModelBlackList(List<String> modelBlackList) {
+        this.modelBlackList = modelBlackList;
     }
 }

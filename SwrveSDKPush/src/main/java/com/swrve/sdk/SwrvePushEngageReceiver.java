@@ -9,6 +9,9 @@ import android.os.Bundle;
 
 import com.swrve.sdk.model.PushPayloadButton;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Date;
 
 public class SwrvePushEngageReceiver extends BroadcastReceiver {
@@ -46,7 +49,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
 
                         String actionKey = extras.getString(SwrvePushConstants.PUSH_ACTION_KEY);
                         if (SwrveHelper.isNotNullOrEmpty(actionKey)) {
-                            SwrveLogger.d("Found engaged event: %s, with actionId: %s", (Object)msgId, actionKey);
+                            SwrveLogger.d("Found engaged event: %s, with actionId: %s", msgId, actionKey);
                             // Send events and resolve the button action
                             SwrveEngageEventSender.sendPushButtonEngagedEvent(context, msgId, actionKey, extras.getString(SwrvePushConstants.PUSH_ACTION_TEXT));
                             PushPayloadButton.ActionType type = (PushPayloadButton.ActionType) extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY);
@@ -65,9 +68,9 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                             // Button has been pressed, now close the notification
                             closeNotification(extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
                         } else {
-                            SwrveLogger.d("Found engaged event: %s", (Object)msgId);
+                            SwrveLogger.d("Found engaged event: %s", msgId);
                             SwrveEngageEventSender.sendPushEngagedEvent(context, msgId);
-                            if(msg.containsKey(SwrvePushConstants.DEEPLINK_KEY)) {
+                            if (msg.containsKey(SwrvePushConstants.DEEPLINK_KEY)) {
                                 openDeeplink(msg, msg.getString(SwrvePushConstants.DEEPLINK_KEY));
                             } else {
                                 openActivity(msg);
@@ -75,12 +78,41 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
                         }
 
                         if (pushSDK.getPushNotificationListener() != null) {
-                            pushSDK.getPushNotificationListener().onPushNotification(msg);
+                            // Convert Bundle root keys to JSONObject and add the _s.JsonPayload ones
+                            JSONObject payload = parseBundle(msg);
+                            pushSDK.getPushNotificationListener().onPushNotification(payload);
                         }
                     }
                 }
             }
         }
+    }
+
+    private JSONObject parseBundle(Bundle bundle) {
+        JSONObject payload = null;
+        if (bundle.containsKey(SwrvePushConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {
+            try {
+                payload = new JSONObject(bundle.getString(SwrvePushConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY));
+            } catch(JSONException ex) {
+                SwrveLogger.e("SwrvePushEngageReceiver. Could not parse deep Json", ex);
+            }
+        }
+
+        if (payload == null) {
+            payload = new JSONObject();
+        }
+
+        for (String key : bundle.keySet()) {
+            if (!key.equals(SwrvePushConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {
+                try {
+                    payload.put(key, bundle.get(key));
+                } catch (JSONException e) {
+                    SwrveLogger.e("SwrvePushEngageReceiver. Could not add key to payload %s", key, e);
+                }
+            }
+        }
+
+        return payload;
     }
 
     protected void closeNotification(int notificationID) {
@@ -89,7 +121,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
     }
 
     private void openDeeplink(Bundle msg, String uri) {
-        SwrveLogger.d("Found push deeplink. Will attempt to open: %s", (Object)uri);
+        SwrveLogger.d("Found push deeplink. Will attempt to open: %s", uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
         msgBundleCopy.remove(SwrvePushConstants.SWRVE_TRACKING_KEY);
         msgBundleCopy.remove(SwrvePushConstants.DEEPLINK_KEY);

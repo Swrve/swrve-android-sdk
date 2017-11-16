@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.os.Bundle;
 
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,70 +20,32 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(mActivity, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
         swrveSpy.init(mActivity);
     }
 
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
     public void testSetRegistrationId() throws Exception {
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued once upon init
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
 
         swrveSpy.setRegistrationId("reg1");
         assertEquals("reg1", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued again so atMost== 2
+        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued again so atMost== 2
 
         swrveSpy.setRegistrationId("reg1");
         assertEquals("reg1", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info NOT queued again because the regId has NOT changed so remains atMost== 2
+        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info NOT queued again because the regId has NOT changed so remains atMost== 2
 
         swrveSpy.setRegistrationId("reg2");
         assertEquals("reg2", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(3)).queueDeviceInfoNow(Mockito.anyBoolean()); // device info queued again because the regId has changed so atMost== 3
-    }
-
-    @Test
-    public void testDeprecatedPushListener() throws Exception {
-        SwrveGoogleUnitTest.TestDeprecatedPushListener deprecatedPushListener = new SwrveGoogleUnitTest.TestDeprecatedPushListener();
-
-        Intent intent = new Intent();
-        Bundle extras = new Bundle();
-        extras.putString("text", "validBundle");
-        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1234");
-        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
-
-        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
-        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
-
-        assertTrue(deprecatedPushListener.pushEngaged == false);
-        assertTrue(deprecatedPushListener.receivedBundle == null);
-
-        //Set listener and generate another message
-        SwrveSDK.setPushNotificationListener(deprecatedPushListener);
-
-        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
-
-        //Expect bundle to have been received
-        assertTrue(deprecatedPushListener.pushEngaged == true);
-        assertTrue(deprecatedPushListener.receivedBundle != null);
-    }
-
-    class TestDeprecatedPushListener implements com.swrve.sdk.gcm.ISwrvePushNotificationListener {
-        public boolean pushEngaged = false;
-        public Bundle receivedBundle = null;
-
-        @Override
-        public void onPushNotification(Bundle bundle) {
-            pushEngaged = true;
-            receivedBundle = bundle;
-        }
+        Mockito.verify(swrveSpy, Mockito.atMost(3)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued again because the regId has changed so atMost== 3
     }
 
     @Test
@@ -99,27 +62,50 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
         assertTrue(pushListener.pushEngaged == false);
-        assertTrue(pushListener.receivedBundle == null);
+        assertTrue(pushListener.receivedPayload == null);
 
-        //Set listener and generate another message
+        // Set listener and generate another message
         SwrveSDK.setPushNotificationListener(pushListener);
 
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
-        //Expect bundle to have been received
+        // Expect bundle to have been received
         assertTrue(pushListener.pushEngaged == true);
-        assertTrue(pushListener.receivedBundle != null);
+        assertTrue(pushListener.receivedPayload != null);
     }
 
-    class TestPushListener implements com.swrve.sdk.ISwrvePushNotificationListener {
+    @Test
+    public void testPushListenerNestedJson() throws Exception {
+        TestPushListener pushListener = new TestPushListener();
+
+        Intent intent = new Intent();
+        Bundle extras = new Bundle();
+        extras.putString("text", "validBundle");
+        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1234");
+        extras.putString(SwrvePushConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "{\"key1\":\"value1\",\"key2\":50,\"text\":\"this_should_be_overwritten\"}");
+        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+
+        SwrveSDK.setPushNotificationListener(pushListener);
+        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+
+        // Expect bundle to have been received
+        assertTrue(pushListener.pushEngaged == true);
+        JSONObject payload = pushListener.receivedPayload;
+        assertTrue(payload != null);
+        assertEquals("validBundle", payload.getString("text"));
+        assertEquals("value1", payload.getString("key1"));
+        assertEquals(50, payload.getInt("key2"));
+    }
+
+    class TestPushListener implements SwrvePushNotificationListener {
         public boolean pushEngaged = false;
-        public Bundle receivedBundle = null;
+        public JSONObject receivedPayload = null;
 
         @Override
-        public void onPushNotification(Bundle bundle) {
+        public void onPushNotification(JSONObject payload) {
             pushEngaged = true;
-            receivedBundle = bundle;
+            receivedPayload = payload;
         }
     }
-
 }

@@ -18,7 +18,6 @@ import com.swrve.sdk.conversations.ui.ConversationFullScreenVideoFrame;
 import java.util.Locale;
 
 public abstract class WebVideoViewBase extends WebView {
-    protected static final String LOG_TAG = "SwrveSDK";
     protected static final String PLAYER_VIDEO_VIMEO = "vimeo";
     protected static final String PLAYER_VIDEO_YOUTUBE = "youtube";
     protected String url;
@@ -68,10 +67,10 @@ public abstract class WebVideoViewBase extends WebView {
 
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-            SwrveLogger.e("SwrveVideoWebViewClient", "Could not display url: " + failingUrl + "\n" +
-                            "Error code: " + Integer.toString(errorCode) + "\n" +
-                            "Message: " + description
-            );
+            SwrveLogger.e("Could not display url: %s\n" +
+                    "Error code: %s\n" +
+                    "Message: %s",
+                    failingUrl, Integer.toString(errorCode), description);
             String placeHolderHtml = "<div style=\"width: 100%; height: " + height + "px\"></div>";
             String pageHtml = "<html><body style=\"margin: 0; padding: 0;\">" + placeHolderHtml + errorHtml + "</body></html>";
             WebVideoViewBase.this.loadDataWithBaseURL(null, pageHtml, "text/html", "utf-8", null);

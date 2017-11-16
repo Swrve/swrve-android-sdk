@@ -16,7 +16,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.swrve.sdk.ISwrveResourcesListener;
+import com.swrve.sdk.SwrveResourcesListener;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 
@@ -53,7 +53,7 @@ public class MessageCenterFragment extends Fragment {
 
         // Subscribe to the user resources and campaigns lister.
         // It will be triggered when new campaigns have been downloaded.
-        SwrveSDK.getInstance().setResourcesListener(new ISwrveResourcesListener() {
+        SwrveSDK.getInstance().setResourcesListener(new SwrveResourcesListener() {
             @Override
             public void onResourcesUpdated() {
                 // Notify the adapter

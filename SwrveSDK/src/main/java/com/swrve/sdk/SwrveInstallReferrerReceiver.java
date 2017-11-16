@@ -15,7 +15,7 @@ public class SwrveInstallReferrerReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         String referrer = intent.getStringExtra(SwrveImp.REFERRER);
-        SwrveLogger.i("Received INSTALL_REFERRER broadcast with referrer:" + referrer);
+        SwrveLogger.i("Received INSTALL_REFERRER broadcast with referrer:%s", referrer);
 
         if (!SwrveHelper.isNullOrEmpty(referrer)) {
             try {

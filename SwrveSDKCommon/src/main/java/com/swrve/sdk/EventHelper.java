@@ -1,14 +1,11 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.localstorage.IMemoryLocalStorage;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Used internally to generate JSON batch strings from event data.
@@ -16,29 +13,18 @@ import java.util.Random;
 final class EventHelper {
     private static final Object BATCH_API_VERSION = "2";
 
-    protected synchronized static short getDeviceId(IMemoryLocalStorage storage) {
-        String id = storage.getSharedCacheEntry("device_id");
-        if (id == null || id.length() <= 0) {
-            short deviceId = (short) new Random().nextInt(Short.MAX_VALUE);
-            storage.setAndFlushSharedEntry("device_id", Short.toString(deviceId));
-            return deviceId;
-        } else {
-            return Short.parseShort(id);
-        }
-    }
-
-    public static String eventAsJSON(String type, Map<String, Object> parameters, int seqnum) throws JSONException {
-        return eventAsJSON(type, parameters, null, seqnum);
+    public static String eventAsJSON(String type, Map<String, Object> parameters, int seqnum, long time) throws JSONException {
+        return eventAsJSON(type, parameters, null, seqnum, time);
     }
 
     /*
      * Generate JSON to be stored in EventLocalStorage and eventually sent to
      * the batch API to inform Swrve of these events.
      */
-    public static String eventAsJSON(String type, Map<String, Object> parameters, Map<String, String> payload, int seqnum) throws JSONException {
+    public static String eventAsJSON(String type, Map<String, Object> parameters, Map<String, String> payload, int seqnum, long time) throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put("type", type);
-        obj.put("time", System.currentTimeMillis());
+        obj.put("time", time);
         if (seqnum > 0) {
             obj.put("seqnum", seqnum);
         }

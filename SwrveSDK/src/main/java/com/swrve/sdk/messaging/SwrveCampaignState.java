@@ -5,14 +5,12 @@ import com.swrve.sdk.SwrveLogger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Used internally to save the state of campaigns
  */
 public class SwrveCampaignState {
-    protected static final String LOG_TAG = "SwrveMessagingSDK";
 
     /**
      * The status of the campaign
@@ -72,7 +70,7 @@ public class SwrveCampaignState {
                 this.status = Status.parse(state.getString("status"));
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error while trying to load campaign settings", e);
+            SwrveLogger.e("Error while trying to load campaign settings", e);
         }
     }
 

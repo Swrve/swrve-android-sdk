@@ -21,16 +21,15 @@ public class ConversationActivity extends FragmentActivity {
     private static final String EXTRA_CONVERSATION_KEY = "conversation";
     private static final String EXTRA_ORIENTATION_KEY = "orientation";
 
-    private static final String LOG_TAG = "SwrveSDK";
     private SwrveBaseConversation localConversation;
     private ConversationFragment conversationFragment;
 
     public static boolean showConversation(Context context, SwrveBaseConversation conversation, SwrveOrientation orientation) {
         if (context == null) {
-            SwrveLogger.e(LOG_TAG, "Can't display ConversationActivity without a context.");
+            SwrveLogger.e("Can't display ConversationActivity without a context.");
             return false;
         } else if (hasUnknownContentAtoms(conversation)) {
-            SwrveLogger.e(LOG_TAG, "This sdk cannot display Conversations with Unknown Atoms. Conversation.id:" + conversation.getId());
+            SwrveLogger.e("This sdk cannot display Conversations with Unknown Atoms. Conversation.id:%s", conversation.getId());
             new SwrveConversationEventHelper().conversationEncounteredError(conversation, "UNKNOWN_ATOM", null);
             return false;
         }
@@ -79,11 +78,11 @@ public class ConversationActivity extends FragmentActivity {
                 conversationFragment = ConversationFragment.create(localConversation);
                 conversationFragment.commitConversationFragment(getSupportFragmentManager());
             } else {
-                SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity. No SwrveConversation was detected");
+                SwrveLogger.e("Could not render ConversationActivity. No SwrveConversation was detected");
                 this.finish();
             }
         } catch (Exception ge) {
-            SwrveLogger.e(LOG_TAG, "Could not render ConversationActivity.", ge);
+            SwrveLogger.e("Could not render ConversationActivity.", ge);
             this.finish();
         }
 
@@ -136,7 +135,7 @@ public class ConversationActivity extends FragmentActivity {
         try {
             allowBackPress = conversationFragment.onBackPressed();
         } catch (NullPointerException ne) {
-            SwrveLogger.e(LOG_TAG, "Could not call the ConversationFragments onBackPressed()", ne);
+            SwrveLogger.e("Could not call the ConversationFragments onBackPressed()", ne);
         }
         if (allowBackPress) {
             super.onBackPressed();

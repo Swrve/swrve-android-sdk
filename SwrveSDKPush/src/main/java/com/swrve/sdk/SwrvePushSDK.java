@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -10,7 +9,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
-import com.swrve.sdk.model.PushPayloadButton;
 import com.swrve.sdk.model.PushPayload;
 import com.swrve.sdk.push.SwrvePushDeDuper;
 
@@ -31,7 +29,6 @@ public class SwrvePushSDK {
     public static final String INFLUENCED_PREFS = "swrve.influenced_data";
 
     protected static SwrvePushSDK instance;
-    private NotificationChannel defaultNotificationChannel;
 
     public static synchronized SwrvePushSDK createInstance(Context context) {
         if (instance == null) {
@@ -41,7 +38,7 @@ public class SwrvePushSDK {
     }
 
     private final Context context;
-    private ISwrvePushNotificationListener pushNotificationListener;
+    private SwrvePushNotificationListener pushNotificationListener;
     private SwrveSilentPushListener silentPushListener;
     private SwrvePushService service;
     private int notificationId;
@@ -54,11 +51,11 @@ public class SwrvePushSDK {
         return instance;
     }
 
-    public ISwrvePushNotificationListener getPushNotificationListener() {
+    public SwrvePushNotificationListener getPushNotificationListener() {
         return pushNotificationListener;
     }
 
-    public void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
+    public void setPushNotificationListener(SwrvePushNotificationListener pushNotificationListener) {
         this.pushNotificationListener = pushNotificationListener;
     }
 
@@ -228,7 +225,7 @@ public class SwrvePushSDK {
                         // Add delta time in minutes
                         payload.put("delta", String.valueOf(deltaMillis / (1000 * 60)));
 
-                        String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, sdk.getNextSequenceNumber());
+                        String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, sdk.getNextSequenceNumber(), System.currentTimeMillis());
                         influencedEvents.add(eventAsJSON);
                     }
                 } catch (JSONException e) {
@@ -236,7 +233,7 @@ public class SwrvePushSDK {
                 }
             }
             if (!influencedEvents.isEmpty()) {
-                sdk.sendEventsWakefully(context, influencedEvents);
+                sdk.sendEventsInBackground(context, sdk.getUserId(), influencedEvents);
             }
 
             // Remove the influence data
@@ -297,14 +294,6 @@ public class SwrvePushSDK {
 
     protected Date getNow() {
         return new Date();
-    }
-
-    public void setDefaultNotificationChannel(NotificationChannel defaultNotificationChannel) {
-        this.defaultNotificationChannel = defaultNotificationChannel;
-    }
-
-    public NotificationChannel getDefaultNotificationChannel() {
-        return defaultNotificationChannel;
     }
 
     public static class InfluenceData {

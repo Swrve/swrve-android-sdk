@@ -1,16 +1,12 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
-import android.content.Intent;
-
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.messaging.ISwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.ISwrveInstallButtonListener;
-import com.swrve.sdk.messaging.ISwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -23,8 +19,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public interface ISwrveBase<T, C extends SwrveConfigBase> {
-
-    T onCreate(Activity activity) throws IllegalArgumentException;
 
     void sessionStart();
 
@@ -48,38 +42,21 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     SwrveResourceManager getResourceManager();
 
-    void setResourcesListener(ISwrveResourcesListener resourcesListener);
+    void setResourcesListener(SwrveResourcesListener resourcesListener);
 
-    void getUserResources(final ISwrveUserResourcesListener listener);
+    void getUserResources(final SwrveUserResourcesListener listener);
 
-    void getUserResourcesDiff(final ISwrveUserResourcesDiffListener listener);
+    void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener);
 
     void sendQueuedEvents();
 
     void flushToDisk();
-
-    void onPause();
-
-    void onResume(Activity activity);
-
-    void onLowMemory();
-
-    void onNewIntent(Intent intent);
-
-    void onDestroy(Activity activity);
 
     void shutdown();
 
     void setLanguage(Locale locale);
 
     String getLanguage();
-
-    /**
-     * Set the current language
-     * @deprecated use {@link #setLanguage(Locale)} instead
-     */
-    @Deprecated
-    void setLanguage(String language);
 
     String getApiKey();
 
@@ -89,24 +66,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void refreshCampaignsAndResources();
 
-    /**
-     * @deprecated In-App-Messages's are now started in their own Activity, so the onPause of your
-     * Activity will execute before IAM displays. Use this to pause any resources instead of checking
-     * for a SwrveMessage by event. The getMessageForEvent will continue to work for now but will be
-     * removed in 5.0.
-     */
-    @Deprecated
-    SwrveMessage getMessageForEvent(String event);
-
-    /**
-     * @deprecated In-App-Messages's are now started in their own Activity, so the onPause of your
-     * Activity will execute before IAM displays. Use this to pause any resources instead of checking
-     * for a SwrveMessage by id. The getMessageForId will continue to work for now but will be
-     * removed in 5.0.
-     */
-    @Deprecated
-    SwrveMessage getMessageForId(int messageId);
-
     void buttonWasPressedByUser(SwrveButton button);
 
     void messageWasShownToUser(SwrveMessageFormat messageFormat);
@@ -115,17 +74,17 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     File getCacheDir();
 
-    void setMessageListener(ISwrveMessageListener messageListener);
+    void setMessageListener(SwrveMessageListener messageListener);
 
     Date getInitialisedTime();
 
-    ISwrveInstallButtonListener getInstallButtonListener();
+    SwrveInstallButtonListener getInstallButtonListener();
 
-    void setInstallButtonListener(ISwrveInstallButtonListener installButtonListener);
+    void setInstallButtonListener(SwrveInstallButtonListener installButtonListener);
 
-    ISwrveCustomButtonListener getCustomButtonListener();
+    SwrveCustomButtonListener getCustomButtonListener();
 
-    void setCustomButtonListener(ISwrveCustomButtonListener customButtonListener);
+    void setCustomButtonListener(SwrveCustomButtonListener customButtonListener);
 
     C getConfig();
 

@@ -30,20 +30,8 @@ public class SwrveLogger {
         }
     }
 
-    public void enableLogging() {
-        swrveLoggerPlanted = false;
-    }
-
-    public void disableLogging() {
-        Timber.uprootAll();
-    }
-
     public static void v(String message, Object... args){
         verbose(LOG_TAG, message, args);
-    }
-
-    public static void v(String tag, String message, Object... args){
-        verbose(tag, message, args);
     }
 
     private static void verbose(String tag, String message, Object... args){
@@ -56,10 +44,6 @@ public class SwrveLogger {
         debug(LOG_TAG, message, args);
     }
 
-    public static void d(String tag, String message, Object... args){
-        debug(tag, message, args);
-    }
-
     private static void debug(String tag, String message, Object... args){
         plantSwrveLogger();
         Timber.tag(tag);
@@ -70,10 +54,6 @@ public class SwrveLogger {
         info(LOG_TAG, message, args);
     }
 
-    public static void i(String tag, String message, Object... args){
-        info(tag, message, args);
-    }
-
     private static void info(String tag, String message, Object... args){
         plantSwrveLogger();
         Timber.tag(tag);
@@ -82,10 +62,6 @@ public class SwrveLogger {
 
     public static void w(String message, Object... args){
         warn(LOG_TAG, message, args);
-    }
-
-    public static void w(String tag, String message, Object... args){
-        warn(tag, message, args);
     }
 
     private static void warn(String tag, String message, Object... args){
@@ -108,10 +84,6 @@ public class SwrveLogger {
         error(LOG_TAG, message, args);
     }
 
-    public static void e(String tag, String message, Object... args){
-        error(tag, message, args);
-    }
-
     private static void error(String tag, String message, Object... args){
         plantSwrveLogger();
         Timber.tag(tag);
@@ -120,10 +92,6 @@ public class SwrveLogger {
 
     public static void e(String message, Throwable t, Object... args){
         error(LOG_TAG, message, t, args);
-    }
-
-    public static void e(String tag, String message, Throwable t, Object... args){
-        error(tag, message, t, args);
     }
 
     private static void error(String tag, String message, Throwable t, Object... args){

@@ -1,7 +1,6 @@
 package com.swrve.sdk.demo;
 
 import android.os.Bundle;
-import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,9 +18,6 @@ import java.util.List;
 /*
  * Example of the Swrve SDK integrated in an Activity.
  *
- * It is VERY important to call the onCreate, onResume, onPause, onDestroy, onNewIntent, onLowMemory
- * methods for the SDK to work properly, at least in the Activities that are going to display
- * Swrve in-app messages, conversations or will be launched from a push notification
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -30,8 +26,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        SwrveSDK.onCreate(this);
 
         root = getLayoutInflater().inflate(R.layout.activity_main, null);
         setContentView(root);
@@ -81,35 +75,5 @@ public class MainActivity extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             return mFragmentTitleList.get(position);
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        SwrveSDK.onResume(this);
-    }
-
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        SwrveSDK.onLowMemory();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        SwrveSDK.onPause();
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        SwrveSDK.onNewIntent(intent);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        SwrveSDK.onDestroy(this);
     }
 }

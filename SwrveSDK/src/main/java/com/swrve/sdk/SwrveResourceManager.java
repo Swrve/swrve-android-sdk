@@ -15,13 +15,12 @@ import java.util.Map;
  */
 public class SwrveResourceManager {
 
-    protected static final String LOG_TAG = "SwrveSDK";
     protected Map<String, SwrveResource> resources;
-    private List<ABTestDetails> abTestDetails;
+    private List<SwrveABTestDetails> abTestDetails;
 
     public SwrveResourceManager() {
         this.resources = new HashMap<String, SwrveResource>();
-        this.abTestDetails = new ArrayList<ABTestDetails>();
+        this.abTestDetails = new ArrayList<SwrveABTestDetails>();
     }
 
     protected void _setResourcesFromJSON(JSONArray jsonResources) {
@@ -38,7 +37,7 @@ public class SwrveResourceManager {
                 }
             }
         } catch (JSONException e) {
-            SwrveLogger.i(LOG_TAG, "Invalid JSON received for resources, resources not updated");
+            SwrveLogger.i("Invalid JSON received for resources, resources not updated");
         }
     }
 
@@ -93,7 +92,7 @@ public class SwrveResourceManager {
         try {
             _setResourcesFromJSON(jsonResources);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
@@ -105,7 +104,7 @@ public class SwrveResourceManager {
         try {
             return _getResources();
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -119,7 +118,7 @@ public class SwrveResourceManager {
         try {
             return _getResource(resourceId);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
     }
@@ -135,7 +134,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsString(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -151,7 +150,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsInt(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -167,7 +166,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsFloat(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -183,7 +182,7 @@ public class SwrveResourceManager {
         try {
             return _getAttributeAsBoolean(resourceId, attributeId, defaultValue);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return defaultValue;
     }
@@ -193,7 +192,7 @@ public class SwrveResourceManager {
      * @param abTestInfoCollectionJson
      */
     public void setABTestDetailsFromJSON(JSONObject abTestInfoCollectionJson) {
-        List<ABTestDetails> result = new ArrayList<ABTestDetails>();
+        List<SwrveABTestDetails> result = new ArrayList<SwrveABTestDetails>();
         try {
             Iterator<String> it = abTestInfoCollectionJson.keys();
             while(it.hasNext()) {
@@ -201,10 +200,10 @@ public class SwrveResourceManager {
                 JSONObject abTestInfoJson = abTestInfoCollectionJson.getJSONObject(id);
                 String name = abTestInfoJson.getString("name");
                 int caseIndex = abTestInfoJson.getInt("case_index");
-                result.add(new ABTestDetails(id, name, caseIndex));
+                result.add(new SwrveABTestDetails(id, name, caseIndex));
             }
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Exception thrown in Swrve SDK, could not parse AB Test details", e);
+            SwrveLogger.e("Exception thrown in Swrve SDK, could not parse AB Test details", e);
         }
         abTestDetails = result;
     }
@@ -214,7 +213,7 @@ public class SwrveResourceManager {
      * flag abTestDetailsEnabled in your configuration.
      * @return
      */
-    public List<ABTestDetails> getABTestDetails() {
+    public List<SwrveABTestDetails> getABTestDetails() {
         return this.abTestDetails;
     }
 }

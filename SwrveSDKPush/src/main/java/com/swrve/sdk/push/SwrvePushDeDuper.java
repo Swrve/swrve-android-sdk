@@ -14,7 +14,6 @@ import java.util.LinkedList;
 
 public class SwrvePushDeDuper {
 
-    private final static String TAG = "SwrvePush";
     private final static String AMAZON_RECENT_PUSH_IDS = "recent_push_ids";
     private final static String AMAZON_PREFERENCES = "swrve_amazon_pref"; // TODO rename this
     protected final int DEFAULT_PUSH_ID_CACHE_SIZE = 16;
@@ -44,13 +43,13 @@ public class SwrvePushDeDuper {
 
         final String timestamp = msg.getString(SwrvePushConstants.TIMESTAMP_KEY);
         if (SwrveHelper.isNullOrEmpty(timestamp)) {
-            SwrveLogger.e(TAG, "Push notification: cannot dedupe as it's missing " + SwrvePushConstants.TIMESTAMP_KEY);
+            SwrveLogger.e("Push notification: cannot dedupe as it's missing %s", SwrvePushConstants.TIMESTAMP_KEY);
             isDupe = true;
         } else {
             String curId = msgId + ":" + timestamp;
             LinkedList<String> recentIds = getRecentNotificationIdCache(context);
             if (recentIds.contains(curId)) {
-                SwrveLogger.i(TAG, "Push notification: but not processing because duplicate Id: " + curId);
+                SwrveLogger.i("Push notification: but not processing because duplicate Id: %s", curId);
                 isDupe =true;
             } else {
                 // Try get de-dupe cache size

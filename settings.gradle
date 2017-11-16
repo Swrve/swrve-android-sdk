@@ -3,6 +3,9 @@ include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDKPush', ':SwrveSDK'
 include ':MultipleGCMProviders'
 project(":MultipleGCMProviders").projectDir = file("samples/MultipleGCMProviders")
 
+include ':MultipleFCMProviders'
+project(":MultipleFCMProviders").projectDir = file("samples/MultipleFCMProviders")
+
 include ':MessageCenter'
 project(":MessageCenter").projectDir = file("samples/MessageCenter")
 

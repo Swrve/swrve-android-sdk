@@ -32,7 +32,6 @@ import java.util.concurrent.Executors;
  */
 public class SwrveQAUser {
     public static final int QA_API_VERSION = 1;
-    protected static final String LOG_TAG = "SwrveSDK";
     protected static final long REST_SESSION_INTERVAL = 1000;
     protected static final long REST_TRIGGER_INTERVAL = 500;
     private static Set<WeakReference<SwrveQAUser>> bindedObjects = new HashSet<>();
@@ -111,7 +110,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, talkSessionJson);
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e("QA request talk session failed", exp);
         }
     }
 
@@ -128,7 +127,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, triggerJson);
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e("QA request talk session failed", exp);
         }
     }
 
@@ -173,7 +172,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, triggerJson);
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e("QA request talk session failed", exp);
         }
     }
 
@@ -217,7 +216,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, triggerJson);
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e("QA request talk session failed", exp);
         }
     }
 
@@ -228,7 +227,7 @@ public class SwrveQAUser {
                 makeRequest(endpoint, deviceJson);
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "QA request device info failed", exp);
+            SwrveLogger.e("QA request device info failed", exp);
         }
     }
 
@@ -244,11 +243,11 @@ public class SwrveQAUser {
                     pushJson.put("badge", "");
                     makeRequest(endpoint, pushJson);
                 } else {
-                    SwrveLogger.e(LOG_TAG, "Push notification does not have a proper _p value");
+                    SwrveLogger.e("Push notification does not have a proper _p value");
                 }
             }
         } catch (Exception exp) {
-            SwrveLogger.e(LOG_TAG, "QA request talk session failed", exp);
+            SwrveLogger.e("QA request talk session failed", exp);
         }
     }
 
@@ -326,13 +325,13 @@ public class SwrveQAUser {
         @Override
         public void onResponse(RESTResponse response) {
             if (!SwrveHelper.successResponseCode(response.responseCode)) {
-                SwrveLogger.e(LOG_TAG, "QA request to " + endpoint + " failed with error code " + response.responseCode + ": " + response.responseBody);
+                SwrveLogger.e("QA request to %s failed with error code %s: %s", endpoint, response.responseCode, response.responseBody);
             }
         }
 
         @Override
         public void onException(Exception exp) {
-            SwrveLogger.e(LOG_TAG, "QA request to " + endpoint + " failed", exp);
+            SwrveLogger.e("QA request to %s failed", exp, endpoint);
         }
     }
 }

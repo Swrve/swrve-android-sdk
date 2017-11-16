@@ -1,8 +1,8 @@
 package com.swrve.sdk;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
@@ -20,7 +20,6 @@ import org.json.JSONObject;
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String FLAVOUR_NAME = "google";
-    protected static final String REGISTRATION_ID_CATEGORY = "RegistrationId";
     protected static final String SWRVE_GCM_TOKEN = "swrve.gcm_token";
     protected static final String SWRVE_GOOGLE_ADVERTISING_ID = "swrve.GAID";
 
@@ -28,10 +27,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected String advertisingId;
     protected boolean isAdvertisingLimitAdTrackingEnabled;
 
-    protected Swrve(Context context, int appId, String apiKey, SwrveConfig config) {
-        super(context, appId, apiKey, config);
-        SwrvePushSDK.createInstance(context)
-                .setDefaultNotificationChannel(config.getDefaultNotificationChannel());
+    protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
+        super(application, appId, apiKey, config);
+        SwrvePushSDK.createInstance(application.getApplicationContext());
     }
 
     @Override
@@ -73,9 +71,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         // Google Advertising Id logging enabled and Google Play services ready
         if (config.isGAIDLoggingEnabled() && isGooglePlayServicesAvailable()) {
             // Load previous value for Advertising ID
-            advertisingId = cachedLocalStorage.getCacheEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY);
-            String isAdvertisingLimitAdTrackingEnabledString = cachedLocalStorage.getCacheEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_LIMIT_AD_TRACKING_CATEGORY);
+            advertisingId = multiLayerLocalStorage.getCacheEntry(getUserId(), CACHE_GOOGLE_ADVERTISING_ID);
+            String isAdvertisingLimitAdTrackingEnabledString = multiLayerLocalStorage.getCacheEntry(getUserId(), CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT);
             isAdvertisingLimitAdTrackingEnabled = Boolean.parseBoolean(isAdvertisingLimitAdTrackingEnabledString);
+            final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
             new AsyncTask<Void, Integer, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {
@@ -85,8 +84,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                         advertisingId = adInfo.getId();
                         isAdvertisingLimitAdTrackingEnabled = adInfo.isLimitAdTrackingEnabled();
 
-                        cachedLocalStorage.setAndFlushSecureSharedEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_ID_CATEGORY, advertisingId, getUniqueKey());
-                        cachedLocalStorage.setAndFlushSecureSharedEntryForUser(getUserId(), SWRVE_GOOGLE_ADVERTISING_LIMIT_AD_TRACKING_CATEGORY, Boolean.toString(isAdvertisingLimitAdTrackingEnabled), getUniqueKey());
+                        multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_GOOGLE_ADVERTISING_ID, advertisingId, getUniqueKey(userId));
+                        multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT, Boolean.toString(isAdvertisingLimitAdTrackingEnabled), getUniqueKey(userId));
                     } catch (Exception ex) {
                         SwrveLogger.e("Couldn't obtain Advertising Id", ex);
                     }
@@ -137,6 +136,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      * Stores the registration ID and app version
      */
     protected void registerInBackground(final Context context) {
+        final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
+        final String sessionToken = profileManager.getSessionToken();
         new AsyncTask<Void, Integer, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
@@ -145,7 +146,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     InstanceID instanceID = InstanceID.getInstance(context);
                     String gcmRegistrationId = instanceID.getToken(config.getSenderId(), null);
                     if (!SwrveHelper.isNullOrEmpty(gcmRegistrationId)) {
-                        setRegistrationId(gcmRegistrationId);
+                        _setRegistrationId(userId, sessionToken, gcmRegistrationId);
                     }
                 } catch (Exception ex) {
                     SwrveLogger.e("Couldn't obtain the GCM registration id for the device", ex);
@@ -168,14 +169,14 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
      */
     protected String getRegistrationId() {
         // Try to get registration id from storage
-        String registrationIdRaw = cachedLocalStorage.getSharedCacheEntry(REGISTRATION_ID_CATEGORY);
+        String registrationIdRaw = multiLayerLocalStorage.getCacheEntry(profileManager.getUserId(), CACHE_REGISTRATION_ID);
         if (SwrveHelper.isNullOrEmpty(registrationIdRaw)) {
             return "";
         }
         // Check if app was updated; if so, it must clear the registration ID
         // since the existing regID is not guaranteed to work with the new
         // app version.
-        String registeredVersion = cachedLocalStorage.getSharedCacheEntry(APP_VERSION_CATEGORY);
+        String registeredVersion = multiLayerLocalStorage.getCacheEntry(profileManager.getUserId(), CACHE_APP_VERSION);
         if (!SwrveHelper.isNullOrEmpty(registeredVersion) && !registeredVersion.equals(appVersion)) {
             return "";
         }
@@ -185,20 +186,28 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     @Override
     public void setRegistrationId(String regId) {
         try {
-            if (registrationId == null || !registrationId.equals(regId)) {
-                registrationId = regId;
-                if (qaUser != null) {
-                    qaUser.logDeviceInfo(getDeviceInfo());
-                }
-
-                // Store registration id and app version
-                cachedLocalStorage.setAndFlushSharedEntry(REGISTRATION_ID_CATEGORY, registrationId);
-                cachedLocalStorage.setAndFlushSharedEntry(APP_VERSION_CATEGORY, appVersion);
-                // Re-send data now
-                queueDeviceInfoNow(true);
+            if(profileManager != null && profileManager.isLoggedIn()) {
+                final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
+                final String sessionToken = profileManager.getSessionToken();
+                _setRegistrationId(userId, sessionToken, regId);
             }
         } catch (Exception ex) {
             SwrveLogger.e("Couldn't save the GCM registration id for the device", ex);
+        }
+    }
+
+    private void _setRegistrationId(String userId, String sessionToken, String regId) throws Exception {
+        if (registrationId == null || !registrationId.equals(regId)) {
+            registrationId = regId;
+            if (qaUser != null) {
+                qaUser.logDeviceInfo(getDeviceInfo());
+            }
+
+            // Store registration id and app version
+            multiLayerLocalStorage.setCacheEntry(userId, CACHE_REGISTRATION_ID, registrationId);
+            multiLayerLocalStorage.setCacheEntry(userId, CACHE_APP_VERSION, appVersion);
+            // Re-send data now
+            queueDeviceInfoNow(userId, sessionToken, true);
         }
     }
 
@@ -233,13 +242,5 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             return false;
         }
         return true;
-    }
-
-    /**
-     * @deprecated Swrve engaged events are automatically sent, so this is no longer needed.
-     */
-    @Deprecated
-    public void processIntent(Intent intent) {
-        SwrveLogger.e("The processIntent method is Deprecated and should not be used anymore");
     }
 }

@@ -1,8 +1,8 @@
 package com.swrve.sdk;
 
 
+import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfig;
 
@@ -10,33 +10,35 @@ public class SwrveSDK extends SwrveSDKBase {
 
     /**
      * Create a single Swrve SDK instance.
-     * @param context your activity or application context
+     * @param application your application context
      * @param appId   your app id in the Swrve dashboard
      * @param apiKey  your app api_key in the Swrve dashboard
      * @return singleton SDK instance.
      */
-    public static synchronized ISwrve createInstance(final Context context, final int appId, final String apiKey) {
-        return createInstance(context, appId, apiKey, new SwrveConfig());
+    public static synchronized ISwrve createInstance(final Application application, final int appId, final String apiKey) {
+        return createInstance(application, appId, apiKey, new SwrveConfig());
     }
 
     /**
      * Create a single Swrve SDK instance.
-     * @param context your activity or application context
+     * @param application your application context
      * @param appId   your app id in the Swrve dashboard
      * @param apiKey  your app api_key in the Swrve dashboard
      * @param config  your SwrveConfig options
      * @return singleton SDK instance.
      */
-    public static synchronized ISwrve createInstance(final Context context, final int appId, final String apiKey, final SwrveConfig config) {
-        if (context == null) {
-            SwrveHelper.logAndThrowException("Context not specified");
+    public static synchronized ISwrve createInstance(final Application application, final int appId, final String apiKey, final SwrveConfig config) {
+        if (application == null) {
+            SwrveHelper.logAndThrowException("Application is null");
+        } else if (SwrveHelper.isNullOrEmpty(apiKey)) {
+            SwrveHelper.logAndThrowException("Api key not specified");
         }
 
-        if (!SwrveHelper.sdkAvailable()) {
-            instance =  new SwrveEmpty(context, apiKey);
+        if (!SwrveHelper.sdkAvailable(config.getModelBlackList())) {
+            instance =  new SwrveEmpty(application, apiKey);
         }
         if (instance == null) {
-            instance = new Swrve(context, appId, apiKey, config);
+            instance = new Swrve(application, appId, apiKey, config);
         }
         return (ISwrve) instance;
     }
@@ -56,7 +58,7 @@ public class SwrveSDK extends SwrveSDKBase {
      *
      * @param pushNotificationListener
      */
-    public static void setPushNotificationListener(ISwrvePushNotificationListener pushNotificationListener) {
+    public static void setPushNotificationListener(SwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
         SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
         if (pushSDK != null) {
@@ -128,16 +130,6 @@ public class SwrveSDK extends SwrveSDKBase {
     public static void onTokenRefreshed() {
         checkInstanceCreated();
         ((ISwrve) instance).onTokenRefreshed();
-    }
-
-    /**
-     * @param intent The intent that opened the activity
-     * @deprecated Swrve engaged events are automatically sent, so this is no longer needed.
-     */
-    @Deprecated
-    public static void processIntent(Intent intent) {
-        checkInstanceCreated();
-        ((ISwrve) instance).processIntent(intent);
     }
 
     /**

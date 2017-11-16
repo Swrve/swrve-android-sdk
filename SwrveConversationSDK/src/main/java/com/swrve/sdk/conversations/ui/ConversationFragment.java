@@ -55,7 +55,6 @@ import java.util.Map;
 import static com.swrve.sdk.conversations.ui.SwrveConversationHelper.setBackgroundDrawable;
 
 public class ConversationFragment extends Fragment implements OnClickListener, ConversationInputChangedListener {
-    private static final String LOG_TAG = "SwrveSDK";
 
     private ViewGroup root;
     private LinearLayout contentLayout;
@@ -150,7 +149,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
             renderControls(activity);
             renderContent(activity);
         } catch (Exception e) {
-            SwrveLogger.e(LOG_TAG, "Error rendering conversation page. Exiting conversation.", e);
+            SwrveLogger.e("Error rendering conversation page. Exiting conversation.", e);
             sendErrorNavigationEvent(page.getTag(), e);
             activity.finish();
             return;
@@ -250,7 +249,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                         setBackgroundDrawable(iv, colorStyle.getPrimaryDrawable());
                         contentLayout.addView(iv);
                     } else {
-                        SwrveLogger.e(LOG_TAG, "Could not render conversation asset image because there is no read access to:" + filePath);
+                        SwrveLogger.e("Could not render conversation asset image because there is no read access to:%s", filePath);
                     }
                 } else if (modelType == ConversationAtom.TYPE.CONTENT_HTML) {
                     HtmlSnippetView view = new HtmlSnippetView(activity, modelContent, swrveConversation.getCacheDir());
@@ -382,7 +381,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     // Unknown button type was clicked
                 }
             } catch (Exception exp) {
-                SwrveLogger.e(LOG_TAG, "Could not process button action", exp);
+                SwrveLogger.e("Could not process button action", exp);
             }
         }
     }
@@ -391,7 +390,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
      * Go through each of the recorded interactions the user has with the page and queue them as events
      */
     public void commitUserInputsToEvents() {
-        SwrveLogger.i(LOG_TAG, "Commiting all stashed events");
+        SwrveLogger.i("Commiting all stashed events");
         ArrayList<UserInputResult> userInputEvents = new ArrayList<UserInputResult>();
         for (String k : userInteractionData.keySet()) {
             UserInputResult r = userInteractionData.get(k);
@@ -422,14 +421,14 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
             eventHelper.sendQueuedEvents();
             openConversationOnPage(nextPage);
         } else if (control.hasActions()) {
-            SwrveLogger.i(LOG_TAG, "User has selected an Action. They are now finished the conversation");
+            SwrveLogger.i("User has selected an Action. They are now finished the conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag());
             Activity activity = getActivity();
             if (isAdded() && activity != null) {
                 activity.finish();
             }
         } else {
-            SwrveLogger.i(LOG_TAG, "No more pages in this conversation");
+            SwrveLogger.i("No more pages in this conversation");
             sendDoneNavigationEvent(page.getTag(), control.getTag()); // No exception. We just couldn't find a page attached to the control.
             Activity activity = getActivity();
             if (isAdded() && activity != null) {

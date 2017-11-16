@@ -1,10 +1,7 @@
 package com.swrve.sdk;
 
-import android.content.Context;
 import android.os.Build;
 import android.util.Base64;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,6 +20,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,8 +33,9 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public final class SwrveHelper {
 
-    public static final String LOG_TAG = "SwrveSDK";
     private static final String CHARSET = "UTF-8";
+
+    protected static String buildModel = Build.MODEL;
 
     public static boolean isNullOrEmpty(String val) {
         return (val == null || val.length() == 0);
@@ -83,7 +82,7 @@ public final class SwrveHelper {
                 }
                 return hexDigest.toString();
             } catch (NoSuchAlgorithmException nsae) {
-                SwrveLogger.wtf(LOG_TAG, "Couldn't find MD5 - what a strange JVM", nsae);
+                SwrveLogger.wtf("Couldn't find MD5 - what a strange JVM", nsae);
                 return "";
             }
         }
@@ -106,7 +105,7 @@ public final class SwrveHelper {
                 }
                 return hexDigest.toString();
             } catch (NoSuchAlgorithmException nsae) {
-                SwrveLogger.wtf(LOG_TAG, "Couldn't find SHA1 - what a strange JVM", nsae);
+                SwrveLogger.wtf("Couldn't find SHA1 - what a strange JVM", nsae);
                 return "";
             }
         }
@@ -158,7 +157,7 @@ public final class SwrveHelper {
     }
 
     public static void logAndThrowException(String reason) throws IllegalArgumentException {
-        SwrveLogger.e(LOG_TAG, reason);
+        SwrveLogger.e(reason);
         throw new IllegalArgumentException(reason);
     }
 
@@ -192,8 +191,22 @@ public final class SwrveHelper {
     }
 
     public static boolean sdkAvailable() {
+        return sdkAvailable(null);
+    }
+
+    public static boolean sdkAvailable(List<String> modelBlackList) {
         // Returns true if current SDK is higher or equal than 4.X (API 14)
-        return (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH);
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            // Ignore the Calypso
+            if (modelBlackList == null || !modelBlackList.contains(buildModel)) {
+                return true;
+            } else {
+                SwrveLogger.i("Current device is part of the model blacklist");
+            }
+        } else {
+            SwrveLogger.i("SDK not initialised as it is under API 14");
+        }
+        return false;
     }
 
     public static boolean hasFileAccess(String filePath) {
@@ -201,16 +214,6 @@ public final class SwrveHelper {
             return true;
         }
         File file = new File(filePath);
-        if (file.canRead()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public static float convertDipToPixels(Context context, float dipValue) {
-        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        float pixelValue = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
-        return pixelValue;
+        return file.canRead();
     }
 }

@@ -3,7 +3,7 @@ package com.swrve.sdk.config;
 /**
  * Configuration for the Swrve Firebase SDK.
  */
-public class SwrveConfig extends SwrveConfigPushBase {
+public class SwrveConfig extends SwrveConfigBase {
 
     /**
      * Automatically get the Firebase Registration ID.

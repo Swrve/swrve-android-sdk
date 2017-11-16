@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 class SwrveCommon {
-    private static final String LOG_TAG = "SwrveCommon";
     private static ISwrveCommon instance;
     private static Runnable toRunIfNull;
 
@@ -15,7 +14,7 @@ class SwrveCommon {
         }
 
         if (instance == null) {
-            SwrveLogger.e(LOG_TAG, "Please call SwrveSDK.createInstance first in your Application class.");
+            SwrveLogger.e("Please call SwrveSDK.createInstance first in your Application class.");
             throw new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
         }
     }

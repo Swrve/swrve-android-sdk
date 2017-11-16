@@ -37,7 +37,6 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
         if (server != null) {
             server.shutdown();
         }

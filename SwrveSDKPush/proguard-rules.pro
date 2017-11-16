@@ -1,6 +1,5 @@
 # GSON proguard config
 -keepattributes Signature
 -keepattributes *Annotation*
--dontwarn sun.misc.Unsafe
--keep class sun.misc.Unsafe { *; }
+-dontwarn sun.misc.**
 -keep class com.swrve.sdk.model.** { *; }

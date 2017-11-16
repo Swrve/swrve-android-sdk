@@ -18,7 +18,6 @@ import java.util.Set;
  * Swrve campaign containing messages targeted for the current device and user id.
  */
 public abstract class SwrveBaseCampaign {
-    protected static final String LOG_TAG = "SwrveSDK";
 
     // Default campaign throttle limits
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 180;
@@ -51,7 +50,7 @@ public abstract class SwrveBaseCampaign {
         this.campaignDisplayer = campaignDisplayer;
 
         this.id = campaignData.getInt("id");
-        SwrveLogger.i(LOG_TAG, "Parsing campaign " + id);
+        SwrveLogger.i("Parsing campaign %s", id);
 
         this.messageCenter = campaignData.optBoolean("message_center", false);
         this.subject = campaignData.isNull("subject") ? "" : campaignData.getString("subject");

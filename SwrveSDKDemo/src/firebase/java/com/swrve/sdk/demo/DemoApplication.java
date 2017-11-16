@@ -1,12 +1,14 @@
 package com.swrve.sdk.demo;
 
 import android.app.Application;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.ISwrvePushNotificationListener;
+import com.swrve.sdk.SwrvePushNotificationListener;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class DemoApplication extends Application {
 
@@ -24,13 +26,17 @@ public class DemoApplication extends Application {
             SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY, config);
             // Comment the following lines if you do not want to do Firebase push notifications
             // React to the push notification when the user clicks on it
-            SwrveSDK.setPushNotificationListener(new ISwrvePushNotificationListener() {
+            SwrveSDK.setPushNotificationListener(new SwrvePushNotificationListener() {
                 @Override
-                public void onPushNotification(Bundle bundle) {
-                    if (bundle.containsKey("custom_key")) {
-                        String customValue = bundle.getString("custom_key");
-                        // Do something awesome with custom value!
-                        Log.d("DemoApplication", "Received push payload " + customValue);
+                public void onPushNotification(JSONObject payload) {
+                    try {
+                        if (payload.has("custom_key")) {
+                            String customValue = payload.getString("custom_key");
+                            // Do something awesome with custom value!
+                            Log.d("DemoApplication", "Received push payload " + customValue);
+                        }
+                    } catch(JSONException exp) {
+                        exp.printStackTrace();
                     }
                 }
             });

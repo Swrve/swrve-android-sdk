@@ -2,9 +2,9 @@ package com.swrve.sdk;
 
 import android.content.Context;
 
-import com.swrve.sdk.conversations.ISwrveConversationListener;
+import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.messaging.ISwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
@@ -17,10 +17,10 @@ import java.util.Map;
 public class SwrveEventListener implements ISwrveEventListener {
 
     private WeakReference<SwrveBase<?, ?>> talk;
-    private ISwrveMessageListener messageListener;
-    private ISwrveConversationListener conversationListener;
+    private SwrveMessageListener messageListener;
+    private SwrveConversationListener conversationListener;
 
-    public SwrveEventListener(SwrveBase<?, ?> talk, ISwrveMessageListener messageListener, ISwrveConversationListener conversationListener) {
+    public SwrveEventListener(SwrveBase<?, ?> talk, SwrveMessageListener messageListener, SwrveConversationListener conversationListener) {
         this.talk = new WeakReference<SwrveBase<?, ?>>(talk);
         this.messageListener = messageListener;
         this.conversationListener = conversationListener;
@@ -30,7 +30,7 @@ public class SwrveEventListener implements ISwrveEventListener {
     public void onEvent(String eventName, Map<String, String> payload) {
         if (conversationListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
             SwrveBase<?, ?> talkRef = talk.get();
-            if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
+            if (talkRef != null) {
                 SwrveConversation conversation = talkRef.getConversationForEvent(eventName, payload);
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
@@ -41,7 +41,7 @@ public class SwrveEventListener implements ISwrveEventListener {
 
         if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
             SwrveBase<?, ?> talkRef = talk.get();
-            if (talkRef != null && talkRef.getConfig().isTalkEnabled()) {
+            if (talkRef != null) {
                 SwrveOrientation deviceOrientation = SwrveOrientation.Both;
                 Context ctx = talkRef.getContext();
                 if (ctx != null) {
