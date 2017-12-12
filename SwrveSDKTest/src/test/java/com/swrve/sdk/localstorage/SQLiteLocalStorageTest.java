@@ -2,6 +2,8 @@ package com.swrve.sdk.localstorage;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(RobolectricTestRunner.class)
 public class SQLiteLocalStorageTest extends BaseLocalStorage {
 
     int maxSize = 2024 * 1024 * 1024;

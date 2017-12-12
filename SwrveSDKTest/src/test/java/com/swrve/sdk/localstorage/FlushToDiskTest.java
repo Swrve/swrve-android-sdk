@@ -1,5 +1,6 @@
 package com.swrve.sdk.localstorage;
 
+import android.os.Build;
 import android.util.Log;
 
 import com.swrve.sdk.SwrveLogger;
@@ -18,7 +19,7 @@ import java.util.LinkedHashMap;
 import static junit.framework.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk=25)
+@Config(sdk = Build.VERSION_CODES.N_MR1)
 public class FlushToDiskTest  {
     private LocalStorage primaryLocalStorage;
     private LocalStorage secondaryLocalStorage;

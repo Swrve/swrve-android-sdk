@@ -5,7 +5,9 @@ import android.app.Application;
 import android.os.Build;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.robolectric.RobolectricTestRunner;
 
 import static org.robolectric.RuntimeEnvironment.application;
 

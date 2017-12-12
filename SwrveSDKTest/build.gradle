@@ -10,9 +10,6 @@ android {
         applicationId 'com.swrve.sdk.test'
     }
 
-    // Needed to publish all variants
-    publishNonDefault true
-
     buildTypes {
         release { }
         debug {
@@ -22,11 +19,27 @@ android {
         }
     }
 
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+
+    flavorDimensions "swrve-sdk"
+
     productFlavors {
-        core {}
-        google {}
-        amazon {}
-        firebase {}
+        core {
+            flavorDimensions "swrve-sdk"
+        }
+        google {
+            flavorDimensions "swrve-sdk"
+        }
+        amazon {
+            flavorDimensions "swrve-sdk"
+        }
+        firebase {
+            flavorDimensions "swrve-sdk"
+        }
     }
 
     lintOptions {
@@ -37,23 +50,20 @@ android {
 }
 
 dependencies {
-    // SDKs
-    coreCompile project(path: ':SwrveSDK', configuration: 'coreDebug')
-    googleCompile project(path: ':SwrveSDK', configuration: 'googleDebug')
-    amazonCompile project(path: ':SwrveSDK', configuration: 'amazonDebug')
-    firebaseCompile project(path: ':SwrveSDK', configuration: 'firebaseDebug')
+    // SDK
+    api project(path: ':SwrveSDK')
 
     // Unit tests
-    testCompile 'org.mockito:mockito-core:1.9.0'
-    testCompile 'org.robolectric:shadows-support-v4:3.4-rc2'
-    testCompile 'org.robolectric:shadows-httpclient:3.4-rc2'
+    testApi 'org.mockito:mockito-core:1.9.0'
+    testApi 'org.robolectric:shadows-support-v4:3.4-rc2'
+    testApi 'org.robolectric:shadows-httpclient:3.4-rc2'
 
     // Robolectric tests
-    testCompile 'junit:junit:4.12'
-    testCompile('org.robolectric:robolectric:3.4.2') {
+    testApi 'junit:junit:4.12'
+    testApi('org.robolectric:robolectric:3.5.1') {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
 
-    testCompile 'com.squareup.okhttp3:mockwebserver:3.4.1'
+    testApi 'com.squareup.okhttp3:mockwebserver:3.9.0'
 }

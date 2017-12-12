@@ -6,7 +6,9 @@ import android.os.Bundle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import static org.junit.Assert.assertEquals;
@@ -14,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.json.JSONObject;
 
+@RunWith(RobolectricTestRunner.class)
 public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;

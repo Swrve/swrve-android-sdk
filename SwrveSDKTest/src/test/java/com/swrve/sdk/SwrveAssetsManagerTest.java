@@ -3,8 +3,10 @@ package com.swrve.sdk;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.robolectric.RobolectricTestRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

@@ -2,6 +2,8 @@ package com.swrve.sdk.localstorage;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.LinkedHashMap;
@@ -9,6 +11,7 @@ import java.util.LinkedHashMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+@RunWith(RobolectricTestRunner.class)
 public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
     private LocalStorage primaryLocalStorage;
     private LocalStorage secondaryLocalStorage;

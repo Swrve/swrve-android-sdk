@@ -18,23 +18,23 @@ import android.view.WindowManager;
 
 import com.swrve.sdk.SwrveCampaignDisplayer.Result;
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -809,8 +809,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                                     // If json contains location campaigns then save it to sqlite cache to be used by the location sdk
                                     if (responseJson.has("location_campaigns")) {
-                                        JSONObject campaignJson = responseJson.getJSONObject("location_campaigns");
-                                        saveLocationCampaignsInCache(campaignJson);
+                                        JSONObject locationCampaignsJson = responseJson.getJSONObject("location_campaigns");
+                                        saveLocationCampaignsInCache(locationCampaignsJson);
+                                        QaUser.locationCampaignsDownloaded();
                                     }
 
                                     if (responseJson.has("user_resources")) {
@@ -1641,7 +1642,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setLocationSegmentVersion(int locationSegmentVersion) {
+    public void setLocationSegmentVersion(final int locationSegmentVersion) {
         this.locationSegmentVersion = locationSegmentVersion;
     }
 

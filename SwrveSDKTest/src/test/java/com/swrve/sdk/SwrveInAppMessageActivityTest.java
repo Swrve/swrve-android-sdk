@@ -18,9 +18,11 @@ import com.swrve.sdk.messaging.view.SwrveMessageView;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowView;
@@ -95,8 +97,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
-        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class);
-        SwrveInAppMessageActivity activity = activityController.withIntent(mShadowActivity.peekNextStartedActivity()).create().start().visible().get();
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
 
         ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
@@ -146,9 +148,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testCreateActivityWithNoMessageAndFinishes() throws Exception {
-        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class);
         Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
-        SwrveInAppMessageActivity activity = activityController.withIntent(intent).create().start().visible().get();
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
         assertTrue(activity.isFinishing());
     }
@@ -401,8 +403,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     private Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> createActivityFromPeekIntent(Intent intent) {
-        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class);
-        return new Pair(activityController, activityController.withIntent(intent).create().start().visible().get());
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
+        return new Pair(activityController, activityController.create().start().visible().get());
     }
 
     /**

@@ -24,6 +24,7 @@ interface ISwrveCommon {
     String CACHE_GOOGLE_ADVERTISING_ID = "GoogleAdvertisingId";
     String CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT = "GoogleAdvertisingLimitAdTrackingEnabled";
     String CACHE_REGISTRATION_ID = "RegistrationId";
+    String CACHE_QA = "swrve.q1";
 
     // device info
     String SWRVE_DEVICE_NAME                = "swrve.device_name";

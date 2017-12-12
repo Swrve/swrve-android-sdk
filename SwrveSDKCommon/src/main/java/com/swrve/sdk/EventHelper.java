@@ -40,6 +40,17 @@ final class EventHelper {
         return obj.toString();
     }
 
+    public static String qaLogEventAsJSON(int seqnum, long time, String logSource, String logType, String logDetails) throws JSONException {
+        JSONObject obj = new JSONObject();
+        obj.put("seqnum", seqnum);
+        obj.put("time", time);
+        obj.put("type", "qa_log_event");
+        obj.put("log_source", logSource);
+        obj.put("log_type", logType);
+        obj.put("log_details", new JSONObject(logDetails));
+        return obj.toString();
+    }
+
     /*
      * Generate JSON in the format expected by the batch API to inform Swrve of
      * these events.

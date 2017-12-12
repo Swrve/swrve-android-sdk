@@ -11,9 +11,13 @@ import com.swrve.sdk.model.PushPayload;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertNull;
 
+@RunWith(RobolectricTestRunner.class)
 public class PushPayloadTest extends SwrveBaseTest {
 
     @Before

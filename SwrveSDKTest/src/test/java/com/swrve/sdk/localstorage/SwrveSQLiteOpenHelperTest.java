@@ -12,6 +12,8 @@ import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.SwrveTestUtils;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.Arrays;
@@ -28,6 +30,7 @@ import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.SWRVE_DB_VERSION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(RobolectricTestRunner.class)
 public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
 
     @Test

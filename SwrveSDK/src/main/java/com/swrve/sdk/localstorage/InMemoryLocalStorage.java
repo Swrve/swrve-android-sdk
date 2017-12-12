@@ -24,6 +24,7 @@ public class InMemoryLocalStorage implements LocalStorage {
 
     @Override
     public synchronized long addEvent(String userId, String eventJSON) {
+        long storedEventId = 0;
         if (userId == null || eventJSON == null) {
             SwrveLogger.e("Cannot set null value for event in userId:%s eventJSON:%s", userId, eventJSON);
         } else if (getEventsSize() >= MAX_ELEMENTS) {
@@ -38,8 +39,9 @@ public class InMemoryLocalStorage implements LocalStorage {
             newEvent.event = eventJSON;
             events.add(newEvent);
             eventsPerUserId.put(userId, events);
+            storedEventId = newEvent.id;
         }
-        return 0;
+        return storedEventId;
     }
 
     @Override

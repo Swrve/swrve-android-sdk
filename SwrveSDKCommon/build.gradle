@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
@@ -16,7 +17,7 @@ android {
 }
 
 dependencies {
-    compile 'com.jakewharton.timber:timber:4.5.1'
+    api 'com.jakewharton.timber:timber:4.5.1'
 }
 
 apply plugin: 'maven-publish'
@@ -30,7 +31,7 @@ publishing {
     }
 
     publications {
-        main(MavenPublication) {
+        maven(MavenPublication) {
             artifactId project.SWRVE_COMMON_ARTIFACT_ID
             groupId project.SWRVE_GROUP_ID
             version project.SWRVE_SDK_VERSION
@@ -42,7 +43,7 @@ publishing {
                 def dependenciesNode = asNode().appendNode('dependencies')
 
                 // Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-                configurations.compile.allDependencies.each {
+                configurations.getByName("releaseCompileClasspath").allDependencies.each {
                     def dependencyNode = dependenciesNode.appendNode('dependency')
                     dependencyNode.appendNode('groupId', it.group)
                     dependencyNode.appendNode('artifactId', it.name)
@@ -75,3 +76,21 @@ task androidCommonSourcesJar(type: Jar) {
     from files(android.sourceSets.main.java.srcDirs)
 }
 
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    pkg {
+        repo = 'android'
+        name = project.SWRVE_COMMON_ARTIFACT_ID
+        userOrg = 'swrve-inc'
+        licenses = ['Apache-2.0']
+        desc = 'Swrve SDK'
+        websiteUrl = "https://www.swrve.com"
+        publish = true
+        version {
+            name = project.SWRVE_SDK_VERSION
+        }
+    }
+    publications = ['maven']
+
+}

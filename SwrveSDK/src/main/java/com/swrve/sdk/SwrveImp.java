@@ -16,21 +16,21 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.InMemoryLocalStorage;
 import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
@@ -66,6 +66,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_LOCATION_CAMPAIGNS;
+import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
 
 /**
@@ -73,7 +74,7 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "5.0";
+    protected static String version = "5.1";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
@@ -489,6 +490,16 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         });
     }
 
+    protected void saveIsQaUserInCache(final boolean isQaUser) {
+        final String userId = profileManager.getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
+        storageExecutorExecute(new Runnable() {
+            @Override
+            public void run() {
+                multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA, String.valueOf(isQaUser), getUniqueKey(userId));
+            }
+        });
+    }
+
     protected void autoShowMessages() {
         // Don't do anything if we've already shown a message or if its too long after session start
         if (!autoShowMessagesEnabled) {
@@ -661,9 +672,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         campaignsDownloaded.put(campaignId, campaignReason);
                     }
                 }
+                saveIsQaUserInCache(true);
+                QaUser.update();
             } else if (qaUser != null) {
                 qaUser.unbindToServices();
                 qaUser = null;
+                saveIsQaUserInCache(false);
             }
 
             JSONArray jsonCampaigns = json.getJSONArray("campaigns");

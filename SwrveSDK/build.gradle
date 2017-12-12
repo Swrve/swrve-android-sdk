@@ -1,11 +1,9 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
     buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
-
-    // Needed to publish all variants
-    publishNonDefault true
 
     defaultConfig {
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
@@ -18,13 +16,22 @@ android {
         debug {}
     }
 
+    flavorDimensions "swrve-sdk"
+
     productFlavors {
-        core {}
-        google {}
+        core {
+            flavorDimensions "swrve-sdk"
+        }
+        google {
+            flavorDimensions "swrve-sdk"
+        }
         amazon {
+            flavorDimensions "swrve-sdk"
             consumerProguardFiles 'amazon-proguard-rules.pro'
         }
-        firebase {}
+        firebase {
+            flavorDimensions "swrve-sdk"
+        }
     }
 
     lintOptions {
@@ -33,22 +40,22 @@ android {
 }
 
 dependencies {
-    compile project(':SwrveSDKCommon')
-    compile project(':SwrveConversationSDK')
-    compile 'com.google.code.gson:gson:2.2.+'
-    compile 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    googleCompile 'com.google.android.gms:play-services-gcm:' + project.GOOGLE_GMS_TOOLS_VERSION
-    googleCompile 'com.google.android.gms:play-services-ads:' + project.GOOGLE_GMS_TOOLS_VERSION
-    googleCompile project(':SwrveSDKPush')
-    amazonCompile project(':SwrveSDKPush')
+    api project(':SwrveSDKCommon')
+    api project(':SwrveConversationSDK')
+    api 'com.google.code.gson:gson:2.2.+'
+    api 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    googleApi 'com.google.android.gms:play-services-gcm:' + project.GOOGLE_GMS_TOOLS_VERSION
+    googleApi 'com.google.android.gms:play-services-ads:' + project.GOOGLE_GMS_TOOLS_VERSION
+    googleApi project(':SwrveSDKPush')
+    amazonApi project(':SwrveSDKPush')
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead. If compiling amazon flavour from source you should delete the
     // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon
     // Developer portal (https://developer.amazon.com/device-messaging).
-    amazonProvided fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
-    firebaseCompile project(':SwrveSDKPush')
-    firebaseCompile 'com.google.android.gms:play-services-base:' + project.FIREBASE_TOOLS_VERSION
-    firebaseCompile 'com.google.firebase:firebase-messaging:' + project.FIREBASE_TOOLS_VERSION
+    amazonCompileOnly fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
+    firebaseApi project(':SwrveSDKPush')
+    firebaseApi 'com.google.android.gms:play-services-base:' + project.FIREBASE_TOOLS_VERSION
+    firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_TOOLS_VERSION
 }
 
 apply plugin: 'maven-publish'
@@ -75,7 +82,8 @@ publishing {
                 def dependenciesNode = asNode().appendNode('dependencies')
 
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-                configurations.compile.allDependencies.each {
+
+                configurations.getByName("coreReleaseCompileClasspath").allDependencies.each {
                     if (it.group == null || it.name == null || it.version == null) {
                         logger.log(LogLevel.ERROR, "Invalid dependency")
                     } else {
@@ -96,18 +104,6 @@ publishing {
                             dependencyNode.appendNode('version', it.version)
                             dependencyNode.appendNode('scope', 'compile')
                         }
-                    }
-                }
-
-                configurations.coreCompile.allDependencies.each {
-                    if (it.group == null || it.name == null || it.version == null) {
-                        logger.log(LogLevel.ERROR, "Invalid dependency")
-                    } else {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
-                        dependencyNode.appendNode('scope', 'compile')
                     }
                 }
             }
@@ -124,7 +120,7 @@ publishing {
                 def dependenciesNode = asNode().appendNode('dependencies')
 
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-                configurations.compile.allDependencies.each {
+                configurations.getByName("googleReleaseCompileClasspath").allDependencies.each {
                     if (it.group == null || it.name == null || it.version == null) {
                         logger.log(LogLevel.ERROR, "Invalid dependency")
                     } else {
@@ -150,24 +146,6 @@ publishing {
                             dependencyNode.appendNode('version', it.version)
                             dependencyNode.appendNode('scope', 'compile')
                         }
-                    }
-                }
-
-                configurations.googleCompile.allDependencies.each {
-                    if (it.group == null || it.name == null || it.version == null) {
-                        logger.log(LogLevel.ERROR, "Invalid dependency")
-                    } else if (it.name == 'SwrveSDKPush') {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                        dependencyNode.appendNode('artifactId', project.SWRVE_PUSH_ARTIFACT_ID)
-                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                        dependencyNode.appendNode('scope', 'compile')
-                    } else {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
-                        dependencyNode.appendNode('scope', 'compile')
                     }
                 }
             }
@@ -184,7 +162,7 @@ publishing {
                 def dependenciesNode = asNode().appendNode('dependencies')
 
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-                configurations.compile.allDependencies.each {
+                configurations.getByName("amazonReleaseCompileClasspath").allDependencies.each {
                     if (it.group == null || it.name == null || it.version == null) {
                         logger.log(LogLevel.ERROR, "Invalid dependency")
                     } else {
@@ -212,24 +190,6 @@ publishing {
                         }
                     }
                 }
-
-                configurations.amazonCompile.allDependencies.each {
-                    if (it.group == null || it.name == null || it.version == null) {
-                        logger.log(LogLevel.ERROR, "Invalid dependency")
-                    } else if (it.name == 'SwrveSDKPush') {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                        dependencyNode.appendNode('artifactId', project.SWRVE_PUSH_ARTIFACT_ID)
-                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                        dependencyNode.appendNode('scope', 'compile')
-                    } else {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
-                        dependencyNode.appendNode('scope', 'compile')
-                    }
-                }
             }
         }
         firebase(MavenPublication) {
@@ -244,7 +204,7 @@ publishing {
                 def dependenciesNode = asNode().appendNode('dependencies')
 
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-                configurations.compile.allDependencies.each {
+                configurations.getByName("firebaseReleaseCompileClasspath").allDependencies.each {
                     if (it.group == null || it.name == null || it.version == null) {
                         logger.log(LogLevel.ERROR, "Invalid dependency")
                     } else {
@@ -259,7 +219,7 @@ publishing {
                             dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
                             dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
                             dependencyNode.appendNode('scope', 'compile')
-                        } else if (it.name == 'SwrvePushSDK') {
+                        } else if (it.name == 'SwrveSDKPush') {
                             dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
                             dependencyNode.appendNode('artifactId', project.SWRVE_PUSH_ARTIFACT_ID)
                             dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
@@ -270,24 +230,6 @@ publishing {
                             dependencyNode.appendNode('version', it.version)
                             dependencyNode.appendNode('scope', 'compile')
                         }
-                    }
-                }
-
-                configurations.firebaseCompile.allDependencies.each {
-                    if (it.group == null || it.name == null || it.version == null) {
-                        logger.log(LogLevel.ERROR, "Invalid dependency")
-                    } else if (it.name == 'SwrveSDKPush') {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                        dependencyNode.appendNode('artifactId', project.SWRVE_PUSH_ARTIFACT_ID)
-                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                        dependencyNode.appendNode('scope', 'compile')
-                    } else {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
-                        dependencyNode.appendNode('scope', 'compile')
                     }
                 }
             }
@@ -377,4 +319,23 @@ task androidFirebaseSourcesJar(type: Jar) {
     description "Package sources for Firebase."
     classifier = 'source'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    pkg {
+        repo = 'android'
+        name = System.getProperty('bintray.pkg.name') == null ? 'swrve-sdk' : System.getProperty('bintray.pkg.name')
+        userOrg = 'swrve-inc'
+        licenses = ['Apache-2.0']
+        desc = 'Swrve SDK'
+        websiteUrl = "https://www.swrve.com"
+        publish = true
+        version {
+            name = project.SWRVE_SDK_VERSION
+        }
+    }
+    String bintrayPublication = System.getProperty('bintray.publication') == null ? 'core' : System.getProperty('bintray.publication')
+    publications = [bintrayPublication]
 }

@@ -1,16 +1,17 @@
 package com.swrve.sdk;
 
-import android.util.Log;
-
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import static org.junit.Assert.assertTrue;
 
+@RunWith(RobolectricTestRunner.class)
 public class SwrveAmazonConfigTest extends SwrveBaseTest {
 
     @Before

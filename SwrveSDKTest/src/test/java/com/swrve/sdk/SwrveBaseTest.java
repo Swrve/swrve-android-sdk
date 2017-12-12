@@ -21,7 +21,7 @@ import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLog;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = Build.VERSION_CODES.LOLLIPOP)
+@Config(sdk = Build.VERSION_CODES.LOLLIPOP)
 @TargetApi(Build.VERSION_CODES.GINGERBREAD)
 public abstract class SwrveBaseTest {
 

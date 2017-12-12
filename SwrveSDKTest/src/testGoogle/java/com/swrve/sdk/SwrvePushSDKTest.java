@@ -25,7 +25,9 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
@@ -45,6 +47,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
+@RunWith(RobolectricTestRunner.class)
 public class SwrvePushSDKTest extends SwrveBaseTest {
 
     private GenericSwrvePushService service;

@@ -17,18 +17,24 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    flavorDimensions 'swrve-sdk'
+    productFlavors {
+        core {
+            dimension 'swrve-sdk'
+        }
+    }
     lintOptions {
         abortOnError false
     }
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    compile 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    api 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    api 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
 
     // In your app please include the SDK using the following dependency
-//  compile 'com.swrve.sdk.android:swrve:5.0.0' // No Google Services push
+//  api 'com.swrve.sdk.android:swrve:5.1.0' // No Google Services push
 
     // Use the SDK source shipped with this demo
-    compile project(path: ':SwrveSDK', configuration: 'coreDebug') // No Google Services push
+    api project(path: ':SwrveSDK')
 }

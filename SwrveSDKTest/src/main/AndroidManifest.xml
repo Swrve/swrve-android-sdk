@@ -6,7 +6,7 @@
     android:versionName="1.0">
 
     <uses-sdk
-        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.conversations, com.swrve.swrvesdkcommon, com.swrve.sdk.push, com.android.support.v4, android.support.design, android.support.v7.appcompat, android.support.graphics.drawable, android.support.v7.recyclerview, com.plotprojects.retail.android"/>
+        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.conversations, com.swrve.swrvesdkcommon, com.swrve.sdk.push, com.android.support.v4, android.support.design, android.support.v7.appcompat, android.support.graphics.drawable, android.support.v7.recyclerview, com.plotprojects.retail.android, com.google.android.gms.base.license, com.google.android.gms.gcm.license, com.google.android.gms.admob.impl.license, com.google.android.gms.common.license, com.google.android.gms.iid.license, com.google.android.gms.admob.license, com.google.android.gms.gass.license, com.google.android.gms.tasks.license, com.google.android.gms.location.license, com.google.android.gms.nearby.license, com.google.firebase.firebase.messaging.license, com.google.firebase.measurement.license, com.google.firebase.firebase.iid.license, com.google.firebase.firebase.common.license, com.google.firebase.measurement.impl.license, android.support.graphics.drawable.animated, android.support.transition, android.arch.lifecycle"/>
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />

@@ -26,7 +26,6 @@
                 android:id="@+id/btnQueueEvent"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:onClick="btnQueueEvent"
                 android:text="Queue event" />
 
             <EditText

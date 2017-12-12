@@ -14,8 +14,10 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLog;
 import org.robolectric.android.controller.IntentServiceController;
@@ -29,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
 
+@RunWith(RobolectricTestRunner.class)
 public class SwrveAdmIntentServiceTest extends SwrveBaseTest {
 
     private SwrveAdmIntentService service;

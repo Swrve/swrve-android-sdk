@@ -21,11 +21,11 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
+import com.swrve.sdk.model.PushPayload;
 import com.swrve.sdk.model.PushPayloadButton;
 import com.swrve.sdk.model.PushPayloadChannel;
 import com.swrve.sdk.model.PushPayloadExpanded;
 import com.swrve.sdk.model.PushPayloadMedia;
-import com.swrve.sdk.model.PushPayload;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,6 +55,7 @@ public class SwrvePushNotificationConfig {
     private final String notificationTitle;
     private boolean usingFallbackDeeplink;
     private PushPayload pushPayload;
+    private String msgText;
     protected SwrvePushMediaHelper mediaHelper;
 
     // Called by Unity Swrve SDK
@@ -176,6 +177,7 @@ public class SwrvePushNotificationConfig {
     public NotificationCompat.Builder createNotificationBuilder(Context context, String msgText, Bundle msg, int notificationId) {
 
         parsePushPayload(msg);
+        this.msgText = msgText;
 
         boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
@@ -228,7 +230,7 @@ public class SwrvePushNotificationConfig {
     private void parsePushPayload(Bundle msg){
         String swrvePushPayload = msg.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY);
         if (SwrveHelper.isNotNullOrEmpty(swrvePushPayload)) {
-            pushPayload = PushPayload.fromJson(swrvePushPayload);
+            this.pushPayload = PushPayload.fromJson(swrvePushPayload);
         }
     }
 
@@ -291,139 +293,135 @@ public class SwrvePushNotificationConfig {
         return notificationChannelId;
     }
 
-    private NotificationCompat.Builder getNotificationBuilderFromSwrvePayload(NotificationCompat.Builder mBuilder, Bundle msg) {
+    private NotificationCompat.Builder getNotificationBuilderFromSwrvePayload(NotificationCompat.Builder builder, Bundle msg) {
 
         if (pushPayload.getVersion() > SwrvePushConstants.SWRVE_PUSH_VERSION) {
-            // version number is beyond this SDK. return to default
-            return mBuilder;
+            SwrveLogger.i("Notification version is greater than version that this sdk can show. Showing default");
+            return builder;
         }
 
         // Base Title
         if (SwrveHelper.isNotNullOrEmpty(pushPayload.getTitle())) {
-            mBuilder.setContentTitle(pushPayload.getTitle());
+            builder.setContentTitle(pushPayload.getTitle());
         }
 
         // Base Subtitle
         if (SwrveHelper.isNotNullOrEmpty(pushPayload.getSubtitle())) {
-            mBuilder.setSubText(pushPayload.getSubtitle());
+            builder.setSubText(pushPayload.getSubtitle());
         }
 
         // Accent Color
         if (SwrveHelper.isNotNullOrEmpty(pushPayload.getAccent())) {
-            mBuilder.setColor(Color.parseColor(pushPayload.getAccent()));
+            builder.setColor(Color.parseColor(pushPayload.getAccent()));
         }
 
         // Icon
         if (SwrveHelper.isNotNullOrEmpty(pushPayload.getIconUrl())) {
             Bitmap icon = mediaHelper.downloadBitmapImageFromUrl(pushPayload.getIconUrl());
             if (icon != null) {
-                mBuilder.setLargeIcon(icon);
+                builder.setLargeIcon(icon);
             }
         }
 
         // Visibility
+        buildVisibility(builder);
+
+        // Base Ticker
+        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getTicker())) {
+            builder.setTicker(pushPayload.getTicker());
+        }
+
+        // Notification Priority (checks if it's not zero since default doesn't need to be set)
+        if (pushPayload.getPriority() != 0) {
+            builder.setPriority(pushPayload.getPriority());
+        }
+
+        // set Default style for expanded content
+        NotificationCompat.Style defaultStyle = buildDefaultStyle(pushPayload);
+        builder.setStyle(defaultStyle);
+
+        // if media is present apply a different template based on type
+        buildMediaText(builder, msg);
+
+        buildLockScreen(builder, pushPayload);
+
+        return builder;
+    }
+
+    private void buildVisibility(NotificationCompat.Builder builder) {
         if (pushPayload.getVisibility() != null) {
             switch (pushPayload.getVisibility()) {
                 case PUBLIC:
-                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                    builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
                     break;
                 case PRIVATE:
-                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE);
+                    builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE);
                     break;
                 case SECRET:
-                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_SECRET);
+                    builder.setVisibility(NotificationCompat.VISIBILITY_SECRET);
                     break;
                 default:
-                    mBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                    builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
                     break;
             }
         }
-
-        // Base Ticker
-        String ticker = pushPayload.getTicker();
-        if (SwrveHelper.isNotNullOrEmpty(ticker)) {
-            mBuilder.setTicker(ticker);
-        }
-
-        // Notification Priority
-        if (pushPayload.getPriority() != 0) {
-            // Checks if it's not zero since default doesn't need to be set
-            mBuilder.setPriority(pushPayload.getPriority());
-        }
-
-        // set Default style for extended content
-        mBuilder.setStyle(buildDefaultStyle(pushPayload));
-
-        // Media is present so apply a different template based on type
-        PushPayloadMedia media = pushPayload.getMedia();
-        if (media != null) {
-            if (media.getType() != null) {
-                // Notification Style Template
-                NotificationCompat.Style mediaStyle = buildNotificationStyle(media.getType(), false, pushPayload);
-                if (mediaStyle != null) {
-                    mBuilder.setStyle(mediaStyle);
-
-                    // Set media Text since style is set
-                    setMediaText(mBuilder, pushPayload);
-                    // If the image download failed and the fallback is a video
-
-                    if (usingFallbackDeeplink) {
-                        msg.putString(SwrvePushConstants.DEEPLINK_KEY, media.getFallbackSd());
-                    }
-                }
-
-            }
-        }
-
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // Lock Screen Message
-            if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
-                // Use the notification builder to build a copy of the private notification
-                // with different lock screen message text
-                String contentText = mBuilder.mContentText.toString();
-
-                // Create a public visible notification version
-                mBuilder.setTicker(pushPayload.getLockScreenMsg());
-                mBuilder.setContentText(pushPayload.getLockScreenMsg());
-                Notification lockScreenNotification = mBuilder.build();
-                lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
-                mBuilder.setPublicVersion(lockScreenNotification);
-
-                // Reset changed values
-                mBuilder.setContentText(contentText);
-                if (SwrveHelper.isNotNullOrEmpty(ticker)) {
-                    mBuilder.setTicker(ticker);
-                } else {
-                    mBuilder.setTicker(contentText);
-                }
-            }
-        }
-
-        return mBuilder;
     }
 
-    private void setMediaText(NotificationCompat.Builder mBuilder, PushPayload payload) {
+    private void buildMediaText(NotificationCompat.Builder builder, Bundle msg) {
+        PushPayloadMedia media = pushPayload.getMedia();
+        if (media != null && media.getType() != null) {
+            // Media is present so apply a different template based on type
+            NotificationCompat.Style mediaStyle = buildNotificationStyle(media.getType(), false, pushPayload);
+            if (mediaStyle != null) {
+                builder.setStyle(mediaStyle);
+                setMediaText(builder);
+                if (usingFallbackDeeplink) {
+                    msg.putString(SwrvePushConstants.DEEPLINK_KEY, media.getFallbackSd());
+                }
+            }
+        }
+    }
 
-        PushPayloadMedia media = payload.getMedia();
-        if(media != null){
-            // Media Title
+    private void setMediaText(NotificationCompat.Builder mBuilder) {
+
+        PushPayloadMedia media = pushPayload.getMedia();
+        if (media != null) {
             if (SwrveHelper.isNotNullOrEmpty(media.getTitle())) {
                 mBuilder.setContentTitle(media.getTitle());
             }
 
-            // Media Subtitle
             if (SwrveHelper.isNotNullOrEmpty(media.getSubtitle())) {
                 mBuilder.setSubText(media.getSubtitle());
             }
 
-            // Media Body
             if (SwrveHelper.isNotNullOrEmpty(media.getBody())) {
                 mBuilder.setContentText(media.getBody());
-
                 // If ticker is not set from earlier, set the body to it
-                if (SwrveHelper.isNullOrEmpty(payload.getTicker())) {
+                if (SwrveHelper.isNullOrEmpty(pushPayload.getTicker())) {
                     mBuilder.setTicker(media.getBody());
                 }
+            }
+        }
+    }
+
+    private void buildLockScreen(NotificationCompat.Builder builder, PushPayload pushPayload) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
+                // Use the notification builder to build a copy of the private notification with different lock screen message text
+
+                // Create a public visible notification version
+                builder.setTicker(pushPayload.getLockScreenMsg());
+                builder.setContentText(pushPayload.getLockScreenMsg());
+                Notification lockScreenNotification = builder.build();
+                lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
+                builder.setPublicVersion(lockScreenNotification);
+
+                // Reset changed values
+                builder.setTicker(msgText);
+                if (SwrveHelper.isNotNullOrEmpty(pushPayload.getTicker())) {
+                    builder.setTicker(pushPayload.getTicker());
+                }
+                setMediaText(builder);
             }
         }
     }
@@ -499,16 +497,13 @@ public class SwrvePushNotificationConfig {
     private NotificationCompat.Style buildDefaultStyle(PushPayload payload) {
         NotificationCompat.Style responseStyle;
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
-        PushPayloadExpanded exp = payload.getExpanded();
-        if (exp != null) {
-            // Expanded Title
-            if (SwrveHelper.isNotNullOrEmpty(exp.getTitle())) {
-                bigTextStyle.setBigContentTitle(exp.getTitle());
+        PushPayloadExpanded expanded = payload.getExpanded();
+        if (expanded != null) {
+            if (SwrveHelper.isNotNullOrEmpty(expanded.getTitle())) {
+                bigTextStyle.setBigContentTitle(expanded.getTitle()); // Expanded Title
             }
-
-            // Expanded Body
-            if (SwrveHelper.isNotNullOrEmpty(exp.getBody())) {
-                bigTextStyle.bigText(exp.getBody());
+            if (SwrveHelper.isNotNullOrEmpty(expanded.getBody())) {
+                bigTextStyle.bigText(expanded.getBody()); // Expanded Body
             }
         }
         responseStyle = bigTextStyle;

@@ -61,9 +61,13 @@ public class SwrveTestUtils {
     }
 
     public static void removeSingleton(Class clazz, String fieldName) throws Exception {
+        removeSingleton(clazz, fieldName, null);
+    }
+
+    public static void removeSingleton(Class clazz, String fieldName, Object value) throws Exception {
         Field instance = clazz.getDeclaredField(fieldName);
         instance.setAccessible(true);
-        instance.set(null, null);
+        instance.set(null, value);
     }
 
     public static void setSDKInstance(ISwrveBase instance) throws Exception {
@@ -84,7 +88,7 @@ public class SwrveTestUtils {
             result = s.hasNext() ? s.next() : "";
             Assert.assertFalse(result.length() == 0);
         } catch (IOException ex) {
-            SwrveLogger.e("SwrveSDKTest", "Error getting asset as text:" + assetName, ex);
+            SwrveLogger.e("Error getting asset as text:%s", ex, assetName);
             fail("Error getting asset as text:" + assetName);
         } finally {
             if (in != null) {
