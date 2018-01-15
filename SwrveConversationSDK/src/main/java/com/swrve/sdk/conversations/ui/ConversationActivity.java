@@ -9,6 +9,7 @@ import android.support.v4.app.FragmentActivity;
 
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveConversationEventHelper;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
@@ -88,7 +89,12 @@ public class ConversationActivity extends FragmentActivity {
 
         // Used by Unity too - Force the orientation based on the app configuration
         if (orientation != SwrveOrientation.Both) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if(Build.VERSION.SDK_INT == Build.VERSION_CODES.O && SwrveHelper.getTargetSdkVersion(this) >= 27) {
+                // Cannot call setRequestedOrientation with translucent attribute, otherwise "IllegalStateException: Only fullscreen activities can request orientation"
+                // https://github.com/Swrve/swrve-android-sdk/issues/271
+                // workaround is to not change orientation
+                SwrveLogger.w("Oreo bug with setRequestedOrientation so Conversation may appear in wrong orientation.");
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 if (orientation == SwrveOrientation.Landscape) {
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
                 } else if (orientation == SwrveOrientation.Portrait) {

@@ -126,6 +126,7 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         msgBundleCopy.remove(SwrvePushConstants.SWRVE_TRACKING_KEY);
         msgBundleCopy.remove(SwrvePushConstants.DEEPLINK_KEY);
         SwrveIntentHelper.openDeepLink(context, uri, msgBundleCopy);
+        closeNotificationBar();
     }
 
     private void openActivity(Bundle msg) {
@@ -134,10 +135,8 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
             intent = getActivityIntent(msg);
             PendingIntent pi = PendingIntent.getActivity(context, generateTimestampId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             pi.send();
+            closeNotificationBar();
 
-            // Close the notification bar
-            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-            context.sendBroadcast(it);
         } catch (PendingIntent.CanceledException e) {
             SwrveLogger.e("SwrvePushEngageReceiver. Could open activity with intent: %s", intent.toString(), e);
         }
@@ -153,6 +152,13 @@ public class SwrvePushEngageReceiver extends BroadcastReceiver {
         }
         return intent;
     }
+
+    private void closeNotificationBar() {
+        // When performing a button action on advanced notifications, You need to close the centre explicitly
+        Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+        context.sendBroadcast(it);
+    }
+
 
     private int generateTimestampId() {
         return (int)(new Date().getTime() % Integer.MAX_VALUE);

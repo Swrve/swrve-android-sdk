@@ -48,6 +48,7 @@ public abstract class SwrveConfigBase {
     private boolean androidIdLoggingEnabled; // Automatically log Android ID as "swrve.android_id".
     private boolean abTestDetailsEnabled; // Obtain information about the AB Tests a user is part of.
     private List<String> modelBlackList;
+    private boolean loggingEnabled = true;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -546,5 +547,19 @@ public abstract class SwrveConfigBase {
      */
     public void setModelBlackList(List<String> modelBlackList) {
         this.modelBlackList = modelBlackList;
+    }
+
+    /**
+     * @return if the SDK will log information to the console.
+     */
+    public boolean isLoggingEnabled() {
+        return loggingEnabled;
+    }
+
+    /**
+     * @param enabled to control whether the SDK will log information to the console.
+     */
+    public void setLoggingEnabled(boolean enabled) {
+        this.loggingEnabled = enabled;
     }
 }

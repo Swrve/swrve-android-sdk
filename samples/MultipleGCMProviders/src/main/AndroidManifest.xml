@@ -55,6 +55,15 @@
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
         </service>
+
+        <service android:exported="false" android:name="com.swrve.sdk.sample.GcmJobService" android:permission="android.permission.BIND_JOB_SERVICE"/>
+
+        <service android:exported="false" android:name="com.swrve.sdk.sample.GcmWakefulIntentService"/>
+        <receiver android:exported="false" android:name="com.swrve.sdk.sample.GcmWakefulReceiver">
+            <intent-filter>
+                <action android:name="${applicationId}.swrve.SwrveWakeful" />
+            </intent-filter>
+        </receiver>
         <!-- End of changes -->
 
         <activity

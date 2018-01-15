@@ -42,10 +42,10 @@ dependencies {
 
 
 // In your app please include the SDK using one of the following dependencies (swrve or swrve-google)
-//    coreApi 'com.swrve.sdk.android:swrve:5.1.0' // No Google Services push
-//    googleApi 'com.swrve.sdk.android:swrve-google:5.1.0' // Google GCM push version
-//    amazonApi 'com.swrve.sdk.android:swrve-amazon:5.1.0' // Amazon push version
-//    firebaseApi 'com.swrve.sdk.android:swrve-firebase:5.1.0' // Firebase push version
+//    coreApi 'com.swrve.sdk.android:swrve:X.X.X' // No Google Services push (where X.X.X is the version)
+//    googleApi 'com.swrve.sdk.android:swrve-google:X.X.X' // Google GCM push version (where X.X.X is the version)
+//    amazonApi 'com.swrve.sdk.android:swrve-amazon:X.X.X' // Amazon push version (where X.X.X is the version)
+//    firebaseApi 'com.swrve.sdk.android:swrve-firebase:X.X.X' // Firebase push version (where X.X.X is the version)
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead. If compiling amazon flavour from source you should delete the
     // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon

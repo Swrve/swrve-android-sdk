@@ -33,7 +33,7 @@ dependencies {
     api 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
 
     // In your app please include the SDK using the following dependency
-//  api 'com.swrve.sdk.android:swrve-firebase:5.1.0' // Google FCM push version
+//  api 'com.swrve.sdk.android:swrve-firebase:X.X.X' // Google FCM push version (where X.X.X is the version)
 
     // Use the SDK source shipped with this demo
     api project(path: ':SwrveSDK')

@@ -3,10 +3,15 @@ package com.swrve.sdk.messaging.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
+import android.view.WindowManager;
 
 import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveBase;
@@ -69,7 +74,13 @@ public class SwrveInAppMessageActivity extends Activity {
         }
 
         if (message.getFormats().size() == 1) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if(Build.VERSION.SDK_INT == Build.VERSION_CODES.O && SwrveHelper.getTargetSdkVersion(this) >= 27) {
+                // Cannot call setRequestedOrientation with translucent attribute, otherwise "IllegalStateException: Only fullscreen activities can request orientation"
+                // https://github.com/Swrve/swrve-android-sdk/issues/271
+                // workaround is to not change orientation
+                SwrveLogger.w("Oreo bug with setRequestedOrientation so Message may appear in wrong orientation.");
+            } else
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 if (format.getOrientation() == SwrveOrientation.Landscape) {
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
                 } else {
@@ -91,8 +102,7 @@ public class SwrveInAppMessageActivity extends Activity {
 
         try {
             // Create view and add as root of the activity
-            SwrveMessageView view = new SwrveMessageView(this, message,
-                    format, minSampleSize, defaultBackgroundColor);
+            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize, defaultBackgroundColor);
             setContentView(view);
             if(savedInstanceState == null) {
                 notifyOfImpression(format);

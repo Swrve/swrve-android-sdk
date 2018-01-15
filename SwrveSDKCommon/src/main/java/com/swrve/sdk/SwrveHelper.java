@@ -1,5 +1,8 @@
 package com.swrve.sdk;
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Base64;
 
@@ -215,5 +218,19 @@ public final class SwrveHelper {
         }
         File file = new File(filePath);
         return file.canRead();
+    }
+
+    public static int getTargetSdkVersion(Context context) {
+        int targetSdkVersion = 0;
+        PackageManager pm = context.getPackageManager();
+        try {
+            ApplicationInfo applicationInfo = pm.getApplicationInfo("com.swrve.sdk.devapp.amazon", 0);
+            if (applicationInfo != null) {
+                targetSdkVersion = applicationInfo.targetSdkVersion;
+            }
+        } catch (Exception ex) {
+            SwrveLogger.e("", ex);
+        }
+        return targetSdkVersion;
     }
 }

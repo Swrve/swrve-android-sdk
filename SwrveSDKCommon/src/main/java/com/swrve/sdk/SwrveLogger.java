@@ -30,6 +30,16 @@ public class SwrveLogger {
         }
     }
 
+    protected static void setLoggingEnabled(boolean enabled) {
+        if (enabled) {
+            swrveLoggerPlanted = false;
+        } else {
+            Timber.uprootAll();
+            logLevelSet = true;
+            swrveLoggerPlanted = true;
+        }
+    }
+
     public static void v(String message, Object... args){
         verbose(LOG_TAG, message, args);
     }
