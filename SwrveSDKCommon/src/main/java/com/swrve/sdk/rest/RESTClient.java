@@ -35,7 +35,7 @@ public class RESTClient implements IRESTClient {
      * Safeguarded against multiple writers
      * and on copy-and-clean when writing the headers.
      */
-    private static List<String> metrics = new ArrayList<String>();
+    private static List<String> metrics = new ArrayList<>();
 
     public RESTClient(int httpTimeout) {
         this.httpTimeout = httpTimeout;
@@ -79,7 +79,7 @@ public class RESTClient implements IRESTClient {
                 in = urlConnection.getInputStream();
                 String encoding = urlConnection.getContentEncoding();
 
-                if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).indexOf("gzip") != -1) {
+                if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
                     in = new GZIPInputStream(in);
                 } else {
                     in = new BufferedInputStream(in);
@@ -208,16 +208,16 @@ public class RESTClient implements IRESTClient {
     /*
      * Print a sorted list with a custom separator
      */
-    private String printList(List<String> list, String separarator) {
-        StringBuffer buffer = new StringBuffer();
+    private String printList(List<String> list, String separator) {
+        StringBuilder builder = new StringBuilder();
         int remains = list.size();
         for (String value : list) {
-            buffer.append(value);
+            builder.append(value);
             if (--remains > 0) {
-                buffer.append(separarator);
+                builder.append(separator);
             }
         }
-        return buffer.toString();
+        return builder.toString();
     }
 
     /*
@@ -258,7 +258,7 @@ public class RESTClient implements IRESTClient {
     }
 
     private void recordMetrics(boolean post, String url, long c, long sb, long rh, long rb, boolean timeout) {
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
 
         try {
             params.add(String.format("u=%s", getUrlWithoutPathOrQuery(url)));
@@ -272,7 +272,7 @@ public class RESTClient implements IRESTClient {
         // it when the metrics have been written.
         // Using a list as there can be more than one
         // metric to be updated with the same value.
-        List<String> templates = new ArrayList<String>();
+        List<String> templates = new ArrayList<>();
 
         templates.add("c=%d");
         if (!addMetric(params, c, templates, "c_error=1", timeout)) return;
@@ -313,7 +313,7 @@ public class RESTClient implements IRESTClient {
     }
 
     private HttpURLConnection addMetricsHeader(HttpURLConnection urlConnection) {
-        List<String> metricList = new ArrayList<String>();
+        List<String> metricList = new ArrayList<>();
         synchronized (metrics) {
             metricList.addAll(metrics);
             metrics.clear();

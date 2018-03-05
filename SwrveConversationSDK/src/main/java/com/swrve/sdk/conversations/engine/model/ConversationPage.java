@@ -49,7 +49,7 @@ public class ConversationPage implements Serializable {
 
     public ArrayList<ButtonControl> getControls() {
         if (controls == null) {
-            controls = new ArrayList<ButtonControl>();
+            controls = new ArrayList<>();
         }
         return controls;
     }

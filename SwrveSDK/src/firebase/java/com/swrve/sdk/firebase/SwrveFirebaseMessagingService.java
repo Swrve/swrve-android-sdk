@@ -14,8 +14,6 @@ import com.swrve.sdk.SwrvePushSDK;
 import com.swrve.sdk.SwrvePushService;
 import com.swrve.sdk.qa.SwrveQAUser;
 
-import java.util.Iterator;
-
 /**
  * Used internally to process push notifications inside for your app.
  */
@@ -56,9 +54,7 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService impl
         pushSDK.processNotification(msg);
 
         // Notify bound clients
-        Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-        while (iter.hasNext()) {
-            SwrveQAUser sdkListener = iter.next();
+        for (SwrveQAUser sdkListener : SwrveQAUser.getBindedListeners()) {
             sdkListener.pushNotification(SwrvePushSDK.getPushId(msg), msg);
         }
     }

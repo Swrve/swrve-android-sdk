@@ -4,18 +4,13 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
 
 public class SwrveSwrveABTestDetailsTest extends SwrveBaseTest {
     private Swrve swrveSpy;

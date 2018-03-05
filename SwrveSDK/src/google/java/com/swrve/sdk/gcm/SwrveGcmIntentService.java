@@ -40,7 +40,7 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
     /**
      * Override this function to process notifications in a different way.
      *
-     * @param msg
+     * @param msg The bundle from push provider
      */
     @Override
     public void processNotification(final Bundle msg) {
@@ -70,8 +70,8 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
     /**
      * Override this function to change the way a notification is shown.
      *
-     * @param notificationManager
-     * @param notification
+     * @param notificationManager Android NotificationManager
+     * @param notification Notification that is being rendered.
      * @return the notification id so that it can be dismissed by other UI elements.
      */
     @Override
@@ -82,8 +82,8 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
     /**
      * Override this function to change the attributes of a notification.
      *
-     * @param msgText
-     * @param msg
+     * @param msgText The message text to display
+     * @param msg The original message bundle to push provider
      * @return the notification builder.
      */
     @Override
@@ -94,8 +94,8 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
     /**
      * Override this function to change the way the notifications are created.
      *
-     * @param msg
-     * @param contentIntent
+     * @param msg The message bundle from server
+     * @param contentIntent The pendingintent to trigger when notification is tapped.
      * @return the notification that will be displayed.
      */
     @Override
@@ -129,7 +129,7 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
      * can be notified that the app was opened from the
      * notification.
      *
-     * @param msg
+     * @param msg The original message bundle.
      * @return the notification intent.
      */
     @Override

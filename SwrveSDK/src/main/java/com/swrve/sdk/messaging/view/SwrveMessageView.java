@@ -1,7 +1,9 @@
 package com.swrve.sdk.messaging.view;
 
 import android.app.Activity;
+import android.app.UiModeManager;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -25,7 +27,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,12 +51,15 @@ public class SwrveMessageView extends RelativeLayout {
     // Default background color
     protected int defaultBackgroundColor;
 
+    protected int inAppMessageFocusColor;
+    protected int inAppMessageClickColor;
+
     // Bitmap cache
     protected Set<WeakReference<Bitmap>> bitmapCache;
 
     public SwrveMessageView(SwrveInAppMessageActivity activity, SwrveMessage message,
                             SwrveMessageFormat format, int minSampleSize,
-                            int defaultBackgroundColor) throws SwrveMessageViewBuildException {
+                            int defaultBackgroundColor, int inAppMessageFocusColor, int inAppMessageClickColor) throws SwrveMessageViewBuildException {
         super(activity);
         this.activity = activity;
         this.format = format;
@@ -64,6 +68,8 @@ public class SwrveMessageView extends RelativeLayout {
             this.minSampleSize = minSampleSize;
         }
         this.defaultBackgroundColor = defaultBackgroundColor;
+        this.inAppMessageFocusColor = inAppMessageFocusColor;
+        this.inAppMessageClickColor = inAppMessageClickColor;
         initializeLayout(activity, message, format);
     }
 
@@ -116,10 +122,10 @@ public class SwrveMessageView extends RelativeLayout {
     }
 
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
-        List<String> loadErrorReasons = new ArrayList<String>();
+        List<String> loadErrorReasons = new ArrayList<>();
         try {
             // Create bitmap cache
-            bitmapCache = new HashSet<WeakReference<Bitmap>>();
+            bitmapCache = new HashSet<>();
 
             // Get device screen metrics
             Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -151,7 +157,7 @@ public class SwrveMessageView extends RelativeLayout {
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
                     SwrveImageView imageView = new SwrveImageView(context);
-                    bitmapCache.add(new WeakReference<Bitmap>(imageBitmap));
+                    bitmapCache.add(new WeakReference<>(imageBitmap));
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
                     lparams.leftMargin = image.getPosition().x;
@@ -181,11 +187,11 @@ public class SwrveMessageView extends RelativeLayout {
                 final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
-                    SwrveButtonView buttonView = new SwrveButtonView(context, button.getActionType());
+                    SwrveButtonView buttonView = new SwrveButtonView(context, button.getActionType(), inAppMessageFocusColor, inAppMessageClickColor);
                     //Mark the buttonView tag with the name of the button as found on the swrve dashboard.
                     //Used primarily for testing.
                     buttonView.setTag(button.getName());
-                    bitmapCache.add(new WeakReference<Bitmap>(imageBitmap));
+                    bitmapCache.add(new WeakReference<>(imageBitmap));
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
                     lparams.leftMargin = button.getPosition().x;
@@ -213,6 +219,11 @@ public class SwrveMessageView extends RelativeLayout {
                     });
                     // Add to parent
                     addView(buttonView);
+                    UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
+                    if(uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+                        buttonView.requestFocus();
+                    }
+
                 } else {
                     loadErrorReasons.add("Could not decode bitmap from file:" + filePath);
                     break;
@@ -227,7 +238,7 @@ public class SwrveMessageView extends RelativeLayout {
         }
 
         if (loadErrorReasons.size() > 0) {
-            Map<String, String> errorReasonPayload = new HashMap<String, String>();
+            Map<String, String> errorReasonPayload = new HashMap<>();
             errorReasonPayload.put("reason", loadErrorReasons.toString());
             destroy();
             throw new SwrveMessageViewBuildException("There was an error creating the view caused by:\n" + loadErrorReasons.toString());
@@ -276,9 +287,7 @@ public class SwrveMessageView extends RelativeLayout {
         try {
             if (bitmapCache != null) {
                 // Iterate through all the bitmaps to recycle them
-                Iterator<WeakReference<Bitmap>> bitmapIt = bitmapCache.iterator();
-                while (bitmapIt.hasNext()) {
-                    WeakReference<Bitmap> weakBitmap = bitmapIt.next();
+                for(WeakReference<Bitmap> weakBitmap :bitmapCache) {
                     Bitmap b = weakBitmap.get();
                     if (b != null) {
                         if (!b.isRecycled()) {

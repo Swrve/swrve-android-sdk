@@ -19,16 +19,14 @@ import com.swrve.sdk.conversations.ui.ConversationRelativeLayout;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
-import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.android.controller.ActivityController;
+import org.robolectric.shadows.ShadowActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;

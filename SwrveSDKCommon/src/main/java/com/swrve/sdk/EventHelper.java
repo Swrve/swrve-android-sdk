@@ -4,6 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -15,6 +17,27 @@ final class EventHelper {
 
     public static String eventAsJSON(String type, Map<String, Object> parameters, int seqnum, long time) throws JSONException {
         return eventAsJSON(type, parameters, null, seqnum, time);
+    }
+
+    public static ArrayList<String> createGenericEvent(String id, String campaignType, String actionType, String contextId,String campaignId, Map<String, String> payload) throws JSONException {
+
+        ISwrveCommon swrve = SwrveCommon.getInstance();
+        if (swrve != null) {
+
+            ArrayList<String> events = new ArrayList<>();
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("id", id);
+            parameters.put("campaignType", campaignType);
+            parameters.put("actionType", actionType);
+            parameters.put("contextId", contextId);
+            parameters.put("campaignId", campaignId);
+            String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, swrve.getNextSequenceNumber(), System.currentTimeMillis());
+            events.add(eventAsJSON);
+
+            return events;
+        }
+
+        return null;
     }
 
     /*
@@ -85,26 +108,24 @@ final class EventHelper {
      * Return the event name used for triggers based on the event parameters
      */
     public static String getEventName(String eventType, Map<String, Object> eventParameters) {
-        String eventName = "";
-
-        if (eventType.equals("session_start")) {
-            eventName = "Swrve.session.start";
-        } else if (eventType.equals("session_end")) {
-            eventName = "Swrve.session.end";
-        } else if (eventType.equals("buy_in")) {
-            eventName = "Swrve.buy_in";
-        } else if (eventType.equals("iap")) {
-            eventName = "Swrve.iap";
-        } else if (eventType.equals("event")) {
-            eventName = (String) eventParameters.get("name");
-        } else if (eventType.equals("purchase")) {
-            eventName = "Swrve.user_purchase";
-        } else if (eventType.equals("currency_given")) {
-            eventName = "Swrve.currency_given";
-        } else if (eventType.equals("user")) {
-            eventName = "Swrve.user_properties_changed";
+        switch (eventType) {
+            case "session_start":
+                return "Swrve.session.start";
+            case "session_end":
+                return "Swrve.session.end";
+            case "buy_in":
+                return "Swrve.buy_in";
+            case "iap":
+                return "Swrve.iap";
+            case "event":
+                return (String) eventParameters.get("name");
+            case "purchase":
+                return "Swrve.user_purchase";
+            case "currency_given":
+                return "Swrve.currency_given";
+            case "user":
+                return "Swrve.user_properties_changed";
         }
-
-        return eventName;
+        return "";
     }
 }

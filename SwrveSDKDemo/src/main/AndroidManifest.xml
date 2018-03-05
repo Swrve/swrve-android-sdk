@@ -6,7 +6,7 @@
     <uses-sdk
         android:minSdkVersion="14"
         android:targetSdkVersion="25"
-        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.conversations, com.swrve.sdk.push, com.swrve.swrvesdkcommon, android.support.graphics.drawable.animated, android.support.transition, android.arch.lifecycle"/>
+        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.conversations, com.swrve.sdk.push, com.swrve.swrvesdkcommon, android.support.graphics.drawable.animated, android.support.transition, android.arch.lifecycle, com.google.firebase.firebase_common, com.google.android.gms.admob"/>
 
     <application>
 

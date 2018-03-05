@@ -15,7 +15,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,9 +196,7 @@ public class SQLiteLocalStorage implements LocalStorage {
             SQLiteStatement statement = null;
             try {
                 statement = database.compileStatement(sql);
-                Iterator<SwrveEventItem> iterator = eventList.iterator();
-                while (iterator.hasNext()) {
-                    SwrveEventItem eventItem = iterator.next();
+                for (SwrveEventItem eventItem : eventList) {
                     statement.bindString(1, eventItem.event);
                     statement.bindString(2, eventItem.userId);
                     statement.execute();

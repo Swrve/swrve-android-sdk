@@ -5,9 +5,6 @@ import com.swrve.sdk.SwrveBaseTest;
 import org.junit.After;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -45,12 +42,7 @@ public abstract class BaseLocalStorage extends SwrveBaseTest {
         Map<Long, String> events = localStorage.getFirstNEvents(20, "userId");
         assertEquals(10, events.keySet().size());
 
-        List<Long> ids = new ArrayList<>();
-        Iterator<Long> it = events.keySet().iterator();
-        while (it.hasNext()) {
-            ids.add(it.next());
-        }
-        localStorage.removeEvents("userId", ids);
+        localStorage.removeEvents("userId", events.keySet());
 
         Map<Long, String> notRemovedEvents = localStorage.getFirstNEvents(20, "userId");
         assertEquals(0, notRemovedEvents.keySet().size());

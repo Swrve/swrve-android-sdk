@@ -26,6 +26,7 @@ public class ConversationRelativeLayout extends RelativeLayout {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
 
+        setFocusable(false);
         View conversationLayoutModal = findViewById(R.id.swrve__conversation_modal);
         if (conversationLayoutModal == null) {
             SwrveLogger.e("ConversationRelativeLayout missing swrve__conversation_modal layout in xml.");

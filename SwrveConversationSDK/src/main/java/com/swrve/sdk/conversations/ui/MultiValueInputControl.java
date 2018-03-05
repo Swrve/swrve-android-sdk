@@ -53,18 +53,13 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         super(context);
     }
 
-    /**
+    /*
      * Inflates but does not add to parent container. Caller will need to add it.
-     *
-     * @param context
-     * @param parentContainer
-     * @param model
-     * @return mutli value input control
      */
     public static MultiValueInputControl inflate(Context context, ViewGroup parentContainer, MultiValueInput model) {
         LayoutInflater layoutInf = LayoutInflater.from(context);
         MultiValueInputControl control = (MultiValueInputControl) layoutInf.inflate(R.layout.swrve__multiinput, parentContainer, false);
-        control.titleTextView = (TextView) control.findViewById(R.id.swrve__MIV_Header);
+        control.titleTextView = control.findViewById(R.id.swrve__MIV_Header);
         control.titleTextView.setText(model.getDescription());
         ConversationStyle titleStyle = model.getStyle();
         int titleTextColorInt =  titleStyle.getTextColorInt();
@@ -76,7 +71,7 @@ public class MultiValueInputControl extends LinearLayout implements Serializable
         control.titleTextView.setPadding(padding, padding, padding, padding);
 
         control.model = model;
-        control.radioButtons = new ArrayList<RadioButton>();
+        control.radioButtons = new ArrayList<>();
 
         for (int i = 0; i < model.getValues().size(); i++) {
             RadioButton rb = new RadioButton(context);

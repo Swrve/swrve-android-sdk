@@ -56,7 +56,7 @@ public class SwrveSDK extends SwrveSDKBase {
     /**
      * Set the push notification listener.
      *
-     * @param pushNotificationListener
+     * @param pushNotificationListener The custom listener
      */
     public static void setPushNotificationListener(SwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
@@ -69,7 +69,7 @@ public class SwrveSDK extends SwrveSDKBase {
     /**
      * Set the silent push listener.
      *
-     * @param silentPushListener
+     * @param silentPushListener The custom listener
      */
     public static void setSilentPushListener(SwrveSilentPushListener silentPushListener) {
         checkInstanceCreated();

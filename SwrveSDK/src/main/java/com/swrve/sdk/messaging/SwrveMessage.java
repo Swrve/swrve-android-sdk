@@ -9,7 +9,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -32,11 +31,11 @@ public class SwrveMessage {
 
     public SwrveMessage(SwrveInAppCampaign campaign, File cacheDir) {
         this.campaign = campaign;
-        this.formats = new ArrayList<SwrveMessageFormat>();
+        this.formats = new ArrayList<>();
         setCacheDir(cacheDir);
     }
 
-    /**
+    /*
      * Load message from JSON data.
      *
      * @param campaign    Related campaign.
@@ -139,22 +138,19 @@ public class SwrveMessage {
     public SwrveMessageFormat getFormat(SwrveOrientation orientation) {
         if (formats != null) {
             // Get given orientation
-            Iterator<SwrveMessageFormat> itFormats = formats.iterator();
-            while (itFormats.hasNext()) {
-                SwrveMessageFormat proposedFormat = itFormats.next();
+            for (SwrveMessageFormat proposedFormat : formats) {
                 if (proposedFormat.getOrientation() == orientation) {
                     return proposedFormat;
                 }
             }
         }
-
         return null;
     }
 
     /**
      * Returns true if the message has a format for the given orientation.
      *
-     * @param orientation
+     * @param orientation A SwrveOrientation
      * @return true if the message supports the given orientation.
      */
     public boolean supportsOrientation(SwrveOrientation orientation) {
@@ -173,22 +169,18 @@ public class SwrveMessage {
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
         if (this.formats != null) {
-            Iterator<SwrveMessageFormat> itFormats = formats.iterator();
-            while (itFormats.hasNext()) {
-                SwrveMessageFormat format = itFormats.next();
+            for (SwrveMessageFormat format : formats) {
 
-                Iterator<SwrveButton> itButtons = format.buttons.iterator();
-                while (itButtons.hasNext()) {
-                    String buttonAsset = itButtons.next().getImage();
+                for (SwrveButton button : format.buttons) {
+                    String buttonAsset = button.getImage();
                     if (!this.assetInCache(assetsOnDisk, buttonAsset)) {
                         SwrveLogger.i("Button asset not yet downloaded: %s", buttonAsset);
                         return false;
                     }
                 }
 
-                Iterator<SwrveImage> itImages = format.images.iterator();
-                while (itImages.hasNext()) {
-                    String imageAsset = itImages.next().getFile();
+                for (SwrveImage image : format.images) {
+                    String imageAsset = image.getFile();
                     if (!this.assetInCache(assetsOnDisk, imageAsset)) {
                         SwrveLogger.i("Image asset not yet downloaded: %s", imageAsset);
                         return false;
@@ -196,7 +188,6 @@ public class SwrveMessage {
                 }
             }
         }
-
         return true;
     }
 }

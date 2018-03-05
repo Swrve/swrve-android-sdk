@@ -6,6 +6,7 @@ public class ConversationImageView extends android.widget.ImageView {
 
     public ConversationImageView(Context context) {
         super(context);
+        setFocusable(false);
     }
 
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {

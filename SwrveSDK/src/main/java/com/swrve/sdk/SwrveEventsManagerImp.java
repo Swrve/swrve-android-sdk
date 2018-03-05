@@ -9,7 +9,6 @@ import com.swrve.sdk.rest.RESTResponse;
 
 import org.json.JSONException;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -80,9 +79,8 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
             SwrveLogger.i("Sending queued events");
             try {
                 // Combine all events
-                Iterator<LocalStorage> storageIt = combinedEvents.keySet().iterator();
-                while (storageIt.hasNext()) {
-                    events.putAll(combinedEvents.get(storageIt.next()));
+                for (LocalStorage storage : combinedEvents.keySet()) {
+                    events.putAll(combinedEvents.get(storage));
                 }
                 eventsSent = events.size();
                 String data = EventHelper.eventsAsBatch(events, userId, appVersion, sessionToken, deviceId);
@@ -91,9 +89,7 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
                     public void onResponse(boolean shouldDelete) {
                         if (shouldDelete) {
                             // Remove events from where they came from
-                            Iterator<LocalStorage> storageIt = combinedEvents.keySet().iterator();
-                            while (storageIt.hasNext()) {
-                                LocalStorage storage = storageIt.next();
+                            for (LocalStorage storage : combinedEvents.keySet()) {
                                 storage.removeEvents(userId, combinedEvents.get(storage).keySet());
                             }
                         } else {

@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import android.content.Intent;
+import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
@@ -95,4 +97,9 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     boolean showMessageCenterCampaign(SwrveBaseCampaign campaign);
 
     void removeMessageCenterCampaign(SwrveBaseCampaign campaign);
+
+    void handleDeferredDeeplink(Bundle bundle);
+
+    void handleDeeplink(Bundle bundle);
+
 }

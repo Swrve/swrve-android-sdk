@@ -5,8 +5,6 @@ import com.swrve.sdk.config.SwrveStack;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 
 import java.net.URL;
 import java.util.Locale;

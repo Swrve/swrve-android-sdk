@@ -1,8 +1,10 @@
 package com.swrve.sdk;
 
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.util.Base64;
 
@@ -30,6 +32,8 @@ import java.util.Map.Entry;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+
+import static android.content.Context.UI_MODE_SERVICE;
 
 /**
  * Used internally to provide MD5, token generation and other helper methods.
@@ -77,11 +81,11 @@ public final class SwrveHelper {
                 byte[] hash = md5.digest(bytesOfMessage);
 
                 StringBuilder hexDigest = new StringBuilder();
-                for (int i = 0; i < hash.length; i++) {
-                    if ((0xFF & hash[i]) < 0x10) {
+                for (byte b : hash) {
+                    if ((0xFF & b) < 0x10) {
                         hexDigest.append("0");
                     }
-                    hexDigest.append(Integer.toHexString(0xFF & hash[i]));
+                    hexDigest.append(Integer.toHexString(0xFF & b));
                 }
                 return hexDigest.toString();
             } catch (NoSuchAlgorithmException nsae) {
@@ -100,11 +104,11 @@ public final class SwrveHelper {
                 byte[] hash = sha1.digest(bytesOfMessage);
 
                 StringBuilder hexDigest = new StringBuilder();
-                for (int i = 0; i < hash.length; i++) {
-                    if ((0xFF & hash[i]) < 0x10) {
+                for (byte b : hash) {
+                    if ((0xFF & b) < 0x10) {
                         hexDigest.append("0");
                     }
-                    hexDigest.append(Integer.toHexString(0xFF & hash[i]));
+                    hexDigest.append(Integer.toHexString(0xFF & b));
                 }
                 return hexDigest.toString();
             } catch (NoSuchAlgorithmException nsae) {
@@ -118,7 +122,7 @@ public final class SwrveHelper {
      * Convert from JSONObject to Map.
      */
     public static Map<String, String> JSONToMap(JSONObject obj) throws JSONException {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         @SuppressWarnings("unchecked")
         Iterator<String> it = obj.keys();
         while (it.hasNext()) {
@@ -224,7 +228,7 @@ public final class SwrveHelper {
         int targetSdkVersion = 0;
         PackageManager pm = context.getPackageManager();
         try {
-            ApplicationInfo applicationInfo = pm.getApplicationInfo("com.swrve.sdk.devapp.amazon", 0);
+            ApplicationInfo applicationInfo = pm.getApplicationInfo(context.getPackageName(), 0);
             if (applicationInfo != null) {
                 targetSdkVersion = applicationInfo.targetSdkVersion;
             }
@@ -232,5 +236,13 @@ public final class SwrveHelper {
             SwrveLogger.e("", ex);
         }
         return targetSdkVersion;
+    }
+
+    public static String getPlatformOS(Context context) {
+        UiModeManager uiModeManager = (UiModeManager) context.getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            return "AndroidTV";
+        }
+        return "Android";
     }
 }

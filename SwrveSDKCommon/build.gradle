@@ -14,6 +14,11 @@ android {
         release {}
         debug {}
     }
+
+    lintOptions {
+        abortOnError true
+        baseline file("../../lint/lint-baseline-swrvesdkcommon.xml")
+    }
 }
 
 dependencies {

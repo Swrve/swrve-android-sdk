@@ -36,17 +36,10 @@ public class SwrveMessageFormat {
     // Parent in-app message
     protected SwrveMessage message;
 
-    /**
-     * Load format from JSON data.
-     *
-     * @param message
-     * @param messageFormatData
-     * @throws JSONException
-     */
     public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData) throws JSONException {
         this.message = message;
-        this.buttons = new ArrayList<SwrveButton>();
-        this.images = new ArrayList<SwrveImage>();
+        this.buttons = new ArrayList<>();
+        this.images = new ArrayList<>();
         this.scale = 1f;
 
         setName(messageFormatData.getString("name"));

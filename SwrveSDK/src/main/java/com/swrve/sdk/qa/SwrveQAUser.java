@@ -91,9 +91,7 @@ public class SwrveQAUser {
 
                 // Add campaigns (downloaded or not) to request
                 JSONArray campaignsJson = new JSONArray();
-                Iterator<Integer> campaignIt = campaignsDownloaded.keySet().iterator();
-                while (campaignIt.hasNext()) {
-                    int campaignId = campaignIt.next();
+                for(int campaignId: campaignsDownloaded.keySet()) {
                     String reason = campaignsDownloaded.get(campaignId);
 
                     JSONObject campaignInfo = new JSONObject();
@@ -144,9 +142,7 @@ public class SwrveQAUser {
 
                 // Add campaigns that were not displayed
                 JSONArray campaignsJson = new JSONArray();
-                Iterator<Integer> campaignIt = campaignDisplayResults.keySet().iterator();
-                while (campaignIt.hasNext()) {
-                    int campaignId = campaignIt.next();
+                for (int campaignId : campaignDisplayResults.keySet()) {
                     SwrveCampaignDisplayer.Result result = campaignDisplayResults.get(campaignId);
                     Integer conversationId = campaignConversations.get(campaignId);
 
@@ -188,9 +184,7 @@ public class SwrveQAUser {
 
                 // Add campaigns that were not displayed
                 JSONArray campaignsJson = new JSONArray();
-                Iterator<Integer> campaignIt = campaignDisplayResults.keySet().iterator();
-                while (campaignIt.hasNext()) {
-                    int campaignId = campaignIt.next();
+                for (int campaignId : campaignDisplayResults.keySet()) {
                     SwrveCampaignDisplayer.Result result = campaignDisplayResults.get(campaignId);
                     Integer messageId = campaignMessages.get(campaignId);
 
@@ -252,9 +246,8 @@ public class SwrveQAUser {
     }
 
     public void bindToServices() {
-        Iterator<WeakReference<SwrveQAUser>> iter = bindedObjects.iterator();
-        while (iter.hasNext()) {
-            SwrveQAUser sdkListener = iter.next().get();
+        for (WeakReference<SwrveQAUser> weakQaUser : bindedObjects) {
+            SwrveQAUser sdkListener = weakQaUser.get();
             if (sdkListener == this) {
                 return;
             }

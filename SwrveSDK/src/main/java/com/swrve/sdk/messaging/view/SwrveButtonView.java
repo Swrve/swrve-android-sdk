@@ -3,6 +3,8 @@ package com.swrve.sdk.messaging.view;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
@@ -12,13 +14,17 @@ import com.swrve.sdk.messaging.SwrveActionType;
  * Android view representing a button.
  */
 public class SwrveButtonView extends ImageView {
-    private static int clickColor = Color.argb(100, 0, 0, 0);
+    public int clickColor;
+    public int focusColor;
 
     private SwrveActionType type;
 
-    public SwrveButtonView(Context context, SwrveActionType type) {
+    public SwrveButtonView(Context context, SwrveActionType type, int inAppMessageFocusColor, int inAppMessageClickColor) {
         super(context);
         this.type = type;
+        this.focusColor = inAppMessageFocusColor;
+        this.clickColor = inAppMessageClickColor;
+        setFocusable(true);
     }
 
     @Override
@@ -47,4 +53,15 @@ public class SwrveButtonView extends ImageView {
 
         return super.onTouchEvent(event);
     }
+
+    @Override
+    protected void onFocusChanged(boolean gainFocus, int direction, @Nullable Rect previouslyFocusedRect) {
+        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
+        if(gainFocus) {
+            clearColorFilter();
+        } else {
+            setColorFilter(focusColor);
+        }
+    }
+
 }

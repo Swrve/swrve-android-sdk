@@ -9,6 +9,7 @@ import com.swrve.sdk.messaging.model.Trigger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -38,12 +39,8 @@ public abstract class SwrveBaseCampaign {
     protected int minDelayBetweenMessage;
     protected Date showMessagesAfterLaunch; // Time we can show the first message after launch
 
-    /**
+    /*
      * Parse a campaign from JSON data.
-     *
-     * @param campaignManager
-     * @param campaignData JSON data containing the campaign details.
-     * @throws org.json.JSONException
      */
     public SwrveBaseCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData) throws JSONException {
         this.campaignManager = campaignManager;
@@ -61,28 +58,40 @@ public abstract class SwrveBaseCampaign {
         this.minDelayBetweenMessage = DEFAULT_MIN_DELAY_BETWEEN_MSGS;
         this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(campaignManager.getInitialisedTime(), DEFAULT_DELAY_FIRST_MESSAGE, Calendar.SECOND);
 
-        // Parse campaign triggers
-        String triggersJson = campaignData.getString("triggers");
-        triggers = Trigger.fromJson(triggersJson, id);
 
+        // Parse campaign triggers
+        if (campaignData.has("triggers")) {
+            String triggersJson = campaignData.getString("triggers");
+            triggers = Trigger.fromJson(triggersJson, id);
+        } else {
+            triggers = new ArrayList<>();
+        }
         // Parse campaign rules
-        JSONObject rules = campaignData.getJSONObject("rules");
-        this.randomOrder = rules.getString("display_order").equals("random");
-        if (rules.has("dismiss_after_views")) {
-            int totalImpressions = rules.getInt("dismiss_after_views");
-            this.maxImpressions = totalImpressions;
-        }
-        if (rules.has("delay_first_message")) {
-            int delayFirstMessage = rules.getInt("delay_first_message");
-            this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(campaignManager.getInitialisedTime(), delayFirstMessage, Calendar.SECOND);
-        }
-        if (rules.has("min_delay_between_messages")) {
-            this.minDelayBetweenMessage = rules.getInt("min_delay_between_messages");
+        if (campaignData.has("rules")) {
+
+            JSONObject rules = campaignData.getJSONObject("rules");
+            this.randomOrder = rules.getString("display_order").equals("random");
+            if (rules.has("dismiss_after_views")) {
+                int totalImpressions = rules.getInt("dismiss_after_views");
+                this.maxImpressions = totalImpressions;
+            }
+            if (rules.has("delay_first_message")) {
+                int delayFirstMessage = rules.getInt("delay_first_message");
+                this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(campaignManager.getInitialisedTime(), delayFirstMessage, Calendar.SECOND);
+            }
+            if (rules.has("min_delay_between_messages")) {
+                this.minDelayBetweenMessage = rules.getInt("min_delay_between_messages");
+            }
         }
 
         // Parse campaign dates
-        this.startDate = new Date(campaignData.getLong("start_date"));
-        this.endDate = new Date(campaignData.getLong("end_date"));
+        if (campaignData.has("start_date")) {
+            this.startDate = new Date(campaignData.getLong("start_date"));
+        }
+
+        if (campaignData.has("end_date")) {
+            this.endDate = new Date(campaignData.getLong("end_date"));
+        }
     }
 
     /**
@@ -230,7 +239,7 @@ public abstract class SwrveBaseCampaign {
 
     /**
      * Set the previous state of this campaign.
-     * @param saveableState
+     * @param saveableState The state to save
      */
     public void setSaveableState(SwrveCampaignState saveableState) {
         this.saveableState = saveableState;

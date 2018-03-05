@@ -2,13 +2,15 @@ package com.swrve.sdk;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.swrve.sdk.conversations.ui.ConversationActivity;
+import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
-import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
@@ -18,15 +20,13 @@ import com.swrve.sdk.messaging.view.SwrveMessageView;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
-import org.robolectric.shadows.ShadowView;
 import org.robolectric.android.controller.ActivityController;
+import org.robolectric.shadows.ShadowView;
 import org.robolectric.util.Pair;
 
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(message);
 
         SwrveInAppMessageActivity activity = Robolectric.buildActivity(SwrveInAppMessageActivity.class).create().get();
-        SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, 0);
+        SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, 0, 0, 0);
         assertNotNull(view);
         assertEquals(4, view.getChildCount());
 
@@ -82,7 +82,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNotNull(view);
         ShadowView shadowView = Shadows.shadowOf(view);
@@ -101,7 +101,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
 
-        ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNotNull(view);
         ShadowView shadowView = Shadows.shadowOf(view);
@@ -110,12 +110,36 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testConfigurationOfButtonFocusClickColors() throws Exception {
+        swrveSpy.config.setInAppMessageClickColor(Color.GREEN);
+        swrveSpy.config.setInAppMessageFocusColor(Color.BLUE);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_color.json", "1111111111111111111111111");
+
+        // Trigger IAM
+        swrveSpy.currencyGiven("gold", 20);
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(1);
+
+        assertEquals(Color.GREEN, swrveButtonView.clickColor);
+        assertEquals(Color.BLUE, swrveButtonView.focusColor);
+        view.destroy();
+    }
+
+
+    @Test
     public void testRenderView() throws Exception {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         SwrveMessage message = swrveSpy.getMessageForId(165);
         assertNotNull(message);
         SwrveInAppMessageActivity activity = Robolectric.buildActivity(SwrveInAppMessageActivity.class).create().get();
-        SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, 0);
+        SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, 0, 0, 0);
 
         String base64MD5Screnshot = SwrveHelper.md5(SwrveTestUtils.takeScreenshot(view));
         assertNotNull(base64MD5Screnshot);
@@ -137,9 +161,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         activityController.pause().stop().destroy();
 
         // Swrve.Messages.Message-165.impression
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<String, String>();
+        Map<String, String> payload = new HashMap<>();
         payload.put("format", "Kindle (English (US))");
         payload.put("orientation", "Landscape");
         payload.put("size", "320x240");
@@ -178,7 +202,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
         swrveSpy.setInstallButtonListener(new SwrveInstallButtonListener() {
@@ -209,9 +233,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(expectedUrl, testInstallButtonSuccess);
 
         // Swrve.Messages.Message-165.impression
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<String, String>();
+        Map<String, String> payload = new HashMap<>();
         payload.put("format", "Kindle (English (US))");
         payload.put("orientation", "Landscape");
         payload.put("size", "320x240");
@@ -234,7 +258,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
         // Press install button
@@ -260,9 +284,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(expectedUrl, nextIntent.getDataString());
 
         // Swrve.Messages.Message-165.impression
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<String, String>();
+        Map<String, String> payload = new HashMap<>();
         payload.put("format", "Kindle (English (US))");
         payload.put("orientation", "Landscape");
         payload.put("size", "320x240");
@@ -285,7 +309,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
         swrveSpy.setCustomButtonListener(new SwrveCustomButtonListener() {
@@ -313,9 +337,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals("custom_action", testCustomButtonSuccess);
 
         // Swrve.Messages.Message-165.impression
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<String, String>();
+        Map<String, String> payload = new HashMap<>();
         payload.put("format", "Kindle (English (US))");
         payload.put("orientation", "Landscape");
         payload.put("size", "320x240");
@@ -338,7 +362,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
         // Press custom button
@@ -364,9 +388,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
 
         // Swrve.Messages.Message-165.impression
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<String, String>();
+        Map<String, String> payload = new HashMap<>();
         payload.put("format", "Kindle (English (US))");
         payload.put("orientation", "Landscape");
         payload.put("size", "320x240");
@@ -378,6 +402,28 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         payload.clear();
         payload.put("name", "custom");
         assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
+    }
+
+    @Test
+    public void testButtonFocusability() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
+        swrveSpy.currencyGiven("gold", 20);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+
+        SwrveButtonView swrveButtonView;
+        for (int i = 0; i < view.getChildCount(); i++) {
+            View childView = view.getChildAt(i);
+            if (childView instanceof SwrveButtonView) {
+                swrveButtonView = (SwrveButtonView) childView;
+                assertTrue(swrveButtonView.isFocusable());
+                Log.d("testButtonFocusability()", "Button " + i + " is focusable");
+            }
+        }
     }
 
     private int getButtonCount(SwrveMessageView view) {

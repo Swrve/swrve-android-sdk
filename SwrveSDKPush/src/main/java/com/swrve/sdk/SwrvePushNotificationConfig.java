@@ -529,7 +529,7 @@ public class SwrvePushNotificationConfig {
             return null;
         }
 
-        List<NotificationCompat.Action> actions = new ArrayList<NotificationCompat.Action>();
+        List<NotificationCompat.Action> actions = new ArrayList<>();
         List<PushPayloadButton> buttons = payload.getButtons();
         if(buttons != null && !buttons.isEmpty()){
             for(int index = 0; index < buttons.size(); index++){

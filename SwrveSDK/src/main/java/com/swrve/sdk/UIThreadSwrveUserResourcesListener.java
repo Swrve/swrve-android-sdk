@@ -20,7 +20,7 @@ public class UIThreadSwrveUserResourcesListener implements SwrveUserResourcesLis
     private final UIThreadSwrveResourcesRunnable uiWork;
 
     public UIThreadSwrveUserResourcesListener(Activity context, UIThreadSwrveResourcesRunnable uiWork) {
-        this.context = new WeakReference<Activity>(context);
+        this.context = new WeakReference<>(context);
         this.uiWork = uiWork;
     }
 

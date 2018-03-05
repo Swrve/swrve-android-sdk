@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.swrve.sdk.model.PushPayloadButton;
-import com.swrve.sdk.model.PushPayload;
 
 import org.junit.After;
 import org.junit.Before;

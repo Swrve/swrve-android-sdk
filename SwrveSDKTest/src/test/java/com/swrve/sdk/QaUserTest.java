@@ -87,7 +87,7 @@ public class QaUserTest extends SwrveBaseTest {
         qaUser.instance = qaUserSpy;
 
         Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
-        Mockito.doReturn(999l).when(qaUserSpy).getTime();
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
 
         QaUser.locationCampaignEngaged("plotId", 12, 122, "{}");
 
@@ -116,7 +116,7 @@ public class QaUserTest extends SwrveBaseTest {
         qaUser.instance = qaUserSpy;
 
         Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
-        Mockito.doReturn(999l).when(qaUserSpy).getTime();
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
 
         QaUser.locationCampaignsDownloaded();
 
@@ -139,7 +139,7 @@ public class QaUserTest extends SwrveBaseTest {
         qaUser.instance = qaUserSpy;
 
         Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
-        Mockito.doReturn(999l).when(qaUserSpy).getTime();
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
         String locationCampaigns = "" +
                 "    {\n" +
                 "        \"campaigns\": {\n" +
@@ -193,7 +193,7 @@ public class QaUserTest extends SwrveBaseTest {
         qaUser.instance = qaUserSpy;
 
         Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
-        Mockito.doReturn(999l).when(qaUserSpy).getTime();
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
 
         Collection<QaLocationCampaignTriggered> locationCampignTriggeredList = new ArrayList<>();
         locationCampignTriggeredList.add(new QaLocationCampaignTriggered(1, 2, "3", true, "reason1"));

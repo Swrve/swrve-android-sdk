@@ -1,5 +1,8 @@
 package com.swrve.sdk;
 
+import android.content.Intent;
+import android.os.Bundle;
+
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
@@ -20,6 +23,47 @@ import java.util.Map;
 public abstract class SwrveSDKBase {
 
     protected static ISwrveBase instance;
+
+    /**
+     * Handle a deeplink when the app is already installed
+     * i.e. using facebook API
+     * <pre>
+     * <code>
+     * AppLinkData appLinkData = AppLinkData.createFromActivity(this);
+        if (appLinkData != null) {
+            SwrveSDK.handleDeeplink(appLinkData.getArgumentBundle());
+        }
+     * </code>
+     * </pre>
+     *
+     * @param bundle the bundle to process
+     */
+    public static void handleDeeplink(Bundle bundle) {
+        checkInstanceCreated();
+        instance.handleDeeplink(bundle);
+    }
+
+    /**
+     * Handle a deeplink when the app was installed first from the play store`
+     * i.e. using facebook API
+     * <pre>
+     * <code>
+     * AppLinkData.fetchDeferredAppLinkData(this, new AppLinkData.CompletionHandler(){
+     *
+     *     public void onDeferredAppLinkDataFetched(AppLinkData appLinkData) {
+     *          Bundle data = appLinkData.getArgumentBundle();
+     *          SwrveSDK.handleDeferredDeeplink(data);
+     *      }
+     *      });
+     * </code>
+     * </pre>
+     *
+     * @param bundle the bundle to process
+     */
+    public static void handleDeferredDeeplink(Bundle bundle) {
+        checkInstanceCreated();
+        instance.handleDeferredDeeplink(bundle);
+    }
 
     /**
      * Add a Swrve.session.start event to the event queue. This event should typically be added in
@@ -52,7 +96,7 @@ public abstract class SwrveSDKBase {
     /**
      * Add a generic named event to the event queue.
      *
-     * @param name the name of the event in question. The character '.' is used as grouping syntax.
+     * @param name    the name of the event in question. The character '.' is used as grouping syntax.
      * @param payload a dictionary of key-value pairs to be supplied with this named event. Typically
      *                this would be information about the event rather than about the user. Compare
      *                with the userUpdate function for properties of the user.
@@ -113,7 +157,6 @@ public abstract class SwrveSDKBase {
      *
      * @param name key for the custom user property
      * @param date date value for the custom user property
-     *
      */
     public static void userUpdate(String name, Date date) {
         checkInstanceCreated();
@@ -144,7 +187,7 @@ public abstract class SwrveSDKBase {
      * Add a Swrve.iap event to the event queue. This event should be added for
      * unvalidated real money transactions where in-app currency was purchased
      * or where multiple items and/or currencies were purchased.
-     *
+     * <p>
      * To create the rewards object, create an instance of SwrveIAPRewards and
      * use addItem() and addCurrency() to add the individual rewards
      *
@@ -189,11 +232,11 @@ public abstract class SwrveSDKBase {
      * any applicable AB Tests have been applied. This request is executed on a
      * background thread, which will call methods on the user-provided listener
      * parameter.
-     *
+     * <p>
      * If no user id has been specified this function raises a
      * NoUserIdSwrveException exception to the listener object.
      *
-     * @param listener
+     * @param listener The custom listener
      */
     public static void getUserResources(final SwrveUserResourcesListener listener) {
         checkInstanceCreated();
@@ -204,11 +247,11 @@ public abstract class SwrveSDKBase {
      * Request all applicable AB-Tested resources for the user. This request is
      * executed on a background thread, which will call methods on the
      * user-provided listener parameter.
-     *
+     * <p>
      * If no user id has been specified this function raises a
      * NoUserIdSwrveException exception to the listener object.
      *
-     * @param listener
+     * @param listener The custom listener
      */
     public static void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener) {
         checkInstanceCreated();
@@ -233,7 +276,7 @@ public abstract class SwrveSDKBase {
 
     /**
      * Shutdown the SDK. This instance will be unusable after shutdown.
-     *
+     * <p>
      * Note: All the background jobs will try to stop when this happens.
      */
     public static void shutdown() {
@@ -276,7 +319,7 @@ public abstract class SwrveSDKBase {
     /**
      * Collect device information
      *
-     * @throws JSONException
+     * @throws JSONException If there's an error
      */
     public static JSONObject getDeviceInfo() throws JSONException {
         checkInstanceCreated();
@@ -371,7 +414,7 @@ public abstract class SwrveSDKBase {
     /**
      * Set the custom listener to process Talk message install button clicks
      *
-     * @param installButtonListener
+     * @param installButtonListener The custom listener
      */
     public static void setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
         instance.setInstallButtonListener(installButtonListener);
@@ -390,7 +433,7 @@ public abstract class SwrveSDKBase {
     /**
      * Set the custom listener to process Talk message custom button clicks
      *
-     * @param customButtonListener
+     * @param customButtonListener The custom listener
      */
     public static void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
         checkInstanceCreated();
@@ -401,7 +444,7 @@ public abstract class SwrveSDKBase {
      * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the current orientation.
-     *
+     * <p>
      * To obtain all MessageCenter campaigns independent of their orientation support
      * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
      *
@@ -428,7 +471,7 @@ public abstract class SwrveSDKBase {
      * Display the given campaign without the need to trigger an event and skipping
      * the configured rules.
      *
-     * @param campaign
+     * @param campaign The campaign
      * @return true if the campaign was displayed.
      */
     public static boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
@@ -439,7 +482,7 @@ public abstract class SwrveSDKBase {
     /**
      * Remove this campaign. It won't be returned anymore by the 'getMessageCenterCampaigns' methods.
      *
-     * @param campaign
+     * @param campaign the campaign
      */
     public static void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
         checkInstanceCreated();

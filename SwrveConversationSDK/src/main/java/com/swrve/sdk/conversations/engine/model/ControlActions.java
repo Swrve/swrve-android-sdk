@@ -14,7 +14,7 @@ public class ControlActions implements Serializable {
     public static final String VISIT_URL_REFERER_KEY = "refer";
     public static final String DEEPLINK_URL_URI_KEY = "url";
 
-    private HashMap<String, Object> actionItems = new HashMap<String, Object>();
+    private HashMap<String, Object> actionItems = new HashMap<>();
 
     public void includeAction(String name, Object value) {
         actionItems.put(name, value);

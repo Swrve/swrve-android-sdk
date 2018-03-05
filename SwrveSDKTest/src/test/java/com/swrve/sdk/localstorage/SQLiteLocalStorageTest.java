@@ -47,10 +47,10 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
 
         LinkedHashMap<Long, String> firstNEvents = sqLiteLocalStorage.getFirstNEvents(100, userId);
         assertEquals(2, firstNEvents.size());
-        assertTrue(firstNEvents.containsKey(new Long(1)));
-        assertEquals(item1.event, firstNEvents.get(new Long(1)));
-        assertTrue(firstNEvents.containsKey(new Long(2)));
-        assertEquals(item2.event, firstNEvents.get(new Long(2)));
+        assertTrue(firstNEvents.containsKey(1L));
+        assertEquals(item1.event, firstNEvents.get(1L));
+        assertTrue(firstNEvents.containsKey(2L));
+        assertEquals(item2.event, firstNEvents.get(2L));
     }
 
     private SwrveEventItem createEventItem(String userId, String event) {

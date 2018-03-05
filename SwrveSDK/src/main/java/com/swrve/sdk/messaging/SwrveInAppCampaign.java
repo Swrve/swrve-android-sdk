@@ -15,7 +15,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,18 +28,9 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected List<SwrveMessage> messages;
 
-    /**
-     * Load a campaign from JSON data.
-     *
-     * @param campaignManager
-     * @param campaignDisplayer
-     * @param campaignData JSON data containing the campaign details.
-     * @param assetsQueue  Set where to save the resources to be loaded
-     * @throws JSONException
-     */
     public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
-        this.messages = new ArrayList<SwrveMessage>();
+        this.messages = new ArrayList<>();
 
         if (campaignData.has("messages")) {
             JSONArray jsonMessages = campaignData.getJSONArray("messages");
@@ -125,11 +115,10 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
             return null;
         }
 
-        Iterator<SwrveMessage> messageIt = messages.iterator();
-        while (messageIt.hasNext()) {
-            SwrveMessage message = messageIt.next();
-            if (message.getId() == messageId)
+        for (SwrveMessage message : messages) {
+            if (message.getId() == messageId) {
                 return message;
+            }
         }
 
         return null;
@@ -137,11 +126,9 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected SwrveMessage getNextMessage(Map<Integer, Result> campaignDisplayResult) {
         if (randomOrder) {
-            List<SwrveMessage> randomMessages = new ArrayList<SwrveMessage>(messages);
+            List<SwrveMessage> randomMessages = new ArrayList<>(messages);
             Collections.shuffle(randomMessages);
-            Iterator<SwrveMessage> itRandom = randomMessages.iterator();
-            while (itRandom.hasNext()) {
-                SwrveMessage msg = itRandom.next();
+            for (SwrveMessage msg : randomMessages) {
                 if (msg.areAssetsReady(campaignManager.getAssetsOnDisk())) {
                     return msg;
                 }
@@ -183,13 +170,11 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
     }
     @Override
     public boolean supportsOrientation(SwrveOrientation orientation) {
-        Iterator<SwrveMessage> messageIt = messages.iterator();
-        while (messageIt.hasNext()) {
-            SwrveMessage message = messageIt.next();
-            if (message.supportsOrientation(orientation))
+        for (SwrveMessage message : messages) {
+            if (message.supportsOrientation(orientation)) {
                 return true;
+            }
         }
-
         return false;
     }
 
@@ -202,13 +187,11 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
-        Iterator<SwrveMessage> messageIt = messages.iterator();
-        while (messageIt.hasNext()) {
-            SwrveMessage message = messageIt.next();
-            if (!message.areAssetsReady(assetsOnDisk))
+        for (SwrveMessage message : messages) {
+            if (!message.areAssetsReady(assetsOnDisk)) {
                 return false;
+            }
         }
-
         return true;
     }
 }

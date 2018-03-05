@@ -107,7 +107,7 @@ public class SwrveTestUtils {
      * @param swrve sdk
      * @param campaignFileName the cfile name in assets folder containing the campaign json
      * @param assets an array of downloaded assets so campaign is eligible (font or image)
-     * @throws Exception
+     * @throws Exception If there's an error
      */
     public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... assets) throws Exception {
         String json = SwrveTestUtils.getAssetAsText(context, campaignFileName);

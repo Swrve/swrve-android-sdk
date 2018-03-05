@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 import android.content.Context;
-import android.content.Intent;
 
 import com.swrve.sdk.config.SwrveConfig;
 

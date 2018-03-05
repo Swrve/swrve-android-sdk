@@ -438,9 +438,9 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testAdvancedUnknownVersion() throws Exception {
-        /**
+        /*
          * Check if the SDK will revert to original notification if the version is wrong
-         * **/
+         **/
         service.checkDupes = true;
         Intent intent = new Intent();
         // Send a valid Rich Payload
@@ -480,10 +480,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testAdvancedUnknownType() throws Exception {
-        /**
+        /*
          * This test is to check if the SDK can handle new types of media before it's added
          * This should default back to BigText and parse what it can.
-         * **/
+         */
         service.checkDupes = true;
         Intent intent = new Intent();
         // Send a valid Rich Payload

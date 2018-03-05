@@ -73,17 +73,13 @@ public class SwrveEngageEventSender extends BroadcastReceiver {
 
         ISwrveCommon swrve = SwrveCommon.getInstance();
         if (swrve != null) {
-            ArrayList<String> events = new ArrayList<>();
-            Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("id", msgId);
-            parameters.put("campaignType", "push");
-            parameters.put("actionType", "button_click");
-            parameters.put("contextId", actionId);
-            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, String> payload = new HashMap<>();
             payload.put("buttonText", actionText);
-            String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, swrve.getNextSequenceNumber(), System.currentTimeMillis());
-            events.add(eventAsJSON);
-            swrve.sendEventsInBackground(context, swrve.getUserId(), events);
+            ArrayList<String> events = EventHelper.createGenericEvent(msgId, "push", "button_click", actionId,null, payload);
+            if (events != null) {
+                swrve.sendEventsInBackground(context, swrve.getUserId(), events);
+            }
+
         } else {
             SwrveLogger.e("No SwrveSDK instance present");
         }

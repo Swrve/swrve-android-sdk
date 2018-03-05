@@ -29,7 +29,7 @@ public class ConfigContentFragment extends Fragment {
         if (SwrveSDK.getInstance() instanceof Swrve) {
             try {
                 String eventsUrl = SwrveSDK.getConfig().getEventsUrl().toURI().toString();
-                TextView textViewEventsUrl = (TextView) getView().findViewById(R.id.config_eventsUrl);
+                TextView textViewEventsUrl = getView().findViewById(R.id.config_eventsUrl);
                 textViewEventsUrl.setText(eventsUrl);
             } catch (Exception ex) {
                 Log.e("Demo", "Error getting events url", ex);
@@ -37,18 +37,18 @@ public class ConfigContentFragment extends Fragment {
 
             try {
                 String contentUrl = SwrveSDK.getConfig().getContentUrl().toURI().toString();
-                TextView textViewContentUrl = (TextView) getView().findViewById(R.id.config_contentUrl);
+                TextView textViewContentUrl = getView().findViewById(R.id.config_contentUrl);
                 textViewContentUrl.setText(contentUrl);
             } catch (URISyntaxException ex) {
                 Log.e("Demo", "Error getting content url", ex);
             }
 
             String apikey = SwrveSDK.getApiKey();
-            TextView textViewApikey = (TextView) getView().findViewById(R.id.config_apikey);
+            TextView textViewApikey = getView().findViewById(R.id.config_apikey);
             textViewApikey.setText(apikey);
 
             String userId = SwrveSDK.getUserId();
-            TextView textViewUserId = (TextView) getView().findViewById(R.id.config_userid);
+            TextView textViewUserId = getView().findViewById(R.id.config_userid);
             textViewUserId.setText(userId);
         } else {
             Toast.makeText(getContext(), "Swrve may not be supported on this device api level.", Toast.LENGTH_LONG).show();

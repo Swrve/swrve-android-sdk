@@ -18,11 +18,8 @@ import com.swrve.sdk.conversations.R;
  */
 class SwrveConversationHelper {
 
-    /**
+    /*
      * Converts a percentage radius to a pixel float based from a fixed value.
-     * @param context
-     * @param borderRadiusPerCent
-     * @return
      */
     public static float getRadiusInPixels(Context context, int borderRadiusPerCent) {
         float borderRadius;

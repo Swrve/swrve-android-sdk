@@ -9,9 +9,7 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.HashMap;
@@ -183,7 +181,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("app_store", "unknown_store");
-        parameters.put("cost", Double.valueOf(0.99));
+        parameters.put("cost", 0.99);
         parameters.put("quantity", 1);
         parameters.put("product_id", "com.swrve.product1");
         parameters.put("local_currency", "USD");
@@ -200,7 +198,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("app_store", "unknown_store");
-        parameters.put("cost", Double.valueOf(1.99));
+        parameters.put("cost", 1.99);
         parameters.put("quantity", 2);
         parameters.put("product_id", "com.swrve.product2");
         parameters.put("local_currency", "EUR");

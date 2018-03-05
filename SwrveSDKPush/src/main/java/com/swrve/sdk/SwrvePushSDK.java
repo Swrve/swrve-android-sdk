@@ -166,7 +166,7 @@ public class SwrvePushSDK {
     // Called by Unity
     public static List<InfluenceData> readSavedInfluencedData(SharedPreferences prefs) {
         Set<String> keys = prefs.getAll().keySet();
-        ArrayList<InfluenceData> influencedData = new ArrayList<InfluenceData>();
+        ArrayList<InfluenceData> influencedData = new ArrayList<>();
         for (String trackingId : keys) {
             long maxInfluenceMillis = prefs.getLong(trackingId, 0);
             if (maxInfluenceMillis > 0) {
@@ -210,18 +210,18 @@ public class SwrvePushSDK {
         SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
         List<InfluenceData> influencedArray = readSavedInfluencedData(sharedPreferences);
         if (!influencedArray.isEmpty()) {
-            ArrayList<String> influencedEvents = new ArrayList<String>();
+            ArrayList<String> influencedEvents = new ArrayList<>();
             long nowMillis = getNow().getTime();
             for (InfluenceData influenceData : influencedArray) {
                 try {
                     long deltaMillis = influenceData.maxInfluencedMillis - nowMillis;
                     if (deltaMillis >= 0 && influenceData.maxInfluencedMillis > 0) {
                         // We are still inside the influence window
-                        Map<String, Object> parameters = new HashMap<String, Object>();
+                        Map<String, Object> parameters = new HashMap<>();
                         parameters.put("id", influenceData.getIntTrackingId());
                         parameters.put("campaignType", "push");
                         parameters.put("actionType", "influenced");
-                        Map<String, String> payload = new HashMap<String, String>();
+                        Map<String, String> payload = new HashMap<>();
                         // Add delta time in minutes
                         payload.put("delta", String.valueOf(deltaMillis / (1000 * 60)));
 

@@ -39,7 +39,7 @@ public class MessageCenterFragment extends Fragment {
 
         // Populate the list
         messageCenterAdapter = new MessageCenterAdapter(getContext(), R.layout.message_center_item, messageCenterCampaigns);
-        messageCenterList = (ListView) v.findViewById(R.id.message_center_list);
+        messageCenterList = v.findViewById(R.id.message_center_list);
         messageCenterList.setAdapter(messageCenterAdapter);
         // Display the campaign when an item is clicked
         messageCenterList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -110,9 +110,9 @@ public class MessageCenterFragment extends Fragment {
         public View getView(int position, View convertView, ViewGroup parent) {
             LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(itemResourceId, parent, false);
-            TextView subjectTextView = (TextView) rowView.findViewById(R.id.campaign_subject);
-            Button deleteButton = (Button) rowView.findViewById(R.id.delete_button);
-            ImageView statusImageView = (ImageView) rowView.findViewById(R.id.campaign_status_icon);
+            TextView subjectTextView = rowView.findViewById(R.id.campaign_subject);
+            Button deleteButton = rowView.findViewById(R.id.delete_button);
+            ImageView statusImageView = rowView.findViewById(R.id.campaign_status_icon);
 
             final SwrveBaseCampaign item = getItem(position);
 

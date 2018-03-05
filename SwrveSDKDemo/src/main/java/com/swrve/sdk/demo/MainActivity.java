@@ -10,8 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
-import com.swrve.sdk.SwrveSDK;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,13 +28,13 @@ public class MainActivity extends AppCompatActivity {
         root = getLayoutInflater().inflate(R.layout.activity_main, null);
         setContentView(root);
         // Adding Toolbar to Main screen
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Setting ViewPager for each Tabs
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        ViewPager viewPager = findViewById(R.id.viewpager);
         setupViewPager(viewPager);
         // Set Tabs inside Toolbar
-        TabLayout tabs = (TabLayout) findViewById(R.id.tabs);
+        TabLayout tabs = findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
     }
 

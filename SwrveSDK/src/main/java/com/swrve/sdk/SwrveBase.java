@@ -17,6 +17,7 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.swrve.sdk.SwrveCampaignDisplayer.Result;
+import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.SwrveConversationListener;
@@ -73,6 +74,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected SwrveBase(Application application, int appId, String apiKey, C config) {
         super(application, appId, apiKey, config);
         SwrveCommon.setSwrveCommon(this);
+        SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
     }
 
     protected static String _getVersion() {
@@ -315,14 +317,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _event(String name, Map<String, String> payload) {
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", name);
 
         queueEvent("event", parameters, payload);
     }
 
     protected void _purchase(String item, String currency, int cost, int quantity) {
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("item", item);
         parameters.put("currency", currency);
         parameters.put("cost", Integer.toString(cost));
@@ -332,7 +334,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _currencyGiven(String givenCurrency, double givenAmount) {
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("given_currency", givenCurrency);
         parameters.put("given_amount", Double.toString(givenAmount));
 
@@ -340,7 +342,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _userUpdate(Map<String, String> attributes) {
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         try {
             parameters.put("attributes", new JSONObject(attributes));
         } catch (NullPointerException ex) {
@@ -351,8 +353,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _userUpdate (String name, Date date) {
-        Map<String, Object> parameters = new HashMap<String, Object>();
-        Map<String, String> resultAttributes = new HashMap<String, String>();
+        Map<String, Object> parameters = new HashMap<>();
+        Map<String, String> resultAttributes = new HashMap<>();
 
         String resultantDate = getStringFromDate(date);
         resultAttributes.put(name, resultantDate);
@@ -608,10 +610,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         JSONObject deviceInfo = new JSONObject();
 
         deviceInfo.put(SWRVE_DEVICE_NAME, getDeviceName());
-        deviceInfo.put(SWRVE_OS, "Android");
         deviceInfo.put(SWRVE_OS_VERSION, Build.VERSION.RELEASE);
 
         Context contextRef = context.get();
+
         if (contextRef != null) {
             try {
                 Display display = ((WindowManager) contextRef.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -653,6 +655,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             } catch (Exception exp) {
                 SwrveLogger.e("Get device screen info failed", exp);
             }
+            //OS
+            deviceInfo.put(SWRVE_OS, SwrveHelper.getPlatformOS(contextRef));
             deviceInfo.put(SWRVE_LANGUAGE, SwrveBase.this.language);
             String deviceRegion = Locale.getDefault().getCountry();
             deviceInfo.put(SWRVE_DEVICE_REGION, deviceRegion);
@@ -702,31 +706,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         restClientExecutorExecute(new Runnable() {
             @Override
             public void run() {
-                Map<String, String> params = new HashMap<>();
 
-                // General params
-                params.put("api_key", apiKey);
-                params.put("user", userId);
-                params.put("app_version", appVersion);
-                params.put("joined", String.valueOf(installTime));
-
-
-                // Talk only params
-                params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
-                params.put("conversation_version", String.valueOf(ISwrveConversationSDK.CONVERSATION_VERSION));
-                params.put("language", language);
-                params.put("app_store", config.getAppStore());
-
-                // Device info
-                params.put("device_width", String.valueOf(deviceWidth));
-                params.put("device_height", String.valueOf(deviceHeight));
-                params.put("device_dpi", String.valueOf(deviceDpi));
-                params.put("android_device_xdpi", String.valueOf(androidDeviceXdpi));
-                params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
-                params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
-                params.put("device_name", getDeviceName());
-                params.put("os_version", Build.VERSION.RELEASE);
-
+                Map<String, String> params = getContentRequestParams();
 
                 if (locationSegmentVersion > 0) {
                     params.put("location_version", String.valueOf(locationSegmentVersion));
@@ -884,9 +865,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 // Select messages with higher priority
                 int minPriority = Integer.MAX_VALUE;
                 List<SwrveConversation> candidateConversations = new ArrayList<>();
-                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
-                while (itCampaign.hasNext()) {
-                    SwrveBaseCampaign nextCampaign = itCampaign.next();
+                for (SwrveBaseCampaign nextCampaign : campaigns) {
                     if (nextCampaign instanceof SwrveConversationCampaign) {
                         SwrveConversation nextConversation = ((SwrveConversationCampaign)nextCampaign).getConversationForEvent(event, payload, now, campaignDisplayResults);
                         if (nextConversation != null) {
@@ -912,9 +891,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
                 if (qaUser != null && campaign != null && result != null) {
                     // A message was chosen, set the reason for the others
-                    Iterator<SwrveConversation> itOtherConversation = availableConversations.iterator();
-                    while (itOtherConversation.hasNext()) {
-                        SwrveConversation otherMessage = itOtherConversation.next();
+                    for (SwrveConversation otherMessage : availableConversations) {
                         if (otherMessage != result) {
                             int otherCampaignId = otherMessage.getCampaign().getId();
                             if (!campaignMessages.containsKey(otherCampaignId)) {
@@ -969,9 +946,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 // Select messages with higher priority
                 int minPriority = Integer.MAX_VALUE;
                 List<SwrveMessage> candidateMessages = new ArrayList<>();
-                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
-                while (itCampaign.hasNext()) {
-                    SwrveBaseCampaign nextCampaign = itCampaign.next();
+                for (SwrveBaseCampaign nextCampaign : campaigns) {
                     if (nextCampaign instanceof SwrveInAppCampaign) {
                         SwrveMessage nextMessage = ((SwrveInAppCampaign)nextCampaign).getMessageForEvent(event, payload, now, campaignDisplayResults);
                         if (nextMessage != null) {
@@ -1011,9 +986,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
                 if (qaUser != null && campaign != null && result != null) {
                     // A message was chosen, set the reason for the others
-                    Iterator<SwrveMessage> itOtherMessage = availableMessages.iterator();
-                    while (itOtherMessage.hasNext()) {
-                        SwrveMessage otherMessage = itOtherMessage.next();
+                    for (SwrveMessage otherMessage : availableMessages) {
                         if (otherMessage != result) {
                             int otherCampaignId = otherMessage.getCampaign().getId();
                             if (!campaignMessages.containsKey(otherCampaignId)) {
@@ -1438,6 +1411,21 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
+
+    public SwrveMessage getAdMesage() {
+        SwrveMessage result = null;
+
+        if (this.swrveDeeplinkManager != null) {
+            result = this.swrveDeeplinkManager.getSwrveMessage();
+        }
+
+        if (result == null) {
+            SwrveLogger.i("Not showing messages: no candidate messages");
+        }
+
+        return result;
+    }
+
     protected SwrveConversation getConversationForEvent(String event, Map<String, String> payload) {
         try {
             return _getConversationForEvent(event, payload);
@@ -1577,7 +1565,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
-        List<SwrveBaseCampaign> result = new ArrayList<SwrveBaseCampaign>();
+        List<SwrveBaseCampaign> result = new ArrayList<>();
         synchronized (campaigns) {
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
@@ -1620,6 +1608,60 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
         campaign.setStatus(SwrveCampaignState.Status.Deleted);
         saveCampaignsState(getUserId());
+    }
+
+    protected Map<String, String> getContentRequestParams() {
+
+        Map<String, String> params = new HashMap<>();
+
+        // General params
+        params.put("api_key", apiKey);
+        params.put("user", this.profileManager.getUserId());
+        params.put("app_version", appVersion);
+        params.put("joined", String.valueOf(installTime));
+
+
+        // Talk only params
+        params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
+        params.put("conversation_version", String.valueOf(ISwrveConversationSDK.CONVERSATION_VERSION));
+        params.put("language", language);
+        params.put("app_store", config.getAppStore());
+
+        // Device info
+        params.put("device_width", String.valueOf(deviceWidth));
+        params.put("device_height", String.valueOf(deviceHeight));
+        params.put("device_dpi", String.valueOf(deviceDpi));
+        params.put("android_device_xdpi", String.valueOf(androidDeviceXdpi));
+        params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
+        params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
+        params.put("device_name", getDeviceName());
+        params.put("os_version", Build.VERSION.RELEASE);
+
+        return params;
+    }
+
+    protected void initSwrveAdManager() {
+        if (this.swrveDeeplinkManager == null) {
+            this.swrveDeeplinkManager = new SwrveDeeplinkManager(getContentRequestParams(),(SwrveConfig)this.getConfig(),this.getContext(),this.swrveAssetsManager,this.restClient);
+        }
+    }
+
+    @Override
+    public void handleDeferredDeeplink(Bundle bundle) {
+
+        if (SwrveDeeplinkManager.isSwrveDeeplink(bundle) == false)  { return; }
+
+        initSwrveAdManager();
+        this.swrveDeeplinkManager.handleDeferredDeeplink(bundle);
+    }
+
+    @Override
+    public void handleDeeplink(Bundle bundle) {
+
+        if (SwrveDeeplinkManager.isSwrveDeeplink(bundle) == false)  { return; }
+
+        initSwrveAdManager();
+        this.swrveDeeplinkManager.handleDeeplink(bundle);
     }
 
     /***
@@ -1711,11 +1753,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return config.getDefaultNotificationChannel();
     }
 
-    /***
+    /*
      * eo ISwrveCommon
      */
 
-    /***
+    /*
      * Implementation of ISwrveConversationSDK methods
      */
 
@@ -1730,17 +1772,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         SwrveLogger.d("Sending view conversation event: %s", eventParamName);
 
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", eventParamName);
         String userId = profileManager.getUserId();
         queueEvent(userId, "event", parameters, payload, false);
     }
 
-    /***
+    /*
      * eo ISwrveConversationSDK
      */
 
-    /***
+    /*
      * Implementation of Application.ActivityLifecycleCallbacks methods
      */
 
@@ -1779,7 +1821,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         onDestroy(activity);
     }
 
-    /***
+    /*
      * eo Application.ActivityLifecycleCallbacks
      */
 }

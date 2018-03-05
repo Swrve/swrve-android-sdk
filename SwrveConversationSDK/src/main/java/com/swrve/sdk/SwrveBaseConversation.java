@@ -24,11 +24,8 @@ public class SwrveBaseConversation implements Serializable {
     // Priority of the conversation
     protected int priority = 9999;
 
-    /**
+    /*
      * Load message from JSON data.
-     *
-     * @param conversationData JSON data containing the message details.
-     * @throws JSONException
      */
     public SwrveBaseConversation(JSONObject conversationData, File cacheDir) throws JSONException {
         this.cacheDir = cacheDir;
@@ -46,7 +43,7 @@ public class SwrveBaseConversation implements Serializable {
         setName(conversationData.getString("name"));
 
         JSONArray pagesJson = conversationData.getJSONArray("pages");
-        ArrayList<ConversationPage> pages = new ArrayList<ConversationPage>();
+        ArrayList<ConversationPage> pages = new ArrayList<>();
 
         for (int i = 0; i < pagesJson.length(); i++) {
             JSONObject o = pagesJson.getJSONObject(i);

@@ -34,7 +34,7 @@ public class SwrveConversationEventHelper {
         try {
             Map<String, String> payload = null;
             if ((actionKey != null) && (toActionTag != null)) {
-                payload = new HashMap<String, String>();
+                payload = new HashMap<>();
                 payload.put(actionKey, toActionTag);
             }
 
@@ -80,7 +80,7 @@ public class SwrveConversationEventHelper {
         try {
             if (swrveConversationSDK != null) {
                 for (UserInputResult userInteraction : userInteractions) {
-                    Map<String, String> payload = new HashMap<String, String>();
+                    Map<String, String> payload = new HashMap<>();
                     payload.put("fragment", userInteraction.getFragmentTag());
 
                     if (userInteraction.isSingleChoice()) {
@@ -104,7 +104,7 @@ public class SwrveConversationEventHelper {
 
     public void conversationTransitionedToOtherPage(SwrveBaseConversation conversation, String fromPageTag, String toPageTag, String controlTag) {
         try {
-            Map<String, String> payload = new HashMap<String, String>();
+            Map<String, String> payload = new HashMap<>();
 
             payload.put("control", controlTag);
             payload.put("to", toPageTag); // The page the user ended on

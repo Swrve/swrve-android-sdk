@@ -3,8 +3,6 @@ package com.swrve.sdk.sample;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.swrve.sdk.SwrveSDK;
-
 public class MainActivity extends AppCompatActivity {
 
     @Override

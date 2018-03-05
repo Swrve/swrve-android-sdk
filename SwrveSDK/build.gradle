@@ -36,6 +36,7 @@ android {
 
     lintOptions {
         abortOnError true
+        baseline file("../../lint/lint-baseline-swrvesdk.xml")
     }
 }
 

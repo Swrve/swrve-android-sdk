@@ -29,6 +29,7 @@ public class ConversationRoundedLinearLayout extends LinearLayout {
     }
 
     private void init() {
+        setFocusable(false);
         maxModalWidthPx = getResources().getDimensionPixelSize(R.dimen.swrve__conversation_max_modal_width);
         // clipPath is not supported on some API versions when hardware acceleration is used. Disable
         // for those.

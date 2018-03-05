@@ -118,7 +118,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
 
             // Support gzip if possible
             String encoding = openConnection.getContentEncoding();
-            if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).indexOf("gzip") != -1) {
+            if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
                 inputStream = new GZIPInputStream(inputStream);
             }
 

@@ -10,13 +10,13 @@ interface SwrveAssetsManager {
 
     /**
      * The root url of the cdn to download image assets. Should end in a forward slash.
-     * @param cdnImages
+     * @param cdnImages The image cdn url
      */
     void setCdnImages(String cdnImages);
 
     /**
      * The root url of the cdn to download font assets. Should end in a forward slash.
-     * @param cdnFonts
+     * @param cdnFonts The font cdn url
      */
     void setCdnFonts(String cdnFonts);
 

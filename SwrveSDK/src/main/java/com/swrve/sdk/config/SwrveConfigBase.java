@@ -43,6 +43,8 @@ public abstract class SwrveConfigBase {
     private long autoShowMessagesMaxDelay = 5000; // Maximum delay for in-app messages to appear after initialization.
     private boolean loadCachedCampaignsAndResourcesOnUIThread = true; // Will load the campaign and resources cache on the UI thread.
     private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
+    private int inAppMessageFocusColor = Color.argb(100, 0, 190, 152); // Default button focus color for IAM
+    private int inAppMessageClickColor = Color.TRANSPARENT; // Default button click color for IAM
     private int httpTimeout = 60000; // HTTP timeout used when contacting the Swrve APIs, in milliseconds.
     private boolean hideToolbar = true; // Hide the toolbar when displaing in-app messages.
     private boolean androidIdLoggingEnabled; // Automatically log Android ID as "swrve.android_id".
@@ -54,7 +56,7 @@ public abstract class SwrveConfigBase {
      * Create an instance of the SDK advance preferences.
      */
     public SwrveConfigBase() {
-        modelBlackList = new ArrayList<String>();
+        modelBlackList = new ArrayList<>();
         modelBlackList.add("Calypso AppCrawler");
     }
 
@@ -127,7 +129,7 @@ public abstract class SwrveConfigBase {
 
     /**
      * Get the selected Stack
-     * @return
+     * @return The selected stack
      */
     public SwrveStack getSelectedStack() {
         return selectedStack;
@@ -142,9 +144,8 @@ public abstract class SwrveConfigBase {
     }
 
 
-    /**
+    /*
      * Get the stack prefix for the events and content url
-     * @return
      */
     private String getStackHostPrefix(){
         return (getSelectedStack() == SwrveStack.EU) ? "eu-" : "";
@@ -333,7 +334,7 @@ public abstract class SwrveConfigBase {
     /**
      * Generate default endpoints with the given app id. Used internally.
      *
-     * @throws MalformedURLException
+     * @throws MalformedURLException If theres an error
      */
     public void generateUrls(int appId) throws MalformedURLException {
         // If the prefix is non empty, prepend it with a .
@@ -411,7 +412,7 @@ public abstract class SwrveConfigBase {
     /**
      * Automatically send events onResume.
      *
-     * @param sendQueuedEventsOnResume
+     * @param sendQueuedEventsOnResume true to send queued event upon resume
      */
     public void setSendQueuedEventsOnResume(boolean sendQueuedEventsOnResume) {
         this.sendQueuedEventsOnResume = sendQueuedEventsOnResume;
@@ -429,7 +430,7 @@ public abstract class SwrveConfigBase {
     /**
      * Maximum delay for in-app messages to appear after initialization.
      *
-     * @param autoShowMessagesMaxDelay
+     * @param autoShowMessagesMaxDelay max delay
      */
     public void setAutoShowMessagesMaxDelay(long autoShowMessagesMaxDelay) {
         this.autoShowMessagesMaxDelay = autoShowMessagesMaxDelay;
@@ -449,7 +450,7 @@ public abstract class SwrveConfigBase {
      * Load campaigns and resources cache on the UI thread. Allows to get user resources and
      * campaigns on the early start.
      *
-     * @param loadOnUIThread
+     * @param loadOnUIThread true if cached campaigns should be retreived on UI thread
      */
     public void setLoadCachedCampaignsAndResourcesOnUIThread(boolean loadOnUIThread) {
         this.loadCachedCampaignsAndResourcesOnUIThread = loadOnUIThread;
@@ -467,16 +468,52 @@ public abstract class SwrveConfigBase {
     /**
      * Set the default in-app background color.
      *
-     * @param defaultBackgroundColor
+     * @param defaultBackgroundColor Default in-app background color used if none is specified in the template
      */
     public void setDefaultBackgroundColor(int defaultBackgroundColor) {
         this.defaultBackgroundColor = defaultBackgroundColor;
     }
 
     /**
+     * The in-app message focus color
+     *
+     * @return The in-app message focus color.
+     */
+    public int getInAppMessageFocusColor() {
+        return inAppMessageFocusColor;
+    }
+
+    /**
+     * Set the in-app message focus color. Used for in app message buttons on TV.
+     *
+     * @param inAppMessageFocusColor A color-int, eg: Color.argb(100, 0, 190, 152)
+     */
+    public void setInAppMessageFocusColor(int inAppMessageFocusColor) {
+        this.inAppMessageFocusColor = inAppMessageFocusColor;
+    }
+
+    /**
+     * The in-app message button click color
+     *
+     * @return The in-app message button click color.
+     */
+    public int getInAppMessageClickColor() {
+        return inAppMessageClickColor;
+    }
+
+    /**
+     * Set the in-app message button click color. Used for in app message buttons on TV.
+     *
+     * @param inAppMessageClickColor A color-int, eg: Color.argb(100, 0, 190, 152)
+     */
+    public void setInAppMessageClickColor(int inAppMessageClickColor) {
+        this.inAppMessageClickColor = inAppMessageClickColor;
+    }
+
+    /**
      * Set the HTTP timeout.
      *
-     * @param httpTimeout
+     * @param httpTimeout the http timeout for rest calls
      */
     public void setHttpTimeout(int httpTimeout) {
         this.httpTimeout = httpTimeout;
@@ -494,7 +531,7 @@ public abstract class SwrveConfigBase {
     /**
      * Hide the toolbar when displaying in-app messages.
      *
-     * @param hideToolbar
+     * @param hideToolbar true to hide the toolbar when displaying in-app messages
      */
     public void setHideToolbar(boolean hideToolbar) {
         this.hideToolbar = hideToolbar;

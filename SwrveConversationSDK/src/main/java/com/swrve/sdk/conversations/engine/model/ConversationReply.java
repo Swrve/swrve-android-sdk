@@ -7,7 +7,7 @@ public class ConversationReply {
     private HashMap<String, Object> data;
 
     public ConversationReply() {
-        data = new HashMap<String, Object>();
+        data = new HashMap<>();
     }
 
     public String getControl() {

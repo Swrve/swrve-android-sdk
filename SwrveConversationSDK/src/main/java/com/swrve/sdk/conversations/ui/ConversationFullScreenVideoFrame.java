@@ -16,6 +16,7 @@ public class ConversationFullScreenVideoFrame extends FrameLayout {
 
     public ConversationFullScreenVideoFrame(Context context, AttributeSet attrs) {
         super(context, attrs);
+        setFocusable(false);
     }
 
     public void disableFullScreen() {

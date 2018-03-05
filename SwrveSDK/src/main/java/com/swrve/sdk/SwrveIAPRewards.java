@@ -17,7 +17,7 @@ public class SwrveIAPRewards {
     protected Map<String, Map<String, Object>> rewards;
 
     public SwrveIAPRewards() {
-        this.rewards = new HashMap<String, Map<String, Object>>();
+        this.rewards = new HashMap<>();
     }
 
     /**
@@ -26,7 +26,7 @@ public class SwrveIAPRewards {
      * @param amount amount to be given.
      */
     public SwrveIAPRewards(String currencyName, long amount) {
-        this.rewards = new HashMap<String, Map<String, Object>>();
+        this.rewards = new HashMap<>();
         this.addCurrency(currencyName, amount);
     }
 
@@ -50,7 +50,7 @@ public class SwrveIAPRewards {
 
     protected void addObject(String name, long quantity, String type) {
         if (checkParameters(name, quantity, type)) {
-            Map<String, Object> item = new HashMap<String, Object>();
+            Map<String, Object> item = new HashMap<>();
             item.put("amount", quantity);
             item.put("type", type);
             this.rewards.put(name, item);

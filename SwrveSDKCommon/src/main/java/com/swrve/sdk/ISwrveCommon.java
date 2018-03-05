@@ -17,6 +17,7 @@ interface ISwrveCommon {
     String CACHE_RESOURCES = "srcngt2";
     String CACHE_RESOURCES_DIFF = "rsdfngt2";
     String CACHE_LOCATION_CAMPAIGNS = "LocationCampaign";
+    String CACHE_AD_CAMPAIGNS = "AdCampaign";
     String CACHE_APP_VERSION = "AppVersion";
     String CACHE_INSTALL_TIME = "SwrveSDK.installTime";
     String CACHE_CAMPAIGNS_STATE = "SwrveCampaignSettings";

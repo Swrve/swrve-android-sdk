@@ -25,20 +25,12 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
     // Parent in-app campaign
     protected transient SwrveConversationCampaign campaign;
 
-    /**
-     * Load message from JSON data.
-     *
-     * @param campaign         Related campaign.
-     * @param conversationData JSON data containing the message details.
-     * @param campaignManager
-     * @throws JSONException
-     */
     public SwrveConversation(SwrveConversationCampaign campaign, JSONObject conversationData, ISwrveCampaignManager campaignManager) throws JSONException {
         super(conversationData, campaignManager.getCacheDir());
         this.campaign = campaign;
     }
 
-    /**
+    /*
      * @return has the conversation been downloaded fully yet
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk) {

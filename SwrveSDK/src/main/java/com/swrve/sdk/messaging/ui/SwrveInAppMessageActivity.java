@@ -29,12 +29,15 @@ import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
 public class SwrveInAppMessageActivity extends Activity {
 
     public static final String MESSAGE_ID_KEY = "message_id";
+    private static final String SWRVE_AD_MESSAGE = "ad_message_key";
 
     private SwrveBase sdk;
     private SwrveMessage message;
     private boolean hideToolbar = false;
     private int minSampleSize;
     private int defaultBackgroundColor;
+    private int inAppMessageFocusColor;
+    private int inAppMessageClickColor;
 
     private SwrveMessageFormat format;
 
@@ -51,13 +54,23 @@ public class SwrveInAppMessageActivity extends Activity {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
+
                 int messageId = extras.getInt(MESSAGE_ID_KEY);
                 message = sdk.getMessageForId(messageId);
+
+                if (message == null) {
+                    //check if loaded from SwrveDeeplinkManager
+                    if (extras.getBoolean(SWRVE_AD_MESSAGE)) {
+                        message = sdk.getAdMesage();
+                    }
+                }
 
                 SwrveConfigBase config = sdk.getConfig();
                 this.hideToolbar = config.isHideToolbar();
                 this.minSampleSize = config.getMinSampleSize();
                 this.defaultBackgroundColor = config.getDefaultBackgroundColor();
+                this.inAppMessageFocusColor = config.getInAppMessageFocusColor();
+                this.inAppMessageClickColor = config.getInAppMessageClickColor();
             }
         }
 
@@ -102,7 +115,9 @@ public class SwrveInAppMessageActivity extends Activity {
 
         try {
             // Create view and add as root of the activity
-            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize, defaultBackgroundColor);
+
+            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize,
+                    defaultBackgroundColor, inAppMessageFocusColor, inAppMessageClickColor);
             setContentView(view);
             if(savedInstanceState == null) {
                 notifyOfImpression(format);

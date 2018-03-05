@@ -78,12 +78,6 @@ public class SwrveCampaignState {
         return impressions;
     }
 
-    /**
-     * Serialize the campaign state.
-     *
-     * @return JSONObject State for the campaign.
-     * @throws org.json.JSONException
-     */
     public JSONObject toJSON() throws JSONException {
         JSONObject state = new JSONObject();
         state.put("next", next);

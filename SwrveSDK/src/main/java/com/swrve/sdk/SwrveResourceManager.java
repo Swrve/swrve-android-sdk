@@ -19,8 +19,8 @@ public class SwrveResourceManager {
     private List<SwrveABTestDetails> abTestDetails;
 
     public SwrveResourceManager() {
-        this.resources = new HashMap<String, SwrveResource>();
-        this.abTestDetails = new ArrayList<SwrveABTestDetails>();
+        this.resources = new HashMap<>();
+        this.abTestDetails = new ArrayList<>();
     }
 
     protected void _setResourcesFromJSON(JSONArray jsonResources) {
@@ -28,7 +28,7 @@ public class SwrveResourceManager {
             // Convert to map
             int numResources = jsonResources.length();
             synchronized (this.resources) {
-                this.resources = new HashMap<String, SwrveResource>();
+                this.resources = new HashMap<>();
                 for (int i = 0; i < numResources; i++) {
                     JSONObject resourceJSON = jsonResources.getJSONObject(i);
                     String uid = resourceJSON.getString("uid");
@@ -86,7 +86,7 @@ public class SwrveResourceManager {
 
     /**
      * Update the resources with the JSON content coming from the Swrve servers.
-     * @param jsonResources
+     * @param jsonResources JSONArray
      */
     public void setResourcesFromJSON(JSONArray jsonResources) {
         try {
@@ -189,10 +189,10 @@ public class SwrveResourceManager {
 
     /**
      * Update the AB Test information for the user.
-     * @param abTestInfoCollectionJson
+     * @param abTestInfoCollectionJson jsonobject
      */
     public void setABTestDetailsFromJSON(JSONObject abTestInfoCollectionJson) {
-        List<SwrveABTestDetails> result = new ArrayList<SwrveABTestDetails>();
+        List<SwrveABTestDetails> result = new ArrayList<>();
         try {
             Iterator<String> it = abTestInfoCollectionJson.keys();
             while(it.hasNext()) {
@@ -211,7 +211,7 @@ public class SwrveResourceManager {
     /**
      * Obtain information about the AB Tests a user is part of. To use this feature enable the
      * flag abTestDetailsEnabled in your configuration.
-     * @return
+     * @return List containing abtestdetails.
      */
     public List<SwrveABTestDetails> getABTestDetails() {
         return this.abTestDetails;

@@ -1,7 +1,6 @@
 package com.swrve.sdk;
 
 import android.content.Context;
-import android.os.Bundle;
 
 import org.json.JSONObject;
 

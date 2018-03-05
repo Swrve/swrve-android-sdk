@@ -20,7 +20,7 @@ public class UIThreadSwrveUserResourcesDiffListener implements SwrveUserResource
     private final UIThreadSwrveResourcesDiffRunnable uiWork;
 
     public UIThreadSwrveUserResourcesDiffListener(Activity context, UIThreadSwrveResourcesDiffRunnable uiWork) {
-        this.context = new WeakReference<Activity>(context);
+        this.context = new WeakReference<>(context);
         this.uiWork = uiWork;
     }
 

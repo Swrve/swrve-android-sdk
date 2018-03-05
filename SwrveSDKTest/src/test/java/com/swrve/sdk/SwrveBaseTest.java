@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.os.Build;
 import android.util.Log;
 
-import com.swrve.sdk.test.BuildConfig;
 import com.swrve.sdk.test.MainActivity;
 
 import org.junit.After;

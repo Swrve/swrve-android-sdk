@@ -29,7 +29,7 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
                     actions.includeAction(label, value);
                 } else if (label.equalsIgnoreCase(ControlActions.VISIT_URL_ACTION.toString())) {
                     JsonObject jsonObject = entry.getValue().getAsJsonObject();
-                    HashMap<String, String> visitUriDetails = new HashMap<String, String>();
+                    HashMap<String, String> visitUriDetails = new HashMap<>();
 
                     String urlStr = "http://www.google.ie";
                     String refer = "http://swrve.com";
@@ -48,7 +48,7 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
                     actions.includeAction(label, visitUriDetails);
                 } else if (label.equalsIgnoreCase(ControlActions.DEEPLINK_ACTION.toString())) {
                     JsonObject jsonObject = entry.getValue().getAsJsonObject();
-                    HashMap<String, String> deeplinkURIDetails = new HashMap<String, String>();
+                    HashMap<String, String> deeplinkURIDetails = new HashMap<>();
 
                     String urlStr = "twitter://"; // Default.
 

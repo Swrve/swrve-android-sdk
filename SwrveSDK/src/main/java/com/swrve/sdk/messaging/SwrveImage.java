@@ -3,8 +3,6 @@ package com.swrve.sdk.messaging;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.Serializable;
-
 /**
  * In-app message background image.
  */

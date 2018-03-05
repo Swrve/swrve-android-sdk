@@ -43,7 +43,8 @@ android {
     }
 
     lintOptions {
-        abortOnError false
+        abortOnError true
+        baseline file("../../lint/lint-baseline-swrvesdktest.xml")
     }
 
     useLibrary 'org.apache.http.legacy'
@@ -66,4 +67,5 @@ dependencies {
     }
 
     testApi 'com.squareup.okhttp3:mockwebserver:3.9.0'
+    testCompile 'org.awaitility:awaitility:3.0.0'
 }

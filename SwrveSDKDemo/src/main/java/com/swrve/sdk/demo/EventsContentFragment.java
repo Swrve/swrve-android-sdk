@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import com.swrve.sdk.SwrveIAPRewards;
@@ -20,9 +19,9 @@ public class EventsContentFragment extends Fragment implements View.OnClickListe
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.frag_events, null);
-        Button btnQueueEvent = (Button) v.findViewById(R.id.btnQueueEvent);
+        Button btnQueueEvent = v.findViewById(R.id.btnQueueEvent);
         btnQueueEvent.setOnClickListener(this);
-        Button btnAction = (Button) v.findViewById(R.id.btnAction);
+        Button btnAction = v.findViewById(R.id.btnAction);
         btnAction.setOnClickListener(this);
         return v;
     }
@@ -40,7 +39,7 @@ public class EventsContentFragment extends Fragment implements View.OnClickListe
     }
 
     private void btnQueueEvent() {
-        EditText editText = (EditText) getView().findViewById(R.id.eventName);
+        EditText editText = getView().findViewById(R.id.eventName);
         String eventName = editText.getText().toString();
         if(eventName.length()>0) {
             SwrveSDK.event(eventName);
@@ -49,11 +48,11 @@ public class EventsContentFragment extends Fragment implements View.OnClickListe
     }
 
     private void btnAction() {
-        RadioGroup radioGroup = (RadioGroup) getView().findViewById(R.id.radioGroupActions);
+        RadioGroup radioGroup = getView().findViewById(R.id.radioGroupActions);
         int selectedId = radioGroup.getCheckedRadioButtonId();
         View radioButton = radioGroup.findViewById(selectedId);
         int radioId = radioGroup.indexOfChild(radioButton);
-        int action = ((RadioButton) radioGroup.getChildAt(radioId)).getId();
+        int action = (radioGroup.getChildAt(radioId)).getId();
 
         if(action == R.id.radioPurchaseEvent) {
             SwrveSDK.purchase("BANANA_PACK", "gold", 120, 99);

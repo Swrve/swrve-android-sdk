@@ -2,6 +2,9 @@ package com.swrve.sdk.conversations.ui;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.UiModeManager;
+import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -116,6 +119,14 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         } else {
             openFirstPage();
         }
+
+        // If the platform is TV then request focus on the first button
+        UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
+        if(uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            if (controlLayout.getChildCount() > 0) {
+                controlLayout.getChildAt(0).requestFocus();
+            }
+        }
     }
 
     @Override
@@ -160,13 +171,13 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
     }
 
     private void initLayout() {
-        ConversationRoundedLinearLayout modalLayout = (ConversationRoundedLinearLayout) root.findViewById(R.id.swrve__conversation_modal);
+        ConversationRoundedLinearLayout modalLayout = root.findViewById(R.id.swrve__conversation_modal);
         float pageBorderRadius = SwrveConversationHelper.getRadiusInPixels(getContext(), page.getStyle().getBorderRadius());
         modalLayout.setRadius(pageBorderRadius);
 
-        contentLayout = (LinearLayout) root.findViewById(R.id.swrve__content);
-        controlLayout = (LinearLayout) root.findViewById(R.id.swrve__controls);
-        fullScreenFrame = (ConversationFullScreenVideoFrame) root.findViewById(R.id.swrve__full_screen);
+        contentLayout = root.findViewById(R.id.swrve__content);
+        controlLayout = root.findViewById(R.id.swrve__controls);
+        fullScreenFrame = root.findViewById(R.id.swrve__full_screen);
 
         if (contentLayout.getChildCount() > 0) {
             contentLayout.removeAllViews();
@@ -391,7 +402,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
      */
     public void commitUserInputsToEvents() {
         SwrveLogger.i("Commiting all stashed events");
-        ArrayList<UserInputResult> userInputEvents = new ArrayList<UserInputResult>();
+        ArrayList<UserInputResult> userInputEvents = new ArrayList<>();
         for (String k : userInteractionData.keySet()) {
             UserInputResult r = userInteractionData.get(k);
             userInputEvents.add(r);
@@ -406,11 +417,8 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
         eventHelper.sendQueuedEvents();
     }
 
-    /**
+    /*
      * Kick off sending reply. The input tree will be traversed and responses gathered. If additional data needs to be included, include in the reply before passing in.
-     *
-     * @param control
-     * @param reply
      */
     private void sendReply(ControlBase control, ConversationReply reply) {
         reply.setControl(control.getTag());
