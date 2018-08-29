@@ -47,7 +47,7 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
     private void saveUserIdToPrefs(String userId) {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit(); // Save new user id
-        editor.putString("userId", userId).apply();
+        editor.putString("userId", userId).commit();
     }
 
     private String getSavedUserIdFromPrefs() {

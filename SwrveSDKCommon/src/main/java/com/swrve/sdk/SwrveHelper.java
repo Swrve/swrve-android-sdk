@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Base64;
 
 import org.json.JSONException;
@@ -244,5 +245,45 @@ public final class SwrveHelper {
             return "AndroidTV";
         }
         return "Android";
+    }
+
+    // Used by Unity
+    public static boolean isSwrvePush(final Bundle msg) {
+        String pushId = SwrveHelper.getRemotePushId(msg);
+        if (SwrveHelper.isNullOrEmpty(pushId)) {
+            pushId = SwrveHelper.getSilentPushId(msg);
+        }
+        return SwrveHelper.isNotNullOrEmpty(pushId);
+    }
+
+    // Obtains the normal push or silent push tracking id
+    public static String getRemotePushId(final Bundle msg) {
+        String pushId = null;
+        if(msg == null) {
+            return pushId;
+        }
+        Object rawId = msg.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+        pushId = (rawId != null) ? rawId.toString() : null;
+        return pushId;
+    }
+
+    // Obtains the silent push tracking id
+    // Used by Unity
+    public static String getSilentPushId(final Bundle msg) {
+        if (msg == null) {
+            return null;
+        }
+        Object rawId = msg.get(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
+        return (rawId != null) ? rawId.toString() : null;
+    }
+
+    public static Map<String, String> getBundleAsMap(Bundle propertyBundle) {
+        Map<String, String> map = new HashMap<>();
+        if (propertyBundle != null) {
+            for (String key : propertyBundle.keySet()) {
+                map.put(key, propertyBundle.getString(key));
+            }
+        }
+        return map;
     }
 }

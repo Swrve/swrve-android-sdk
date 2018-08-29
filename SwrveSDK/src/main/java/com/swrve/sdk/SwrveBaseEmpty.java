@@ -2,7 +2,6 @@ package com.swrve.sdk;
 
 import android.app.NotificationChannel;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -156,6 +155,11 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public String getJoined() {
+        return "";
+    }
+
+    @Override
     public String getApiKey() {
         return this.apiKey;
     }
@@ -195,6 +199,11 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public String getBatchURL() {
+        return null;
+    }
+
+    @Override
+    public String getContentURL() {
         return null;
     }
 
@@ -316,6 +325,19 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void handleDeeplink(Bundle bundle) {
+    }
 
+    @Override
+    public SwrveNotificationConfig getNotificationConfig() {
+        return null;
+    }
+
+    @Override
+    public SwrvePushNotificationListener getNotificationListener() {
+        return null;
+    }
+
+    @Override
+    public void setNotificationSwrveCampaignId(String swrveCampaignId) {
     }
 }

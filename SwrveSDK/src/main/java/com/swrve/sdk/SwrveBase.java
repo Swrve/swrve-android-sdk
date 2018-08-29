@@ -74,7 +74,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected SwrveBase(Application application, int appId, String apiKey, C config) {
         super(application, appId, apiKey, config);
         SwrveCommon.setSwrveCommon(this);
-        SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
     }
 
     protected static String _getVersion() {
@@ -539,6 +538,22 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         }
         generateNewSessionInterval();
+
+        // Detect if user is influenced by a push notification
+        campaignInfluence.processInfluenceData(getContext(), this);
+
+        loadCampaignFromNotification(this.notificaionSwrveCampaignId);
+    }
+
+    protected void loadCampaignFromNotification(String swrveCampaignId) {
+
+        if (swrveCampaignId != null) {
+            Bundle b = new Bundle();
+            b.putString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, swrveCampaignId);
+            initSwrveDeepLinkManager();
+            this.swrveDeeplinkManager.handleDeeplink(b);
+            notificaionSwrveCampaignId = null;
+        }
     }
 
     protected void _onDestroy(Activity ctx) {
@@ -1346,6 +1361,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public String getJoined() {
+        return String.valueOf(installTime);
+    }
+
+    @Override
     public String getApiKey() {
         try {
             return _getApiKey();
@@ -1640,7 +1660,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return params;
     }
 
-    protected void initSwrveAdManager() {
+    protected void initSwrveDeepLinkManager() {
         if (this.swrveDeeplinkManager == null) {
             this.swrveDeeplinkManager = new SwrveDeeplinkManager(getContentRequestParams(),(SwrveConfig)this.getConfig(),this.getContext(),this.swrveAssetsManager,this.restClient);
         }
@@ -1651,7 +1671,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         if (SwrveDeeplinkManager.isSwrveDeeplink(bundle) == false)  { return; }
 
-        initSwrveAdManager();
+        initSwrveDeepLinkManager();
         this.swrveDeeplinkManager.handleDeferredDeeplink(bundle);
     }
 
@@ -1660,7 +1680,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         if (SwrveDeeplinkManager.isSwrveDeeplink(bundle) == false)  { return; }
 
-        initSwrveAdManager();
+        initSwrveDeepLinkManager();
         this.swrveDeeplinkManager.handleDeeplink(bundle);
     }
 
@@ -1681,6 +1701,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public String getBatchURL() {
         return getEventsServer() +  BATCH_EVENTS_ACTION;
+    }
+
+    @Override
+    public String getContentURL() {
+        return config.getContentUrl().toString();
     }
 
     @Override
@@ -1709,7 +1734,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void sendEventsInBackground(Context context, String userId, ArrayList<String> events) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             // Avoid using the deprecated wakeful receiver
-            SwrveEventSenderJobService.scheduleJob(context, userId, events);
+            SwrveEventSenderJobIntentService.enqueueWork(context, userId, events);
         } else {
             Intent intent = new Intent(context, SwrveWakefulReceiver.class);
             intent.putExtra(SwrveBackgroundEventSender.EXTRA_USER_ID, userId);
@@ -1751,6 +1776,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public NotificationChannel getDefaultNotificationChannel() {
         return config.getDefaultNotificationChannel();
+    }
+
+    @Override
+    public SwrveNotificationConfig getNotificationConfig() {
+        return config.getNotificationConfig();
+    }
+
+    @Override
+    public SwrvePushNotificationListener getNotificationListener() {
+        return config.getNotificationListener();
     }
 
     /*
@@ -1824,4 +1859,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     /*
      * eo Application.ActivityLifecycleCallbacks
      */
+    @Override
+    public void setNotificationSwrveCampaignId(String swrveCampaignId) {
+        notificaionSwrveCampaignId = swrveCampaignId;
+    }
 }

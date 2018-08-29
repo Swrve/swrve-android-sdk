@@ -8,14 +8,14 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.SwrvePushConstants;
+import com.swrve.sdk.SwrveNotificationConstants;
 
 import java.util.LinkedList;
 
 public class SwrvePushDeDuper {
 
     private final static String AMAZON_RECENT_PUSH_IDS = "recent_push_ids";
-    private final static String AMAZON_PREFERENCES = "swrve_amazon_pref"; // TODO rename this
+    private final static String AMAZON_PREFERENCES = "swrve_amazon_pref";
     protected final int DEFAULT_PUSH_ID_CACHE_SIZE = 16;
 
     private Context context;
@@ -35,15 +35,15 @@ public class SwrvePushDeDuper {
 
         boolean isDupe = false;
 
-        Object rawId = msg.get(SwrvePushConstants.SWRVE_TRACKING_KEY);
+        Object rawId = msg.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
         if (rawId == null) {
-            rawId = msg.get(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY);
+            rawId = msg.get(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
         }
         String msgId = (rawId != null) ? rawId.toString() : null;
 
-        final String timestamp = msg.getString(SwrvePushConstants.TIMESTAMP_KEY);
+        final String timestamp = msg.getString(SwrveNotificationConstants.TIMESTAMP_KEY);
         if (SwrveHelper.isNullOrEmpty(timestamp)) {
-            SwrveLogger.e("Push notification: cannot dedupe as it's missing %s", SwrvePushConstants.TIMESTAMP_KEY);
+            SwrveLogger.e("Push notification: cannot dedupe as it's missing %s", SwrveNotificationConstants.TIMESTAMP_KEY);
             isDupe = true;
         } else {
             String curId = msgId + ":" + timestamp;
@@ -53,7 +53,7 @@ public class SwrvePushDeDuper {
                 isDupe =true;
             } else {
                 // Try get de-dupe cache size
-                int pushIdCacheSize = msg.getInt(SwrvePushConstants.PUSH_ID_CACHE_SIZE_KEY, DEFAULT_PUSH_ID_CACHE_SIZE);
+                int pushIdCacheSize = msg.getInt(SwrveNotificationConstants.PUSH_ID_CACHE_SIZE_KEY, DEFAULT_PUSH_ID_CACHE_SIZE);
 
                 // No duplicate found. Update the cache.
                 updateRecentNotificationIdCache(recentIds, curId, pushIdCacheSize, context);

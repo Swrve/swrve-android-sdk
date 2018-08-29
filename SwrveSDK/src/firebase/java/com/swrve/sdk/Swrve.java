@@ -1,14 +1,17 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.firebase.SwrveFirebaseConstants;
 
@@ -39,25 +42,24 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected void registerInBackground() {
         final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
         final String sessionToken = profileManager.getSessionToken();
-        new AsyncTask<Void, Integer, Void>() {
+        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
             @Override
-            protected Void doInBackground(Void... params) {
-                // Try to obtain the Firebase registration id from Google Play
+            public void onSuccess(InstanceIdResult instanceIdResult) {
                 try {
-                    String newRegistrationId = FirebaseInstanceId.getInstance().getToken();
+                    String newRegistrationId = instanceIdResult.getToken();
                     if (!SwrveHelper.isNullOrEmpty(newRegistrationId)) {
                         _setRegistrationId(userId, sessionToken, newRegistrationId);
                     }
                 } catch (Exception ex) {
                     SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", ex);
                 }
-                return null;
             }
-
+        }).addOnFailureListener(new OnFailureListener() {
             @Override
-            protected void onPostExecute(Void v) {
+            public void onFailure(@NonNull Exception e) {
+                SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", e);
             }
-        }.execute(null, null, null);
+        });
     }
 
     /**
@@ -212,16 +214,5 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             return false;
         }
         return true;
-    }
-
-    @Override
-    protected void _onResume(Activity ctx) {
-        super._onResume(ctx);
-
-        // Detect if user is influenced by a push notification
-        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
-        if (pushSDK != null) {
-            pushSDK.processInfluenceData(this);
-        }
     }
 }

@@ -168,6 +168,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
             SwrveLogger.i("Next message in campaign %s is random", getId());
         }
     }
+
     @Override
     public boolean supportsOrientation(SwrveOrientation orientation) {
         for (SwrveMessage message : messages) {

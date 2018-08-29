@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import android.content.Context;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -8,6 +10,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_ENGAGED;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 
 /**
  * Used internally to generate JSON batch strings from event data.
@@ -19,25 +34,21 @@ final class EventHelper {
         return eventAsJSON(type, parameters, null, seqnum, time);
     }
 
-    public static ArrayList<String> createGenericEvent(String id, String campaignType, String actionType, String contextId,String campaignId, Map<String, String> payload) throws JSONException {
-
-        ISwrveCommon swrve = SwrveCommon.getInstance();
-        if (swrve != null) {
-
-            ArrayList<String> events = new ArrayList<>();
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("id", id);
-            parameters.put("campaignType", campaignType);
-            parameters.put("actionType", actionType);
-            parameters.put("contextId", contextId);
-            parameters.put("campaignId", campaignId);
-            String eventAsJSON = EventHelper.eventAsJSON("generic_campaign_event", parameters, payload, swrve.getNextSequenceNumber(), System.currentTimeMillis());
-            events.add(eventAsJSON);
-
-            return events;
+    public static ArrayList<String> createGenericEvent(String id, String campaignType, String actionType, String contextId, String campaignId, Map<String, String> payload, int seqnum) throws JSONException {
+        ArrayList<String> events = new ArrayList<>();
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put(EVENT_ID_KEY, id);
+        parameters.put(GENERIC_EVENT_CAMPAIGN_TYPE_KEY, campaignType);
+        parameters.put(GENERIC_EVENT_ACTION_TYPE_KEY, actionType);
+        if (SwrveHelper.isNotNullOrEmpty(contextId)) {
+            parameters.put(GENERIC_EVENT_CONTEXT_ID_KEY, contextId);
         }
-
-        return null;
+        if (SwrveHelper.isNotNullOrEmpty(campaignId)) {
+            parameters.put(GENERIC_EVENT_CAMPAIGN_ID_KEY, campaignId);
+        }
+        String eventAsJSON = EventHelper.eventAsJSON(EVENT_TYPE_GENERIC_CAMPAIGN, parameters, payload, seqnum, System.currentTimeMillis());
+        events.add(eventAsJSON);
+        return events;
     }
 
     /*
@@ -46,7 +57,7 @@ final class EventHelper {
      */
     public static String eventAsJSON(String type, Map<String, Object> parameters, Map<String, String> payload, int seqnum, long time) throws JSONException {
         JSONObject obj = new JSONObject();
-        obj.put("type", type);
+        obj.put(EVENT_TYPE_KEY, type);
         obj.put("time", time);
         if (seqnum > 0) {
             obj.put("seqnum", seqnum);
@@ -57,8 +68,8 @@ final class EventHelper {
             }
         }
 
-        if (payload != null) {
-            obj.put("payload", new JSONObject(payload));
+        if (payload != null && payload.size() > 0) {
+            obj.put(EVENT_PAYLOAD_KEY, new JSONObject(payload));
         }
         return obj.toString();
     }
@@ -127,5 +138,42 @@ final class EventHelper {
                 return "Swrve.user_properties_changed";
         }
         return "";
+    }
+
+    protected static void sendEngagedEvent(Context context, String campaignType, String id, Map<String, String> payload) {
+        try {
+            ISwrveCommon swrve = SwrveCommon.getInstance();
+            ArrayList<String> events = new ArrayList<>();
+            int seqNum = swrve.getNextSequenceNumber();
+            if (GENERIC_EVENT_CAMPAIGN_TYPE_GEO.equalsIgnoreCase(campaignType)) {
+                SwrveLogger.d("Sending generic engaged event.");
+                String contextId = "";
+                String campaignId = "";
+                events = EventHelper.createGenericEvent(id, GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, contextId, campaignId, payload, seqNum);
+            } else if (GENERIC_EVENT_CAMPAIGN_TYPE_PUSH.equalsIgnoreCase(campaignType)) {
+                String eventName = "Swrve.Messages.Push-" + id + ".engaged";
+                SwrveLogger.d("Sending engaged event: %s", eventName);
+                Map<String, Object> parameters = new HashMap<>();
+                parameters.put("name", eventName);
+                String eventString = EventHelper.eventAsJSON("event", parameters, payload, seqNum, System.currentTimeMillis());
+                events.add(eventString);
+            }
+            swrve.sendEventsInBackground(context, swrve.getUserId(), events);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception trying to send engaged event.", e);
+        }
+    }
+
+    protected static void sendButtonClickEvent(Context context, String campaignType, String id, String contextId, Map<String, String> payload) {
+        try {
+            ISwrveCommon swrve = SwrveCommon.getInstance();
+            int seqNum = swrve.getNextSequenceNumber();
+            String campaignId = null;
+            ArrayList<String> events = EventHelper.createGenericEvent(id, campaignType, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, contextId, campaignId, payload, seqNum);
+            SwrveLogger.d("Sending button_click for id:%s contextId:%s campaignType:%s", id, contextId, campaignType);
+            swrve.sendEventsInBackground(context, swrve.getUserId(), events);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception trying to send button click event.", e);
+        }
     }
 }

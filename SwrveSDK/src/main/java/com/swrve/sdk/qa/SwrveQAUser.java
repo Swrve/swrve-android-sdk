@@ -1,7 +1,5 @@
 package com.swrve.sdk.qa;
 
-import android.os.Bundle;
-
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -222,26 +220,6 @@ public class SwrveQAUser {
             }
         } catch (Exception exp) {
             SwrveLogger.e("QA request device info failed", exp);
-        }
-    }
-
-    public void pushNotification(String trackingId, Bundle msg) {
-        try {
-            if (canMakeTriggerRequest()) {
-                if (!SwrveHelper.isNullOrEmpty(trackingId)) {
-                    String endpoint = loggingUrl + "/talk/game/" + apiKey + "/user/" + userId + "/push";
-                    JSONObject pushJson = new JSONObject();
-                    pushJson.put("id", trackingId);
-                    pushJson.put("alert", msg.getString("text"));
-                    pushJson.put("sound", msg.getString("sound"));
-                    pushJson.put("badge", "");
-                    makeRequest(endpoint, pushJson);
-                } else {
-                    SwrveLogger.e("Push notification does not have a proper _p value");
-                }
-            }
-        } catch (Exception exp) {
-            SwrveLogger.e("QA request talk session failed", exp);
         }
     }
 

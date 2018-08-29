@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -12,20 +11,21 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
-import android.support.v4.app.NotificationCompat;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.model.PushPayload;
-import com.swrve.sdk.model.PushPayloadButton;
+import com.swrve.sdk.notifications.model.SwrveNotification;
+import com.swrve.sdk.notifications.model.SwrveNotificationButton;
+import com.swrve.sdk.push.SwrvePushServiceDefault;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.RESTClient;
 
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -34,41 +34,47 @@ import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowNotification;
 import org.robolectric.shadows.ShadowPendingIntent;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_INFLUENCED;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrvePushSDKTest extends SwrveBaseTest {
 
-    private GenericSwrvePushService service;
-    private TestableSwrvePushSDK swrvePushSDK;
+    private SwrvePushServiceDefault serviceDefault;
+    private SwrvePushSDK swrvePushSDKSpy;
     private final int DEFAULT_PUSH_ID_CACHE_SIZE = 16;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        swrvePushSDK = new TestableSwrvePushSDK(RuntimeEnvironment.application);
-        setSwrvePushSDKInstance(swrvePushSDK);
-        service = new GenericSwrvePushService("TEST");
-        service.onCreate();
-    }
-
-    // TODO is this needed, or can we use the teardown in the super class
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
-        SwrveTestUtils.removeSingleton(SwrvePushNotificationConfig.class, "instance");
+        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        SwrvePushSDK swrvePushSDK = new SwrvePushSDK(RuntimeEnvironment.application);
+        swrvePushSDKSpy = spy(swrvePushSDK);
+        SwrvePushSDK.instance = swrvePushSDKSpy;
+        serviceDefault = new SwrvePushServiceDefault();
     }
 
     private int generateTimestampId() {
@@ -77,55 +83,45 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testService() throws Exception {
-        service.checkDupes = true;
-
         //Check null scenario
-        service.onHandleIntent(null);
-        assertEquals(0, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        swrvePushSDKSpy.processRemoteNotification(null, true);
+        verify(swrvePushSDKSpy, never()).processNotification(any(Bundle.class));
 
         //Check no payload scenario
-        Intent intent = new Intent();
         Bundle missingTrackingKey = new Bundle();
-        missingTrackingKey.putString("text", "");
-        intent.putExtras(missingTrackingKey);
-        service.onHandleIntent(intent);
-        assertEquals(2, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        missingTrackingKey.putString(SwrveNotificationConstants.TEXT_KEY, "");
+        swrvePushSDKSpy.processRemoteNotification(missingTrackingKey, true);
+        verify(swrvePushSDKSpy, never()).processNotification(any(Bundle.class));
 
         //Check no timestamp scenario
         Bundle noTimestamp = new Bundle();
-        noTimestamp.putString("text", "validBundle");
-        noTimestamp.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        intent.putExtras(noTimestamp);
-        service.onHandleIntent(intent);
-
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        noTimestamp.putString(SwrveNotificationConstants.TEXT_KEY, "validBundle");
+        noTimestamp.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        swrvePushSDKSpy.processRemoteNotification(noTimestamp, true);
+        verify(swrvePushSDKSpy, never()).processNotification(any(Bundle.class));
         assertNumberOfNotifications(0);
 
         //Check good scenario
         Bundle extras = new Bundle();
-        extras.putString("text", "validBundle");
+        extras.putString(SwrveNotificationConstants.TEXT_KEY, "validBundle");
         extras.putString("customData", "some custom values");
         extras.putString("sound", "default");
-        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
+        extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
         int firstTimestamp = generateTimestampId();
-        extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(extras);
-        service.onHandleIntent(intent);
-
+        extras.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        swrvePushSDKSpy.processRemoteNotification(extras, true);
         assertNotification("validBundle", "content://settings/system/notification_sound", extras);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         //Try sending duplicate
-        service.onHandleIntent(intent);
+        swrvePushSDKSpy.processRemoteNotification(extras, true);
         assertNumberOfNotifications(1);
 
         //Now send another 16 unique notifications to overfill the buffer
         int newTimestamp = generateTimestampId();
         for (int i=0; i<DEFAULT_PUSH_ID_CACHE_SIZE; ++i) {
-            extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(newTimestamp));
-            intent.putExtras(extras);
-            service.onHandleIntent(intent);
+            extras.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(newTimestamp));
+            swrvePushSDKSpy.processRemoteNotification(extras, true);
             newTimestamp++;
 
             //Let the notification manager do its thing
@@ -136,9 +132,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 1);
 
         //Now we should be able to reuse the first notification timestamp
-        extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(extras);
-        service.onHandleIntent(intent);
+        extras.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        swrvePushSDKSpy.processRemoteNotification(extras, true);
         //Let the notification manager do its thing
         Thread.sleep(100);
 
@@ -146,9 +141,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 2);
 
         //Now make use of the ability to configure the duplication cache size
-        extras.putInt(SwrvePushConstants.PUSH_ID_CACHE_SIZE_KEY, 1);
-        intent.putExtras(extras);
-        service.onHandleIntent(intent);
+        extras.putInt(SwrveNotificationConstants.PUSH_ID_CACHE_SIZE_KEY, 1);
+        swrvePushSDKSpy.processRemoteNotification(extras, true);
         //Let the notification manager do its thing
         Thread.sleep(100);
 
@@ -156,7 +150,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 2);
 
         //Send again to make sure dedupe is happening with newest item.
-        service.onHandleIntent(intent);
+        swrvePushSDKSpy.processRemoteNotification(extras, true);
         //Let the notification manager do its thing
         Thread.sleep(100);
 
@@ -164,9 +158,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 2);
 
         //Change the key to new timestamp
-        extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(newTimestamp));
-        intent.putExtras(extras);
-        service.onHandleIntent(intent);
+        extras.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(newTimestamp));
+        swrvePushSDKSpy.processRemoteNotification(extras, true);
         //Let the notification manager do its thing
         Thread.sleep(100);
 
@@ -174,9 +167,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertNumberOfNotifications(DEFAULT_PUSH_ID_CACHE_SIZE + 3);
 
         //Use the previous timestamp - but now expect an extra notification since the cache is only 1.
-        extras.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(extras);
-        service.onHandleIntent(intent);
+        extras.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        swrvePushSDKSpy.processRemoteNotification(extras, true);
         //Let the notification manager do its thing
         Thread.sleep(100);
 
@@ -186,16 +178,13 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testServiceCustomSound() throws Exception {
-        Intent intent = new Intent();
         Bundle validBundleCustomSound = new Bundle();
-        validBundleCustomSound.putString("text", "validBundleCustomSound");
+        validBundleCustomSound.putString(SwrveNotificationConstants.TEXT_KEY, "validBundleCustomSound");
         validBundleCustomSound.putString("sound", "customSound");
         validBundleCustomSound.putString("customData", "some custom values");
-        validBundleCustomSound.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
-        validBundleCustomSound.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        intent.putExtras(validBundleCustomSound);
-        service.onHandleIntent(intent);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        validBundleCustomSound.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
+        validBundleCustomSound.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        serviceDefault.processNotification(validBundleCustomSound);
         assertNotification("validBundleCustomSound", "android.resource://com.swrve.sdk.test/raw/customSound", validBundleCustomSound);
     }
 
@@ -207,86 +196,67 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
         Intent intent = new Intent();
         Bundle validBundle = new Bundle();
-        validBundle.putString("text", "hello there");
-        validBundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
-        validBundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        intent.putExtras(validBundle);
-        service.onHandleIntent(intent);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        validBundle.putString(SwrveNotificationConstants.TEXT_KEY, "hello there");
+        validBundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
+        validBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        serviceDefault.processNotification(validBundle);
         assertNotification("hello there", null, validBundle);
     }
 
     @Test
-    public void testWithDeeplink() throws Exception {
-        Intent intent = new Intent();
+    public void testWithDeeplink() {
         Bundle deeplinkBundle = new Bundle();
-        deeplinkBundle.putString("text", "deeplinkBundle");
-        deeplinkBundle.putString(SwrvePushConstants.DEEPLINK_KEY, "swrve://deeplink/config");
-        deeplinkBundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        deeplinkBundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
-        intent.putExtras(deeplinkBundle);
-        service.onHandleIntent(intent);
+        deeplinkBundle.putString(SwrveNotificationConstants.TEXT_KEY, "deeplinkBundle");
+        deeplinkBundle.putString(SwrveNotificationConstants.DEEPLINK_KEY, "swrve://deeplink/config");
+        deeplinkBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        deeplinkBundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
+        serviceDefault.processNotification(deeplinkBundle);
         assertNotification("deeplinkBundle", null, deeplinkBundle);
     }
 
-    private boolean listenerCalledWithRightParams;
     @Test
     public void testSilentPush() throws Exception {
-        Intent intent = new Intent();
-        listenerCalledWithRightParams = false;
+        SwrveSilentPushListener silentPushListenerMock = Mockito.mock(SwrveSilentPushListener.class);
+        swrvePushSDKSpy.setSilentPushListener(silentPushListenerMock);
 
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         Swrve swrveSpy = spy(swrveReal);
 
-        swrvePushSDK.setSilentPushListener(new SwrveSilentPushListener() {
-            @Override
-            public void onSilentPush(Context context, JSONObject payload) {
-                if (!listenerCalledWithRightParams) {
-                    try {
-                        listenerCalledWithRightParams = payload.getString("custom").equals("value1");
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-
         // Send some valid silent pushes
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
-        bundle.putString(SwrvePushConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value1\"}");
-        intent.putExtras(bundle);
-        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 0:00");
-        service.onHandleIntent(intent);
-        // Silent push 2
-        bundle.putString(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY, "2");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
-        bundle.putString(SwrvePushConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value2\"}");
-        intent.putExtras(bundle);
-        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 10:00");
-        service.onHandleIntent(intent);
-        // Silent push 3
-        bundle.putString(SwrvePushConstants.SWRVE_SILENT_TRACKING_KEY, "3");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
-        bundle.putString(SwrvePushConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value3\"}");
-        intent.putExtras(bundle);
-        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 11:00");
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value1\"}");
+        when(swrvePushSDKSpy.getNow()).thenReturn(SwrveTestUtils.parseDate("2017/01/01 0:00"));
+        serviceDefault.processNotification(bundle);
+        ArgumentCaptor<JSONObject> payloadCaptor = ArgumentCaptor.forClass(JSONObject.class);
+        verify(silentPushListenerMock, atLeastOnce()).onSilentPush(any(Context.class), payloadCaptor.capture());
+        assertEquals("{\"custom\":\"value1\"}", payloadCaptor.getValue().toString());
 
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        // Silent push 2
+        bundle.putString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, "2");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value2\"}");
+        when(swrvePushSDKSpy.getNow()).thenReturn(SwrveTestUtils.parseDate("2017/01/01 10:00"));
+        serviceDefault.processNotification(bundle);
+
+        // Silent push 3
+        bundle.putString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, "3");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value3\"}");
+        when(swrvePushSDKSpy.getNow()).thenReturn(SwrveTestUtils.parseDate("2017/01/01 11:00"));
+        serviceDefault.processNotification(bundle);
+
         assertNumberOfNotifications(0);
-        assertTrue(listenerCalledWithRightParams);
 
         // Init the SDK, should read influence data
-        swrvePushSDK.dateNow = SwrveTestUtils.parseDate("2017/01/01 13:00");
-        swrveReal.init(mActivity);
-        swrveReal.onPause();
-        swrveReal.onResume(mActivity);
-        assertEquals(1, swrvePushSDK.processInfluenceDataCallCount);
-        swrveReal.onPause();
-        swrveReal.onResume(mActivity);
-        assertEquals(2, swrvePushSDK.processInfluenceDataCallCount);
+        swrveSpy.campaignInfluence = spy(new SwrveCampaignInfluence());
+        when(swrveSpy.campaignInfluence.getNow()).thenReturn(SwrveTestUtils.parseDate("2017/01/01 13:00"));
+        swrveSpy.init(mActivity);
+        swrveSpy.onPause();
+        swrveSpy.onResume(mActivity);
+        swrveSpy.onPause();
+        swrveSpy.onResume(mActivity);
 
         List<Intent> eventIntents = shadowApplication.getBroadcastIntents();
         assertEquals(1, eventIntents.size());
@@ -294,45 +264,39 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         ArrayList extras = (ArrayList) eventIntent.getExtras().get("swrve_wakeful_events");
         assertEquals(2, extras.size());
         JSONObject event1 = new JSONObject((String) extras.get(0));
-        assertEquals("generic_campaign_event", event1.get("type"));
+        assertEquals(EVENT_TYPE_GENERIC_CAMPAIGN, event1.get("type"));
         assertEquals(2, event1.get("id"));
-        assertEquals("push", event1.get("campaignType"));
-        assertEquals("influenced", event1.get("actionType"));
+        assertEquals(GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, event1.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY));
+        assertEquals(GENERIC_EVENT_ACTION_TYPE_INFLUENCED, event1.get(GENERIC_EVENT_ACTION_TYPE_KEY));
         JSONObject payload1 = event1.getJSONObject("payload");
         assertEquals("540", payload1.get("delta"));
 
         JSONObject event2 = new JSONObject((String) extras.get(1));
         assertEquals(3, event2.get("id"));
-
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test
-    public void testAdvancedBigTextPush() throws Exception {
-        service.checkDupes = true;
-        Intent intent = new Intent();
+    public void testAdvancedBigTextPush() {
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
                 " \"version\": 1,\n" +
                 "\"expanded\": { \"title\": \"[expanded title]\",\n" +
                 "                \"body\": \"[expanded body]\"}}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "text");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "text");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        serviceDefault.processNotification(bundle);
 
         assertNotification("text", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        verify(swrvePushSDKSpy, times(1)).processNotification(bundle);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -349,12 +313,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testAlternateAccentColorPush() throws Exception {
-        service.checkDupes = true;
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -362,17 +324,17 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 " \"accent\": \"#00FF0000\",\n" +
                 "\"expanded\": { \"title\": \"[expanded title]\",\n" +
                 "                \"body\": \"[expanded body]\"}}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "text");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "text");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+
+        serviceDefault.processNotification(bundle);
 
         assertNotification("text", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        verify(swrvePushSDKSpy, times(1)).processNotification(bundle);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -384,12 +346,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testAdvancedUpdateExisting() throws Exception {
-        service.checkDupes = true;
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -397,14 +357,14 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 " \"notification_id\": 12,\n" +
                 "\"expanded\": { \"title\": \"[expanded title]\",\n" +
                 "                \"body\": \"[expanded body]\"}}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "body");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "body");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+
+        serviceDefault.processNotification(bundle);
 
         String updateJson = "{\n" +
                 " \"title\": \"update title\",\n" +
@@ -413,14 +373,14 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 " \"notification_id\": 12,\n" +
                 "\"expanded\": { \"title\": \"[expanded updated title]\",\n" +
                 "                \"body\": \"[expanded update body]\"}}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, updateJson);
-        bundle.putString("text", "update body");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, updateJson);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "update body");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int secondTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(secondTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(secondTimestamp));
+
+        serviceDefault.processNotification(bundle);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
@@ -441,12 +401,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         /*
          * Check if the SDK will revert to original notification if the version is wrong
          **/
-        service.checkDupes = true;
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"fallback title\",\n" +
                 " \"subtitle\": \"fallback subtitle\",\n" +
@@ -464,17 +422,23 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                \"body\": \"[expanded body]\",\n" +
                 "                \"icon_url\": \"https://valid-image.png\"} \n"+
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "original push notification");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "original push notification");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, null));
+        Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
+        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(bmp);
+        when(swrvePushSDKSpy.getSwrveNotificationBuilder()).thenReturn(builderSpy);
+
+        serviceDefault.processNotification(bundle);
 
         assertNotification("original push notification", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        verify(swrvePushSDKSpy, times(1)).processNotification(bundle);
         assertNumberOfNotifications(1);
     }
 
@@ -484,12 +448,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
          * This test is to check if the SDK can handle new types of media before it's added
          * This should default back to BigText and parse what it can.
          */
-        service.checkDupes = true;
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"fallback title\",\n" +
                 " \"subtitle\": \"fallback subtitle\",\n" +
@@ -504,28 +466,32 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                \"body\": \"[expanded body]\",\n" +
                 "                \"icon_url\": \"https://valid-image.png\"} \n"+
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "original push notification");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "original push notification");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, null));
+        Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
+        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(bmp);
+        when(swrvePushSDKSpy.getSwrveNotificationBuilder()).thenReturn(builderSpy);
+
+        serviceDefault.processNotification(bundle);
 
         assertNotification("original push notification", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        verify(swrvePushSDKSpy, times(1)).processNotification(bundle);
         assertNumberOfNotifications(1);
     }
 
     @Test
     public void testAdvancedPushLockScreenMessage() throws Exception {
-        service.checkDupes = true;
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -534,17 +500,15 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 " \"lock_screen_msg\": \"lock screen test message\",\n" +
                 "\"expanded\": { \"title\": \"[expanded title]\",\n" +
                 "                \"body\": \"[expanded body]\"}}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "original push notification");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "original push notification");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        serviceDefault.processNotification(bundle);
 
         assertNotification("original push notification", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -557,12 +521,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
     @Test
     public void testAdvancedPushLockScreenMessageNoMedia() throws Exception {
-        service.checkDupes = true;
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -571,17 +533,15 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 " \"lock_screen_msg\": \"lock screen test message\",\n" +
                 "\"expanded\": { \"title\": \"[expanded title]\",\n" +
                 "                \"body\": \"[expanded body]\"}}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "original push notification");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "original push notification");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        serviceDefault.processNotification(bundle);
 
         assertNotification("original push notification", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -593,14 +553,12 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testAdvancedBigImagePush() throws Exception {
-        service.checkDupes = true;
+    public void testAdvancedBigImagePush() {
 
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"fallback title\",\n" +
                 " \"subtitle\": \"fallback subtitle\",\n" +
@@ -619,30 +577,22 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                \"icon_url\": \"https://valid-image.png\"} \n"+
                 "}\n";
 
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "should be rich");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, null));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
-        config.mediaHelper = mockMedia;
+        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(swrvePushSDKSpy.getSwrveNotificationBuilder()).thenReturn(builderSpy);
 
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
-
-        service.onHandleIntent(intent);
+        serviceDefault.processNotification(bundle);
 
         assertNotification("[rich body]", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -661,14 +611,11 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Config(sdk = Build.VERSION_CODES.M)
     @Test
-    public void testAdvancedBigImagePushVideoFallback() throws Exception {
-        service.checkDupes = true;
+    public void testAdvancedBigImagePushVideoFallback() {
 
-        Intent intent = new Intent();
-        // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"fallback title\",\n" +
                 " \"subtitle\": \"fallback subtitle\",\n" +
@@ -687,28 +634,22 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                \"icon_url\": \"https://valid-image.png\"} \n"+
                 "}\n";
 
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "should be rich");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, null));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
-        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
-        config.mediaHelper = mockMedia;
+        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
+        when(builderSpy.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
+        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(swrvePushSDKSpy.getSwrveNotificationBuilder()).thenReturn(builderSpy);
 
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
-
-        service.onHandleIntent(intent);
+        serviceDefault.processNotification(bundle);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
@@ -728,9 +669,9 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertTrue(shadowPendingIntent.isBroadcastIntent());
         assertEquals(1, shadowPendingIntent.getSavedIntents().length);
         Intent shadowIntent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrvePushEngageReceiver", shadowIntent.getComponent().getClassName());
-        Bundle intentExtras = shadowIntent.getBundleExtra(SwrvePushConstants.PUSH_BUNDLE);
-        assertEquals("https://fallback_sd", intentExtras.get(SwrvePushConstants.DEEPLINK_KEY));
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
+        Bundle intentExtras = shadowIntent.getBundleExtra(SwrveNotificationConstants.PUSH_BUNDLE);
+        assertEquals("https://fallback_sd", intentExtras.get(SwrveNotificationConstants.DEEPLINK_KEY));
 
         // Although they are the same, equals returns false, must fix
         // Icon icon = Icon.createWithBitmap(bmp);
@@ -741,13 +682,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     @Config(sdk = Build.VERSION_CODES.N)
     @Test
     public void testAdvancedBigImagePushBigTextFallback() throws Exception {
-        service.checkDupes = true;
-
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"fallback title\",\n" +
                 " \"subtitle\": \"fallback subtitle\",\n" +
@@ -765,29 +703,23 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                \"body\":  \"[expanded body]\",\n" +
                 "                \"icon_url\": \"https://valid-image.png\"} \n"+
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "fallback body");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "fallback body");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, null));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
-        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
-        config.mediaHelper = mockMedia;
+        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
+        when(builderSpy.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
+        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(swrvePushSDKSpy.getSwrveNotificationBuilder()).thenReturn(builderSpy);
 
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
+        serviceDefault.processNotification(bundle);
 
-        service.onHandleIntent(intent);
-
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -810,20 +742,17 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertTrue(shadowPendingIntent.isBroadcastIntent());
         assertEquals(1, shadowPendingIntent.getSavedIntents().length);
         Intent shadowIntent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrvePushEngageReceiver", shadowIntent.getComponent().getClassName());
-        Bundle intentExtras = shadowIntent.getBundleExtra(SwrvePushConstants.PUSH_BUNDLE);
-        assertNull(intentExtras.get(SwrvePushConstants.DEEPLINK_KEY)); // this should not be set
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
+        Bundle intentExtras = shadowIntent.getBundleExtra(SwrveNotificationConstants.PUSH_BUNDLE);
+        assertNull(intentExtras.get(SwrveNotificationConstants.DEEPLINK_KEY)); // this should not be set
     }
 
     @Test
     public void testBadImageAndNoFallback() throws Exception {
-        service.checkDupes = true;
-
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"fallback title\",\n" +
                 " \"subtitle\": \"fallback subtitle\",\n" +
@@ -834,25 +763,20 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "              \"type\": \"image\",\n" +
                 "              \"url\": \"https://fail-image.png\" }" +
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "fallback body");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "fallback body");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
-        when(mockMedia.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
-        config.mediaHelper = mockMedia;
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, null));
+        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
+        when(builderSpy.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
+        when(swrvePushSDKSpy.getSwrveNotificationBuilder()).thenReturn(builderSpy);
 
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
+        serviceDefault.processNotification(bundle);
 
-        service.onHandleIntent(intent);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -872,12 +796,10 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
     @Config(sdk = Build.VERSION_CODES.KITKAT)
     @Test
     public void testAdvancedBigTextPushWith1Action() throws Exception {
-        service.checkDupes = true;
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -889,17 +811,16 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                 \"action_type\": \"open_url\",\n" +
                 "                 \"action\": \"https://lovelyURL\"\n }]\n" +
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "text");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "text");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        assertNotification("text", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
+        serviceDefault.processNotification(bundle);
+
+        assertNotification(SwrveNotificationConstants.TEXT_KEY, "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -907,7 +828,7 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
         ShadowNotification shadowNotification = shadowOf(notification);
-        assertEquals("text", notification.tickerText);
+        assertEquals(SwrveNotificationConstants.TEXT_KEY, notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
         assertEquals("[expanded body]", shadowNotification.getBigText());// Robolectric does not give the ability to check the subtitle yet
         // assertEquals("[rich subtitle]", shadowNotification.getSubText());
@@ -918,23 +839,20 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals(testAction.title, "[button text 1]");
         Intent testIntent = getIntent(testAction.actionIntent);
         Bundle extras = testIntent.getExtras();
-        assertEquals("0", extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PushPayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
-        assertEquals("https://lovelyURL", extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
-        assertEquals(221, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
+        assertEquals("0", extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY));
+        assertEquals(SwrveNotificationButton.ActionType.OPEN_URL, extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals("https://lovelyURL", extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
+        assertEquals(221, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Config(sdk = Build.VERSION_CODES.KITKAT)
     @Test
     public void testAdvancedBigImagePushWith2Actions() throws Exception {
-        service.checkDupes = true;
-
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -955,29 +873,23 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                {\"title\": \"[button text 2]\",\n" +
                 "                 \"action_type\": \"open_app\"}]\n" +
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "should be rich");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        SwrvePushMediaHelper mockMedia = Mockito.mock(SwrvePushMediaHelper.class);
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, null));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(mockMedia.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
-        config.mediaHelper = mockMedia;
+        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
+        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        when(swrvePushSDKSpy.getSwrveNotificationBuilder()).thenReturn(builderSpy);
 
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
-
-        service.onHandleIntent(intent);
+        serviceDefault.processNotification(bundle);
 
         assertNotification("[rich body]", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -998,32 +910,29 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals(testAction.title, "[button text 1]");
         Intent testIntent = getIntent(testAction.actionIntent);
         Bundle extras = testIntent.getExtras();
-        assertEquals("0", extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PushPayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
-        assertEquals("https://lovelyURL", extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
-        assertEquals(222, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
+        assertEquals("0", extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY));
+        assertEquals(SwrveNotificationButton.ActionType.OPEN_URL, extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals("https://lovelyURL", extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
+        assertEquals(222, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
 
         testAction = actions[1];
         assertEquals(testAction.title, "[button text 2]");
         testIntent = getIntent(testAction.actionIntent);
         extras = testIntent.getExtras();
-        assertEquals("1", extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PushPayloadButton.ActionType.OPEN_APP, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
-        assertNull(extras.get(SwrvePushConstants.PUSH_ACTION_URL_KEY));
-        assertEquals(222, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
+        assertEquals("1", extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY));
+        assertEquals(SwrveNotificationButton.ActionType.OPEN_APP, extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY));
+        assertNull(extras.get(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
+        assertEquals(222, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Config(sdk = Build.VERSION_CODES.KITKAT)
     @Test
     public void testAdvancedBigTextPushWith3Actions() throws Exception {
-        service.checkDupes = true;
-
-        Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -1039,17 +948,16 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 "                {\"title\": \"[button text 3]\",\n" +
                 "                 \"action_type\": \"dismiss\"}]\n" +
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "text");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "text");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        intent.putExtras(bundle);
-        service.onHandleIntent(intent);
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+
+        serviceDefault.processNotification(bundle);
 
         assertNotification("text", "content://settings/system/notification_sound", bundle);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -1069,28 +977,28 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals(testAction.title, "[button text 1]");
         Intent testIntent = getIntent(testAction.actionIntent);
         Bundle extras = testIntent.getExtras();
-        assertEquals("0",extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PushPayloadButton.ActionType.OPEN_URL, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
-        assertEquals("https://lovelyURL", extras.getString(SwrvePushConstants.PUSH_ACTION_URL_KEY));
-        assertEquals(223, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
+        assertEquals("0",extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY));
+        assertEquals(SwrveNotificationButton.ActionType.OPEN_URL, extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY));
+        assertEquals("https://lovelyURL", extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
+        assertEquals(223, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
 
         testAction = actions[1];
         assertEquals(testAction.title, "[button text 2]");
         testIntent = getIntent(testAction.actionIntent);
         extras = testIntent.getExtras();
-        assertEquals("1",extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PushPayloadButton.ActionType.OPEN_APP, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
-        assertNull(extras.get(SwrvePushConstants.PUSH_ACTION_URL_KEY));
-        assertEquals(223, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
+        assertEquals("1",extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY));
+        assertEquals(SwrveNotificationButton.ActionType.OPEN_APP, extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY));
+        assertNull(extras.get(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
+        assertEquals(223, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
 
         testAction = actions[2];
         assertEquals(testAction.title, "[button text 3]");
         testIntent = getIntent(testAction.actionIntent);
         extras = testIntent.getExtras();
-        assertEquals("2",extras.getString(SwrvePushConstants.PUSH_ACTION_KEY));
-        assertEquals(PushPayloadButton.ActionType.DISMISS, extras.get(SwrvePushConstants.PUSH_ACTION_TYPE_KEY));
-        assertNull(extras.get(SwrvePushConstants.PUSH_ACTION_URL_KEY));
-        assertEquals(223, extras.getInt(SwrvePushConstants.PUSH_NOTIFICATION_ID));
+        assertEquals("2",extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY));
+        assertEquals(SwrveNotificationButton.ActionType.DISMISS, extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY));
+        assertNull(extras.get(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
+        assertEquals(223, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -1101,69 +1009,61 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveReal.init(mActivity);
 
-        try {
-            service.checkDupes = true;
-            Intent intent = new Intent();
-            // Send a valid Rich Payload
-            Bundle bundle = new Bundle();
-            bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-            bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
-            String json = "{\n" +
-                    " \"title\": \"title\",\n" +
-                    " \"subtitle\": \"subtitle\",\n" +
-                    " \"version\": 1,\n" +
-                    "\"buttons\": [{\"title\": \"[button text 1]\",\n" +
-                    "                 \"action_type\": \"open_url\",\n" +
-                    "                 \"action\": \"https://lovelyURL\"},\n" +
-                    "                {\"title\": \"[button text 2]\",\n" +
-                    "                 \"action_type\": \"open_app\"},\n" +
-                    "                {\"title\": \"[button text 3]\",\n" +
-                    "                 \"action_type\": \"dismiss\"}]\n" +
-                    "}\n";
-            bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-            bundle.putString("text", "text");
-            bundle.putString("customData", "some custom values");
-            bundle.putString("sound", "default");
-            int firstTimestamp = generateTimestampId();
-            bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-            intent.putExtras(bundle);
-            service.onHandleIntent(intent);
+        // Send a valid Rich Payload
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        String json = "{\n" +
+                " \"title\": \"title\",\n" +
+                " \"subtitle\": \"subtitle\",\n" +
+                " \"version\": 1,\n" +
+                "\"buttons\": [{\"title\": \"[button text 1]\",\n" +
+                "                 \"action_type\": \"open_url\",\n" +
+                "                 \"action\": \"https://lovelyURL\"},\n" +
+                "                {\"title\": \"[button text 2]\",\n" +
+                "                 \"action_type\": \"open_app\"},\n" +
+                "                {\"title\": \"[button text 3]\",\n" +
+                "                 \"action_type\": \"dismiss\"}]\n" +
+                "}\n";
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "text");
+        bundle.putString("customData", "some custom values");
+        bundle.putString("sound", "default");
+        int firstTimestamp = generateTimestampId();
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-            Notification notification = assertNotification("text", "content://settings/system/notification_sound", bundle);
-            assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
-            assertNumberOfNotifications(1);
+        serviceDefault.processNotification(bundle);
 
-            Notification.Action[] actions = notification.actions;
-            assertEquals(actions.length, 3);
-            Notification.Action testAction = actions[2];
-            assertEquals(testAction.title, "[button text 3]");
-            Intent buttonClickIntent = getIntent(testAction.actionIntent);
-            SwrvePushEngageReceiver receiver = new SwrvePushEngageReceiver();
-            receiver.onReceive(mActivity, buttonClickIntent);
+        Notification notification = assertNotification("text", "content://settings/system/notification_sound", bundle);
+        assertNumberOfNotifications(1);
 
-            // Resolve SwrveEngageEventSender intent
-            List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
-            assertEquals(1, broadcastIntents.size());
-            Intent engageEventIntent = broadcastIntents.get(0);
-            // Clear pending intents
-            mShadowActivity.getBroadcastIntents().clear();
-            SwrveEngageEventSender engageEventSender = new SwrveEngageEventSender();
-            engageEventSender.onReceive(mActivity, engageEventIntent);
+        Notification.Action[] actions = notification.actions;
+        assertEquals(actions.length, 3);
+        Notification.Action testAction = actions[2];
+        assertEquals(testAction.title, "[button text 3]");
+        Intent buttonClickIntent = getIntent(testAction.actionIntent);
+        SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
+        receiver.onReceive(mActivity, buttonClickIntent);
 
-            // Should send a button click event and an engagement event
-            List<String> events = SwrveEngageEventSenderTest.assertEventCount(mShadowActivity, 2, 2);
-            SwrveEngageEventSenderTest.assertButtonClickedEvent(events.get(0), "2");
-            SwrveEngageEventSenderTest.assertEngagedEvent(events.get(1), "Swrve.Messages.Push-1.engaged");
+        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
+        assertEquals(2, broadcastIntents.size());
 
-            // Should not send an influence event when the app is opened (emulate app start/resume)
-            swrveReal.onResume(mActivity);
-            SwrveEngageEventSenderTest.assertEventCount(mShadowActivity, 2, 2); // No new events should be queued
-        } catch(Exception exp) {
-            throw exp;
-        } finally {
-            swrveReal.shutdown();
-            SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        // Should send a button click event and an engagement event
+        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
+        assertEquals(2, events.size());
+        for(String event : events) { // can't guarantee which event is in list first so just iterate through them
+            if(event.contains("generic_campaign_event")) {
+                SwrveTestUtils.assertGenericEvent(event, "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, null);
+            } else {
+                assertEngagedEvent(event, "Swrve.Messages.Push-1.engaged");
+            }
         }
+
+        // Should not send an influence event when the app is opened (emulate app start/resume)
+        swrveReal.onResume(mActivity);
+        // No new events should be queued
+        events = SwrveTestUtils.getEventsQueued(mShadowActivity);
+        assertEquals(2, events.size());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -1174,69 +1074,52 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveReal.init(mActivity);
 
-        try {
-            service.checkDupes = true;
-            Intent intent = new Intent();
-            // Send a valid Rich Payload
-            Bundle bundle = new Bundle();
-            bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-            bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
-            bundle.putString("text", "body");
-            bundle.putString("customData", "some custom values");
-            bundle.putString("sound", "default");
-            int firstTimestamp = generateTimestampId();
-            bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-            intent.putExtras(bundle);
-            service.onHandleIntent(intent);
+        // Send a valid Rich Payload
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "body");
+        bundle.putString("customData", "some custom values");
+        bundle.putString("sound", "default");
+        int firstTimestamp = generateTimestampId();
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-            Notification notification = assertNotification("body", "content://settings/system/notification_sound", bundle);
-            assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
-            assertNumberOfNotifications(1);
+        serviceDefault.processNotification(bundle);
 
-            notification.contentIntent.send();
+        Notification notification = assertNotification("body", "content://settings/system/notification_sound", bundle);
+        assertNumberOfNotifications(1);
 
-            // Launch SwrvePushEngageReceiver (imitate single engagement with notification)
-            List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
-            assertEquals(1, broadcastIntents.size());
-            Intent engageEventIntent = broadcastIntents.get(0);
-            SwrvePushEngageReceiver engageReceiver = new SwrvePushEngageReceiver();
-            // Clear pending intents
-            mShadowActivity.getBroadcastIntents().clear();
-            engageReceiver.onReceive(mActivity, engageEventIntent);
+        notification.contentIntent.send();
 
-            // Resolve SwrveEngageEventSender intent
-            broadcastIntents = mShadowActivity.getBroadcastIntents();
-            assertEquals(2, broadcastIntents.size());
-            assertEquals("com.swrve.sdk.SwrveEngageEventSender", broadcastIntents.get(0).getComponent().getShortClassName());
-            assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(1).getAction());
+        // Launch SwrveNotificationEngageReceiver (imitate single engagement with notification)
+        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
+        assertEquals(1, broadcastIntents.size());
+        Intent engageEventIntent = broadcastIntents.get(0);
+        SwrveNotificationEngageReceiver engageReceiver = new SwrveNotificationEngageReceiver();
+        // Clear pending intents
+        mShadowActivity.getBroadcastIntents().clear();
+        engageReceiver.onReceive(mActivity, engageEventIntent);
 
-            Intent engageEventSendIntent = broadcastIntents.get(0);
-            // Clear pending intents
-            mShadowActivity.getBroadcastIntents().clear();
-            SwrveEngageEventSender engageEventSender = new SwrveEngageEventSender();
-            engageEventSender.onReceive(mActivity, engageEventSendIntent);
+        broadcastIntents = mShadowActivity.getBroadcastIntents();
+        assertEquals(2, broadcastIntents.size());
+        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(1).getAction());
 
-            // Should send a button click event and an engagement event
-            List<String> events = SwrveEngageEventSenderTest.assertEventCount(mShadowActivity, 1, 1);
-            SwrveEngageEventSenderTest.assertEngagedEvent(events.get(0), "Swrve.Messages.Push-1.engaged");
+        // Should send a button click event and an engagement event
+        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
+        assertEquals(1, events.size());
+        assertEngagedEvent(events.get(0), "Swrve.Messages.Push-1.engaged");
 
-            // Should not send an influence event when the app is opened (emulate app start/resume)
-            swrveReal.onResume(mActivity);
-            SwrveEngageEventSenderTest.assertEventCount(mShadowActivity, 1, 1); // No new events should be queued
-        } catch(Exception exp) {
-            throw exp;
-        } finally {
-            swrveReal.shutdown();
-            SwrveTestUtils.removeSwrveSDKSingletonInstance();
-        }
+        // Should not send an influence event when the app is opened (emulate app start/resume)
+        swrveReal.onResume(mActivity);
+        // No new events should be queued
+        events = SwrveTestUtils.getEventsQueued(mShadowActivity);
+        assertEquals(1, events.size());
     }
 
     @Config(sdk = Build.VERSION_CODES.O)
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Test
     public void testNotificationChannelFromConfig() throws Exception {
-        service.checkDupes = true;
-
         NotificationChannel channel = new NotificationChannel("swrve_channel", "Swrve channel", NotificationManager.IMPORTANCE_LOW);
         channel.setDescription("All the news from Swrve");
         ISwrveCommon mockSwrveCommon = Mockito.mock(ISwrveCommon.class);
@@ -1246,28 +1129,23 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
                 " \"version\": 1\n" +
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "should be rich");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(bundle);
 
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
+        serviceDefault.processNotification(bundle);
 
-        service.onHandleIntent(intent);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -1287,36 +1165,29 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
 
         String channelId = "my_channel_id";
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.createNotificationChannel(new NotificationChannel(channelId, "some channel", NotificationManager.IMPORTANCE_DEFAULT) );
-
-        service.checkDupes = true;
+        notificationManager.createNotificationChannel(new NotificationChannel(channelId, "some channel", NotificationManager.IMPORTANCE_DEFAULT));
 
         Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
                 " \"channel_id\": \"" + channelId + "\",\n" +
                 " \"version\": 1\n" +
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "should be rich");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(bundle);
 
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
+        serviceDefault.processNotification(bundle);
 
-        service.onHandleIntent(intent);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
@@ -1337,13 +1208,11 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         String channelId = "my_channel_id";
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        service.checkDupes = true;
-
         Intent intent = new Intent();
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
-        bundle.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1");
-        bundle.putString(SwrvePushConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
                 " \"title\": \"title\",\n" +
                 " \"subtitle\": \"subtitle\",\n" +
@@ -1353,21 +1222,16 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
                 " \"importance\": \"high\" },\n" +
                 " \"version\": 1\n" +
                 "}\n";
-        bundle.putString(SwrvePushConstants.SWRVE_PAYLOAD_KEY, json);
-        bundle.putString("text", "should be rich");
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
         bundle.putString("customData", "some custom values");
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
-        bundle.putString(SwrvePushConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(bundle);
 
-        SwrvePushNotificationConfig config = SwrvePushNotificationConfig.getInstance(RuntimeEnvironment.application);
-        Field instanceField = SwrvePushNotificationConfig.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, config);
+        serviceDefault.processNotification(bundle);
 
-        service.onHandleIntent(intent);
-        assertEquals(1, swrvePushSDK.isSwrveRemoteNotificationExecuted);
         assertNumberOfNotifications(1);
 
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
@@ -1395,8 +1259,8 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertTrue(shadowPendingIntent.isBroadcastIntent());
         assertEquals(1, shadowPendingIntent.getSavedIntents().length);
         Intent intent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrvePushEngageReceiver", intent.getComponent().getClassName());
-        Bundle intentExtras = intent.getBundleExtra(SwrvePushConstants.PUSH_BUNDLE);
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", intent.getComponent().getClassName());
+        Bundle intentExtras = intent.getBundleExtra(SwrveNotificationConstants.PUSH_BUNDLE);
         assertNotNull(intentExtras);
         for (String key : extras.keySet()) {
             assertTrue(intentExtras.containsKey(key));
@@ -1404,12 +1268,12 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         }
         ShadowNotification shadowNotification = shadowOf(notification);
         // In the case of a rich push, we should expect the title to be set to something else
-        if (!intentExtras.containsKey(SwrvePushConstants.SWRVE_PAYLOAD_KEY)) {
+        if (!intentExtras.containsKey(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY)) {
             assertEquals("Android Test App", shadowNotification.getContentTitle());
         } else {
-            PushPayload extrasPPayload = PushPayload.fromJson(extras.getString(SwrvePushConstants.SWRVE_PAYLOAD_KEY));
+            SwrveNotification extrasPPayload = SwrveNotification.fromJson(extras.getString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY));
             if(extrasPPayload != null) {
-                if(extrasPPayload.getVersion() == SwrvePushConstants.SWRVE_PUSH_VERSION) {
+                if(extrasPPayload.getVersion() == SwrveNotificationConstants.SWRVE_PUSH_VERSION) {
                     if(extrasPPayload.getMedia() != null && extrasPPayload.getMedia().getType() != null){
                         assertEquals(extrasPPayload.getMedia().getTitle(), shadowNotification.getContentTitle());
                         // Robolectric still has to be give the ability to check for subText and body separately
@@ -1429,104 +1293,21 @@ public class SwrvePushSDKTest extends SwrveBaseTest {
         assertEquals(expectedNumberOfNotifications, notifications.size());
     }
 
-    class TestableSwrvePushSDK extends SwrvePushSDK {
-        public Date dateNow;
-        int isSwrveRemoteNotificationExecuted = 0;
-        int processInfluenceDataCallCount = 0;
-
-        public TestableSwrvePushSDK(Context context) {
-            super(context);
-            // Set as the main instance
-            instance = this;
-        }
-
-        @Override
-        public void processRemoteNotification(Bundle msg, boolean checkDupes) {
-            super.processRemoteNotification(msg, checkDupes);
-            isSwrveRemoteNotificationExecuted = SwrvePushSDK.isSwrveRemoteNotification(msg)? 1 : 2;
-        }
-
-        @Override
-        void processInfluenceData(ISwrveCommon sdk) {
-            processInfluenceDataCallCount++;
-            super.processInfluenceData(sdk);
-        }
-
-        @Override
-        protected Date getNow() {
-            if (dateNow != null) {
-                return dateNow;
-            }
-            return super.getNow();
-        }
-    }
-
-    public void setSwrvePushSDKInstance(SwrvePushSDK instance) throws Exception {
-        Field hack = SwrvePushSDK.class.getDeclaredField("instance");
-        hack.setAccessible(true);
-        hack.set(null, instance);
-    }
-
-    public class GenericSwrvePushService extends IntentService implements SwrvePushService {
-
-        private SwrvePushSDK pushSDK;
-        public boolean checkDupes = false;
-
-        public GenericSwrvePushService(String name) {
-            super(name);
-        }
-
-        @Override
-        public void onCreate() {
-            super.onCreate();
-            pushSDK = SwrvePushSDK.getInstance();
-            pushSDK.setService(this);
-        }
-
-        @Override
-        protected void onHandleIntent(Intent intent) {
-            if(intent != null) {
-                pushSDK.processRemoteNotification(intent.getExtras(), checkDupes);
-            }
-        }
-
-        @Override
-        public void processNotification(final Bundle msg) {
-            pushSDK.processNotification(msg);
-        }
-
-        @Override
-        public boolean mustShowNotification() {
-            return true;
-        }
-
-        @Override
-        public int showNotification(NotificationManager notificationManager, Notification notification) {
-            return pushSDK.showNotification(notificationManager, notification);
-        }
-
-        @Override
-        public NotificationCompat.Builder createNotificationBuilder(String msgText, Bundle msg) {
-            return pushSDK.createNotificationBuilder(msgText, msg);
-        }
-
-        @Override
-        public Notification createNotification(Bundle msg, PendingIntent contentIntent) {
-            return pushSDK.createNotification(msg, contentIntent);
-        }
-
-        @Override
-        public PendingIntent createPendingIntent(Bundle msg) {
-            return pushSDK.createPendingIntent(msg);
-        }
-
-        @Override
-        public Intent createIntent(Bundle msg) {
-            return pushSDK.createIntent(msg);
-        }
-    }
-
-    public static Intent getIntent(PendingIntent pendingIntent) {
+    private Intent getIntent(PendingIntent pendingIntent) {
         return ((ShadowPendingIntent) Shadow.extract(pendingIntent)).getSavedIntent();
+    }
+
+    public void assertEngagedEvent(String eventJson, String eventName) {
+        Gson gson = new Gson(); // eg: {"type":"event","time":1466519995192,"name":"Swrve.Messages.Push-1.engaged"}
+        Type type = new TypeToken<Map<String, Object>>() {
+        }.getType();
+        Map<String, String> event = gson.fromJson(eventJson, type);
+        assertEquals(4, event.size());
+        assertTrue(event.containsKey("type"));
+        assertEquals("event", event.get("type"));
+        assertTrue(event.containsKey("name"));
+        assertEquals(eventName, event.get("name"));
+        assertTrue(event.containsKey("time"));
+        assertTrue(event.containsKey("seqnum"));
     }
 }

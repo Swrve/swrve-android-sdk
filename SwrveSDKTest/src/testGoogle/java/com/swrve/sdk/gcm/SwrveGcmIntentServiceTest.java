@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.swrve.sdk.SwrveBaseTest;
+import com.swrve.sdk.SwrveNotificationConstants;
 import com.swrve.sdk.SwrvePushSDK;
 
 import org.junit.After;
@@ -44,7 +45,7 @@ public class SwrveGcmIntentServiceTest extends SwrveBaseTest {
         //Check no payload scenario
         Intent intent = new Intent();
         Bundle bundle = new Bundle();
-        bundle.putString("text", "");
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "");
         intent.putExtras(bundle);
         service.onMessageReceived("", bundle);
         assertEquals(1, swrvePushSDK.processRemoteNotificationExecuted);

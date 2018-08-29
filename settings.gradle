@@ -1,7 +1,4 @@
-include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDKPush', ':SwrveSDK', ':SwrveSDKDemo', ':SwrveSDKTest', ':AdvancedPushNotifications'
-
-include ':MultipleGCMProviders'
-project(":MultipleGCMProviders").projectDir = file("samples/MultipleGCMProviders")
+include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDKPush', ':SwrveSDK', ':SwrveSDKTest'
 
 include ':MultipleFCMProviders'
 project(":MultipleFCMProviders").projectDir = file("samples/MultipleFCMProviders")
@@ -9,5 +6,5 @@ project(":MultipleFCMProviders").projectDir = file("samples/MultipleFCMProviders
 include ':MessageCenter'
 project(":MessageCenter").projectDir = file("samples/MessageCenter")
 
-include ':AdvancedPushNotifications'
-project(':AdvancedPushNotifications').projectDir = new File("samples/AdvancedPushNotifications")
+include ':MinimalIntegrationSample'
+project(':MinimalIntegrationSample').projectDir = new File("samples/MinimalIntegrationSample")

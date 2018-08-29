@@ -9,6 +9,8 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_LOCATION_CAMPAIGNS;
@@ -98,7 +100,7 @@ public class QaUserTest extends SwrveBaseTest {
                     "\"variant_id\":122," +
                     "\"variant_payload\":{}" +
                 "}";
-        String body = getExpectedBody(qaUser, "location-campaign-engaged", logDetails);
+        String body = getExpectedBody(qaUser, "location-sdk","location-campaign-engaged", logDetails);
 
         verifyRestRequest(qaUserSpy, body);
     }
@@ -121,7 +123,7 @@ public class QaUserTest extends SwrveBaseTest {
         QaUser.locationCampaignsDownloaded();
 
         String logDetails = "{\"campaigns\":[]}";
-        String body = getExpectedBody(qaUser, "location-campaigns-downloaded", logDetails);
+        String body = getExpectedBody(qaUser, "location-sdk","location-campaigns-downloaded", logDetails);
 
         verifyRestRequest(qaUserSpy, body);
     }
@@ -175,13 +177,140 @@ public class QaUserTest extends SwrveBaseTest {
                         "\"variant_id\":382" +
                     "}" +
                 "]}";
-        String body = getExpectedBody(qaUser, "location-campaigns-downloaded", logDetails);
+        String body = getExpectedBody(qaUser, "location-sdk","location-campaigns-downloaded", logDetails);
 
         verifyRestRequest(qaUserSpy, body);
     }
 
     @Test
-    public void testLocationCampaignTriggered() throws Exception {
+    public void testGeoCampaignTriggered() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        qaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        Collection<QaGeoCampaignInfo> geoCampignInfoList = new ArrayList<>();
+        geoCampignInfoList.add(new QaGeoCampaignInfo(1, true, "reason1"));
+        geoCampignInfoList.add(new QaGeoCampaignInfo(4, false, "reason2"));
+        QaUser.geoCampaignTriggered(123, 456, "enter", geoCampignInfoList);
+
+        String logDetails =
+                "{" +
+                    "\"geoplace_id\":123," +
+                    "\"geofence_id\":456," +
+                    "\"action_type\":\"enter\"," +
+                    "\"campaigns\":[" +
+                    "{" +
+                        "\"variant_id\":1," +
+                        "\"displayed\":true," +
+                        "\"reason\":\"reason1\"" +
+                    "},{" +
+                        "\"variant_id\":4," +
+                        "\"displayed\":false," +
+                        "\"reason\":\"reason2\"" +
+                     "}" +
+                 "]}";
+        String body = getExpectedBody(qaUser, "geo-sdk","geo-campaign-triggered", logDetails);
+
+        verifyRestRequest(qaUserSpy, body);
+    }
+
+    @Test
+    public void testGeoCampaignsDownloadedWithNoCampaigns() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        qaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        QaUser.geoCampaignsDownloaded(123, 456, "enter", Collections.<QaGeoCampaignInfo>emptyList());
+
+        String logDetails = "{" +
+                "\"geoplace_id\":123," +
+                "\"geofence_id\":456," +
+                "\"action_type\":\"enter\"," +
+                "\"campaigns\":[]" +
+                "}";
+        String body = getExpectedBody(qaUser, "geo-sdk","geo-campaigns-downloaded", logDetails);
+
+        verifyRestRequest(qaUserSpy, body);
+    }
+
+    @Test
+    public void testGeoCampaignsDownloadedWithCampaigns() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        qaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+        String geoCampaigns = "" +
+                "    {\n" +
+                "        \"campaigns\": {\n" +
+                "            \"391\": {\n" +
+                "                \"version\": 1,\n" +
+                "                \"message\": {\n" +
+                "                    \"variant_id\": 381,\n" +
+                "                    \"body\": \"\",\n" +
+                "                    \"payload\": \"{}\"\n" +
+                "                }\n" +
+                "            },\n" +
+                "            \"392\": {\n" +
+                "                \"version\": 1,\n" +
+                "                \"message\": {\n" +
+                "                    \"variant_id\": 382,\n" +
+                "                    \"body\": \"\",\n" +
+                "                    \"payload\": \"{}\"\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }\n" +
+                "    }";
+        Mockito.doReturn(geoCampaigns).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_LOCATION_CAMPAIGNS);
+
+        List<QaGeoCampaignInfo> geoCampaignsDownloaded = new ArrayList();
+        geoCampaignsDownloaded.add(new QaGeoCampaignInfo(1, false, ""));
+        geoCampaignsDownloaded.add(new QaGeoCampaignInfo(2, false, ""));
+
+        QaUser.geoCampaignsDownloaded(123, 456, "enter", geoCampaignsDownloaded);
+
+        String logDetails =
+                "{" +
+                    "\"geoplace_id\":123," +
+                    "\"geofence_id\":456," +
+                    "\"action_type\":\"enter\"," +
+                     "\"campaigns\":[" +
+                        "{\"variant_id\":1}," +
+                        "{\"variant_id\":2}" +
+                     "]" +
+                 "}";
+        String body = getExpectedBody(qaUser, "geo-sdk","geo-campaigns-downloaded", logDetails);
+
+        verifyRestRequest(qaUserSpy, body);
+    }
+
+    @Test
+    public void testLocationCampaignTriggered() {
 
         QaUser qaUser = QaUser.getInstance();
         Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
@@ -216,13 +345,13 @@ public class QaUserTest extends SwrveBaseTest {
                             "\"reason\":\"reason2\"" +
                         "}" +
                     "]}";
-        String body = getExpectedBody(qaUser, "location-campaign-triggered", logDetails);
+        String body = getExpectedBody(qaUser, "location-sdk","location-campaign-triggered", logDetails);
 
         verifyRestRequest(qaUserSpy, body);
     }
 
     @Test
-    public void testRateLimiting() throws Exception {
+    public void testRateLimiting() {
 
         QaUser qaUser = QaUser.getInstance();
         long cooloffTime = qaUser.RATE_LIMIT_COOLOFF_TIME_MILLS;
@@ -260,7 +389,7 @@ public class QaUserTest extends SwrveBaseTest {
         assertTrue("rate limit exceeded, so should be starting cooloff", qaUser.isRateLimited(11000 + cooloffTime + cooloffTime));
     }
 
-    private String getExpectedBody(QaUser qaUser, String logType, String logDetails) {
+    private String getExpectedBody(QaUser qaUser, String logSource, String logType, String logDetails) {
         String body =
                 "{" +
                     "\"user\":\"" + qaUser.userId + "\"," +
@@ -273,7 +402,7 @@ public class QaUserTest extends SwrveBaseTest {
                             "\"seqnum\":1," +
                             "\"time\":999," +
                             "\"type\":\"qa_log_event\"," +
-                            "\"log_source\":\"location-sdk\"," +
+                            "\"log_source\":\"" + logSource + "\"," +
                             "\"log_type\":\"" + logType + "\"," +
                             "\"log_details\":" + logDetails +
                         "}" +

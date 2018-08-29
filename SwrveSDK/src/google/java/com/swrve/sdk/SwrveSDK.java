@@ -1,11 +1,20 @@
 package com.swrve.sdk;
 
-
 import android.app.Application;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
 
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+
+/**
+ * @deprecated Google Cloud Messaging SDK will be fully deprecated in 6.0 as Google will
+ * remove support in April of 2019. Please migrate to use Firebase and follow these steps to migrate
+ * your app: https://docs.swrve.com/faqs/sdk-integration/migrate-gcm-to-firebase/
+ *
+ * For any questions contact support@swrve.com
+ */
+@Deprecated
 public class SwrveSDK extends SwrveSDKBase {
 
     /**
@@ -55,15 +64,12 @@ public class SwrveSDK extends SwrveSDKBase {
 
     /**
      * Set the push notification listener.
-     *
+     * @deprecated set the SwrvePushNotificationListener via SwrveConfig instead
      * @param pushNotificationListener The custom listener
      */
     public static void setPushNotificationListener(SwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
-        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
-        if (pushSDK != null) {
-            pushSDK.setPushNotificationListener(pushNotificationListener);
-        }
+        getConfig().setNotificationListener(pushNotificationListener);
     }
 
     /**
@@ -150,6 +156,6 @@ public class SwrveSDK extends SwrveSDKBase {
      */
     public static void sendPushEngagedEvent(Context context, String pushId) {
         checkInstanceCreated();
-        SwrveEngageEventSender.sendPushEngagedEvent(context, pushId);
+        EventHelper.sendEngagedEvent(context, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, pushId, null);
     }
 }

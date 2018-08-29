@@ -17,7 +17,8 @@ interface ISwrveCommon {
     String CACHE_RESOURCES = "srcngt2";
     String CACHE_RESOURCES_DIFF = "rsdfngt2";
     String CACHE_LOCATION_CAMPAIGNS = "LocationCampaign";
-    String CACHE_AD_CAMPAIGNS = "AdCampaign";
+    String CACHE_AD_CAMPAIGNS_DEBUG = "AdCampaign";
+    String CACHE_NOTIFICATION_CAMPAIGNS_DEBUG = "NotificationCampaign";
     String CACHE_APP_VERSION = "AppVersion";
     String CACHE_INSTALL_TIME = "SwrveSDK.installTime";
     String CACHE_CAMPAIGNS_STATE = "SwrveCampaignSettings";
@@ -54,6 +55,24 @@ interface ISwrveCommon {
     String SWRVE_NOTIFICATIONS_BUTTONS      = "swrve.support.rich_buttons";
     String SWRVE_NOTIFICATIONS_ATTACHMENT   = "swrve.support.rich_attachment";
 
+
+    // events
+    String EVENT_ID_KEY                             = "id";
+    String EVENT_TYPE_KEY                           = "type";
+    String EVENT_PAYLOAD_KEY                        = "payload";
+    String EVENT_TYPE_GENERIC_CAMPAIGN              = "generic_campaign_event";
+    String GENERIC_EVENT_CAMPAIGN_TYPE_KEY          = "campaignType";
+    String GENERIC_EVENT_CAMPAIGN_TYPE_GEO          = "geo";
+    String GENERIC_EVENT_CAMPAIGN_TYPE_PUSH         = "push";
+    String GENERIC_EVENT_ACTION_TYPE_KEY            = "actionType";
+    String GENERIC_EVENT_ACTION_TYPE_IMPRESSION     = "impression";
+    String GENERIC_EVENT_ACTION_TYPE_ENGAGED        = "engaged";
+    String GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK   = "button_click";
+    String GENERIC_EVENT_ACTION_TYPE_INFLUENCED     = "influenced";
+    String GENERIC_EVENT_CONTEXT_ID_KEY             = "contextId";
+    String GENERIC_EVENT_CAMPAIGN_ID_KEY            = "campaignId";
+    String GENERIC_EVENT_PAYLOAD_BUTTON_TEXT        = "buttonText";
+
     String getApiKey();
 
     String getSessionKey();
@@ -69,6 +88,8 @@ interface ISwrveCommon {
     String getUniqueKey(String userId);
 
     String getBatchURL();
+
+    String getContentURL();
 
     String getCachedData(String userId, String key);
 
@@ -91,4 +112,14 @@ interface ISwrveCommon {
     int getNextSequenceNumber();
 
     NotificationChannel getDefaultNotificationChannel();
+
+    SwrveNotificationConfig getNotificationConfig();
+
+    SwrvePushNotificationListener getNotificationListener();
+
+    String getJoined();
+
+    String getLanguage();
+
+    void setNotificationSwrveCampaignId(String swrveCampaignId);
 }

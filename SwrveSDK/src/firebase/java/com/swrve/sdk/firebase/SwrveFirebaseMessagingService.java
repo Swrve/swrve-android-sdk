@@ -9,10 +9,13 @@ import android.support.v4.app.NotificationCompat;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.swrve.sdk.ISwrveBase;
+import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrvePushHelper;
 import com.swrve.sdk.SwrvePushSDK;
 import com.swrve.sdk.SwrvePushService;
-import com.swrve.sdk.qa.SwrveQAUser;
+import com.swrve.sdk.SwrveSDK;
 
 /**
  * Used internally to process push notifications inside for your app.
@@ -29,7 +32,20 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService impl
         }
     }
 
+    @Override
+    public void onNewToken(String token) {
+        super.onNewToken(token);
+        ISwrveBase sdk = SwrveSDK.getInstance();
+        if (sdk != null && sdk instanceof Swrve) {
+            ((Swrve) sdk).setRegistrationId(token);
+        } else {
+            SwrveLogger.e("Could not notify the SDK of a new token.");
+        }
+    }
+
+    @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+        super.onMessageReceived(remoteMessage);
         if (remoteMessage.getData() != null) {
             SwrveLogger.i("Received Firebase notification: %s" + remoteMessage.getData().toString());
 
@@ -52,11 +68,7 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService impl
     @Override
     public void processNotification(final Bundle msg) {
         pushSDK.processNotification(msg);
-
-        // Notify bound clients
-        for (SwrveQAUser sdkListener : SwrveQAUser.getBindedListeners()) {
-            sdkListener.pushNotification(SwrvePushSDK.getPushId(msg), msg);
-        }
+        SwrvePushHelper.qaUserPushNotification(msg);
     }
 
     /**
@@ -108,7 +120,7 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService impl
     /**
      * Override this function to change what the notification will do
      * once clicked by the user.
-     *
+     * <p>
      * Note: sending the Bundle in an extra parameter
      * "notification" is essential so that the Swrve SDK
      * can be notified that the app was opened from the
@@ -125,7 +137,7 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService impl
     /**
      * Override this function to change what the notification will do
      * once clicked by the user.
-     *
+     * <p>
      * Note: sending the Bundle in an extra parameter
      * "notification" is essential so that the Swrve SDK
      * can be notified that the app was opened from the

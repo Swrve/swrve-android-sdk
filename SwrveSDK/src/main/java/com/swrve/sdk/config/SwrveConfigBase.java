@@ -5,6 +5,8 @@ import android.graphics.Color;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveNotificationConfig;
+import com.swrve.sdk.SwrvePushNotificationListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import java.io.File;
@@ -51,6 +53,8 @@ public abstract class SwrveConfigBase {
     private boolean abTestDetailsEnabled; // Obtain information about the AB Tests a user is part of.
     private List<String> modelBlackList;
     private boolean loggingEnabled = true;
+    private SwrveNotificationConfig notificationConfig; // null as default, but attempts to populate from manifest if not instantiated. The manifest logic is deprecated and will be removed later
+    private SwrvePushNotificationListener notificationListener;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -598,5 +602,33 @@ public abstract class SwrveConfigBase {
      */
     public void setLoggingEnabled(boolean enabled) {
         this.loggingEnabled = enabled;
+    }
+
+    /**
+     * @return The custom SwrveNotificationConfig if one is set. If null, configuration from manifest will be attempted. Note that manifest logic is deprecated and will be removed.
+     */
+    public SwrveNotificationConfig getNotificationConfig() {
+        return notificationConfig;
+    }
+
+    /**
+     * @param notificationConfig Set custom notification configurations
+     */
+    public void setNotificationConfig(SwrveNotificationConfig notificationConfig) {
+        this.notificationConfig = notificationConfig;
+    }
+
+    /**
+     * @return The custom notification listener.
+     */
+    public SwrvePushNotificationListener getNotificationListener() {
+        return notificationListener;
+    }
+
+    /**
+     * @param notificationListener Set custom notification listener to be executed when a notification is fired.
+     */
+    public void setNotificationListener(SwrvePushNotificationListener notificationListener) {
+        this.notificationListener = notificationListener;
     }
 }

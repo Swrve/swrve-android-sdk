@@ -2,13 +2,17 @@ package com.swrve.sdk;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.localstorage.LocalStorageTestUtils;
@@ -24,6 +28,7 @@ import junit.framework.Assert;
 import org.json.JSONObject;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.robolectric.shadows.ShadowActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -42,6 +48,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -351,5 +366,40 @@ public class SwrveTestUtils {
 
     public static void onCreate(ISwrve swrve, Activity activity) {
         ((Swrve)swrve).onCreate(activity);
+    }
+
+    public static List<String> getEventsQueued(ShadowActivity mShadowActivity) {
+        List<String> events = new ArrayList<>();
+        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
+        for (Intent intent : broadcastIntents) {
+            if (intent.getComponent() != null && intent.getComponent().toString().contains("SwrveWakefulReceiver")) {
+                Bundle extras = intent.getExtras();
+                events.addAll((List) extras.get(SwrveBackgroundEventSender.EXTRA_EVENTS));
+            }
+        }
+        return events;
+    }
+
+    public static void assertGenericEvent(String eventJson, String expectedContextId, String expectedCampaignType, String expectedActionType, Map<String, String> expectedPayload) {
+        Gson gson = new Gson(); // eg: {"type":"generic_campaign_event","time":1499179867473,"seqnum":1,"actionType":"button_click","campaignType":"push","contextId":"0","id":"4567","payload":{"buttonText":"btn1"}}
+        Type type = new TypeToken<Map<String, Object>>() {
+        }.getType();
+        Map<String, Object> event = gson.fromJson(eventJson, type);
+        assertTrue(event.containsKey("type"));
+        assertEquals(EVENT_TYPE_GENERIC_CAMPAIGN, event.get(EVENT_TYPE_KEY));
+        assertTrue(event.containsKey(EVENT_ID_KEY));
+        if (SwrveHelper.isNotNullOrEmpty(expectedContextId)) {
+            assertEquals(expectedContextId, event.get(GENERIC_EVENT_CONTEXT_ID_KEY));
+        }
+        assertEquals(expectedCampaignType, event.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY));
+        assertEquals(expectedActionType, event.get(GENERIC_EVENT_ACTION_TYPE_KEY));
+        assertTrue(event.containsKey("time"));
+        assertTrue(event.containsKey("seqnum"));
+
+        if (expectedPayload != null && expectedPayload.size() > 0) {
+            assertTrue(event.containsKey(EVENT_PAYLOAD_KEY));
+            Map<String, String> actualPayload = (Map) event.get(EVENT_PAYLOAD_KEY);
+            assertEquals(expectedPayload, actualPayload);
+        }
     }
 }

@@ -7,16 +7,13 @@ import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveSDK;
 
 public class SwrveGcmInstanceIDListenerService extends InstanceIDListenerService {
-
-    protected static final String TAG = "SwrvePush";
-
     @Override
     public void onTokenRefresh() {
         ISwrveBase sdk = SwrveSDK.getInstance();
         if (sdk != null && sdk instanceof Swrve) {
             ((Swrve)sdk).onTokenRefreshed();
         } else {
-            SwrveLogger.e(TAG, "Could not notify the SDK of a new token.");
+            SwrveLogger.e("Could not notify the SDK of a new token.");
         }
     }
 }

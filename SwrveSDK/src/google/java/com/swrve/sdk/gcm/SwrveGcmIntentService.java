@@ -8,11 +8,9 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
 import com.google.android.gms.gcm.GcmListenerService;
+import com.swrve.sdk.SwrvePushHelper;
 import com.swrve.sdk.SwrvePushSDK;
 import com.swrve.sdk.SwrvePushService;
-import com.swrve.sdk.qa.SwrveQAUser;
-
-import java.util.Iterator;
 
 /**
  * Used internally to process push notifications inside for your app.
@@ -46,14 +44,7 @@ public class SwrveGcmIntentService extends GcmListenerService implements SwrvePu
     public void processNotification(final Bundle msg) {
         if (pushSDK != null) {
             pushSDK.processNotification(msg);
-
-            // Notify bound clients
-            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-            String pushId = SwrvePushSDK.getPushId(msg);
-            while (iter.hasNext()) {
-                SwrveQAUser sdkListener = iter.next();
-                sdkListener.pushNotification(pushId, msg);
-            }
+            SwrvePushHelper.qaUserPushNotification(msg);
         }
     }
 

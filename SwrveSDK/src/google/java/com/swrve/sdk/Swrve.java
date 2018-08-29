@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient.Info;
@@ -17,7 +18,14 @@ import org.json.JSONObject;
 
 /**
  * Main implementation of the Google Swrve SDK.
+ *
+ * @deprecated Google Cloud Messaging SDK will be fully deprecated in 6.0 as Google will
+ * remove support in April of 2019. Please migrate to use Firebase and follow these steps to migrate
+ * your app: https://docs.swrve.com/faqs/sdk-integration/migrate-gcm-to-firebase/
+ *
+ * For any questions contact support@swrve.com
  */
+@Deprecated
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected static final String FLAVOUR_NAME = "google";
     protected static final String SWRVE_GCM_TOKEN = "swrve.gcm_token";
@@ -33,14 +41,10 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     @Override
-    protected void _onResume(Activity ctx) {
-        super._onResume(ctx);
-
-        // Detect if user is influenced by a push notification
-        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
-        if (pushSDK != null) {
-            pushSDK.processInfluenceData(this);
-        }
+    protected ISwrve init(Activity activity) throws IllegalArgumentException {
+        ISwrve instance = super.init(activity);
+        Log.w("SwrveSDK", "The Google Cloud Messaging flavour is no longer supported and has been deprecated, please migrate to the Firebase flavour.");
+        return instance;
     }
 
     @Override

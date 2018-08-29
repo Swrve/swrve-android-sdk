@@ -35,6 +35,6 @@ dependencies {
     // In your app please include the SDK using the following dependency
 //  api 'com.swrve.sdk.android:swrve:X.X.X' // No Google Services push (where X.X.X is the version)
 
-    // Use the SDK source shipped with this demo
+    // Use the local SDK source
     api project(path: ':SwrveSDK')
 }

@@ -6,7 +6,7 @@
     android:versionName="1.0">
 
     <uses-sdk
-        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.locationcampaigns, android.support.v4, android.support.mediacompat, android.support.fragment, android.support.coreui, android.support.coreutils, android.support.compat, com.plotprojects.retail.android"/>
+        tools:overrideLibrary="com.swrve.sdk, android.support.v4, android.support.mediacompat, android.support.fragment, android.support.coreui, android.support.coreutils, android.support.compat"/>
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 

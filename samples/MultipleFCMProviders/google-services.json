@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "3763631070556",
+    "firebase_url": "https://your-app.firebaseio.com",
+    "project_id": "your-app",
+    "storage_bucket": "your-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:3763631070556:android:d4961e394860f17f",
+        "android_client_info": {
+          "package_name": "com.swrve.sdk.sample"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "3763631070556-x6h6dht78tpd6cn2fods1im61i4hr1tn.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "3763631070556.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "your_key"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

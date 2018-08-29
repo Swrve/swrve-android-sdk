@@ -3,6 +3,10 @@ What is Swrve
 Swrve is a single integrated platform delivering everything you need to drive mobile engagement and create valuable consumer relationships on mobile.  
 This native Android SDK will enable your app to use all of these features.
 
+Deprecations
+------------
+Google Cloud Messaging SDK will be fully deprecated in 6.0 as Google will remove support in April of 2019. Please migrate to use Firebase and follow these steps to migrate your app: https://docs.swrve.com/faqs/sdk-integration/migrate-gcm-to-firebase/
+
 Getting started
 ---------------
 Have a look at the quick integration guide at http://docs.swrve.com/developer-documentation/integration/android/

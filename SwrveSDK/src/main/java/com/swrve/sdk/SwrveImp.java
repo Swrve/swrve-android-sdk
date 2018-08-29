@@ -68,14 +68,13 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_LOCATION_CAMPAIGNS;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
-import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS;
 
 /**
  * Internal base class implementation of the Swrve SDK.
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "5.2";
+    protected static String version = "5.3";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
@@ -150,6 +149,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected int locationSegmentVersion;
     protected SwrveQAUser qaUser;
     protected SwrveDeeplinkManager swrveDeeplinkManager;
+    protected SwrveCampaignInfluence campaignInfluence = new SwrveCampaignInfluence();
+    protected String notificaionSwrveCampaignId;
 
     protected SwrveImp(Application application, int appId, String apiKey, C config) {
         SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
@@ -372,7 +373,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected boolean restClientExecutorExecute(Runnable runnable) {
         try {
             if (restClientExecutor.isShutdown()) {
-                SwrveLogger.i("Trying to schedule a rest execution while shutdown");
+                SwrveLogger.i("Trying to handle a rest execution while shutdown");
             } else {
                 restClientExecutor.execute(SwrveRunnables.withoutExceptions(runnable));
                 return true;
@@ -386,7 +387,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected boolean storageExecutorExecute(Runnable runnable) {
         try {
             if (storageExecutor.isShutdown()) {
-                SwrveLogger.i("Trying to schedule a storage execution while shutdown");
+                SwrveLogger.i("Trying to handle a storage execution while shutdown");
             } else {
                 storageExecutor.execute(SwrveRunnables.withoutExceptions(runnable));
                 return true;
@@ -828,9 +829,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         try {
             // Save campaigns state
             JSONObject campaignStateJson = new JSONObject();
-            for (int campaignId : campaignsState.keySet()) {
-                SwrveCampaignState campaignState = campaignsState.get(campaignId);
-                campaignStateJson.put(String.valueOf(campaignId), campaignState.toJSON());
+            if (campaignsState != null) {
+                for (int campaignId : campaignsState.keySet()) {
+                    SwrveCampaignState campaignState = campaignsState.get(campaignId);
+                    campaignStateJson.put(String.valueOf(campaignId), campaignState.toJSON());
+                }
             }
 
             final String serializedCampaignsState = campaignStateJson.toString();

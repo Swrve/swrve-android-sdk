@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.os.Bundle;
 
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,8 +14,6 @@ import org.robolectric.RuntimeEnvironment;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import org.json.JSONObject;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrveFirebaseUnitTest extends SwrveBaseTest {
@@ -59,11 +58,11 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
         Intent intent = new Intent();
         Bundle extras = new Bundle();
-        extras.putString("text", "validBundle");
-        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1234");
-        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+        extras.putString(SwrveNotificationConstants.TEXT_KEY, "validBundle");
+        extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1234");
+        intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
 
-        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
         assertTrue(pushListener.pushEngaged == false);

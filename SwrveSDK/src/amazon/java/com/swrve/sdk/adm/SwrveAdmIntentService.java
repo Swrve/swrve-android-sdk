@@ -11,14 +11,12 @@ import android.support.v4.app.NotificationCompat;
 import com.amazon.device.messaging.ADMMessageHandlerBase;
 import com.swrve.sdk.ISwrveBase;
 import com.swrve.sdk.Swrve;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrvePushHelper;
 import com.swrve.sdk.SwrvePushSDK;
 import com.swrve.sdk.SwrvePushService;
 import com.swrve.sdk.SwrveSDK;
-import com.swrve.sdk.qa.SwrveQAUser;
-import com.swrve.sdk.SwrveHelper;
-
-import java.util.Iterator;
 
 public class SwrveAdmIntentService extends ADMMessageHandlerBase implements SwrvePushService {
     private final static String TAG = "SwrvePush";
@@ -92,14 +90,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase implements Swrv
     public void processNotification(final Bundle msg) {
         if (pushSDK != null) {
             pushSDK.processNotification(msg);
-
-            // Notify bound clients
-            Iterator<SwrveQAUser> iter = SwrveQAUser.getBindedListeners().iterator();
-            String pushId = SwrvePushSDK.getPushId(msg);
-            while (iter.hasNext()) {
-                SwrveQAUser sdkListener = iter.next();
-                sdkListener.pushNotification(pushId, msg);
-            }
+            SwrvePushHelper.qaUserPushNotification(msg);
         }
     }
 

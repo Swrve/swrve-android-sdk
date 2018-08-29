@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Iterator;
 
 import timber.log.Timber;
 
@@ -32,7 +33,12 @@ public class SwrveLogger {
 
     protected static void setLoggingEnabled(boolean enabled) {
         if (enabled) {
-            swrveLoggerPlanted = false;
+            boolean alreadyPlanted = false;
+            Iterator<Timber.Tree> forestIt = Timber.forest().iterator();
+            while(!alreadyPlanted && forestIt.hasNext()) {
+                alreadyPlanted = forestIt.next().getClass().equals(SwrveLoggerTree.class);
+            }
+            swrveLoggerPlanted = alreadyPlanted;
         } else {
             Timber.uprootAll();
             logLevelSet = true;

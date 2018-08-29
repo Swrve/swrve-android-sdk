@@ -5,6 +5,8 @@ import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
 
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+
 public class SwrveSDK extends SwrveSDKBase {
 
     /**
@@ -54,15 +56,12 @@ public class SwrveSDK extends SwrveSDKBase {
 
     /**
      * Set the push notification listener.
-     *
+     * @deprecated set the SwrvePushNotificationListener via SwrveConfig instead
      * @param pushNotificationListener
      */
     public static void setPushNotificationListener(SwrvePushNotificationListener pushNotificationListener) {
         checkInstanceCreated();
-        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
-        if (pushSDK != null) {
-            pushSDK.setPushNotificationListener(pushNotificationListener);
-        }
+        getConfig().setNotificationListener(pushNotificationListener);
     }
 
     /**
@@ -131,6 +130,6 @@ public class SwrveSDK extends SwrveSDKBase {
      */
     public static void sendPushEngagedEvent(Context context, String pushId) {
         checkInstanceCreated();
-        SwrveEngageEventSender.sendPushEngagedEvent(context, pushId);
+        EventHelper.sendEngagedEvent(context, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, pushId, null);
     }
 }

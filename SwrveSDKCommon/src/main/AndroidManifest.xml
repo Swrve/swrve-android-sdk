@@ -1,3 +1,12 @@
-<manifest package="com.swrve.swrvesdkcommon">
-    <application/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.swrve.swrvesdkcommon">
+
+    <application>
+        <receiver
+            android:name="com.swrve.sdk.SwrveNotificationEngageReceiver"
+            android:exported="true" />
+
+    </application>
 </manifest>
+
+

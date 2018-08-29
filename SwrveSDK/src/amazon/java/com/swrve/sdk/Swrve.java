@@ -24,17 +24,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         SwrvePushSDK.createInstance(application.getApplicationContext());
     }
 
-    @Override
-    protected void _onResume(Activity ctx) {
-        super._onResume(ctx);
-
-        // Detect if user is influenced by a push notification
-        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
-        if (pushSDK != null) {
-            pushSDK.processInfluenceData(this);
-        }
-    }
-
     //ADM callbacks
     @Override
     public void onRegistrationIdReceived(String registrationId) {

@@ -37,6 +37,7 @@ android {
     lintOptions {
         abortOnError true
         baseline file("../../lint/lint-baseline-swrvesdk.xml")
+        disable 'GradleCompatible' // TODO remove this when play-services-ads gets upgraded again. 15.0.1 causes GradleCompatible lint error
     }
 }
 
@@ -45,8 +46,8 @@ dependencies {
     api project(':SwrveConversationSDK')
     api 'com.google.code.gson:gson:2.2.+'
     api 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    googleApi 'com.google.android.gms:play-services-gcm:' + project.GOOGLE_GMS_TOOLS_VERSION
-    googleApi 'com.google.android.gms:play-services-ads:' + project.GOOGLE_GMS_TOOLS_VERSION
+    googleApi 'com.google.android.gms:play-services-gcm:' + project.GMS_PLAY_SERVICES_GCM_VERSION
+    googleApi 'com.google.android.gms:play-services-ads:' + project.GMS_PLAY_SERVICES_ADS_VERSION
     googleApi project(':SwrveSDKPush')
     amazonApi project(':SwrveSDKPush')
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
@@ -55,8 +56,8 @@ dependencies {
     // Developer portal (https://developer.amazon.com/device-messaging).
     amazonCompileOnly fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
     firebaseApi project(':SwrveSDKPush')
-    firebaseApi 'com.google.android.gms:play-services-base:' + project.FIREBASE_TOOLS_VERSION
-    firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_TOOLS_VERSION
+    firebaseApi 'com.google.android.gms:play-services-ads:' + project.GMS_PLAY_SERVICES_ADS_VERSION
+    firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
 }
 
 apply plugin: 'maven-publish'
@@ -255,7 +256,7 @@ task androidCoreJavadocsJar(type: Jar) {
 }
 task androidCoreSourcesJar(type: Jar) {
     description "Package sources for Core."
-    classifier = 'source'
+    classifier = 'sources'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.core.java.srcDirs)
 }
 
@@ -276,7 +277,7 @@ task androidGoogleJavadocsJar(type: Jar) {
 }
 task androidGoogleSourcesJar(type: Jar) {
     description "Package sources for Google."
-    classifier = 'source'
+    classifier = 'sources'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.google.java.srcDirs)
 }
 
@@ -297,7 +298,7 @@ task androidAmazonJavadocsJar(type: Jar) {
 }
 task androidAmazonSourcesJar(type: Jar) {
     description "Package sources for Amazon."
-    classifier = 'source'
+    classifier = 'sources'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
 }
 
@@ -318,7 +319,7 @@ task androidFirebaseJavadocsJar(type: Jar) {
 }
 task androidFirebaseSourcesJar(type: Jar) {
     description "Package sources for Firebase."
-    classifier = 'source'
+    classifier = 'sources'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
 }
 

@@ -85,7 +85,7 @@ task androidConversationsJavadocsJar(type: Jar) {
 }
 task androidConversationsSourcesJar(type: Jar) {
     description "Package sources for Conversations."
-    classifier = 'source'
+    classifier = 'sources'
     from files(android.sourceSets.main.java.srcDirs)
 }
 
@@ -94,7 +94,7 @@ bintray {
     key = System.getenv('BINTRAY_KEY')
     pkg {
         repo = 'android'
-        name = project.SWRVE_CONVERSATIONS_ARTIFACT_ID
+        name = System.getProperty('bintray.pkg.name') == null ? project.SWRVE_CONVERSATIONS_ARTIFACT_ID : System.getProperty('bintray.pkg.name')
         userOrg = 'swrve-inc'
         licenses = ['Apache-2.0']
         desc = 'Swrve SDK'

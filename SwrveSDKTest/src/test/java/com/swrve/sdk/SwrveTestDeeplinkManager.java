@@ -8,7 +8,6 @@ import android.os.Bundle;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
-
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -17,21 +16,25 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 
 import java.io.UnsupportedEncodingException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS;
+import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS_DEBUG;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
 import static com.swrve.sdk.SwrveDeeplinkManager.SWRVE_AD_MESSAGE;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -66,12 +69,10 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
         IRESTClient spyRestClient = new IRESTClient() {
             @Override
             public void get(String endpoint, IRESTResponseListener callback) {
-
             }
 
             @Override
             public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) throws UnsupportedEncodingException {
-
                 String response = null;
                 if (params.containsValue("295412")) {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_conversation.json");
@@ -88,12 +89,10 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
 
             @Override
             public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
-
                 String response = null;
                 if (endpoint.contains("batch")) {
                     response = "{}";
                 }
-
                 callback.onResponse(new RESTResponse(200, response, null));
             }
         };
@@ -102,7 +101,6 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
 
         SwrveCommon.setSwrveCommon(swrveSpy);
         swrveSpy.init(mActivity);
-
     }
 
     @Test
@@ -144,12 +142,12 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
 
         assertTrue(jObj.has("time"));
         assertTrue(jObj.has("seqnum"));
-        assertTrue(jObj.get("type").equals("generic_campaign_event"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
         assertTrue(jObj.get("id").equals("-1"));
-        assertTrue(jObj.get("campaignType").equals("external_source_facebook"));
-        assertTrue(jObj.get("actionType").equals("install"));
-        assertTrue(jObj.get("contextId").equals("blackfriday"));
-        assertTrue(jObj.get("campaignId").equals("291145"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("install"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("blackfriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("291145"));
     }
 
     @Test
@@ -177,12 +175,12 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
 
         assertTrue(jObj.has("time"));
         assertTrue(jObj.has("seqnum"));
-        assertTrue(jObj.get("type").equals("generic_campaign_event"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
         assertTrue(jObj.get("id").equals("-1"));
-        assertTrue(jObj.get("campaignType").equals("external_source_facebook"));
-        assertTrue(jObj.get("actionType").equals("reengage"));
-        assertTrue(jObj.get("contextId").equals("BlackFriday"));
-        assertTrue(jObj.get("campaignId").equals("295412"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295412"));
 
         // 2. Test Conversation was shown
 
@@ -201,7 +199,7 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
 
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
         final String userId = swrveCommon.getUserId();
-        String adCampaigns = swrveSpy.multiLayerLocalStorage.getCacheEntry(userId, CACHE_AD_CAMPAIGNS);
+        String adCampaigns = swrveSpy.multiLayerLocalStorage.getCacheEntry(userId, CACHE_AD_CAMPAIGNS_DEBUG);
         JSONObject rootJson = new JSONObject(adCampaigns);
         JSONObject campaignJson = rootJson.getJSONObject("campaign");
         assertEquals(campaignJson.getInt("id"), 295412);
@@ -234,12 +232,12 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
 
         assertTrue(jObj.has("time"));
         assertTrue(jObj.has("seqnum"));
-        assertTrue(jObj.get("type").equals("generic_campaign_event"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
         assertTrue(jObj.get("id").equals("-1"));
-        assertTrue(jObj.get("campaignType").equals("external_source_facebook"));
-        assertTrue(jObj.get("actionType").equals("reengage"));
-        assertTrue(jObj.get("contextId").equals("BlackFriday"));
-        assertTrue(jObj.get("campaignId").equals("295411"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295411"));
 
         // 2. Test Conversation was shown
 
@@ -264,7 +262,7 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
 
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
         final String userId = swrveCommon.getUserId();
-        String adCampaigns = swrveSpy.multiLayerLocalStorage.getCacheEntry(userId, CACHE_AD_CAMPAIGNS);
+        String adCampaigns = swrveSpy.multiLayerLocalStorage.getCacheEntry(userId, CACHE_AD_CAMPAIGNS_DEBUG);
         JSONObject rootJson = new JSONObject(adCampaigns);
         JSONObject campaignJson = rootJson.getJSONObject("campaign");
         assertEquals(campaignJson.getInt("id"), 295411);
@@ -279,10 +277,10 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
         bundle.putString("target_url","swrve://app?ad_content=295412&ad_source=facebook&ad_campaign=BlackFriday");
 
         swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadAdCampaign("295412");
+        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadCampaign("295412","reengage");
         await().until(campaignShown());
         swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadAdCampaign("295412");
+        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadCampaign("295412","reengage");
     }
 
     @Test
@@ -292,21 +290,18 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
         bundle.putString("target_url","swrve://app?ad_content=295411&ad_source=facebook&ad_campaign=BlackFriday");
 
         swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadAdCampaign("295411");
+        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadCampaign("295411","reengage");
         await().until(campaignShown());
         swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadAdCampaign("295411");
+        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadCampaign("295411","reengage");
     }
 
     private Callable<Boolean> campaignShown() {
         return new Callable<Boolean>() {
-            public Boolean call() throws Exception {
-
+            public Boolean call() {
                 ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
                 Intent nextIntent = shadowMainActivity.peekNextStartedActivity();
-
                 return (nextIntent != null);
-
             }
         };
     }

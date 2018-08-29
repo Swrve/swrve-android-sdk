@@ -45,6 +45,7 @@ android {
     lintOptions {
         abortOnError true
         baseline file("../../lint/lint-baseline-swrvesdktest.xml")
+        disable 'GradleCompatible' // TODO remove this when play-services-ads gets upgraded again. 15.0.1 causes GradleCompatible lint error
     }
 
     useLibrary 'org.apache.http.legacy'
@@ -55,17 +56,17 @@ dependencies {
     api project(path: ':SwrveSDK')
 
     // Unit tests
-    testApi 'org.mockito:mockito-core:1.9.0'
-    testApi 'org.robolectric:shadows-support-v4:3.4-rc2'
-    testApi 'org.robolectric:shadows-httpclient:3.4-rc2'
+    testImplementation 'org.mockito:mockito-core:1.9.0'
+    testImplementation 'org.robolectric:shadows-support-v4:3.4-rc2'
+    testImplementation 'org.robolectric:shadows-httpclient:3.4-rc2'
 
     // Robolectric tests
-    testApi 'junit:junit:4.12'
-    testApi('org.robolectric:robolectric:3.5.1') {
+    testImplementation 'junit:junit:4.12'
+    testImplementation('org.robolectric:robolectric:3.5.1') {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
 
-    testApi 'com.squareup.okhttp3:mockwebserver:3.9.0'
-    testCompile 'org.awaitility:awaitility:3.0.0'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:3.9.0'
+    testImplementation 'org.awaitility:awaitility:3.0.0'
 }

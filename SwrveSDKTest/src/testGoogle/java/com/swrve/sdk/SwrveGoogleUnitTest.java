@@ -57,11 +57,11 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
 
         Intent intent = new Intent();
         Bundle extras = new Bundle();
-        extras.putString("text", "validBundle");
-        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1234");
-        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+        extras.putString(SwrveNotificationConstants.TEXT_KEY, "validBundle");
+        extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1234");
+        intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
 
-        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
         assertTrue(pushListener.pushEngaged == false);
@@ -83,20 +83,20 @@ public class SwrveGoogleUnitTest extends SwrveBaseTest {
 
         Intent intent = new Intent();
         Bundle extras = new Bundle();
-        extras.putString("text", "validBundle");
-        extras.putString(SwrvePushConstants.SWRVE_TRACKING_KEY, "1234");
-        extras.putString(SwrvePushConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "{\"key1\":\"value1\",\"key2\":50,\"text\":\"this_should_be_overwritten\"}");
-        intent.putExtra(SwrvePushConstants.PUSH_BUNDLE, extras);
+        extras.putString(SwrveNotificationConstants.TEXT_KEY, "validBundle");
+        extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1234");
+        extras.putString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "{\"key1\":\"value1\",\"key2\":50,\"text\":\"this_should_be_overwritten\"}");
+        intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
 
         SwrveSDK.setPushNotificationListener(pushListener);
-        SwrvePushEngageReceiver pushEngageReceiver = new SwrvePushEngageReceiver();
+        SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
         // Expect bundle to have been received
         assertTrue(pushListener.pushEngaged == true);
         JSONObject payload = pushListener.receivedPayload;
         assertTrue(payload != null);
-        assertEquals("validBundle", payload.getString("text"));
+        assertEquals("validBundle", payload.getString(SwrveNotificationConstants.TEXT_KEY));
         assertEquals("value1", payload.getString("key1"));
         assertEquals(50, payload.getInt("key2"));
     }

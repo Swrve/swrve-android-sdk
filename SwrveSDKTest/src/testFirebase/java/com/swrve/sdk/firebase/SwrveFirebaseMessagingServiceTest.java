@@ -1,77 +1,71 @@
 package com.swrve.sdk.firebase;
 
-import android.content.Context;
 import android.os.Bundle;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.RemoteMessage;
+import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.SwrvePushSDK;
 import com.swrve.sdk.SwrveTestUtils;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.Field;
 
-import static org.junit.Assert.assertEquals;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrveFirebaseMessagingServiceTest extends SwrveBaseTest {
 
-    private SwrveFirebaseMessagingService service;
-    private TestableSwrvePushSDK swrvePushSDK;
+    @Test
+    public void testOnMessageReceived() throws Exception {
+        SwrvePushSDK swrvePushSDKSpy = Mockito.mock(SwrvePushSDK.class);
+        setSwrvePushSDKInstance(swrvePushSDKSpy);
 
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        SwrvePushSDK.createInstance(RuntimeEnvironment.application);
-        swrvePushSDK = new TestableSwrvePushSDK(RuntimeEnvironment.application);
-        setSwrvePushSDKInstance(swrvePushSDK);
-        service = new SwrveFirebaseMessagingService();
+        SwrveFirebaseMessagingService service = Robolectric.setupService(SwrveFirebaseMessagingService.class);
         service.onCreate();
 
-        FirebaseApp.initializeApp(mActivity);
-    }
+        RemoteMessage.Builder b = new RemoteMessage.Builder("dest");
+        b.addData("text", "hello");
+        b.addData("key1", "value1");
+        service.onMessageReceived(b.build());
 
-    @After
-    public void tearDown() throws Exception {
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        ArgumentCaptor<Bundle> bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
+        ArgumentCaptor<Boolean> booleanCaptor = ArgumentCaptor.forClass(Boolean.class);
+        Mockito.verify(swrvePushSDKSpy, Mockito.atLeastOnce()).processRemoteNotification(bundleCaptor.capture(), booleanCaptor.capture());
+
+        Bundle actualBundle = bundleCaptor.getAllValues().get(0);
+        assertEquals(2, actualBundle.size());
+        assertEquals("hello", actualBundle.getString("text"));
+        assertEquals("value1", actualBundle.getString("key1"));
+        assertFalse(booleanCaptor.getAllValues().get(0));
     }
 
     @Test
-    public void testOnMessageReceived() throws Exception {
-        RemoteMessage.Builder b = new RemoteMessage.Builder("dest");
-        b.addData("text", "");
+    public void testOnNewToken() throws Exception {
+        Swrve swrveSpy = Mockito.mock(Swrve.class);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
 
-        service.onMessageReceived(b.build());
-        assertEquals(1, swrvePushSDK.processRemoteNotificationExecuted);
+        SwrveFirebaseMessagingService service = Robolectric.setupService(SwrveFirebaseMessagingService.class);
+        service.onCreate();
+        service.onNewToken("new_token");
+
+        ArgumentCaptor<String> stringCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).setRegistrationId(stringCaptor.capture());
+        assertEquals("new_token", stringCaptor.getAllValues().get(0));
     }
 
-    class TestableSwrvePushSDK extends SwrvePushSDK {
-        int processRemoteNotificationExecuted = 0;
-
-        public TestableSwrvePushSDK(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void processRemoteNotification(Bundle msg, boolean checkDupes) {
-            processRemoteNotificationExecuted = 1;
-        }
-    }
-
-    public void setSwrvePushSDKInstance(SwrvePushSDK instance) throws Exception {
+    private void setSwrvePushSDKInstance(SwrvePushSDK instance) throws Exception {
         Field hack = SwrvePushSDK.class.getDeclaredField("instance");
         hack.setAccessible(true);
         hack.set(null, instance);
     }
-
 }
 
 
