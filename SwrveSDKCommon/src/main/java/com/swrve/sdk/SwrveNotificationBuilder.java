@@ -51,12 +51,12 @@ public class SwrveNotificationBuilder {
     private String notificationTitle;
 
     private boolean usingFallbackDeeplink = false;
-    protected SwrveNotification swrveNotification;
+    private SwrveNotification swrveNotification;
     private Bundle msg;
-    protected String msgText;
+    private String msgText;
     private String campaignType;
     private Bundle eventPayload;
-    protected int notificationId;
+    private int notificationId;
 
     // Called by Unity Swrve SDK
     public SwrveNotificationBuilder(Context context, int iconDrawableId, int iconMaterialDrawableId, int largeIconDrawableId,
@@ -318,7 +318,9 @@ public class SwrveNotificationBuilder {
 
         // set Default style for expanded content
         NotificationCompat.Style defaultStyle = buildDefaultStyle(swrveNotification);
-        builder.setStyle(defaultStyle);
+        if (defaultStyle != null) {
+            builder.setStyle(defaultStyle);
+        }
 
         // if media is present apply a different template based on type
         buildMediaText(builder);
@@ -475,22 +477,23 @@ public class SwrveNotificationBuilder {
     }
 
     private NotificationCompat.Style buildDefaultStyle(SwrveNotification payload) {
-        NotificationCompat.Style responseStyle;
+        NotificationCompat.Style responseStyle = null;
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
         SwrveNotificationExpanded expanded = payload.getExpanded();
         if (expanded != null) {
             if (SwrveHelper.isNotNullOrEmpty(expanded.getTitle())) {
                 bigTextStyle.setBigContentTitle(expanded.getTitle()); // Expanded Title
+                responseStyle = bigTextStyle;
             }
             if (SwrveHelper.isNotNullOrEmpty(expanded.getBody())) {
                 bigTextStyle.bigText(expanded.getBody()); // Expanded Body
+                responseStyle = bigTextStyle;
             }
         }
-        responseStyle = bigTextStyle;
         return responseStyle;
     }
 
-    public List<NotificationCompat.Action> getNotificationActions() {
+    private List<NotificationCompat.Action> getNotificationActions() {
         String swrvePayloadKey = msg.getString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY);
 
         if(SwrveHelper.isNullOrEmpty(swrvePayloadKey)){
