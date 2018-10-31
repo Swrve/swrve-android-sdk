@@ -1,21 +1,27 @@
 package com.swrve.sdk;
 
+import android.app.NotificationChannel;
+
 public class SwrveNotificationConfig {
 
     private Class<?> activityClass;
     private int iconDrawableId;
     private int iconMaterialDrawableId;
+    private NotificationChannel defaultNotificationChannel;
     private int largeIconDrawableId;
-    private int accentColorResourceId;
-    private String notificationTitle;
+    private Integer accentColorResourceId;
+    private SwrveNotificationCustomFilter notificationCustomFilter;
 
     private SwrveNotificationConfig(Builder builder) {
         this.activityClass = builder.activityClass;
         this.iconDrawableId = builder.iconDrawableId;
         this.iconMaterialDrawableId = builder.iconMaterialDrawableId;
+        this.defaultNotificationChannel = builder.defaultNotificationChannel;
         this.largeIconDrawableId = builder.largeIconDrawableId;
-        this.accentColorResourceId = builder.accentColorResourceId;
-        this.notificationTitle = builder.notificationTitle;
+        if (builder.accentColorResourceId != 0) {
+            this.accentColorResourceId = builder.accentColorResourceId;
+        }
+        this.notificationCustomFilter = builder.notificationCustomFilter;
     }
 
     /**
@@ -46,6 +52,15 @@ public class SwrveNotificationConfig {
     }
 
     /**
+     * The default notification channel for which notifications should appear in.
+     *
+     * @return The default NotificationChannel
+     */
+    public NotificationChannel getDefaultNotificationChannel() {
+        return defaultNotificationChannel;
+    }
+
+    /**
      * The icon to display if not configured by swrve dashboard
      *
      * @return drawable icon id
@@ -59,17 +74,17 @@ public class SwrveNotificationConfig {
      *
      * @return color id
      */
-    public int getAccentColorResourceId() {
+    public Integer getAccentColorResourceId() {
         return accentColorResourceId;
     }
 
     /**
-     * The default notification title to use if none defined by swrve dashboard
+     * The notification filter used for modifying notifications before they are displayed.
      *
-     * @return the notification title text
+     * @return the notification custom filter
      */
-    public String getNotificationTitle() {
-        return notificationTitle;
+    public SwrveNotificationCustomFilter getNotificationCustomFilter() {
+        return notificationCustomFilter;
     }
 
     public static class Builder {
@@ -77,9 +92,23 @@ public class SwrveNotificationConfig {
         private Class<?> activityClass;
         private int iconDrawableId;
         private int iconMaterialDrawableId;
+        private NotificationChannel defaultNotificationChannel;
         private int largeIconDrawableId;
         private int accentColorResourceId;
-        private String notificationTitle;
+        private SwrveNotificationCustomFilter notificationCustomFilter;
+
+        /**
+         * Builder constructor
+         * @param iconDrawableId the notification icon drawable to be shown in the status bar for below api level 21
+         * @param iconMaterialDrawableId the notification icon drawable to be shown in the status bar for above api level 20
+         * @param defaultNotificationChannel Set the default notification channel used to display notifications. This is required if you target Android O (API 26) or higher.
+         *                                   We recommend that the channel is created before setting it in our config. Our SDK will attempt to create it if it doesn't exist.
+         */
+        public Builder(int iconDrawableId, int iconMaterialDrawableId, NotificationChannel defaultNotificationChannel) {
+            this.iconDrawableId = iconDrawableId;
+            this.iconMaterialDrawableId = iconMaterialDrawableId;
+            this.defaultNotificationChannel = defaultNotificationChannel;
+        }
 
         /**
          * Set the activity class to open when the notification is engaged with.
@@ -89,28 +118,6 @@ public class SwrveNotificationConfig {
          */
         public Builder activityClass(Class<?> activityClass) {
             this.activityClass = activityClass;
-            return this;
-        }
-
-        /**
-         * Set the notification icon drawable to be shown in the status bar for below api level 21
-         *
-         * @param iconDrawableId The notification icon drawable id
-         * @return this builder
-         */
-        public Builder iconDrawableId(int iconDrawableId) {
-            this.iconDrawableId = iconDrawableId;
-            return this;
-        }
-
-        /**
-         * Set the notification icon drawable to be shown in the status bar for above api level 20
-         *
-         * @param iconMaterialDrawableId The notification icon drawable id
-         * @return this builder
-         */
-        public Builder iconMaterialDrawableId(int iconMaterialDrawableId) {
-            this.iconMaterialDrawableId = iconMaterialDrawableId;
             return this;
         }
 
@@ -137,13 +144,14 @@ public class SwrveNotificationConfig {
         }
 
         /**
-         * Set the default notification title to use if none defined by swrve dashboard
+         * Set the notification filter used for modifying remote notifications before they are displayed.
+         * If filtering Geo Notifications, please use the SwrveGeoCustomFilter
          *
-         * @param notificationTitle the notification title text
+         * @param notificationCustomFilter the notification custom filter to apply
          * @return this builder
          */
-        public Builder notificationTitle(String notificationTitle) {
-            this.notificationTitle = notificationTitle;
+        public Builder notificationCustomFilter(SwrveNotificationCustomFilter notificationCustomFilter) {
+            this.notificationCustomFilter = notificationCustomFilter;
             return this;
         }
 

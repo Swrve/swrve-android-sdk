@@ -3,47 +3,34 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.swrve.sdk.adm.SwrveAdmIntentService;
-
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
-import org.robolectric.android.controller.IntentServiceController;
 
 import static junit.framework.Assert.assertEquals;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrveAdmIntentServiceTest extends SwrveBaseTest {
 
-    private SwrveAdmIntentService service;
-    private SwrvePushSDK swrvePushSDKSpy;
-
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        SwrvePushSDK swrvePushSDK = new SwrvePushSDK(RuntimeEnvironment.application);
-        swrvePushSDKSpy = spy(swrvePushSDK);
-        SwrvePushSDK.instance = swrvePushSDKSpy;
-        IntentServiceController<SwrveAdmIntentService> serviceController = IntentServiceController.of(Robolectric.getShadowsAdapter(), new SwrveAdmIntentService(), null);
-        serviceController.create();
-        service = serviceController.get();
-    }
-
     @Test
     public void testOnMessage() {
+        SwrveAdmIntentService service = Robolectric.setupService(SwrveAdmIntentService.class);
+        SwrveAdmIntentService serviceSpy = Mockito.spy(service);
+        serviceSpy.onCreate();
+
+        SwrvePushServiceManager mockSwrvePushServiceManager = Mockito.mock(SwrvePushServiceManager.class);
+        Mockito.doNothing().when(mockSwrvePushServiceManager).processMessage(Mockito.any(Bundle.class));
+        Mockito.doReturn(mockSwrvePushServiceManager).when(serviceSpy).getSwrvePushServiceManager();
+
         // Check null scenario
-        service.onMessage(null);
-        verify(swrvePushSDKSpy, never()).processNotification(any(Bundle.class));
+        serviceSpy.onMessage(null);
+
+        ArgumentCaptor<Bundle> bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
+        Mockito.verify(mockSwrvePushServiceManager, never()).processMessage(bundleCaptor.capture());
 
         Intent intent = new Intent();
         Bundle extras = new Bundle();
@@ -54,10 +41,10 @@ public class SwrveAdmIntentServiceTest extends SwrveBaseTest {
         extras.putString(SwrveNotificationConstants.TIMESTAMP_KEY, "1234");
         intent.putExtras(extras);
 
-        service.onMessage(intent);
+        serviceSpy.onMessage(intent);
 
         ArgumentCaptor<Bundle> extrasCaptor = ArgumentCaptor.forClass(Bundle.class);
-        verify(swrvePushSDKSpy, times(1)).processNotification(extrasCaptor.capture());
+        Mockito.verify(mockSwrvePushServiceManager, Mockito.atLeastOnce()).processMessage(extrasCaptor.capture());
 
         assertEquals("validBundle", extrasCaptor.getValue().getString(SwrveNotificationConstants.TEXT_KEY));
         assertEquals("some custom values", extrasCaptor.getValue().getString("customData"));

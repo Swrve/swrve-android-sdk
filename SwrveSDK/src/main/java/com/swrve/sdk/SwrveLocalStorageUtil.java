@@ -8,20 +8,21 @@ import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 
 import java.util.Random;
+import java.util.UUID;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_DEVICE_ID;
 import static com.swrve.sdk.ISwrveCommon.CACHE_SEQNUM;
 
 class SwrveLocalStorageUtil {
 
-    static synchronized short getDeviceId(SwrveMultiLayerLocalStorage multiLayerLocalStorage) {
-        String id = multiLayerLocalStorage.getCacheEntry("", CACHE_DEVICE_ID); // device_id is with empty userId
+    static synchronized String getDeviceId(SwrveMultiLayerLocalStorage multiLayerLocalStorage) {
+        String id = multiLayerLocalStorage.getCacheEntry("", CACHE_DEVICE_ID); // device_id is with empty userId, its the same for all users
         if (id == null || id.length() <= 0) {
-            short deviceId = (short) new Random().nextInt(Short.MAX_VALUE);
-            multiLayerLocalStorage.setCacheEntry("", CACHE_DEVICE_ID, Short.toString(deviceId)); // device_id is saved with empty userId
+            String deviceId = UUID.randomUUID().toString();
+            multiLayerLocalStorage.setCacheEntry("", CACHE_DEVICE_ID, deviceId); // device_id is saved with empty userId, its the same for all users
             return deviceId;
         } else {
-            return Short.parseShort(id);
+            return id;
         }
     }
 

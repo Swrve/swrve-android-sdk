@@ -59,10 +59,13 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
         super.setUp();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
 
-        SwrveDeeplinkManager swrveDeeplinkManager = new SwrveDeeplinkManager(swrveSpy.getContentRequestParams(), swrveSpy.getConfig(), swrveSpy.getContext(), swrveSpy.swrveAssetsManager, swrveSpy.restClient);
+        final String userId = swrveSpy.profileManager.getUserId();
+        Map<String, String> params = swrveSpy.getContentRequestParams(userId);
+        SwrveDeeplinkManager swrveDeeplinkManager = new SwrveDeeplinkManager(params, swrveSpy.getConfig(), swrveSpy.getContext(), swrveSpy.swrveAssetsManager, swrveSpy.restClient);
         SwrveDeeplinkManager swrveDeeplinkManagerSpy = Mockito.spy(swrveDeeplinkManager);
         swrveSpy.swrveDeeplinkManager = swrveDeeplinkManagerSpy;
 
@@ -125,7 +128,9 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
     @Test
     public void testQueueDeeplinkGenericEvent_Queued() throws Exception {
 
-        SwrveDeeplinkManager swrveDeeplinkManager = new SwrveDeeplinkManager(swrveSpy.getContentRequestParams(), swrveSpy.getConfig(), swrveSpy.getContext(), swrveSpy.swrveAssetsManager, swrveSpy.restClient);
+        final String userId = swrveSpy.profileManager.getUserId();
+        Map<String, String> params = swrveSpy.getContentRequestParams(userId);
+        SwrveDeeplinkManager swrveDeeplinkManager = new SwrveDeeplinkManager(params, swrveSpy.getConfig(), swrveSpy.getContext(), swrveSpy.swrveAssetsManager, swrveSpy.restClient);
         SwrveDeeplinkManager swrveDeeplinkManagerSpy = Mockito.spy(swrveDeeplinkManager);
         swrveSpy.swrveDeeplinkManager = swrveDeeplinkManagerSpy;
 

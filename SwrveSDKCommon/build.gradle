@@ -22,9 +22,9 @@ android {
 }
 
 dependencies {
-    implementation 'com.jakewharton.timber:timber:4.5.1'
-    api 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    api 'com.google.code.gson:gson:2.2.+'
+    implementation 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
+    implementation 'com.jakewharton.timber:timber:' + project.TIMBER_VERSION
 }
 
 apply plugin: 'maven-publish'

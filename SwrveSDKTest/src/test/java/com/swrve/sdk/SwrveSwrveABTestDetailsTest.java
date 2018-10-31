@@ -37,6 +37,7 @@ public class SwrveSwrveABTestDetailsTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         resourceManager = new TestSwrveResourceManager();
         swrveSpy.resourceManager = resourceManager;

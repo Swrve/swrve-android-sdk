@@ -18,14 +18,6 @@
         android:theme="@style/AppTheme" >
 
         <!-- Add this to your AndroidManifest.xml if you want to support push notifications  -->
-        <!-- Configure the aspect of the UI -->
-        <meta-data android:name="SWRVE_PUSH_ICON" android:resource="@mipmap/ic_launcher"/>
-        <meta-data android:name="SWRVE_PUSH_ICON_MATERIAL" android:resource="@mipmap/ic_launcher_material"/>
-        <meta-data android:name="SWRVE_PUSH_ICON_LARGE" android:resource="@mipmap/ic_launcher" />
-        <meta-data android:name="SWRVE_PUSH_ACCENT_COLOR" android:resource="@android:color/black" />
-        <meta-data android:name="SWRVE_PUSH_ACTIVITY" android:value=".MainActivity"/>
-        <meta-data android:name="SWRVE_PUSH_TITLE" android:value="Swrve Demo"/>
-
         <!-- Example of another push receiver in your app -->
         <service android:name=".MyFirebaseMessagingService" >
             <intent-filter>

@@ -28,7 +28,7 @@ import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
  * Used internally to generate JSON batch strings from event data.
  */
 final class EventHelper {
-    private static final Object BATCH_API_VERSION = "2";
+    private static final Object BATCH_API_VERSION = "3";
 
     public static String eventAsJSON(String type, Map<String, Object> parameters, int seqnum, long time) throws JSONException {
         return eventAsJSON(type, parameters, null, seqnum, time);
@@ -89,13 +89,13 @@ final class EventHelper {
      * Generate JSON in the format expected by the batch API to inform Swrve of
      * these events.
      */
-    public static String eventsAsBatch(LinkedHashMap<Long, String> events, String userId, String appVersion, String sessionToken, short deviceId) throws JSONException {
+    public static String eventsAsBatch(LinkedHashMap<Long, String> events, String userId, String appVersion, String sessionToken, String deviceId) throws JSONException {
         JSONObject batch = new JSONObject();
         batch.put("user", userId);
         batch.put("session_token", sessionToken);
         batch.put("version", BATCH_API_VERSION);
         batch.put("app_version", appVersion);
-        batch.put("device_id", deviceId);
+        batch.put("unique_device_id", deviceId);
         batch.put("data", orderedMapToJSONArray(events));
         return batch.toString();
     }

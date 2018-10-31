@@ -4,6 +4,7 @@ public class SwrveNotificationConstants {
     public static final String SWRVE_TRACKING_KEY = "_p";
     public static final String SWRVE_SILENT_TRACKING_KEY = "_sp";
     public static final String SWRVE_INFLUENCED_WINDOW_MINS_KEY = "_siw";
+    public static final String SWRVE_AUTH_USER_KEY = "_aui";
     public static final String SWRVE_CAMPAIGN_KEY = "campaign";
     public static final String CAMPAIGN_TYPE = "campaign_type";
     public static final String EVENT_PAYLOAD = "event_payload";
@@ -24,18 +25,5 @@ public class SwrveNotificationConstants {
     public static final String PUSH_NOTIFICATION_ID = "notification_id";
     public static final int NO_ACTION_ICON = 0;
     public static final int SWRVE_PUSH_VERSION = 1;
-    
-    @Deprecated
-    public static final String SWRVE_PUSH_ICON_METADATA = "SWRVE_PUSH_ICON";
-    @Deprecated
-    public static final String SWRVE_PUSH_ICON_MATERIAL_METADATA = "SWRVE_PUSH_ICON_MATERIAL";
-    @Deprecated
-    public static final String SWRVE_PUSH_ICON_LARGE_METADATA = "SWRVE_PUSH_ICON_LARGE";
-    @Deprecated
-    public static final String SWRVE_PUSH_ACCENT_COLOR_METADATA = "SWRVE_PUSH_ACCENT_COLOR";
-    @Deprecated
-    public static final String SWRVE_PUSH_ACTIVITY_METADATA = "SWRVE_PUSH_ACTIVITY";
-    @Deprecated
-    public static final String SWRVE_PUSH_TITLE_METADATA = "SWRVE_PUSH_TITLE";
 }
 

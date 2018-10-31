@@ -56,25 +56,15 @@ public class SwrveSDK extends SwrveSDKBase {
     }
 
     /**
-     * Set the push notification listener.
-     * @deprecated set the SwrvePushNotificationListener via SwrveConfig instead
-     * @param pushNotificationListener
-     */
-    public static void setPushNotificationListener(SwrvePushNotificationListener pushNotificationListener) {
-        checkInstanceCreated();
-        getConfig().setNotificationListener(pushNotificationListener);
-    }
-
-    /**
      * Set the silent push listener.
      *
      * @param silentPushListener
      */
     public static void setSilentPushListener(SwrveSilentPushListener silentPushListener) {
         checkInstanceCreated();
-        SwrvePushSDK pushSDK = SwrvePushSDK.getInstance();
-        if (pushSDK != null) {
-            pushSDK.setSilentPushListener(silentPushListener);
+        SwrveConfig config = getConfig();
+        if (config != null) {
+            config.setSilentPushListener(silentPushListener);
         }
     }
 

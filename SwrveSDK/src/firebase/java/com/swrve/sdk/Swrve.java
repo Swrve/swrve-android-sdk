@@ -6,10 +6,10 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.swrve.sdk.config.SwrveConfig;
@@ -17,6 +17,8 @@ import com.swrve.sdk.firebase.SwrveFirebaseConstants;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
 
 /**
  * Main implementation of the Firebase Swrve SDK.
@@ -31,7 +33,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
         super(application, appId, apiKey, config);
-        SwrvePushSDK.createInstance(application.getApplicationContext());
     }
 
     @Override
@@ -40,87 +41,84 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     protected void registerInBackground() {
-        final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
-        final String sessionToken = profileManager.getSessionToken();
-        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
-            @Override
-            public void onSuccess(InstanceIdResult instanceIdResult) {
-                try {
-                    String newRegistrationId = instanceIdResult.getToken();
-                    if (!SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                        _setRegistrationId(userId, sessionToken, newRegistrationId);
+        FirebaseInstanceId firebaseInstanceId = getFirebaseInstanceId();
+        if (firebaseInstanceId != null) {
+            final String userId = getUserId(); // user can change so retrieve now as a final String for thread safeness
+            final String sessionToken = profileManager.getSessionToken();
+            Task<InstanceIdResult> task = firebaseInstanceId.getInstanceId();
+            task.addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+                @Override
+                public void onSuccess(InstanceIdResult instanceIdResult) {
+                    try {
+                        String newRegistrationId = instanceIdResult.getToken();
+                        if (!SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+                            _setRegistrationId(userId, sessionToken, newRegistrationId);
+                        }
+                    } catch (Exception ex) {
+                        SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", ex);
                     }
-                } catch (Exception ex) {
-                    SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", ex);
                 }
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", e);
-            }
-        });
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", e);
+                }
+            });
+        }
     }
 
-    /**
-     * Check the device to make sure it has the Google Play Services APK. If
-     * it doesn't, display a dialog that allows users to download the APK from
-     * the Google Play Store or enable it in the device's system settings.
-     */
-    private boolean isGooglePlayServicesAvailable() {
-        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
-        int resultCode = googleAPI.isGooglePlayServicesAvailable(getContext());
-        if (resultCode == ConnectionResult.SUCCESS) {
-            return true;
+    protected FirebaseInstanceId getFirebaseInstanceId() {
+        FirebaseInstanceId firebaseInstanceId = null;
+        try {
+            firebaseInstanceId = FirebaseInstanceId.getInstance();
+        } catch (IllegalStateException e) {
+            SwrveLogger.e("Swrve cannot get instance of FirebaseInstanceId and therefore cannot get token registration id.", e);
         }
-        if (googleAPI.isUserResolvableError(resultCode)) {
-            SwrveLogger.e("Google Play Services are not available, resolvable error code: %s. You can use getErrorDialog in your app to try to address this issue at runtime.", resultCode);
-        } else {
-            SwrveLogger.e("Google Play Services are not available. Error code: %s", resultCode);
-        }
-
-        return false;
+        return firebaseInstanceId;
     }
 
     private void obtainGAID() {
-        if (isGooglePlayServicesAvailable()) {
-            // Load previous value for Advertising ID
-            advertisingId = multiLayerLocalStorage.getCacheEntry(getUserId(), CACHE_GOOGLE_ADVERTISING_ID);
-            String isAdvertisingLimitAdTrackingEnabledString = multiLayerLocalStorage.getCacheEntry(getUserId(), CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT);
-            isAdvertisingLimitAdTrackingEnabled = Boolean.parseBoolean(isAdvertisingLimitAdTrackingEnabledString);
-            final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
-            new AsyncTask<Void, Integer, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        // Obtain and save the new Google Advertising Id
-                        AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(getContext());
-                        advertisingId = adInfo.getId();
-                        isAdvertisingLimitAdTrackingEnabled = adInfo.isLimitAdTrackingEnabled();
+        // Load previous value for Advertising ID
+        advertisingId = multiLayerLocalStorage.getCacheEntry(getUserId(), CACHE_GOOGLE_ADVERTISING_ID);
+        String isAdvertisingLimitAdTrackingEnabledString = multiLayerLocalStorage.getCacheEntry(getUserId(), CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT);
+        isAdvertisingLimitAdTrackingEnabled = Boolean.parseBoolean(isAdvertisingLimitAdTrackingEnabledString);
+        final String userId = getUserId(); // user can change so retrieve now as a final String for thread safeness
+        new AsyncTask<Void, Integer, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    // Obtain and save the new Google Advertising Id
+                    AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(getContext());
+                    advertisingId = adInfo.getId();
+                    isAdvertisingLimitAdTrackingEnabled = adInfo.isLimitAdTrackingEnabled();
 
-                        multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_GOOGLE_ADVERTISING_ID, advertisingId, getUniqueKey(userId));
-                        multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT, Boolean.toString(isAdvertisingLimitAdTrackingEnabled), getUniqueKey(userId));
-                    } catch (Exception ex) {
-                        SwrveLogger.e("Couldn't obtain Advertising Id", ex);
-                    }
-                    return null;
+                    multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_GOOGLE_ADVERTISING_ID, advertisingId, getUniqueKey(userId));
+                    multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT, Boolean.toString(isAdvertisingLimitAdTrackingEnabled), getUniqueKey(userId));
+                } catch (IOException ex) {
+                    // Unrecoverable error connecting to Google Play services (e.g.,
+                    // the old version of the service doesn't support getting AdvertisingId).
+                    SwrveLogger.e("Couldn't obtain Advertising Id: Unrecoverable error connecting to Google Play services", ex);
+                } catch (GooglePlayServicesNotAvailableException ex) {
+                    // Google Play services is not available entirely.
+                    SwrveLogger.e("Couldn't obtain Advertising Id: Google Play services is not available", ex);
+                } catch (Exception ex) {
+                    SwrveLogger.e("Couldn't obtain Advertising Id", ex);
                 }
+                return null;
+            }
 
-                @Override
-                protected void onPostExecute(Void v) {
-                }
-            }.execute(null, null, null);
-        }
+            @Override
+            protected void onPostExecute(Void v) {
+            }
+        }.execute(null, null, null);
     }
 
     @Override
     public void setRegistrationId(String regId) {
         try {
-            if(profileManager != null && profileManager.isLoggedIn()) {
-                final String userId = getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
-                final String sessionToken = profileManager.getSessionToken();
-                _setRegistrationId(userId, sessionToken, regId);
-            }
+            final String userId = getUserId(); // user can change so retrieve now as a final String for thread safeness
+            final String sessionToken = profileManager.getSessionToken();
+            _setRegistrationId(userId, sessionToken, regId);
         } catch (Exception ex) {
             SwrveLogger.e("Couldn't save the GCM registration id for the device", ex);
         }
@@ -135,7 +133,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
             // Store registration id
             multiLayerLocalStorage.setCacheEntry(profileManager.getUserId(), CACHE_REGISTRATION_ID, registrationId);
             // Re-send data now
-            queueDeviceInfoNow(userId, sessionToken, true);
+            queueDeviceUpdateNow(userId, sessionToken, true);
         }
     }
 
@@ -143,14 +141,11 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected void beforeSendDeviceInfo(final Context context) {
         if (config.isPushRegistrationAutomatic()) {
             try {
-                // Check device for Play Services APK.
-                if (isGooglePlayServicesAvailable()) {
-                    String newRegistrationId = getRegistrationId();
-                    if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                        registerInBackground();
-                    } else {
-                        registrationId = newRegistrationId;
-                    }
+                String newRegistrationId = getRegistrationId();
+                if (SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+                    registerInBackground();
+                } else {
+                    registrationId = newRegistrationId;
                 }
             } catch (Throwable exp) {
                 // Don't trust Firebase and all the moving parts to work as expected

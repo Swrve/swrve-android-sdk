@@ -3,12 +3,13 @@ package com.swrve.sdk.sample;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.os.Build;
+import android.content.Context;
 import android.util.Log;
 
+import com.swrve.sdk.SwrveNotificationConfig;
+import com.swrve.sdk.SwrvePushNotificationListener;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.SwrvePushNotificationListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,14 +25,23 @@ public class SampleApplication extends Application {
         super.onCreate();
         try {
             SwrveConfig config = new SwrveConfig();
-            // Configure your default Notification Channel
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel channel = new NotificationChannel("default", "Default", NotificationManager.IMPORTANCE_DEFAULT);
-                config.setDefaultNotificationChannel(channel);
+
+            NotificationChannel channel = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                channel = new NotificationChannel("123", "Devapp swrve default channel", NotificationManager.IMPORTANCE_DEFAULT);
+                if (getSystemService(Context.NOTIFICATION_SERVICE) != null) {
+                    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    notificationManager.createNotificationChannel(channel);
+                }
             }
-            SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY, config);
+            SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo, R.drawable.swrve_s_transparent, channel)
+                    .activityClass(MainActivity.class)
+                    .largeIconDrawableId(R.drawable.swrve_s_solid)
+                    .accentColorResourceId(R.color.dark_blue);
+            config.setNotificationConfig(notificationConfig.build());
+
             // React to the push notification when the user clicks on it
-            SwrveSDK.setPushNotificationListener(new SwrvePushNotificationListener() {
+            config.setNotificationListener(new SwrvePushNotificationListener() {
                 @Override
                 public void onPushNotification(JSONObject payload) {
                     try {
@@ -45,6 +55,9 @@ public class SampleApplication extends Application {
                     }
                 }
             });
+
+            SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY, config);
+
         } catch (Exception exp) {
             Log.e(LOG_TAG, "Could not initialize the Swrve SDK", exp);
         }

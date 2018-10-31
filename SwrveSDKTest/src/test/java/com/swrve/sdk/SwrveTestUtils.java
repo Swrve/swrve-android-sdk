@@ -28,6 +28,7 @@ import junit.framework.Assert;
 import org.json.JSONObject;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowActivity;
 
 import java.io.ByteArrayOutputStream;
@@ -56,9 +57,9 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 
 public class SwrveTestUtils {
 
@@ -68,7 +69,7 @@ public class SwrveTestUtils {
             swrve.shutdown();
         }
         removeSingleton(SwrveSDKBase.class, "instance");
-        LocalStorageTestUtils.removeSQLiteOpenHelperSingletonInstance();
+        LocalStorageTestUtils.closeSQLiteOpenHelperInstance();
     }
 
     public static void removeSwrveSDKSingletonInstance() throws Exception{
@@ -229,6 +230,16 @@ public class SwrveTestUtils {
         SwrveAssetsManager swrveAssetsManagerSpy = Mockito.spy(swrve.swrveAssetsManager);
         Mockito.doNothing().when(swrveAssetsManagerSpy).downloadAssets(Mockito.anySet(), Mockito.any(SwrveAssetsCompleteCallback.class));
         swrve.swrveAssetsManager = swrveAssetsManagerSpy;
+    }
+
+    public static void disableBeforeSendDeviceInfo(Swrve swrveReal, Swrve swrveSpy) {
+        RuntimeEnvironment.application.unregisterActivityLifecycleCallbacks(swrveReal);
+        swrveSpy.registerActivityLifecycleCallbacks();
+        Mockito.doNothing().when(swrveSpy).beforeSendDeviceInfo(any(Context.class));
+    }
+
+    public static void disableRestClientExecutor(Swrve swrveSpy) {
+        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
     }
 
     /*

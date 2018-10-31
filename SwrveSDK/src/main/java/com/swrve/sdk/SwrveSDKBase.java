@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
@@ -23,6 +22,33 @@ import java.util.Map;
 public abstract class SwrveSDKBase {
 
     protected static ISwrveBase instance;
+
+    /**
+     * Identify users such that they can be tracked and targeted safely across multiple devices, platforms and channels.
+     * <pre>
+     * <code>
+     * SwrveSDK.identify("12345", new SwrveIdentityResponse() {
+     *      @Override
+     *      public void onSuccess(String status, String swrveId) {
+     *
+     *      }
+     *
+     *      @Override
+     *      public void onError(int responseCode, String errorMessage) {
+     *          // please note in the event of an error the tracked userId will not reflect correctly on the backend until this
+     *          // call completes successfully
+     *      }
+     * });
+     * </code>
+     * </pre>
+     *
+     * @param userId ID that uniquely identifies your user. Personal identifiable information should not be used. An error may be returned if such information is submitted as the userID eg email, phone number etc.
+     * @param identityResponse Interface with onSuccess onError callbacks
+     */
+    public static void identify(final String userId, final SwrveIdentityResponse identityResponse) {
+        checkInstanceCreated();
+        instance.identify(userId, identityResponse);
+    }
 
     /**
      * Handle a deeplink when the app is already installed
@@ -494,6 +520,14 @@ public abstract class SwrveSDKBase {
             SwrveLogger.e("Please call SwrveSDK.createInstance first in your Application class.");
             throw new RuntimeException("Please call SwrveSDK.createInstance first in your Application class.");
         }
+    }
+
+    /**
+     * Get the current external user id
+     */
+    public static String getExternalUserId() {
+        checkInstanceCreated();
+        return instance.getExternalUserId();
     }
 
     public static ISwrveBase getInstance() {

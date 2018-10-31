@@ -40,10 +40,13 @@ public class SwrveNotificaitonToCampaignTest extends SwrveBaseTest {
             super.setUp();
             Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
             swrveSpy = Mockito.spy(swrveReal);
+            SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
             SwrveTestUtils.setSDKInstance(swrveSpy);
             Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
 
-            SwrveDeeplinkManager swrveDeeplinkManager = new SwrveDeeplinkManager(swrveSpy.getContentRequestParams(), swrveSpy.getConfig(), swrveSpy.getContext(), swrveSpy.swrveAssetsManager, swrveSpy.restClient);
+            final String userId = swrveSpy.profileManager.getUserId();
+            Map<String, String> params = swrveSpy.getContentRequestParams(userId);
+            SwrveDeeplinkManager swrveDeeplinkManager = new SwrveDeeplinkManager(params, swrveSpy.getConfig(), swrveSpy.getContext(), swrveSpy.swrveAssetsManager, swrveSpy.restClient);
             SwrveDeeplinkManager swrveDeeplinkManagerSpy = Mockito.spy(swrveDeeplinkManager);
             swrveSpy.swrveDeeplinkManager = swrveDeeplinkManagerSpy;
 
@@ -108,13 +111,13 @@ public class SwrveNotificaitonToCampaignTest extends SwrveBaseTest {
     @Test
     public void testLoadCampaignFromNotifcation_ResetNull() throws Exception {
         swrveSpy.setNotificationSwrveCampaignId("295411");
-        String campaignId = swrveSpy.notificaionSwrveCampaignId;
+        String campaignId = swrveSpy.notificationSwrveCampaignId;
         swrveSpy.loadCampaignFromNotification(campaignId);
 
         ArgumentCaptor<Bundle> bundle = ArgumentCaptor.forClass(Bundle.class);
         Mockito.verify(swrveSpy.swrveDeeplinkManager, Mockito.atLeastOnce()).handleDeeplink(bundle.capture());
 
-        campaignId = swrveSpy.notificaionSwrveCampaignId;
+        campaignId = swrveSpy.notificationSwrveCampaignId;
 
         /// call it again , notifcationCampaign id should of been reset to null , so the loadCampaignFromNotification function should do nothing
         swrveSpy.loadCampaignFromNotification(campaignId);

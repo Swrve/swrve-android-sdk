@@ -3,7 +3,7 @@ package com.swrve.sdk.sample.minimalintegration;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.os.Build;
+import android.content.Context;
 
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrveSDK;
@@ -18,17 +18,17 @@ public class SampleApplication extends Application {
     public void onCreate() {
         super.onCreate();
         SwrveConfig config = new SwrveConfig();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("default", "Default", NotificationManager.IMPORTANCE_DEFAULT);
-            config.setDefaultNotificationChannel(channel);
+        NotificationChannel channel = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            channel = new NotificationChannel("123", "Devapp swrve default channel", NotificationManager.IMPORTANCE_DEFAULT);
+            if (getSystemService(Context.NOTIFICATION_SERVICE) != null) {
+                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.createNotificationChannel(channel);
+            }
         }
-
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder()
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo, R.drawable.swrve_s_transparent, channel)
                 .activityClass(MainActivity.class)
-                .iconDrawableId(R.drawable.logo)
-                .iconMaterialDrawableId(R.drawable.swrve_s_transparent)
                 .largeIconDrawableId(R.drawable.swrve_s_solid)
-                .notificationTitle(getString(R.string.app_name))
                 .accentColorResourceId(R.color.dark_blue);
         config.setNotificationConfig(notificationConfig.build());
 

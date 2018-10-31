@@ -212,7 +212,7 @@ class SwrveDeeplinkManager {
 
     protected void writeCampaignDataToCache(final JSONObject campaignContent, String actionType) {
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-        final String userId = swrveCommon.getUserId(); // user can logout or change so retrieve now as a final String for thread safeness
+        final String userId = swrveCommon.getUserId();
         final Swrve swrve = (Swrve) SwrveSDK.getInstance();
         String category = actionType.equals(SWRVE_NOTIFICATION_TO_CAMPAIGN) ? CACHE_NOTIFICATION_CAMPAIGNS_DEBUG : CACHE_AD_CAMPAIGNS_DEBUG;
         swrve.multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, category, campaignContent.toString(), swrve.getUniqueKey(userId));

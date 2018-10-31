@@ -21,7 +21,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
         super(application, appId, apiKey, config);
-        SwrvePushSDK.createInstance(application.getApplicationContext());
     }
 
     //ADM callbacks
@@ -72,9 +71,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
                     qaUser.logDeviceInfo(getDeviceInfo());
                 }
 
-                if (profileManager != null && profileManager.isLoggedIn()) {
-                    queueDeviceInfoNow(getUserId(), profileManager.getSessionToken(), true);
-                }
+                queueDeviceUpdateNow(getUserId(), profileManager.getSessionToken(), true);
             }
         } catch (Exception ex) {
             SwrveLogger.e("Couldn't save the ADM registration id for the device", ex);

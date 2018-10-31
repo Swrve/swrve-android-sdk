@@ -19,9 +19,9 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
     private final String userId;
     private final String appVersion;
     private final String sessionToken;
-    private final short deviceId;
+    private final String deviceId;
 
-    protected SwrveEventsManagerImp(SwrveConfigBase config, IRESTClient restClient, String userId, String appVersion, String sessionToken, short deviceId) {
+    protected SwrveEventsManagerImp(SwrveConfigBase config, IRESTClient restClient, String userId, String appVersion, String sessionToken, String deviceId) {
         this.config = config;
         this.restClient = restClient;
         this.userId = userId;

@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import android.content.Intent;
 import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
@@ -102,4 +101,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void handleDeeplink(Bundle bundle);
 
+    void identify(final String userId, final SwrveIdentityResponse identityResponse);
+
+    String getExternalUserId();
 }

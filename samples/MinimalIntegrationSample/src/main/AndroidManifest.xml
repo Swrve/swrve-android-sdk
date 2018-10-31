@@ -12,7 +12,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
 
-        <service android:name="com.swrve.sdk.firebase.SwrveFirebaseMessagingService">
+        <service android:name="com.swrve.sdk.SwrveFirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>

@@ -2,6 +2,7 @@ package com.swrve.sdk.localstorage;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveUser;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -132,6 +133,28 @@ public class InMemoryLocalStorage implements LocalStorage {
         setCacheEntry(userId, category + SIGNATURE_SUFFIX, signature);
     }
 
+    @Override
+    public void saveUser(SwrveUser swrveUser) {
+         // not used for in memory storage
+    }
+
+    @Override
+    public void deleteUser(String swrveUserId) {
+        // not used for in memory storage
+    }
+
+    @Override
+    public SwrveUser getUserByExternalUserId(String externalUserId) {
+        // not used for in memory storage
+        return null;
+    }
+
+    @Override
+    public SwrveUser getUserBySwrveUserId(String swrveUserId) {
+        // not used for in memory storage
+        return null;
+    }
+
     private int getEventsSize() {
         int size = 0;
         for (Map.Entry<String, List<SwrveEventItem>> entry : eventsPerUserId.entrySet()) {
@@ -146,5 +169,26 @@ public class InMemoryLocalStorage implements LocalStorage {
             size += entry.getValue().size();
         }
         return size;
+    }
+
+    @Override
+    public void truncateNotificationsAuthenticated(int rows) {
+        // not implemented. Go directly to SQLiteLocalStorage
+    }
+
+    @Override
+    public void saveNotificationAuthenticated(int notificationId, long time) {
+        // not implemented. Go directly to SQLiteLocalStorage
+    }
+
+    @Override
+    public List<Integer> getNotificationsAuthenticated() {
+        // not implemented. Go directly to SQLiteLocalStorage
+        return null;
+    }
+
+    @Override
+    public void deleteNotificationsAuthenticated() {
+        // not implemented. Go directly to SQLiteLocalStorage
     }
 }

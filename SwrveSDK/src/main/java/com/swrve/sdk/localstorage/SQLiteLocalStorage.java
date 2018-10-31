@@ -10,6 +10,7 @@ import android.text.TextUtils;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveUser;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -23,11 +24,18 @@ import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATE
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVENT;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.SWRVE_DB_VERSION;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_EXTERNAL_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_SWRVE_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_VERFIED;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_TABLE_NAME;
 
 /**
  * Used internally to provide a persistent storage of data on the device.
@@ -168,7 +176,7 @@ public class SQLiteLocalStorage implements LocalStorage {
             return null;
         }
         String cachedContent = cacheItem.rawData;
-        if(cachedContent == null) {
+        if (cachedContent == null) {
             return null;
         }
         SwrveCacheItem cacheItemSignature = getCacheItem(userId, category + SIGNATURE_SUFFIX);
@@ -231,5 +239,165 @@ public class SQLiteLocalStorage implements LocalStorage {
                 database.endTransaction();
             }
         }
+    }
+
+    @Override
+    public void saveUser(SwrveUser swrveUser) throws SQLException {
+        if (database.isOpen()) {
+            database.beginTransaction();
+            try {
+                ContentValues values = new ContentValues();
+                values.put(USER_COLUMN_SWRVE_USER_ID, swrveUser.getSwrveUserId());
+                values.put(USER_COLUMN_EXTERNAL_USER_ID, swrveUser.getExternalUserId());
+                values.put(USER_COLUMN_VERFIED, swrveUser.isVerified());
+                insertOrUpdate(USER_TABLE_NAME, values, USER_COLUMN_EXTERNAL_USER_ID + "= ?", new String[]{swrveUser.getExternalUserId()});
+
+                database.setTransactionSuccessful(); // Commit
+            } finally {
+                database.endTransaction();
+            }
+        }
+    }
+
+    @Override
+    public SwrveUser getUserByExternalUserId(String externalUserId) throws SQLException {
+        if (externalUserId == null || externalUserId.isEmpty()) return null;
+
+        SwrveUser swrveUser = null;
+        if (database.isOpen()) {
+            Cursor cursor = null;
+            try {
+                cursor = database.query(USER_TABLE_NAME, new String[]{USER_COLUMN_SWRVE_USER_ID, USER_COLUMN_VERFIED}, USER_COLUMN_EXTERNAL_USER_ID + "= ?", new String[]{externalUserId}, null, null, null, "1");
+                cursor.moveToFirst();
+                if (!cursor.isAfterLast()) {
+                    String swrveUserId = cursor.getString(0);
+                    int verified = cursor.getInt(1);
+                    cursor.moveToNext();
+                    swrveUser = new SwrveUser(swrveUserId, externalUserId, verified == 1);
+                }
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred getting user: %s", e, externalUserId);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return swrveUser;
+    }
+
+    @Override
+    public SwrveUser getUserBySwrveUserId(String swrveUserId) throws SQLException {
+        if (swrveUserId == null || swrveUserId.isEmpty()) return null;
+
+        SwrveUser swrveUser = null;
+        if (database.isOpen()) {
+            Cursor cursor = null;
+            try {
+                cursor = database.query(USER_TABLE_NAME, new String[]{USER_COLUMN_EXTERNAL_USER_ID, USER_COLUMN_VERFIED}, USER_COLUMN_SWRVE_USER_ID + "= ?", new String[]{swrveUserId}, null, null, null, "1");
+                cursor.moveToFirst();
+                if (!cursor.isAfterLast()) {
+                    String externalId = cursor.getString(0);
+                    int verified = cursor.getInt(1);
+                    cursor.moveToNext();
+                    swrveUser = new SwrveUser(swrveUserId, externalId, verified == 1);
+                }
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred getting user: %s", e, swrveUserId);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return swrveUser;
+    }
+
+    @Override
+    public synchronized void deleteUser(String swrveUserId) {
+        try {
+            if (database.isOpen()) {
+                database.delete(USER_TABLE_NAME, USER_COLUMN_SWRVE_USER_ID + "= ?", new String[]{swrveUserId});
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception deleting user for userId: %s", e, swrveUserId);
+        }
+    }
+
+    @Override
+    public void truncateNotificationsAuthenticated(int rows) {
+        if (database.isOpen()) {
+            database.beginTransaction();
+            try {
+                String whereQuery = "SELECT " + NOTIFICATIONS_AUTHENTICATED_COLUMN_ID
+                        + " FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME
+                        + " ORDER BY " + NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME
+                        + " DESC LIMIT -1 OFFSET " + rows;
+                String deleteQuery = "DELETE FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME
+                        + " WHERE " + NOTIFICATIONS_AUTHENTICATED_COLUMN_ID
+                        + " IN (" + whereQuery + ")";
+                database.execSQL(deleteQuery);
+                database.setTransactionSuccessful(); // Commit
+            } finally {
+                database.endTransaction();
+            }
+        }
+    }
+
+    @Override
+    public void saveNotificationAuthenticated(int notificationId, long time) {
+        if (database.isOpen()) {
+            database.beginTransaction();
+            try {
+                ContentValues values = new ContentValues();
+                values.put(NOTIFICATIONS_AUTHENTICATED_COLUMN_ID, notificationId);
+                values.put(NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME, time);
+                insertOrUpdate(NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, values, NOTIFICATIONS_AUTHENTICATED_COLUMN_ID + "= ?", new String[]{String.valueOf(notificationId)});
+
+                database.setTransactionSuccessful(); // Commit
+            } finally {
+                database.endTransaction();
+            }
+        }
+    }
+
+    @Override
+    public void deleteNotificationsAuthenticated() {
+        try {
+            if (database.isOpen()) {
+                database.delete(NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, null, null);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception deleting current notifications.", e);
+        }
+    }
+
+    @Override
+    public List<Integer> getNotificationsAuthenticated() {
+        List<Integer> notifications = new ArrayList<>();
+        if (database.isOpen()) {
+            Cursor cursor = null;
+            try {
+                String table = NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
+                String[] columns = new String[]{NOTIFICATIONS_AUTHENTICATED_COLUMN_ID};
+                String whereClause = null;
+                String[] whereArgs = null;
+                String groupBy = null, having = null;
+                cursor = database.query(table, columns, whereClause, whereArgs, groupBy, having, NOTIFICATIONS_AUTHENTICATED_COLUMN_ID, null);
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    Integer notificationId = cursor.getInt(0);
+                    notifications.add(notificationId);
+                    cursor.moveToNext();
+                }
+            } catch (Exception ex) {
+                SwrveLogger.e("Error getting notifications from db", ex);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return notifications;
     }
 }

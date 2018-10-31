@@ -5,7 +5,6 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
@@ -94,7 +93,8 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
             case DISMISS:
                 break;
         }
-        closeNotification(extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID)); // Button has been pressed, now close the notification
+        int notificationId = extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID);
+        closeNotification(notificationId); // Button has been pressed, now close the notification
     }
 
     private void sendEngagedEvent(Bundle extras, Bundle pushBundle, String msgId) throws Exception {
@@ -218,16 +218,15 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
         if (notificationConfig != null && notificationConfig.getActivityClass() != null) {
             clazz = notificationConfig.getActivityClass();
         } else {
+            // If no class configured then use the default launcher activity
             try {
-                String activity = getActivityClassDeprecated();
-                if (SwrveHelper.isNullOrEmpty(activity)) {
-                    PackageManager packageManager = context.getPackageManager();
-                    ResolveInfo resolveInfo = packageManager.resolveActivity(packageManager.getLaunchIntentForPackage(context.getPackageName()), PackageManager.MATCH_DEFAULT_ONLY);
-                    if (resolveInfo != null) {
-                        activity = resolveInfo.activityInfo.name;
-                        if (activity.startsWith(".")) {
-                            activity = context.getPackageName() + activity; // Append application package as it starts with .
-                        }
+                String activity = null;
+                PackageManager packageManager = context.getPackageManager();
+                ResolveInfo resolveInfo = packageManager.resolveActivity(packageManager.getLaunchIntentForPackage(context.getPackageName()), PackageManager.MATCH_DEFAULT_ONLY);
+                if (resolveInfo != null) {
+                    activity = resolveInfo.activityInfo.name;
+                    if (activity.startsWith(".")) {
+                        activity = context.getPackageName() + activity; // Append application package as it starts with .
                     }
                 }
                 if (SwrveHelper.isNotNullOrEmpty(activity)) {
@@ -241,14 +240,5 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
             }
         }
         return clazz;
-    }
-
-    @Deprecated
-    private String getActivityClassDeprecated() throws Exception {
-        PackageManager packageManager = context.getPackageManager();
-        ApplicationInfo app = packageManager.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-        Bundle metaData = app.metaData;
-        String activity = metaData.getString(SwrveNotificationConstants.SWRVE_PUSH_ACTIVITY_METADATA);
-        return activity;
     }
 }

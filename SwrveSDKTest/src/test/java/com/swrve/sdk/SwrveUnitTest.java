@@ -5,6 +5,8 @@ import android.os.Build;
 import com.google.common.collect.Lists;
 import com.swrve.sdk.config.SwrveConfig;
 
+import junit.framework.Assert;
+
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -18,7 +20,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
 public class SwrveUnitTest extends SwrveBaseTest {
@@ -30,6 +31,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         super.setUp();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
@@ -70,51 +72,16 @@ public class SwrveUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testInitialisationWithUserId() throws Exception {
+    public void testInitialisationAndUserIdGenerated() throws Exception {
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
-        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        SwrveTestUtils.setSDKInstance(swrve);
-        String userId = swrve.getUserId();
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
+        String userId = SwrveSDK.getUserId();
         assertNotNull(userId);
-
-        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-
-        SwrveConfig config = new SwrveConfig();
-        config.setUserId("custom_user_id");
-        swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-        SwrveTestUtils.setSDKInstance(swrve);
-        String userId2 = swrve.getUserId();
-        assertNotSame(userId, userId2);
-        assertEquals("custom_user_id", userId2);
-    }
-
-    @Test
-    public void testInitialisationWithNoId() throws Exception {
-        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-
-        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        SwrveTestUtils.setSDKInstance(swrve);
-        String userId = swrve.getUserId();
-        assertNotNull(userId);
-
-        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-
-        swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        SwrveTestUtils.setSDKInstance(swrve);
-        String userId2 = swrve.getUserId();
-        assertEquals(userId, userId2);
-    }
-
-    @Test
-    public void testGetUserIdForced() throws Exception {
-        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-
-        SwrveConfig config = new SwrveConfig();
-        config.setUserId("forced");
-        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-        SwrveTestUtils.setSDKInstance(swrve);
-        assertEquals("forced", swrve.getUserId());
     }
 
     @Test
@@ -123,17 +90,23 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         Swrve swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
 
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued
+        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued
+        Mockito.verify(swrveSpy, Mockito.atMost(0)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
 
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
 
         swrveSpy.onResume(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceInfoNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
+
     }
 
     @Test
@@ -230,6 +203,20 @@ public class SwrveUnitTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testDeviceUpdate() throws Exception {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("attributes", swrveSpy.getDeviceInfo());
+        swrveSpy.deviceUpdate(swrveSpy.getUserId(),swrveSpy.getDeviceInfo());
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "device_update", parameters, null);
+    }
+
+    @Test
+    public void testDeviceUpdate_AuthPushConstantSet() throws Exception {
+        JSONObject deviceInfo =  swrveSpy.getDeviceInfo();
+        assertEquals(deviceInfo.getBoolean("swrve.can_receive_authenticated_push"),true);
+    }
+
+    @Test
     public void testModelBlacklist() throws Exception {
         // Test default blacklist
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
@@ -253,5 +240,33 @@ public class SwrveUnitTest extends SwrveBaseTest {
         sdk = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         assertTrue(sdk instanceof Swrve);
         assertNotNull(SwrveSDK.getInstance());
+    }
+
+    @Test
+    public void testAutoShowMessagesDelay() throws Exception {
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+
+        // configure sdk to disable autoShowMessagesEnabled after 1 second
+        SwrveConfig config = new SwrveConfig();
+        config.setAutoShowMessagesMaxDelay(1000l);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
+
+        // create instance should not call disableAutoShowAfterDelay and the default for autoShowMessagesEnabled should be false
+        Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", false, swrveSpy.autoShowMessagesEnabled);
+        Mockito.verify(swrveSpy, Mockito.atMost(0)).disableAutoShowAfterDelay();
+
+        swrveSpy.onCreate(mActivity);
+
+        // After init of sdk the disableAutoShowAfterDelay should be called and the default for autoShowMessagesEnabled should be true
+        Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", true, swrveSpy.autoShowMessagesEnabled);
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).disableAutoShowAfterDelay();
+
+        // sleep 2 seconds and test autoShowMessagesEnabled has been disabled.
+        Thread.sleep(2000l);
+        Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", false, swrveSpy.autoShowMessagesEnabled);
     }
 }

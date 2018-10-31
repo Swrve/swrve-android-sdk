@@ -2,7 +2,7 @@ package com.swrve.sdk.sample;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.swrve.sdk.push.SwrvePushServiceDefault;
+import com.swrve.sdk.SwrvePushServiceDefault;
 
 /**
  * Class that receives the FCM messages

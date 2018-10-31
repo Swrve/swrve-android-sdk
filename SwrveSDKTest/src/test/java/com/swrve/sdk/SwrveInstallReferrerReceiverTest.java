@@ -23,6 +23,7 @@ public class SwrveInstallReferrerReceiverTest extends SwrveBaseTest {
         super.setUp();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         swrveSpy.init(mActivity);
@@ -60,6 +61,7 @@ public class SwrveInstallReferrerReceiverTest extends SwrveBaseTest {
         Mockito.verify(swrveSpy, Mockito.atLeastOnce()).userUpdate(attributesCaptor.capture());
 
         Mockito.reset(swrveSpy);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveSpy, swrveSpy); // disable token registration
         swrveSpy.initialised = false;
         swrveSpy.onCreate(mActivity); // calling init again should NOT increment counter
         Mockito.verify(swrveSpy, Mockito.never()).userUpdate(Mockito.anyMap());

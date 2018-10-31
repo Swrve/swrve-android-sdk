@@ -13,10 +13,9 @@ import static org.robolectric.RuntimeEnvironment.application;
 public class ActivityLifecycleCallbacksTest extends SwrveBaseTest {
 
     @Test
-    public void testCreateInstance() throws Exception {
+    public void testCreateInstance() {
         Application applicationSpy = Mockito.spy(application);
         Swrve swrve = (Swrve) SwrveSDK.createInstance(applicationSpy, 1, "apiKey");
         Mockito.verify(applicationSpy).registerActivityLifecycleCallbacks(swrve);
     }
-
 }

@@ -16,17 +16,17 @@ interface ISwrveCommon {
     String CACHE_CAMPAIGNS = "CMCC2";
     String CACHE_RESOURCES = "srcngt2";
     String CACHE_RESOURCES_DIFF = "rsdfngt2";
-    String CACHE_LOCATION_CAMPAIGNS = "LocationCampaign";
     String CACHE_AD_CAMPAIGNS_DEBUG = "AdCampaign";
     String CACHE_NOTIFICATION_CAMPAIGNS_DEBUG = "NotificationCampaign";
     String CACHE_APP_VERSION = "AppVersion";
-    String CACHE_INSTALL_TIME = "SwrveSDK.installTime";
+    String CACHE_USER_JOINED_TIME = "SwrveSDK.userJoinedTime";
     String CACHE_CAMPAIGNS_STATE = "SwrveCampaignSettings";
     String CACHE_SEQNUM = "seqnum";
     String CACHE_GOOGLE_ADVERTISING_ID = "GoogleAdvertisingId";
     String CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT = "GoogleAdvertisingLimitAdTrackingEnabled";
     String CACHE_REGISTRATION_ID = "RegistrationId";
     String CACHE_QA = "swrve.q1";
+    String CACHE_ETAG = "swrve.etag";
 
     // device info
     String SWRVE_DEVICE_NAME                = "swrve.device_name";
@@ -54,6 +54,7 @@ interface ISwrveCommon {
     String SWRVE_NOTIFICATIONS_IMPORTANCE   = "swrve.permission.notifications_importance";
     String SWRVE_NOTIFICATIONS_BUTTONS      = "swrve.support.rich_buttons";
     String SWRVE_NOTIFICATIONS_ATTACHMENT   = "swrve.support.rich_attachment";
+    String SWRVE_CAN_RECEIVE_AUTH_PUSH      = "swrve.can_receive_authenticated_push";
 
 
     // events
@@ -72,12 +73,13 @@ interface ISwrveCommon {
     String GENERIC_EVENT_CONTEXT_ID_KEY             = "contextId";
     String GENERIC_EVENT_CAMPAIGN_ID_KEY            = "campaignId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_TEXT        = "buttonText";
+    String EVENT_FIRST_SESSION                      = "Swrve.first_session";
 
     String getApiKey();
 
     String getSessionKey();
 
-    short getDeviceId();
+    String getDeviceId();
 
     int getAppId();
 
@@ -117,9 +119,13 @@ interface ISwrveCommon {
 
     SwrvePushNotificationListener getNotificationListener();
 
+    SwrveSilentPushListener getSilentPushListener();
+
     String getJoined();
 
     String getLanguage();
 
     void setNotificationSwrveCampaignId(String swrveCampaignId);
+
+    void saveNotificationAuthenticated(int notificationId);
 }

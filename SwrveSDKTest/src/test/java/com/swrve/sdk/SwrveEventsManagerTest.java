@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static com.swrve.sdk.SwrveTestUtils.createFakeRestClient;
 import static org.junit.Assert.assertEquals;
@@ -87,14 +88,14 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
 
     private void storeAndSendEvents(int responseCode, ArrayList<String> events) throws Exception {
         IRESTClient restClient = createFakeRestClient(responseCode);
-        short deviceId = 1;
+        String deviceId = UUID.randomUUID().toString();
         SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(new SwrveConfig(), restClient, userId, "1", "sessionToken", deviceId);
         swrveEventsManager.storeAndSendEvents(events, secondaryStorage);
     }
 
     private void sendStoredEvents(int responseCode) throws Exception {
         IRESTClient restClient = createFakeRestClient(responseCode);
-        short deviceId = 1;
+        String deviceId = UUID.randomUUID().toString();
         SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(new SwrveConfig(), restClient, userId, "1", "sessionToken", deviceId);
         swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
     }

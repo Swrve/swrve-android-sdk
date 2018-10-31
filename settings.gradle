@@ -1,4 +1,4 @@
-include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDKPush', ':SwrveSDK', ':SwrveSDKTest'
+include ':SwrveSDKCommon', ':SwrveConversationSDK', ':SwrveSDK', ':SwrveSDKTest'
 
 include ':MultipleFCMProviders'
 project(":MultipleFCMProviders").projectDir = file("samples/MultipleFCMProviders")

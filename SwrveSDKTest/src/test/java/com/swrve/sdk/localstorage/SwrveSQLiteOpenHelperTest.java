@@ -2,17 +2,21 @@ package com.swrve.sdk.localstorage;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.swrve.sdk.ISwrve;
+import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveBaseTest;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.SwrveTestUtils;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
@@ -22,16 +26,32 @@ import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATE
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVENT;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.SWRVE_DB_VERSION;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_EXTERNAL_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_SWRVE_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_VERFIED;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_TABLE_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        Swrve swrveMock = Mockito.mock(Swrve.class);
+        doReturn("some_user_id").when(swrveMock).getUserId();
+        SwrveTestUtils.setSDKInstance(swrveMock);
+    }
 
     @Test
     public void testNewDatabase() {
@@ -41,7 +61,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         SQLiteDatabase database = sqLiteOpenHelper.getWritableDatabase();
 
         Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table'", null);
-        assertEquals("Should be 4 tables in database.", 4, cursor.getCount());
+        assertEquals("Should be 6 tables in database.", 6, cursor.getCount());
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='android_metadata'", null);
         assertEquals("Should be 1 table called android_metadata in database.", 1, cursor.getCount());
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + EVENTS_TABLE_NAME + "'", null);
@@ -49,6 +69,10 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + CACHE_TABLE_NAME + "'", null);
         assertEquals("Should be 1 table called cache in database.", 1, cursor.getCount());
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='sqlite_sequence'", null);
+        assertEquals("Should be 1 table called sqlite_sequence in database.", 1, cursor.getCount());
+        cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + USER_TABLE_NAME + "'", null);
+        assertEquals("Should be 1 table called sqlite_sequence in database.", 1, cursor.getCount());
+        cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME + "'", null);
         assertEquals("Should be 1 table called sqlite_sequence in database.", 1, cursor.getCount());
 
         cursor = database.rawQuery("SELECT * FROM " + EVENTS_TABLE_NAME, null);
@@ -67,47 +91,63 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         assertTrue("onCreate of tables failed as there should be a raw_data column", Arrays.asList(columnNames).contains(CACHE_COLUMN_RAW_DATA));
         assertEquals("Should be 0 rows.", 0, cursor.getCount());
 
+        cursor = database.rawQuery("SELECT * FROM " + USER_TABLE_NAME, null);
+        columnNames = cursor.getColumnNames();
+        assertEquals("Should only be 3 columns 'swrve_user_id', 'external_user_id', and 'verified'", 3, columnNames.length);
+        assertTrue("onCreate of tables failed as there should be a swrve_user_id column", Arrays.asList(columnNames).contains(USER_COLUMN_SWRVE_USER_ID));
+        assertTrue("onCreate of tables failed as there should be a external_user_id column", Arrays.asList(columnNames).contains(USER_COLUMN_EXTERNAL_USER_ID));
+        assertTrue("onCreate of tables failed as there should be a verified column", Arrays.asList(columnNames).contains(USER_COLUMN_VERFIED));
+        assertEquals("Should be 0 rows.", 0, cursor.getCount());
+
+        cursor = database.rawQuery("SELECT * FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, null);
+        columnNames = cursor.getColumnNames();
+        assertEquals("Should only be 2 column 'notification_id', and 'time'", 2, columnNames.length);
+        assertTrue("onCreate of tables failed as there should be a notification_id column", Arrays.asList(columnNames).contains(NOTIFICATIONS_AUTHENTICATED_COLUMN_ID));
+        assertTrue("onCreate of tables failed as there should be a time column", Arrays.asList(columnNames).contains(NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME));
+        assertEquals("Should be 0 rows.", 0, cursor.getCount());
+
         database.close();
     }
 
     @Test
-    public void testOnUpgrade1_cache() throws Exception{
+    public void testOnUpgradeCache_1_to_2_to_Latest() {
 
-        // for the purpose of this unit test, use a different database name than swrve, but let the
-        // SwrveSQLiteOpenHelper use the userId from SwrveSDK
-        String dbName = "testOnUpgrade1_cache";
-        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        SwrveTestUtils.setSDKInstance(swrve);
-        SwrveTestUtils.onCreate(swrve, mActivity);
+        String dbName = "testOnUpgrade_cache";
+
+        //Set fake etag
+        SharedPreferences settings = RuntimeEnvironment.application.getSharedPreferences("swrve_prefs", 0);
+        SharedPreferences.Editor settingsEditor = settings.edit();
+        settingsEditor.putString("campaigns_and_resources_etag", "ExistingEtag");
+        settingsEditor.apply();
 
         SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
         SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
         Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='server_cache'", null);
         assertEquals("Should be 1 table called server_cache in database v1.", 1, cursor.getCount());
 
-        long rowId = insertSharedCacheEntryDb1(database, "SwrveSDK.installTime");
+        long rowId = insertSharedCacheEntryDb1(database, "SwrveSDK.installTime", "12345");
         assertEquals("RowId should have incremented to 1.", 1, rowId);
-        rowId = insertSharedCacheEntryDb1(database, "seqnum");
+        rowId = insertSharedCacheEntryDb1(database, "seqnum", "12345");
         assertEquals("RowId should have incremented to 2.", 2, rowId);
-        rowId = insertSharedCacheEntryDb1(database, "RegistrationId");
+        rowId = insertSharedCacheEntryDb1(database, "RegistrationId", "12345");
         assertEquals("RowId should have incremented to 3.", 3, rowId);
-        rowId = insertSharedCacheEntryDb1(database, "AppVersion");
+        rowId = insertSharedCacheEntryDb1(database, "AppVersion", "12345");
         assertEquals("RowId should have incremented to 4.", 4, rowId);
-        rowId = insertSharedCacheEntryDb1(database, "GoogleAdvertisingId");
+        rowId = insertSharedCacheEntryDb1(database, "GoogleAdvertisingId", "12345");
         assertEquals("RowId should have incremented to 5.", 5, rowId);
-        rowId = insertSharedCacheEntryDb1(database, "GoogleAdvertisingLimitAdTrackingEnabled");
+        rowId = insertSharedCacheEntryDb1(database, "GoogleAdvertisingLimitAdTrackingEnabled", "12345");
         assertEquals("RowId should have incremented to 6.", 6, rowId);
-        rowId = insertSharedCacheEntryDb1(database, "device_id");
+        rowId = insertSharedCacheEntryDb1(database, "device_id", "12345");
         assertEquals("RowId should have incremented to 7.", 7, rowId);
 
         database.close();
 
         // increment db version to 2 to trigger onUpgrade
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 2);
-        database = sqLiteOpenHelper.getWritableDatabase();
+        SwrveSQLiteOpenHelper_v2 swrveSQLiteOpenHelper_v2 = new SwrveSQLiteOpenHelper_v2(RuntimeEnvironment.application, dbName);
+        database = swrveSQLiteOpenHelper_v2.getWritableDatabase();
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='server_cache'", null);
         assertEquals("Should be no table called server_cache in database v2.", 0, cursor.getCount());
-        cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + CACHE_TABLE_NAME + "'", null);
+        cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='cache'", null);
         assertEquals("Should be one table called server_cache in database v2.", 1, cursor.getCount());
 
         assertCacheUserIdUpdated(database, SwrveSDK.getUserId(), "SwrveSDK.installTime");
@@ -117,36 +157,46 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         assertCacheUserIdUpdated(database, SwrveSDK.getUserId(), "GoogleAdvertisingId");
         assertCacheUserIdUpdated(database, SwrveSDK.getUserId(), "GoogleAdvertisingLimitAdTrackingEnabled");
         assertCacheUserIdUpdated(database, "", "device_id"); // userId for deviceId is blank
+        database.close();
+
+        // increment db version to latest by using SwrveSQLiteOpenHelper
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
+        database = sqLiteOpenHelper.getWritableDatabase();
+        assertCacheEntry(1, database, SwrveSDK.getUserId(), "swrve.etag", "ExistingEtag");
+        assertCacheEntry(1, database, "", "SwrveSDK.installTime", "12345"); // blank userId on purpose
+        assertCacheEntry(1, database, SwrveSDK.getUserId(), "SwrveSDK.userJoinedTime", "12345");
+        assertCacheEntry(0, database, "", "SwrveSDK.installTime", "");
 
         database.close();
     }
 
     // database v1 repeated/stored the category value in the userId column in the old tablename 'server_cache'
-    private long insertSharedCacheEntryDb1(SQLiteDatabase database, String categoryValue){
+    private long insertSharedCacheEntryDb1(SQLiteDatabase database, String categoryValue, String rawData) {
         ContentValues values = new ContentValues();
-        values.put(CACHE_COLUMN_USER_ID, categoryValue);
-        values.put(CACHE_COLUMN_CATEGORY, categoryValue);
-        values.put(CACHE_COLUMN_RAW_DATA, "12345");
+        values.put("user_id", categoryValue);
+        values.put("category", categoryValue);
+        values.put("raw_data", rawData);
         return database.insertOrThrow("server_cache", null, values);
     }
 
     private void assertCacheUserIdUpdated(SQLiteDatabase database, String userId, String categoryValue){
-        Cursor cursor = database.rawQuery("SELECT * FROM " + CACHE_TABLE_NAME + " WHERE " + CACHE_COLUMN_CATEGORY + "='" + categoryValue + "'", null);
+        Cursor cursor = database.rawQuery("SELECT * FROM cache WHERE category='" + categoryValue + "'", null);
         assertEquals("Should be one row with category=" + categoryValue, 1, cursor.getCount());
         cursor.moveToFirst();
-        String userIdEntry = cursor.getString(cursor.getColumnIndex(CACHE_COLUMN_USER_ID));
+        String userIdEntry = cursor.getString(cursor.getColumnIndex("user_id"));
         assertEquals(categoryValue + " should now have the current user: " + userId, userIdEntry, userId);
     }
 
-    @Test
-    public void testOnUpgrade1_events() throws Exception{
+    private void assertCacheEntry(int rows, SQLiteDatabase database, String userId, String categoryValue, String rawData) {
+        Cursor cursor = database.rawQuery("SELECT * FROM cache WHERE category='" + categoryValue + "' AND raw_data='" + rawData + "'", null);
+        String msg = "Should be " + rows + " row with user_id=" + userId + " category=" + categoryValue + " raw_data=" + rawData;
+        assertEquals(msg, rows, cursor.getCount());
+    }
 
-        // for the purpose of this unit test, use a different database name than swrve, but let the
-        // SwrveSQLiteOpenHelper use the userId from SwrveSDK
-        String dbName = "testOnUpgrade1_events";
-        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        SwrveTestUtils.setSDKInstance(swrve);
-        SwrveTestUtils.onCreate(swrve, mActivity);
+    @Test
+    public void testOnUpgradeEvents_1_to_Latest() {
+
+        String dbName = "testOnUpgradeEvents_1_to_3";
 
         SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
         SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
@@ -163,8 +213,8 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         assertEquals("Should only be 2 columns '_id' and 'event'", 2, columnNames.length);
         database.close();
 
-        // increment db version to 2 to trigger onUpgrade
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 2);
+        // increment db version to latest by using SwrveSQLiteOpenHelper
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
         database = sqLiteOpenHelper.getWritableDatabase();
 
         cursor = database.rawQuery("SELECT * FROM " + EVENTS_TABLE_NAME, null);
@@ -179,6 +229,44 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
                 cursor.moveToNext();
             }
         }
+        database.close();
+    }
+
+    @Test
+    public void testOnUpgradeUsers_1_to_Latest() {
+
+        String dbName = "testOnUpgradeUsers_1_to_3";
+
+        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
+        SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
+        database.close();
+
+        // increment db version to latest by using SwrveSQLiteOpenHelper
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
+        database = sqLiteOpenHelper.getWritableDatabase();
+
+        Cursor cursor = database.rawQuery("SELECT * FROM users", null);
+        String[] columnNames = cursor.getColumnNames();
+        assertEquals("Should only be 3 columns 'swrve_user_id', 'external_user_id', and 'verified'", 3, columnNames.length);
+        database.close();
+    }
+
+    @Test
+    public void testOnUpgradeNotificationsAuthenticated_1_to_Latest() {
+
+        String dbName = "testOnUpgradeNotificationsAuthenticated_1_to_3";
+
+        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
+        SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
+        database.close();
+
+        // increment db version to latest by using SwrveSQLiteOpenHelper
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
+        database = sqLiteOpenHelper.getWritableDatabase();
+
+        Cursor cursor = database.rawQuery("SELECT * FROM notifications_authenticated", null);
+        String[] columnNames = cursor.getColumnNames();
+        assertEquals("Should only be 2 columns 'notification_id', and 'time'", 2, columnNames.length);
         database.close();
     }
 
@@ -205,6 +293,42 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // no upgrade in first version
+        }
+    }
+
+    private static class SwrveSQLiteOpenHelper_v2 extends SQLiteOpenHelper {
+        public static final int SWRVE_DB_VERSION = 2;
+
+        public SwrveSQLiteOpenHelper_v2(Context context, String dbName) {
+            super(context, dbName, null, SWRVE_DB_VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            // onCreate not needed for this test setup
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            String userId = SwrveSDK.getUserId();
+            db.execSQL("ALTER TABLE events ADD COLUMN user_id TEXT");
+            if (SwrveHelper.isNotNullOrEmpty(userId)) {
+                db.execSQL("UPDATE events SET user_id=" + "'" + userId + "' " +
+                        "WHERE user_id IS NULL OR user_id = ''");
+            } else {
+                db.execSQL("DELETE FROM events"); // these events are orphaned so should be removed.
+            }
+
+            db.execSQL("ALTER TABLE server_cache RENAME TO cache");
+            if (SwrveHelper.isNotNullOrEmpty(userId)) {
+                db.execSQL("UPDATE cache SET user_id='" + userId + "' WHERE user_id='SwrveSDK.installTime'");
+                db.execSQL("UPDATE cache SET user_id='" + userId + "' WHERE user_id='seqnum'");
+                db.execSQL("UPDATE cache SET user_id='" + userId + "' WHERE user_id='RegistrationId'");
+                db.execSQL("UPDATE cache SET user_id='" + userId + "' WHERE user_id='AppVersion'");
+                db.execSQL("UPDATE cache SET user_id='" + userId + "' WHERE user_id='GoogleAdvertisingId'");
+                db.execSQL("UPDATE cache SET user_id='" + userId + "' WHERE user_id='GoogleAdvertisingLimitAdTrackingEnabled'");
+            }
+            db.execSQL("UPDATE cache SET user_id='' WHERE user_id='device_id'");
         }
     }
 }

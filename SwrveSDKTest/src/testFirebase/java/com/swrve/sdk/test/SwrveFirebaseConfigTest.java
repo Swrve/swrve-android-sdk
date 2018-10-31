@@ -15,7 +15,7 @@ import static org.junit.Assert.assertTrue;
 public class SwrveFirebaseConfigTest extends SwrveBaseTest {
 
     @Test
-    public void testGoogleAdvertisingIdLogging() {
+    public void testAdvertisingIdLogging() {
         SwrveConfig swrveConfig = new SwrveConfig();
         assertEquals(false, swrveConfig.isGAIDLoggingEnabled());
 
@@ -36,5 +36,14 @@ public class SwrveFirebaseConfigTest extends SwrveBaseTest {
     public void testSDKAppStore() throws Exception {
         SwrveConfig swrveConfig = new SwrveConfig();
         assertTrue(swrveConfig.getAppStore().equals(SwrveAppStore.Google));
+    }
+
+    @Test
+    public void testObtainRegistrationId() {
+        SwrveConfig swrveConfig = new SwrveConfig();
+        assertEquals(true, swrveConfig.isPushRegistrationAutomatic());
+
+        swrveConfig.setPushRegistrationAutomatic(false);
+        assertEquals(false, swrveConfig.isPushRegistrationAutomatic());
     }
 }

@@ -47,7 +47,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
         this.config = (C) new SwrveConfigBaseImp();
         SwrveCommon.setSwrveCommon(this);
         this.language = config.getLanguage();
-        this.userId = config.getUserId();
         cacheDir = config.getCacheDir();
         if (cacheDir == null) {
             cacheDir = context.getCacheDir();
@@ -170,8 +169,8 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public short getDeviceId() {
-        return 0;
+    public String getDeviceId() {
+        return null;
     }
 
     @Override
@@ -234,7 +233,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public NotificationChannel getDefaultNotificationChannel() {
-        return config.getDefaultNotificationChannel();
+        return null;
     }
 
     @Override
@@ -338,6 +337,25 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public SwrveSilentPushListener getSilentPushListener() {
+        return null;
+    }
+
+    @Override
     public void setNotificationSwrveCampaignId(String swrveCampaignId) {
     }
+
+    @Override
+    public void identify(final String userID, final SwrveIdentityResponse identityResponse) {
+    }
+
+    @Override
+    public void saveNotificationAuthenticated(int notificationId) {
+    }
+
+    @Override
+    public String getExternalUserId() {
+        return "";
+    }
+
 }

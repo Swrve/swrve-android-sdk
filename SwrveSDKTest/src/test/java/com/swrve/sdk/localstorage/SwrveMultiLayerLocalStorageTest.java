@@ -1,5 +1,7 @@
 package com.swrve.sdk.localstorage;
 
+import junit.framework.Assert;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,6 +9,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -97,5 +100,48 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
         } catch (SecurityException ex) {
             // Correctly detected bad content
         }
+    }
+
+    @Test
+    public void testSaveNotificationAuthenicated() {
+        secondaryLocalStorage.saveNotificationAuthenticated(1, 100); // oldest
+        secondaryLocalStorage.saveNotificationAuthenticated(2, 200);
+        secondaryLocalStorage.saveNotificationAuthenticated(3, 300);
+        secondaryLocalStorage.saveNotificationAuthenticated(4, 400);
+        secondaryLocalStorage.saveNotificationAuthenticated(5, 500);
+        secondaryLocalStorage.saveNotificationAuthenticated(6, 600); // most recent
+
+        List<Integer> notifications = secondaryLocalStorage.getNotificationsAuthenticated();
+        assertEquals(6, notifications.size());
+
+        multiLayerLocalStorage.NOTIFICATIONS_AUTHENICATED_MAX_ROWS = 6;
+
+        multiLayerLocalStorage.saveNotificationAuthenticated(7);
+
+        notifications = secondaryLocalStorage.getNotificationsAuthenticated();
+        assertEquals(6, notifications.size());
+        boolean foundId2 = false, foundId3 = false, foundId4 = false, foundId5 = false, foundId6 = false, foundId7 = false;;
+        for (Integer notificationId : notifications) {
+            if (notificationId == 1) {
+                Assert.fail("testSaveNotificationAuthenicated failed oldest notification did not get truncated.");
+            } else if (notificationId == 2) {
+                foundId2 = true;
+            } else if (notificationId == 3) {
+                foundId3 = true;
+            } else if (notificationId == 4) {
+                foundId4 = true;
+            } else if (notificationId == 5) {
+                foundId5 = true;
+            } else if (notificationId == 6) {
+                foundId6 = true;
+            } else if (notificationId == 7) {
+                foundId7 = true;
+            }
+        }
+
+        if (!foundId2 || !foundId3 || !foundId4 || !foundId5 || !foundId6 || !foundId7) {
+            Assert.fail("testSaveNotificationAuthenicated failed because id's returned didn't match what was saved.");
+        }
+
     }
 }

@@ -31,9 +31,6 @@ android {
         core {
             flavorDimensions "swrve-sdk"
         }
-        google {
-            flavorDimensions "swrve-sdk"
-        }
         amazon {
             flavorDimensions "swrve-sdk"
         }
@@ -48,12 +45,17 @@ android {
         disable 'GradleCompatible' // TODO remove this when play-services-ads gets upgraded again. 15.0.1 causes GradleCompatible lint error
     }
 
-    useLibrary 'org.apache.http.legacy'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     // SDK
     api project(path: ':SwrveSDK')
+    implementation 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
 
     // Unit tests
     testImplementation 'org.mockito:mockito-core:1.9.0'
@@ -70,3 +72,5 @@ dependencies {
     testImplementation 'com.squareup.okhttp3:mockwebserver:3.9.0'
     testImplementation 'org.awaitility:awaitility:3.0.0'
 }
+
+apply plugin: 'com.google.gms.google-services'

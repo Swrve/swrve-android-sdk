@@ -1,12 +1,12 @@
 package com.swrve.sdk.config;
 
-import android.app.NotificationChannel;
 import android.graphics.Color;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrvePushNotificationListener;
+import com.swrve.sdk.SwrveSilentPushListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import java.io.File;
@@ -21,18 +21,16 @@ import java.util.Locale;
  */
 public abstract class SwrveConfigBase {
 
-    private NotificationChannel defaultNotificationChannel;
-    private String userId;
     private long maxSqliteDbSize = 1 * 1024 * 1024; // Maximum size of the internal SQLite database.
     private int maxEventsPerFlush = 50; // Maximum number of events to send per flush.
     private String dbName = "swrve.db";
     private SwrveStack selectedStack = SwrveStack.US;
     private URL eventsUrl = null;
     private URL defaultEventsUrl = null;
-    private boolean useHttpsForEventsUrl = true;
     private URL contentUrl = null;
     private URL defaultContentUrl = null;
-    private boolean useHttpsForContentUrl = true;
+    private URL identityUrl = null;
+    private URL defaultIdentityUrl = null;
     private long newSessionInterval = 30000; // Session timeout time
     private String appVersion;
     private String appStore = SwrveAppStore.Google; // App Store where the app will be distributed.
@@ -55,6 +53,7 @@ public abstract class SwrveConfigBase {
     private boolean loggingEnabled = true;
     private SwrveNotificationConfig notificationConfig; // null as default, but attempts to populate from manifest if not instantiated. The manifest logic is deprecated and will be removed later
     private SwrvePushNotificationListener notificationListener;
+    private SwrveSilentPushListener silentPushListener;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -62,23 +61,6 @@ public abstract class SwrveConfigBase {
     public SwrveConfigBase() {
         modelBlackList = new ArrayList<>();
         modelBlackList.add("Calypso AppCrawler");
-    }
-
-    /**
-     * Set the default notification channel used to display notifications. This is required if you target Android O (API 26) or higher.
-     * We recommend that the channel is created before setting it in our config. Our SDK will attempt to create it if it doesn't exist.
-     *
-     * @param defaultNotificationChannel Default notification channel
-     */
-    public void setDefaultNotificationChannel(NotificationChannel defaultNotificationChannel) {
-        this.defaultNotificationChannel = defaultNotificationChannel;
-    }
-
-    /**
-     * @return default channel used to display notifications. This is required if you target Android O (API 26) or higher.
-     */
-    public NotificationChannel getDefaultNotificationChannel() {
-        return defaultNotificationChannel;
     }
 
     /**
@@ -228,20 +210,24 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Whether to use HTTPS for events.
+     * Set to override the default location of the server user to identify user id
+     * If your company has a special API end-point enabled, then you should specify it here.
+     * You should only need to change this value if you are working with Swrve support on a specific support issue.
+     *
+     * @param identityUrl Custom location of the identity server.
      */
-    public boolean getUseHttpsForEventsUrl() {
-        return useHttpsForEventsUrl;
+    public SwrveConfigBase setIdentityUrl(URL identityUrl) {
+        this.identityUrl = identityUrl;
+        return this;
     }
 
     /**
-     * Enable HTTPS for event requests.
-     *
-     * @param useHttpsForEventsUrl Whether to use HTTPS for api.swrve.com.
+     * @return Location of the identity server.
      */
-    public SwrveConfigBase setUseHttpsForEventsUrl(boolean useHttpsForEventsUrl) {
-        this.useHttpsForEventsUrl = useHttpsForEventsUrl;
-        return this;
+    public URL getIdentityUrl() {
+        if (identityUrl == null)
+            return defaultIdentityUrl;
+        return identityUrl;
     }
 
     /**
@@ -262,23 +248,6 @@ public abstract class SwrveConfigBase {
      */
     public SwrveConfigBase setContentUrl(URL contentUrl) {
         this.contentUrl = contentUrl;
-        return this;
-    }
-
-    /**
-     * @return Whether to use HTTPS for resources and in-app campaigns.
-     */
-    public boolean getUseHttpsForContentUrl() {
-        return useHttpsForContentUrl;
-    }
-
-    /**
-     * Enable HTTPS for resources and in-app campaign requests.
-     *
-     * @param useHttpsForContentUrl Whether to use HTTPS for content.swrve.com.
-     */
-    public SwrveConfigBase setUseHttpsForContentUrl(boolean useHttpsForContentUrl) {
-        this.useHttpsForContentUrl = useHttpsForContentUrl;
         return this;
     }
 
@@ -344,29 +313,9 @@ public abstract class SwrveConfigBase {
         // If the prefix is non empty, prepend it with a .
         String prefix = getStackHostPrefix();
         // Build the URL
-        defaultEventsUrl = new URL(getSchema(useHttpsForEventsUrl) + "://" + appId + "." +  prefix + "api.swrve.com");
-        defaultContentUrl = new URL(getSchema(useHttpsForContentUrl) + "://" + appId + "." + prefix + "content.swrve.com");
-    }
-
-    private static String getSchema(boolean https) {
-        return https? "https" : "http";
-    }
-
-    /**
-     * @return Custom unique user id.
-     */
-    public String getUserId() {
-        return this.userId;
-    }
-
-    /**
-     * Set a custom unique user id.
-     *
-     * @param userId Custom unique user id.
-     */
-    public SwrveConfigBase setUserId(String userId) {
-        this.userId = userId;
-        return this;
+        defaultEventsUrl = new URL("https://" + appId + "." + prefix + "api.swrve.com");
+        defaultContentUrl = new URL("https://" + appId + "." + prefix + "content.swrve.com");
+        defaultIdentityUrl = new URL("https://" + appId + "." + prefix + "identity.swrve.com");
     }
 
     /**
@@ -630,5 +579,19 @@ public abstract class SwrveConfigBase {
      */
     public void setNotificationListener(SwrvePushNotificationListener notificationListener) {
         this.notificationListener = notificationListener;
+    }
+
+    /**
+     * @return The custom silent push listener.
+     */
+    public SwrveSilentPushListener getSilentPushListener() {
+        return silentPushListener;
+    }
+
+    /**
+     * @param silentPushListener Set custom silent push listener to be executed when a silent push is received.
+     */
+    public void setSilentPushListener(SwrveSilentPushListener silentPushListener) {
+        this.silentPushListener = silentPushListener;
     }
 }

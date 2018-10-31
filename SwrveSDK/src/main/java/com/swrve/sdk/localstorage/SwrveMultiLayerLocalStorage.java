@@ -2,9 +2,11 @@ package com.swrve.sdk.localstorage;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveUser;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,8 @@ import static com.swrve.sdk.localstorage.LocalStorage.SIGNATURE_SUFFIX;
  * Used internally to provide a multi-layer primary and secondary LocalStorage
  */
 public class SwrveMultiLayerLocalStorage {
+
+    protected int NOTIFICATIONS_AUTHENICATED_MAX_ROWS = 100;
 
     private LocalStorage primaryStorage; // in-memory temporary and fast storage
     private LocalStorage secondaryStorage; // sql-ite database
@@ -156,7 +160,7 @@ public class SwrveMultiLayerLocalStorage {
         }
     }
 
-    public void flush() throws Exception {
+    public void flush() {
         if (primaryStorage != secondaryStorage &&
                 primaryStorage instanceof InMemoryLocalStorage &&
                 secondaryStorage instanceof SQLiteLocalStorage) {
@@ -186,5 +190,55 @@ public class SwrveMultiLayerLocalStorage {
             permanentStorage.saveMultipleCacheItems(entry.getValue());
         }
         cachePerUserId.clear();
+    }
+
+    public SwrveUser getUserBySwrveUserId(String swrveUserId) {
+        SwrveUser swrveUser = null;
+        if (secondaryStorage != null) {
+            swrveUser = secondaryStorage.getUserBySwrveUserId(swrveUserId);
+        }
+        return swrveUser;
+    }
+
+    public SwrveUser getUserByExternalUserId(String externalUserId) {
+        SwrveUser swrveUser = null;
+        if (secondaryStorage != null) {
+            swrveUser = secondaryStorage.getUserByExternalUserId(externalUserId);
+        }
+        return swrveUser;
+    }
+
+    public void saveUser(SwrveUser swrveUser) {
+        if (secondaryStorage != null) {
+            secondaryStorage.saveUser(swrveUser);
+        }
+    }
+
+    public void deleteUser(String swrveUserId) {
+        if (secondaryStorage != null) {
+            secondaryStorage.deleteUser(swrveUserId);
+        }
+    }
+
+    public void saveNotificationAuthenticated(int notificationId) {
+        if (secondaryStorage != null) {
+            secondaryStorage.saveNotificationAuthenticated(notificationId, System.currentTimeMillis());
+            // After adding an entry truncate the table to remove the oldest.
+            secondaryStorage.truncateNotificationsAuthenticated(NOTIFICATIONS_AUTHENICATED_MAX_ROWS);
+        }
+    }
+
+    public List<Integer> getNotificationsAuthenticated() {
+        List<Integer> notifications = new ArrayList<>();
+        if (secondaryStorage != null) {
+            notifications = secondaryStorage.getNotificationsAuthenticated();
+        }
+        return notifications;
+    }
+
+    public void deleteNotificationsAuthenticated() {
+        if (secondaryStorage != null) {
+            secondaryStorage.deleteNotificationsAuthenticated();
+        }
     }
 }

@@ -17,7 +17,7 @@ public abstract class BaseLocalStorage extends SwrveBaseTest {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-        LocalStorageTestUtils.removeSQLiteOpenHelperSingletonInstance();
+        LocalStorageTestUtils.closeSQLiteOpenHelperInstance();
     }
 
     protected int insertEvents(int eventCount, String userId) throws Exception {

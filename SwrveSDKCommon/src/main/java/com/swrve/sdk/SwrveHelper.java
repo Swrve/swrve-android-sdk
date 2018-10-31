@@ -22,6 +22,7 @@ import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -44,6 +45,9 @@ public final class SwrveHelper {
     private static final String CHARSET = "UTF-8";
 
     protected static String buildModel = Build.MODEL;
+
+    private static final SimpleDateFormat appInstallTimeFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
+    private static String appInstallTime;
 
     public static boolean isNullOrEmpty(String val) {
         return (val == null || val.length() == 0);
@@ -285,5 +289,18 @@ public final class SwrveHelper {
             }
         }
         return map;
+    }
+
+    public static String getAppInstallTime(Context context) {
+        if (appInstallTime == null) {
+            long appInstallTimeMillis = System.currentTimeMillis();
+            try {
+                appInstallTimeMillis = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).firstInstallTime;
+            } catch (PackageManager.NameNotFoundException e) {
+                SwrveLogger.e("Could not get package info to retrieve appInstallTime so using current date.", e);
+            }
+            appInstallTime = appInstallTimeFormat.format(new Date(appInstallTimeMillis));
+        }
+        return appInstallTime;
     }
 }

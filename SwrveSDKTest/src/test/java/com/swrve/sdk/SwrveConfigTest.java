@@ -53,35 +53,18 @@ public class SwrveConfigTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testHttpFlags() throws Exception {
+    public void testUrlDefaults() throws Exception {
         SwrveConfig config;
-
         config = new SwrveConfig();
-        config.setUseHttpsForEventsUrl(true);
-        config.setUseHttpsForContentUrl(true);
         config.generateUrls(101);
         assertEquals("https://101.api.swrve.com", config.getEventsUrl().toString());
         assertEquals("https://101.content.swrve.com", config.getContentUrl().toString());
+        assertEquals("https://101.identity.swrve.com", config.getIdentityUrl().toString());
+    }
 
-        config = new SwrveConfig();
-        config.setUseHttpsForEventsUrl(true);
-        config.setUseHttpsForContentUrl(false);
-        config.generateUrls(101);
-        assertEquals("https://101.api.swrve.com", config.getEventsUrl().toString());
-        assertEquals("http://101.content.swrve.com", config.getContentUrl().toString());
-
-        config = new SwrveConfig();
-        config.setUseHttpsForEventsUrl(false);
-        config.setUseHttpsForContentUrl(true);
-        config.generateUrls(101);
-        assertEquals("http://101.api.swrve.com", config.getEventsUrl().toString());
-        assertEquals("https://101.content.swrve.com", config.getContentUrl().toString());
-
-        config = new SwrveConfig();
-        config.setUseHttpsForEventsUrl(false);
-        config.setUseHttpsForContentUrl(false);
-        config.generateUrls(101);
-        assertEquals("http://101.api.swrve.com", config.getEventsUrl().toString());
-        assertEquals("http://101.content.swrve.com", config.getContentUrl().toString());
+    @Test
+    public void testAutoShowMessagesMaxDelay() {
+        SwrveConfig config = new SwrveConfig();
+        assertEquals(config.getAutoShowMessagesMaxDelay(), 5000);
     }
 }

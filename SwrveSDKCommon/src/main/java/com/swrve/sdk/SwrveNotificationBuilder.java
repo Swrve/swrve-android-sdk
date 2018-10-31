@@ -18,7 +18,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
 
 import com.swrve.sdk.notifications.model.SwrveNotification;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
@@ -32,20 +31,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_PUSH_ACCENT_COLOR_METADATA;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_PUSH_ICON_LARGE_METADATA;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_PUSH_ICON_MATERIAL_METADATA;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_PUSH_ICON_METADATA;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_PUSH_TITLE_METADATA;
 
 public class SwrveNotificationBuilder {
 
     private final Context context;
     private int iconDrawableId;
     private int iconMaterialDrawableId;
+    private NotificationChannel defaultNotificationChannel;
     private int largeIconDrawableId;
     private Integer accentColorObject;
     private String notificationTitle;
@@ -58,84 +52,14 @@ public class SwrveNotificationBuilder {
     private Bundle eventPayload;
     private int notificationId;
 
-    // Called by Unity Swrve SDK
-    public SwrveNotificationBuilder(Context context, int iconDrawableId, int iconMaterialDrawableId, int largeIconDrawableId,
-                                       Integer accentColorObject, String notificationTitle) {
-        this.context = context;
-        this.iconDrawableId = iconDrawableId;
-        this.iconMaterialDrawableId = iconMaterialDrawableId;
-        this.largeIconDrawableId = largeIconDrawableId;
-        this.accentColorObject = accentColorObject;
-        this.notificationTitle = notificationTitle;
-        this.notificationId = generateTimestampId();
-    }
-
     public SwrveNotificationBuilder(Context context, SwrveNotificationConfig config) {
         this.context = context;
-        if (config != null) {
-            this.iconDrawableId = config.getIconDrawableId();
-            this.iconMaterialDrawableId = config.getIconMaterialDrawableId();
-            this.largeIconDrawableId = config.getLargeIconDrawableId();
-            this.accentColorObject = config.getAccentColorResourceId();
-            this.notificationTitle = config.getNotificationTitle();
-        } else {
-            initFromManifest(context);
-        }
+        this.iconDrawableId = config.getIconDrawableId();
+        this.iconMaterialDrawableId = config.getIconMaterialDrawableId();
+        this.defaultNotificationChannel = config.getDefaultNotificationChannel();
+        this.largeIconDrawableId = config.getLargeIconDrawableId();
+        this.accentColorObject = config.getAccentColorResourceId();
         this.notificationId = generateTimestampId();
-    }
-
-    @Deprecated
-    private void initFromManifest(Context context) {
-        try {
-            PackageManager packageManager = context.getPackageManager();
-            ApplicationInfo app = packageManager.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-            Bundle metaData = app.metaData;
-            if (metaData == null) {
-                throw new RuntimeException("No SWRVE metadata specified in AndroidManifest.xml");
-            }
-
-            int iconId = metaData.getInt(SWRVE_PUSH_ICON_METADATA, -1);
-            if (iconId < 0) {
-                iconId = app.icon; // Default to the application icon
-            }
-
-            int iconMaterialId = metaData.getInt(SWRVE_PUSH_ICON_MATERIAL_METADATA, -1);
-            if (iconMaterialId < 0) {
-                // No material (Android L+) icon specified in the metadata
-                SwrveLogger.w("No %s specified. We recommend setting a special material icon for Android L+", SWRVE_PUSH_ICON_MATERIAL_METADATA);
-            }
-
-            int largeIconBitmapId = metaData.getInt(SWRVE_PUSH_ICON_LARGE_METADATA, -1);
-
-            int accentColorResourceId = metaData.getInt(SWRVE_PUSH_ACCENT_COLOR_METADATA, -1);
-            Integer accentColorObject = null;
-            if (accentColorResourceId < 0) {
-                // No accent color specified in the metadata
-                SwrveLogger.w("No specified. We recommend setting an accent color for your notifications", SWRVE_PUSH_ACCENT_COLOR_METADATA);
-            } else {
-                accentColorObject = ContextCompat.getColor(context, accentColorResourceId);
-            }
-
-            String pushTitle = metaData.getString(SWRVE_PUSH_TITLE_METADATA);
-            if (SwrveHelper.isNullOrEmpty(pushTitle)) {
-                CharSequence appTitle = app.loadLabel(packageManager);
-                if (appTitle != null) {
-                    pushTitle = appTitle.toString();
-                }
-                if (SwrveHelper.isNullOrEmpty(pushTitle)) {
-                    // No title specified in the metadata and could not find default
-                    throw new RuntimeException("No " + SWRVE_PUSH_TITLE_METADATA + " specified in AndroidManifest.xml");
-                }
-            }
-
-            this.iconDrawableId = iconId;
-            this.iconMaterialDrawableId = iconMaterialId;
-            this.largeIconDrawableId = largeIconBitmapId;
-            this.accentColorObject = accentColorObject;
-            this.notificationTitle = pushTitle;
-        } catch (Exception ex) {
-            SwrveLogger.e("Error configuring notification from manifest metadata", ex);
-        }
     }
 
     public NotificationCompat.Builder build(String msgText, Bundle msg, String campaignType, Bundle eventPayload) {
@@ -158,7 +82,6 @@ public class SwrveNotificationBuilder {
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, notificationChannelId)
                 .setSmallIcon(iconResource)
-                .setContentTitle(notificationTitle)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(this.msgText))
                 .setTicker(this.msgText)
                 .setContentText(this.msgText)
@@ -194,6 +117,12 @@ public class SwrveNotificationBuilder {
             for (NotificationCompat.Action item : actions) {
                 mBuilder.addAction(item);
             }
+        }
+
+        if(SwrveHelper.isNullOrEmpty(notificationTitle)) {
+            String fallback = getFallbackNotificationTitle();
+            SwrveLogger.d("No notification title in configured from server payload so using app name:%s", fallback);
+            mBuilder.setContentTitle(fallback);
         }
 
         PendingIntent pendingIntent = createPendingIntent(msg, campaignType, eventPayload);
@@ -255,18 +184,17 @@ public class SwrveNotificationBuilder {
         SwrveCommon.checkInstanceCreated(); // throws RuntimeException
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
         if (notificationChannelId == null && swrveCommon != null) {
-            NotificationChannel defaultChannel = swrveCommon.getDefaultNotificationChannel();
-            if(defaultChannel!=null) {
-                NotificationChannel existingChannel = mNotificationManager.getNotificationChannel(defaultChannel.getId());
+            if (defaultNotificationChannel != null) {
+                NotificationChannel existingChannel = mNotificationManager.getNotificationChannel(defaultNotificationChannel.getId());
                 if (existingChannel == null) {
-                    SwrveLogger.i("Notification channel from default config[%s] does not exist, creating it", defaultChannel.getId());
-                    mNotificationManager.createNotificationChannel(defaultChannel);
+                    SwrveLogger.i("Notification channel from default config[%s] does not exist, creating it", defaultNotificationChannel.getId());
+                    mNotificationManager.createNotificationChannel(defaultNotificationChannel);
                 }
-                notificationChannelId = defaultChannel.getId();
+                notificationChannelId = defaultNotificationChannel.getId();
             }
         }
 
-        if(notificationChannelId == null) {
+        if (notificationChannelId == null) {
             SwrveLogger.e("Notification channel could not be found, the swrve notification cannot be shown.");
         }
 
@@ -282,6 +210,7 @@ public class SwrveNotificationBuilder {
 
         // Base Title
         if (SwrveHelper.isNotNullOrEmpty(swrveNotification.getTitle())) {
+            notificationTitle = swrveNotification.getTitle();
             builder.setContentTitle(swrveNotification.getTitle());
         }
 
@@ -369,6 +298,7 @@ public class SwrveNotificationBuilder {
         SwrveNotificationMedia media = swrveNotification.getMedia();
         if (media != null) {
             if (SwrveHelper.isNotNullOrEmpty(media.getTitle())) {
+                notificationTitle = media.getTitle();
                 mBuilder.setContentTitle(media.getTitle());
             }
 
@@ -565,6 +495,22 @@ public class SwrveNotificationBuilder {
 
     private int generateTimestampId() {
         return (int) (getNow().getTime() % Integer.MAX_VALUE);
+    }
+
+    private String getFallbackNotificationTitle() {
+        String pushTitle = "";
+        try {
+            PackageManager packageManager = context.getPackageManager();
+            ApplicationInfo app = packageManager.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+            CharSequence appTitle = app.loadLabel(packageManager);
+            if (appTitle != null) {
+                pushTitle = appTitle.toString();
+            }
+
+        } catch (Exception e) {
+            SwrveLogger.e("Exception getting fallback notification title.", e);
+        }
+        return pushTitle;
     }
 
     protected Bitmap downloadBitmapImageFromUrl(final String mediaUrl) {
