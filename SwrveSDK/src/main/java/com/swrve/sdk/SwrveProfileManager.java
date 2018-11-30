@@ -22,16 +22,15 @@ import static com.swrve.sdk.SwrveImp.SDK_PREFS_NAME;
 
 class SwrveProfileManager<C extends SwrveConfigBase> {
 
-    private Context context;
+    private final Context context;
+    private final int appId;
+    private final String apiKey;
+    private final SwrveConfigBase config;
+    protected IRESTClient restclient;
     private String userId;
     private String sessionToken;
-    private SwrveConfigBase config;
-    protected IRESTClient restclient;
-    private String deviceId;
-    private int appId;
-    private String apiKey;
 
-    protected SwrveProfileManager(Context context, C config, String apiKey, int appId, IRESTClient restClient, String deviceId) {
+    protected SwrveProfileManager(Context context, int appId, String apiKey, C config, IRESTClient restClient) {
 
         this.context = context;
         String savedUserIdFromPrefs = getSavedUserIdFromPrefs();
@@ -46,7 +45,6 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
 
         this.sessionToken = SwrveHelper.generateSessionToken(apiKey, appId, userId);
         this.config = config;
-        this.deviceId = deviceId;
         this.restclient = restClient;
         this.apiKey = apiKey;
         this.appId = appId;
@@ -64,8 +62,7 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
 
     private String getSavedUserIdFromPrefs() {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
-        String userId = settings.getString("userId", null);
-        return userId;
+        return settings.getString("userId", null);
     }
 
     protected String getSessionToken() {
@@ -87,21 +84,20 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
         return config.getIdentityUrl() + SwrveBase.IDENTITY_ACTION;
     }
 
-    protected String getIdentityBody(final String externalUserId, final String userId) {
+    protected String getIdentityBody(final String externalUserId, final String userId, final String deviceId) {
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
         map.put("swrve_id", userId);
         map.put("external_user_id", externalUserId);
         map.put("unique_device_id", deviceId);
         map.put("api_key", apiKey);
-        String jsonString = gson.toJson(map);
-        return jsonString;
+        return gson.toJson(map);
     }
 
-    protected void identify(final String externalUserId, String userId, final SwrveIdentityResponse identityResponse) {
+    protected void identify(final String externalUserId, final String userId, final String deviceId, final SwrveIdentityResponse identityResponse) {
 
         final IdentifyIRESTResponseListener callback = new IdentifyIRESTResponseListener(identityResponse);
-        final String postString = getIdentityBody(externalUserId, userId);
+        final String postString = getIdentityBody(externalUserId, userId, deviceId);
         final String identityUrl = getIdentityUrl();
         SwrveLogger.d("Identity call: %s  body:  %s ", identityUrl, postString);
         final ExecutorService executorService = Executors.newSingleThreadExecutor();

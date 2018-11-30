@@ -72,7 +72,8 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
     @Test
     public void testBeforeSendDeviceInfo() throws Exception {
-        reset(swrveSpy); // reset so the beforeSendDeviceInfo metod is not disabled which is part of setup
+        reset(swrveSpy); // reset so the beforeSendDeviceInfo method is not disabled which is part of setup
+        swrveSpy.initialised = false; // reset, due to initialised check added to init
 
         assertNull(swrveSpy.registrationId);
         Mockito.verify(swrveSpy, never()).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean());

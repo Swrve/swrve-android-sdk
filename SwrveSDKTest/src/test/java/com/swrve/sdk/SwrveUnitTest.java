@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -268,5 +269,24 @@ public class SwrveUnitTest extends SwrveBaseTest {
         // sleep 2 seconds and test autoShowMessagesEnabled has been disabled.
         Thread.sleep(2000l);
         Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", false, swrveSpy.autoShowMessagesEnabled);
+    }
+
+    @Test
+    public void testGetJoined() throws Exception {
+
+        assertTrue("Test getting the joined value when sdk has been initialised.", swrveSpy.initialised);
+        String joined1 = swrveSpy.getJoined();
+        assertTrue("Joined should not be null or empty", SwrveHelper.isNotNullOrEmpty(joined1));
+        long joinedLong = new Long(joined1);
+        assertTrue("Joined should be greater than zero", joinedLong > 0);
+
+        // recreate the sdk but make sure its not initialised.
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+
+        assertFalse("Test getting the joined value when sdk has NOT been initialised.", swrveSpy.initialised);
+        String joined2 = swrveSpy.getJoined();
+        assertEquals(joined2, joined1);
     }
 }

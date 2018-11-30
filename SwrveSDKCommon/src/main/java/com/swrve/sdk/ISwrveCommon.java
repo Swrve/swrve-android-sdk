@@ -128,4 +128,6 @@ interface ISwrveCommon {
     void setNotificationSwrveCampaignId(String swrveCampaignId);
 
     void saveNotificationAuthenticated(int notificationId);
+
+    int getFlushRefreshDelay();
 }

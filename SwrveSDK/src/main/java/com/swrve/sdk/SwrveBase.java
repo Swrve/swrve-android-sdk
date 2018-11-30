@@ -106,12 +106,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return (T) this;
     }
 
-    protected T init(final Activity activity) throws IllegalArgumentException {
+    protected synchronized T init(final Activity activity) throws IllegalArgumentException {
 
-        // Initialization checks
-        if (activity == null) {
-            SwrveHelper.logAndThrowException("Activity not specified");
+        if (initialised) {
+            return (T) this;
         }
+        initialised = true;
 
         try {
             trackingState = ON;
@@ -120,7 +120,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             final String userId = profileManager.getUserId();
             initialisedTime = getNow();
-            initialised = true;
+
             lastSessionTick = getSessionTime();
 
             autoShowMessagesEnabled = true;
@@ -203,7 +203,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
             campaignsAndResourcesFlushFrequency = settings.getInt("swrve_cr_flush_frequency", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
-            campaignsAndResourcesFlushRefreshDelay = settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
+            campaignsAndResourcesFlushRefreshDelay = getFlushRefreshDelay();
             campaignsAndResourcesLastETag = multiLayerLocalStorage.getCacheEntry(userId, CACHE_ETAG);
 
             startCampaignsAndResourcesTimer(true);
@@ -632,6 +632,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected String _getJoined() {
+        openLocalStorageConnection(); // getJoined can be called from GeoSDK so ensure storage connection is open.
         return multiLayerLocalStorage.getCacheEntry(profileManager.getUserId(), CACHE_USER_JOINED_TIME);
     }
 
@@ -1761,6 +1762,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public String getDeviceId() {
+        openLocalStorageConnection();
         return SwrveLocalStorageUtil.getDeviceId(multiLayerLocalStorage);
     }
 
@@ -1897,7 +1899,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         profileManager.updateUserId(newUserId);
         profileManager.updateSessionToken();
 
-        init(getActivityContext());
+        if (getActivityContext() != null) {
+            initialised = false;
+            qaUser = null;
+            init(getActivityContext());
+        } else {
+            SwrveLogger.d("Switching user before activity loaded, unable to call init");
+        }
     }
 
     @Override
@@ -1918,6 +1926,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
             return;
         }
+
+        // if identify is called from Application class, swrve may not be init'ed yet, we need to open db.
+        openLocalStorageConnection();
 
         // always flush events and pause event sending
         sendQueuedEvents();
@@ -1949,7 +1960,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         final String unidentifiedUserId = getUnidentifiedUserId(externalUserId, cachedSwrveUser);
         identifiedOnAnotherDevice =  false; // reset the flag
-        profileManager.identify(externalUserId, unidentifiedUserId, new SwrveIdentityResponse() {
+        profileManager.identify(externalUserId, unidentifiedUserId, getDeviceId(), new SwrveIdentityResponse() {
             @Override
             public void onSuccess(String status, String swrveId) {
                 // Update User in DB
@@ -2028,5 +2039,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public String getExternalUserId() {
         SwrveUser existingUser = multiLayerLocalStorage.getUserBySwrveUserId(getUserId());
         return (existingUser == null) ? "" : existingUser.getExternalUserId();
+    }
+
+    @Override
+    public int getFlushRefreshDelay() {
+        SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
+        return settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
     }
 }

@@ -358,4 +358,9 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
         return "";
     }
 
+    @Override
+    public int getFlushRefreshDelay() {
+        return 0;
+    }
+
 }

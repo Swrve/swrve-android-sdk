@@ -19,6 +19,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -68,15 +69,18 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
 
         assertNull(swrveSpy.campaignsAndResourcesExecutor);
 
+        swrveSpy.init(mActivity);
+
         swrveSpy._iap(1, "productId", 2, "currency",
                 new SwrveIAPRewards(), "receipt", "receiptSignature", "paymentProvider");
+
 
         assertNotNull(swrveSpy.campaignsAndResourcesExecutor);
 
         ArgumentCaptor<Boolean> sessionStartCaptor = ArgumentCaptor.forClass(Boolean.class);
         Mockito.verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(sessionStartCaptor.capture());
         assertEquals(false, sessionStartCaptor.getValue());
-        Mockito.verify(swrveSpy, never()).refreshCampaignsAndResources(); // campaigns don't need to be refreshed
+        Mockito.verify(swrveSpy, atMost(1)).refreshCampaignsAndResources(); // campaigns don't need to be refreshed
 
         assertEquals(true, swrveSpy.eventsWereSent);
     }

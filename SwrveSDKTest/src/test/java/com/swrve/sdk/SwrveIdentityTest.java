@@ -34,6 +34,7 @@ import static com.swrve.sdk.ISwrveCommon.EVENT_FIRST_SESSION;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.awaitility.Awaitility.await;
@@ -80,6 +81,56 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testDeviceIDUniqueBetweenInstances() throws Exception {
+
+        String deviceID = swrveSpy.getDeviceId();
+        assertNotNull(deviceID);
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+
+        assertEquals(deviceID, swrveReal.getDeviceId());
+    }
+
+    @Test
+    public void testIdentityCanGetCachedUserBefore_SDKInit() throws Exception {
+
+        //  Add current swrve user to cache to mock that it has been identified.
+        SwrveUser unVerifiedUser = new SwrveUser(swrveSpy.getUserId(), testExternalId, true);
+        swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveUser(unVerifiedUser);
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+
+        // create a new instance , but dont call init.
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+
+        final String cachedSwrveId = swrveSpy.getUserId();
+        final AtomicBoolean identityCallback = new AtomicBoolean(false);
+        swrveSpy.identify(testExternalId, new SwrveIdentityResponse() {
+            @Override
+            public void onSuccess(String status, String swrveId) {
+                assertEquals(swrveId, cachedSwrveId);
+                assertEquals(status, "Loaded from cache");
+                identityCallback.set(true);
+            }
+
+            @Override
+            public void onError(int responseCode, String errorMessage) {
+                fail("Couldn't get user from cache");
+                identityCallback.set(true);
+            }
+        });
+        await().untilTrue(identityCallback);
+    }
+
+    @Test
     public void testIdentityResponseSuccess() {
 
         final String currentSwrveUserId = swrveSpy.getUserId();
@@ -101,25 +152,31 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     @Test
     public void testIdentityResponseNull() {
         try {
-            doAnswer((Answer<Void>) invocation -> {
-                SwrveIdentityResponse callback = (SwrveIdentityResponse) invocation.getArguments()[2];
-                callback.onSuccess("status", "userId");
-                return null;
-            }).when(profileManagerSpy).identify(anyString(), anyString(), any(SwrveIdentityResponse.class));
+            String currentSwrveUserId = swrveSpy.getUserId();
 
+            // test success case by creating success response's below
+
+            swrveSpy.profileManager = new SwrveProfileManagerIdentifySuccess("user1", mActivity, 1, "apiKey", new SwrveConfig(), null);
             swrveSpy._identify("", null); // test null identityResponse with blank externalUserId
-            swrveSpy._identify("SomeExternalId", null); // test null identityResponse with new externalUserId
-            swrveSpy._identify("SomeExternalId", null); // test null identityResponse with existing externalUserId
+            assertEquals(currentSwrveUserId, swrveSpy.getUserId());
 
-            doAnswer((Answer<Void>) invocation -> {
-                SwrveIdentityResponse callback = (SwrveIdentityResponse) invocation.getArguments()[2];
-                callback.onError(1, "error message");
-                return null;
-            }).when(profileManagerSpy).identify(anyString(), anyString(), any(SwrveIdentityResponse.class));
+            swrveSpy.profileManager = new SwrveProfileManagerIdentifySuccess("user2", mActivity, 1, "apiKey", new SwrveConfig(), null);
+            swrveSpy._identify("user2", null); // test null identityResponse with new externalUserId
+            assertEquals("user2", swrveSpy.getUserId());
+
+            swrveSpy._identify("user2", null); // test null identityResponse with existing externalUserId
+            assertEquals("user2", swrveSpy.getUserId());
+
+            // test error case by creating error response's below
+
+            swrveSpy.profileManager = new SwrveProfileManagerIdentifyError(mActivity, 1, "apiKey", new SwrveConfig(), null);
+            currentSwrveUserId = swrveSpy.getUserId();
 
             swrveSpy._identify("DiffExternalId", null); // test null identityResponse and error response
+            assertNotEquals(currentSwrveUserId, swrveSpy.getUserId()); // new userid should be generated
 
         } catch (Exception ex) {
+            SwrveLogger.e("Null SwrveIdentityResponse may have caused an exception", ex);
             fail("Null SwrveIdentityResponse may have caused an exception");
         }
     }
@@ -268,8 +325,8 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
     @Test
     public void testIdentify_Body() throws Exception {
-        SwrveProfileManager profileManager = new SwrveProfileManager(mActivity, new SwrveConfig(), "apiKey", 1, null, "deviceId");
-        String postString = profileManager.getIdentityBody("ExternalUserId", "SwrveUserId");
+        SwrveProfileManager profileManager = new SwrveProfileManager(mActivity, 1, "apiKey", new SwrveConfig(), null);
+        String postString = profileManager.getIdentityBody("ExternalUserId", "SwrveUserId", "deviceId");
         JSONObject postObject = new JSONObject(postString);
         assertEquals(postObject.getString("swrve_id"), "SwrveUserId");
         assertEquals(postObject.getString("external_user_id"), "ExternalUserId");
@@ -520,6 +577,33 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         @Override
         public void onError(int responseCode, String errorMessage) {
             identityCallback.set(true);
+        }
+    }
+
+    private class SwrveProfileManagerIdentifySuccess extends SwrveProfileManager<SwrveConfig> {
+
+        final String testUserId;
+
+        protected SwrveProfileManagerIdentifySuccess(String userId, Context context, int appId, String apiKey, SwrveConfig config, IRESTClient restClient) {
+            super(context, appId, apiKey, config, restClient);
+            this.testUserId = userId;
+        }
+
+        @Override
+        protected void identify(final String externalUserId, final String userId, final String deviceId, final SwrveIdentityResponse identityResponse) {
+            identityResponse.onSuccess("status", testUserId);
+        }
+    }
+
+    private class SwrveProfileManagerIdentifyError extends SwrveProfileManager<SwrveConfig> {
+
+        protected SwrveProfileManagerIdentifyError(Context context, int appId, String apiKey, SwrveConfig config, IRESTClient restClient) {
+            super(context, appId, apiKey, config, restClient);
+        }
+
+        @Override
+        protected void identify(final String externalUserId, final String userId, final String deviceId, final SwrveIdentityResponse identityResponse) {
+            identityResponse.onError(1, "error message");
         }
     }
 

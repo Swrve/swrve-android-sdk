@@ -74,7 +74,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "6.0";
+    protected static String version = "6.0.1";
     private static final Object CAMPAIGNS_AND_RESOURCES_TIMER_LOCK = new Object();
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
@@ -172,8 +172,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.swrveAssetsManager = new SwrveAssetsManagerImp(application.getApplicationContext());
         this.newSessionInterval = config.getNewSessionInterval();
         this.multiLayerLocalStorage = new SwrveMultiLayerLocalStorage(new InMemoryLocalStorage());
-        String deviceId = SwrveLocalStorageUtil.getDeviceId(multiLayerLocalStorage);
-        this.profileManager = new SwrveProfileManager(application.getApplicationContext(), config, apiKey, appId, restClient, deviceId);
+        this.profileManager = new SwrveProfileManager(application.getApplicationContext(), appId, apiKey, config, restClient);
         this.context = new WeakReference<>(application.getApplicationContext());
         this.application = new WeakReference<>(application);
 
@@ -1084,7 +1083,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
      * Set up timer for checking for campaign and resources updates. Called when session begins and after IAP.
      */
     protected void startCampaignsAndResourcesTimer(boolean sessionStart) {
-        if (!config.isAutoDownloadCampaignsAndResources()) {
+        if (!config.isAutoDownloadCampaignsAndResources() || !initialised) {
             return;
         }
 
