@@ -74,8 +74,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "6.0.1";
-    private static final Object CAMPAIGNS_AND_RESOURCES_TIMER_LOCK = new Object();
+    protected static String version = "6.0.2";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
@@ -1052,30 +1051,28 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
      * This function should be called periodically.
      */
     protected void checkForCampaignAndResourcesUpdates() {
-        synchronized (CAMPAIGNS_AND_RESOURCES_TIMER_LOCK) {
-            if(initialisedTime == null) {
-                SwrveLogger.w("Not executing checkForCampaignAndResourcesUpdates because initialisedTime is null indicating the sdk is not initialised.");
-                return;
-            }
-            // If there are any events to be sent, or if any events were sent since last refresh
-            // send events queued, wait campaignsAndResourcesFlushRefreshDelay for events to reach servers and refresh
-            final LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = multiLayerLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush(), profileManager.getUserId());
-            if (!combinedEvents.isEmpty() || eventsWereSent) {
-                final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-                swrve.sendQueuedEvents();
-                eventsWereSent = false;
-                final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
-                timedService.schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            swrve.refreshCampaignsAndResources();
-                        } finally {
-                            timedService.shutdownNow();
-                        }
+        if(initialisedTime == null) {
+            SwrveLogger.w("Not executing checkForCampaignAndResourcesUpdates because initialisedTime is null indicating the sdk is not initialised.");
+            return;
+        }
+        // If there are any events to be sent, or if any events were sent since last refresh
+        // send events queued, wait campaignsAndResourcesFlushRefreshDelay for events to reach servers and refresh
+        final LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = multiLayerLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush(), profileManager.getUserId());
+        if (!combinedEvents.isEmpty() || eventsWereSent) {
+            final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
+            swrve.sendQueuedEvents();
+            eventsWereSent = false;
+            final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
+            timedService.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        swrve.refreshCampaignsAndResources();
+                    } finally {
+                        timedService.shutdownNow();
                     }
-                }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
-            }
+                }
+            }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -1089,9 +1086,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
         final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
         // If there is an existing executor, shut it down. This will finish any tasks in progress, but not execute any tasks currently scheduled or accept new tasks
-        if (campaignsAndResourcesExecutor != null) {
-            campaignsAndResourcesExecutor.shutdown();
-        }
+        shutdownCampaignsAndResourcesTimer();
 
         // For session start, execute immediately.
         if (sessionStart) {
@@ -1101,27 +1096,23 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         // Start repeating timer to begin checking if campaigns/resources needs updating. It starts straight away.
         eventsWereSent = true;
 
-        synchronized (CAMPAIGNS_AND_RESOURCES_TIMER_LOCK) {
-            final ScheduledThreadPoolExecutor localExecutor = new ScheduledThreadPoolExecutor(1);
-            localExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-            localExecutor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    checkForCampaignAndResourcesUpdates();
-                }
-            }, 0L, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
-            campaignsAndResourcesExecutor = localExecutor;
-        }
+        final ScheduledThreadPoolExecutor localExecutor = new ScheduledThreadPoolExecutor(1);
+        localExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        localExecutor.scheduleWithFixedDelay(new Runnable() {
+            @Override
+            public void run() {
+                checkForCampaignAndResourcesUpdates();
+            }
+        }, 0L, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
+        campaignsAndResourcesExecutor = localExecutor;
     }
 
     protected void shutdownCampaignsAndResourcesTimer() {
-        synchronized (CAMPAIGNS_AND_RESOURCES_TIMER_LOCK) {
-            if (campaignsAndResourcesExecutor != null) {
-                try {
-                    campaignsAndResourcesExecutor.shutdown();
-                } catch (Exception e) {
-                    SwrveLogger.e("Exception occurred shutting down campaignsAndResourcesExecutor", e);
-                }
+        if (campaignsAndResourcesExecutor != null) {
+            try {
+                campaignsAndResourcesExecutor.shutdown();
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred shutting down campaignsAndResourcesExecutor", e);
             }
         }
     }
