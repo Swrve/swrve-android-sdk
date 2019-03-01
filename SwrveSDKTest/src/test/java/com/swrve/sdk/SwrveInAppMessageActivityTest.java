@@ -2,12 +2,10 @@ package com.swrve.sdk;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
@@ -280,9 +278,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Detect intent from url
         String expectedUrl = swrveSpy.getAppStoreURLForApp(150);
-        Intent nextStartedActivity = mShadowActivity.getNextStartedActivity(); // for some reason this line is needed before calling peekNextStartedActivity?
-        assertNotNull(nextStartedActivity);
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
+        Intent nextIntent = mShadowActivity.getNextStartedActivity();
+        assertNotNull(nextIntent);
         assertEquals(expectedUrl, nextIntent.getDataString());
 
         // Swrve.Messages.Message-165.impression
@@ -383,9 +380,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         swrveButtonView.performClick();
 
         // Detect intent from url
-        Intent nextStartedActivity = mShadowActivity.getNextStartedActivity(); // for some reason this line is needed before calling peekNextStartedActivity?
-        assertNotNull(nextStartedActivity);
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
+        Intent nextIntent = mShadowActivity.getNextStartedActivity();
+        assertNotNull(nextIntent);
         assertEquals("custom_action", nextIntent.getDataString());
 
 
@@ -451,6 +447,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     private Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> createActivityFromPeekIntent(Intent intent) {
+        assertNotNull(intent);
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
         return new Pair(activityController, activityController.create().start().visible().get());
     }
