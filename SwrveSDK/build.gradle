@@ -33,7 +33,7 @@ android {
 
     lintOptions {
         abortOnError true
-        baseline file("../../lint/lint-baseline-swrvesdk.xml")
+        baseline file("../lint/lint-baseline-swrvesdk.xml")
         disable 'GradleCompatible' // TODO remove this when play-services-ads gets upgraded again. 15.0.1 causes GradleCompatible lint error
     }
 }
