@@ -1,320 +1,170 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="4" by="lint 3.0.1">
+<issues format="4" by="lint 3.1.3">
 
     <issue
-        id="ObsoleteLintCustomCheck"
-        severity="Warning"
-        message="Lint found one or more custom checks using its older Java API; these checks are still run in compatibility mode, but this causes duplicated parsing, and in the next version lint will no longer include this legacy mode. Make sure the following lint detectors are upgraded to the new API: timber.lint.WrongTimberUsageDetector"
-        category="Lint"
-        priority="10"
-        summary="Obsolete custom lint check"
-        explanation="Lint can be extended with &quot;custom checks&quot;: additional checks implemented by developers and libraries to for example enforce specific API usages required by a library or a company coding style guideline.&#xA;&#xA;The Lint APIs are not yet stable, so these checks may either cause a performance, degradation, or stop working, or provide wrong results.&#xA;&#xA;This warning flags custom lint checks that are found to be using obsolete APIs and will need to be updated to run in the current lint environment.">
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        editor.putString(&quot;userId&quot;, userId).commit();"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK"/>
+            file="src/main/java/com/swrve/sdk/SwrveProfileManager.java"
+            line="60"
+            column="9"/>
     </issue>
 
     <issue
         id="OldTargetApi"
-        severity="Warning"
         message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
-        category="Correctness"
-        priority="6"
-        summary="Target SDK attribute is not targeting latest version"
-        explanation="When your application runs on a version of Android that is more recent than your `targetSdkVersion` specifies that it has been tested with, various compatibility modes kick in. This ensures that your application continues to work, but it may look out of place. For example, if the `targetSdkVersion` is less than 14, your app may get an option button in the UI.&#xA;&#xA;To fix this issue, set the `targetSdkVersion` to the highest available value. Then test your app to make sure everything works correctly. You may want to consult the compatibility notes to see what changes apply to each version you are adding support for: http://developer.android.com/reference/android/os/Build.VERSION_CODES.html"
-        url="http://developer.android.com/reference/android/os/Build.VERSION_CODES.html"
-        urls="http://developer.android.com/reference/android/os/Build.VERSION_CODES.html"
         errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        quickfix="studio">
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/AndroidManifest.xml"
+            file="src/firebase/AndroidManifest.xml"
             line="8"
             column="9"/>
     </issue>
 
     <issue
         id="SimpleDateFormat"
-        severity="Warning"
         message="To get local formatting use `getDateInstance()`, `getDateTimeInstance()`, or `getTimeInstance()`, or use `new SimpleDateFormat(String template, Locale locale)` with for example `Locale.US` for ASCII dates."
-        category="Correctness"
-        priority="6"
-        summary="Implied locale in date format"
-        explanation="Almost all callers should use `getDateInstance()`, `getDateTimeInstance()`, or `getTimeInstance()` to get a ready-made instance of SimpleDateFormat suitable for the user&apos;s locale. The main reason you&apos;d create an instance this class directly is because you need to format/parse a specific machine-readable format, in which case you almost certainly want to explicitly ask for US to ensure that you get ASCII digits (rather than, say, Arabic digits).&#xA;&#xA;Therefore, you should either use the form of the SimpleDateFormat constructor where you pass in an explicit locale, such as Locale.US, or use one of the get instance methods, or suppress this error if really know what you are doing."
-        url="http://developer.android.com/reference/java/text/SimpleDateFormat.html"
-        urls="http://developer.android.com/reference/java/text/SimpleDateFormat.html"
         errorLine1="        DateFormat dateformat = new SimpleDateFormat(&quot;yyyy-MM-dd&apos;T&apos;HH:mm:ss.SSS&apos;Z&apos;&quot;);"
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/SwrveBase.java"
-            line="374"
+            file="src/main/java/com/swrve/sdk/SwrveBase.java"
+            line="386"
             column="33"/>
     </issue>
 
     <issue
-        id="GradleDependency"
-        severity="Warning"
-        message="A newer version of com.google.code.gson:gson than 2.2.+ is available: 2.8.0"
-        category="Correctness"
-        priority="4"
-        summary="Obsolete Gradle Dependency"
-        explanation="This detector looks for usages of libraries where the version you are using is not the current stable release. Using older versions is fine, and there are cases where you deliberately want to stick with an older version. However, you may simply not be aware that a more recent version is available, and that is what this lint check helps find."
-        errorLine1="    api &apos;com.google.code.gson:gson:2.2.+&apos;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        quickfix="studio">
-        <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/build.gradle"
-            line="45"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="GradleDynamicVersion"
-        severity="Warning"
-        message="Avoid using + in version numbers; can lead to unpredictable and unrepeatable builds (com.google.code.gson:gson:2.2.+)"
-        category="Correctness"
-        priority="4"
-        summary="Gradle Dynamic Version"
-        explanation="Using `+` in dependencies lets you automatically pick up the latest available version rather than a specific, named version. However, this is not recommended; your builds are not repeatable; you may have tested with a slightly different version than what the build server used. (Using a dynamic version as the major version number is more problematic than using it in the minor version position.)"
-        errorLine1="    api &apos;com.google.code.gson:gson:2.2.+&apos;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        quickfix="studio">
-        <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/build.gradle"
-            line="45"
-            column="5"/>
-    </issue>
-
-    <issue
         id="GradleOverrides"
-        severity="Warning"
         message="This `minSdkVersion` value (`14`) is not used; it is always overridden by the value specified in the Gradle build script (`14`)"
-        category="Correctness"
-        priority="4"
-        summary="Value overridden by Gradle build script"
-        explanation="The value of (for example) `minSdkVersion` is only used if it is not specified in the `build.gradle` build scripts. When specified in the Gradle build scripts, the manifest value is ignored and can be misleading, so should be removed to avoid ambiguity."
         errorLine1="        android:minSdkVersion=&quot;14&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/AndroidManifest.xml"
+            file="src/firebase/AndroidManifest.xml"
             line="7"
             column="9"/>
     </issue>
 
     <issue
         id="GradleOverrides"
-        severity="Warning"
-        message="This `targetSdkVersion` value (`25`) is not used; it is always overridden by the value specified in the Gradle build script (`26`)"
-        category="Correctness"
-        priority="4"
-        summary="Value overridden by Gradle build script"
-        explanation="The value of (for example) `minSdkVersion` is only used if it is not specified in the `build.gradle` build scripts. When specified in the Gradle build scripts, the manifest value is ignored and can be misleading, so should be removed to avoid ambiguity."
+        message="This `targetSdkVersion` value (`25`) is not used; it is always overridden by the value specified in the Gradle build script (`27`)"
         errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/AndroidManifest.xml"
+            file="src/firebase/AndroidManifest.xml"
             line="8"
             column="9"/>
     </issue>
 
     <issue
         id="HardwareIds"
-        severity="Warning"
         message="Using `getString` to get device identifiers is not recommended."
-        category="Security"
-        priority="6"
-        summary="Hardware Id Usage"
-        explanation="Using these device identifiers is not recommended other than for high value fraud prevention and advanced telephony use-cases. For advertising use-cases, use `AdvertisingIdClient$Info#getId` and for analytics, use `InstanceId#getId`."
-        url="https://developer.android.com/training/articles/user-data-ids.html"
-        urls="https://developer.android.com/training/articles/user-data-ids.html"
         errorLine1="                this.androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);"
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/SwrveImp.java"
-            line="439"
+            file="src/main/java/com/swrve/sdk/SwrveImp.java"
+            line="445"
             column="34"/>
     </issue>
 
     <issue
+        id="Recycle"
+        message="This `Cursor` should be freed up after use with `#close()`"
+        errorLine1="                    Cursor cursor = db.rawQuery(&quot;SELECT * FROM cache WHERE category=&apos;SwrveSDK.installTime&apos;&quot;, null);"
+        errorLine2="                                       ~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/localstorage/SwrveSQLiteOpenHelper.java"
+            line="159"
+            column="40"/>
+    </issue>
+
+    <issue
         id="StaticFieldLeak"
-        severity="Warning"
         message="This AsyncTask class should be static or leaks might occur (anonymous android.os.AsyncTask)"
-        category="Performance"
-        priority="6"
-        summary="Static Field Leaks"
-        explanation="A static field will leak contexts.&#xA;&#xA;Non-static inner classes have an implicit reference to their outer class. If that outer class is for example a `Fragment` or `Activity`, then this reference means that the long-running handler/loader/task will hold a reference to the activity which prevents it from getting garbage collected.&#xA;&#xA;Similarly, direct field references to activities and fragments from these longer running instances can cause leaks.&#xA;&#xA;ViewModel classes should never point to Views or non-application Contexts."
         errorLine1="        new AsyncTask&lt;Void, Integer, Void>() {"
         errorLine2="        ^"
         includedVariants="firebaseDebug,firebaseRelease"
-        excludedVariants="amazonDebug,amazonRelease,coreDebug,coreRelease,googleDebug,googleRelease">
+        excludedVariants="amazonDebug,amazonRelease,coreDebug,coreRelease">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/firebase/java/com/swrve/sdk/Swrve.java"
-            line="42"
+            file="src/firebase/java/com/swrve/sdk/Swrve.java"
+            line="86"
             column="9"/>
     </issue>
 
     <issue
         id="StaticFieldLeak"
-        severity="Warning"
-        message="This AsyncTask class should be static or leaks might occur (anonymous android.os.AsyncTask)"
-        category="Performance"
-        priority="6"
-        summary="Static Field Leaks"
-        explanation="A static field will leak contexts.&#xA;&#xA;Non-static inner classes have an implicit reference to their outer class. If that outer class is for example a `Fragment` or `Activity`, then this reference means that the long-running handler/loader/task will hold a reference to the activity which prevents it from getting garbage collected.&#xA;&#xA;Similarly, direct field references to activities and fragments from these longer running instances can cause leaks.&#xA;&#xA;ViewModel classes should never point to Views or non-application Contexts."
-        errorLine1="            new AsyncTask&lt;Void, Integer, Void>() {"
-        errorLine2="            ^"
-        includedVariants="googleDebug,googleRelease"
-        excludedVariants="amazonDebug,amazonRelease,coreDebug,coreRelease,firebaseDebug,firebaseRelease">
+        message="Do not place Android context classes in static fields (static reference to `SwrveSQLiteOpenHelper` which has field `context` pointing to `Context`); this is a memory leak (and also breaks Instant Run)"
+        errorLine1="    private static SwrveSQLiteOpenHelper instance;"
+        errorLine2="            ~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/google/java/com/swrve/sdk/Swrve.java"
-            line="78"
+            file="src/main/java/com/swrve/sdk/localstorage/SwrveSQLiteOpenHelper.java"
+            line="16"
             column="13"/>
-    </issue>
-
-    <issue
-        id="StaticFieldLeak"
-        severity="Warning"
-        message="This AsyncTask class should be static or leaks might occur (anonymous android.os.AsyncTask)"
-        category="Performance"
-        priority="6"
-        summary="Static Field Leaks"
-        explanation="A static field will leak contexts.&#xA;&#xA;Non-static inner classes have an implicit reference to their outer class. If that outer class is for example a `Fragment` or `Activity`, then this reference means that the long-running handler/loader/task will hold a reference to the activity which prevents it from getting garbage collected.&#xA;&#xA;Similarly, direct field references to activities and fragments from these longer running instances can cause leaks.&#xA;&#xA;ViewModel classes should never point to Views or non-application Contexts."
-        errorLine1="            new AsyncTask&lt;Void, Integer, Void>() {"
-        errorLine2="            ^"
-        includedVariants="firebaseDebug,firebaseRelease"
-        excludedVariants="amazonDebug,amazonRelease,coreDebug,coreRelease,googleDebug,googleRelease">
-        <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/firebase/java/com/swrve/sdk/Swrve.java"
-            line="90"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="StaticFieldLeak"
-        severity="Warning"
-        message="This AsyncTask class should be static or leaks might occur (anonymous android.os.AsyncTask)"
-        category="Performance"
-        priority="6"
-        summary="Static Field Leaks"
-        explanation="A static field will leak contexts.&#xA;&#xA;Non-static inner classes have an implicit reference to their outer class. If that outer class is for example a `Fragment` or `Activity`, then this reference means that the long-running handler/loader/task will hold a reference to the activity which prevents it from getting garbage collected.&#xA;&#xA;Similarly, direct field references to activities and fragments from these longer running instances can cause leaks.&#xA;&#xA;ViewModel classes should never point to Views or non-application Contexts."
-        errorLine1="        new AsyncTask&lt;Void, Integer, Void>() {"
-        errorLine2="        ^"
-        includedVariants="googleDebug,googleRelease"
-        excludedVariants="amazonDebug,amazonRelease,coreDebug,coreRelease,firebaseDebug,firebaseRelease">
-        <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/google/java/com/swrve/sdk/Swrve.java"
-            line="141"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StaticFieldLeak"
-        severity="Warning"
-        message="This AsyncTask class should be static or leaks might occur (anonymous android.os.AsyncTask)"
-        category="Performance"
-        priority="6"
-        summary="Static Field Leaks"
-        explanation="A static field will leak contexts.&#xA;&#xA;Non-static inner classes have an implicit reference to their outer class. If that outer class is for example a `Fragment` or `Activity`, then this reference means that the long-running handler/loader/task will hold a reference to the activity which prevents it from getting garbage collected.&#xA;&#xA;Similarly, direct field references to activities and fragments from these longer running instances can cause leaks.&#xA;&#xA;ViewModel classes should never point to Views or non-application Contexts."
-        errorLine1="    private AsyncTask&lt;JobParameters, Void, Void> sendEventsTask = new AsyncTask&lt;JobParameters, Void, Void>() {"
-        errorLine2="                                                                  ^">
-        <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/SwrveEventSenderJobService.java"
-            line="64"
-            column="67"/>
     </issue>
 
     <issue
         id="UseSparseArrays"
-        severity="Warning"
         message="Use `new SparseArray&lt;SwrveCampaignState>(...)` instead for better performance"
-        category="Performance"
-        priority="4"
-        summary="HashMap can be replaced with SparseArray"
-        explanation="For maps where the keys are of type integer, it&apos;s typically more efficient to use the Android `SparseArray` API. This check identifies scenarios where you might want to consider using `SparseArray` instead of `HashMap` for better performance.&#xA;&#xA;This is **particularly** useful when the value types are primitives like ints, where you can use `SparseIntArray` and avoid auto-boxing the values from `int` to `Integer`.&#xA;&#xA;If you need to construct a `HashMap` because you need to call an API outside of your control which requires a `Map`, you can suppress this warning using for example the `@SuppressLint` annotation."
         errorLine1="        campaignsState = new HashMap&lt;>();"
         errorLine2="                         ~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/SwrveImp.java"
-            line="987"
+            file="src/main/java/com/swrve/sdk/SwrveImp.java"
+            line="980"
             column="26"/>
     </issue>
 
     <issue
         id="ViewConstructor"
-        severity="Warning"
         message="Custom view `SwrveButtonView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
-        category="Usability"
-        priority="3"
-        summary="Missing View constructors for XML inflation"
-        explanation="Some layout tools (such as the Android layout editor) need to find a constructor with one of the following signatures:&#xA;* `View(Context context)`&#xA;* `View(Context context, AttributeSet attrs)`&#xA;* `View(Context context, AttributeSet attrs, int defStyle)`&#xA;&#xA;If your custom view needs to perform initialization which does not apply when used in a layout editor, you can surround the given code with a check to see if `View#isInEditMode()` is false, since that method will return `false` at runtime but true within a user interface editor."
         errorLine1="public class SwrveButtonView extends ImageView {"
         errorLine2="             ~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
-            line="14"
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
+            line="16"
             column="14"/>
     </issue>
 
     <issue
         id="ViewConstructor"
-        severity="Warning"
         message="Custom view `SwrveMessageView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
-        category="Usability"
-        priority="3"
-        summary="Missing View constructors for XML inflation"
-        explanation="Some layout tools (such as the Android layout editor) need to find a constructor with one of the following signatures:&#xA;* `View(Context context)`&#xA;* `View(Context context, AttributeSet attrs)`&#xA;* `View(Context context, AttributeSet attrs, int defStyle)`&#xA;&#xA;If your custom view needs to perform initialization which does not apply when used in a layout editor, you can surround the given code with a check to see if `View#isInEditMode()` is false, since that method will return `false` at runtime but true within a user interface editor."
         errorLine1="public class SwrveMessageView extends RelativeLayout {"
         errorLine2="             ~~~~~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
-            line="37"
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
+            line="38"
             column="14"/>
     </issue>
 
     <issue
         id="ClickableViewAccessibility"
-        severity="Warning"
         message="Custom view `SwrveButtonView` overrides `onTouchEvent` but not `performClick`"
-        category="Accessibility"
-        priority="6"
-        summary="Accessibility in Custom Views"
-        explanation="If a `View` that overrides `onTouchEvent` or uses an `OnTouchListener` does not also implement `performClick` and call it when clicks are detected, the `View` may not handle accessibility actions properly. Logic handling the click actions should ideally be placed in `View#performClick` as some accessibility services invoke `performClick` when a click action should occur."
         errorLine1="    public boolean onTouchEvent(MotionEvent event) {"
         errorLine2="                   ~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
-            line="37"
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
+            line="43"
             column="20"/>
     </issue>
 
     <issue
         id="ClickableViewAccessibility"
-        severity="Warning"
         message="Custom view `SwrveImageView` overrides `onTouchEvent` but not `performClick`"
-        category="Accessibility"
-        priority="6"
-        summary="Accessibility in Custom Views"
-        explanation="If a `View` that overrides `onTouchEvent` or uses an `OnTouchListener` does not also implement `performClick` and call it when clicks are detected, the `View` may not handle accessibility actions properly. Logic handling the click actions should ideally be placed in `View#performClick` as some accessibility services invoke `performClick` when a click action should occur."
         errorLine1="    public boolean onTouchEvent(MotionEvent event) {"
         errorLine2="                   ~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/messaging/view/SwrveImageView.java"
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveImageView.java"
             line="17"
             column="20"/>
     </issue>
 
     <issue
         id="ClickableViewAccessibility"
-        severity="Warning"
         message="Custom view `SwrveMessageView` overrides `onTouchEvent` but not `performClick`"
-        category="Accessibility"
-        priority="6"
-        summary="Accessibility in Custom Views"
-        explanation="If a `View` that overrides `onTouchEvent` or uses an `OnTouchListener` does not also implement `performClick` and call it when clicks are detected, the `View` may not handle accessibility actions properly. Logic handling the click actions should ideally be placed in `View#performClick` as some accessibility services invoke `performClick` when a click action should occur."
         errorLine1="    public boolean onTouchEvent(MotionEvent event) {"
         errorLine2="                   ~~~~~~~~~~~~">
         <location
-            file="/Users/dominicmarmion/dev/sdk-tools-3/android-sdk/public/SwrveSDK/src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
-            line="271"
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
+            line="282"
             column="20"/>
     </issue>
 
