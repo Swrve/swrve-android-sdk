@@ -1,6 +1,8 @@
 package com.swrve.sdk;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 
 import com.google.gson.Gson;
@@ -136,10 +138,12 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
     @Test
     public void testReceiverInManifest() {
-        List<BroadcastReceiverData> receiverDataList = shadowApplication.getAppManifest().getBroadcastReceivers();
+        Context ctx = shadowApplication.getApplicationContext();
+        Intent intent = new Intent(ctx, SwrveNotificationEngageReceiver.class);
+        List<ResolveInfo> receiverDataList = ctx.getPackageManager().queryBroadcastReceivers(intent, 0);
         boolean inManifest = false;
-        for (BroadcastReceiverData receiverData : receiverDataList) {
-            if (receiverData.getClassName().equals("com.swrve.sdk.SwrveNotificationEngageReceiver")) {
+        for (ResolveInfo receiverData : receiverDataList) {
+            if (receiverData.activityInfo.name.equals("com.swrve.sdk.SwrveNotificationEngageReceiver")) {
                 inManifest = true;
                 break;
             }
