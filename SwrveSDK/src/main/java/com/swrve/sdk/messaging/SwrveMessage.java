@@ -165,6 +165,7 @@ public class SwrveMessage {
     }
 
     /**
+     * @param assetsOnDisk Already downloaded assets on disk
      * @return true if all assets for this message have been downloaded.
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk) {

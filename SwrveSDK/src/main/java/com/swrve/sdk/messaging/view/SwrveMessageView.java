@@ -54,9 +54,6 @@ public class SwrveMessageView extends RelativeLayout {
     protected int inAppMessageFocusColor;
     protected int inAppMessageClickColor;
 
-    // Bitmap cache
-    protected Set<WeakReference<Bitmap>> bitmapCache;
-
     public SwrveMessageView(SwrveInAppMessageActivity activity, SwrveMessage message,
                             SwrveMessageFormat format, int minSampleSize,
                             int defaultBackgroundColor, int inAppMessageFocusColor, int inAppMessageClickColor) throws SwrveMessageViewBuildException {
@@ -124,9 +121,6 @@ public class SwrveMessageView extends RelativeLayout {
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
         List<String> loadErrorReasons = new ArrayList<>();
         try {
-            // Create bitmap cache
-            bitmapCache = new HashSet<>();
-
             // Get device screen metrics
             Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
             int screenWidth = display.getWidth();
@@ -146,7 +140,7 @@ public class SwrveMessageView extends RelativeLayout {
             setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             for (final SwrveImage image : format.getImages()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + image.getFile();
-                if(!SwrveHelper.hasFileAccess(filePath)) {
+                if (!SwrveHelper.hasFileAccess(filePath)) {
                     SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
@@ -157,7 +151,6 @@ public class SwrveMessageView extends RelativeLayout {
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
                     SwrveImageView imageView = new SwrveImageView(context);
-                    bitmapCache.add(new WeakReference<>(imageBitmap));
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
                     lparams.leftMargin = image.getPosition().x;
@@ -177,7 +170,7 @@ public class SwrveMessageView extends RelativeLayout {
 
             for (final SwrveButton button : format.getButtons()) {
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + button.getImage();
-                if(!SwrveHelper.hasFileAccess(filePath)) {
+                if (!SwrveHelper.hasFileAccess(filePath)) {
                     SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
@@ -188,10 +181,9 @@ public class SwrveMessageView extends RelativeLayout {
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
                     Bitmap imageBitmap = backgroundImage.getBitmap();
                     SwrveButtonView buttonView = new SwrveButtonView(context, button.getActionType(), inAppMessageFocusColor, inAppMessageClickColor);
-                    //Mark the buttonView tag with the name of the button as found on the swrve dashboard.
-                    //Used primarily for testing.
+                    // Mark the buttonView tag with the name of the button as found on the swrve dashboard.
+                    // Used primarily for testing.
                     buttonView.setTag(button.getName());
-                    bitmapCache.add(new WeakReference<>(imageBitmap));
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
                     lparams.leftMargin = button.getPosition().x;
@@ -211,6 +203,8 @@ public class SwrveMessageView extends RelativeLayout {
                                     activity.notifyOfInstallButtonPress(button);
                                 } else if (button.getActionType() == SwrveActionType.Custom) {
                                     activity.notifyOfCustomButtonPress(button);
+                                } else if (button.getActionType() == SwrveActionType.Dismiss) {
+                                    activity.notifyOfDismissButtonPress(button);
                                 }
                             } catch (Exception e) {
                                 SwrveLogger.e("Error in onClick handler.", e);
@@ -232,15 +226,21 @@ public class SwrveMessageView extends RelativeLayout {
         } catch (Exception e) {
             SwrveLogger.e("Error while initializing SwrveMessageView layout", e);
             loadErrorReasons.add("Error while initializing SwrveMessageView layout:" + e.getMessage());
+            // dismiss view as it may not be completely displayed.
+            dismiss();
+
         } catch (OutOfMemoryError e) {
             SwrveLogger.e("OutOfMemoryError while initializing SwrveMessageView layout", e);
             loadErrorReasons.add("OutOfMemoryError while initializing SwrveMessageView layout:" + e.getMessage());
+            // dismiss view as it may not be completely displayed.
+            dismiss();
         }
 
         if (loadErrorReasons.size() > 0) {
             Map<String, String> errorReasonPayload = new HashMap<>();
             errorReasonPayload.put("reason", loadErrorReasons.toString());
-            destroy();
+            // dismiss what did successfully load as there was an error displaying the overall view
+            dismiss();
             throw new SwrveMessageViewBuildException("There was an error creating the view caused by:\n" + loadErrorReasons.toString());
         }
     }
@@ -283,44 +283,8 @@ public class SwrveMessageView extends RelativeLayout {
         return true;
     }
 
-    public void destroy() {
-        try {
-            if (bitmapCache != null) {
-                // Iterate through all the bitmaps to recycle them
-                for(WeakReference<Bitmap> weakBitmap :bitmapCache) {
-                    Bitmap b = weakBitmap.get();
-                    if (b != null) {
-                        if (!b.isRecycled()) {
-                            b.recycle();
-                        }
-                        b = null;
-                    }
-                    weakBitmap = null;
-                }
-
-                bitmapCache.clear();
-                bitmapCache = null;
-            }
-            System.gc();
-        } catch (Exception exp) {
-            SwrveLogger.e(Log.getStackTraceString(exp));
-        }
-    }
-
     public SwrveMessageFormat getFormat() {
         return format;
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        destroy();
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        destroy();
     }
 
     private static class BitmapResult {

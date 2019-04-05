@@ -35,7 +35,7 @@ public class RESTClient implements IRESTClient {
      * Safeguarded against multiple writers
      * and on copy-and-clean when writing the headers.
      */
-    private static List<String> metrics = new ArrayList<>();
+    protected static List<String> metrics = new ArrayList<>();
 
     public RESTClient(int httpTimeout) {
         this.httpTimeout = httpTimeout;
@@ -72,22 +72,20 @@ public class RESTClient implements IRESTClient {
             responseCode = urlConnection.getResponseCode();
             responseHeaderTime = milisecondsFrom(start);
 
-            InputStream errorStream = urlConnection.getErrorStream();
-            InputStream in = null;
-
-            if (errorStream == null) {
-                in = urlConnection.getInputStream();
-                String encoding = urlConnection.getContentEncoding();
-
-                if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
-                    in = new GZIPInputStream(in);
-                } else {
-                    in = new BufferedInputStream(in);
-                }
-            } else {
-                in = new BufferedInputStream(errorStream);
+            // get stream source which normally is urlConnection.getInputStream(), but check error stream first
+            InputStream streamSource = urlConnection.getErrorStream();
+            if (streamSource == null) {
+                streamSource = urlConnection.getInputStream();
             }
-            wrapperIn = new SwrveFilterInputStream(in);
+
+            InputStream inputStream;
+            String encoding = urlConnection.getContentEncoding();
+            if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
+                inputStream = new GZIPInputStream(streamSource);
+            } else {
+                inputStream = new BufferedInputStream(streamSource);
+            }
+            wrapperIn = new SwrveFilterInputStream(inputStream);
             responseBody = SwrveHelper.readStringFromInputStream(wrapperIn);
 
             responseBodyTime = milisecondsFrom(start);

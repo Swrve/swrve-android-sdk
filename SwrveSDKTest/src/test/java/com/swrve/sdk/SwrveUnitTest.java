@@ -5,7 +5,7 @@ import android.os.Build;
 import com.google.common.collect.Lists;
 import com.swrve.sdk.config.SwrveConfig;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.json.JSONObject;
 import org.junit.After;
@@ -21,6 +21,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class SwrveUnitTest extends SwrveBaseTest {
@@ -262,8 +263,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         swrveSpy.onCreate(mActivity);
 
-        // After init of sdk the disableAutoShowAfterDelay should be called and the default for autoShowMessagesEnabled should be true
-        Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", true, swrveSpy.autoShowMessagesEnabled);
+        // After init of sdk the disableAutoShowAfterDelay should be called
         Mockito.verify(swrveSpy, Mockito.atMost(1)).disableAutoShowAfterDelay();
 
         // sleep 2 seconds and test autoShowMessagesEnabled has been disabled.
@@ -288,5 +288,33 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertFalse("Test getting the joined value when sdk has NOT been initialised.", swrveSpy.initialised);
         String joined2 = swrveSpy.getJoined();
         assertEquals(joined2, joined1);
+    }
+
+    @Test
+    public void testSessionListener() {
+
+        assertNull(swrveSpy.sessionListener); // null to start with
+        SwrveSessionListener mockSessionListener = Mockito.mock(SwrveSessionListener.class);
+        swrveSpy.setSessionListener(mockSessionListener);
+        assertEquals(mockSessionListener, swrveSpy.sessionListener);
+
+        Mockito.verify(mockSessionListener, Mockito.never()).sessionStarted();
+
+        // init is called in setup which will start first session tick
+
+        // calling onResume should not invoke sessionStarted because its the same session
+        swrveSpy.onResume(mActivity);
+        Mockito.verify(mockSessionListener, Mockito.times(0)).sessionStarted();
+
+        // calling onResume 2nd and 3rd time should not invoke sessionStarted because its the same session
+        swrveSpy.onResume(mActivity);
+        Mockito.verify(mockSessionListener, Mockito.times(0)).sessionStarted();
+        swrveSpy.onResume(mActivity);
+        Mockito.verify(mockSessionListener, Mockito.times(0)).sessionStarted();
+
+        // fast forward to time after session expires and calling onResume should invoke sessionStarted once more
+        Mockito.doReturn(swrveSpy.lastSessionTick + 1).when(swrveSpy).getSessionTime();
+        swrveSpy.onResume(mActivity);
+        Mockito.verify(mockSessionListener, Mockito.times(1)).sessionStarted();
     }
 }

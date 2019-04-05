@@ -228,9 +228,7 @@ public class SwrveCampaignDisplayer {
         }
     }
 
-    /**
-     * Ensures a new message cannot be shown until now + minDelayBetweenMessage
-     */
+    // Ensures a new message cannot be shown until now + minDelayBetweenMessage
     public void setMessageMinDelayThrottle(Date now) {
         this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND);
     }

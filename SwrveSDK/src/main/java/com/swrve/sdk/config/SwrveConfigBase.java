@@ -74,6 +74,7 @@ public abstract class SwrveConfigBase {
      * Download resources and in-app campaigns automatically.
      *
      * @param autoDownload Automatically download campaigns and resources.
+     * @return the config object
      */
     public SwrveConfigBase setAutoDownloadCampaignsAndResources(boolean autoDownload) {
         this.autoDownloadCampaignsAndResources = autoDownload;
@@ -88,7 +89,10 @@ public abstract class SwrveConfigBase {
     }
 
     /**
+     * Set the orientation to limit in-app messages.
+     *
      * @param orientation Orientation supported by the application.
+     * @return the config object
      */
     public SwrveConfigBase setOrientation(SwrveOrientation orientation) {
         this.orientation = orientation;
@@ -100,6 +104,7 @@ public abstract class SwrveConfigBase {
      * the default locale is used.
      *
      * @param locale Locale of the app.
+     * @return the config object
      */
     public SwrveConfigBase setLanguage(Locale locale) {
         this.language = SwrveHelper.toLanguageTag(locale);
@@ -129,7 +134,6 @@ public abstract class SwrveConfigBase {
         selectedStack = stack;
     }
 
-
     /*
      * Get the stack prefix for the events and content url
      */
@@ -148,6 +152,7 @@ public abstract class SwrveConfigBase {
      * Set the maximum byte size of the internal SQLite database.
      *
      * @param maxSqliteDbSize Maximum size in bytes.
+     * @return the config object
      */
     public SwrveConfigBase setMaxSqliteDbSize(long maxSqliteDbSize) {
         this.maxSqliteDbSize = maxSqliteDbSize;
@@ -165,6 +170,7 @@ public abstract class SwrveConfigBase {
      * Set the maximum number of events per batch to the event server.
      *
      * @param maxEventsPerFlush Maximum number of events per batch.
+     * @return the config object
      */
     public SwrveConfigBase setMaxEventsPerFlush(int maxEventsPerFlush) {
         this.maxEventsPerFlush = maxEventsPerFlush;
@@ -182,6 +188,7 @@ public abstract class SwrveConfigBase {
      * Override the name of the internal SQLite database.
      *
      * @param dbName Name of the internal SQLite database.
+     * @return the config object
      */
     public SwrveConfigBase setDbName(String dbName) {
         this.dbName = dbName;
@@ -203,6 +210,7 @@ public abstract class SwrveConfigBase {
      * You should only need to change this value if you are working with Swrve support on a specific support issue.
      *
      * @param eventsUrl Custom location of the event server.
+     * @return the config object
      */
     public SwrveConfigBase setEventsUrl(URL eventsUrl) {
         this.eventsUrl = eventsUrl;
@@ -215,6 +223,7 @@ public abstract class SwrveConfigBase {
      * You should only need to change this value if you are working with Swrve support on a specific support issue.
      *
      * @param identityUrl Custom location of the identity server.
+     * @return the config object
      */
     public SwrveConfigBase setIdentityUrl(URL identityUrl) {
         this.identityUrl = identityUrl;
@@ -245,6 +254,7 @@ public abstract class SwrveConfigBase {
      * You should only need to change this value if you are working with Swrve support on a specific support issue.
      *
      * @param contentUrl Custom location of the content server.
+     * @return the config object
      */
     public SwrveConfigBase setContentUrl(URL contentUrl) {
         this.contentUrl = contentUrl;
@@ -263,6 +273,7 @@ public abstract class SwrveConfigBase {
      * will be used.
      *
      * @param appVersion Version of the app.
+     * @return the config object
      */
     public SwrveConfigBase setAppVersion(String appVersion) {
         this.appVersion = appVersion;
@@ -281,6 +292,7 @@ public abstract class SwrveConfigBase {
      * User activity after this time will be considered a new session.
      *
      * @param newSessionInterval session timeout in milliseconds.
+     * @return the config object
      */
     public SwrveConfigBase setNewSessionInterval(long newSessionInterval) {
         this.newSessionInterval = newSessionInterval;
@@ -298,6 +310,7 @@ public abstract class SwrveConfigBase {
      * Set the App Store where the app will be distributed.
      *
      * @param appStore App Store where the app will be distributed.
+     * @return the config object
      */
     public SwrveConfigBase setAppStore(String appStore) {
         this.appStore = appStore;
@@ -306,6 +319,7 @@ public abstract class SwrveConfigBase {
 
     /**
      * Generate default endpoints with the given app id. Used internally.
+     * @param appId application id
      *
      * @throws MalformedURLException If theres an error
      */

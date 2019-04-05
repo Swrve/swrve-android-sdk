@@ -118,6 +118,7 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
+     * @param date Current date
      * @return true if the campaign is active at the given time.
      */
     public boolean isActive(Date date) {

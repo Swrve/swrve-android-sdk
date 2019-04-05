@@ -23,7 +23,7 @@ import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.json.JSONObject;
 import org.mockito.ArgumentCaptor;

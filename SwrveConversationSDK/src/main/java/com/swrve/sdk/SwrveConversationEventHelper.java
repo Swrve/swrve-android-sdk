@@ -5,11 +5,58 @@ import com.swrve.sdk.conversations.engine.model.UserInputResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class SwrveConversationEventHelper {
 
     protected ISwrveConversationSDK swrveConversationSDK;
+
+    protected static Map<String,String> customPayload;
+
+    public static Map<String, String> getCustomPayload() {
+        return customPayload;
+    }
+
+    private static boolean validatePayloadKeys(Map payload) {
+        if (payload == null) return true;
+
+        HashSet unionKeys = new HashSet<>(payload.keySet());
+        HashSet restrictedSwrveKeys = new HashSet();
+        restrictedSwrveKeys.add("event");
+        restrictedSwrveKeys.add("to");
+        restrictedSwrveKeys.add("page");
+        restrictedSwrveKeys.add("conversation");
+        restrictedSwrveKeys.add("control");
+        restrictedSwrveKeys.add("fragment");
+        restrictedSwrveKeys.add("result");
+        restrictedSwrveKeys.add("name");
+        restrictedSwrveKeys.add("id");
+
+        unionKeys.addAll(restrictedSwrveKeys);
+        return (unionKeys.size() == payload.size() + restrictedSwrveKeys.size());
+    }
+
+    public static void setCustomPayload(Map<String, String> customPayload) {
+
+        if (customPayload == null) {
+            SwrveLogger.d("Swrve removing custom payload");
+            SwrveConversationEventHelper.customPayload = customPayload;
+            return;
+        }
+
+        if (customPayload.size() > 5) {
+            SwrveLogger.e("Swrve custom payload rejected, attempted to add more than 5 key pair values");
+            return;
+        }
+
+        if (!(validatePayloadKeys(customPayload))) {
+            SwrveLogger.e("Swrve custom payload rejected, attempted to add a key which is already reserved for Swrve internal events");
+            return;
+        }
+
+        SwrveConversationEventHelper.customPayload = customPayload;
+    }
 
     public SwrveConversationEventHelper() {
         this.swrveConversationSDK = (ISwrveConversationSDK) SwrveCommon.getInstance();
@@ -92,6 +139,14 @@ public class SwrveConversationEventHelper {
 
                     String key = userInteraction.getType();
                     String eventParamName = getEventForConversation(conversation, key);
+
+                    if (UserInputResult.TYPE_STAR_RATING.equals(key) || UserInputResult.TYPE_SINGLE_CHOICE.equals(key) || UserInputResult.TYPE_VIDEO_PLAY.equals(key)) {
+                        Map customPayload = getCustomPayload();
+                        if (customPayload != null) {
+                            payload.putAll(customPayload);
+                        }
+                    }
+
                     swrveConversationSDK.queueConversationEvent(eventParamName, key, userInteraction.getPageTag(), userInteraction.getConversationId(), payload);
                 }
             } else {

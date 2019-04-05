@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="4" by="lint 3.1.3">
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        edit.commit();"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveCampaignInfluence.java"
+            line="73"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        edit.remove(trackingId).commit();"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveCampaignInfluence.java"
+            line="79"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="            sharedPreferences.edit().clear().commit();"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveCampaignInfluence.java"
+            line="113"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 14): `android.app.NotificationManager#IMPORTANCE_DEFAULT`"
+        errorLine1="                    return NotificationManager.IMPORTANCE_DEFAULT;"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/notifications/model/SwrveNotificationChannel.java"
+            line="26"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 14): `android.app.NotificationManager#IMPORTANCE_HIGH`"
+        errorLine1="                    return NotificationManager.IMPORTANCE_HIGH;"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/notifications/model/SwrveNotificationChannel.java"
+            line="28"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 14): `android.app.NotificationManager#IMPORTANCE_LOW`"
+        errorLine1="                    return NotificationManager.IMPORTANCE_LOW;"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/notifications/model/SwrveNotificationChannel.java"
+            line="30"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 14): `android.app.NotificationManager#IMPORTANCE_MAX`"
+        errorLine1="                    return NotificationManager.IMPORTANCE_MAX;"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/notifications/model/SwrveNotificationChannel.java"
+            line="32"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 14): `android.app.NotificationManager#IMPORTANCE_MIN`"
+        errorLine1="                    return NotificationManager.IMPORTANCE_MIN;"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/notifications/model/SwrveNotificationChannel.java"
+            line="34"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 14): `android.app.NotificationManager#IMPORTANCE_NONE`"
+        errorLine1="                    return NotificationManager.IMPORTANCE_NONE;"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/notifications/model/SwrveNotificationChannel.java"
+            line="36"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 14): `android.app.NotificationManager#IMPORTANCE_DEFAULT`"
+        errorLine1="                    return NotificationManager.IMPORTANCE_DEFAULT;"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/notifications/model/SwrveNotificationChannel.java"
+            line="38"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="LogNotTimber"
+        message="Using &apos;Log&apos; instead of &apos;Timber&apos;"
+        errorLine1="                Log.e(LOG_TAG, &quot;Found SwrveLogger system loglevel prop but failed to read it. systemProp:&quot; + systemProp, ex);"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveLogger.java"
+            line="152"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="LogNotTimber"
+        message="Using &apos;Log&apos; instead of &apos;Timber&apos;"
+        errorLine1="            Log.w(LOG_TAG, &quot;Failure to read prop:&quot; + propName + &quot;. Using Swrve default log level:&quot; + LOG_LEVEL_DEFAULT);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveLogger.java"
+            line="174"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver"
+        errorLine2="        ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="5"
+            column="9"/>
+    </issue>
+
+</issues>

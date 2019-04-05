@@ -13,47 +13,77 @@ import timber.log.Timber;
  */
 public class SwrveLogger {
 
-    private static final String LOG_TAG = "SwrveSDK";
+    public static final String LOG_TAG = "SwrveSDK";
 
     private static final int LOG_LEVEL_DEFAULT = Log.WARN;
     private static int logLevel = -1;
-    private static boolean logLevelSet = false;
-    private static boolean swrveLoggerPlanted = false;
+    private static boolean enabled = true;
+    private static Timber.Tree swrveLoggerTree;
+    private static boolean isPlanted = false;
+    private static boolean useCustomLogger = false;
+
+    private static void checkSwrveLogger() {
+        if (logLevel == -1) {
+            logLevel = getLogLevelFromSystemProps();
+        }
+        if (!useCustomLogger && !isPlanted) {
+            plantSwrveLogger();
+        }
+    }
 
     private static synchronized void plantSwrveLogger() {
-        if (logLevelSet == false) {
-            logLevel = getLogLevelFromSystemProps();
-            logLevelSet = true;
+        if (!isSwrveLoggerTreeAlreadyPlanted()) {
+            swrveLoggerTree = new SwrveLoggerTree();
+            Timber.plant(swrveLoggerTree);
         }
-        if (swrveLoggerPlanted == false) {
-            Timber.plant(new SwrveLoggerTree());
-            swrveLoggerPlanted = true;
+        isPlanted = true;
+    }
+
+    private static boolean isSwrveLoggerTreeAlreadyPlanted() {
+        boolean alreadyPlanted = false;
+        Iterator<Timber.Tree> forestIt = Timber.forest().iterator();
+        while (!alreadyPlanted && forestIt.hasNext()) {
+            alreadyPlanted = forestIt.next().getClass().equals(SwrveLoggerTree.class);
         }
+        return alreadyPlanted;
     }
 
     protected static void setLoggingEnabled(boolean enabled) {
-        if (enabled) {
-            boolean alreadyPlanted = false;
-            Iterator<Timber.Tree> forestIt = Timber.forest().iterator();
-            while(!alreadyPlanted && forestIt.hasNext()) {
-                alreadyPlanted = forestIt.next().getClass().equals(SwrveLoggerTree.class);
+        SwrveLogger.enabled = enabled;
+        if (!enabled) {
+            if (swrveLoggerTree != null) {
+                Timber.uproot(swrveLoggerTree);
             }
-            swrveLoggerPlanted = alreadyPlanted;
-        } else {
-            Timber.uprootAll();
-            logLevelSet = true;
-            swrveLoggerPlanted = true;
         }
     }
 
+    /**
+     * Set this boolean to true if using Timber library in your own app and you want to handle all
+     * SwrveSDK logging within your own custom Timber Tree. If your tree is printing logs to Logcat
+     * then setting this flag to true will prevent your Tree and the SwrveLogger duplicating the
+     * logs to Logcat. The SwrveSDK logs can be filtered from your custom tree by overriding the
+     * Tree.isLoggable method and filtering on tag SwrveLogger.LOG_TAG
+     * 
+     * The default is false which means the SwrveSDK will print to logcat according to the loglevel.
+
+     * @param useCustomLogger set to true if handling all logs with your own Timber.Tree.
+     */
+    public static void useCustomLogger(boolean useCustomLogger) {
+        SwrveLogger.useCustomLogger = useCustomLogger;
+    }
+
     public static void v(String message, Object... args){
-        verbose(LOG_TAG, message, args);
+        if(enabled) {
+            verbose(LOG_TAG, message, args);
+        }
     }
 
     private static void verbose(String tag, String message, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.v(message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.v(message, args);
+        }
     }
 
     public static void d(String message, Object... args){
@@ -61,9 +91,11 @@ public class SwrveLogger {
     }
 
     private static void debug(String tag, String message, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.d(message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.d(message, args);
+        }
     }
 
     public static void i(String message, Object... args){
@@ -71,9 +103,11 @@ public class SwrveLogger {
     }
 
     private static void info(String tag, String message, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.i(message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.i(message, args);
+        }
     }
 
     public static void w(String message, Object... args){
@@ -81,9 +115,11 @@ public class SwrveLogger {
     }
 
     private static void warn(String tag, String message, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.w(message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.w(message, args);
+        }
     }
 
     public static void w(String tag, String message, Throwable t, Object... args){
@@ -91,9 +127,11 @@ public class SwrveLogger {
     }
 
     private static void warn(String tag, String message, Throwable t, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.w(t, message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.w(t, message, args);
+        }
     }
 
     public static void e(String message, Object... args){
@@ -101,9 +139,11 @@ public class SwrveLogger {
     }
 
     private static void error(String tag, String message, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.e(message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.e(message, args);
+        }
     }
 
     public static void e(String message, Throwable t, Object... args){
@@ -111,9 +151,11 @@ public class SwrveLogger {
     }
 
     private static void error(String tag, String message, Throwable t, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.e(t, message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.e(t, message, args);
+        }
     }
 
     public static void wtf(String message, Object... args){
@@ -121,15 +163,19 @@ public class SwrveLogger {
     }
 
     public static void wtf(String tag, String message, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.wtf(message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.wtf(message, args);
+        }
     }
 
     public static void wtf(String tag, String message, Throwable t, Object... args){
-        plantSwrveLogger();
-        Timber.tag(tag);
-        Timber.wtf(t, message, args);
+        if(enabled) {
+            checkSwrveLogger();
+            Timber.tag(tag);
+            Timber.wtf(t, message, args);
+        }
     }
 
     public static int getLogLevel() {
@@ -138,7 +184,6 @@ public class SwrveLogger {
 
     public static void setLogLevel(int logLevel) {
         SwrveLogger.logLevel = logLevel;
-        SwrveLogger.logLevelSet = true;
     }
 
     protected static int getLogLevelFromSystemProps() {
@@ -182,7 +227,7 @@ public class SwrveLogger {
     protected static class SwrveLoggerTree extends Timber.DebugTree {
         @Override
         protected boolean isLoggable(String tag, int priority) {
-            return priority >= logLevel;
+            return tag.equals(SwrveLogger.LOG_TAG) && priority >= logLevel;
         }
     }
 }

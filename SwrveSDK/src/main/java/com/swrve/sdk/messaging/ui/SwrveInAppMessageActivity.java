@@ -3,15 +3,10 @@ package com.swrve.sdk.messaging.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
-import android.view.WindowManager;
 
 import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveBase;
@@ -59,7 +54,7 @@ public class SwrveInAppMessageActivity extends Activity {
                 message = sdk.getMessageForId(messageId);
 
                 if (message == null) {
-                    //check if loaded from SwrveDeeplinkManager
+                    // Check if loaded from SwrveDeeplinkManager
                     if (extras.getBoolean(SWRVE_AD_MESSAGE)) {
                         message = sdk.getAdMesage();
                     }
@@ -87,24 +82,27 @@ public class SwrveInAppMessageActivity extends Activity {
         }
 
         if (message.getFormats().size() == 1) {
-            if(Build.VERSION.SDK_INT == Build.VERSION_CODES.O && SwrveHelper.getTargetSdkVersion(this) >= 27) {
-                // Cannot call setRequestedOrientation with translucent attribute, otherwise "IllegalStateException: Only fullscreen activities can request orientation"
-                // https://github.com/Swrve/swrve-android-sdk/issues/271
-                // workaround is to not change orientation
-                SwrveLogger.w("Oreo bug with setRequestedOrientation so Message may appear in wrong orientation.");
-            } else
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                if (format.getOrientation() == SwrveOrientation.Landscape) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+            try {
+                if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O && SwrveHelper.getTargetSdkVersion(this) >= 27) {
+                    // Cannot call setRequestedOrientation with translucent attribute, otherwise "IllegalStateException: Only fullscreen activities can request orientation"
+                    // https://github.com/Swrve/swrve-android-sdk/issues/271
+                    // workaround is to not change orientation
+                    SwrveLogger.w("Oreo bug with setRequestedOrientation so Message may appear in wrong orientation.");
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                    if (format.getOrientation() == SwrveOrientation.Landscape) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+                    } else {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+                    }
                 } else {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+                    if (format.getOrientation() == SwrveOrientation.Landscape) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                    } else {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                    }
                 }
-            } else {
-                if (format.getOrientation() == SwrveOrientation.Landscape) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                } else {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-                }
+            } catch(RuntimeException ex) {
+                SwrveLogger.e("Bugs with setRequestedOrientation can happen: https://issuetracker.google.com/issues/68454482", ex);
             }
         }
 
@@ -178,6 +176,20 @@ public class SwrveInAppMessageActivity extends Activity {
             } catch (Exception e) {
                 SwrveLogger.e("Couldn't launch default custom action: %s", e, buttonAction);
             }
+        }
+    }
+
+    public void notifyOfDismissButtonPress(SwrveButton button) {
+        if (sdk.getDismissButtonListener() != null) {
+            sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), button.getName());
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        if (sdk.getDismissButtonListener() != null) {
+            sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), null);
         }
     }
 

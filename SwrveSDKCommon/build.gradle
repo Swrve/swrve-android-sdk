@@ -8,6 +8,7 @@ android {
     defaultConfig {
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
     buildTypes {
@@ -17,7 +18,7 @@ android {
 
     lintOptions {
         abortOnError true
-        baseline file("../../lint/lint-baseline-swrvesdkcommon.xml")
+        baseline file("../lint/lint-baseline-swrvesdkcommon.xml")
     }
 }
 
@@ -30,49 +31,24 @@ dependencies {
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-publishing {
-    repositories {
-        maven {
-            url "$buildDir/../publish" // SwrveCommonSDK/publish
-        }
-    }
+task androidCommonJavadoc(type: Javadoc, dependsOn: "assembleRelease") {
+    description "Generates Javadoc for release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
 
-    publications {
-        maven(MavenPublication) {
-            artifactId project.SWRVE_COMMON_ARTIFACT_ID
-            groupId project.SWRVE_GROUP_ID
-            version project.SWRVE_SDK_VERSION
-            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidCommonJavadocsJar, androidCommonSourcesJar]
-
-            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
-            // so we have to manually add them to the pom
-            pom.withXml {
-                def dependenciesNode = asNode().appendNode('dependencies')
-
-                // Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-                configurations.getByName("releaseCompileClasspath").allDependencies.each {
-                    def dependencyNode = dependenciesNode.appendNode('dependency')
-                    dependencyNode.appendNode('groupId', it.group)
-                    dependencyNode.appendNode('artifactId', it.name)
-                    dependencyNode.appendNode('version', it.version)
-                    dependencyNode.appendNode('scope', 'compile')
-                }
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "release") {
+            source = variant.sourceSets.collect { it.java.sourceFiles }.inject { t, fc -> t + fc }
+            doFirst {
+              classpath += files(variant.javaCompileProvider.get().classpath.files)
             }
         }
     }
 }
-
-task androidCommonJavadoc(type: Javadoc) {
-    description "Generates Javadoc for Common."
-    source = files(android.sourceSets.main.java.srcDirs)
-    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-    classpath = files(android.libraryVariants.javaCompile.classpath.files) + files(ext.androidJar)
-    exclude '**/BuildConfig.java'
-    exclude '**/R.java'
-    exclude '**/README.md'
-    failOnError false
-}
-task androidCommonJavadocsJar(type: Jar) {
+task androidCommonJavadocsJar(type: Jar, dependsOn: androidCommonJavadoc) {
     description "Package Javadoc for Common."
     classifier = 'javadoc'
     from androidCommonJavadoc
@@ -83,21 +59,55 @@ task androidCommonSourcesJar(type: Jar) {
     from files(android.sourceSets.main.java.srcDirs)
 }
 
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-    pkg {
-        repo = 'android'
-        name = System.getProperty('bintray.pkg.name') == null ? project.SWRVE_COMMON_ARTIFACT_ID : System.getProperty('bintray.pkg.name')
-        userOrg = 'swrve-inc'
-        licenses = ['Apache-2.0']
-        desc = 'Swrve SDK'
-        websiteUrl = "https://www.swrve.com"
-        publish = true
-        version {
-            name = project.SWRVE_SDK_VERSION
+if (project.hasProperty('SWRVE_COMMON_ARTIFACT_ID')) {
+    publishing {
+        repositories {
+            maven {
+                url "$buildDir/../publish" // SwrveCommonSDK/publish
+            }
+        }
+
+        publications {
+            maven(MavenPublication) {
+                artifactId project.SWRVE_COMMON_ARTIFACT_ID
+                groupId project.SWRVE_GROUP_ID
+                version project.SWRVE_SDK_VERSION
+                artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidCommonJavadocsJar, androidCommonSourcesJar]
+
+                // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+                // so we have to manually add them to the pom
+                pom.withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+
+                    // Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                    configurations.getByName("releaseCompileClasspath").allDependencies.each {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', 'compile')
+                    }
+                }
+            }
         }
     }
-    publications = ['maven']
 
+    bintray {
+        user = System.getenv('BINTRAY_USER')
+        key = System.getenv('BINTRAY_KEY')
+        pkg {
+            repo = 'android'
+            name = System.getProperty('bintray.pkg.name') == null ? project.SWRVE_COMMON_ARTIFACT_ID : System.getProperty('bintray.pkg.name')
+            userOrg = 'swrve-inc'
+            licenses = ['Apache-2.0']
+            desc = 'Swrve SDK'
+            websiteUrl = "https://www.swrve.com"
+            publish = true
+            version {
+                name = project.SWRVE_SDK_VERSION
+            }
+        }
+        publications = ['maven']
+
+    }
 }

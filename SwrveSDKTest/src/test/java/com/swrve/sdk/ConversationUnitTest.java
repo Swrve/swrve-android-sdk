@@ -46,6 +46,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         swrveSpy.init(mActivity);
         Mockito.reset(swrveSpy);
+        SwrveConversationEventHelper.customPayload = null; // remove action custom payloads
     }
 
     @Test
@@ -232,6 +233,98 @@ public class ConversationUnitTest extends SwrveBaseTest {
         SwrveConversation mockConversation = getMockSwrveConversation(1);
         SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
         ISwrveConversationSDK swrveConversationSDKSpy = Mockito.spy(conversationEventHelper.swrveConversationSDK);
+        conversationEventHelper.swrveConversationSDK = swrveConversationSDKSpy;
+        conversationEventHelper.conversationEventsCommitedByUser(mockConversation, userInteractions);
+
+        Map<String, String> map = new HashMap<>();
+        map.put("result", null);
+        map.put("page", "tag");
+        map.put("event", "choice");
+        map.put("conversation", "123");
+        map.put("fragment", "fragmentTag");
+        Mockito.verify(swrveConversationSDKSpy, times(2)).queueConversationEvent("Swrve.Conversations.Conversation-1.choice", "choice", "tag", 123, map);
+    }
+
+    @Test
+    public void testConversationEventsCommitedByUserWithCustomPayload() throws Exception {
+        ArrayList<UserInputResult> userInteractions = new ArrayList<UserInputResult>() {
+            {
+                add(createUserInputResult(UserInputResult.TYPE_SINGLE_CHOICE));
+                add(createUserInputResult(UserInputResult.TYPE_SINGLE_CHOICE));
+                add(createUserInputResult(UserInputResult.TYPE_VIDEO_PLAY));
+            }
+        };
+        SwrveConversation mockConversation = getMockSwrveConversation(1);
+        SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        ISwrveConversationSDK swrveConversationSDKSpy = Mockito.spy(conversationEventHelper.swrveConversationSDK);
+        Map<String, String> customPayload = new HashMap<>();
+        customPayload.put("key1", "value1");
+        customPayload.put("key2", "value2");
+        customPayload.put("key3", "value3");
+        customPayload.put("key4", "value4");
+        swrveSpy.setCustomPayloadForConversationInput(customPayload);
+        conversationEventHelper.swrveConversationSDK = swrveConversationSDKSpy;
+
+        conversationEventHelper.conversationEventsCommitedByUser(mockConversation, userInteractions);
+
+        Map<String, String> map = new HashMap();
+        map.put("result", null);
+        map.put("page", "tag");
+        map.put("event", "choice");
+        map.put("conversation", "123");
+        map.put("fragment", "fragmentTag");
+        map.putAll(customPayload);
+        Mockito.verify(swrveConversationSDKSpy, times(2)).queueConversationEvent("Swrve.Conversations.Conversation-1.choice", "choice", "tag", 123, map);
+    }
+
+    @Test
+    public void testConversationEventsCommitedByUserWithCustomPayloadForbiddenKey() throws Exception {
+        ArrayList<UserInputResult> userInteractions = new ArrayList<UserInputResult>() {
+            {
+                add(createUserInputResult(UserInputResult.TYPE_SINGLE_CHOICE));
+                add(createUserInputResult(UserInputResult.TYPE_SINGLE_CHOICE));
+                add(createUserInputResult(UserInputResult.TYPE_VIDEO_PLAY));
+            }
+        };
+        SwrveConversation mockConversation = getMockSwrveConversation(1);
+        SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        ISwrveConversationSDK swrveConversationSDKSpy = Mockito.spy(conversationEventHelper.swrveConversationSDK);
+        Map<String, String> customPayload = new HashMap<>();
+        customPayload.put("event", "should_not_be_there");
+        swrveSpy.setCustomPayloadForConversationInput(customPayload);
+        conversationEventHelper.swrveConversationSDK = swrveConversationSDKSpy;
+
+        conversationEventHelper.conversationEventsCommitedByUser(mockConversation, userInteractions);
+
+        Map<String, String> map = new HashMap();
+        map.put("result", null);
+        map.put("page", "tag");
+        map.put("event", "choice");
+        map.put("conversation", "123");
+        map.put("fragment", "fragmentTag");
+        Mockito.verify(swrveConversationSDKSpy, times(2)).queueConversationEvent("Swrve.Conversations.Conversation-1.choice", "choice", "tag", 123, map);
+    }
+
+    @Test
+    public void testConversationEventsCommitedByUserWithCustomPayloadTooManyKeys() throws Exception {
+        ArrayList<UserInputResult> userInteractions = new ArrayList<UserInputResult>() {
+            {
+                add(createUserInputResult(UserInputResult.TYPE_SINGLE_CHOICE));
+                add(createUserInputResult(UserInputResult.TYPE_SINGLE_CHOICE));
+                add(createUserInputResult(UserInputResult.TYPE_VIDEO_PLAY));
+            }
+        };
+        SwrveConversation mockConversation = getMockSwrveConversation(1);
+        SwrveConversationEventHelper conversationEventHelper = new SwrveConversationEventHelper();
+        ISwrveConversationSDK swrveConversationSDKSpy = Mockito.spy(conversationEventHelper.swrveConversationSDK);
+        Map<String, String> customPayload = new HashMap<>();
+        customPayload.put("key1", "value1");
+        customPayload.put("key2", "value2");
+        customPayload.put("key3", "value3");
+        customPayload.put("key4", "value4");
+        customPayload.put("key5", "value5");
+        customPayload.put("key6", "value6"); // one too many keys
+        swrveSpy.setCustomPayloadForConversationInput(customPayload);
         conversationEventHelper.swrveConversationSDK = swrveConversationSDKSpy;
 
         conversationEventHelper.conversationEventsCommitedByUser(mockConversation, userInteractions);

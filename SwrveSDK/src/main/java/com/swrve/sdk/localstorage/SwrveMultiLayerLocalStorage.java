@@ -241,4 +241,18 @@ public class SwrveMultiLayerLocalStorage {
             secondaryStorage.deleteNotificationsAuthenticated();
         }
     }
+
+    public void saveOfflineCampaign(String userId, String campaignId, String campaignData) {
+        if (secondaryStorage != null) {
+            secondaryStorage.saveOfflineCampaign(userId, campaignId, campaignData);
+        }
+    }
+
+    public String getOfflineCampaign(String userId, String campaignId) {
+        String campaignData = null;
+        if (secondaryStorage != null) {
+            campaignData = secondaryStorage.getOfflineCampaign(userId, campaignId);
+        }
+        return campaignData;
+    }
 }

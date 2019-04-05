@@ -82,6 +82,7 @@ public class ConversationFragmentTest extends SwrveBaseTest {
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
+        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
         SwrveCommon.setSwrveCommon(swrveSpy);
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");

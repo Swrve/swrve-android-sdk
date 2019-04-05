@@ -26,6 +26,7 @@ import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -74,7 +75,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "6.0.2";
+    protected static String version = "6.1";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
@@ -107,6 +108,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected SwrveConversationListener conversationListener;
     protected SwrveInstallButtonListener installButtonListener;
     protected SwrveCustomButtonListener customButtonListener;
+    protected SwrveDismissButtonListener inAppDismissButtonListener;
     protected SwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
     protected AtomicInteger bindCounter;
@@ -151,6 +153,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected String notificationSwrveCampaignId;
     protected SwrveTrackingState trackingState = ON;
     protected boolean identifiedOnAnotherDevice;
+    protected SwrveSessionListener sessionListener;
 
     protected SwrveImp(Application application, int appId, String apiKey, C config) {
         SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
@@ -243,9 +246,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    /**
-     * Internal function to add a Swrve.iap event to the event queue.
-     */
+    // Internal function to add a Swrve.iap event to the event queue.
     protected void _iap(int quantity, String productId, double productPrice, String currency, SwrveIAPRewards rewards, String receipt, String receiptSignature, String paymentProvider) {
         if (_iap_check_parameters(quantity, productId, productPrice, currency, paymentProvider)) {
             Map<String, Object> parameters = new HashMap<>();
@@ -354,7 +355,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             return false;
         }
         try {
-            storageExecutorExecute(new QueueEventRunnable(userId, eventType, parameters, payload));
+            int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();
+            storageExecutorExecute(new QueueEventRunnable(multiLayerLocalStorage, userId, eventType, parameters, payload, seqNum));
             if (triggerEventListener && eventListener != null) {
                 eventListener.onEvent(EventHelper.getEventName(eventType, parameters), payload);
             }
@@ -885,9 +887,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return activity.isFinishing();
     }
 
-    /**
-     * Get device info and send it to Swrve
-     */
+    // Get device info and send it to Swrve
     protected void queueDeviceUpdateNow(final String userId, final String sessionToken, final boolean sendNow) {
         final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
         storageExecutorExecute(new Runnable() {
@@ -909,24 +909,18 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         });
     }
 
-    /**
-     * Create a unique key for this user
-     */
+    // Create a unique key for this user
     public String getUniqueKey(String userId) {
         return userId + this.apiKey;
     }
 
-    /**
-     * Invalidates the currently stored ETag
-     * Should be called when a refresh of campaigns and resources needs to be forced (eg. when cached data cannot be read)
-     */
+    // Invalidates the currently stored ETag
+    // Should be called when a refresh of campaigns and resources needs to be forced (eg. when cached data cannot be read)
     protected void invalidateETag(final String userId) {
         multiLayerLocalStorage.setCacheEntry(userId, CACHE_ETAG, "");
     }
 
-    /**
-     * Initialize Resource Manager with cache content
-     */
+    // Initialize Resource Manager with cache content
     protected void initResources(String userId) {
         String cachedResources = null;
 
@@ -971,9 +965,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    /**
-     * Initialize campaigns with cache content
-     */
+    // Initialize campaigns with cache content
     protected void initCampaigns(String userId) {
         campaigns = new ArrayList<>();
         campaignDisplayer = new SwrveCampaignDisplayer(qaUser);
@@ -1122,32 +1114,4 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return swrveAssetsManager == null ? new HashSet<String>() : swrveAssetsManager.getAssetsOnDisk();
     }
 
-    private class QueueEventRunnable implements Runnable {
-        private String userId;
-        private String eventType;
-        private Map<String, Object> parameters;
-        private Map<String, String> payload;
-
-        public QueueEventRunnable(String userId, String eventType, Map<String, Object> parameters, Map<String, String> payload) {
-            this.userId = userId;
-            this.eventType = eventType;
-            this.parameters = parameters;
-            this.payload = payload;
-        }
-
-        @Override
-        public void run() {
-            String eventString = "";
-            try {
-                int seqNum = SwrveLocalStorageUtil.getNextSequenceNumber(context.get(), config, multiLayerLocalStorage, userId);
-                eventString = EventHelper.eventAsJSON(eventType, parameters, payload, seqNum, System.currentTimeMillis());
-                parameters = null;
-                payload = null;
-                multiLayerLocalStorage.addEvent(userId, eventString);
-                SwrveLogger.i("Event queued of type: %s and seqNum:%s for userId:%s", eventType, seqNum, userId);
-            } catch (Exception e) {
-                SwrveLogger.e("Unable to insert QueueEvent into local storage. EventString:" + eventString, e);
-            }
-        }
-    }
 }

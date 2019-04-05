@@ -34,6 +34,10 @@ import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowNotification;
 import org.robolectric.shadows.ShadowPendingIntent;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.List;
@@ -66,6 +70,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         ISwrveCommon swrveCommonSpy = mock(ISwrveCommon.class);
         SwrveCommon.setSwrveCommon(swrveCommonSpy);
         doReturn(notificationConfig).when(swrveCommonSpy).getNotificationConfig();
+        doReturn(RuntimeEnvironment.application.getCacheDir()).when(swrveCommonSpy).getCacheDir(RuntimeEnvironment.application);
         pushServiceManager = new SwrvePushServiceManager(RuntimeEnvironment.application);
     }
 
@@ -297,11 +302,10 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotification("original push notification - testAdvancedUnknownType", "content://settings/system/notification_sound", bundle);
     }
 
-    // TODO
     private void mockAllImageDownloads(SwrveNotificationBuilder builderSpy) {
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(bmp);
+        doReturn(bmp).when(builderSpy).getImageFromUrl(anyString());
     }
 
     private void displayNotification(SwrveNotificationBuilder builderSpy, Bundle bundle) {
@@ -401,7 +405,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
                 "              \"subtitle\": \"[rich subtitle]\",\n" +
                 "              \"body\": \"[rich body]\",\n" +
                 "              \"type\": \"image\",\n" +
-                "              \"url\": \"https://media.jpg\",\n" +
+                "              \"url\": \"https://valid-image.png\",\n" +
                 "              \"fallback_type\": \"image\",\n" +
                 "              \"fallback_url\": \"https://valid-image.png\",\n" +
                 "              \"fallback_sd\": \"https://video.com\"\n }," +
@@ -420,7 +424,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
 
         displayNotification(builderSpy, bundle);
 
@@ -474,9 +478,9 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
-        when(builderSpy.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
-        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        doReturn(null).when(builderSpy).getImageFromUrl(anyString());
+        doReturn(null).when(builderSpy).getImageFromUrl("https://fail-image.png");
+        doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
 
         displayNotification(builderSpy, bundle);
 
@@ -538,9 +542,9 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
-        when(builderSpy.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
-        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        doReturn(null).when(builderSpy).getImageFromUrl(anyString());
+        doReturn(null).when(builderSpy).getImageFromUrl("https://fail-image.png");
+        doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
 
         displayNotification(builderSpy, bundle);
 
@@ -593,8 +597,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
         SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
-        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
-        when(builderSpy.downloadBitmapImageFromUrl("https://fail-image.png")).thenReturn(null);
+        when(builderSpy.getImageFromUrl(anyString())).thenReturn(null);
+        when(builderSpy.getImageFromUrl("https://fail-image.png")).thenReturn(null);
 
         displayNotification(builderSpy, bundle);
 
@@ -703,8 +707,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        when(builderSpy.downloadBitmapImageFromUrl(anyString())).thenReturn(null);
-        when(builderSpy.downloadBitmapImageFromUrl("https://valid-image.png")).thenReturn(bmp);
+        doReturn(null).when(builderSpy).getImageFromUrl(anyString());
+        doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
 
         displayNotification(builderSpy, bundle);
 
@@ -826,6 +830,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
+        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class));
         swrveSpy.init(mActivity);
 
         // Send a valid Rich Payload
@@ -896,6 +901,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
+        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class));
         swrveSpy.init(mActivity);
 
         // Send a valid Rich Payload
@@ -984,7 +990,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         assertEquals("swrve_channel", notification.getChannelId());
         // Check that the channel was created by our SDK
-        assertNotNull(shadowOf(notificationManager).getNotificationChannel("swrve_channel"));
+        assertNotNull(notificationManager.getNotificationChannel("swrve_channel"));
     }
 
     @Config(sdk = Build.VERSION_CODES.O)
@@ -1075,6 +1081,41 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         NotificationChannel newChannel = notificationManager.getNotificationChannel(channelId);
         assertEquals("channel_name", newChannel.getName());
         assertEquals(NotificationManager.IMPORTANCE_HIGH, newChannel.getImportance());
+    }
+
+    @Test
+    public void testGetImageFromUrl() throws Exception {
+
+        String image1Url = "https://someimage.com/image_blah";
+        String image1FileName = "fc5d3fd9bc7b8bc9960d91851da9dc48";
+        File cacheDir = SwrveCommon.getInstance().getCacheDir(RuntimeEnvironment.application);
+
+        // save a file so bitmap is returned
+        File file = new File(cacheDir, image1FileName);
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        writer.write("");
+        writer.close();
+
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        doReturn(null).when(builderSpy).downloadBitmapImageFromUrl(anyString());
+
+        Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);
+
+        assertNotNull(bitmap);
+        Mockito.verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
+    }
+
+    @Test
+    public void testGetImageFromUrl_notInCache() throws Exception {
+
+        String image1Url = "https://someimage.com/image_blah";
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        doReturn(null).when(builderSpy).downloadBitmapImageFromUrl(anyString());
+
+        Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);
+
+        assertNull(bitmap);
+        Mockito.verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
     }
 
     // HELPER METHODS

@@ -24,7 +24,7 @@ import org.robolectric.RuntimeEnvironment;
 import java.util.concurrent.Executor;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_REGISTRATION_ID;
-import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;

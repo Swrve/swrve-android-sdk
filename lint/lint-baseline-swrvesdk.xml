@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="4" by="lint 3.1.3">
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        editor.putString(&quot;userId&quot;, userId).commit();"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveProfileManager.java"
+            line="60"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+        errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/firebase/AndroidManifest.xml"
+            line="8"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SimpleDateFormat"
+        message="To get local formatting use `getDateInstance()`, `getDateTimeInstance()`, or `getTimeInstance()`, or use `new SimpleDateFormat(String template, Locale locale)` with for example `Locale.US` for ASCII dates."
+        errorLine1="        DateFormat dateformat = new SimpleDateFormat(&quot;yyyy-MM-dd&apos;T&apos;HH:mm:ss.SSS&apos;Z&apos;&quot;);"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveBase.java"
+            line="386"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="GradleOverrides"
+        message="This `minSdkVersion` value (`14`) is not used; it is always overridden by the value specified in the Gradle build script (`14`)"
+        errorLine1="        android:minSdkVersion=&quot;14&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/firebase/AndroidManifest.xml"
+            line="7"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GradleOverrides"
+        message="This `targetSdkVersion` value (`25`) is not used; it is always overridden by the value specified in the Gradle build script (`27`)"
+        errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/firebase/AndroidManifest.xml"
+            line="8"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardwareIds"
+        message="Using `getString` to get device identifiers is not recommended."
+        errorLine1="                this.androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveImp.java"
+            line="445"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="Recycle"
+        message="This `Cursor` should be freed up after use with `#close()`"
+        errorLine1="                    Cursor cursor = db.rawQuery(&quot;SELECT * FROM cache WHERE category=&apos;SwrveSDK.installTime&apos;&quot;, null);"
+        errorLine2="                                       ~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/localstorage/SwrveSQLiteOpenHelper.java"
+            line="159"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="This AsyncTask class should be static or leaks might occur (anonymous android.os.AsyncTask)"
+        errorLine1="        new AsyncTask&lt;Void, Integer, Void>() {"
+        errorLine2="        ^"
+        includedVariants="firebaseDebug,firebaseRelease"
+        excludedVariants="amazonDebug,amazonRelease,coreDebug,coreRelease">
+        <location
+            file="src/firebase/java/com/swrve/sdk/Swrve.java"
+            line="86"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="Do not place Android context classes in static fields (static reference to `SwrveSQLiteOpenHelper` which has field `context` pointing to `Context`); this is a memory leak (and also breaks Instant Run)"
+        errorLine1="    private static SwrveSQLiteOpenHelper instance;"
+        errorLine2="            ~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/localstorage/SwrveSQLiteOpenHelper.java"
+            line="16"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseSparseArrays"
+        message="Use `new SparseArray&lt;SwrveCampaignState>(...)` instead for better performance"
+        errorLine1="        campaignsState = new HashMap&lt;>();"
+        errorLine2="                         ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/SwrveImp.java"
+            line="980"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `SwrveButtonView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class SwrveButtonView extends ImageView {"
+        errorLine2="             ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
+            line="16"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `SwrveMessageView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class SwrveMessageView extends RelativeLayout {"
+        errorLine2="             ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
+            line="38"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="Custom view `SwrveButtonView` overrides `onTouchEvent` but not `performClick`"
+        errorLine1="    public boolean onTouchEvent(MotionEvent event) {"
+        errorLine2="                   ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
+            line="43"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="Custom view `SwrveImageView` overrides `onTouchEvent` but not `performClick`"
+        errorLine1="    public boolean onTouchEvent(MotionEvent event) {"
+        errorLine2="                   ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveImageView.java"
+            line="17"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="Custom view `SwrveMessageView` overrides `onTouchEvent` but not `performClick`"
+        errorLine1="    public boolean onTouchEvent(MotionEvent event) {"
+        errorLine2="                   ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
+            line="282"
+            column="20"/>
+    </issue>
+
+</issues>

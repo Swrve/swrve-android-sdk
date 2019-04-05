@@ -41,8 +41,7 @@ android {
 
     lintOptions {
         abortOnError true
-        baseline file("../../lint/lint-baseline-swrvesdktest.xml")
-        disable 'GradleCompatible' // TODO remove this when play-services-ads gets upgraded again. 15.0.1 causes GradleCompatible lint error
+        baseline file("../lint/lint-baseline-swrvesdktest.xml")
     }
 
     compileOptions {
@@ -64,10 +63,11 @@ dependencies {
 
     // Robolectric tests
     testImplementation 'junit:junit:4.12'
-    testImplementation('org.robolectric:robolectric:3.5.1') {
+    testImplementation('org.robolectric:robolectric:4.2') {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
+    testImplementation 'androidx.test:core:1.0.0'
 
     testImplementation 'com.squareup.okhttp3:mockwebserver:3.9.0'
     testImplementation 'org.awaitility:awaitility:3.0.0'

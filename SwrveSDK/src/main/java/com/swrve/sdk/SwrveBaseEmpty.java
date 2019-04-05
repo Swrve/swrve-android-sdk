@@ -8,6 +8,7 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Empty implementation of the Swrve SDK. Will be returned when the SDK is used from an unsupported runtime version.
@@ -36,6 +38,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     private C config;
     private SwrveCustomButtonListener customButtonListener;
     private SwrveInstallButtonListener installButtonListener;
+    private SwrveDismissButtonListener inAppDismissButtonListener;
     private String language = "en-US";
     private String userId;
     private File cacheDir;
@@ -302,6 +305,16 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public SwrveDismissButtonListener getDismissButtonListener() {
+        return this.inAppDismissButtonListener;
+    }
+
+    @Override
+    public void setDismissButtonListener(SwrveDismissButtonListener inAppDismissButtonListener) {
+        this.inAppDismissButtonListener = inAppDismissButtonListener;
+    }
+
+    @Override
     public SwrveInstallButtonListener getInstallButtonListener() {
         return installButtonListener;
     }
@@ -359,8 +372,24 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void setCustomPayloadForConversationInput(Map payload) {
+    }
+
+    @Override
     public int getFlushRefreshDelay() {
         return 0;
     }
 
+    @Override
+    public void setSessionListener(SwrveSessionListener sessionListener) {
+    }
+
+    @Override
+    public void fetchNotificationCampaigns(Set<Long> campaignIds) {
+    }
+
+    @Override
+    public File getCacheDir(Context context) {
+        return null;
+    }
 }

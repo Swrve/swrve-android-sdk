@@ -31,6 +31,7 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
     }
 
     /*
+     * @param assetsOnDisk Already downloaded assets on disk
      * @return has the conversation been downloaded fully yet
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk) {

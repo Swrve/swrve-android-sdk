@@ -15,7 +15,7 @@ import org.robolectric.shadows.ShadowLog;
 
 import java.util.LinkedHashMap;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.N_MR1)

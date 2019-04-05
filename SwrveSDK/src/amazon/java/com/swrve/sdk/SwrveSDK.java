@@ -58,7 +58,7 @@ public class SwrveSDK extends SwrveSDKBase {
     /**
      * Set the silent push listener.
      *
-     * @param silentPushListener
+     * @param silentPushListener silent push listener
      */
     public static void setSilentPushListener(SwrveSilentPushListener silentPushListener) {
         checkInstanceCreated();

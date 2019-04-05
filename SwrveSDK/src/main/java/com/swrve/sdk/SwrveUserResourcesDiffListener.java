@@ -29,6 +29,8 @@ public interface SwrveUserResourcesDiffListener {
 
     /**
      * Called back on error.
+     *
+     * @param exception Exception caused when trying to obtain user resources.
      */
     void onUserResourcesDiffError(Exception exception);
 }

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
@@ -28,12 +29,12 @@ public abstract class SwrveSDKBase {
      * <pre>
      * <code>
      * SwrveSDK.identify("12345", new SwrveIdentityResponse() {
-     *      @Override
+     *      {@literal @}Override
      *      public void onSuccess(String status, String swrveId) {
      *
      *      }
      *
-     *      @Override
+     *      {@literal @}Override
      *      public void onError(int responseCode, String errorMessage) {
      *          // please note in the event of an error the tracked userId will not reflect correctly on the backend until this
      *          // call completes successfully
@@ -238,6 +239,8 @@ public abstract class SwrveSDKBase {
 
     /**
      * Get the SwrveResourceManager, which can be queried for up-to-date resource attribute values
+     *
+     * @return resource manager
      */
     public static SwrveResourceManager getResourceManager() {
         checkInstanceCreated();
@@ -247,6 +250,8 @@ public abstract class SwrveSDKBase {
     /**
      * The resourcesListener onResourcesUpdated() method is invoked when user resources in the SwrveResourceManager
      * have been initially loaded and each time user resources are updated.
+     *
+     * @param resourcesListener Resource listener
      */
     public static void setResourcesListener(SwrveResourcesListener resourcesListener) {
         checkInstanceCreated();
@@ -312,6 +317,8 @@ public abstract class SwrveSDKBase {
 
     /**
      * Set the current language
+     *
+     * @param locale Language locale to use.
      */
     public static void setLanguage(Locale locale) {
         checkInstanceCreated();
@@ -320,6 +327,8 @@ public abstract class SwrveSDKBase {
 
     /**
      * Get the current language
+     *
+     * @return current language
      */
     public static String getLanguage() {
         checkInstanceCreated();
@@ -328,6 +337,8 @@ public abstract class SwrveSDKBase {
 
     /**
      * Get the current api key
+     *
+     * @return current api key
      */
     public static String getApiKey() {
         checkInstanceCreated();
@@ -336,6 +347,8 @@ public abstract class SwrveSDKBase {
 
     /**
      * Get the current user id
+     *
+     * @return current user id
      */
     public static String getUserId() {
         checkInstanceCreated();
@@ -345,6 +358,7 @@ public abstract class SwrveSDKBase {
     /**
      * Collect device information
      *
+     * @return device information
      * @throws JSONException If there's an error
      */
     public static JSONObject getDeviceInfo() throws JSONException {
@@ -408,7 +422,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Set a message listener to process Talk messages.
+     * Set a message listener to process in-app messages.
      *
      * @param messageListener logic to listen for messages
      */
@@ -428,7 +442,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the custom listener to process Talk message install button clicks
+     * Get the custom listener to process in-app message install button clicks
      *
      * @return buttonListener
      */
@@ -438,7 +452,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Set the custom listener to process Talk message install button clicks
+     * Set the custom listener to process in-app message install button clicks
      *
      * @param installButtonListener The custom listener
      */
@@ -447,7 +461,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the custom listener to process Talk message custom button clicks
+     * Get the custom listener to process in-app message custom button clicks
      *
      * @return the custom buttonListener
      */
@@ -457,13 +471,33 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Set the custom listener to process Talk message custom button clicks
+     * Set the custom listener to process in-app message custom button clicks
      *
      * @param customButtonListener The custom listener
      */
     public static void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
         checkInstanceCreated();
         instance.setCustomButtonListener(customButtonListener);
+    }
+
+    /**
+     * Get the in-app listener to get notified of in-app message dismiss button clicks
+     *
+     * @return the custom buttonListener
+     */
+    public static SwrveDismissButtonListener getInAppDismissButtonListener() {
+        checkInstanceCreated();
+        return instance.getDismissButtonListener();
+    }
+
+    /**
+     * Set the in-app button listener to get notified of in-app message dismiss button clicks
+     *
+     * @param inAppDismissButtonListener The in-app dismiss button listener
+     */
+    public static void setCustomDismissButtonListener(SwrveDismissButtonListener inAppDismissButtonListener) {
+        checkInstanceCreated();
+        instance.setDismissButtonListener(inAppDismissButtonListener);
     }
 
     /**
@@ -486,6 +520,7 @@ public abstract class SwrveSDKBase {
      * It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the given orientation.
      *
+     * @param orientation Orientation whcih the messages have to support
      * @return list of active MessageCenter campaigns.
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
@@ -523,11 +558,29 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the current external user id
+     * Get the current external user id.
+     *
+     * @return current external user id
      */
     public static String getExternalUserId() {
         checkInstanceCreated();
         return instance.getExternalUserId();
+    }
+
+    /**
+     * Add a custom payload for user input events
+     *   Selecting a star-rating,
+     *   Selecting a choice on a text questionnaire
+     *   Selecting play on a video
+     *
+     * If key pair values added is greater than 5 or Keys added conflict with existing swrve internal keys then
+     * the custom payload will be rejected and not added for the event. A debug log error will be generated.
+     *
+     * @param payload Map with custom key pair values.
+     */
+    public static void setCustomPayloadForConversationInput(Map payload) {
+        checkInstanceCreated();
+        instance.setCustomPayloadForConversationInput(payload);
     }
 
     public static ISwrveBase getInstance() {

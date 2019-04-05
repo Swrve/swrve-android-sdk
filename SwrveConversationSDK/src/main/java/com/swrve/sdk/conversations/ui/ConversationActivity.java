@@ -89,23 +89,27 @@ public class ConversationActivity extends FragmentActivity {
 
         // Used by Unity too - Force the orientation based on the app configuration
         if (orientation != SwrveOrientation.Both) {
-            if(Build.VERSION.SDK_INT == Build.VERSION_CODES.O && SwrveHelper.getTargetSdkVersion(this) >= 27) {
-                // Cannot call setRequestedOrientation with translucent attribute, otherwise "IllegalStateException: Only fullscreen activities can request orientation"
-                // https://github.com/Swrve/swrve-android-sdk/issues/271
-                // workaround is to not change orientation
-                SwrveLogger.w("Oreo bug with setRequestedOrientation so Conversation may appear in wrong orientation.");
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                if (orientation == SwrveOrientation.Landscape) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
-                } else if (orientation == SwrveOrientation.Portrait) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+            try {
+                if(Build.VERSION.SDK_INT == Build.VERSION_CODES.O && SwrveHelper.getTargetSdkVersion(this) >= 27) {
+                    // Cannot call setRequestedOrientation with translucent attribute, otherwise "IllegalStateException: Only fullscreen activities can request orientation"
+                    // https://github.com/Swrve/swrve-android-sdk/issues/271
+                    // workaround is to not change orientation
+                    SwrveLogger.w("Oreo bug with setRequestedOrientation so Conversation may appear in wrong orientation.");
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                    if (orientation == SwrveOrientation.Landscape) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+                    } else if (orientation == SwrveOrientation.Portrait) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+                    }
+                } else {
+                    if (orientation == SwrveOrientation.Landscape) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                    } else if (orientation == SwrveOrientation.Portrait) {
+                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                    }
                 }
-            } else {
-                if (orientation == SwrveOrientation.Landscape) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                } else if (orientation == SwrveOrientation.Portrait) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-                }
+            } catch(RuntimeException ex) {
+                SwrveLogger.e("Bugs with setRequestedOrientation can happen: https://issuetracker.google.com/issues/68454482", ex);
             }
         }
     }

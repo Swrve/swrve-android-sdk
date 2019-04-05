@@ -191,4 +191,15 @@ public class InMemoryLocalStorage implements LocalStorage {
     public void deleteNotificationsAuthenticated() {
         // not implemented. Go directly to SQLiteLocalStorage
     }
+
+    @Override
+    public void saveOfflineCampaign(String userId, String campaignId, String campaignData) {
+        // not implemented. Go directly to SQLiteLocalStorage
+    }
+
+    @Override
+    public String getOfflineCampaign(String userId, String campaignId) {
+        // not implemented. Go directly to SQLiteLocalStorage
+        return null;
+    }
 }

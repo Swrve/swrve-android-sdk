@@ -31,6 +31,10 @@ import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVE
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_JSON;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.SWRVE_DB_VERSION;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_EXTERNAL_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_SWRVE_USER_ID;
@@ -399,5 +403,51 @@ public class SQLiteLocalStorage implements LocalStorage {
             }
         }
         return notifications;
+    }
+
+    @Override
+    public void saveOfflineCampaign(String userId, String campaignId, String campaignData) {
+        if (userId == null || campaignId == null || campaignData == null) {
+            SwrveLogger.e("Cannot set null value in saveOfflineCampaign for userId:%s category:%s rawData:%s.", userId, campaignId, campaignData);
+            return;
+        }
+        try {
+            ContentValues values = new ContentValues();
+            values.put(OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID, userId);
+            values.put(OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID, campaignId);
+            values.put(OFFLINE_CAMPAIGNS_COLUMN_JSON, campaignData);
+            insertOrUpdate(OFFLINE_CAMPAIGNS_TABLE_NAME, values, OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID + "= ? AND " + OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID + "= ?", new String[]{userId, campaignId});
+        } catch (Exception e) {
+            SwrveLogger.e("Exception setting cache for userId:" + userId + " campaignId:" + campaignId + " campaignData:" + campaignData, e);
+        }
+    }
+
+    @Override
+    public String getOfflineCampaign(String userId, String campaignId) {
+        String jsonData = null;
+        if (userId == null || campaignId == null) {
+            SwrveLogger.e("Cannot use null value in getofflineCampaign. userId:%s category:%s rawData:%s.", userId, campaignId);
+        } else if (database.isOpen()) {
+            Cursor cursor = null;
+            try {
+                String sql = "SELECT " + OFFLINE_CAMPAIGNS_COLUMN_JSON + " " +
+                        "FROM " + OFFLINE_CAMPAIGNS_TABLE_NAME + " " +
+                        "WHERE " + OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID + " = '" + userId + "' " +
+                        "AND " + OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID + " = '" + campaignId + "' ";
+                cursor = database.rawQuery(sql, null);
+                cursor.moveToFirst();
+                if (!cursor.isAfterLast()) {
+                    jsonData = cursor.getString(0);
+                    cursor.moveToNext();
+                }
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred getting cache userId:" + userId + " category:" + campaignId, e);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return jsonData;
     }
 }

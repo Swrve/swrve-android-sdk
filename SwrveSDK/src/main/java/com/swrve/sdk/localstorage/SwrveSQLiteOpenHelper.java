@@ -18,7 +18,7 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
     private Context context;
 
     // Database
-    protected static final int SWRVE_DB_VERSION = 3;
+    protected static final int SWRVE_DB_VERSION = 4;
 
     // User table
     protected static final String USER_TABLE_NAME = "users";
@@ -42,6 +42,12 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
     protected static final String NOTIFICATIONS_AUTHENTICATED_TABLE_NAME = "notifications_authenticated";
     protected static final String NOTIFICATIONS_AUTHENTICATED_COLUMN_ID = "notification_id";
     protected static final String NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME = "time";
+
+    // External Campaign table
+    protected static final String OFFLINE_CAMPAIGNS_TABLE_NAME = "offline_campaigns";
+    protected static final String OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID = "user_id";
+    protected static final String OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID = "campaign_id";
+    protected static final String OFFLINE_CAMPAIGNS_COLUMN_JSON = "campaign_json";
 
     SwrveSQLiteOpenHelper(Context context, String dbName, int version) {
         super(context, dbName, null, version);
@@ -95,6 +101,13 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
                 "PRIMARY KEY (" + NOTIFICATIONS_AUTHENTICATED_COLUMN_ID + ")" +
                 ");");
         db.execSQL("CREATE INDEX notifications_authenticated_time_idx ON " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME + "(" + NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME + ");");
+
+        db.execSQL("CREATE TABLE " + OFFLINE_CAMPAIGNS_TABLE_NAME + " (" +
+                OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID + " TEXT NOT NULL, " +
+                OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID + " TEXT NOT NULL," +
+                OFFLINE_CAMPAIGNS_COLUMN_JSON + " TEXT NOT NULL," +
+                "PRIMARY KEY (" + OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID + "," + OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID + ")" +
+                ");");
     }
 
     @Override
@@ -170,6 +183,14 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
                     }
                 }
                 db.execSQL("DELETE FROM cache WHERE user_id='' AND category='SwrveSDK.installTime'");
+
+            case 3:
+
+                db.execSQL("CREATE TABLE offline_campaigns (swrve_user_id TEXT NOT NULL, " +
+                        "campaign_id TEXT NOT NULL, " +
+                        "campaign_json_data TEXT NOT NULL, " +
+                        "PRIMARY KEY (swrve_user_id, campaign_id)" +
+                        ");");
         }
     }
 

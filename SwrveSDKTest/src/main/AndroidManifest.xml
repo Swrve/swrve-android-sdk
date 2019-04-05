@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     package="com.swrve.sdk.test"
     android:versionCode="1"
     android:versionName="1.0">
-
-    <uses-sdk
-        tools:overrideLibrary="com.swrve.sdk, com.swrve.sdk.conversations, com.swrve.swrvesdkcommon, com.swrve.sdk.push, com.android.support.v4, android.support.design, android.support.v7.appcompat, android.support.graphics.drawable, android.support.v7.recyclerview, com.google.android.gms.base.license, com.google.android.gms.gcm.license, com.google.android.gms.admob.impl.license, com.google.android.gms.common.license, com.google.android.gms.iid.license, com.google.android.gms.admob.license, com.google.android.gms.gass.license, com.google.android.gms.tasks.license, com.google.android.gms.location.license, com.google.android.gms.nearby.license, com.google.firebase.firebase.messaging.license, com.google.firebase.measurement.license, com.google.firebase.firebase.iid.license, com.google.firebase.firebase.common.license, com.google.firebase.measurement.impl.license, android.support.graphics.drawable.animated, android.support.transition, android.arch.lifecycle, android.arch.lifecycle.livedata.core, android.arch.lifecycle.viewmodel, android.arch.core, com.google.android.gms.stats, com.google.android.gms.ads_identifier, com.google.android.gms.common, com.google.android.gms.ads_base, com.google.firebase.iid.internal, com.google.firebase.analytics.connector, com.google.firebase.firebase_core, com.google.android.gms.measurement, com.google.android.gms.measurement.impl, com.google.firebase.iid, com.google.firebase, com.google.android.gms.tasks, com.google.android.gms"/>
-
+      
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 

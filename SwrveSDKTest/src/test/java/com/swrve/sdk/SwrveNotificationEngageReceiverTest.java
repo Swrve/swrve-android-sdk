@@ -1,6 +1,8 @@
 package com.swrve.sdk;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 
 import com.google.gson.Gson;
@@ -22,6 +24,8 @@ import org.robolectric.manifest.BroadcastReceiverData;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+
+import androidx.test.core.app.ApplicationProvider;
 
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
@@ -136,10 +140,12 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
     @Test
     public void testReceiverInManifest() {
-        List<BroadcastReceiverData> receiverDataList = shadowApplication.getAppManifest().getBroadcastReceivers();
+        Context ctx = ApplicationProvider.getApplicationContext();
+        Intent intent = new Intent(ctx, SwrveNotificationEngageReceiver.class);
+        List<ResolveInfo> receiverDataList = ctx.getPackageManager().queryBroadcastReceivers(intent, 0);
         boolean inManifest = false;
-        for (BroadcastReceiverData receiverData : receiverDataList) {
-            if (receiverData.getClassName().equals("com.swrve.sdk.SwrveNotificationEngageReceiver")) {
+        for (ResolveInfo receiverData : receiverDataList) {
+            if (receiverData.activityInfo.name.equals("com.swrve.sdk.SwrveNotificationEngageReceiver")) {
                 inManifest = true;
                 break;
             }

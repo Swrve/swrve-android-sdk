@@ -34,4 +34,6 @@ public interface LocalStorage {
     List<Integer> getNotificationsAuthenticated();
     void deleteNotificationsAuthenticated();
 
+    void saveOfflineCampaign(String userId, String campaignId, String campaignData);
+    String getOfflineCampaign(String userId, String campaignId);
 }

@@ -24,9 +24,13 @@ import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS_DEBUG;
@@ -42,17 +46,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class SwrveTestDeeplinkManager extends SwrveBaseTest {
+public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
 
     @Before
     public void setUp() throws Exception {
@@ -75,15 +77,21 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
             }
 
             @Override
-            public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) throws UnsupportedEncodingException {
+            public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) {
                 String response = null;
+                int httpCode = -1;
                 if (params.containsValue("295412")) {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_conversation.json");
+                    httpCode = 200;
                 }
-                if (params.containsValue("295411")) {
+                else if (params.containsValue("295411")) {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message.json");
+                    httpCode = 200;
                 }
-                callback.onResponse(new RESTResponse(200, response, null));
+                else if (params.containsValue("12345")) {
+                    httpCode = 500;
+                }
+                callback.onResponse(new RESTResponse(httpCode, response, null));
             }
 
             @Override
@@ -299,6 +307,65 @@ public class SwrveTestDeeplinkManager extends SwrveBaseTest {
         await().until(campaignShown());
         swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
         verify(swrveSpy.swrveDeeplinkManager, times(1)).loadCampaign("295411","reengage");
+    }
+
+    @Test
+    public void testLoadFromCache() throws Exception {
+
+        String campaignData = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message.json");
+        swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveOfflineCampaign(swrveSpy.getUserId(), "12345", campaignData);
+
+        //12345 will return 500 from mock restclient
+        swrveSpy.swrveDeeplinkManager.loadCampaign("12345", null);
+
+        await().until(campaignShown());
+    }
+
+    @Test
+    public void testFetchOfflineCampaignsProcessed() throws Exception {
+
+        Set<Long> campaignIds = new HashSet<>();
+        campaignIds.add(54321l);
+
+        String campaignData = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message.json");
+        RESTResponse restResponse = new RESTResponse(HttpURLConnection.HTTP_OK, campaignData, null);
+        IRESTResponseListener responseListener = swrveSpy.swrveDeeplinkManager.getOfflineRestResponseListener(54321l);
+        responseListener.onResponse(restResponse);
+
+        swrveSpy.swrveDeeplinkManager.fetchOfflineCampaigns(campaignIds);
+
+        verify(swrveSpy.swrveDeeplinkManager, times(1)).processOfflineCampaignResponse(54321, campaignData);
+        verify(swrveSpy.swrveDeeplinkManager, times(1)).getCampaignAssets(any(), any());
+
+        String offlineCampaign = swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getOfflineCampaign(swrveSpy.getUserId(), String.valueOf(54321));
+        assertEquals(offlineCampaign, campaignData);
+    }
+
+    @Test
+    public void testFetchOfflineCampaignsParams() throws Exception {
+
+        Set<Long> campaignIds = new HashSet<>();
+        campaignIds.add(1l);
+
+        IRESTClient restClientMock = Mockito.mock(IRESTClient.class);
+        Mockito.doReturn(restClientMock).when(swrveSpy.swrveDeeplinkManager).getRestClient();
+        IRESTResponseListener responseListener = Mockito.mock(IRESTResponseListener.class);
+
+        Mockito.doReturn(responseListener).when(swrveSpy.swrveDeeplinkManager).getOfflineRestResponseListener(anyLong());
+
+        swrveSpy.swrveDeeplinkManager.fetchOfflineCampaigns(campaignIds);
+
+        Map<String, String> expectedParams = swrveSpy.getContentRequestParams(swrveSpy.getUserId());
+        String expectEndpoint = swrveSpy.getContentURL() + "/api/1/ad_journey_campaign";
+        expectedParams.put("in_app_campaign_id", "2");
+
+        ArgumentCaptor<Map> paramsCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<String> endpointCaptor = ArgumentCaptor.forClass(String.class);
+
+        Mockito.verify(swrveSpy.swrveDeeplinkManager.getRestClient(), atLeast(1)).get(endpointCaptor.capture(), paramsCaptor.capture(), any());
+
+        assertEquals(paramsCaptor.getValue().get("in_app_campaign_id"), "1");
+        assertEquals(expectEndpoint, endpointCaptor.getValue());
     }
 
     private Callable<Boolean> campaignShown() {

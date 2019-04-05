@@ -57,7 +57,7 @@ public class SwrveSDK extends SwrveSDKBase {
     /**
      * Set the silent push listener.
      *
-     * @param silentPushListener
+     * @param silentPushListener silent push listener
      */
     public static void setSilentPushListener(SwrveSilentPushListener silentPushListener) {
         checkInstanceCreated();
@@ -80,6 +80,7 @@ public class SwrveSDK extends SwrveSDKBase {
      *                      Must be greater than or equal to zero.
      * @param currency      real world currency used for this transaction. This must be an ISO
      *                      currency code. A typical value would be "USD". Required, cannot be empty.
+     * @param purchaseData  Receipt information from Google play. Required, cannot be empty.
      * @param dataSignature The purchase data received from Google Play. Required, cannot be empty.
      */
     public static void iapPlay(String productId, double productPrice, String currency, String purchaseData, String dataSignature) {
@@ -98,13 +99,14 @@ public class SwrveSDK extends SwrveSDKBase {
      * @param productId     Unique product identifier for the item bought. This should match the
      *                      Swrve resource name. Required, cannot be empty.
      * @param productPrice  price of the product in real money. Note that this is the price
-     *                      per product, not the total price of the transaction (when quantity > 1)
+     *                      per product, not the total price of the transaction (when quantity is higher than 1)
      *                      A typical value would be 0.99. Must be greater or equal to zero.
      * @param currency      real world currency used for this transaction. This must be an
      *                      ISO currency code. A typical value would be "USD".
      *                      Required, cannot be empty.
      * @param rewards       SwrveIAPRewards object containing any in-app currency and/or additional
      *                      items included in this purchase that need to be recorded.
+     * @param purchaseData  Receipt information from Google play. Required, cannot be empty.
      * @param dataSignature The purchase data received from Google Play. Required, cannot be empty.
      */
     public static void iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature) {

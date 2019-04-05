@@ -1,6 +1,5 @@
 package com.swrve.sdk;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -44,7 +43,7 @@ class SwrveDeeplinkManager {
 
     private static final String SWRVE_AD_CAMPAIGN_URL = "/api/1/ad_journey_campaign";
     private static final String SWRVE_AD_CONTENT = "ad_content";
-    public static  final String SWRVE_AD_MESSAGE = "ad_message_key";
+    public static final String SWRVE_AD_MESSAGE = "ad_message_key";
     private static final String SWRVE_AD_INSTALL = "install";
     private static final String SWRVE_AD_REENGAGE = "reengage";
     private static final String SWRVE_AD_SOURCE = "ad_source";
@@ -123,7 +122,7 @@ class SwrveDeeplinkManager {
     protected void handleDeferredDeeplink(Bundle bundle) {
         if (bundle != null) {
             Uri data = Uri.parse(bundle.getString(SWRVE_FB_TARGET_URL));
-            this.handleDeeplink(data,SWRVE_AD_INSTALL);
+            this.handleDeeplink(data, SWRVE_AD_INSTALL);
         }
     }
 
@@ -139,7 +138,7 @@ class SwrveDeeplinkManager {
                 return;
             }
 
-            loadCampaign(campaignId,actionType);
+            loadCampaign(campaignId, actionType);
 
             String adSource = data.getQueryParameter(SWRVE_AD_SOURCE);
             String contextId = data.getQueryParameter(SWRVE_AD_CAMPAIGN);
@@ -183,21 +182,30 @@ class SwrveDeeplinkManager {
                                         }
 
                                         updateCdnPaths(responseJson);
-                                        getCampaignAssets(responseJson);
-                                        writeCampaignDataToCache(responseJson,actionType);
+
+                                        final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
+                                            @Override
+                                            public void complete() {
+                                                showCampaign(campaign, context, config);
+                                            }
+                                        };
+
+                                        getCampaignAssets(responseJson, callback);
+                                        writeCampaignDataToCache(responseJson, actionType);
 
                                     } catch (JSONException e) {
                                         SwrveLogger.e("Could not parse JSON for ad campaign", e);
                                     }
                                 } else {
                                     SwrveLogger.e("SwrveSDK unable to get ad_journey_campaign JSON : \"%s\".", response.responseBody);
+                                    loadCampaignFromCache(campaignID);
                                 }
                             }
 
                             @Override
                             public void onException(Exception e) {
-
                                 SwrveLogger.e("Error downloading ad campaign", e);
+                                //TODO we need to do a loadCampaignFromCache here but the restclient calls both onResponse and onException, we need to look at this.
                             }
                         });
                     } catch (UnsupportedEncodingException e) {
@@ -218,78 +226,79 @@ class SwrveDeeplinkManager {
         swrve.multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, category, campaignContent.toString(), swrve.getUniqueKey(userId));
     }
 
-    @SuppressLint("UseSparseArrays")
-    protected void getCampaignAssets(JSONObject json) {
-        if (json == null) {
-            SwrveLogger.i("NULL JSON for campaigns, aborting load.");
+    protected void getCampaignAssets(JSONObject json, final SwrveAssetsCompleteCallback callback) throws JSONException {
+
+        if (!isValidCampaignJson(json)) {
             return;
         }
-        SwrveLogger.i("Campaign JSON data: %s", json);
 
-        try {
-            JSONObject jsonCampaign = json.getJSONObject("campaign");
-            JSONObject additionalInfo = json.getJSONObject("additional_info");
+        JSONObject jsonCampaign = json.getJSONObject("campaign");
+        final Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
 
-            if (!additionalInfo.has("version")) {
+        if (jsonCampaign.has("conversation")) {
+            JSONObject conversationJson = jsonCampaign.getJSONObject("conversation");
+            if (!hasValidFilters(conversationJson)) {
+                SwrveLogger.w("SwrveDeeplinkManager: has invalid filter. No campaigns loaded");
                 return;
             }
-            String version = additionalInfo.getString("version");
-            if (!version.equals(CAMPAIGN_RESPONSE_VERSION)) {
-                SwrveLogger.i("Campaign JSON (%s) has the wrong version for this sdk (%s). No campaigns loaded.", version, CAMPAIGN_RESPONSE_VERSION);
-                return;
-            }
-
-            final Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
-
-            if (jsonCampaign.has("conversation")) {
-                JSONObject conversationJson = jsonCampaign.getJSONObject("conversation");
-
-                // Check filters (permission requests, platform)
-                boolean passesAllFilters = true;
-                String lastCheckedFilter = null;
-
-                if (conversationJson.has("filters")) {
-                    JSONArray filters = conversationJson.getJSONArray("filters");
-                    for (int ri = 0; ri < filters.length() && passesAllFilters; ri++) {
-                        lastCheckedFilter = filters.getString(ri);
-                        passesAllFilters = supportsDeviceFilter(lastCheckedFilter);
-                    }
-                }
-
-                int conversationVersionDownloaded = conversationJson.optInt("conversation_version", 1);
-                if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
-                    Swrve swrve = (Swrve) SwrveSDK.getInstance();
-                    campaign = new SwrveConversationCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue);
-
-                } else {
-                    SwrveLogger.i("Conversation version %s cannot be loaded with this SDK version", conversationVersionDownloaded);
-                }
-
-            } else if (jsonCampaign.has("messages")) {
+            int conversationVersionDownloaded = conversationJson.optInt("conversation_version", 1);
+            if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
                 Swrve swrve = (Swrve) SwrveSDK.getInstance();
-                campaign = new SwrveInAppCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue);
+                campaign = new SwrveConversationCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue);
             } else {
-                SwrveLogger.e("Unknown campaign type");
+                SwrveLogger.i("SwrveDeeplinkManager: Conversation version %s cannot be loaded with this SDK version", conversationVersionDownloaded);
             }
-
-            downloadAssets(assetsQueue);
-        } catch (JSONException exp) {
-            SwrveLogger.e("Error parsing campaign JSON", exp);
+        } else if (jsonCampaign.has("messages")) {
+            Swrve swrve = (Swrve) SwrveSDK.getInstance();
+            campaign = new SwrveInAppCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue);
         }
+
+        downloadAssets(assetsQueue, callback);
     }
 
-    protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
-        final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
-            @Override
-            public void complete() {
-                showCampaign(campaign, context, config);
+    protected boolean isValidCampaignJson(JSONObject json) throws JSONException {
+        if (json == null) {
+            SwrveLogger.w("SwrveDeeplinkManager: NULL JSON for campaigns, aborting load.");
+            return false;
+        }
+        SwrveLogger.v("SwrveDeeplinkManager: Campaign JSON data: %s", json);
+
+        JSONObject additionalInfo = json.getJSONObject("additional_info");
+        if (!additionalInfo.has("version")) {
+            SwrveLogger.w("SwrveDeeplinkManager: no version. No campaigns loaded.");
+            return false;
+        }
+        String version = additionalInfo.getString("version");
+        if (!version.equals(CAMPAIGN_RESPONSE_VERSION)) {
+            SwrveLogger.w("SwrveDeeplinkManager: Campaign JSON (%s) has the wrong version for this sdk (%s). No campaigns loaded.", version, CAMPAIGN_RESPONSE_VERSION);
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean hasValidFilters(JSONObject conversationJson) throws JSONException {
+        // Check filters (permission requests, platform)
+        boolean passesAllFilters = true;
+        if (conversationJson.has("filters")) {
+            JSONArray filters = conversationJson.getJSONArray("filters");
+            for (int ri = 0; ri < filters.length() && passesAllFilters; ri++) {
+                String lastCheckedFilter = filters.getString(ri);
+                passesAllFilters = supportsDeviceFilter(lastCheckedFilter);
             }
-        };
+        }
+        return passesAllFilters;
+    }
+
+    protected boolean supportsDeviceFilter(String requirement) {
+        return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
+    }
+
+    protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue, SwrveAssetsCompleteCallback callback) {
         swrveAssetsManager.downloadAssets(assetsQueue, callback);
     }
 
     protected void showCampaign(SwrveBaseCampaign campaign, Context context, SwrveConfig config) {
-        alreadySeenCampaignId =  String.valueOf(campaign.getId());
+        alreadySeenCampaignId = String.valueOf(campaign.getId());
         if (campaign != null) {
             if (campaign instanceof SwrveConversationCampaign) {
                 SwrveConversation conversation = ((SwrveConversationCampaign) campaign).getConversation();
@@ -313,7 +322,7 @@ class SwrveDeeplinkManager {
             }
         }
     }
-  
+
     protected void queueDeeplinkGenericEvent(String adSource, String campaignId, String contextId, String actionType) throws JSONException {
         ISwrveCommon swrve = SwrveCommon.getInstance();
         if (swrve != null && SwrveHelper.isNotNullOrEmpty(adSource) && SwrveHelper.isNotNullOrEmpty(contextId)) {
@@ -327,12 +336,8 @@ class SwrveDeeplinkManager {
         }
     }
 
-    protected boolean supportsDeviceFilter(String requirement) {
-        return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
-    }
-
     private void updateCdnPaths(JSONObject json) throws JSONException {
-        if(json.has("additional_info")) {
+        if (json.has("additional_info")) {
             if (json.has("cdn_root")) {
                 String cdnRoot = json.getString("cdn_root");
                 this.swrveAssetsManager.setCdnImages(cdnRoot);
@@ -347,4 +352,66 @@ class SwrveDeeplinkManager {
             }
         }
     }
+
+    private void loadCampaignFromCache(final String campaignId) {
+        SwrveLogger.v("SwrveSDK attempting to load campaign from cache");
+        try {
+            final Swrve swrve = (Swrve) SwrveSDK.getInstance();
+            String cachedCampaign = swrve.multiLayerLocalStorage.getOfflineCampaign(swrve.getUserId(), campaignId);
+            if (SwrveHelper.isNotNullOrEmpty(cachedCampaign)) {
+                final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
+                    @Override
+                    public void complete() {
+                        showCampaign(campaign, context, config);
+                    }
+                };
+                JSONObject responseJson = new JSONObject(cachedCampaign);
+                getCampaignAssets(responseJson, callback);
+            } else {
+                SwrveLogger.w("SwrveDeeplinkManager: unable to load campaignId:%s from cache", campaignId);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveDeeplinkManager: exception loading campaignId:%s from cache", e, campaignId);
+        }
+    }
+
+    protected void fetchOfflineCampaigns(final Set<Long> campaignIds) throws Exception {
+        for (long campaignId : campaignIds) {
+            String endPoint = config.getContentUrl() + SWRVE_AD_CAMPAIGN_URL;
+            IRESTResponseListener responseListener = getOfflineRestResponseListener(campaignId);
+            standardParams.put("in_app_campaign_id", String.valueOf(campaignId));
+            getRestClient().get(endPoint, standardParams, responseListener);
+        }
+    }
+
+    protected IRESTResponseListener getOfflineRestResponseListener(final long campaignId) {
+        return new IRESTResponseListener() {
+            @Override
+            public void onResponse(RESTResponse response) {
+                if (response.responseCode == HttpURLConnection.HTTP_OK) {
+                    try {
+                        processOfflineCampaignResponse(campaignId, response.responseBody);
+                    } catch (Exception e) {
+                        SwrveLogger.e("SwrveDeeplinkManager: exception getting offline campaign:%s", e, campaignId);
+                    }
+                } else {
+                    SwrveLogger.w("SwrveDeeplinkManager: checking for offline campaign did not return OK. ResponseCode:%s", response.responseCode);
+                }
+            }
+
+            @Override
+            public void onException(Exception ex) {
+                SwrveLogger.e("SwrveDeeplinkManager: Exception getting offline campaign.", ex);
+            }
+        };
+    }
+
+    protected void processOfflineCampaignResponse(final long campaignId, final String response) throws Exception {
+        final Swrve swrve = (Swrve) SwrveSDK.getInstance();
+        swrve.multiLayerLocalStorage.saveOfflineCampaign(swrve.getUserId(), String.valueOf(campaignId), response);
+        JSONObject responseJson = new JSONObject(response);
+        updateCdnPaths(responseJson);
+        getCampaignAssets(responseJson, null);
+    }
+
 }

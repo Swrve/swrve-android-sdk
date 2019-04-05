@@ -76,13 +76,13 @@ class SwrvePushServiceManager {
             JSONObject silentPayload = getSilentPayload(msg);
             silentPushListener.onSilentPush(context, silentPayload);
         } else {
-            SwrveLogger.i("Swrve silent push received but there was no listener assigned or wasn't currently authenicated user");
+            SwrveLogger.i("Swrve silent push received but there was no listener assigned or wasn't currently authenticated user");
         }
     }
 
     private void processNotification(final Bundle msg, String pushId) {
 
-        if(!isTargetUser(msg)) {
+        if (!isTargetUser(msg)) {
             SwrveLogger.w("Swrve cannot process push because its intended for different user.");
             return;
         }

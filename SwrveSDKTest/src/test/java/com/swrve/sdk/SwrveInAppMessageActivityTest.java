@@ -2,15 +2,15 @@ package com.swrve.sdk;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
+import android.graphics.drawable.ColorDrawable;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -19,6 +19,7 @@ import com.swrve.sdk.messaging.view.SwrveButtonView;
 import com.swrve.sdk.messaging.view.SwrveImageView;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -44,6 +45,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     private Swrve swrveSpy;
     private String testInstallButtonSuccess;
     private String testCustomButtonSuccess;
+    private String testDismissButtonName;
+    private boolean testDismissButtonBackButton;
 
     @Before
     public void setUp() throws Exception {
@@ -70,7 +73,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         assertEquals(3, getButtonCount(view));
         assertEquals(1, getImageCount(view));
-        view.destroy();
     }
 
     @Test
@@ -87,9 +89,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNotNull(view);
-        ShadowView shadowView = Shadows.shadowOf(view);
-        assertEquals(Color.RED, shadowView.getBackgroundColor());
-        view.destroy();
+        assertEquals(Color.RED, ((ColorDrawable)view.getBackground()).getColor());
     }
 
     @Test
@@ -106,9 +106,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNotNull(view);
-        ShadowView shadowView = Shadows.shadowOf(view);
-        assertEquals(Color.parseColor("#EC9D78"), shadowView.getBackgroundColor());
-        view.destroy();
+        assertEquals(Color.parseColor("#EC9D78"), ((ColorDrawable)view.getBackground()).getColor());
     }
 
     @Test
@@ -131,7 +129,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
         assertEquals(Color.BLUE, swrveButtonView.focusColor);
-        view.destroy();
     }
 
 
@@ -145,7 +142,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         String base64MD5Screnshot = SwrveHelper.md5(SwrveTestUtils.takeScreenshot(view));
         assertNotNull(base64MD5Screnshot);
-        view.destroy();
     }
 
     @Test
@@ -216,18 +212,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         });
 
         // Press install button
-        boolean seekingButton = true;
-        SwrveButtonView swrveButtonView = null;
-        for (int i = 0; i < view.getChildCount() && seekingButton; i++) {
-            View childView = view.getChildAt(i);
-            if (childView instanceof SwrveButtonView) {
-                swrveButtonView = (SwrveButtonView) childView;
-                if (swrveButtonView.getType() == SwrveActionType.Install) {
-                    seekingButton = false;
-                }
-            }
-        }
-        assertNotNull("Could not find install button", swrveButtonView);
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Install);
         swrveButtonView.performClick();
 
         String expectedUrl = swrveSpy.getAppStoreURLForApp(150);
@@ -264,25 +249,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
         // Press install button
-        boolean seekingButton = true;
-        SwrveButtonView swrveButtonView = null;
-        for (int i = 0; i < view.getChildCount() && seekingButton; i++) {
-            View childView = view.getChildAt(i);
-            if (childView instanceof SwrveButtonView) {
-                swrveButtonView = (SwrveButtonView) childView;
-                if (swrveButtonView.getType() == SwrveActionType.Install) {
-                    seekingButton = false;
-                }
-            }
-        }
-        assertNotNull("Could not find install button", swrveButtonView);
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Install);
         swrveButtonView.performClick();
 
         // Detect intent from url
         String expectedUrl = swrveSpy.getAppStoreURLForApp(150);
-        Intent nextStartedActivity = mShadowActivity.getNextStartedActivity(); // for some reason this line is needed before calling peekNextStartedActivity?
-        assertNotNull(nextStartedActivity);
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
+        Intent nextIntent = mShadowActivity.getNextStartedActivity();
+        assertNotNull(nextIntent);
         assertEquals(expectedUrl, nextIntent.getDataString());
 
         // Swrve.Messages.Message-165.impression
@@ -322,18 +295,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         });
 
         // Press custom button
-        boolean seekingButton = true;
-        SwrveButtonView swrveButtonView = null;
-        for (int i = 0; i < view.getChildCount() && seekingButton; i++) {
-            View childView = view.getChildAt(i);
-            if (childView instanceof SwrveButtonView) {
-                swrveButtonView = (SwrveButtonView) childView;
-                if (swrveButtonView.getType() == SwrveActionType.Custom) {
-                    seekingButton = false;
-                }
-            }
-        }
-        assertNotNull("Could not find custom button", swrveButtonView);
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Custom);
         swrveButtonView.performClick();
 
         assertEquals("custom_action", testCustomButtonSuccess);
@@ -356,6 +318,70 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testDismissButtonListenerIntercept() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
+        // Trigger IAM
+        swrveSpy.currencyGiven("gold", 20);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+
+        swrveSpy.setDismissButtonListener(new SwrveDismissButtonListener() {
+            @Override
+            public void onAction(String campaignSubject, String buttonName) {
+                testDismissButtonName = buttonName;
+            }
+        });
+
+        // Press dismiss button
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Dismiss);
+        swrveButtonView.performClick();
+
+        assertEquals("close", testDismissButtonName);
+    }
+
+    @Test
+    public void testDismissButtonListenerInterceptBackButton() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
+        // Trigger IAM
+        swrveSpy.currencyGiven("gold", 20);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        swrveSpy.setDismissButtonListener(new SwrveDismissButtonListener() {
+            @Override
+            public void onAction(String campaignSubject, String buttonName) {
+                if (buttonName == null) {
+                    testDismissButtonBackButton = true;
+                }
+            }
+        });
+
+        // Press back button
+        activity.onBackPressed();
+
+        assertTrue(testDismissButtonBackButton);
+    }
+
+    private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
+        for (int i = 0; i < view.getChildCount(); i++) {
+            View childView = view.getChildAt(i);
+            if (childView instanceof SwrveButtonView) {
+                SwrveButtonView swrveButtonView = (SwrveButtonView) childView;
+                if (swrveButtonView.getType() == actionType) {
+                    return swrveButtonView;
+                }
+            }
+        }
+        Assert.fail("Could not find custom button");
+        return null;
+    }
+
+    @Test
     public void testCustomButtonLaunchesUrl() throws Exception {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
@@ -368,24 +394,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
 
         // Press custom button
-        boolean seekingButton = true;
-        SwrveButtonView swrveButtonView = null;
-        for (int i = 0; i < view.getChildCount() && seekingButton; i++) {
-            View childView = view.getChildAt(i);
-            if (childView instanceof SwrveButtonView) {
-                swrveButtonView = (SwrveButtonView) childView;
-                if (swrveButtonView.getType() == SwrveActionType.Custom) {
-                    seekingButton = false;
-                }
-            }
-        }
-        assertNotNull("Could not find custom button", swrveButtonView);
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Custom);
         swrveButtonView.performClick();
 
         // Detect intent from url
-        Intent nextStartedActivity = mShadowActivity.getNextStartedActivity(); // for some reason this line is needed before calling peekNextStartedActivity?
-        assertNotNull(nextStartedActivity);
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
+        Intent nextIntent = mShadowActivity.getNextStartedActivity();
+        assertNotNull(nextIntent);
         assertEquals("custom_action", nextIntent.getDataString());
 
 
@@ -451,6 +465,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     private Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> createActivityFromPeekIntent(Intent intent) {
+        assertNotNull(intent);
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
         return new Pair(activityController, activityController.create().start().visible().get());
     }

@@ -33,27 +33,125 @@ android {
 
     lintOptions {
         abortOnError true
-        baseline file("../../lint/lint-baseline-swrvesdk.xml")
-        disable 'GradleCompatible' // TODO remove this when play-services-ads gets upgraded again. 15.0.1 causes GradleCompatible lint error
+        baseline file("../lint/lint-baseline-swrvesdk.xml")
     }
 }
 
 dependencies {
     api project(':SwrveSDKCommon')
     api project(':SwrveConversationSDK')
-    implementation 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
+    api 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    api 'com.google.code.gson:gson:' + project.GSON_VERSION
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead. If compiling amazon flavour from source you should delete the
     // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon
     // Developer portal (https://developer.amazon.com/device-messaging).
     amazonCompileOnly fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
-    firebaseApi 'com.google.android.gms:play-services-ads:' + project.PLAY_SERVICES_ADS_VERSION
+    firebaseApi 'com.google.android.gms:play-services-ads-identifier:' + project.PLAY_SERVICES_ADS_VERSION
     firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
 }
 
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
+
+task androidCoreJavadoc(type: Javadoc, dependsOn: "assembleCoreRelease") {
+    description "Generates Javadoc for Core release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "coreRelease") {
+            source = variant.sourceSets.collect { it.java.sourceFiles }.inject { t, fc -> t + fc }
+            doFirst {
+              classpath += files(variant.javaCompileProvider.get().classpath.files)
+            }
+        }
+    }
+}
+task androidCoreJavadocsJar(type: Jar) {
+    description "Package Javadoc for Core."
+    classifier = 'javadoc'
+    from androidCoreJavadoc
+}
+task androidCoreSourcesJar(type: Jar) {
+    description "Package sources for Core."
+    classifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.core.java.srcDirs)
+}
+
+task androidAmazonJavadoc(type: Javadoc, dependsOn: "assembleAmazonRelease") {
+    description "Generates Javadoc for Amazon release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "amazonRelease") {
+            source = variant.javaCompileProvider.get().source
+            classpath += files(variant.javaCompileProvider.get().classpath)
+        }
+    }
+}
+task androidAmazonJavadocsJar(type: Jar) {
+    description "Package Javadoc for Amazon."
+    classifier = 'javadoc'
+    from androidAmazonJavadoc
+}
+task androidAmazonSourcesJar(type: Jar) {
+    description "Package sources for Amazon."
+    classifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
+}
+
+task androidFirebaseJavadoc(type: Javadoc, dependsOn: "assembleFirebaseRelease") {
+    description "Generates Javadoc for Firebase release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "firebaseRelease") {
+            source = variant.javaCompileProvider.get().source
+            classpath += files(variant.javaCompileProvider.get().classpath)
+        }
+    }
+}
+task androidFirebaseJavadocsJar(type: Jar) {
+    description "Package Javadoc for Firebase."
+    classifier = 'javadoc'
+    from androidFirebaseJavadoc
+}
+task androidFirebaseSourcesJar(type: Jar) {
+    description "Package sources for Firebase."
+    classifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    pkg {
+        repo = 'android'
+        name = System.getProperty('bintray.pkg.name') == null ? 'swrve-sdk' : System.getProperty('bintray.pkg.name')
+        userOrg = 'swrve-inc'
+        licenses = ['Apache-2.0']
+        desc = 'Swrve SDK'
+        websiteUrl = "https://www.swrve.com"
+        publish = true
+        version {
+            name = project.SWRVE_SDK_VERSION
+        }
+    }
+    String bintrayPublication = System.getProperty('bintray.publication') == null ? 'core' : System.getProperty('bintray.publication')
+    publications = [bintrayPublication]
+}
 
 publishing {
     repositories {
@@ -177,86 +275,4 @@ publishing {
             }
         }
     }
-}
-
-task androidCoreJavadoc(type: Javadoc) {
-    description "Generates Javadoc for Core."
-    source = files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.core.java.srcDirs)
-    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-    classpath = files(android.libraryVariants.core.javaCompile.classpath.files) + files(ext.androidJar)
-    exclude '**/BuildConfig.java'
-    exclude '**/R.java'
-    exclude '**/README.md'
-    failOnError false
-}
-task androidCoreJavadocsJar(type: Jar) {
-    description "Package Javadoc for Core."
-    classifier = 'javadoc'
-    from androidCoreJavadoc
-}
-task androidCoreSourcesJar(type: Jar) {
-    description "Package sources for Core."
-    classifier = 'sources'
-    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.core.java.srcDirs)
-}
-
-task androidAmazonJavadoc(type: Javadoc) {
-    description "Generates Javadoc for Amazon."
-    source = files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
-    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-    classpath = files(android.libraryVariants.amazon.javaCompile.classpath.files) + files(ext.androidJar)
-    exclude '**/BuildConfig.java'
-    exclude '**/R.java'
-    exclude '**/README.md'
-    failOnError false
-}
-task androidAmazonJavadocsJar(type: Jar) {
-    description "Package Javadoc for Amazon."
-    classifier = 'javadoc'
-    from androidAmazonJavadoc
-}
-task androidAmazonSourcesJar(type: Jar) {
-    description "Package sources for Amazon."
-    classifier = 'sources'
-    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
-}
-
-task androidFirebaseJavadoc(type: Javadoc) {
-    description "Generates Javadoc for Firebase."
-    source = files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
-    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-    classpath = files(android.libraryVariants.firebase.javaCompile.classpath.files) + files(ext.androidJar)
-    exclude '**/BuildConfig.java'
-    exclude '**/R.java'
-    exclude '**/README.md'
-    failOnError false
-}
-task androidFirebaseJavadocsJar(type: Jar) {
-    description "Package Javadoc for Firebase."
-    classifier = 'javadoc'
-    from androidFirebaseJavadoc
-}
-task androidFirebaseSourcesJar(type: Jar) {
-    description "Package sources for Firebase."
-    classifier = 'sources'
-    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
-}
-
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-    pkg {
-        repo = 'android'
-        name = System.getProperty('bintray.pkg.name') == null ? 'swrve-sdk' : System.getProperty('bintray.pkg.name')
-        userOrg = 'swrve-inc'
-        licenses = ['Apache-2.0']
-        desc = 'Swrve SDK'
-        websiteUrl = "https://www.swrve.com"
-        publish = true
-        version {
-            name = project.SWRVE_SDK_VERSION
-        }
-    }
-    String bintrayPublication = System.getProperty('bintray.publication') == null ? 'core' : System.getProperty('bintray.publication')
-    publications = [bintrayPublication]
 }

@@ -18,7 +18,7 @@ android {
 
     lintOptions {
         abortOnError true
-        baseline file("../../lint/lint-baseline-swrveconversationsdk.xml")
+        baseline file("../lint/lint-baseline-swrveconversationsdk.xml")
     }
 }
 
@@ -28,57 +28,24 @@ dependencies {
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
 }
 
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-
-publishing {
-    repositories {
-        maven {
-            url "$buildDir/../publish" // SwrveConversationSDK/publish
-        }
-    }
-
-    publications {
-        maven(MavenPublication) {
-
-            artifactId project.SWRVE_CONVERSATIONS_ARTIFACT_ID
-            groupId project.SWRVE_GROUP_ID
-            version project.SWRVE_SDK_VERSION
-            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidConversationsJavadocsJar, androidConversationsSourcesJar]
-
-            pom.withXml {
-                def dependenciesNode = asNode().appendNode('dependencies')
-                configurations.getByName("releaseCompileClasspath").allDependencies.each {
-                    def dependencyNode = dependenciesNode.appendNode('dependency')
-                    if (it.name == 'SwrveSDKCommon') {
-                        dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                        dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
-                        dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                        dependencyNode.appendNode('scope', 'compile')
-                    } else {
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
-                        dependencyNode.appendNode('scope', 'compile')
-                    }
-                }
-            }
-
-        }
-    }
-}
-
-task androidConversationsJavadoc(type: Javadoc) {
-    description "Generates Javadoc for Conversations."
-    source = files(android.sourceSets.main.java.srcDirs)
+task androidConversationsJavadoc(type: Javadoc, dependsOn: "assembleRelease") {
+    description "Generates Javadoc for release."
     ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-    classpath = files(android.libraryVariants.javaCompile.classpath.files) + files(ext.androidJar)
-    exclude '**/BuildConfig.java'
-    exclude '**/R.java'
-    exclude '**/README.md'
-    failOnError false
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "release") {
+            source = variant.sourceSets.collect { it.java.sourceFiles }.inject { t, fc -> t + fc }
+            doFirst {
+              classpath += files(variant.javaCompileProvider.get().classpath.files)
+            }
+        }
+    }
 }
-task androidConversationsJavadocsJar(type: Jar) {
+task androidConversationsJavadocsJar(type: Jar, dependsOn: androidConversationsJavadoc) {
     description "Package Javadoc for Conversations."
     classifier = 'javadoc'
     from androidConversationsJavadoc
@@ -89,21 +56,63 @@ task androidConversationsSourcesJar(type: Jar) {
     from files(android.sourceSets.main.java.srcDirs)
 }
 
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-    pkg {
-        repo = 'android'
-        name = System.getProperty('bintray.pkg.name') == null ? project.SWRVE_CONVERSATIONS_ARTIFACT_ID : System.getProperty('bintray.pkg.name')
-        userOrg = 'swrve-inc'
-        licenses = ['Apache-2.0']
-        desc = 'Swrve SDK'
-        websiteUrl = "https://www.swrve.com"
-        publish = true
-        version {
-            name = project.SWRVE_SDK_VERSION
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+if (project.hasProperty('SWRVE_CONVERSATIONS_ARTIFACT_ID')) {
+    publishing {
+        repositories {
+            maven {
+                url "$buildDir/../publish" // SwrveConversationSDK/publish
+            }
+        }
+
+        publications {
+            maven(MavenPublication) {
+
+                artifactId project.SWRVE_CONVERSATIONS_ARTIFACT_ID
+                groupId project.SWRVE_GROUP_ID
+                version project.SWRVE_SDK_VERSION
+                artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidConversationsJavadocsJar, androidConversationsSourcesJar]
+
+                pom.withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+                    configurations.getByName("releaseCompileClasspath").allDependencies.each {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+
+            }
         }
     }
-    publications = ['maven']
 
+    bintray {
+        user = System.getenv('BINTRAY_USER')
+        key = System.getenv('BINTRAY_KEY')
+        pkg {
+            repo = 'android'
+            name = System.getProperty('bintray.pkg.name') == null ? project.SWRVE_CONVERSATIONS_ARTIFACT_ID : System.getProperty('bintray.pkg.name')
+            userOrg = 'swrve-inc'
+            licenses = ['Apache-2.0']
+            desc = 'Swrve SDK'
+            websiteUrl = "https://www.swrve.com"
+            publish = true
+            version {
+                name = project.SWRVE_SDK_VERSION
+            }
+        }
+        publications = ['maven']
+
+    }
 }

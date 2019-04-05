@@ -32,6 +32,7 @@ import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -57,10 +58,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -128,7 +131,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             appStoreURLs = new SparseArray<>();
 
-            initCacheFolder(activity);
+            initCacheDir(activity);
 
             // Open access to local storage
             openLocalStorageConnection();
@@ -168,9 +171,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // Messaging initialization
 
             if (SwrveHelper.isNullOrEmpty(language)) {
-                SwrveHelper.logAndThrowException("Language needed to use Talk");
+                SwrveHelper.logAndThrowException("Language needed to use in-app messages");
             } else if (SwrveHelper.isNullOrEmpty(config.getAppStore())) {
-                SwrveHelper.logAndThrowException("App store needed to use Talk");
+                SwrveHelper.logAndThrowException("App store needed to use in-app messages");
             }
 
             if (preloadRandC) {
@@ -233,24 +236,32 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return (T) this;
     }
 
-    private void initCacheFolder(Activity activity) {
+    private void initCacheDir(Activity activity) {
+        File cacheDir = getCacheDir(activity);
+        swrveAssetsManager.setStorageDir(cacheDir);
+        SwrveLogger.d("Using cache directory at %s", cacheDir.getPath());
+    }
+
+    @Override
+    public File getCacheDir(Context context) {
         File cacheDir = config.getCacheDir();
 
         if (cacheDir == null) {
-            cacheDir = activity.getCacheDir();
+            cacheDir = context.getCacheDir();
         } else {
-            if (!checkPermissionGranted(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            if (!checkPermissionGranted(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 final String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                requestPermissions(activity, permissions);
-                cacheDir = activity.getCacheDir(); // fall back to internal cache until permission granted.
+                if (context instanceof Activity) {
+                    requestPermissions((Activity) context, permissions);
+                }
+                cacheDir = context.getCacheDir(); // fall back to internal cache until permission granted.
             }
 
             if (!cacheDir.exists()) {
                 cacheDir.mkdirs();
             }
         }
-        swrveAssetsManager.setStorageDir(cacheDir);
-        SwrveLogger.d("Using cache directory at %s", cacheDir.getPath());
+        return cacheDir;
     }
 
     private void initUserJoinedTimeAndFirstSession() {
@@ -292,7 +303,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void openLocalStorageConnection() {
         try {
             if (multiLayerLocalStorage != null && multiLayerLocalStorage.getSecondaryStorage() != null && multiLayerLocalStorage.getSecondaryStorage() instanceof SQLiteLocalStorage) {
-                SwrveLogger.v("Swrve SQLiteLocalStorage already open.");
+                // empty
             } else {
                 SQLiteLocalStorage sqLiteLocalStorage = new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
                 multiLayerLocalStorage.setSecondaryStorage(sqLiteLocalStorage);
@@ -317,6 +328,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 _sendQueuedEvents(userId, sessionToken);
             }
         });
+
+        if (sessionListener != null) {
+            sessionListener.sessionStarted();
+        }
     }
 
     protected void _sessionEnd() {
@@ -1147,6 +1162,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return customButtonListener;
     }
 
+    protected void _setInAppDismissButtonListener(SwrveDismissButtonListener inAppDismissButtonListener) {
+        this.inAppDismissButtonListener = inAppDismissButtonListener;
+    }
+
+    protected SwrveDismissButtonListener _getInAppDismissButtonListener() {
+        return inAppDismissButtonListener;
+    }
+
     protected C _getConfig() {
         return config;
     }
@@ -1576,6 +1599,25 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public SwrveDismissButtonListener getDismissButtonListener() {
+        try {
+            return _getInAppDismissButtonListener();
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    @Override
+    public void setDismissButtonListener(SwrveDismissButtonListener inAppButtonListener) {
+        try {
+            _setInAppDismissButtonListener(inAppButtonListener);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
     public C getConfig() {
         try {
             return _getConfig();
@@ -1651,7 +1693,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         params.put("app_version", appVersion);
         params.put("joined", userJoinedTime);
 
-        // Talk only params
+        // In-app only params
         params.put("version", String.valueOf(CAMPAIGN_ENDPOINT_VERSION));
         params.put("conversation_version", String.valueOf(ISwrveConversationSDK.CONVERSATION_VERSION));
         params.put("language", language);
@@ -1783,7 +1825,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public synchronized int getNextSequenceNumber() {
-        return SwrveLocalStorageUtil.getNextSequenceNumber(context.get(), config, multiLayerLocalStorage, profileManager.getUserId());
+        openLocalStorageConnection();
+
+        String id = multiLayerLocalStorage.getCacheEntry(profileManager.getUserId(), CACHE_SEQNUM);
+        int seqnum = 1;
+        if (!SwrveHelper.isNullOrEmpty(id)) {
+            seqnum = Integer.parseInt(id) + 1;
+        }
+        multiLayerLocalStorage.setCacheEntry(profileManager.getUserId(), CACHE_SEQNUM, Integer.toString(seqnum));
+        return seqnum;
     }
 
     @Override
@@ -2042,8 +2092,29 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public void setCustomPayloadForConversationInput(Map payload) {
+        SwrveConversationEventHelper.setCustomPayload(payload);
+    }
+
+    @Override
     public int getFlushRefreshDelay() {
         SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
         return settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
     }
+
+    @Override
+    public void setSessionListener(SwrveSessionListener sessionListener) {
+        this.sessionListener = sessionListener;
+    }
+
+    @Override
+    public void fetchNotificationCampaigns(Set<Long> campaignIds) {
+        try {
+            initSwrveDeepLinkManager();
+            this.swrveDeeplinkManager.fetchOfflineCampaigns(campaignIds);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception fetching notifications campaigns", e);
+        }
+    }
+
 }

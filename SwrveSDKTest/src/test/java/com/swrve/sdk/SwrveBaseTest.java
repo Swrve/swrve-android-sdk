@@ -30,6 +30,7 @@ public abstract class SwrveBaseTest {
 
     @Before
     public void setUp() throws Exception {
+        RuntimeEnvironment.setQualifiers("+land");
         SwrveLogger.setLogLevel(Log.VERBOSE);
         ShadowLog.stream = System.out;
         shadowApplication = Shadows.shadowOf(RuntimeEnvironment.application);

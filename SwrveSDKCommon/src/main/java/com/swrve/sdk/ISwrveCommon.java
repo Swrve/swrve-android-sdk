@@ -6,8 +6,10 @@ import android.content.Context;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
 interface ISwrveCommon {
 
@@ -130,4 +132,11 @@ interface ISwrveCommon {
     void saveNotificationAuthenticated(int notificationId);
 
     int getFlushRefreshDelay();
+
+    void setSessionListener(SwrveSessionListener sessionListener);
+
+    void fetchNotificationCampaigns(Set<Long> campaignIds);
+
+    File getCacheDir(Context context);
+
 }

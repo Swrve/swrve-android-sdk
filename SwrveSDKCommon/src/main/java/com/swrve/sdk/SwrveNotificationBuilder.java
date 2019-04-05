@@ -25,12 +25,14 @@ import com.swrve.sdk.notifications.model.SwrveNotificationChannel;
 import com.swrve.sdk.notifications.model.SwrveNotificationExpanded;
 import com.swrve.sdk.notifications.model.SwrveNotificationMedia;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
 
@@ -119,7 +121,7 @@ public class SwrveNotificationBuilder {
             }
         }
 
-        if(SwrveHelper.isNullOrEmpty(notificationTitle)) {
+        if (SwrveHelper.isNullOrEmpty(notificationTitle)) {
             String fallback = getFallbackNotificationTitle();
             SwrveLogger.d("No notification title in configured from server payload so using app name:%s", fallback);
             mBuilder.setContentTitle(fallback);
@@ -226,7 +228,7 @@ public class SwrveNotificationBuilder {
 
         // Icon
         if (SwrveHelper.isNotNullOrEmpty(swrveNotification.getIconUrl())) {
-            Bitmap icon = downloadBitmapImageFromUrl(swrveNotification.getIconUrl());
+            Bitmap icon = getImageFromUrl(swrveNotification.getIconUrl());
             if (icon != null) {
                 builder.setLargeIcon(icon);
             }
@@ -354,7 +356,7 @@ public class SwrveNotificationBuilder {
                     // Main Big Picture
                     if (SwrveHelper.isNotNullOrEmpty(media.getUrl())) {
 
-                        Bitmap bigImage = downloadBitmapImageFromUrl(media.getUrl());
+                        Bitmap bigImage = getImageFromUrl(media.getUrl());
                         if (bigImage != null) {
                             bigPictureStyle.bigPicture(bigImage);
                         } else {
@@ -366,7 +368,7 @@ public class SwrveNotificationBuilder {
                         return null;
                     }
                 } else {
-                    Bitmap fallbackImage = downloadBitmapImageFromUrl(media.getFallbackUrl());
+                    Bitmap fallbackImage = getImageFromUrl(media.getFallbackUrl());
                     if (fallbackImage != null) {
                         bigPictureStyle.bigPicture(fallbackImage);
                     } else {
@@ -384,7 +386,7 @@ public class SwrveNotificationBuilder {
                 if (expanded != null) {
                     // Expanded Icon
                     if (SwrveHelper.isNotNullOrEmpty(expanded.getIconUrl())) {
-                        bigPictureStyle.bigLargeIcon(downloadBitmapImageFromUrl(expanded.getIconUrl()));
+                        bigPictureStyle.bigLargeIcon(getImageFromUrl(expanded.getIconUrl()));
                     }
                     // Expanded Title
                     if (SwrveHelper.isNotNullOrEmpty(expanded.getTitle())) {
@@ -513,8 +515,17 @@ public class SwrveNotificationBuilder {
         return pushTitle;
     }
 
+    protected Bitmap getImageFromUrl(final String url) {
+        Bitmap bitmap = getImageFromCache(url);
+        if (bitmap == null) {
+            bitmap = downloadBitmapImageFromUrl(url);
+        }
+        return bitmap;
+    }
+
     protected Bitmap downloadBitmapImageFromUrl(final String mediaUrl) {
         Bitmap bitmap = null;
+        InputStream inputStream = null;
         try {
             URL url = null;
             if (SwrveHelper.isNotNullOrEmpty(mediaUrl)) {
@@ -529,11 +540,36 @@ public class SwrveNotificationBuilder {
                 httpConnection.connect();
                 httpConnection.setConnectTimeout(10000); //set timeout to 10 seconds
 
-                InputStream input = httpConnection.getInputStream();
-                bitmap = BitmapFactory.decodeStream(input);
+                inputStream = httpConnection.getInputStream();
+                bitmap = BitmapFactory.decodeStream(inputStream);
             }
         } catch (Exception e) {
-            SwrveLogger.e("Notification image has failed to download.", e);
+            SwrveLogger.e("Exception downloading notification image:%s", e, mediaUrl);
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (Exception e) {
+                    SwrveLogger.e("Exception closing stream for downloading notification image.", e);
+                }
+            }
+        }
+        return bitmap;
+    }
+
+    protected Bitmap getImageFromCache(final String url) {
+        Bitmap bitmap = null;
+        try {
+            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
+            File cacheDir = swrveCommon.getCacheDir(context);
+            String hashedUrl = SwrveHelper.md5(url.toLowerCase(Locale.ENGLISH));
+            File file = new File(cacheDir, hashedUrl);
+            if (file.exists() && file.canRead()) {
+                bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                SwrveLogger.v("Using cached notification image:%s", url);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception trying to get notification image from cache.", e);
         }
         return bitmap;
     }

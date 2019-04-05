@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="4" by="lint 3.1.3">
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+        errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="8"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GradleOverrides"
+        message="This `minSdkVersion` value (`14`) is not used; it is always overridden by the value specified in the Gradle build script (`14`)"
+        errorLine1="        android:minSdkVersion=&quot;14&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="7"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GradleOverrides"
+        message="This `targetSdkVersion` value (`25`) is not used; it is always overridden by the value specified in the Gradle build script (`27`)"
+        errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="8"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SetJavaScriptEnabled"
+        message="Using `setJavaScriptEnabled` can introduce XSS vulnerabilities into your application, review carefully."
+        errorLine1="        this.getSettings().setJavaScriptEnabled(true);"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/video/YoutubeVideoView.java"
+            line="48"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; SDK_INT is always >= 14"
+        errorLine1="                &amp;&amp; Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/ConversationRoundedLinearLayout.java"
+            line="37"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v4`) is unnecessary; `minSdkVersion` is 14. Merge all the resources in this folder into `drawable-hdpi`.">
+        <location
+            file="src/main/res/drawable-hdpi-v4"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v4`) is unnecessary; `minSdkVersion` is 14. Merge all the resources in this folder into `drawable-mdpi`.">
+        <location
+            file="src/main/res/drawable-mdpi-v4"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v4`) is unnecessary; `minSdkVersion` is 14. Merge all the resources in this folder into `drawable-xhdpi`.">
+        <location
+            file="src/main/res/drawable-xhdpi-v4"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v4`) is unnecessary; `minSdkVersion` is 14. Merge all the resources in this folder into `drawable-xxhdpi`.">
+        <location
+            file="src/main/res/drawable-xxhdpi-v4"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v4`) is unnecessary; `minSdkVersion` is 14. Merge all the resources in this folder into `drawable-xxxhdpi`.">
+        <location
+            file="src/main/res/drawable-xxxhdpi-v4"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v11`) is unnecessary; `minSdkVersion` is 14. Merge all the resources in this folder into `values`.">
+        <location
+            file="src/main/res/values-v11"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v14`) is unnecessary; `minSdkVersion` is 14. Merge all the resources in this folder into `values`.">
+        <location
+            file="src/main/res/values-v14"/>
+    </issue>
+
+    <issue
+        id="IconMissingDensityFolder"
+        message="Missing density variation folders in `src/main/res`: drawable-hdpi, drawable-mdpi, drawable-xxhdpi">
+        <location
+            file="src/main/res"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `ConversationButton` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class ConversationButton extends android.widget.Button implements IConversationControl {"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/ConversationButton.java"
+            line="17"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `ConversationRatingBar` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class ConversationRatingBar extends LinearLayout implements RatingBar.OnRatingBarChangeListener, IConversationInput {"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/ConversationRatingBar.java"
+            line="25"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `HtmlSnippetView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class HtmlSnippetView extends WebView {"
+        errorLine2="             ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/HtmlSnippetView.java"
+            line="15"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `YoutubeVideoView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class YoutubeVideoView extends WebVideoViewBase {"
+        errorLine2="             ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/video/YoutubeVideoView.java"
+            line="16"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="Custom view ``YoutubeVideoView`` has `setOnTouchListener` called on it but does not override `performClick`"
+        errorLine1="                    view.setOnTouchListener(new View.OnTouchListener() {"
+        errorLine2="                    ^">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/ConversationFragment.java"
+            line="281"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="`onTouch` should call `View#performClick` when a click is detected"
+        errorLine1="                        public boolean onTouch(View v, MotionEvent event) {"
+        errorLine2="                                       ~~~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/ConversationFragment.java"
+            line="283"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Use &quot;`Gravity.START`&quot; instead of &quot;`Gravity.LEFT`&quot; to ensure correct behavior in right-to-left locales"
+        errorLine1="            setGravity(Gravity.CENTER | Gravity.LEFT);"
+        errorLine2="                                                ~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/ConversationButton.java"
+            line="98"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Use &quot;`Gravity.END`&quot; instead of &quot;`Gravity.RIGHT`&quot; to ensure correct behavior in right-to-left locales"
+        errorLine1="            setGravity(Gravity.CENTER | Gravity.RIGHT);"
+        errorLine2="                                                ~~~~~">
+        <location
+            file="src/main/java/com/swrve/sdk/conversations/ui/ConversationButton.java"
+            line="102"
+            column="49"/>
+    </issue>
+
+</issues>

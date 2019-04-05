@@ -29,9 +29,6 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
 
     protected SwrveConversation conversation;
 
-    /**
-     * Load a campaign from JSON data.
-     */
     public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
 
