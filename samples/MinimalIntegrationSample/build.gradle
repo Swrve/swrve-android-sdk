@@ -24,7 +24,7 @@ android {
 
 dependencies {
     api 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    api 'com.swrve.sdk.android:swrve-firebase:6.1.0'
+    api 'com.swrve.sdk.android:swrve-firebase:6.1.1'
 }
 
 apply plugin: 'com.google.gms.google-services'

@@ -135,7 +135,7 @@ public class SwrveNotificationConfig {
         /**
          * Set the default accent color to use in the notification
          *
-         * @param accentColorResourceId color id
+         * @param accentColorResourceId resource id for the color.
          * @return this builder
          */
         public Builder accentColorResourceId(int accentColorResourceId) {

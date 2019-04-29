@@ -5,8 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 
 import com.swrve.sdk.config.SwrveConfig;
 
@@ -44,6 +46,44 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
 
     private int dummyIconResource = 12345;
     private NotificationChannel dummyChannel = null;
+
+    @Test
+    public void testNotificationConfigAccentColorResourceId() {
+
+        int colorResourceId = com.swrve.sdk.test.R.color.test_color_green;
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel)
+                .accentColorResourceId(colorResourceId);
+        SwrveConfig config = new SwrveConfig();
+        config.setNotificationConfig(notificationConfig.build());
+        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+
+        assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
+        sendSimpleBundleToPushServiceManager();
+        assertNumberOfNotification(1); // there can only be one notification for this test
+
+        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
+        assertEquals(Color.parseColor("#217913"), notifications.get(0).color);
+    }
+
+    @Test
+    public void testNotificationConfigAccentColor() {
+
+        int colorARGB = ContextCompat.getColor(mActivity, com.swrve.sdk.test.R.color.test_color_green);
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel)
+                .accentColorResourceId(colorARGB);
+        SwrveConfig config = new SwrveConfig();
+        config.setNotificationConfig(notificationConfig.build());
+        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+
+        assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
+        sendSimpleBundleToPushServiceManager();
+        assertNumberOfNotification(1); // there can only be one notification for this test
+
+        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
+        assertEquals(Color.parseColor("#217913"), notifications.get(0).color);
+    }
 
     @Test
     public void testNotificationCustomFilterSuppress() {

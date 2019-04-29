@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 
 import com.swrve.sdk.notifications.model.SwrveNotification;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
@@ -94,9 +95,7 @@ public class SwrveNotificationBuilder {
             mBuilder.setLargeIcon(largeIconBitmap);
         }
 
-        if (accentColorObject != null) {
-            mBuilder.setColor(accentColorObject);
-        }
+        applyAccentColor(mBuilder);
 
         String msgSound = msg.getString(SwrveNotificationConstants.SOUND_KEY);
         if (!SwrveHelper.isNullOrEmpty(msgSound)) {
@@ -201,6 +200,23 @@ public class SwrveNotificationBuilder {
         }
 
         return notificationChannelId;
+    }
+
+    private void applyAccentColor(NotificationCompat.Builder builder) {
+        if (accentColorObject == null) {
+            return;
+        }
+
+        int color = 0;
+        if (accentColorObject != 0) {
+            try {
+                color =  ContextCompat.getColor(context, accentColorObject);
+            } catch (Exception e) {
+                SwrveLogger.e("Exception getting accent color for notification.");
+                color = accentColorObject; // fallback in case actual argb color was passed instead of resource Id
+            }
+        }
+        builder.setColor(color);
     }
 
     private NotificationCompat.Builder getNotificationBuilderFromSwrvePayload(NotificationCompat.Builder builder) {
