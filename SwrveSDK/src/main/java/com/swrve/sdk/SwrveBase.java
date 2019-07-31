@@ -1636,15 +1636,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
         List<SwrveBaseCampaign> result = new ArrayList<>();
-        synchronized (campaigns) {
-            for (int i = 0; i < campaigns.size(); i++) {
-                SwrveBaseCampaign campaign = campaigns.get(i);
-                if (campaign.isMessageCenter()
-                        && campaign.getStatus() != SwrveCampaignState.Status.Deleted
-                        && campaign.isActive(getNow())
-                        && campaign.supportsOrientation(orientation)
-                        && campaign.areAssetsReady(getAssetsOnDisk())) {
-                    result.add(campaign);
+        if (campaigns != null) {
+            synchronized (campaigns) {
+                for (int i = 0; i < campaigns.size(); i++) {
+                    SwrveBaseCampaign campaign = campaigns.get(i);
+                    if (campaign.isMessageCenter()
+                            && campaign.getStatus() != SwrveCampaignState.Status.Deleted
+                            && campaign.isActive(getNow())
+                            && campaign.supportsOrientation(orientation)
+                            && campaign.areAssetsReady(getAssetsOnDisk())) {
+                        result.add(campaign);
+                    }
                 }
             }
         }

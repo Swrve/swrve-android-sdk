@@ -66,6 +66,7 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
+import static com.swrve.sdk.ISwrveCommon.CACHE_QA_RESET_DEVICE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
@@ -75,7 +76,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "6.1.1";
+    protected static String version = "6.2";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
@@ -498,6 +499,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         });
     }
 
+    protected void saveQaUserResetDeviceInCache(JSONObject jsonQa) {
+        final boolean resetDevice = jsonQa.optBoolean("reset_device_state", false);
+        final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
+        storageExecutorExecute(new Runnable() {
+            @Override
+            public void run() {
+                multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA_RESET_DEVICE, String.valueOf(resetDevice), getUniqueKey(userId));
+            }
+        });
+    }
+
     protected void autoShowMessages() {
         // Don't do anything if we've already shown a message or if its too long after session start
         if (!autoShowMessagesEnabled) {
@@ -671,6 +683,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     }
                 }
                 saveIsQaUserInCache(true);
+                saveQaUserResetDeviceInCache(jsonQa);
                 QaUser.update();
             } else if (qaUser != null) {
                 qaUser.unbindToServices();

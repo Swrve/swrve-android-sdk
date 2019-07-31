@@ -458,8 +458,6 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     public void testSwitchUserDiffUserId() {
 
         reset(swrveSpy); // reset the setup init calls on swrveSpy so the times() test can be done below
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveSpy, swrveSpy); // disable token registration
-
         swrveSpy.trackingState = EVENT_SENDING_PAUSED;
         assertEquals("Setup of this test will be that event sending is paused.", EVENT_SENDING_PAUSED, swrveSpy.trackingState);
 

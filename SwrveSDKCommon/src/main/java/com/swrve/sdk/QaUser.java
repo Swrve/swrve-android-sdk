@@ -11,14 +11,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
+import static com.swrve.sdk.ISwrveCommon.CACHE_QA_RESET_DEVICE;
 
 class QaUser {
 
@@ -37,6 +35,7 @@ class QaUser {
     protected String sessionToken;
     protected String deviceId;
     protected boolean loggingEnabled;
+    protected boolean resetDevice;
     protected ExecutorService restClientExecutor;
 
     protected static QaUser getInstance() {
@@ -69,6 +68,8 @@ class QaUser {
             userId = swrveCommon.getUserId();
             String qaString = swrveCommon.getCachedData(userId, CACHE_QA);
             loggingEnabled = Boolean.parseBoolean(qaString);
+            String resetDeviceString = swrveCommon.getCachedData(userId, CACHE_QA_RESET_DEVICE);
+            resetDevice = Boolean.parseBoolean(resetDeviceString);
             if (loggingEnabled) {
                 appId = swrveCommon.getAppId();
                 apiKey = swrveCommon.getApiKey();
@@ -86,12 +87,21 @@ class QaUser {
     static boolean isLoggingEnabled() {
         boolean isLoggingEnabled = false;
         try {
-            QaUser qaUser = QaUser.getInstance();
-            isLoggingEnabled = qaUser.loggingEnabled;
+            isLoggingEnabled = QaUser.getInstance().loggingEnabled;
         } catch (Exception e) {
             SwrveLogger.e("Error calling QaUser.isLoggingEnabled", e);
         }
         return isLoggingEnabled;
+    }
+
+    static boolean isResetDevice() {
+        boolean isResetDevice = false;
+        try {
+            isResetDevice = QaUser.getInstance().resetDevice;
+        } catch (Exception e) {
+            SwrveLogger.e("Error calling QaUser.isResetDevice", e);
+        }
+        return isResetDevice;
     }
 
     static void geoCampaignTriggered(long geoplaceId, long geofenceId, String actionType, Collection<QaGeoCampaignInfo> geoCampaignTriggeredList) {

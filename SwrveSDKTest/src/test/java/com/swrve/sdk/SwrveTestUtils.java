@@ -413,4 +413,20 @@ public class SwrveTestUtils {
             assertEquals(expectedPayload, actualPayload);
         }
     }
+
+    public static Swrve createSpyInstance() throws Exception {
+        return createSpyInstance(new SwrveConfig());
+    }
+
+    public static Swrve createSpyInstance(SwrveConfig config) throws Exception {
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveTestUtils.disableAssetsManager(swrveSpy);
+        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
+        Mockito.doNothing().when(swrveSpy).checkForCampaignAndResourcesUpdates();
+        return swrveSpy;
+    }
+
 }

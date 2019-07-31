@@ -31,14 +31,8 @@ public class SwrveUnitTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveTestUtils.disableAssetsManager(swrveSpy);
-        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
+        swrveSpy = SwrveTestUtils.createSpyInstance();
         swrveSpy.init(mActivity);
-        Mockito.reset(swrveSpy);
     }
 
     @After
@@ -53,8 +47,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         String appVersion = "my_version";
         SwrveConfig config = new SwrveConfig();
         config.setAppVersion(appVersion);
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-        SwrveTestUtils.setSDKInstance(swrve);
+        Swrve swrve = SwrveTestUtils.createSpyInstance(config);
         assertEquals(appVersion, swrve.appVersion);
     }
 
@@ -66,8 +59,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         Locale language2 = Locale.CHINESE;
         SwrveConfig config = new SwrveConfig();
         config.setLanguage(language1);
-        ISwrve swrve = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-        SwrveTestUtils.setSDKInstance(swrve);
+        Swrve swrve = SwrveTestUtils.createSpyInstance(config);
         assertEquals("ja", swrve.getLanguage());
         swrve.setLanguage(language2);
         assertEquals("zh", swrve.getLanguage());
@@ -76,12 +68,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
     @Test
     public void testInitialisationAndUserIdGenerated() throws Exception {
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        SwrveTestUtils.disableAssetsManager(swrveSpy);
+        swrveSpy = SwrveTestUtils.createSpyInstance();
         String userId = SwrveSDK.getUserId();
         assertNotNull(userId);
     }
@@ -90,10 +77,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
     public void testDeviceInfoQueued() throws Exception {
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        Swrve swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        SwrveTestUtils.setSDKInstance(swrveSpy);
+        swrveSpy = SwrveTestUtils.createSpyInstance();
 
         Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued
         Mockito.verify(swrveSpy, Mockito.atMost(0)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
@@ -108,7 +92,6 @@ public class SwrveUnitTest extends SwrveBaseTest {
         swrveSpy.onResume(mActivity);
         Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
         Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
-
     }
 
     @Test
@@ -250,12 +233,8 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         // configure sdk to disable autoShowMessagesEnabled after 1 second
         SwrveConfig config = new SwrveConfig();
-        config.setAutoShowMessagesMaxDelay(1000l);
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-        Swrve swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        SwrveTestUtils.disableAssetsManager(swrveSpy);
+        config.setAutoShowMessagesMaxDelay(500l);
+        swrveSpy = SwrveTestUtils.createSpyInstance(config);
 
         // create instance should not call disableAutoShowAfterDelay and the default for autoShowMessagesEnabled should be false
         Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", false, swrveSpy.autoShowMessagesEnabled);
@@ -267,7 +246,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         Mockito.verify(swrveSpy, Mockito.atMost(1)).disableAutoShowAfterDelay();
 
         // sleep 2 seconds and test autoShowMessagesEnabled has been disabled.
-        Thread.sleep(2000l);
+        Thread.sleep(1000l);
         Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", false, swrveSpy.autoShowMessagesEnabled);
     }
 
@@ -313,7 +292,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         Mockito.verify(mockSessionListener, Mockito.times(0)).sessionStarted();
 
         // fast forward to time after session expires and calling onResume should invoke sessionStarted once more
-        Mockito.doReturn(swrveSpy.lastSessionTick + 1).when(swrveSpy).getSessionTime();
+        Mockito.doReturn(swrveSpy.lastSessionTick + 30000).when(swrveSpy).getSessionTime();
         swrveSpy.onResume(mActivity);
         Mockito.verify(mockSessionListener, Mockito.times(1)).sessionStarted();
     }

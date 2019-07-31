@@ -25,5 +25,6 @@ public class SwrveNotificationConstants {
     public static final String PUSH_NOTIFICATION_ID = "notification_id";
     public static final int NO_ACTION_ICON = 0;
     public static final int SWRVE_PUSH_VERSION = 1;
+    public static final String RULES_KEY = "rules";
 }
 
