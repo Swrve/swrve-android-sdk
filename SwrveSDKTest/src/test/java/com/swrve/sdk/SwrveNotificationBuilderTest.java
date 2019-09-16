@@ -821,6 +821,45 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(223, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
+    @Test
+    public void testUniqueRequestCodes() {
+
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        String json = "{\n" +
+                " \"title\": \"title\",\n" +
+                " \"subtitle\": \"subtitle\",\n" +
+                " \"version\": 1,\n" +
+                "\"expanded\": { \"title\": \"[expanded title]\",\n" +
+                "                \"body\": \"[expanded body]\"}, \n" +
+                "\"buttons\": [{\"title\": \"[button text 1]\",\n" +
+                "                 \"action_type\": \"open_url\",\n" +
+                "                 \"action\": \"https://lovelyURL\"},\n" +
+                "                {\"title\": \"[button text 2]\",\n" +
+                "                 \"action_type\": \"open_app\"},\n" +
+                "                {\"title\": \"[button text 3]\",\n" +
+                "                 \"action_type\": \"dismiss\"}]\n" +
+                "}\n";
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "text");
+
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        int requestCodeStart = builderSpy.requestCode;
+
+        displayNotification(builderSpy, bundle);
+
+        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
+
+        Notification notification = notifications.get(0);
+        Notification.Action[] actions = notification.actions;
+        assertEquals(requestCodeStart, shadowOf(actions[0].actionIntent).getRequestCode());
+        assertEquals(requestCodeStart + 1, shadowOf(actions[1].actionIntent).getRequestCode());
+        assertEquals(requestCodeStart + 2, shadowOf(actions[2].actionIntent).getRequestCode());
+        assertEquals(requestCodeStart + 3, shadowOf(notification.contentIntent).getRequestCode());
+        assertEquals(requestCodeStart + 4, builderSpy.requestCode); // final value of requestCode
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Config(sdk = Build.VERSION_CODES.KITKAT)
     @Test

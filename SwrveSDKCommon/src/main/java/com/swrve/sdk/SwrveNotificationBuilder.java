@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
 
@@ -54,6 +55,7 @@ public class SwrveNotificationBuilder {
     private String campaignType;
     private Bundle eventPayload;
     private int notificationId;
+    protected int requestCode;
 
     public SwrveNotificationBuilder(Context context, SwrveNotificationConfig config) {
         this.context = context;
@@ -62,7 +64,8 @@ public class SwrveNotificationBuilder {
         this.defaultNotificationChannel = config.getDefaultNotificationChannel();
         this.largeIconDrawableId = config.getLargeIconDrawableId();
         this.accentColorObject = config.getAccentColorResourceId();
-        this.notificationId = generateTimestampId();
+        this.notificationId = new Random().nextInt();
+        this.requestCode = new Random().nextInt();
     }
 
     public NotificationCompat.Builder build(String msgText, Bundle msg, String campaignType, Bundle eventPayload) {
@@ -480,7 +483,7 @@ public class SwrveNotificationBuilder {
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_URL_KEY, actionUrl);
         intent.putExtra(SwrveNotificationConstants.BUTTON_TEXT_KEY, buttonText);
         intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
-        PendingIntent pendingIntentButton = PendingIntent.getBroadcast(context, generateTimestampId(), intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent pendingIntentButton = PendingIntent.getBroadcast(context, requestCode++, intent, PendingIntent.FLAG_CANCEL_CURRENT);
         return new NotificationCompat.Action.Builder(icon, buttonText, pendingIntentButton).build();
     }
 
@@ -495,7 +498,7 @@ public class SwrveNotificationBuilder {
 
     protected PendingIntent createPendingIntent(Bundle msg, String campaignType, Bundle eventPayload) {
         Intent intent = createIntent(msg, campaignType, eventPayload);
-        return PendingIntent.getBroadcast(context, generateTimestampId(), intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        return PendingIntent.getBroadcast(context, requestCode++, intent, PendingIntent.FLAG_CANCEL_CURRENT);
     }
 
     protected Intent createIntent(Bundle msg, String campaignType, Bundle eventPayload) {
@@ -509,10 +512,6 @@ public class SwrveNotificationBuilder {
 
     protected Date getNow() {
         return new Date();
-    }
-
-    private int generateTimestampId() {
-        return (int) (getNow().getTime() % Integer.MAX_VALUE);
     }
 
     private String getFallbackNotificationTitle() {
