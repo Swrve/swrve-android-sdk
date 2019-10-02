@@ -1,9 +1,9 @@
 package com.swrve.sdk;
 
 import android.content.Intent;
-import android.support.v4.app.JobIntentService;
+import android.support.v4.app.SwrveJobIntentService;
 
-public class SwrvePushServiceDefaultJobIntentService extends JobIntentService {
+public class SwrvePushServiceDefaultJobIntentService extends SwrveJobIntentService {
 
     @Override
     protected void onHandleWork(Intent intent) {

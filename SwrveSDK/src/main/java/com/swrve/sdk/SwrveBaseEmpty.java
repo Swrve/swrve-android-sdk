@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.content.Context;
 import android.os.Bundle;
@@ -39,8 +40,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     private SwrveCustomButtonListener customButtonListener;
     private SwrveInstallButtonListener installButtonListener;
     private SwrveDismissButtonListener inAppDismissButtonListener;
-    private String language = "en-US";
-    private String userId;
+    private String language;
     private File cacheDir;
 
     protected SwrveBaseEmpty(Context context, String apiKey) {
@@ -95,11 +95,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public int getHttpTimeout() {
-        return 0;
-    }
-
-    @Override
-    public int getMaxEventsPerFlush() {
         return 0;
     }
 
@@ -183,10 +178,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public String getUserId() {
-        if (SwrveHelper.isNullOrEmpty(userId)) {
-            return "unsupported_version";
-        }
-        return userId;
+        return "unsupported_version";
     }
 
     @Override
@@ -212,11 +204,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public String getCachedData(String userId, String key) {
         return null;
-    }
-
-    @Override
-    public void setLocationSegmentVersion(int locationSegmentVersion) {
-
     }
 
     @Override
@@ -391,5 +378,18 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public File getCacheDir(Context context) {
         return null;
+    }
+
+    @Override
+    public void start(Activity context) {
+    }
+
+    @Override
+    public void start(Activity context, String userId) {
+    }
+
+    @Override
+    public boolean isStarted() {
+        return false;
     }
 }

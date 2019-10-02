@@ -27,6 +27,7 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -394,6 +396,27 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testQueueEventWhileEventSendingPaused() {
+
+        reset(swrveSpy); // reset the setup init calls on swrveSpy so the times()/never() test can be done below
+        assertNotNull(swrveSpy.pausedEvents);
+        assertEquals(swrveSpy.pausedEvents.size(), 0);
+
+        swrveSpy.pauseEventSending();
+        assertTrue(swrveSpy.trackingState == EVENT_SENDING_PAUSED);
+
+        SwrveSDK.event("someEvent");
+        SwrveSDK.event("anotherEvent", new HashMap<>());
+        assertEquals(swrveSpy.pausedEvents.size(), 2);
+
+        swrveSpy.enableEventSending();
+        swrveSpy.queuePausedEvents();
+        assertEquals(swrveSpy.pausedEvents.size(), 0);
+        verify(swrveSpy, atLeast(2)).storageExecutorExecute(any(Runnable.class));
+        verify(swrveSpy, atLeastOnce()).sendQueuedEvents();
+    }
+
+    @Test
     public void testGetExternalId() {
 
         assertEquals("", SwrveSDK.getExternalUserId()); // no external id to start with
@@ -466,6 +489,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         assertEquals("switchUser should always enable event sending.", ON, swrveSpy.trackingState);
         Mockito.verify(swrveSpy, times(1)).clearAllAuthenticatedNotifications();
         Mockito.verify(swrveSpy, times(1)).init(any(Activity.class));
+        Mockito.verify(swrveSpy, times(1)).queuePausedEvents();
     }
 
     @Test
@@ -482,6 +506,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         assertEquals("switchUser should always enable event sending.", ON, swrveSpy.trackingState);
         Mockito.verify(swrveSpy, never()).clearAllAuthenticatedNotifications();
         Mockito.verify(swrveSpy, never()).init(any(Activity.class));
+        Mockito.verify(swrveSpy, times(1)).queuePausedEvents();
     }
 
     // Helper methods below

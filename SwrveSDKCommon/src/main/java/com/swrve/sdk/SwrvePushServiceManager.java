@@ -10,9 +10,11 @@ import android.support.v4.app.NotificationCompat;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.Set;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY;
+import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.PUSH_INTERNAL_KEYS;
 
 class SwrvePushServiceManager {
 
@@ -95,9 +97,8 @@ class SwrvePushServiceManager {
             PendingIntent contentIntent = swrveNotificationBuilder.createPendingIntent(msg, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
             notificationCompatBuilder.setContentIntent(contentIntent);
 
-            String jsonPayload = msg.getString(SWRVE_NESTED_JSON_PAYLOAD_KEY);
             int notificationId = swrveNotificationBuilder.getNotificationId();
-            Notification notification = applyCustomFilter(notificationCompatBuilder, notificationId, jsonPayload);
+            Notification notification = applyCustomFilter(notificationCompatBuilder, notificationId, msg, swrveNotificationBuilder.getNotificationDetails());
 
             if (notification == null) {
                 SwrveLogger.d("SwrvePushServiceManager: notification suppressed via custom filter. notificationId: %s", notificationId);
@@ -122,18 +123,54 @@ class SwrvePushServiceManager {
         QaUser.pushNotification(pushId, msg);
     }
 
-    private Notification applyCustomFilter(NotificationCompat.Builder builder, int notificationId, String jsonPayload) {
+    private Notification applyCustomFilter(NotificationCompat.Builder builder, int notificationId, final Bundle msg, SwrveNotificationDetails notificationDetails) {
         Notification notification;
-        ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-        if (swrveCommon.getNotificationConfig() == null || swrveCommon.getNotificationConfig().getNotificationCustomFilter() == null) {
-            SwrveLogger.d("SwrveNotificationCustomFilter not configured.");
+        SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
+        if (notificationConfig == null ||
+                (notificationConfig.getNotificationCustomFilter() == null && notificationConfig.getNotificationFilter() == null)) {
+            SwrveLogger.d("SwrveNotificationFilter not configured.");
             notification = builder.build();
         } else {
-            SwrveNotificationCustomFilter customFilter = swrveCommon.getNotificationConfig().getNotificationCustomFilter();
-            SwrveLogger.d("SwrveNotificationCustomFilter configured. Passing builder to custom filter.");
-            notification = customFilter.filterNotification(builder, notificationId, jsonPayload);
+            SwrveLogger.d("SwrveNotificationFilter configured. Passing builder to custom filter.");
+            try {
+                String payload = getPayload(msg);
+                if (notificationConfig.getNotificationFilter() != null) {
+                    SwrveNotificationFilter filter = notificationConfig.getNotificationFilter();
+                    notification = filter.filterNotification(builder, notificationId, notificationDetails, payload);
+                } else if (notificationConfig.getNotificationCustomFilter() != null) {
+                    SwrveNotificationCustomFilter customFilter = notificationConfig.getNotificationCustomFilter();
+                    notification = customFilter.filterNotification(builder, notificationId, payload);
+                } else {
+                    notification = builder.build();
+                }
+            } catch (Exception ex) {
+                SwrveLogger.e("Error calling the custom notification filter.", ex);
+                notification = builder.build();
+            }
         }
         return notification;
+    }
+
+    protected String getPayload(final Bundle msg) {
+        String payload = "";
+        String jsonPayload = msg.getString(SWRVE_NESTED_JSON_PAYLOAD_KEY);
+        // Try and clean the bundle keys so that only the custom properties (and no internal ones) are added to the custom filter json param
+        try {
+            JSONObject jsonObject = (jsonPayload != null) ? new JSONObject(jsonPayload) : new JSONObject();
+            Set<String> msgKeySet = msg.keySet();
+            msgKeySet.removeAll(PUSH_INTERNAL_KEYS);
+
+            for (String key : msgKeySet) {
+                // Do not overwrite key if already present
+                if (!jsonObject.has(key)) {
+                    jsonObject.put(key, msg.get(key));
+                }
+            }
+            payload = jsonObject.toString();
+        } catch (Exception ex) {
+            SwrveLogger.e("Error getting json payload.", ex);
+        }
+        return payload;
     }
 
     protected Date getNow() {

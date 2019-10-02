@@ -53,6 +53,7 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
 
        new SwrveCampaignInfluence().removeInfluenceCampaign(context, msgId); // Clear the influence data for this push
 
+        // Cannot send any event if the SDK is not started
         String contextId = extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY);
         if (SwrveHelper.isNotNullOrEmpty(contextId)) {
             sendButtonEngagedEvent(extras, pushBundle, msgId, contextId);
@@ -110,8 +111,9 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
         }
     }
 
-    private void setNotificationSwrveCampaignIdFromPayload (Bundle pushBundle) {
+    private void setNotificationSwrveCampaignIdFromPayload(Bundle pushBundle) {
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
+
         String swrvePushPayload = pushBundle.getString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY);
         if (SwrveHelper.isNotNullOrEmpty(swrvePushPayload)) {
             SwrveNotification swrveNotification = SwrveNotification.fromJson(swrvePushPayload);
@@ -124,8 +126,9 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
         }
     }
 
-    private void setNotificationSwrveCampaignIdFromButtonAction (String campaignId) {
+    private void setNotificationSwrveCampaignIdFromButtonAction(String campaignId) {
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
+
         if (SwrveHelper.isNotNullOrEmpty(campaignId)) {
             swrveCommon.setNotificationSwrveCampaignId(campaignId);
         }

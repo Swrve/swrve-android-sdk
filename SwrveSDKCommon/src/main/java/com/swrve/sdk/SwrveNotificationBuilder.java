@@ -56,6 +56,7 @@ public class SwrveNotificationBuilder {
     private Bundle eventPayload;
     private int notificationId;
     protected int requestCode;
+    private SwrveNotificationDetails notificationDetails = new SwrveNotificationDetails();
 
     public SwrveNotificationBuilder(Context context, SwrveNotificationConfig config) {
         this.context = context;
@@ -92,6 +93,7 @@ public class SwrveNotificationBuilder {
                 .setTicker(this.msgText)
                 .setContentText(this.msgText)
                 .setAutoCancel(true);
+        notificationDetails.setBody(this.msgText);
 
         if (largeIconDrawableId >= 0) {
             Bitmap largeIconBitmap = BitmapFactory.decodeResource(context.getResources(), largeIconDrawableId);
@@ -127,6 +129,7 @@ public class SwrveNotificationBuilder {
             String fallback = getFallbackNotificationTitle();
             SwrveLogger.d("No notification title in configured from server payload so using app name:%s", fallback);
             mBuilder.setContentTitle(fallback);
+            notificationDetails.setTitle(fallback);
         }
 
         PendingIntent pendingIntent = createPendingIntent(msg, campaignType, eventPayload);
@@ -233,6 +236,7 @@ public class SwrveNotificationBuilder {
         if (SwrveHelper.isNotNullOrEmpty(swrveNotification.getTitle())) {
             notificationTitle = swrveNotification.getTitle();
             builder.setContentTitle(swrveNotification.getTitle());
+            notificationDetails.setTitle(swrveNotification.getTitle());
         }
 
         // Base Subtitle
@@ -321,6 +325,7 @@ public class SwrveNotificationBuilder {
             if (SwrveHelper.isNotNullOrEmpty(media.getTitle())) {
                 notificationTitle = media.getTitle();
                 mBuilder.setContentTitle(media.getTitle());
+                notificationDetails.setTitle(media.getTitle());
             }
 
             if (SwrveHelper.isNotNullOrEmpty(media.getSubtitle())) {
@@ -329,6 +334,7 @@ public class SwrveNotificationBuilder {
 
             if (SwrveHelper.isNotNullOrEmpty(media.getBody())) {
                 mBuilder.setContentText(media.getBody());
+                notificationDetails.setBody(media.getBody());
                 // If ticker is not set from earlier, set the body to it
                 if (SwrveHelper.isNullOrEmpty(swrveNotification.getTicker())) {
                     mBuilder.setTicker(media.getBody());
@@ -378,6 +384,8 @@ public class SwrveNotificationBuilder {
                         Bitmap bigImage = getImageFromUrl(media.getUrl());
                         if (bigImage != null) {
                             bigPictureStyle.bigPicture(bigImage);
+                            notificationDetails.setMediaUrl(media.getUrl());
+                            notificationDetails.setMediaBitmap(bigImage);
                         } else {
                             // If m_url failed to download, traverse the same switch with fallback type
                             return buildNotificationStyle(media.getFallbackType(), true, payload);
@@ -410,12 +418,14 @@ public class SwrveNotificationBuilder {
                     // Expanded Title
                     if (SwrveHelper.isNotNullOrEmpty(expanded.getTitle())) {
                         bigPictureStyle.setBigContentTitle(expanded.getTitle());
+                        notificationDetails.setExpandedTitle(expanded.getTitle());
                     }
                     // Expanded Body
                     if (SwrveHelper.isNotNullOrEmpty(expanded.getBody())) {
                         // Summary Text in bigPicture places text in the same place as bigText
                         // so it keeps the format consistent by placing expanded body here.
                         bigPictureStyle.setSummaryText(expanded.getBody());
+                        notificationDetails.setExpandedBody(expanded.getBody());
                     }
                 }
                 responseStyle = bigPictureStyle;
@@ -434,10 +444,12 @@ public class SwrveNotificationBuilder {
         if (expanded != null) {
             if (SwrveHelper.isNotNullOrEmpty(expanded.getTitle())) {
                 bigTextStyle.setBigContentTitle(expanded.getTitle()); // Expanded Title
+                notificationDetails.setExpandedTitle(expanded.getTitle());
                 responseStyle = bigTextStyle;
             }
             if (SwrveHelper.isNotNullOrEmpty(expanded.getBody())) {
                 bigTextStyle.bigText(expanded.getBody()); // Expanded Body
+                notificationDetails.setExpandedBody(expanded.getBody());
                 responseStyle = bigTextStyle;
             }
         }
@@ -591,5 +603,9 @@ public class SwrveNotificationBuilder {
 
     public int getNotificationId() {
         return notificationId;
+    }
+
+    public SwrveNotificationDetails getNotificationDetails() {
+        return notificationDetails;
     }
 }

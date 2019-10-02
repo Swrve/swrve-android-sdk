@@ -58,7 +58,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -105,6 +104,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             // First time it is initialized
             return init(activity);
         }
+
         bindToContext(activity);
         return (T) this;
     }
@@ -185,7 +185,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 setDefaultMessageListener();
             }
 
-
             // Add custom conversation listener
             if (conversationListener == null) {
                 setConversationListener(new SwrveConversationListener() {
@@ -198,7 +197,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         }
                     });
             }
-
 
             if (preloadRandC && config.isABTestDetailsEnabled()) {
                 initABTestDetails(userId);
@@ -345,7 +343,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _event(String name, Map<String, String> payload) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", name);
-
+        try {
+            if (payload != null && payload.size() > 0) {
+                new JSONObject(payload); // validate payload: if payload is invalid exception is thrown and caught by calling method.
+            }
+        } catch (Exception ex) {
+            SwrveLogger.e("SwrveSDK: JSONException when encoding payload event. Not queueing.", ex);
+            return;
+        }
         queueEvent("event", parameters, payload);
     }
 
@@ -355,7 +360,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         parameters.put("currency", currency);
         parameters.put("cost", Integer.toString(cost));
         parameters.put("quantity", Integer.toString(quantity));
-
         queueEvent("purchase", parameters, null);
     }
 
@@ -363,7 +367,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("given_currency", givenCurrency);
         parameters.put("given_amount", Double.toString(givenAmount));
-
         queueEvent("currency_given", parameters, null);
     }
 
@@ -371,36 +374,31 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<String, Object> parameters = new HashMap<>();
         try {
             parameters.put("attributes", new JSONObject(attributes));
-        } catch (NullPointerException ex) {
-            SwrveLogger.e("JSONException when encoding user attributes", ex);
+        } catch (Exception ex) {
+            SwrveLogger.e("SwrveSDK: JSONException when encoding user attributes. Not queueing.", ex);
+            return;
         }
-
         queueEvent("user", parameters, null);
     }
 
-    protected void _userUpdate (String name, Date date) {
+    protected void _userUpdate(String name, Date date) {
         Map<String, Object> parameters = new HashMap<>();
-        Map<String, String> resultAttributes = new HashMap<>();
-
-        String resultantDate = getStringFromDate(date);
-        resultAttributes.put(name, resultantDate);
-
         try {
-            parameters.put("attributes", new JSONObject(resultAttributes));
-        }catch (NullPointerException ex) {
-            SwrveLogger.e("JSONException when encoding user attributes", ex);
+            Map<String, String> dateAttributes = new HashMap<>();
+            String formattedDate = getStringFromDate(date);
+            dateAttributes.put(name, formattedDate);
+            parameters.put("attributes", new JSONObject(dateAttributes));
+        } catch (Exception ex) {
+            SwrveLogger.e("SwrveSDK: JSONException when encoding user date attributes. Not queueing.", ex);
             return;
         }
-
         queueEvent("user", parameters, null);
     }
 
     private String getStringFromDate(Date date) {
-
         TimeZone timezone = TimeZone.getTimeZone("UTC");
         DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         dateformat.setTimeZone(timezone);
-
         return dateformat.format(date);
     }
 
@@ -502,7 +500,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _sendQueuedEvents(final String userId, final String sessionToken) {
         if (trackingState == EVENT_SENDING_PAUSED) {
-            SwrveLogger.d("SwrveSDK tracking state:%s so cannot send events.", trackingState);
+            SwrveLogger.d("SwrveSDK tracking state:%s so cannot send events now.", trackingState);
             return;
         }
         if (SwrveHelper.isNotNullOrEmpty(userId) && SwrveHelper.isNotNullOrEmpty(sessionToken)) {
@@ -510,7 +508,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 @Override
                 public void run() {
                     String deviceId = getDeviceId();
-                    SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(config, restClient, userId, appVersion, sessionToken, deviceId);
+                    SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(context.get(), config, restClient, userId, appVersion, sessionToken, deviceId);
                     swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
                     eventsWereSent = true;
                 }
@@ -577,21 +575,22 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void loadCampaignFromNotification(String swrveCampaignId) {
-
         if (swrveCampaignId != null) {
-            Bundle b = new Bundle();
-            b.putString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, swrveCampaignId);
-            initSwrveDeepLinkManager();
-            this.swrveDeeplinkManager.handleDeeplink(b);
+            if (canProcessPushToInapp()) {
+                Bundle b = new Bundle();
+                b.putString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, swrveCampaignId);
+                initSwrveDeepLinkManager();
+                this.swrveDeeplinkManager.handleDeeplink(b);
+            }
             notificationSwrveCampaignId = null;
         }
     }
 
-    protected void _onDestroy(Activity ctx) {
+    protected void _onDestroy() {
         unbindAndShutdown();
     }
 
-    protected void _shutdown() throws InterruptedException {
+    protected void _shutdown() {
         if (!destroyed) {
             SwrveLogger.i("Shutting down the SDK");
             destroyed = true;
@@ -614,7 +613,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             // Do not accept any more jobs but try to finish sending data
-            if(restClientExecutor != null) {
+            if (restClientExecutor != null) {
                 try {
                     restClientExecutor.shutdown();
                     restClientExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -622,7 +621,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     SwrveLogger.e("Exception occurred shutting down restClientExecutor", e);
                 }
             }
-            if(storageExecutor != null) {
+            if (storageExecutor != null) {
                 try {
                     storageExecutor.shutdown();
                     storageExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -708,6 +707,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceInfo.put(SWRVE_SDK_VERSION, PLATFORM + version);
             deviceInfo.put(SWRVE_APP_STORE, config.getAppStore());
             deviceInfo.put(SWRVE_SDK_FLAVOUR, Swrve.FLAVOUR_NAME);
+            SwrveInitMode mode = config.getInitMode();
+            if (mode == SwrveInitMode.MANAGED && config.isManagedModeAutoStartLastUser()) {
+                deviceInfo.put(SWRVE_INIT_MODE, "managed_auto");
+            } else {
+                deviceInfo.put(SWRVE_INIT_MODE, mode.toString().toLowerCase(Locale.ENGLISH));
+            }
             Calendar cal = new GregorianCalendar();
             deviceInfo.put(SWRVE_TIMEZONE_NAME, cal.getTimeZone().getID());
             deviceInfo.put(SWRVE_UTC_OFFSET_SECONDS, cal.getTimeZone().getOffset(System.currentTimeMillis()) / 1000);
@@ -1179,6 +1184,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      */
     @Override
     public void sessionStart() {
+        if (!isSdkReady()) return;
+
         try {
             _sessionStart();
         } catch (Exception e) {
@@ -1188,6 +1195,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void sessionEnd() {
+        if (!isSdkReady()) return;
+
         try {
             _sessionEnd();
         } catch (Exception e) {
@@ -1197,6 +1206,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void event(String name) {
+        if (!isSdkReady()) return;
+
         try {
             if(isValidEventName(name)) {
                 _event(name);
@@ -1208,6 +1219,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void event(String name, Map<String, String> payload) {
+        if (!isSdkReady()) return;
+
         try {
             if(isValidEventName(name)) {
                 _event(name, payload);
@@ -1234,6 +1247,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void purchase(String item, String currency, int cost, int quantity) {
+        if (!isSdkReady()) return;
+
         try {
             _purchase(item, currency, cost, quantity);
         } catch (Exception e) {
@@ -1243,6 +1258,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void currencyGiven(String givenCurrency, double givenAmount) {
+        if (!isSdkReady()) return;
+
         try {
             _currencyGiven(givenCurrency, givenAmount);
         } catch (Exception e) {
@@ -1252,6 +1269,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void userUpdate(Map<String, String> attributes) {
+        if (!isSdkReady()) return;
+
         try {
             _userUpdate(attributes);
         } catch (Exception e) {
@@ -1261,6 +1280,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void userUpdate(String name, Date date) {
+        if (!isSdkReady()) return;
+
         try {
             _userUpdate(name, date);
         } catch (Exception e) {
@@ -1270,6 +1291,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void iap(int quantity, String productId, double productPrice, String currency) {
+        if (!isSdkReady()) return;
+
         try {
             _iap(quantity, productId, productPrice, currency);
         } catch (Exception e) {
@@ -1279,6 +1302,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void iap(int quantity, String productId, double productPrice, String currency, SwrveIAPRewards rewards) {
+        if (!isSdkReady()) return;
+
         try {
             _iap(quantity, productId, productPrice, currency, rewards);
         } catch (Exception e) {
@@ -1288,6 +1313,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public SwrveResourceManager getResourceManager() {
+        if (!isSdkReady()) {
+            return new SwrveResourceManager();
+        }
+
         try {
             return _getResourceManager();
         } catch (Exception e) {
@@ -1298,6 +1327,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void getUserResources(final SwrveUserResourcesListener listener) {
+        if (!isSdkReady()) return;
+
         try {
             _getUserResources(listener);
         } catch (Exception e) {
@@ -1307,6 +1338,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener) {
+        if (!isSdkReady()) return;
+
         try {
             _getUserResourcesDiff(listener);
         } catch (Exception e) {
@@ -1316,6 +1349,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void sendQueuedEvents() {
+        if (!isSdkReady()) return;
+
         try {
             final String userId = profileManager.getUserId();
             final String sessionToken = profileManager.getSessionToken();
@@ -1327,6 +1362,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void flushToDisk() {
+        if (!isSdkReady()) return;
+
         try {
             _flushToDisk();
         } catch (Exception e) {
@@ -1352,7 +1389,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void onDestroy(Activity ctx) {
         try {
-            _onDestroy(ctx);
+            _onDestroy();
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1418,6 +1455,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public JSONObject getDeviceInfo() {
+        if (!isSdkReady()) return new JSONObject();
+
         try {
             return _getDeviceInfo();
         } catch (Exception e) {
@@ -1428,6 +1467,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void refreshCampaignsAndResources() {
+        if (!isSdkReady()) return;
+
         try {
             _refreshCampaignsAndResources();
         } catch (Exception e) {
@@ -1488,6 +1529,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void buttonWasPressedByUser(SwrveButton button) {
+        if (!isSdkReady()) return;
+
         try {
             _buttonWasPressedByUser(button);
         } catch (Exception e) {
@@ -1497,6 +1540,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
+        if (!isSdkReady()) return;
+
         try {
             _messageWasShownToUser(messageFormat);
         } catch (Exception e) {
@@ -1506,6 +1551,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public String getAppStoreURLForApp(int appId) {
+        if (!isSdkReady()) return null;
+
         try {
             return _getAppStoreURLForApp(appId);
         } catch (Exception e) {
@@ -1552,6 +1599,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public Date getInitialisedTime() {
+        if (!isSdkReady()) return new Date();
+
         try {
             return _getInitialisedTime();
         } catch (Exception e) {
@@ -1630,12 +1679,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
+        if (!isSdkReady()) return new ArrayList<>();
+
         return getMessageCenterCampaigns(getDeviceOrientation());
     }
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
         List<SwrveBaseCampaign> result = new ArrayList<>();
+        if (!isSdkReady()) return result;
+
         if (campaigns != null) {
             synchronized (campaigns) {
                 for (int i = 0; i < campaigns.size(); i++) {
@@ -1655,6 +1708,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
+        if (!isSdkReady()) return false;
+
         if (campaign instanceof SwrveInAppCampaign) {
             SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign)campaign;
             if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
@@ -1678,6 +1733,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
+        if (!isSdkReady()) return;
+
         campaign.setStatus(SwrveCampaignState.Status.Deleted);
         saveCampaignsState(getUserId());
     }
@@ -1724,8 +1781,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void handleDeferredDeeplink(Bundle bundle) {
-
-        if (SwrveDeeplinkManager.isSwrveDeeplink(bundle) == false)  { return; }
+        if (!isSdkReady()) return;
+        if (!SwrveDeeplinkManager.isSwrveDeeplink(bundle)) return;
 
         initSwrveDeepLinkManager();
         this.swrveDeeplinkManager.handleDeferredDeeplink(bundle);
@@ -1733,8 +1790,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void handleDeeplink(Bundle bundle) {
-
-        if (SwrveDeeplinkManager.isSwrveDeeplink(bundle) == false)  { return; }
+        if (!isSdkReady()) return;
+        if (!SwrveDeeplinkManager.isSwrveDeeplink(bundle)) return;
 
         initSwrveDeepLinkManager();
         this.swrveDeeplinkManager.handleDeeplink(bundle);
@@ -1765,11 +1822,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void setLocationSegmentVersion(final int locationSegmentVersion) {
-        this.locationSegmentVersion = locationSegmentVersion;
-    }
-
-    @Override
     public String getSwrveSDKVersion() {
         return version;
     }
@@ -1777,6 +1829,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public String getCachedData(String userId, String key) {
         String data = null;
+
         try {
             LocalStorage localStorage = new SQLiteLocalStorage(context.get(), config.getDbName(), config.getMaxSqliteDbSize());
             data = localStorage.getSecureCacheEntryForUser(userId, key, getUniqueKey(userId));
@@ -1818,11 +1871,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public int getHttpTimeout() {
         return config.getHttpTimeout();
-    }
-
-    @Override
-    public int getMaxEventsPerFlush() {
-        return config.getMaxEventsPerFlush();
     }
 
     @Override
@@ -1872,6 +1920,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void queueConversationEvent(String eventParamName, String eventPayloadName, String page, int conversationId, Map<String, String> payload) {
+        if (!isSdkReady()) return;
+
         if (payload == null) {
             payload = new HashMap<>();
         }
@@ -1933,6 +1983,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     /*
      * eo Application.ActivityLifecycleCallbacks
      */
+
     @Override
     public void setNotificationSwrveCampaignId(String swrveCampaignId) {
         notificationSwrveCampaignId = swrveCampaignId;
@@ -1941,9 +1992,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void switchUser(String newUserId) {
 
         // don't do anything if the current user id is the same as the new one
-        if (SwrveHelper.isNullOrEmpty(newUserId) || newUserId.equals(getUserId())) {
-            enableEventSending();
-            return;
+        if (started) {
+            if (SwrveHelper.isNullOrEmpty(newUserId) || newUserId.equals(getUserId())) {
+                enableEventSending();
+                queuePausedEvents();
+                return;
+            }
         }
 
         clearAllAuthenticatedNotifications();
@@ -1955,6 +2009,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             initialised = false;
             qaUser = null;
             init(getActivityContext());
+            queuePausedEvents();
         } else {
             SwrveLogger.d("Switching user before activity loaded, unable to call init");
         }
@@ -1962,6 +2017,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void identify(final String externalUserId, final SwrveIdentityResponse identityResponse) {
+        if (config.getInitMode() == SwrveInitMode.MANAGED) {
+            throw new RuntimeException("Cannot call Identify when running on SwrveInitMode.MANAGED mode");
+        }
+
         try {
             _identify(externalUserId, identityResponse);
         } catch (Exception e) {
@@ -1970,7 +2029,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _identify(final String externalUserId, final SwrveIdentityResponse identityResponse) {
-
         if (SwrveHelper.isNullOrEmpty(externalUserId)) {
             SwrveLogger.d("External user id cannot be null or empty");
             if (identityResponse != null) {
@@ -2060,6 +2118,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return userId;
     }
 
+    protected void queuePausedEvents() {
+
+        synchronized (pausedEvents) {
+            for (EventQueueItem item : pausedEvents) {
+                queueEvent(item.userId, item.eventType, item.parameters, item.payload, item.triggerEventListener);
+            }
+            if (pausedEvents.size() > 0) {
+                sendQueuedEvents();
+            }
+            pausedEvents.clear();
+        }
+    }
+
     protected void enableEventSending() {
         trackingState = ON;
         startCampaignsAndResourcesTimer(false);
@@ -2078,7 +2149,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void clearAllAuthenticatedNotifications() {
         // Authenticated notifications are persisted to db because NotificationManager.getActiveNotifications is only available
-        // in api 23 and current minVersion is below that
+        // in API 23 and current minVersion is below that
         final NotificationManager notificationManager = (NotificationManager) context.get().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Integer> currentNotifications = multiLayerLocalStorage.getNotificationsAuthenticated();
         for (Integer notificationId : currentNotifications) {
@@ -2089,12 +2160,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public String getExternalUserId() {
+        if (!isSdkReady()) return null;
+
         SwrveUser existingUser = multiLayerLocalStorage.getUserBySwrveUserId(getUserId());
         return (existingUser == null) ? "" : existingUser.getExternalUserId();
     }
 
     @Override
     public void setCustomPayloadForConversationInput(Map payload) {
+        if (!isSdkReady()) return;
+
         SwrveConversationEventHelper.setCustomPayload(payload);
     }
 
@@ -2119,4 +2194,55 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+
+    @Override
+    public void start(Activity activity) {
+        if (config.getInitMode() == SwrveInitMode.AUTO) {
+            throw new RuntimeException("Cannot call start method when running on SwrveInitMode.AUTO mode");
+        }
+
+        if (!started) {
+            started = true;
+            this.profileManager.persistUser();
+            registerActivityLifecycleCallbacks();
+            clearAllAuthenticatedNotifications();
+            init(activity);
+        }
+    }
+
+    @Override
+    public void start(Activity activity, String userId) {
+        if (config.getInitMode() == SwrveInitMode.AUTO) {
+            throw new RuntimeException("Cannot call start method when running on SwrveInitMode.AUTO mode");
+        }
+
+        if (!started) {
+            started = true;
+            registerActivityLifecycleCallbacks();
+            profileManager.updateUserId(userId);
+            profileManager.updateSessionToken();
+            clearAllAuthenticatedNotifications();
+            init(activity);
+        } else {
+            switchUser(userId);
+        }
+    }
+
+    @Override
+    public boolean isStarted() {
+        return started;
+    }
+
+    // Push-to-in app won't work on MANAGED mode with no auto session start as we can't guarantee a user is present.
+    private boolean canProcessPushToInapp() {
+        return (config.getInitMode() == SwrveInitMode.AUTO || (config.getInitMode() == SwrveInitMode.MANAGED && config.isManagedModeAutoStartLastUser()));
+    }
+
+    private boolean isSdkReady() {
+       if (config.getInitMode() == SwrveInitMode.MANAGED && !started) {
+           SwrveLogger.w("Warning: SwrveSDK needs to be started in SwrveInitMode.MANAGED mode before calling this api.");
+           return false;
+       }
+       return true;
+    }
 }

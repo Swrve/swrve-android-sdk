@@ -4,6 +4,7 @@ import android.graphics.Color;
 
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveInitMode;
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrvePushNotificationListener;
 import com.swrve.sdk.SwrveSilentPushListener;
@@ -54,6 +55,8 @@ public abstract class SwrveConfigBase {
     private SwrveNotificationConfig notificationConfig; // null as default, but attempts to populate from manifest if not instantiated. The manifest logic is deprecated and will be removed later
     private SwrvePushNotificationListener notificationListener;
     private SwrveSilentPushListener silentPushListener;
+    private SwrveInitMode initMode = SwrveInitMode.AUTO;
+    private boolean managedModeAutoStartLastUser = true;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -607,5 +610,39 @@ public abstract class SwrveConfigBase {
      */
     public void setSilentPushListener(SwrveSilentPushListener silentPushListener) {
         this.silentPushListener = silentPushListener;
+    }
+
+    /**
+     * Set the SwrveInitMode to MANAGED to delay starting the sdk until start api is called. Default mode is AUTO which automatically
+     * starts when UI is shown.
+     * @param initMode change to managed to control when the SDK starts and with what user.
+     */
+    public void setInitMode(SwrveInitMode initMode) {
+        this.initMode = initMode;
+    }
+
+    /**
+     * @return The init mode.
+     */
+    public SwrveInitMode getInitMode() {
+        return initMode;
+    }
+
+    /**
+     * This configuration can only be used in initMode MANAGED.
+     * @param managedModeAutoStartLastUser If true, the sdk will delay starting until the start api is
+     *                                     called and the userId is set. Once set, it will autostart
+     *                                     when UI is shown. Set to false to force the sdk to always
+     *                                     delay tracking until a start api is called.
+     */
+    public void setManagedModeAutoStartLastUser(boolean managedModeAutoStartLastUser) {
+        this.managedModeAutoStartLastUser = managedModeAutoStartLastUser;
+    }
+
+    /**
+     * @return the current value of managedModeAutoStartLastUser
+     */
+    public boolean isManagedModeAutoStartLastUser() {
+        return managedModeAutoStartLastUser;
     }
 }

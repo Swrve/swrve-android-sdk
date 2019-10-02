@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
-import android.support.v4.app.JobIntentService;
+import android.support.v4.app.SwrveJobIntentService;
 
 import java.util.ArrayList;
 
@@ -13,7 +13,7 @@ import static com.swrve.sdk.SwrveBackgroundEventSender.EXTRA_EVENTS;
 import static com.swrve.sdk.SwrveBackgroundEventSender.EXTRA_USER_ID;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
-public class SwrveEventSenderJobIntentService extends JobIntentService {
+public class SwrveEventSenderJobIntentService extends SwrveJobIntentService {
 
     private static final int JOB_ID = R.integer.swrve_event_sender_job_id; // use the actual generated integer value to guarantee uniqueness
 

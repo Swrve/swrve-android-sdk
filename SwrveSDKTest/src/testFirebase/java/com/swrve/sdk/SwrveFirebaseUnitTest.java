@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -12,15 +13,20 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_REGISTRATION_ID;
@@ -54,20 +60,39 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSetRegistrationId() {
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
+    public void testSetRegistrationId() throws JSONException {
+        // Call executors right away to remove threading problems in test
+        Mockito.doAnswer((Answer<Void>) invocation -> {
+            Runnable runnable = (Runnable) invocation.getArguments()[0];
+            runnable.run();
+            return null;
+        }).when(swrveSpy).storageExecutorExecute(Mockito.any(Runnable.class));
+
+        Mockito.verify(swrveSpy, Mockito.atLeast(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
 
         swrveSpy.setRegistrationId("reg1");
         assertEquals("reg1", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued again so atMost== 2
+        Mockito.verify(swrveSpy, Mockito.atLeast(1)).sendDeviceTokenUpdateNow(Mockito.anyString()); // device info queued again so atLeast== 2
+
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(Mockito.any(), Mockito.any(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jObj = new JSONObject(jsonString);
+
+        assertTrue(jObj.has("time"));
+        assertTrue(jObj.has("seqnum"));
+        assertEquals("device_update", jObj.get("type"));
+        assertEquals("false", jObj.get("user_initiated"));
 
         swrveSpy.setRegistrationId("reg1");
         assertEquals("reg1", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(2)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info NOT queued again because the regId has NOT changed so remains atMost== 2
+        Mockito.verify(swrveSpy, Mockito.atLeast(1)).sendDeviceTokenUpdateNow(Mockito.anyString()); // device info NOT queued again because the regId has NOT changed so remains atLeast== 2
 
         swrveSpy.setRegistrationId("reg2");
         assertEquals("reg2", swrveSpy.getRegistrationId());
-        Mockito.verify(swrveSpy, Mockito.atMost(3)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued again because the regId has changed so atMost== 3
+        Mockito.verify(swrveSpy, Mockito.atLeast(2)).sendDeviceTokenUpdateNow(Mockito.anyString()); // device info queued again because the regId has changed so atLeast== 3
     }
 
     @Test
@@ -152,7 +177,8 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
         String savedToken = swrveSpy.multiLayerLocalStorage.getCacheEntry(swrveSpy.getUserId(), CACHE_REGISTRATION_ID);
         assertEquals("some_reg_token_id", savedToken);
 
-        Mockito.verify(swrveSpy, Mockito.atLeast(2)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // once from init and once from _setRegistrationId
+        Mockito.verify(swrveSpy, Mockito.atLeast(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // once from init
+        Mockito.verify(swrveSpy, Mockito.atLeast(1)).sendDeviceTokenUpdateNow(Mockito.anyString()); // once from from _setRegistrationId
     }
 
     @Test

@@ -46,6 +46,7 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,7 +77,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "6.2.1";
+    protected static String version = "6.3";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
@@ -136,6 +137,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected boolean campaignsAndResourcesInitialized = false;
     protected boolean eventsWereSent = false;
     protected boolean initialised = false;
+    protected boolean started = false;
     protected boolean mustCleanInstance;
     protected Date initialisedTime;
     protected int deviceWidth;
@@ -147,7 +149,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected String simOperatorIsoCountryCode;
     protected String simOperatorCode;
     protected String androidId;
-    protected int locationSegmentVersion;
     protected SwrveQAUser qaUser;
     protected SwrveDeeplinkManager swrveDeeplinkManager;
     protected SwrveCampaignInfluence campaignInfluence = new SwrveCampaignInfluence();
@@ -155,12 +156,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected SwrveTrackingState trackingState = ON;
     protected boolean identifiedOnAnotherDevice;
     protected SwrveSessionListener sessionListener;
+    protected List<EventQueueItem> pausedEvents = Collections.synchronizedList(new ArrayList<EventQueueItem>());
 
     protected SwrveImp(Application application, int appId, String apiKey, C config) {
         SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
         if (appId <= 0 || SwrveHelper.isNullOrEmpty(apiKey)) {
             SwrveHelper.logAndThrowException("Please setup a correct appId and apiKey");
         }
+
+        Context applicationContext = application.getApplicationContext();
 
         this.appId = appId;
         this.apiKey = apiKey;
@@ -179,11 +183,20 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.context = new WeakReference<>(application.getApplicationContext());
         this.application = new WeakReference<>(application);
 
-        initAppVersion(application.getApplicationContext(), config);
+        initAppVersion(applicationContext, config);
         initDefaultUrls(config);
         initLanguage(config);
 
-        registerActivityLifecycleCallbacks();
+        if (shouldAutostart(applicationContext)) {
+            this.profileManager.persistUser();
+            registerActivityLifecycleCallbacks();
+            started = true;
+        }
+    }
+
+    private boolean shouldAutostart(Context context) {
+        return config.getInitMode() == SwrveInitMode.AUTO
+                || (config.getInitMode() == SwrveInitMode.MANAGED && config.isManagedModeAutoStartLastUser() && SwrveProfileManager.getSavedUserIdFromPrefs(context) != null);
     }
 
     private void initAppVersion(Context context, C config) {
@@ -352,12 +365,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected boolean queueEvent(String userId, String eventType, Map<String, Object> parameters, Map<String, String> payload, boolean triggerEventListener) {
         if (trackingState == EVENT_SENDING_PAUSED) {
-            SwrveLogger.d("SwrveSDK tracking state:%s so cannot queue events.", trackingState);
+            SwrveLogger.d("SwrveSDK event sending paused so attempt to queue events has failed. Will auto retry when event sending resumes.");
+            pausedEvents.add(new EventQueueItem(userId, eventType, parameters, payload, triggerEventListener));
             return false;
         }
         try {
-            int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();
-            storageExecutorExecute(new QueueEventRunnable(multiLayerLocalStorage, userId, eventType, parameters, payload, seqNum));
+            storageExecutorExecute(new QueueEventRunnable(multiLayerLocalStorage, userId, eventType, parameters, payload));
             if (triggerEventListener && eventListener != null) {
                 eventListener.onEvent(EventHelper.getEventName(eventType, parameters), payload);
             }

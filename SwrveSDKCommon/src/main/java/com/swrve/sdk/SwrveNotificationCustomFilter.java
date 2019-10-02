@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import android.app.Notification;
 import android.support.v4.app.NotificationCompat;
 
+@Deprecated
 public interface SwrveNotificationCustomFilter {
 
     /**

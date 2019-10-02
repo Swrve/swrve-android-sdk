@@ -11,21 +11,20 @@ class QueueEventRunnable implements Runnable {
     private String eventType;
     private Map<String, Object> parameters;
     private Map<String, String> payload;
-    private int seqNum;
 
-    public QueueEventRunnable(SwrveMultiLayerLocalStorage multiLayerLocalStorage, String userId, String eventType, Map<String, Object> parameters, Map<String, String> payload, int seqNum) {
+    public QueueEventRunnable(SwrveMultiLayerLocalStorage multiLayerLocalStorage, String userId, String eventType, Map<String, Object> parameters, Map<String, String> payload) {
         this.multiLayerLocalStorage = multiLayerLocalStorage;
         this.userId = userId;
         this.eventType = eventType;
         this.parameters = parameters;
         this.payload = payload;
-        this.seqNum = seqNum;
     }
 
     @Override
     public void run() {
         String eventString = "";
         try {
+            int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();
             eventString = EventHelper.eventAsJSON(eventType, parameters, payload, seqNum, System.currentTimeMillis());
             parameters = null;
             payload = null;

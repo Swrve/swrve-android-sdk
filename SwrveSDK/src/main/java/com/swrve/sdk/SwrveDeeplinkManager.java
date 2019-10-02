@@ -95,7 +95,7 @@ class SwrveDeeplinkManager {
                 Uri data = Uri.parse(targetURL);
                 if (data != null) {
                     String campaignID = data.getQueryParameter(SWRVE_AD_CONTENT);
-                    if (SwrveHelper.isNotNullOrEmpty(campaignID)) return true;
+                    return (SwrveHelper.isNotNullOrEmpty(campaignID));
                 }
             }
         }
@@ -114,7 +114,6 @@ class SwrveDeeplinkManager {
             String swrveCampaginId = bundle.getString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY);
             if (SwrveHelper.isNotNullOrEmpty(swrveCampaginId)) {
                 loadCampaign(swrveCampaginId, SWRVE_NOTIFICATION_TO_CAMPAIGN);
-                return;
             }
         }
     }

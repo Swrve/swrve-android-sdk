@@ -50,7 +50,7 @@ public class SwrvePushDeDuper {
                 isDupe =true;
             } else {
                 // Try get de-dupe cache size
-                int pushIdCacheSize = msg.getInt(SwrveNotificationConstants.PUSH_ID_CACHE_SIZE_KEY, DEFAULT_PUSH_ID_CACHE_SIZE);
+                int pushIdCacheSize = msg.getInt(SwrveNotificationInternalPayloadConstants.PUSH_ID_CACHE_SIZE_KEY, DEFAULT_PUSH_ID_CACHE_SIZE);
 
                 // No duplicate found. Update the cache.
                 updateRecentNotificationIdCache(recentIds, curId, pushIdCacheSize, context);

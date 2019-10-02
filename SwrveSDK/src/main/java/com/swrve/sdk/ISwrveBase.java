@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
@@ -112,5 +113,11 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     String getExternalUserId();
 
     void setCustomPayloadForConversationInput(Map payload);
+
+    void start(Activity context);
+
+    void start(Activity context, String userId);
+
+    boolean isStarted();
 
 }

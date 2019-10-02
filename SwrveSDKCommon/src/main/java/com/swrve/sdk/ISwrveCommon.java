@@ -20,7 +20,6 @@ interface ISwrveCommon {
     String CACHE_RESOURCES_DIFF = "rsdfngt2";
     String CACHE_AD_CAMPAIGNS_DEBUG = "AdCampaign";
     String CACHE_NOTIFICATION_CAMPAIGNS_DEBUG = "NotificationCampaign";
-    String CACHE_APP_VERSION = "AppVersion";
     String CACHE_USER_JOINED_TIME = "SwrveSDK.userJoinedTime";
     String CACHE_CAMPAIGNS_STATE = "SwrveCampaignSettings";
     String CACHE_SEQNUM = "seqnum";
@@ -58,7 +57,8 @@ interface ISwrveCommon {
     String SWRVE_NOTIFICATIONS_BUTTONS      = "swrve.support.rich_buttons";
     String SWRVE_NOTIFICATIONS_ATTACHMENT   = "swrve.support.rich_attachment";
     String SWRVE_CAN_RECEIVE_AUTH_PUSH      = "swrve.can_receive_authenticated_push";
-
+    String SWRVE_INIT_MODE                  = "swrve.sdk_init_mode";
+    String SWRVE_MANAGED_AUTO_START         = "swrve.managed_mode_autostart";
 
     // events
     String EVENT_ID_KEY                             = "id";
@@ -98,8 +98,6 @@ interface ISwrveCommon {
 
     String getCachedData(String userId, String key);
 
-    void setLocationSegmentVersion(int locationSegmentVersion);
-
     String getSwrveSDKVersion();
 
     void userUpdate(Map<String, String> attributes);
@@ -109,8 +107,6 @@ interface ISwrveCommon {
     String getEventsServer();
 
     int getHttpTimeout();
-
-    int getMaxEventsPerFlush();
 
     JSONObject getDeviceInfo() throws JSONException;
 
@@ -139,5 +135,4 @@ interface ISwrveCommon {
     void fetchNotificationCampaigns(Set<Long> campaignIds);
 
     File getCacheDir(Context context);
-
 }

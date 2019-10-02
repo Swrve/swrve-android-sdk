@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.os.Bundle;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
@@ -26,6 +27,7 @@ public abstract class SwrveSDKBase {
 
     /**
      * Identify users such that they can be tracked and targeted safely across multiple devices, platforms and channels.
+     * Throws RunTimeException if called in SwrveInitMode.MANAGED mode.
      * <pre>
      * <code>
      * SwrveSDK.identify("12345", new SwrveIdentityResponse() {
@@ -43,7 +45,7 @@ public abstract class SwrveSDKBase {
      * </code>
      * </pre>
      *
-     * @param userId ID that uniquely identifies your user. Personal identifiable information should not be used. An error may be returned if such information is submitted as the userID eg email, phone number etc.
+     * @param userId           ID that uniquely identifies your user. Personal identifiable information should not be used. An error may be returned if such information is submitted as the userID eg email, phone number etc.
      * @param identityResponse Interface with onSuccess onError callbacks
      */
     public static void identify(final String userId, final SwrveIdentityResponse identityResponse) {
@@ -568,11 +570,11 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Add a custom payload for user input events
-     *   Selecting a star-rating,
-     *   Selecting a choice on a text questionnaire
-     *   Selecting play on a video
-     *
+     * Add a custom payload for user input events:
+     * Selecting a star-rating,
+     * Selecting a choice on a text questionnaire
+     * Selecting play on a video
+     * <p>
      * If key pair values added is greater than 5 or Keys added conflict with existing swrve internal keys then
      * the custom payload will be rejected and not added for the event. A debug log error will be generated.
      *
@@ -585,5 +587,43 @@ public abstract class SwrveSDKBase {
 
     public static ISwrveBase getInstance() {
         return instance;
+    }
+
+    /**
+     * Start the sdk when in SwrveInitMode.MANAGED mode.
+     * Tracking will begin using the last user or an auto generated userId if the first time the sdk is started.
+     * Throws RunTimeException if called in SwrveInitMode.AUTO mode.
+     *
+     * @param activity Activity where the session was started.
+     */
+    public static void start(Activity activity) {
+        checkInstanceCreated();
+        instance.start(activity);
+    }
+
+    /**
+     * Start the sdk when in SwrveInitMode.MANAGED mode.
+     * Tracking will begin using the userId passed in.
+     * Can be called multiple times to switch the current userId to something else. A new session is started if not
+     * already started or if is already started with different userId.
+     * The sdk will remain started until the createInstance is called again.
+     * Throws RunTimeException if called in SwrveInitMode.AUTO mode.
+     *
+     * @param activity Activity where the session was started.
+     * @param userId   User id to start sdk with.
+     */
+    public static void start(Activity activity, String userId) {
+        checkInstanceCreated();
+        instance.start(activity, userId);
+    }
+
+    /**
+     * Check if the SDK has been started.
+     *
+     * @return true when in SwrveInitMode.AUTO mode. When in SwrveInitMode.MANAGED mode it will return true after one of the 'start' api's has been called.
+     */
+    public static boolean isStarted() {
+        checkInstanceCreated();
+        return instance.isStarted();
     }
 }

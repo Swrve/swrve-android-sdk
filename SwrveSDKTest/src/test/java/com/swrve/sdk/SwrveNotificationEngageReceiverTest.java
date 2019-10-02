@@ -19,15 +19,11 @@ import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.manifest.BroadcastReceiverData;
-
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_ENGAGED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
@@ -39,12 +35,13 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
+    private SwrveNotificationConfig notificationConfig;
     private Swrve swrveSpy;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
                 .build();
         SwrveConfig config = new SwrveConfig();
@@ -240,16 +237,22 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         Robolectric.flushForegroundThreadScheduler();
     }
 
-    @Test
-    public void testEventPushEngaged() {
+    private Intent createPushEngagedIntent(Bundle eventPayload) {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "4567");
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH);
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
+        intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+
+        return intent;
+    }
+
+    @Test
+    public void testEventPushEngaged() {
         Bundle eventPayload = new Bundle();
         eventPayload.putString("k1", "v1");
-        intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+        Intent intent = createPushEngagedIntent(eventPayload);
 
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
         receiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
@@ -257,7 +260,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
         assertEquals(1, events.size());
         Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-        assertEngagedEvent(events.get(0), "Swrve.Messages.Push-4567.engaged", expectedPayload);
+        SwrveNotificationTestUtils.assertEngagedEvent(events.get(0), "Swrve.Messages.Push-4567.engaged", expectedPayload);
     }
 
     @Test
@@ -280,8 +283,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         SwrveTestUtils.assertGenericEvent(events.get(0), "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
     }
 
-    @Test
-    public void testEventPushButtonEngaged() {
+    private Intent createPushButtonEngagedIntent(Bundle eventPayload) {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "4567");
@@ -290,9 +292,16 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.BUTTON_TEXT_KEY, "btn3");
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH);
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY, SwrveNotificationButton.ActionType.DISMISS);
+        intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+
+        return intent;
+    }
+
+    @Test
+    public void testEventPushButtonEngaged() {
         Bundle eventPayload = new Bundle();
         eventPayload.putString("k1", "v1");
-        intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+        Intent intent = createPushButtonEngagedIntent(eventPayload);
 
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
         receiver.onReceive(mActivity, intent);
@@ -306,7 +315,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
                 SwrveTestUtils.assertGenericEvent(event, "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, expectedPayload);
             } else {
                 Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-                assertEngagedEvent(event, "Swrve.Messages.Push-4567.engaged", expectedPayload);
+                SwrveNotificationTestUtils.assertEngagedEvent(event, "Swrve.Messages.Push-4567.engaged", expectedPayload);
             }
         }
     }
@@ -339,25 +348,6 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
                 Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
                 SwrveTestUtils.assertGenericEvent(event, "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
             }
-        }
-    }
-
-    private void assertEngagedEvent(String eventJson, String eventName, Map<String, String> expectedPayload) {
-        Gson gson = new Gson(); // eg: {"type":"event","time":1466519995192,"name":"Swrve.Messages.Push-1.engaged"}
-        Type type = new TypeToken<Map<String, Object>>() {
-        }.getType();
-        Map<String, Object> event = gson.fromJson(eventJson, type);
-        assertTrue(event.containsKey("type"));
-        assertEquals("event", event.get("type"));
-        assertTrue(event.containsKey("name"));
-        assertEquals(eventName, event.get("name"));
-        assertTrue(event.containsKey("time"));
-        assertTrue(event.containsKey("seqnum"));
-
-        if (expectedPayload != null && expectedPayload.size() > 0) {
-            assertTrue(event.containsKey(EVENT_PAYLOAD_KEY));
-            Map<String, String> actualPayload = (Map) event.get(EVENT_PAYLOAD_KEY);
-            assertEquals(expectedPayload, actualPayload);
         }
     }
 }

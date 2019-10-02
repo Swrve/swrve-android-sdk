@@ -11,6 +11,7 @@ public class SwrveNotificationConfig {
     private int largeIconDrawableId;
     private Integer accentColorResourceId;
     private SwrveNotificationCustomFilter notificationCustomFilter;
+    private SwrveNotificationFilter notificationFilter;
 
     private SwrveNotificationConfig(Builder builder) {
         this.activityClass = builder.activityClass;
@@ -22,6 +23,7 @@ public class SwrveNotificationConfig {
             this.accentColorResourceId = builder.accentColorResourceId;
         }
         this.notificationCustomFilter = builder.notificationCustomFilter;
+        this.notificationFilter = builder.notificationFilter;
     }
 
     /**
@@ -87,6 +89,15 @@ public class SwrveNotificationConfig {
         return notificationCustomFilter;
     }
 
+    /**
+     * The notification filter used for modifying notifications before they are displayed.
+     *
+     * @return the notification filter
+     */
+    public SwrveNotificationFilter getNotificationFilter() {
+        return notificationFilter;
+    }
+
     public static class Builder {
 
         private Class<?> activityClass;
@@ -96,6 +107,7 @@ public class SwrveNotificationConfig {
         private int largeIconDrawableId;
         private int accentColorResourceId;
         private SwrveNotificationCustomFilter notificationCustomFilter;
+        private SwrveNotificationFilter notificationFilter;
 
         /**
          * Builder constructor
@@ -150,8 +162,21 @@ public class SwrveNotificationConfig {
          * @param notificationCustomFilter the notification custom filter to apply
          * @return this builder
          */
+        @Deprecated
         public Builder notificationCustomFilter(SwrveNotificationCustomFilter notificationCustomFilter) {
             this.notificationCustomFilter = notificationCustomFilter;
+            return this;
+        }
+
+        /**
+         * Set the notification filter used for modifying remote notifications before they are displayed.
+         * If filtering Geo Notifications, please use the SwrveGeoCustomFilter
+         *
+         * @param notificationFilter the notification filter to apply
+         * @return this builder
+         */
+        public Builder notificationFilter(SwrveNotificationFilter notificationFilter) {
+            this.notificationFilter = notificationFilter;
             return this;
         }
 

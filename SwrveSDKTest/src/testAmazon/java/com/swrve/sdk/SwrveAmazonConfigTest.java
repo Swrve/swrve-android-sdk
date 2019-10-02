@@ -26,7 +26,7 @@ public class SwrveAmazonConfigTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSDKAppStore() throws Exception {
+    public void testSDKAppStore() {
         SwrveConfig config = SwrveSDK.getConfig();
         assertTrue(config.getAppStore() == SwrveAppStore.Amazon);
     }

@@ -23,6 +23,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.reset;
 
 public class SwrveUnitTest extends SwrveBaseTest {
 
@@ -79,19 +83,19 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         swrveSpy = SwrveTestUtils.createSpyInstance();
 
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
+        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued
+        Mockito.verify(swrveSpy, Mockito.atMost(0)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info queued once upon init
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info queued once upon init
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
 
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
 
         swrveSpy.onResume(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(Mockito.anyString(),Mockito.any(JSONObject.class));
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
     }
 
     @Test
@@ -119,6 +123,20 @@ public class SwrveUnitTest extends SwrveBaseTest {
         Map<String, Object> expectedPayload = new HashMap<>();
         payload.put("k1", "v1");
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", expectedParameters, expectedPayload);
+    }
+
+    @Test
+    public void testQueueEventAndInvalidPayload() {
+        Mockito.reset(swrveSpy); // reset the setup init calls on swrveSpy so the never() test can be done below
+        Map<String, String> payloadInvalid = new HashMap<>();
+        payloadInvalid.put(null, null);
+        SwrveSDK.event("this_name", payloadInvalid);
+        Mockito.verify(swrveSpy, Mockito.never()).queueEvent(anyString(), anyMap(), anyMap());
+
+        Map<String, String> payloadValid = new HashMap<>();
+        payloadValid.put("valid", null);
+        SwrveSDK.event("this_name", payloadValid);
+        Mockito.verify(swrveSpy, Mockito.times(1)).queueEvent(anyString(), anyMap(), anyMap());
     }
 
     @Test

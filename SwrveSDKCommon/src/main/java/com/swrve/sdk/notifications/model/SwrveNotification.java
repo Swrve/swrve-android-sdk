@@ -49,7 +49,7 @@ public class SwrveNotification {
     private List<SwrveNotificationButton> buttons;
     private String channelId;
     private SwrveNotificationChannel channel;
-    private SwrveNotificaitonCampaign campaign;
+    private SwrveNotificationCampaign campaign;
 
     public int getVersion() {
         return version;
@@ -172,7 +172,7 @@ public class SwrveNotification {
         this.version = version;
     }
 
-    public SwrveNotificaitonCampaign getCampaign() {  return campaign; }
+    public SwrveNotificationCampaign getCampaign() {  return campaign; }
 
-    public void setCampaign(SwrveNotificaitonCampaign campaign) { this.campaign = campaign; }
+    public void setCampaign(SwrveNotificationCampaign campaign) { this.campaign = campaign; }
 }

@@ -1,6 +1,6 @@
 package com.swrve.sdk.notifications.model;
 
-public class SwrveNotificaitonCampaign {
+public class SwrveNotificationCampaign {
 
     private String id;
 

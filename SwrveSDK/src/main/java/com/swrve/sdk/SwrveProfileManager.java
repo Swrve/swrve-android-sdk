@@ -31,16 +31,15 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
     private String sessionToken;
 
     protected SwrveProfileManager(Context context, int appId, String apiKey, C config, IRESTClient restClient) {
-
         this.context = context;
-        String savedUserIdFromPrefs = getSavedUserIdFromPrefs();
+
+        String savedUserIdFromPrefs = getSavedUserIdFromPrefs(context);
         if (SwrveHelper.isNullOrEmpty(savedUserIdFromPrefs)) {
             this.userId = UUID.randomUUID().toString(); // Create a random UUID
         } else {
             this.userId = savedUserIdFromPrefs;
         }
 
-        saveUserIdToPrefs(this.userId);
         SwrveLogger.i("Your user id is: %s", this.userId);
 
         this.sessionToken = SwrveHelper.generateSessionToken(apiKey, appId, userId);
@@ -48,6 +47,10 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
         this.restclient = restClient;
         this.apiKey = apiKey;
         this.appId = appId;
+    }
+
+    void persistUser() {
+        saveUserIdToPrefs(this.userId);
     }
 
     protected String getUserId() {
@@ -60,7 +63,7 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
         editor.putString("userId", userId).commit();
     }
 
-    private String getSavedUserIdFromPrefs() {
+    static String getSavedUserIdFromPrefs(Context context) {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
         return settings.getString("userId", null);
     }
@@ -69,11 +72,11 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
         return sessionToken;
     }
 
-    protected void updateSessionToken() {
+    void updateSessionToken() {
         this.sessionToken = SwrveHelper.generateSessionToken(apiKey, appId, userId);
     }
 
-    protected String updateUserId(String userId) {
+    String updateUserId(String userId) {
         saveUserIdToPrefs(userId);
         this.userId = userId;
         SwrveLogger.i("Your user id is: %s", userId);
@@ -170,5 +173,4 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
             identityResponse.onError(503, errorMessage);
         }
     }
-
 }

@@ -11,7 +11,7 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService {
     public void onNewToken(String token) {
         super.onNewToken(token);
         ISwrveBase sdk = SwrveSDK.getInstance();
-        if (sdk != null && sdk instanceof Swrve) {
+        if (sdk instanceof Swrve) {
             ((Swrve) sdk).setRegistrationId(token);
         } else {
             SwrveLogger.e("Could not notify the SDK of a new token.");

@@ -309,11 +309,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     private void displayNotification(SwrveNotificationBuilder builderSpy, Bundle bundle) {
-        String msgText = bundle.getString(SwrveNotificationConstants.TEXT_KEY);
-        NotificationCompat.Builder notificationCompatBuilder = builderSpy.build(msgText, bundle, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
-        Notification notification = notificationCompatBuilder.build();
-        final NotificationManager notificationManager = (NotificationManager) mActivity.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(123, notification);
+        SwrveNotificationTestUtils.displayNotification(mActivity, builderSpy, bundle);
     }
 
     @Test
@@ -919,7 +915,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
             if (event.contains("generic_campaign_event")) {
                 SwrveTestUtils.assertGenericEvent(event, "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, null);
             } else {
-                assertEngagedEvent(event, "Swrve.Messages.Push-1.engaged");
+                SwrveNotificationTestUtils.assertEngagedEvent(event, "Swrve.Messages.Push-1.engaged");
             }
         }
 
@@ -977,7 +973,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         // Should send a button click event and an engagement event
         List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
         assertEquals(1, events.size());
-        assertEngagedEvent(events.get(0), "Swrve.Messages.Push-1.engaged");
+        SwrveNotificationTestUtils.assertEngagedEvent(events.get(0), "Swrve.Messages.Push-1.engaged");
 
         // Should not send an influence event when the app is opened (emulate app start/resume)
         swrveSpy.onResume(mActivity);
@@ -1145,7 +1141,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testGetImageFromUrl_notInCache() throws Exception {
+    public void testGetImageFromUrl_notInCache() {
 
         String image1Url = "https://someimage.com/image_blah";
         SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
@@ -1164,67 +1160,14 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     private Notification assertNotification(String tickerText, String sound, Bundle extras) {
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
-        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
-        assertEquals(1, notifications.size());
-        Notification notification = notifications.get(0);
-        assertEquals(tickerText, notification.tickerText);
-        assertEquals(sound, notification.sound == null ? null : notification.sound.toString());
-        PendingIntent pendingIntent = notification.contentIntent;
-        ShadowPendingIntent shadowPendingIntent = shadowOf(pendingIntent);
-        assertNotNull(shadowPendingIntent);
-        assertTrue(shadowPendingIntent.isBroadcastIntent());
-        assertEquals(1, shadowPendingIntent.getSavedIntents().length);
-        Intent intent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", intent.getComponent().getClassName());
-        Bundle intentExtras = intent.getBundleExtra(SwrveNotificationConstants.PUSH_BUNDLE);
-        assertNotNull(intentExtras);
-        for (String key : extras.keySet()) {
-            assertTrue(intentExtras.containsKey(key));
-            assertEquals(extras.get(key), intentExtras.getString(key));
-        }
-        ShadowNotification shadowNotification = shadowOf(notification);
-        // In the case of a rich push, we should expect the title to be set to something else
-        if (!intentExtras.containsKey(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY)) {
-            assertEquals("com.swrve.sdk.test", shadowNotification.getContentTitle());
-        } else {
-            SwrveNotification extrasPPayload = SwrveNotification.fromJson(extras.getString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY));
-            if (extrasPPayload != null) {
-                if (extrasPPayload.getVersion() == SwrveNotificationConstants.SWRVE_PUSH_VERSION) {
-                    if (extrasPPayload.getMedia() != null && extrasPPayload.getMedia().getType() != null) {
-                        assertEquals(extrasPPayload.getMedia().getTitle(), shadowNotification.getContentTitle());
-                        // Robolectric still has to be give the ability to check for subText and body separately
-                        //assertEquals(extrasPPayload.getMedia().getSubtitle(), shadowNotification.getSubText());
-                        assertEquals(extrasPPayload.getMedia().getBody(), notification.tickerText);
-                    }
-                }
-            }
-        }
-
-        return notification;
+        return SwrveNotificationTestUtils.assertNotification(tickerText, sound, extras);
     }
 
     private void assertNumberOfNotifications(int expectedNumberOfNotifications) {
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
-        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
-        assertEquals(expectedNumberOfNotifications, notifications.size());
+        SwrveNotificationTestUtils.assertNumberOfNotifications(expectedNumberOfNotifications);
     }
 
     private Intent getIntent(PendingIntent pendingIntent) {
         return ((ShadowPendingIntent) Shadow.extract(pendingIntent)).getSavedIntent();
-    }
-
-    public void assertEngagedEvent(String eventJson, String eventName) {
-        Gson gson = new Gson(); // eg: {"type":"event","time":1466519995192,"name":"Swrve.Messages.Push-1.engaged"}
-        Type type = new TypeToken<Map<String, Object>>() {
-        }.getType();
-        Map<String, String> event = gson.fromJson(eventJson, type);
-        assertEquals(4, event.size());
-        assertTrue(event.containsKey("type"));
-        assertEquals("event", event.get("type"));
-        assertTrue(event.containsKey("name"));
-        assertEquals(eventName, event.get("name"));
-        assertTrue(event.containsKey("time"));
-        assertTrue(event.containsKey("seqnum"));
     }
 }

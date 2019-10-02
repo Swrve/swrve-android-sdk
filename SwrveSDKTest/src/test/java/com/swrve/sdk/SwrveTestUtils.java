@@ -326,20 +326,38 @@ public class SwrveTestUtils {
                 // unused
             }
             @Override
-            public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) throws UnsupportedEncodingException {
+            public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) {
                 // unused
             }
             @Override
             public void post(String endpoint, String encodedBody, IRESTResponseListener callback) {
-                RESTResponse response = new RESTResponse(responseCode, String.valueOf(responseCode), new HashMap<String, List<String>>());
+                RESTResponse response = new RESTResponse(responseCode, String.valueOf(responseCode), createFakeResponseHeaders(responseCode));
                 callback.onResponse(response);
             }
             @Override
             public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
-                RESTResponse response = new RESTResponse(responseCode, String.valueOf(responseCode), new HashMap<String, List<String>>());
+                RESTResponse response = new RESTResponse(responseCode, String.valueOf(responseCode), createFakeResponseHeaders(responseCode));
                 callback.onResponse(response);
             }
         };
+    }
+
+    private static Map<String, List<String>> createFakeResponseHeaders(final int responseCode) {
+        Map<String, List<String>> map = new HashMap<>();
+        addHeadersToMap(map, null, "HTTP/1.1 " + responseCode);
+        addHeadersToMap(map, "Connection", "Close");
+        addHeadersToMap(map, "Content-Type", "text/plain");
+        addHeadersToMap(map, "X-Android-Received-Millis", "1565687743788");
+        addHeadersToMap(map, "X-Android-Response-Source", "NETWORK");
+        addHeadersToMap(map, "X-Android-Selected-Protocol", "http/1.1");
+        addHeadersToMap(map, "X-Android-Sent-Millis", "1565687743648");
+        return map;
+    }
+
+    private static void addHeadersToMap(Map<String, List<String>> map, String key, String value) {
+        List<String> headers = new ArrayList<>();
+        headers.add(value);
+        map.put(key, headers);
     }
 
     public static Date parseDate(String date){
