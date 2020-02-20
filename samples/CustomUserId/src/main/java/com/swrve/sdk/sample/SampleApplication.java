@@ -12,8 +12,8 @@ import com.swrve.sdk.config.SwrveConfig;
 public class SampleApplication extends Application {
 
     private static final String LOG_TAG = "SwrveSample";
-    private int YOUR_APP_ID = 0;
-    private String YOUR_API_KEY = "YOUR_API_KEY";
+    private int YOUR_APP_ID = 1031;
+    private String YOUR_API_KEY = "SwrveAndroidKey";
 
     @Override
     public void onCreate() {
