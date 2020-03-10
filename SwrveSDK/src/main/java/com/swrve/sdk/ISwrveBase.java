@@ -5,9 +5,6 @@ import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveDismissButtonListener;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -17,7 +14,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -52,6 +48,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener);
 
+    void getRealTimeUserProperties(final SwrveRealTimeUserPropertiesListener listener);
+
     void sendQueuedEvents();
 
     void flushToDisk();
@@ -82,18 +80,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     Date getInitialisedTime();
 
-    SwrveInstallButtonListener getInstallButtonListener();
-
-    void setInstallButtonListener(SwrveInstallButtonListener installButtonListener);
-
-    SwrveCustomButtonListener getCustomButtonListener();
-
-    void setCustomButtonListener(SwrveCustomButtonListener customButtonListener);
-
-    SwrveDismissButtonListener getDismissButtonListener();
-
-    void setDismissButtonListener(SwrveDismissButtonListener inAppDismissButtonListener);
-
     C getConfig();
 
     List<SwrveBaseCampaign> getMessageCenterCampaigns();
@@ -101,6 +87,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation);
 
     boolean showMessageCenterCampaign(SwrveBaseCampaign campaign);
+
+    boolean showMessageCenterCampaign(SwrveBaseCampaign campaign, Map<String, String> properties);
 
     void removeMessageCenterCampaign(SwrveBaseCampaign campaign);
 

@@ -124,4 +124,14 @@ public class SwrveSDK extends SwrveSDKBase {
         checkInstanceCreated();
         EventHelper.sendEngagedEvent(context, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, pushId, null);
     }
+
+    /**
+     * Update the Google Firebase registrationId.
+     *
+     * @param registrationId Updated registration Id
+     */
+    public static void setRegistrationId(String registrationId) {
+        checkInstanceCreated();
+        ((ISwrve) instance).setRegistrationId(registrationId);
+    }
 }

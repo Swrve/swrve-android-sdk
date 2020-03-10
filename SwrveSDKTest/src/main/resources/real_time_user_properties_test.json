@@ -1,0 +1,16 @@
+{
+  "user_resources": [],
+  "real_time_user_properties": {"test_id": "test_value"},
+  "campaigns": {
+    "game_data": {},
+    "campaigns": [],
+    "rules": {},
+    "cdn_paths": {
+      "message_images": "http://fake_cdn_root.com/someurl/image/",
+      "message_fonts": "http://fake_cdn_root.com/someurl/font/"
+    },
+    "version": 8
+  },
+  "flush_frequency": 60000,
+  "flush_refresh_delay": 5000
+}

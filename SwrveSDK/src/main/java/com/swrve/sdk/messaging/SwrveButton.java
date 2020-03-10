@@ -19,6 +19,8 @@ public class SwrveButton extends SwrveWidget {
     protected int appId;
     // Action associated with this button
     protected SwrveActionType actionType;
+    // Personalised text (render this instead of the image)
+    protected String text;
 
     public SwrveButton() {
     }
@@ -40,6 +42,10 @@ public class SwrveButton extends SwrveWidget {
         }
         setAction(buttonData.getJSONObject("action").getString("value"));
         setActionType(SwrveActionType.parse(buttonData.getJSONObject("type").getString("value")));
+
+        if (buttonData.has("text")) {
+            setText(buttonData.getJSONObject("text").getString("value"));
+        }
     }
 
     /**
@@ -106,5 +112,16 @@ public class SwrveButton extends SwrveWidget {
 
     protected void setActionType(SwrveActionType actionType) {
         this.actionType = actionType;
+    }
+
+    /**
+     * @return the button text to render.
+     */
+    public String getText() {
+        return text;
+    }
+
+    protected void setText(String text) {
+        this.text = text;
     }
 }

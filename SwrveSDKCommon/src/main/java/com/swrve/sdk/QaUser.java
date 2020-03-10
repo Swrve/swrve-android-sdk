@@ -163,28 +163,6 @@ class QaUser {
         }
     }
 
-    static void pushNotification(String trackingId, Bundle msg) {
-        try {
-            QaUser qaUser = QaUser.getInstance();
-            qaUser._pushNotification(trackingId, msg);
-        } catch (Exception e) {
-            SwrveLogger.e("Error trying to send pushNotification qa log event.", e);
-        }
-    }
-
-    private void _pushNotification(String trackingId, Bundle msg) throws Exception {
-        if (loggingEnabled) {
-            JSONObject logDetailsJson = new JSONObject();
-            logDetailsJson.put("campaign_id", trackingId);
-            logDetailsJson.put("displayed", true);
-            logDetailsJson.put("reason", "");
-            JSONObject logDetailsPayloadJson = new JSONObject();
-            logDetailsPayloadJson.put("push", "payload");
-            logDetailsJson.put("payload", logDetailsPayloadJson);
-            sendQaLogEvent(LOG_SOURCE_PUSH, "push-received", logDetailsJson.toString());
-        }
-    }
-
     private void sendQaLogEvent(String logSource, String logType, String logDetails) {
         try {
             int seqnum = SwrveCommon.getInstance().getNextSequenceNumber();

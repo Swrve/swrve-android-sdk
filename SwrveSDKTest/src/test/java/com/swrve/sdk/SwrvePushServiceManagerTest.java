@@ -8,11 +8,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.NotificationCompat;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.rest.IRESTResponseListener;
 
 import org.json.JSONObject;
 import org.junit.Test;
@@ -22,7 +20,6 @@ import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,11 +52,11 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
     private NotificationChannel dummyChannel = null;
 
     @Test
-    public void testNotificationConfigAccentColorResourceId() {
+    public void testNotificationConfigAccentColorHex() {
 
-        int colorResourceId = com.swrve.sdk.test.R.color.test_color_green;
+        String colorHexMocked = "#217913";
         SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel)
-                .accentColorResourceId(colorResourceId);
+                .accentColorHex(colorHexMocked);
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
@@ -70,15 +67,13 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
-        assertEquals(Color.parseColor("#217913"), notifications.get(0).color);
+        assertEquals(Color.parseColor(colorHexMocked), notifications.get(0).color);
     }
 
     @Test
-    public void testNotificationConfigAccentColor() {
+    public void testNotificationConfigAccentColorInvalidHex() {
 
-        int colorARGB = ContextCompat.getColor(mActivity, com.swrve.sdk.test.R.color.test_color_green);
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel)
-                .accentColorResourceId(colorARGB);
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).accentColorHex("SomeInvalidHeColor123");;
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
         SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
@@ -89,36 +84,7 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
 
         NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
-        assertEquals(Color.parseColor("#217913"), notifications.get(0).color);
-    }
-
-    @Test
-    public void testNotificationCustomFilterSuppress() {
-
-        // create pointer to customFilter and change it throughout the test.
-        SwrveNotificationCustomFilter customFilter = null; // default is null
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationCustomFilter(customFilter);
-
-        SwrveConfig config = new SwrveConfig();
-        config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-
-        assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
-
-        sendSimpleBundleToPushServiceManager();
-        assertNumberOfNotification(1); // +1 because customFilter is null and default implementation is to return same notification
-
-        customFilter = (builder, id, jsonPayload) -> null; // returning null here will suppress it
-        notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationCustomFilter(customFilter);
-        SwrveSDK.getConfig().setNotificationConfig(notificationConfig.build());
-        sendSimpleBundleToPushServiceManager();
-        assertNumberOfNotification(1); // still 1 because new customFilter has suppressed it
-
-        customFilter = (builder, id, jsonPayload) -> builder.build();
-        notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationCustomFilter(customFilter);
-        SwrveSDK.getConfig().setNotificationConfig(notificationConfig.build());
-        sendSimpleBundleToPushServiceManager();
-        assertNumberOfNotification(2); // +1, so total is 2 because new customFilter
+        assertEquals(0, notifications.get(0).color); // if we don't set color the default there is 0;
     }
 
     @Test
@@ -148,34 +114,6 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
         SwrveSDK.getConfig().setNotificationConfig(notificationConfig.build());
         sendSimpleBundleToPushServiceManager();
         assertNumberOfNotification(2); // +1, so total is 2 because new customFilter
-    }
-
-    @Test
-    public void testNotificationCustomFilterModify() {
-
-        // create pointer to customFilter and change it throughout the test.
-        SwrveNotificationCustomFilter customFilter = null; // default is null
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationCustomFilter(customFilter);
-
-        SwrveConfig config = new SwrveConfig();
-        config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-
-        assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
-
-        sendSimpleBundleToPushServiceManager();
-        assertTickerText("plain text");
-
-        // clear all and test modifying a notification
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancelAll();
-        assertNumberOfNotification(0);
-
-        customFilter = (builder, id, jsonPayload) -> builder.setTicker("modified ticker text").build();
-        notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationCustomFilter(customFilter);
-        SwrveSDK.getConfig().setNotificationConfig(notificationConfig.build());
-        sendSimpleBundleToPushServiceManager();
-        assertTickerText("modified ticker text");
     }
 
     @Test
@@ -253,24 +191,6 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testNotificationCustomFilterJsonPayload() {
-
-        SwrveNotificationCustomFilter customFilterSpy = spy(new MySwrveNotificationCustomFilter());
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationCustomFilter(customFilterSpy);
-        SwrveConfig config = new SwrveConfig();
-        config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
-
-        assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
-
-        sendSimpleBundleToPushServiceManager();
-
-        // verify the custom payload is delivered to SwrveNotificationCustomFilter
-        verify(customFilterSpy, atLeastOnce())
-                .filterNotification(any(NotificationCompat.Builder.class), anyInt(), eq("{\"customKey\":\"customValues\"}"));
-    }
-
-    @Test
     public void testNotificationFilterJsonPayload() {
 
         SwrveNotificationFilter notificationFilterSpy = spy(new MySwrveNotificationFilter());
@@ -283,7 +203,7 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
 
         sendSimpleBundleToPushServiceManager();
 
-        // verify the custom payload is delivered to SwrveNotificationCustomFilter
+        // verify the custom payload is delivered
         verify(notificationFilterSpy, atLeastOnce())
                 .filterNotification(any(NotificationCompat.Builder.class), anyInt(), any(SwrveNotificationDetails.class), eq("{\"customKey\":\"customValues\"}"));
     }
@@ -501,14 +421,6 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
     }
 
     // this class is because Mockito cannot mock anonymous classes
-    class MySwrveNotificationCustomFilter implements SwrveNotificationCustomFilter {
-        @Override
-        public Notification filterNotification(NotificationCompat.Builder builder, int id, String jsonPayload) {
-            return builder.build();
-        }
-    }
-
-    // this class is because Mockito cannot mock anonymous classes
     class MySwrveNotificationFilter implements SwrveNotificationFilter {
         @Override
         public Notification filterNotification(NotificationCompat.Builder builder, int id, SwrveNotificationDetails notificationDetails, String jsonPayload) {
@@ -563,7 +475,7 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
         SwrvePushServiceManager pushServiceManager = new SwrvePushServiceManager(mActivity);
         pushServiceManager.processMessage(bundle);
 
-        // verify the custom payload is delivered to SwrveNotificationCustomFilter
+        // verify the custom payload is delivered
         verify(notificationFilterSpy, atLeastOnce())
                 .filterNotification(any(NotificationCompat.Builder.class), anyInt(), any(SwrveNotificationDetails.class), eq("{\"customKey\":\"customValues\",\"passKey\":\"passValue\"}"));
     }

@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -86,7 +86,8 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
         assertEquals("device_update", jObj.get("type"));
         assertEquals("false", jObj.get("user_initiated"));
 
-        swrveSpy.setRegistrationId("reg1");
+        // Can also be called from SwrveSDK
+        SwrveSDK.setRegistrationId("reg1");
         assertEquals("reg1", swrveSpy.getRegistrationId());
         Mockito.verify(swrveSpy, Mockito.atLeast(1)).sendDeviceTokenUpdateNow(Mockito.anyString()); // device info NOT queued again because the regId has NOT changed so remains atLeast== 2
 

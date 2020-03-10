@@ -1,7 +1,7 @@
 package com.swrve.sdk;
 
 import android.app.Notification;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 
 public interface SwrveNotificationFilter {
 

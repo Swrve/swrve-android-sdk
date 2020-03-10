@@ -1,7 +1,7 @@
 package com.swrve.sdk;
 
 import android.content.Intent;
-import android.support.v4.app.SwrveJobIntentService;
+import androidx.core.app.SwrveJobIntentService;
 
 public class SwrvePushServiceDefaultJobIntentService extends SwrveJobIntentService {
 

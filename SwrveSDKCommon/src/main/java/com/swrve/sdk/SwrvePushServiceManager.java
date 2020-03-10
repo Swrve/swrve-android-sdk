@@ -5,16 +5,12 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 
 import org.json.JSONObject;
-
 import java.util.Date;
-import java.util.Set;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY;
-import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.PUSH_INTERNAL_KEYS;
 
 class SwrvePushServiceManager {
 
@@ -27,6 +23,7 @@ class SwrvePushServiceManager {
     }
 
     void processMessage(final Bundle msg) {
+        sendPushDeliveredEvent(msg);
         String silentId = SwrveHelper.getSilentPushId(msg);
         if (!SwrveHelper.isNullOrEmpty(silentId)) {
             processSilent(msg,silentId);
@@ -66,6 +63,11 @@ class SwrvePushServiceManager {
     private void saveInfluencedCampaign(final Bundle msg, String trackingId) {
         SwrveCampaignInfluence campaignInfluence = new SwrveCampaignInfluence();
         campaignInfluence.saveInfluencedCampaign(context, trackingId, msg, getNow());
+    }
+
+    private void sendPushDeliveredEvent(Bundle extras) {
+        SwrveCampaignDeliveryAsyncTask task = new SwrveCampaignDeliveryAsyncTask(extras);
+        task.execute();
     }
 
     private void processSilent(final Bundle msg, final  String silentId) {
@@ -119,27 +121,22 @@ class SwrvePushServiceManager {
         } catch (Exception ex) {
             SwrveLogger.e("Error processing push.", ex);
         }
-
-        QaUser.pushNotification(pushId, msg);
     }
 
     private Notification applyCustomFilter(NotificationCompat.Builder builder, int notificationId, final Bundle msg, SwrveNotificationDetails notificationDetails) {
         Notification notification;
         SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
         if (notificationConfig == null ||
-                (notificationConfig.getNotificationCustomFilter() == null && notificationConfig.getNotificationFilter() == null)) {
+                notificationConfig.getNotificationFilter() == null) {
             SwrveLogger.d("SwrveNotificationFilter not configured.");
             notification = builder.build();
         } else {
             SwrveLogger.d("SwrveNotificationFilter configured. Passing builder to custom filter.");
             try {
-                String payload = getPayload(msg);
+                String payload = SwrvePushServiceHelper.getPayload(msg);
                 if (notificationConfig.getNotificationFilter() != null) {
                     SwrveNotificationFilter filter = notificationConfig.getNotificationFilter();
                     notification = filter.filterNotification(builder, notificationId, notificationDetails, payload);
-                } else if (notificationConfig.getNotificationCustomFilter() != null) {
-                    SwrveNotificationCustomFilter customFilter = notificationConfig.getNotificationCustomFilter();
-                    notification = customFilter.filterNotification(builder, notificationId, payload);
                 } else {
                     notification = builder.build();
                 }
@@ -149,28 +146,6 @@ class SwrvePushServiceManager {
             }
         }
         return notification;
-    }
-
-    protected String getPayload(final Bundle msg) {
-        String payload = "";
-        String jsonPayload = msg.getString(SWRVE_NESTED_JSON_PAYLOAD_KEY);
-        // Try and clean the bundle keys so that only the custom properties (and no internal ones) are added to the custom filter json param
-        try {
-            JSONObject jsonObject = (jsonPayload != null) ? new JSONObject(jsonPayload) : new JSONObject();
-            Set<String> msgKeySet = msg.keySet();
-            msgKeySet.removeAll(PUSH_INTERNAL_KEYS);
-
-            for (String key : msgKeySet) {
-                // Do not overwrite key if already present
-                if (!jsonObject.has(key)) {
-                    jsonObject.put(key, msg.get(key));
-                }
-            }
-            payload = jsonObject.toString();
-        } catch (Exception ex) {
-            SwrveLogger.e("Error getting json payload.", ex);
-        }
-        return payload;
     }
 
     protected Date getNow() {

@@ -6,9 +6,10 @@ import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Point;
 import android.os.Build;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.Display;
@@ -25,10 +26,7 @@ import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -68,6 +66,7 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA_RESET_DEVICE;
+import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
@@ -77,10 +76,10 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "6.3.1";
+    protected static String version = "7.0.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
-    protected static final String CAMPAIGNS_AND_RESOURCES_ACTION = "/api/1/user_resources_and_campaigns";
+    protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
     protected static final String BATCH_EVENTS_ACTION = "/1/batch";
     protected static final String IDENTITY_ACTION = "/identify";
@@ -108,9 +107,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected ISwrveEventListener eventListener;
     protected SwrveMessageListener messageListener;
     protected SwrveConversationListener conversationListener;
-    protected SwrveInstallButtonListener installButtonListener;
-    protected SwrveCustomButtonListener customButtonListener;
-    protected SwrveDismissButtonListener inAppDismissButtonListener;
     protected SwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
     protected AtomicInteger bindCounter;
@@ -127,6 +123,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected List<SwrveBaseCampaign> campaigns;
     protected SwrveCampaignDisplayer campaignDisplayer;
     protected Map<Integer, SwrveCampaignState> campaignsState;
+    protected Map<String, String> realTimeUserProperties;
     protected SwrveAssetsManager swrveAssetsManager;
     protected SparseArray<String> appStoreURLs;
     protected boolean autoShowMessagesEnabled;
@@ -428,8 +425,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         try {
             Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
             DisplayMetrics metrics = new DisplayMetrics();
-            int width = display.getWidth();
-            int height = display.getHeight();
+            Point sizePoint = new Point();
+            display.getSize(sizePoint);
+            int width = sizePoint.x;
+            int height = sizePoint.y;
             display.getMetrics(metrics);
             float xdpi = metrics.xdpi;
             float ydpi = metrics.ydpi;
@@ -484,43 +483,28 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected void saveCampaignsInCache(final JSONObject campaignContent) {
         final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_CAMPAIGNS, campaignContent.toString(), getUniqueKey(userId));
-            }
-        });
+        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_CAMPAIGNS, campaignContent.toString(), getUniqueKey(userId)));
     }
 
     protected void saveResourcesInCache(final JSONArray resourcesContent) {
         final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_RESOURCES, resourcesContent.toString(), getUniqueKey(userId));
-            }
-        });
+        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_RESOURCES, resourcesContent.toString(), getUniqueKey(userId)));
+    }
+
+    protected void saveRealTimeUserPropertiesInCache(final JSONObject userPropertiesContent) {
+        final String userId = profileManager.getUserId();
+        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_REALTIME_USER_PROPERTIES, userPropertiesContent.toString(), getUniqueKey(userId)));
     }
 
     protected void saveIsQaUserInCache(final boolean isQaUser) {
         final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA, String.valueOf(isQaUser), getUniqueKey(userId));
-            }
-        });
+        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA, String.valueOf(isQaUser), getUniqueKey(userId)));
     }
 
     protected void saveQaUserResetDeviceInCache(JSONObject jsonQa) {
         final boolean resetDevice = jsonQa.optBoolean("reset_device_state", false);
         final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA_RESET_DEVICE, String.valueOf(resetDevice), getUniqueKey(userId));
-            }
-        });
+        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA_RESET_DEVICE, String.valueOf(resetDevice), getUniqueKey(userId)));
     }
 
     protected void autoShowMessages() {
@@ -529,7 +513,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             return;
         }
 
-        // Only execute if at least 1 call to the /user_resources_and_campaigns api endpoint has been completed
+        // Only execute if at least 1 call to the /user_content api endpoint has been completed
         // And ensure all assets have been downloaded
         if (!campaignsAndResourcesInitialized || campaigns == null) {
             return;
@@ -544,12 +528,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     if (autoShowMessagesEnabled && activityContext != null) {
                         Activity activity = activityContext.get();
                         if (activity != null) {
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    autoShowConversation(swrve);
-                                    autoShowInAppMessage(swrve);
-                                }
+                            activity.runOnUiThread(() -> {
+                                autoShowConversation(swrve);
+                                autoShowInAppMessage(swrve);
                             });
                         }
                     }
@@ -592,16 +573,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
      */
     protected void disableAutoShowAfterDelay() {
         final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
-        timedService.schedule(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    autoShowMessagesEnabled = false;
-                } finally {
-                    timedService.shutdownNow();
-                }
+        timedService.schedule(() -> {
+            try {
+                autoShowMessagesEnabled = false;
+            } finally {
+                timedService.shutdownNow();
             }
-        }, config.getAutoShowMessagesMaxDelay(), TimeUnit.MILLISECONDS);
+        }, config.getInAppMessageConfig().getAutoShowMessagesMaxDelay(), TimeUnit.MILLISECONDS);
     }
 
     @SuppressLint("UseSparseArrays")
@@ -819,19 +797,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
-            final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
-                @Override
-                public void complete() {
-                    autoShowMessages();
-                }
-
-            };
-            executorService.execute(SwrveRunnables.withoutExceptions(new Runnable() {
-                @Override
-                public void run() {
-                    swrveAssetsManager.downloadAssets(assetsQueue, callback);
-                }
-            }));
+            final SwrveAssetsCompleteCallback callback = () -> autoShowMessages();
+            executorService.execute(SwrveRunnables.withoutExceptions(() -> swrveAssetsManager.downloadAssets(assetsQueue, callback)));
         } finally {
             executorService.shutdown();
         }
@@ -857,12 +824,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             }
 
             final String serializedCampaignsState = campaignStateJson.toString();
-            storageExecutorExecute(new Runnable() {
-                @Override
-                public void run() {
-                    multiLayerLocalStorage.setCacheEntry(userId, CACHE_CAMPAIGNS_STATE, serializedCampaignsState);
-                    SwrveLogger.i("Saved and flushed campaign state in cache");
-                }
+            storageExecutorExecute(() -> {
+                multiLayerLocalStorage.setCacheEntry(userId, CACHE_CAMPAIGNS_STATE, serializedCampaignsState);
+                SwrveLogger.i("Saved and flushed campaign state in cache");
             });
         } catch (JSONException exp) {
             SwrveLogger.e("Error saving campaigns settings", exp);
@@ -916,21 +880,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     // Get device info and send it to Swrve
     protected void queueDeviceUpdateNow(final String userId, final String sessionToken, final boolean sendNow) {
         final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                deviceUpdate(userId, swrve.getDeviceInfo());
-                // Send event after it has been queued, trigger from the storage executor
-                // to wait for all events. Will be executed on the rest thread.
-                if (sendNow) {
-                    storageExecutorExecute(new Runnable() {
-                        @Override
-                        public void run() {
-                            SwrveLogger.i("Sending device info for userId:%s", userId);
-                            swrve._sendQueuedEvents(userId, sessionToken);
-                        }
-                    });
-                }
+        storageExecutorExecute(() -> {
+            deviceUpdate(userId, swrve.getDeviceInfo());
+            // Send event after it has been queued, trigger from the storage executor
+            // to wait for all events. Will be executed on the rest thread.
+            if (sendNow) {
+                storageExecutorExecute(() -> {
+                    SwrveLogger.i("Sending device info for userId:%s", userId);
+                    swrve._sendQueuedEvents(userId, sessionToken);
+                });
             }
         });
     }
@@ -971,6 +929,32 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             invalidateETag(userId);
         }
     }
+
+    protected void initRealTimeUserProperties(String userId) {
+        realTimeUserProperties = new HashMap<>();
+
+        try {
+            String realTimeUserPropertiesFromCache = multiLayerLocalStorage.getSecureCacheEntryForUser(userId, CACHE_REALTIME_USER_PROPERTIES, getUniqueKey(userId));
+            if (!SwrveHelper.isNullOrEmpty(realTimeUserPropertiesFromCache)) {
+                JSONObject realTimeUserPropertiesJSON = new JSONObject(realTimeUserPropertiesFromCache);
+                Iterator<String> userPropertyIterator = realTimeUserPropertiesJSON.keys();
+                while (userPropertyIterator.hasNext()) {
+                    String userPropertyKey = userPropertyIterator.next();
+                    try {
+                        String userPropertyValue = realTimeUserPropertiesJSON.getString(userPropertyKey);
+                        realTimeUserProperties.put(userPropertyKey, userPropertyValue);
+                    } catch (Exception exp) {
+                        SwrveLogger.e("Could not load realtime user property for key: " + userPropertyKey, exp);
+                    }
+                }
+            }
+
+            SwrveLogger.i("Loaded realtime user properties from cache.");
+        } catch(JSONException e) {
+            SwrveLogger.e("Could not load real time user properties, bad JSON", e);
+        }
+    }
+
 
     protected void initABTestDetails(String userId) {
         try {
@@ -1050,13 +1034,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         if (resourcesListener != null) {
             Activity ctx = getActivityContext();
             if (ctx != null) {
-                ctx.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        resourcesListener.onResourcesUpdated();
-                    }
-
-                });
+                ctx.runOnUiThread(() -> resourcesListener.onResourcesUpdated());
             } else {
                 // If we do not have access to the activity context run on current thread
                 resourcesListener.onResourcesUpdated();
@@ -1081,14 +1059,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             swrve.sendQueuedEvents();
             eventsWereSent = false;
             final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
-            timedService.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        swrve.refreshCampaignsAndResources();
-                    } finally {
-                        timedService.shutdownNow();
-                    }
+            timedService.schedule(() -> {
+                try {
+                    swrve.refreshCampaignsAndResources();
+                } finally {
+                    timedService.shutdownNow();
                 }
             }, campaignsAndResourcesFlushRefreshDelay.longValue(), TimeUnit.MILLISECONDS);
         }
@@ -1116,12 +1091,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
         final ScheduledThreadPoolExecutor localExecutor = new ScheduledThreadPoolExecutor(1);
         localExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-        localExecutor.scheduleWithFixedDelay(new Runnable() {
-            @Override
-            public void run() {
-                checkForCampaignAndResourcesUpdates();
-            }
-        }, 0L, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
+        localExecutor.scheduleWithFixedDelay(() -> checkForCampaignAndResourcesUpdates(), 0L, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
         campaignsAndResourcesExecutor = localExecutor;
     }
 

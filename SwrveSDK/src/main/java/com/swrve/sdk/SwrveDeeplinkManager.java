@@ -160,56 +160,53 @@ class SwrveDeeplinkManager {
 
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
-            executorService.execute(SwrveRunnables.withoutExceptions(new Runnable() {
-                @Override
-                public void run() {
+            executorService.execute(SwrveRunnables.withoutExceptions(() -> {
 
-                    try {
-                        restClient.get(config.getContentUrl() + SWRVE_AD_CAMPAIGN_URL, standardParams, new IRESTResponseListener() {
-                            @Override
-                            public void onResponse(RESTResponse response) {
+                try {
+                    restClient.get(config.getContentUrl() + SWRVE_AD_CAMPAIGN_URL, standardParams, new IRESTResponseListener() {
+                        @Override
+                        public void onResponse(RESTResponse response) {
 
-                                if (response.responseCode == HttpURLConnection.HTTP_OK) {
+                            if (response.responseCode == HttpURLConnection.HTTP_OK) {
 
+                                try {
+                                    JSONObject responseJson;
                                     try {
-                                        JSONObject responseJson;
-                                        try {
-                                            responseJson = new JSONObject(response.responseBody);
-                                        } catch (JSONException e) {
-                                            SwrveLogger.e("SwrveSDK unable to decode ad_journey_campaign JSON : \"%s\".", response.responseBody);
-                                            throw e;
-                                        }
-
-                                        updateCdnPaths(responseJson);
-
-                                        final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
-                                            @Override
-                                            public void complete() {
-                                                showCampaign(campaign, context, config);
-                                            }
-                                        };
-
-                                        getCampaignAssets(responseJson, callback);
-                                        writeCampaignDataToCache(responseJson, actionType);
-
+                                        responseJson = new JSONObject(response.responseBody);
                                     } catch (JSONException e) {
-                                        SwrveLogger.e("Could not parse JSON for ad campaign", e);
+                                        SwrveLogger.e("SwrveSDK unable to decode ad_journey_campaign JSON : \"%s\".", response.responseBody);
+                                        throw e;
                                     }
-                                } else {
-                                    SwrveLogger.e("SwrveSDK unable to get ad_journey_campaign JSON : \"%s\".", response.responseBody);
-                                    loadCampaignFromCache(campaignID);
-                                }
-                            }
 
-                            @Override
-                            public void onException(Exception e) {
-                                SwrveLogger.e("Error downloading ad campaign", e);
-                                //TODO we need to do a loadCampaignFromCache here but the restclient calls both onResponse and onException, we need to look at this.
+                                    updateCdnPaths(responseJson);
+
+                                    final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
+                                        @Override
+                                        public void complete() {
+                                            showCampaign(campaign, context, config);
+                                        }
+                                    };
+
+                                    getCampaignAssets(responseJson, callback);
+                                    writeCampaignDataToCache(responseJson, actionType);
+
+                                } catch (JSONException e) {
+                                    SwrveLogger.e("Could not parse JSON for ad campaign", e);
+                                }
+                            } else {
+                                SwrveLogger.e("SwrveSDK unable to get ad_journey_campaign JSON : \"%s\".", response.responseBody);
+                                loadCampaignFromCache(campaignID);
                             }
-                        });
-                    } catch (UnsupportedEncodingException e) {
-                        SwrveLogger.e("Could not update ad campaign, invalid parameters", e);
-                    }
+                        }
+
+                        @Override
+                        public void onException(Exception e) {
+                            SwrveLogger.e("Error downloading ad campaign", e);
+                            //TODO we need to do a loadCampaignFromCache here but the restclient calls both onResponse and onException, we need to look at this.
+                        }
+                    });
+                } catch (UnsupportedEncodingException e) {
+                    SwrveLogger.e("Could not update ad campaign, invalid parameters", e);
                 }
             }));
         } finally {
@@ -309,14 +306,16 @@ class SwrveDeeplinkManager {
 
             } else if (campaign instanceof SwrveInAppCampaign) {
                 SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessages().get(0);
-                setSwrveMessage(message);
-                if (this.swrveMessageListener == null) {
-                    Intent intent = new Intent(context, SwrveInAppMessageActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    intent.putExtra(SWRVE_AD_MESSAGE, true);
-                    context.startActivity(intent);
-                } else {
-                    this.swrveMessageListener.onMessage(message);
+                if (SwrveMessageTextTemplatingChecks.checkTemplating(message, null)) {
+                    setSwrveMessage(message);
+                    if (this.swrveMessageListener == null) {
+                        Intent intent = new Intent(context, SwrveInAppMessageActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.putExtra(SWRVE_AD_MESSAGE, true);
+                        context.startActivity(intent);
+                    } else {
+                        this.swrveMessageListener.onMessage(message);
+                    }
                 }
             }
         }

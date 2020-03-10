@@ -35,12 +35,17 @@ android {
         abortOnError true
         baseline file("../lint/lint-baseline-swrvesdk.xml")
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     api project(':SwrveSDKCommon')
     api project(':SwrveConversationSDK')
-    api 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    api 'androidx.legacy:legacy-support-v4:' + project.ANDROIDX_LEGACY_SUPPORT_V4_VERSION
     api 'com.google.code.gson:gson:' + project.GSON_VERSION
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead. If compiling amazon flavour from source you should delete the

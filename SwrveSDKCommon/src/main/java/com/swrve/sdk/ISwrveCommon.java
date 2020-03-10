@@ -17,6 +17,7 @@ interface ISwrveCommon {
     String CACHE_DEVICE_ID = "device_id";
     String CACHE_CAMPAIGNS = "CMCC2";
     String CACHE_RESOURCES = "srcngt2";
+    String CACHE_REALTIME_USER_PROPERTIES = "cmrp2s";
     String CACHE_RESOURCES_DIFF = "rsdfngt2";
     String CACHE_AD_CAMPAIGNS_DEBUG = "AdCampaign";
     String CACHE_NOTIFICATION_CAMPAIGNS_DEBUG = "NotificationCampaign";
@@ -70,6 +71,7 @@ interface ISwrveCommon {
     String GENERIC_EVENT_CAMPAIGN_TYPE_PUSH         = "push";
     String GENERIC_EVENT_ACTION_TYPE_KEY            = "actionType";
     String GENERIC_EVENT_ACTION_TYPE_IMPRESSION     = "impression";
+    String GENERIC_EVENT_ACTION_TYPE_DELIVERED      = "delivered";
     String GENERIC_EVENT_ACTION_TYPE_ENGAGED        = "engaged";
     String GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK   = "button_click";
     String GENERIC_EVENT_ACTION_TYPE_INFLUENCED     = "influenced";

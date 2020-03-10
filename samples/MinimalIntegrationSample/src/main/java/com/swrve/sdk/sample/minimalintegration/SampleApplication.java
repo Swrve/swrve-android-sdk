@@ -20,16 +20,16 @@ public class SampleApplication extends Application {
         SwrveConfig config = new SwrveConfig();
         NotificationChannel channel = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            channel = new NotificationChannel("123", "Devapp swrve default channel", NotificationManager.IMPORTANCE_DEFAULT);
+            channel = new NotificationChannel("123", "Swrve default channel", NotificationManager.IMPORTANCE_DEFAULT);
             if (getSystemService(Context.NOTIFICATION_SERVICE) != null) {
-                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                NotificationManager notificationManager = (NotificationManager) getSystemService(
+                        Context.NOTIFICATION_SERVICE);
                 notificationManager.createNotificationChannel(channel);
             }
         }
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo, R.drawable.swrve_s_transparent, channel)
-                .activityClass(MainActivity.class)
-                .largeIconDrawableId(R.drawable.swrve_s_solid)
-                .accentColorResourceId(R.color.dark_blue);
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo,
+                R.drawable.swrve_s_transparent, channel).activityClass(MainActivity.class)
+                        .largeIconDrawableId(R.drawable.swrve_s_solid).accentColorHex("#3949AB"); // Darkblue
         config.setNotificationConfig(notificationConfig.build());
 
         SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY, config);

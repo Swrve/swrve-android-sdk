@@ -1,7 +1,5 @@
 package com.swrve.sdk.config;
 
-import android.graphics.Color;
-
 import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveInitMode;
@@ -41,13 +39,8 @@ public abstract class SwrveConfigBase {
     private int minSampleSize = 1; // Sample size to use when loading in-app message images. Has to be a power of two.
     private File cacheDir;
     private boolean sendQueuedEventsOnResume = true;
-    private long autoShowMessagesMaxDelay = 5000; // Maximum delay for in-app messages to appear after initialization.
     private boolean loadCachedCampaignsAndResourcesOnUIThread = true; // Will load the campaign and resources cache on the UI thread.
-    private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
-    private int inAppMessageFocusColor = Color.argb(100, 0, 190, 152); // Default button focus color for IAM
-    private int inAppMessageClickColor = Color.TRANSPARENT; // Default button click color for IAM
     private int httpTimeout = 60000; // HTTP timeout used when contacting the Swrve APIs, in milliseconds.
-    private boolean hideToolbar = true; // Hide the toolbar when displaing in-app messages.
     private boolean androidIdLoggingEnabled; // Automatically log Android ID as "swrve.android_id".
     private boolean abTestDetailsEnabled; // Obtain information about the AB Tests a user is part of.
     private List<String> modelBlackList;
@@ -55,6 +48,7 @@ public abstract class SwrveConfigBase {
     private SwrveNotificationConfig notificationConfig; // null as default, but attempts to populate from manifest if not instantiated. The manifest logic is deprecated and will be removed later
     private SwrvePushNotificationListener notificationListener;
     private SwrveSilentPushListener silentPushListener;
+    private SwrveInAppMessageConfig inAppMessageConfig = new SwrveInAppMessageConfig.Builder().build(); // All default values set in the init
     private SwrveInitMode initMode = SwrveInitMode.AUTO;
     private boolean managedModeAutoStartLastUser = true;
 
@@ -389,24 +383,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Maximum delay for in-app messages to appear after initialization.
-     *
-     * @return maximum delay in milliseconds
-     */
-    public long getAutoShowMessagesMaxDelay() {
-        return autoShowMessagesMaxDelay;
-    }
-
-    /**
-     * Maximum delay for in-app messages to appear after initialization.
-     *
-     * @param autoShowMessagesMaxDelay max delay
-     */
-    public void setAutoShowMessagesMaxDelay(long autoShowMessagesMaxDelay) {
-        this.autoShowMessagesMaxDelay = autoShowMessagesMaxDelay;
-    }
-
-    /**
      * Load campaigns and resources cache on the UI thread. Allows to get user resources and
      * campaigns on the early start.
      *
@@ -427,60 +403,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * The default in-app background color, if none is specified in the template.
-     *
-     * @return The default in-app background color.
-     */
-    public int getDefaultBackgroundColor() {
-        return defaultBackgroundColor;
-    }
-
-    /**
-     * Set the default in-app background color.
-     *
-     * @param defaultBackgroundColor Default in-app background color used if none is specified in the template
-     */
-    public void setDefaultBackgroundColor(int defaultBackgroundColor) {
-        this.defaultBackgroundColor = defaultBackgroundColor;
-    }
-
-    /**
-     * The in-app message focus color
-     *
-     * @return The in-app message focus color.
-     */
-    public int getInAppMessageFocusColor() {
-        return inAppMessageFocusColor;
-    }
-
-    /**
-     * Set the in-app message focus color. Used for in app message buttons on TV.
-     *
-     * @param inAppMessageFocusColor A color-int, eg: Color.argb(100, 0, 190, 152)
-     */
-    public void setInAppMessageFocusColor(int inAppMessageFocusColor) {
-        this.inAppMessageFocusColor = inAppMessageFocusColor;
-    }
-
-    /**
-     * The in-app message button click color
-     *
-     * @return The in-app message button click color.
-     */
-    public int getInAppMessageClickColor() {
-        return inAppMessageClickColor;
-    }
-
-    /**
-     * Set the in-app message button click color. Used for in app message buttons on TV.
-     *
-     * @param inAppMessageClickColor A color-int, eg: Color.argb(100, 0, 190, 152)
-     */
-    public void setInAppMessageClickColor(int inAppMessageClickColor) {
-        this.inAppMessageClickColor = inAppMessageClickColor;
-    }
-
-    /**
      * Set the HTTP timeout.
      *
      * @param httpTimeout the http timeout for rest calls
@@ -496,22 +418,6 @@ public abstract class SwrveConfigBase {
      */
     public int getHttpTimeout() {
         return httpTimeout;
-    }
-
-    /**
-     * Hide the toolbar when displaying in-app messages.
-     *
-     * @param hideToolbar true to hide the toolbar when displaying in-app messages
-     */
-    public void setHideToolbar(boolean hideToolbar) {
-        this.hideToolbar = hideToolbar;
-    }
-
-    /**
-     * @return Whether the SDK will hide the toolbar when displaying in-app messages.
-     */
-    public boolean isHideToolbar() {
-        return hideToolbar;
     }
 
     /**
@@ -644,5 +550,23 @@ public abstract class SwrveConfigBase {
      */
     public boolean isManagedModeAutoStartLastUser() {
         return managedModeAutoStartLastUser;
+    }
+
+    /**
+     * The configuration file for InAppMessages.
+     *
+     * @return the inApp config object
+     */
+    public SwrveInAppMessageConfig getInAppMessageConfig() {
+        return inAppMessageConfig;
+    }
+
+    /**
+     * The configuration file for InAppMessages.
+     *
+     * @param inAppMessageConfig object with in app configuration
+     */
+    public void setInAppMessageConfig(SwrveInAppMessageConfig inAppMessageConfig) {
+        this.inAppMessageConfig = inAppMessageConfig;
     }
 }

@@ -5,17 +5,19 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.RelativeLayout;
 
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveImageScaler;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveTextTemplating;
+import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveImage;
@@ -23,13 +25,10 @@ import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Android view representing a Swrve message with a given format.
@@ -48,15 +47,13 @@ public class SwrveMessageView extends RelativeLayout {
     // Minimum sample size to use when loading images
     protected int minSampleSize = 1;
 
-    // Default background color
-    protected int defaultBackgroundColor;
+    // In App Config
+    protected SwrveInAppMessageConfig inAppConfig;
 
-    protected int inAppMessageFocusColor;
-    protected int inAppMessageClickColor;
+    protected Map<String, String> inAppPersonalisation;
 
     public SwrveMessageView(SwrveInAppMessageActivity activity, SwrveMessage message,
-                            SwrveMessageFormat format, int minSampleSize,
-                            int defaultBackgroundColor, int inAppMessageFocusColor, int inAppMessageClickColor) throws SwrveMessageViewBuildException {
+                            SwrveMessageFormat format, int minSampleSize, SwrveInAppMessageConfig inAppConfig, Map<String, String> inAppPersonalisation) throws SwrveMessageViewBuildException {
         super(activity);
         this.activity = activity;
         this.format = format;
@@ -64,60 +61,13 @@ public class SwrveMessageView extends RelativeLayout {
         if (minSampleSize > 0 && (minSampleSize % 2) == 0) {
             this.minSampleSize = minSampleSize;
         }
-        this.defaultBackgroundColor = defaultBackgroundColor;
-        this.inAppMessageFocusColor = inAppMessageFocusColor;
-        this.inAppMessageClickColor = inAppMessageClickColor;
+
+        this.inAppPersonalisation = inAppPersonalisation;
+        this.inAppConfig = inAppConfig;
         initializeLayout(activity, message, format);
     }
 
-    private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Calculate the largest inSampleSize value that is a power of 2 and
-            // keeps both
-            // height and width larger than the requested height and width.
-            while ((halfHeight / inSampleSize) > reqHeight
-                    && (halfWidth / inSampleSize) > reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
-    }
-
-    private static BitmapResult decodeSampledBitmapFromFile(String filePath, int reqWidth, int reqHeight, int minSampleSize) {
-        try {
-            // First decode with inJustDecodeBounds=true to check dimensions
-            final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(filePath, options);
-
-            int bitmapWidth = options.outWidth;
-            int bitmapHeight = options.outHeight;
-
-            // Calculate inSampleSize
-            options.inSampleSize = Math.max(calculateInSampleSize(options, reqWidth,
-                    reqHeight), minSampleSize);
-
-            // Decode bitmap with inSampleSize set
-            options.inJustDecodeBounds = false;
-            return new BitmapResult(BitmapFactory.decodeFile(filePath, options), bitmapWidth, bitmapHeight);
-        } catch (OutOfMemoryError exp) {
-            SwrveLogger.e(Log.getStackTraceString(exp));
-        } catch (Exception exp) {
-            SwrveLogger.e(Log.getStackTraceString(exp));
-        }
-
-        return null;
-    }
-
+    // Personalisation is guarded by SwrveMessageTextTemplatingChecks
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
         List<String> loadErrorReasons = new ArrayList<>();
         try {
@@ -129,7 +79,7 @@ public class SwrveMessageView extends RelativeLayout {
             // Set background
             Integer backgroundColor = format.getBackgroundColor();
             if (backgroundColor == null) {
-                backgroundColor = defaultBackgroundColor;
+                backgroundColor = inAppConfig.getDefaultBackgroundColor();
             }
             setBackgroundColor(backgroundColor);
 
@@ -147,10 +97,21 @@ public class SwrveMessageView extends RelativeLayout {
                 }
 
                 // Load background image
-                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
+                final SwrveImageScaler.BitmapResult backgroundImage = SwrveImageScaler.decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
-                    Bitmap imageBitmap = backgroundImage.getBitmap();
-                    SwrveImageView imageView = new SwrveImageView(context);
+
+                    ImageView imageView;
+                    String imageText = image.getText();
+                    if (SwrveHelper.isNullOrEmpty(imageText)) {
+                        imageView = new SwrveImageView(context);
+                        imageView.setImageBitmap(backgroundImage.getBitmap());
+                    } else {
+                        // Need to render dynamic text
+                        String personalisedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalisation);
+                        // Add a default dismiss action although it won't be clickable as we set no setOnClickListener
+                        imageView = new SwrvePersonalisedTextView(context, SwrveActionType.Dismiss, inAppConfig, personalisedText,
+                                backgroundImage.getWidth(), backgroundImage.getHeight(), null);
+                    }
                     // Position
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
                     lparams.leftMargin = image.getPosition().x;
@@ -158,7 +119,6 @@ public class SwrveMessageView extends RelativeLayout {
                     lparams.width = backgroundImage.getWidth();
                     lparams.height = backgroundImage.getHeight();
                     imageView.setLayoutParams(lparams);
-                    imageView.setImageBitmap(imageBitmap);
                     imageView.setScaleType(ScaleType.FIT_XY);
                     // Add to parent
                     addView(imageView);
@@ -177,10 +137,30 @@ public class SwrveMessageView extends RelativeLayout {
                 }
 
                 // Load button image
-                final BitmapResult backgroundImage = decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
+                final SwrveImageScaler.BitmapResult backgroundImage = SwrveImageScaler.decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
+
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
-                    Bitmap imageBitmap = backgroundImage.getBitmap();
-                    SwrveButtonView buttonView = new SwrveButtonView(context, button.getActionType(), inAppMessageFocusColor, inAppMessageClickColor);
+
+                    // Resolve templating in the button action
+                    String personalisedButtonAction = button.getAction();
+                    if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(personalisedButtonAction)) {
+                        personalisedButtonAction = SwrveTextTemplating.apply(personalisedButtonAction, this.inAppPersonalisation);
+                    }
+
+                    String buttonText = button.getText();
+                    SwrveBaseInteractableView _buttonView;
+                    if (SwrveHelper.isNullOrEmpty(buttonText)) {
+                        _buttonView = new SwrveButtonView(context, button.getActionType(), inAppConfig.getFocusColor(), inAppConfig.getClickColor(), personalisedButtonAction);
+                        _buttonView.setImageBitmap(backgroundImage.getBitmap());
+                    } else {
+                        // Need to render dynamic text
+                        String personalisedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalisation);
+                        _buttonView = new SwrvePersonalisedTextView(context, button.getActionType(), inAppConfig, personalisedText,
+                                backgroundImage.getWidth(), backgroundImage.getHeight(), personalisedButtonAction);
+                        _buttonView.setFocusable(true);
+                    }
+
+                    final SwrveBaseInteractableView buttonView = _buttonView;
                     // Mark the buttonView tag with the name of the button as found on the swrve dashboard.
                     // Used primarily for testing.
                     buttonView.setTag(button.getName());
@@ -191,33 +171,30 @@ public class SwrveMessageView extends RelativeLayout {
                     lparams.width = backgroundImage.getWidth();
                     lparams.height = backgroundImage.getHeight();
                     buttonView.setLayoutParams(lparams);
-                    buttonView.setImageBitmap(imageBitmap);
                     buttonView.setScaleType(ScaleType.FIT_XY);
-                    buttonView.setOnClickListener(new OnClickListener() {
-                        @Override
-                        public void onClick(View buttonView) {
-                            try {
-                                dismiss();
+                    buttonView.setOnClickListener(buttonView1 -> {
+                        try {
+                            dismiss();
 
-                                if (button.getActionType() == SwrveActionType.Install) {
-                                    activity.notifyOfInstallButtonPress(button);
-                                } else if (button.getActionType() == SwrveActionType.Custom) {
-                                    activity.notifyOfCustomButtonPress(button);
-                                } else if (button.getActionType() == SwrveActionType.Dismiss) {
-                                    activity.notifyOfDismissButtonPress(button);
-                                }
-                            } catch (Exception e) {
-                                SwrveLogger.e("Error in onClick handler.", e);
+                            if (button.getActionType() == SwrveActionType.Install) {
+                                activity.notifyOfInstallButtonPress(button);
+                            } else if (button.getActionType() == SwrveActionType.Custom) {
+                                activity.notifyOfCustomButtonPress(button, buttonView.getAction());
+                            } else if (button.getActionType() == SwrveActionType.CopyToClipboard) {
+                                activity.notifyOfClipboardButtonPress(button, buttonView.getAction());
+                            } else if (button.getActionType() == SwrveActionType.Dismiss) {
+                                activity.notifyOfDismissButtonPress(button);
                             }
+                        } catch (Exception e) {
+                            SwrveLogger.e("Error in onClick handler.", e);
                         }
                     });
                     // Add to parent
                     addView(buttonView);
                     UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
-                    if(uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+                    if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
                         buttonView.requestFocus();
                     }
-
                 } else {
                     loadErrorReasons.add("Could not decode bitmap from file:" + filePath);
                     break;
@@ -248,7 +225,7 @@ public class SwrveMessageView extends RelativeLayout {
     private void dismiss() {
         Context ctx = getContext();
         if (ctx instanceof Activity) {
-            ((Activity)ctx).finish();
+            ((Activity) ctx).finish();
         }
     }
 
@@ -285,29 +262,5 @@ public class SwrveMessageView extends RelativeLayout {
 
     public SwrveMessageFormat getFormat() {
         return format;
-    }
-
-    private static class BitmapResult {
-        private Bitmap bitmap;
-        private int width;
-        private int height;
-
-        public BitmapResult(Bitmap bitmap, int width, int height) {
-            this.bitmap = bitmap;
-            this.width = width;
-            this.height = height;
-        }
-
-        public Bitmap getBitmap() {
-            return bitmap;
-        }
-
-        public int getWidth() {
-            return width;
-        }
-
-        public int getHeight() {
-            return height;
-        }
     }
 }

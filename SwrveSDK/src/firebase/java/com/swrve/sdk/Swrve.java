@@ -3,7 +3,7 @@ package com.swrve.sdk;
 import android.app.Application;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -50,24 +50,16 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         if (firebaseInstanceId != null) {
             final String userId = getUserId(); // user can change so retrieve now as a final String for thread safeness
             Task<InstanceIdResult> task = firebaseInstanceId.getInstanceId();
-            task.addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
-                @Override
-                public void onSuccess(InstanceIdResult instanceIdResult) {
-                    try {
-                        String newRegistrationId = instanceIdResult.getToken();
-                        if (!SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                            _setRegistrationId(userId, newRegistrationId);
-                        }
-                    } catch (Exception ex) {
-                        SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", ex);
+            task.addOnSuccessListener(instanceIdResult -> {
+                try {
+                    String newRegistrationId = instanceIdResult.getToken();
+                    if (!SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+                        _setRegistrationId(userId, newRegistrationId);
                     }
+                } catch (Exception ex) {
+                    SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", ex);
                 }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", e);
-                }
-            });
+            }).addOnFailureListener(e -> SwrveLogger.e("Couldn't obtain the Firebase registration id for the device", e));
         }
     }
 
@@ -143,25 +135,22 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     // Send device token in the background without affecting DAU/sessions (user_initiated = false)
     protected void sendDeviceTokenUpdateNow(final String userId) {
         final SwrveBase<ISwrve, SwrveConfig> swrve = this;
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    JSONObject firebaseDeviceInfo = new JSONObject();
-                    extraDeviceInfo(firebaseDeviceInfo);
+        storageExecutorExecute(() -> {
+            try {
+                JSONObject firebaseDeviceInfo = new JSONObject();
+                extraDeviceInfo(firebaseDeviceInfo);
 
-                    Map<String, Object> parameters = new HashMap<>();
-                    parameters.put("attributes", firebaseDeviceInfo);
-                    parameters.put("user_initiated", "false");
+                Map<String, Object> parameters = new HashMap<>();
+                parameters.put("attributes", firebaseDeviceInfo);
+                parameters.put("user_initiated", "false");
 
-                    int seqnum = swrve.getNextSequenceNumber();
-                    String event = EventHelper.eventAsJSON("device_update", parameters, null, seqnum, System.currentTimeMillis());
-                    ArrayList<String> events = new ArrayList<>();
-                    events.add(event);
-                    swrve.sendEventsInBackground(context.get(), userId, events);
-                } catch (JSONException e) {
-                    SwrveLogger.e("Couldn't construct token update event", e);
-                }
+                int seqnum = swrve.getNextSequenceNumber();
+                String event = EventHelper.eventAsJSON("device_update", parameters, null, seqnum, System.currentTimeMillis());
+                ArrayList<String> events = new ArrayList<>();
+                events.add(event);
+                swrve.sendEventsInBackground(context.get(), userId, events);
+            } catch (JSONException e) {
+                SwrveLogger.e("Couldn't construct token update event", e);
             }
         });
     }

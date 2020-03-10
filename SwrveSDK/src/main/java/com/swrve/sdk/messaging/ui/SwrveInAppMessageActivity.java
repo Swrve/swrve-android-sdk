@@ -1,12 +1,16 @@
 package com.swrve.sdk.messaging.ui;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.VisibleForTesting;
+
+import androidx.annotation.VisibleForTesting;
 
 import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveBase;
@@ -14,25 +18,27 @@ import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 import com.swrve.sdk.messaging.view.SwrveMessageViewBuildException;
+import java.util.Map;
 
 public class SwrveInAppMessageActivity extends Activity {
 
     public static final String MESSAGE_ID_KEY = "message_id";
+    public static final String SWRVE_PERSONALISATION_KEY = "message_personalisation";
     private static final String SWRVE_AD_MESSAGE = "ad_message_key";
+
 
     private SwrveBase sdk;
     private SwrveMessage message;
-    private boolean hideToolbar = false;
     private int minSampleSize;
-    private int defaultBackgroundColor;
-    private int inAppMessageFocusColor;
-    private int inAppMessageClickColor;
+    private SwrveInAppMessageConfig inAppConfig;
+    private Map<String, String> inAppPersonalisation;
 
     private SwrveMessageFormat format;
 
@@ -49,7 +55,6 @@ public class SwrveInAppMessageActivity extends Activity {
         if (intent != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-
                 int messageId = extras.getInt(MESSAGE_ID_KEY);
                 message = sdk.getMessageForId(messageId);
 
@@ -60,12 +65,11 @@ public class SwrveInAppMessageActivity extends Activity {
                     }
                 }
 
+                this.inAppPersonalisation = (Map<String, String>) extras.getSerializable(SWRVE_PERSONALISATION_KEY);
+
                 SwrveConfigBase config = sdk.getConfig();
-                this.hideToolbar = config.isHideToolbar();
                 this.minSampleSize = config.getMinSampleSize();
-                this.defaultBackgroundColor = config.getDefaultBackgroundColor();
-                this.inAppMessageFocusColor = config.getInAppMessageFocusColor();
-                this.inAppMessageClickColor = config.getInAppMessageClickColor();
+                this.inAppConfig = config.getInAppMessageConfig();
             }
         }
 
@@ -107,15 +111,13 @@ public class SwrveInAppMessageActivity extends Activity {
         }
 
         // Add the status bar if configured that way
-        if (!hideToolbar) {
+        if (!inAppConfig.isHideToolbar()) {
             setTheme(R.style.Theme_InAppMessageWithToolbar);
         }
 
         try {
             // Create view and add as root of the activity
-
-            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize,
-                    defaultBackgroundColor, inAppMessageFocusColor, inAppMessageClickColor);
+            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize, inAppConfig, inAppPersonalisation);
             setContentView(view);
             if(savedInstanceState == null) {
                 notifyOfImpression(format);
@@ -161,22 +163,43 @@ public class SwrveInAppMessageActivity extends Activity {
         }
     }
 
-    public void notifyOfCustomButtonPress(SwrveButton button) {
+    public void notifyOfCustomButtonPress(SwrveButton button, String resolvedButtonAction) {
         // IAM custom button press
         sdk.buttonWasPressedByUser(button);
         message.getCampaign().messageDismissed();
 
         if (sdk.getCustomButtonListener() != null) {
-            sdk.getCustomButtonListener().onAction(button.getAction());
+            sdk.getCustomButtonListener().onAction(resolvedButtonAction);
         } else {
-            String buttonAction = button.getAction();
             // Parse action as an Uri
             try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(buttonAction)));
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(resolvedButtonAction)));
             } catch (Exception e) {
-                SwrveLogger.e("Couldn't launch default custom action: %s", e, buttonAction);
+                SwrveLogger.e("Couldn't launch default custom action: %s", e, resolvedButtonAction);
             }
         }
+    }
+
+    public void notifyOfClipboardButtonPress(SwrveButton button, String stringToCopy) {
+        // IAM copy-to-clipboard press
+        sdk.buttonWasPressedByUser(button);
+        message.getCampaign().messageDismissed();
+
+        try {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("simple text", stringToCopy);
+            clipboard.setPrimaryClip(clip);
+
+            if (sdk.getClipboardButtonListener() != null){
+                sdk.getClipboardButtonListener().onAction(stringToCopy);
+            }
+
+        } catch (Exception e) {
+
+            SwrveLogger.e("Couldn't copy text to clipboard: %s", e, stringToCopy);
+        }
+
+
     }
 
     public void notifyOfDismissButtonPress(SwrveButton button) {

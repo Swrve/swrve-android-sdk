@@ -9,7 +9,9 @@ public enum SwrveActionType {
     // Handle the custom action string associated with the button
     Custom,
     // Go to the url specified in the action string
-    Install;
+    Install,
+    // Copy the contents of the action string associated to clipboard
+    CopyToClipboard;
 
     /**
      * Convert from string to SwrveActionType.
@@ -24,6 +26,8 @@ public enum SwrveActionType {
             return Install;
         } else if (type.equalsIgnoreCase("dismiss")) {
             return Dismiss;
+        } else if (type.equalsIgnoreCase("copy_to_clipboard")){
+            return CopyToClipboard;
         }
         return Custom;
     }

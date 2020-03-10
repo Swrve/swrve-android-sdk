@@ -5,9 +5,6 @@ import android.os.Bundle;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveDismissButtonListener;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -292,6 +289,18 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Request the list of real time user properties which have been retrieved along with
+     * Campaign and Resources for this user.
+     * <p>
+     *
+     * @param listener The custom listener
+     */
+    public static void getRealTimeUserProperties(final SwrveRealTimeUserPropertiesListener listener) {
+        checkInstanceCreated();
+        instance.getRealTimeUserProperties(listener);
+    }
+
+    /**
      * Send events to Swrve servers.
      */
     public static void sendQueuedEvents() {
@@ -444,65 +453,6 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the custom listener to process in-app message install button clicks
-     *
-     * @return buttonListener
-     */
-    public static SwrveInstallButtonListener getInstallButtonListener() {
-        checkInstanceCreated();
-        return instance.getInstallButtonListener();
-    }
-
-    /**
-     * Set the custom listener to process in-app message install button clicks
-     *
-     * @param installButtonListener The custom listener
-     */
-    public static void setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
-        instance.setInstallButtonListener(installButtonListener);
-    }
-
-    /**
-     * Get the custom listener to process in-app message custom button clicks
-     *
-     * @return the custom buttonListener
-     */
-    public static SwrveCustomButtonListener getCustomButtonListener() {
-        checkInstanceCreated();
-        return instance.getCustomButtonListener();
-    }
-
-    /**
-     * Set the custom listener to process in-app message custom button clicks
-     *
-     * @param customButtonListener The custom listener
-     */
-    public static void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
-        checkInstanceCreated();
-        instance.setCustomButtonListener(customButtonListener);
-    }
-
-    /**
-     * Get the in-app listener to get notified of in-app message dismiss button clicks
-     *
-     * @return the custom buttonListener
-     */
-    public static SwrveDismissButtonListener getInAppDismissButtonListener() {
-        checkInstanceCreated();
-        return instance.getDismissButtonListener();
-    }
-
-    /**
-     * Set the in-app button listener to get notified of in-app message dismiss button clicks
-     *
-     * @param inAppDismissButtonListener The in-app dismiss button listener
-     */
-    public static void setCustomDismissButtonListener(SwrveDismissButtonListener inAppDismissButtonListener) {
-        checkInstanceCreated();
-        instance.setDismissButtonListener(inAppDismissButtonListener);
-    }
-
-    /**
      * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the current orientation.
@@ -540,6 +490,19 @@ public abstract class SwrveSDKBase {
     public static boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
         checkInstanceCreated();
         return instance.showMessageCenterCampaign(campaign);
+    }
+
+    /**
+     * Display the given campaign without the need to trigger an event and skipping
+     * the configured rules.
+     *
+     * @param campaign The campaign
+     * @param properties additional properties which can be used for IAM personalisation.
+     * @return true if the campaign was displayed.
+     */
+    public static boolean showMessageCenterCampaign(SwrveBaseCampaign campaign, Map<String, String> properties) {
+        checkInstanceCreated();
+        return instance.showMessageCenterCampaign(campaign, properties);
     }
 
     /**

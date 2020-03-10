@@ -63,7 +63,7 @@ public class SwrveLogger {
      * then setting this flag to true will prevent your Tree and the SwrveLogger duplicating the
      * logs to Logcat. The SwrveSDK logs can be filtered from your custom tree by overriding the
      * Tree.isLoggable method and filtering on tag SwrveLogger.LOG_TAG
-     * 
+     *
      * The default is false which means the SwrveSDK will print to logcat according to the loglevel.
 
      * @param useCustomLogger set to true if handling all logs with your own Timber.Tree.
@@ -188,6 +188,12 @@ public class SwrveLogger {
 
     protected static int getLogLevelFromSystemProps() {
         int logLevel = LOG_LEVEL_DEFAULT;
+
+        // Do not get log level for old Android OS versions as it might cause a freeze, leave default
+        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+          return logLevel;
+        }
+
         String systemProp = getSystemProp("log.tag." + LOG_TAG);
         if (SwrveHelper.isNotNullOrEmpty(systemProp)) {
             try {

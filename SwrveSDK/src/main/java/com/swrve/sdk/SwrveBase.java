@@ -11,15 +11,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.NotificationManagerCompat;
-import android.util.DisplayMetrics;
+import androidx.core.app.NotificationManagerCompat;
 import android.util.SparseArray;
-import android.view.Display;
-import android.view.WindowManager;
 
 import com.swrve.sdk.SwrveCampaignDisplayer.Result;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
+import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
@@ -30,6 +28,7 @@ import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaignState;
+import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
@@ -149,6 +148,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             queueSessionStart();
+            if (sessionListener != null) {
+                sessionListener.sessionStarted();
+            }
             generateNewSessionInterval();
 
             initUserJoinedTimeAndFirstSession();
@@ -178,6 +180,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             if (preloadRandC) {
                 initCampaigns(userId); // Initialize campaigns from cache
+                initRealTimeUserProperties(userId); // Initialize realtime user properties
             }
 
             // Add default message listener
@@ -187,15 +190,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Add custom conversation listener
             if (conversationListener == null) {
-                setConversationListener(new SwrveConversationListener() {
-                        public void onMessage(final SwrveConversation conversation) {
-                            // Start a Conversation activity to display the campaign
-                            if (SwrveBase.this.context != null) {
-                                ConversationActivity.showConversation(SwrveBase.this.context.get(), conversation, config.getOrientation());
-                                conversation.getCampaign().messageWasShownToUser(); // Report that the conversation was shown to the user
-                            }
-                        }
-                    });
+                setConversationListener(conversation -> {
+                    // Start a Conversation activity to display the campaign
+                    if (SwrveBase.this.context != null) {
+                        ConversationActivity.showConversation(SwrveBase.this.context.get(), conversation, config.getOrientation());
+                        conversation.getCampaign().messageWasShownToUser(); // Report that the conversation was shown to the user
+                    }
+                });
             }
 
             if (preloadRandC && config.isABTestDetailsEnabled()) {
@@ -211,16 +212,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             if (!preloadRandC) {
                 // Load campaigns and resources in a background thread
-                storageExecutorExecute(new Runnable() {
-                    @Override
-                    public void run() {
-                        initResources(userId);
+                storageExecutorExecute(() -> {
+                    initResources(userId);
 
-                        initCampaigns(userId);
+                    initCampaigns(userId);
 
-                        if (config.isABTestDetailsEnabled()) {
-                            initABTestDetails(userId);
-                        }
+                    initRealTimeUserProperties(userId);
+
+                    if (config.isABTestDetailsEnabled()) {
+                        initABTestDetails(userId);
                     }
                 });
             }
@@ -276,7 +276,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     private void setDefaultMessageListener() {
         setMessageListener(new SwrveMessageListener() {
+
             public void onMessage(final SwrveMessage message) {
+                onMessage(message, null);
+            }
+
+            public void onMessage(final SwrveMessage message, Map<String, String> properties) {
                 // Start a Conversation activity to display the campaign
                 if (SwrveBase.this.context != null) {
                     final Context ctx = SwrveBase.this.context.get();
@@ -286,10 +291,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     }
 
                     if (message.supportsOrientation(getDeviceOrientation())) {
-                        Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
-                        ctx.startActivity(intent);
+                        if (SwrveMessageTextTemplatingChecks.checkTemplating(message, properties)) {
+                            Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
+
+                            if (properties != null) {
+                                // Cannot pass a Map to intent, converting to HashMap
+                                HashMap<String, String> personalisation = new HashMap<>(properties);
+                                intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalisation);
+                            }
+
+                            ctx.startActivity(intent);
+                        }
                     } else {
                         SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
                     }
@@ -320,12 +334,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         final String userId = profileManager.getUserId();
         final String sessionToken = profileManager.getSessionToken();
         // Send event after it has been queued
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                _sendQueuedEvents(userId, sessionToken);
-            }
-        });
+        storageExecutorExecute(() -> _sendQueuedEvents(userId, sessionToken));
 
         if (sessionListener != null) {
             sessionListener.sessionStarted();
@@ -455,47 +464,81 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _getUserResourcesDiff(final SwrveUserResourcesDiffListener listener) {
         final SwrveBase<?, ?> swrveReference = this;
         final String userId = getUserId();
-        restClientExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                if (profileManager.getUserId() != null) {
-                    Map<String, String> params = new HashMap<>();
-                    params.put("api_key", apiKey);
-                    params.put("user", profileManager.getUserId());
-                    params.put("app_version", appVersion);
-                    long userJoinedTime = Long.parseLong(multiLayerLocalStorage.getCacheEntry(userId, CACHE_USER_JOINED_TIME));
-                    params.put("joined", String.valueOf(userJoinedTime));
-                    try {
-                        SwrveLogger.i("Contacting AB Test server %s", config.getContentUrl());
-                        restClient.get(config.getContentUrl() + USER_RESOURCES_DIFF_ACTION, params, new RESTCacheResponseListener(swrveReference, multiLayerLocalStorage, userId, CACHE_RESOURCES_DIFF, EMPTY_JSON_ARRAY) {
-                            @Override
-                            public void onResponseCached(int responseCode, String responseBody) {
-                                SwrveLogger.i("Got AB Test response code %s", responseCode);
-                                if (!SwrveHelper.isNullOrEmpty(responseBody)) {
-                                    // Process data and launch listener
-                                    processUserResourcesDiffData(responseBody, listener);
-                                }
+        restClientExecutorExecute(() -> {
+            if (profileManager.getUserId() != null) {
+                Map<String, String> params = new HashMap<>();
+                params.put("api_key", apiKey);
+                params.put("user", profileManager.getUserId());
+                params.put("app_version", appVersion);
+                long userJoinedTime = Long.parseLong(multiLayerLocalStorage.getCacheEntry(userId, CACHE_USER_JOINED_TIME));
+                params.put("joined", String.valueOf(userJoinedTime));
+                try {
+                    SwrveLogger.i("Contacting AB Test server %s", config.getContentUrl());
+                    restClient.get(config.getContentUrl() + USER_RESOURCES_DIFF_ACTION, params, new RESTCacheResponseListener(swrveReference, multiLayerLocalStorage, userId, CACHE_RESOURCES_DIFF, EMPTY_JSON_ARRAY) {
+                        @Override
+                        public void onResponseCached(int responseCode, String responseBody) {
+                            SwrveLogger.i("Got AB Test response code %s", responseCode);
+                            if (!SwrveHelper.isNullOrEmpty(responseBody)) {
+                                // Process data and launch listener
+                                processUserResourcesDiffData(responseBody, listener);
                             }
+                        }
 
-                            @Override
-                            public void onException(Exception exp) {
-                                // Launch exception
-                                SwrveLogger.e("AB Test exception", exp);
-                                listener.onUserResourcesDiffError(exp);
-                            }
-                        });
-                    } catch (Exception exp) {
-                        // Launch exception
-                        SwrveLogger.e("AB Test exception", exp);
-                        listener.onUserResourcesDiffError(exp);
-                    }
-                } else {
-                    // No user specified...
-                    SwrveLogger.e("Error: No user specified");
-                    listener.onUserResourcesDiffError(new NoUserIdSwrveException());
+                        @Override
+                        public void onException(Exception exp) {
+                            // Launch exception
+                            SwrveLogger.e("AB Test exception", exp);
+                            listener.onUserResourcesDiffError(exp);
+                        }
+                    });
+                } catch (Exception exp) {
+                    // Launch exception
+                    SwrveLogger.e("AB Test exception", exp);
+                    listener.onUserResourcesDiffError(exp);
                 }
+            } else {
+                // No user specified...
+                SwrveLogger.e("Error: No user specified");
+                listener.onUserResourcesDiffError(new NoUserIdSwrveException());
             }
         });
+    }
+
+    protected void _getRealTimeUserProperties(final SwrveRealTimeUserPropertiesListener listener) {
+        String cachedRealTimeUserProps = null;
+
+        // Read cached real time user properties
+        try {
+            cachedRealTimeUserProps = multiLayerLocalStorage.getSecureCacheEntryForUser(profileManager.getUserId(), CACHE_REALTIME_USER_PROPERTIES, getUniqueKey(getUserId()));
+        } catch (SecurityException e) {
+            listener.onRealTimeUserPropertiesError(e);
+        }
+
+        if (!SwrveHelper.isNullOrEmpty(cachedRealTimeUserProps)) {
+            try {
+                JSONObject realTimeUserPropertiesJSON = new JSONObject(cachedRealTimeUserProps);
+                Iterator<String> userPropertyIterator = realTimeUserPropertiesJSON.keys();
+
+                Map<String, String> mapProperties = new HashMap<>();
+
+                while (userPropertyIterator.hasNext()) {
+                    String userPropertyKey = userPropertyIterator.next();
+                    try {
+                        String userPropertyValue = realTimeUserPropertiesJSON.getString(userPropertyKey);
+                        mapProperties.put(userPropertyKey, userPropertyValue);
+                    } catch (Exception exp) {
+                        SwrveLogger.e("Could not load realtime user property for key: " + userPropertyKey, exp);
+                        listener.onRealTimeUserPropertiesError(exp);
+                    }
+                }
+
+                // Execute callback (NOTE: Executed in same thread!)
+                listener.onRealTimeUserPropertiesSuccess(mapProperties, cachedRealTimeUserProps);
+            } catch (Exception exp) {
+                // Launch exception
+                listener.onRealTimeUserPropertiesError(exp);
+            }
+        }
     }
 
     protected void _sendQueuedEvents(final String userId, final String sessionToken) {
@@ -504,30 +547,24 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             return;
         }
         if (SwrveHelper.isNotNullOrEmpty(userId) && SwrveHelper.isNotNullOrEmpty(sessionToken)) {
-            restClientExecutorExecute(new Runnable() {
-                @Override
-                public void run() {
-                    String deviceId = getDeviceId();
-                    SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(context.get(), config, restClient, userId, appVersion, sessionToken, deviceId);
-                    swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
-                    eventsWereSent = true;
-                }
+            restClientExecutorExecute(() -> {
+                String deviceId = getDeviceId();
+                SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(context.get(), config, restClient, userId, appVersion, sessionToken, deviceId);
+                swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
+                eventsWereSent = true;
             });
         }
     }
 
     protected void _flushToDisk() {
-        storageExecutorExecute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SwrveLogger.i("Flushing to disk");
-                    if (multiLayerLocalStorage != null) {
-                        multiLayerLocalStorage.flush();
-                    }
-                } catch (Exception e) {
-                    SwrveLogger.e("Flush to disk failed", e);
+        storageExecutorExecute(() -> {
+            try {
+                SwrveLogger.i("Flushing to disk");
+                if (multiLayerLocalStorage != null) {
+                    multiLayerLocalStorage.flush();
                 }
+            } catch (Exception e) {
+                SwrveLogger.e("Flush to disk failed", e);
             }
         });
     }
@@ -660,27 +697,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         if (contextRef != null) {
             try {
-                Display display = ((WindowManager) contextRef.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-                DisplayMetrics metrics = new DisplayMetrics();
-                int width = display.getWidth();
-                int height = display.getHeight();
-                display.getMetrics(metrics);
-                float xdpi = metrics.xdpi;
-                float ydpi = metrics.ydpi;
-                // Always use portrait dimensions (i.e. width < height)
-                if (width > height) {
-                    int tmp = width;
-                    width = height;
-                    height = tmp;
-                    float tmpdpi = xdpi;
-                    xdpi = ydpi;
-                    ydpi = tmpdpi;
-                }
-                deviceInfo.put(SWRVE_DEVICE_WIDTH, width);
-                deviceInfo.put(SWRVE_DEVICE_HEIGHT, height);
-                deviceInfo.put(SWRVE_DEVICE_DPI, metrics.densityDpi);
-                deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, xdpi);
-                deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, ydpi);
+                deviceInfo.put(SWRVE_DEVICE_WIDTH, deviceWidth);
+                deviceInfo.put(SWRVE_DEVICE_HEIGHT, deviceHeight);
+                deviceInfo.put(SWRVE_DEVICE_DPI, deviceDpi);
+                deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, androidDeviceXdpi);
+                deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, androidDeviceYdpi);
                 deviceInfo.put(SWRVE_CONVERSATION_VERSION, ISwrveConversationSDK.CONVERSATION_VERSION);
                 // Carrier info
                 if (!SwrveHelper.isNullOrEmpty(simOperatorName)) {
@@ -757,7 +778,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         restClientExecutorExecute(new Runnable() {
             @Override
             public void run() {
-
                 Map<String, String> params = getContentRequestParams(userId);
                 if (config.isABTestDetailsEnabled()) {
                     params.put("ab_test_details", "1");
@@ -768,7 +788,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
 
                 try {
-                    restClient.get(config.getContentUrl() + CAMPAIGNS_AND_RESOURCES_ACTION, params, new IRESTResponseListener() {
+                    restClient.get(config.getContentUrl() + USER_CONTENT_ACTION, params, new IRESTResponseListener() {
                         @Override
                         public void onResponse(RESTResponse response) {
                             // Response received from server
@@ -787,7 +807,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     try {
                                         responseJson = new JSONObject(response.responseBody);
                                     } catch(JSONException e) {
-                                        SwrveLogger.e("SwrveSDK unable to decode user_resources_and_campaigns JSON : \"%s\".", response.responseBody);
+                                        SwrveLogger.e("SwrveSDK unable to decode user_content JSON : \"%s\".", response.responseBody);
                                         throw e;
                                     }
 
@@ -844,6 +864,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                             invokeResourceListener();
                                         }
                                     }
+
+                                    if (responseJson.has("real_time_user_properties")) {
+                                        JSONObject realTimeUserPropertiesJson = responseJson.getJSONObject("real_time_user_properties");
+                                        saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
+                                    }
+
                                 } catch (JSONException e) {
                                     SwrveLogger.e("Could not parse JSON for campaigns and resources", e);
                                 }
@@ -1151,30 +1177,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return initialisedTime;
     }
 
-    protected void _setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
-        this.installButtonListener = installButtonListener;
-    }
-
-    protected SwrveInstallButtonListener _getInstallButtonListener() {
-        return installButtonListener;
-    }
-
-    protected void _setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
-        this.customButtonListener = customButtonListener;
-    }
-
-    protected SwrveCustomButtonListener _getCustomButtonListener() {
-        return customButtonListener;
-    }
-
-    protected void _setInAppDismissButtonListener(SwrveDismissButtonListener inAppDismissButtonListener) {
-        this.inAppDismissButtonListener = inAppDismissButtonListener;
-    }
-
-    protected SwrveDismissButtonListener _getInAppDismissButtonListener() {
-        return inAppDismissButtonListener;
-    }
-
     protected C _getConfig() {
         return config;
     }
@@ -1342,6 +1344,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         try {
             _getUserResourcesDiff(listener);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
+    public void getRealTimeUserProperties(final SwrveRealTimeUserPropertiesListener listener) {
+        if (!isSdkReady()) return;
+
+        try {
+            _getRealTimeUserProperties(listener);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1609,61 +1622,36 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    @Override
     public SwrveInstallButtonListener getInstallButtonListener() {
-        try {
-            return _getInstallButtonListener();
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
+        if (inAppConfig != null) {
+            return inAppConfig.getInstallButtonListener();
         }
         return null;
     }
 
-    @Override
-    public void setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
-        try {
-            _setInstallButtonListener(installButtonListener);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
     public SwrveCustomButtonListener getCustomButtonListener() {
-        try {
-            return _getCustomButtonListener();
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
+        if (inAppConfig != null) {
+            return inAppConfig.getCustomButtonListener();
         }
         return null;
     }
 
-    @Override
-    public void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
-        try {
-            _setCustomButtonListener(customButtonListener);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+    public SwrveClipboardButtonListener getClipboardButtonListener() {
+        SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
+        if (inAppConfig != null) {
+            return inAppConfig.getClipboardButtonListener();
         }
+        return null;
     }
 
-    @Override
     public SwrveDismissButtonListener getDismissButtonListener() {
-        try {
-            return _getInAppDismissButtonListener();
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
+        if (inAppConfig != null) {
+            return inAppConfig.getDismissButtonListener();
         }
         return null;
-    }
-
-    @Override
-    public void setDismissButtonListener(SwrveDismissButtonListener inAppButtonListener) {
-        try {
-            _setInAppDismissButtonListener(inAppButtonListener);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
     }
 
     @Override
@@ -1708,13 +1696,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
+        return showMessageCenterCampaign(campaign, null);
+    }
+
+    @Override
+    public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign, Map<String, String> properties) {
         if (!isSdkReady()) return false;
 
         if (campaign instanceof SwrveInAppCampaign) {
             SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign)campaign;
             if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
                 // Display first message in the in-app campaign
-                messageListener.onMessage(iamCampaign.getMessages().get(0));
+                messageListener.onMessage(iamCampaign.getMessages().get(0), properties);
                 return true;
             } else {
                 SwrveLogger.e("No in-app message or message listener.");

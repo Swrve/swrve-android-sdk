@@ -9,8 +9,7 @@ public class SwrveNotificationConfig {
     private int iconMaterialDrawableId;
     private NotificationChannel defaultNotificationChannel;
     private int largeIconDrawableId;
-    private Integer accentColorResourceId;
-    private SwrveNotificationCustomFilter notificationCustomFilter;
+    private String accentColorHex;
     private SwrveNotificationFilter notificationFilter;
 
     private SwrveNotificationConfig(Builder builder) {
@@ -19,10 +18,7 @@ public class SwrveNotificationConfig {
         this.iconMaterialDrawableId = builder.iconMaterialDrawableId;
         this.defaultNotificationChannel = builder.defaultNotificationChannel;
         this.largeIconDrawableId = builder.largeIconDrawableId;
-        if (builder.accentColorResourceId != 0) {
-            this.accentColorResourceId = builder.accentColorResourceId;
-        }
-        this.notificationCustomFilter = builder.notificationCustomFilter;
+        this.accentColorHex = builder.accentColorHex;
         this.notificationFilter = builder.notificationFilter;
     }
 
@@ -76,17 +72,8 @@ public class SwrveNotificationConfig {
      *
      * @return color id
      */
-    public Integer getAccentColorResourceId() {
-        return accentColorResourceId;
-    }
-
-    /**
-     * The notification filter used for modifying notifications before they are displayed.
-     *
-     * @return the notification custom filter
-     */
-    public SwrveNotificationCustomFilter getNotificationCustomFilter() {
-        return notificationCustomFilter;
+    public String getAccentColorHex() {
+        return accentColorHex;
     }
 
     /**
@@ -105,8 +92,7 @@ public class SwrveNotificationConfig {
         private int iconMaterialDrawableId;
         private NotificationChannel defaultNotificationChannel;
         private int largeIconDrawableId;
-        private int accentColorResourceId;
-        private SwrveNotificationCustomFilter notificationCustomFilter;
+        private String accentColorHex;
         private SwrveNotificationFilter notificationFilter;
 
         /**
@@ -147,24 +133,11 @@ public class SwrveNotificationConfig {
         /**
          * Set the default accent color to use in the notification
          *
-         * @param accentColorResourceId resource id for the color.
+         * @param accentColorHex hex color string value for the color.
          * @return this builder
          */
-        public Builder accentColorResourceId(int accentColorResourceId) {
-            this.accentColorResourceId = accentColorResourceId;
-            return this;
-        }
-
-        /**
-         * Set the notification filter used for modifying remote notifications before they are displayed.
-         * If filtering Geo Notifications, please use the SwrveGeoCustomFilter
-         *
-         * @param notificationCustomFilter the notification custom filter to apply
-         * @return this builder
-         */
-        @Deprecated
-        public Builder notificationCustomFilter(SwrveNotificationCustomFilter notificationCustomFilter) {
-            this.notificationCustomFilter = notificationCustomFilter;
+        public Builder accentColorHex(String accentColorHex) {
+            this.accentColorHex = accentColorHex;
             return this;
         }
 

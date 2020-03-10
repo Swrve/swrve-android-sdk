@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 public class ConversationStyle implements Serializable {
 
-    public static final String TYPE_OUTLINE = "outline";
+    private static final String TYPE_OUTLINE = "outline";
     public static final String TYPE_SOLID = "solid";
     public static final String DEFAULT_LB_COLOR = "#B3000000";
 

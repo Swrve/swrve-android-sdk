@@ -13,9 +13,9 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -280,7 +280,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                     final String tag = content.getTag();
                     view.setOnTouchListener(new View.OnTouchListener() {
                         @Override
-                        public boolean onTouch(View v, MotionEvent event) {
+                        public boolean onTouch(View view, MotionEvent motionEvent) {
                             // Due the fact that we render video in HTML, its very difficult to detect when a video has started/stopped  playing. For now all we can say is that the video was touched. Note that on click listeners behave strange with WebViews
                             stashVideoViewed(page.getTag(), tag, cloneView);
                             return false;

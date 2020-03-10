@@ -28,7 +28,7 @@ public class SampleApplication extends Application {
 
             NotificationChannel channel = null;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                channel = new NotificationChannel("123", "Devapp swrve default channel", NotificationManager.IMPORTANCE_DEFAULT);
+                channel = new NotificationChannel("123", "Swrve default channel", NotificationManager.IMPORTANCE_DEFAULT);
                 if (getSystemService(Context.NOTIFICATION_SERVICE) != null) {
                     NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                     notificationManager.createNotificationChannel(channel);
@@ -37,22 +37,19 @@ public class SampleApplication extends Application {
             SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo, R.drawable.swrve_s_transparent, channel)
                     .activityClass(MainActivity.class)
                     .largeIconDrawableId(R.drawable.swrve_s_solid)
-                    .accentColorResourceId(R.color.dark_blue);
+                    .accentColorHex("#3949AB"); // Darkblue
             config.setNotificationConfig(notificationConfig.build());
 
             // React to the push notification when the user clicks on it
-            config.setNotificationListener(new SwrvePushNotificationListener() {
-                @Override
-                public void onPushNotification(JSONObject payload) {
-                    try {
-                        if (payload.has("custom_key")) {
-                            String customValue = payload.getString("custom_key");
-                            // Do something awesome with custom value!
-                            Log.d(LOG_TAG, "Received push payload " + customValue);
-                        }
-                    } catch(JSONException exp) {
-                        exp.printStackTrace();
+            config.setNotificationListener(payload -> {
+                try {
+                    if (payload.has("custom_key")) {
+                        String customValue = payload.getString("custom_key");
+                        // Do something awesome with custom value!
+                        Log.d(LOG_TAG, "Received push payload " + customValue);
                     }
+                } catch(JSONException exp) {
+                    exp.printStackTrace();
                 }
             });
 

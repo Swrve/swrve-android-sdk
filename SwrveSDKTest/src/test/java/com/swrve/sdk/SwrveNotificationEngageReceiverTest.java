@@ -67,8 +67,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         bundle.putString("customkey2", "customvalue2");
         bundle.putString("customkey3", "customvalue3");
 
-        SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
-        JSONObject payload = receiver.convertPayloadToJSONObject(bundle);
+        JSONObject payload = SwrveHelper.convertPayloadToJSONObject(bundle);
 
         assertTrue(payload.has(SwrveNotificationConstants.SWRVE_TRACKING_KEY));
         assertEquals("123", payload.getString(SwrveNotificationConstants.SWRVE_TRACKING_KEY));
@@ -114,8 +113,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
                 "}";
         bundle.putString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, twoDeepJson);
 
-        SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
-        JSONObject payload = receiver.convertPayloadToJSONObject(bundle);
+        JSONObject payload = SwrveHelper.convertPayloadToJSONObject(bundle);
 
         assertTrue(payload.has(SwrveNotificationConstants.SWRVE_TRACKING_KEY));
         assertEquals("123", payload.getString(SwrveNotificationConstants.SWRVE_TRACKING_KEY));

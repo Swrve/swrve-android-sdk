@@ -11,6 +11,8 @@ import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.test.MainActivity;
 
@@ -246,7 +248,17 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
 
         final boolean[] messageListenerCalled = {false};
-        swrveSpy.setMessageListener(message -> messageListenerCalled[0] = true);
+        swrveSpy.setMessageListener(new SwrveMessageListener() {
+            @Override
+            public void onMessage(SwrveMessage message) {
+                onMessage(message, null);
+            }
+
+            @Override
+            public void onMessage(SwrveMessage message, Map<String, String> properties) {
+                messageListenerCalled[0] = true;
+            }
+        });
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);

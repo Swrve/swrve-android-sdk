@@ -1,11 +1,13 @@
-package android.support.v4.app;
+package androidx.core.app;
 
 import com.swrve.sdk.SwrveLogger;
 
+/**
+ * Known bug in android causing a SecurityException so wrap dequeueWork method in a try catch
+ * https://github.com/Swrve/swrve-android-sdk/issues/282
+ */
 public abstract class SwrveJobIntentService extends JobIntentService {
 
-    // Known bug in android causing a SecurityException so wrap this method in a try catch
-    // https://github.com/Swrve/swrve-android-sdk/issues/282
     @Override
     GenericWorkItem dequeueWork() {
         try {

@@ -207,8 +207,8 @@ public final class SwrveHelper {
     }
 
     public static boolean sdkAvailable(List<String> modelBlackList) {
-        // Returns true if current SDK is higher or equal than 4.X (API 14)
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+        // Returns true if current SDK is higher or equal than 4.X (API 16)
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             // Ignore the Calypso
             if (modelBlackList == null || !modelBlackList.contains(buildModel)) {
                 return true;
@@ -216,7 +216,7 @@ public final class SwrveHelper {
                 SwrveLogger.i("Current device is part of the model blacklist");
             }
         } else {
-            SwrveLogger.i("SDK not initialised as it is under API 14");
+            SwrveLogger.i("SDK not initialised as it is under API 16");
         }
         return false;
     }
@@ -302,5 +302,35 @@ public final class SwrveHelper {
             appInstallTime = appInstallTimeFormat.format(new Date(appInstallTimeMillis));
         }
         return appInstallTime;
+    }
+
+    // Convert Bundle root keys to JSONObject and promote the _s.JsonPayload ones to root level
+    public static JSONObject convertPayloadToJSONObject(Bundle bundle) {
+
+        JSONObject payload = new JSONObject();
+
+        // the "_s.JsonPayload" is only included if the payload has json more than one level deep. So
+        // promote its contents to root level if its there. (Not ideal)
+        if (bundle.containsKey(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {
+            try {
+                payload = new JSONObject(bundle.getString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY));
+            } catch (Exception ex) {
+                SwrveLogger.e("SwrveNotificationEngageReceiver. Could not parse deep Json", ex);
+            }
+        }
+
+        // One level deep payload is mixed with swrve keys so include all keys. (Again, not ideal).
+        // Exclude the "_s.JsonPayload" key as already added from above.
+        for (String key : bundle.keySet()) {
+            if (!key.equals(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {
+                try {
+                    payload.put(key, bundle.get(key));
+                } catch (Exception e) {
+                    SwrveLogger.e("SwrveNotificationEngageReceiver. Could not add key to payload %s", key, e);
+                }
+            }
+        }
+
+        return payload;
     }
 }

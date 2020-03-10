@@ -20,11 +20,14 @@ android {
         abortOnError true
         baseline file("../lint/lint-baseline-swrveconversationsdk.xml")
     }
+
+    // This lib cannot use 1.8 as it is used by Unity and it would force
+    // the app to create a custom .gradle file
 }
 
 dependencies {
     api project(':SwrveSDKCommon')
-    implementation 'com.android.support:support-v4:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    implementation 'androidx.legacy:legacy-support-v4:' + project.ANDROIDX_LEGACY_SUPPORT_V4_VERSION
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
 }
 

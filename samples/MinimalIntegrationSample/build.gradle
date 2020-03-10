@@ -20,11 +20,15 @@ android {
     lintOptions {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
-    api 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    api 'com.swrve.sdk.android:swrve-firebase:6.3.1'
+    api 'com.google.android.material:material:' + project.ANDROIDX_MATERIAL_VERSION
+    api 'com.swrve.sdk.android:swrve-firebase:7.0.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

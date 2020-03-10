@@ -138,39 +138,9 @@ public class SwrveNotificationEngageReceiver extends BroadcastReceiver {
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
         SwrvePushNotificationListener listener = swrveCommon.getNotificationListener();
         if (listener != null) {
-            JSONObject payload = convertPayloadToJSONObject(msg);
+            JSONObject payload = SwrveHelper.convertPayloadToJSONObject(msg);
             listener.onPushNotification(payload);
         }
-    }
-
-    // Convert Bundle root keys to JSONObject and promote the _s.JsonPayload ones to root level
-    protected JSONObject convertPayloadToJSONObject(Bundle bundle) {
-
-        JSONObject payload = new JSONObject();
-
-        // the "_s.JsonPayload" is only included if the payload has json more than one level deep. So
-        // promote its contents to root level if its there. (Not ideal)
-        if (bundle.containsKey(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {
-            try {
-                payload = new JSONObject(bundle.getString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY));
-            } catch (Exception ex) {
-                SwrveLogger.e("SwrveNotificationEngageReceiver. Could not parse deep Json", ex);
-            }
-        }
-
-        // One level deep payload is mixed with swrve keys so include all keys. (Again, not ideal).
-        // Exclude the "_s.JsonPayload" key as already added from above.
-        for (String key : bundle.keySet()) {
-            if (!key.equals(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {
-                try {
-                    payload.put(key, bundle.get(key));
-                } catch (Exception e) {
-                    SwrveLogger.e("SwrveNotificationEngageReceiver. Could not add key to payload %s", key, e);
-                }
-            }
-        }
-
-        return payload;
     }
 
     protected void closeNotification(int notificationID) {

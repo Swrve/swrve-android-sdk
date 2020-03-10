@@ -8,9 +8,6 @@ import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveDismissButtonListener;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -37,9 +34,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     protected String apiKey;
 
     private C config;
-    private SwrveCustomButtonListener customButtonListener;
-    private SwrveInstallButtonListener installButtonListener;
-    private SwrveDismissButtonListener inAppDismissButtonListener;
     private String language;
     private File cacheDir;
 
@@ -122,16 +116,23 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public void getUserResources(SwrveUserResourcesListener listener) {
         if (listener != null) {
-            listener.onUserResourcesSuccess(new HashMap<String, Map<String, String>>(), null);
+            listener.onUserResourcesSuccess(new HashMap<>(), null);
         }
     }
 
     @Override
     public void getUserResourcesDiff(SwrveUserResourcesDiffListener listener) {
         if (listener != null) {
-            listener.onUserResourcesDiffSuccess(new HashMap<String, Map<String, String>>(), new HashMap<String, Map<String, String>>(), null);
+            listener.onUserResourcesDiffSuccess(new HashMap<>(), new HashMap<>(), null);
         }
     }
+
+    @Override
+    public void getRealTimeUserProperties(SwrveRealTimeUserPropertiesListener listener){
+       if (listener != null) {
+           listener.onRealTimeUserPropertiesSuccess(new HashMap<>(), null);
+       }
+    };
 
     @Override
     public void sendQueuedEvents() {
@@ -278,37 +279,12 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign, Map<String, String> properties) {
+        return false;
+    }
+
+    @Override
     public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
-    }
-
-    @Override
-    public SwrveCustomButtonListener getCustomButtonListener() {
-        return this.customButtonListener;
-    }
-
-    @Override
-    public void setCustomButtonListener(SwrveCustomButtonListener customButtonListener) {
-        this.customButtonListener = customButtonListener;
-    }
-
-    @Override
-    public SwrveDismissButtonListener getDismissButtonListener() {
-        return this.inAppDismissButtonListener;
-    }
-
-    @Override
-    public void setDismissButtonListener(SwrveDismissButtonListener inAppDismissButtonListener) {
-        this.inAppDismissButtonListener = inAppDismissButtonListener;
-    }
-
-    @Override
-    public SwrveInstallButtonListener getInstallButtonListener() {
-        return installButtonListener;
-    }
-
-    @Override
-    public void setInstallButtonListener(SwrveInstallButtonListener installButtonListener) {
-        this.installButtonListener = installButtonListener;
     }
 
     @Override

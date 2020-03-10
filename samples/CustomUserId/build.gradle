@@ -26,11 +26,15 @@ android {
     lintOptions {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
-    api 'com.android.support:appcompat-v7:' + project.ANDROID_DESIGN_TOOLS_VERSION
-    api 'com.android.support:design:' + project.ANDROID_DESIGN_TOOLS_VERSION
+    api 'com.google.android.material:material:' + project.ANDROIDX_MATERIAL_VERSION
+    api 'androidx.appcompat:appcompat:' + project.ANDROIDX_APPCOMPAT_VERSION
 
     // In your app please include the SDK using the following dependency
 //  api 'com.swrve.sdk.android:swrve:X.X.X' // No Google Services push (where X.X.X is the version)

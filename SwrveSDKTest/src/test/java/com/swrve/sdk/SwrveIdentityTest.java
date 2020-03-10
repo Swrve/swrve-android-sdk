@@ -9,7 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.localstorage.LocalStorage;

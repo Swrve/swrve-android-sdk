@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import android.os.Bundle;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

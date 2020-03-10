@@ -115,12 +115,9 @@ public class ConversationActivityTest extends SwrveBaseTest {
         assertNotNull(activity);
 
         final AtomicInteger countCalls = new AtomicInteger();
-        Mockito.doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                countCalls.incrementAndGet();
-                return null;
-            }
+        Mockito.doAnswer((Answer<Void>) invocation -> {
+            countCalls.incrementAndGet();
+            return null;
         }).when(swrveSpy).sendQueuedEvents();
 
         activityController.resume().pause();

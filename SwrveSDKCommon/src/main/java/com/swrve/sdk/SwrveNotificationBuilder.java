@@ -13,21 +13,28 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
+import android.os.FileUtils;
+import android.view.Display;
+import android.view.WindowManager;
+
+import androidx.core.app.NotificationCompat;
 
 import com.swrve.sdk.notifications.model.SwrveNotification;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import com.swrve.sdk.notifications.model.SwrveNotificationChannel;
 import com.swrve.sdk.notifications.model.SwrveNotificationExpanded;
 import com.swrve.sdk.notifications.model.SwrveNotificationMedia;
+import com.swrve.sdk.rest.SwrveFilterInputStream;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -35,6 +42,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.zip.GZIPInputStream;
 
 import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
 
@@ -45,8 +53,9 @@ public class SwrveNotificationBuilder {
     private int iconMaterialDrawableId;
     private NotificationChannel defaultNotificationChannel;
     private int largeIconDrawableId;
-    private Integer accentColorObject;
+    private String accentColorHex;
     private String notificationTitle;
+    private final int minSampleSize = 1;
 
     private boolean usingFallbackDeeplink = false;
     private SwrveNotification swrveNotification;
@@ -58,13 +67,16 @@ public class SwrveNotificationBuilder {
     protected int requestCode;
     private SwrveNotificationDetails notificationDetails = new SwrveNotificationDetails();
 
+    private static int deviceWidth = 0;
+    private static int deviceHeight = 0;
+
     public SwrveNotificationBuilder(Context context, SwrveNotificationConfig config) {
         this.context = context;
         this.iconDrawableId = config.getIconDrawableId();
         this.iconMaterialDrawableId = config.getIconMaterialDrawableId();
         this.defaultNotificationChannel = config.getDefaultNotificationChannel();
         this.largeIconDrawableId = config.getLargeIconDrawableId();
-        this.accentColorObject = config.getAccentColorResourceId();
+        this.accentColorHex = config.getAccentColorHex();
         this.notificationId = new Random().nextInt();
         this.requestCode = new Random().nextInt();
     }
@@ -81,6 +93,19 @@ public class SwrveNotificationBuilder {
         this.swrveNotification = swrveNotification;
         this.campaignType = campaignType;
         this.eventPayload = eventPayload;
+
+        if (deviceWidth == 0 && deviceHeight == 0) {
+            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            Point sizePoint = new Point();
+            display.getSize(sizePoint);
+            deviceWidth = sizePoint.x;
+            deviceHeight = sizePoint.y;
+            if (deviceWidth > deviceHeight) {
+                int tmp = this.deviceWidth;
+                deviceWidth = deviceHeight;
+                deviceHeight = tmp;
+            }
+        }
 
         boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
@@ -209,20 +234,15 @@ public class SwrveNotificationBuilder {
     }
 
     private void applyAccentColor(NotificationCompat.Builder builder) {
-        if (accentColorObject == null) {
+        if (SwrveHelper.isNullOrEmpty(accentColorHex)) {
             return;
         }
-
-        int color = 0;
-        if (accentColorObject != 0) {
-            try {
-                color =  ContextCompat.getColor(context, accentColorObject);
-            } catch (Exception e) {
-                SwrveLogger.e("Exception getting accent color for notification.");
-                color = accentColorObject; // fallback in case actual argb color was passed instead of resource Id
-            }
+        try {
+            int color = Color.parseColor(accentColorHex);
+            builder.setColor(color); // if is an invalid HexColor, we do not set it.
+        } catch (Exception e) {
+            SwrveLogger.e("Exception getting accent color for notification.");
         }
-        builder.setColor(color);
     }
 
     private NotificationCompat.Builder getNotificationBuilderFromSwrvePayload(NotificationCompat.Builder builder) {
@@ -564,11 +584,18 @@ public class SwrveNotificationBuilder {
             if (url != null) {
                 HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
                 httpConnection.setDoInput(true);
+                httpConnection.setConnectTimeout(SwrveCommon.getInstance().getHttpTimeout());
+                httpConnection.setRequestProperty("Accept-Encoding", "gzip");
                 httpConnection.connect();
-                httpConnection.setConnectTimeout(10000); //set timeout to 10 seconds
 
-                inputStream = httpConnection.getInputStream();
-                bitmap = BitmapFactory.decodeStream(inputStream);
+                inputStream = new SwrveFilterInputStream(httpConnection.getInputStream());
+
+                // Support gzip if possible
+                String encoding = httpConnection.getContentEncoding();
+                if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
+                    inputStream = new GZIPInputStream(inputStream);
+                }
+                bitmap = SwrveImageScaler.decodeSampledBitmapFromStream(inputStream, deviceWidth, deviceHeight, minSampleSize, mediaUrl, context.getCacheDir());
             }
         } catch (Exception e) {
             SwrveLogger.e("Exception downloading notification image:%s", e, mediaUrl);

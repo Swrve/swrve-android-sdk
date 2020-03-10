@@ -33,7 +33,6 @@ public class ControlActionsDeserialiser implements JsonDeserializer<ControlActio
 
                     String urlStr = "http://www.google.ie";
                     String refer = "http://swrve.com";
-                    String ext = "true";
 
                     if (jsonObject.has(ControlActions.VISIT_URL_URI_KEY)) {
                         urlStr = jsonObject.get(ControlActions.VISIT_URL_URI_KEY).getAsString().replaceAll("\\s", "");

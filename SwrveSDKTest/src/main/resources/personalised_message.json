@@ -1,0 +1,197 @@
+{
+  "template": {
+    "template_id": "20",
+    "formats": [
+      {
+        "orientation": "landscape",
+        "size": {
+          "w": {
+            "type": "number",
+            "value": 320
+          },
+          "h": {
+            "type": "number",
+            "value": 240
+          }
+        },
+        "images": [
+          {
+            "name": "Background",
+            "color": {
+              "type": "color",
+              "value": "FFFFFF"
+            },
+            "image": {
+              "type": "asset",
+              "value": "1111111111111111111111111"
+            },
+            "x": {
+              "type": "number",
+              "value": 0
+            },
+            "y": {
+              "type": "number",
+              "value": 0
+            },
+            "w": {
+              "type": "number",
+              "value": 900
+            },
+            "h": {
+              "type": "number",
+              "value": 600
+            }
+          },
+          {
+            "name": "Background",
+            "color": {
+              "type": "color",
+              "value": "FFFFFF"
+            },
+            "image": {
+              "type": "asset",
+              "value": "1111111111111111111111111"
+            },
+            "x": {
+              "type": "number",
+              "value": 0
+            },
+            "y": {
+              "type": "number",
+              "value": 0
+            },
+            "w": {
+              "type": "number",
+              "value": 900
+            },
+            "h": {
+              "type": "number",
+              "value": 600
+            },
+            "text": {
+              "type": "text",
+              "value": "Image ${test_image_text}"
+            }
+          }
+        ],
+        "buttons": [
+          {
+            "name": "accept",
+            "x": {
+              "type": "number",
+              "value": -200
+            },
+            "y": {
+              "type": "number",
+              "value": 80
+            },
+            "w": {
+              "type": "number",
+              "value": 229
+            },
+            "h": {
+              "type": "number",
+              "value": 114
+            },
+            "image_up": {
+              "type": "asset",
+              "value": "1111111111111111111111111"
+            },
+            "text": {
+              "type": "text",
+              "value": "Button ${test_image_text}"
+            },
+            "action": {
+              "type": "text",
+              "value": "${test_button_action}"
+            },
+            "game_id": {
+              "type": "number",
+              "value": "150"
+            },
+            "type": {
+              "type": "text",
+              "value": "CUSTOM"
+            }
+          },
+          {
+            "name": "text",
+            "x": {
+              "type": "number",
+              "value": 0
+            },
+            "y": {
+              "type": "number",
+              "value": 80
+            },
+            "w": {
+              "type": "number",
+              "value": 229
+            },
+            "h": {
+              "type": "number",
+              "value": 114
+            },
+            "image_up": {
+              "type": "asset",
+              "value": "1111111111111111111111111"
+            },
+            "action": {
+              "type": "text",
+              "value": "${test_copy_to_clipboard}"
+            },
+            "game_id": {
+              "type": "number",
+              "value": ""
+            },
+            "type": {
+              "type": "text",
+              "value": "COPY_TO_CLIPBOARD"
+            }
+          },
+          {
+            "name": "custom",
+            "x": {
+              "type": "number",
+              "value": 0
+            },
+            "y": {
+              "type": "number",
+              "value": 80
+            },
+            "w": {
+              "type": "number",
+              "value": 229
+            },
+            "h": {
+              "type": "number",
+              "value": 114
+            },
+            "image_up": {
+              "type": "asset",
+              "value": "1111111111111111111111111"
+            },
+            "action": {
+              "type": "text",
+              "value": "http://www.google.com?a=${test_deeplink|fallback=\"hello_other\"}"
+            },
+            "game_id": {
+              "type": "number",
+              "value": ""
+            },
+            "type": {
+              "type": "text",
+              "value": "CUSTOM"
+            }
+          }
+        ],
+        "name": "Kindle (English (US))",
+        "language": "en-US"
+      }
+    ]
+  },
+  "id": 165,
+  "name": "Kindle",
+  "rules": {
+  }
+}

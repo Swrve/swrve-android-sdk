@@ -4,8 +4,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,23 +42,17 @@ public class MessageCenterFragment extends Fragment {
         messageCenterList = v.findViewById(R.id.message_center_list);
         messageCenterList.setAdapter(messageCenterAdapter);
         // Display the campaign when an item is clicked
-        messageCenterList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                SwrveSDK.getInstance().showMessageCenterCampaign(messageCenterCampaigns.get(i));
-                // Notify the adapter
-                updateList();
-            }
+        messageCenterList.setOnItemClickListener((adapterView, view, i, l) -> {
+            SwrveSDK.getInstance().showMessageCenterCampaign(messageCenterCampaigns.get(i));
+            // Notify the adapter
+            updateList();
         });
 
         // Subscribe to the user resources and campaigns lister.
         // It will be triggered when new campaigns have been downloaded.
-        SwrveSDK.getInstance().setResourcesListener(new SwrveResourcesListener() {
-            @Override
-            public void onResourcesUpdated() {
-                // Notify the adapter
-                updateList();
-            }
+        SwrveSDK.getInstance().setResourcesListener(() -> {
+            // Notify the adapter
+            updateList();
         });
 
         return v;
@@ -130,31 +124,26 @@ public class MessageCenterFragment extends Fragment {
             }
 
             // Delete button
-            deleteButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    new AlertDialog.Builder(getContext())
-                            .setTitle("Delete")
-                            .setMessage("Are you sure you want to delete this message from your inbox?")
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // This user won't see this campaign again
-                                    SwrveSDK.getInstance().removeMessageCenterCampaign(item);
-                                    // Notify the adapter
-                                    updateList();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            deleteButton.setOnClickListener(v -> new AlertDialog.Builder(getContext())
+                    .setTitle("Delete")
+                    .setMessage("Are you sure you want to delete this message from your inbox?")
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // This user won't see this campaign again
+                            SwrveSDK.getInstance().removeMessageCenterCampaign(item);
+                            // Notify the adapter
+                            updateList();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
 
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Nothing
-                                }
-                            })
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .show();
-                }
-            });
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Nothing
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show());
 
             return rowView;
         }
