@@ -58,6 +58,7 @@ public class SwrveInstallReferrerReceiverTest extends SwrveBaseTest {
         swrveSpy.initialised = false;
         swrveSpy.onCreate(mActivity);
         ArgumentCaptor<Map> attributesCaptor = ArgumentCaptor.forClass(Map.class);
+        waitUntilInitHasFinishedInBackground();
         Mockito.verify(swrveSpy, Mockito.atLeastOnce()).userUpdate(attributesCaptor.capture());
 
         Mockito.reset(swrveSpy);
@@ -65,5 +66,11 @@ public class SwrveInstallReferrerReceiverTest extends SwrveBaseTest {
         swrveSpy.initialised = false;
         swrveSpy.onCreate(mActivity); // calling init again should NOT increment counter
         Mockito.verify(swrveSpy, Mockito.never()).userUpdate(Mockito.anyMap());
+    }
+
+    private void waitUntilInitHasFinishedInBackground() throws InterruptedException {
+        do {
+            Thread.sleep(100);
+        } while (!swrveSpy.initialised);
     }
 }

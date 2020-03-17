@@ -94,18 +94,28 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    protected T onCreate(final Activity activity) throws IllegalArgumentException {
+    protected void onCreate(final Activity activity) throws IllegalArgumentException {
         if (destroyed) {
             destroyed = initialised = false;
             bindCounter.set(0);
         }
         if (!initialised) {
             // First time it is initialized
-            return init(activity);
+            initInBackground(activity);
+            return;
         }
 
         bindToContext(activity);
-        return (T) this;
+    }
+
+    private void initInBackground(Activity activity) {
+        Thread backgroundThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                init(activity);
+            }
+        });
+        backgroundThread.start();
     }
 
     protected synchronized T init(final Activity activity) throws IllegalArgumentException {
