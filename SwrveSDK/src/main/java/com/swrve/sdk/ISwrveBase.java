@@ -86,11 +86,17 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation);
 
+    List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties);
+
+    List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties);
+
     boolean showMessageCenterCampaign(SwrveBaseCampaign campaign);
 
     boolean showMessageCenterCampaign(SwrveBaseCampaign campaign, Map<String, String> properties);
 
     void removeMessageCenterCampaign(SwrveBaseCampaign campaign);
+
+    void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign);
 
     void handleDeferredDeeplink(Bundle bundle);
 

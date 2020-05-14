@@ -69,6 +69,10 @@ dependencies {
 
     testImplementation 'com.squareup.okhttp3:mockwebserver:3.9.0'
     testImplementation 'org.awaitility:awaitility:3.0.0'
+
+    // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
+    // version is used instead.
+    api fileTree(dir: "../SwrveSDK/providedLibs", include: ['amazon-device-messaging*.jar'])
 }
 
 apply plugin: 'com.google.gms.google-services'

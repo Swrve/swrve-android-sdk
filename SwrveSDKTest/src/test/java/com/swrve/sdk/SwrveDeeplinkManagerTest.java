@@ -5,15 +5,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,7 +25,6 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ import static com.swrve.sdk.SwrveDeeplinkManager.SWRVE_AD_MESSAGE;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -88,6 +90,10 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message.json");
                     httpCode = 200;
                 }
+                else if (params.containsValue("295413")) {
+                    response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message_personalised.json");
+                    httpCode = 200;
+                }
                 else if (params.containsValue("12345")) {
                     httpCode = 500;
                 }
@@ -115,7 +121,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testIsSwrveDeeplink() throws Exception {
+    public void testIsSwrveDeeplink() {
 
         Bundle bundle = new Bundle();
         String targetUrlKey =  "target_url";
@@ -252,7 +258,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
         assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295411"));
 
-        // 2. Test Conversation was shown
+        // 2. Test In-app message was shown
 
         await().until(campaignShown());
 
@@ -284,7 +290,95 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testHandleDeeplink_ConversationShownOncePerAppLoad() throws Exception {
+    public void testHandleDeeplink_MessagePersonalised() throws Exception {
+
+        // Set the personalisation provider and the value that is required for the campaign
+        SwrveInAppMessageConfig inAppConfig = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+            Map<String, String> properties = new HashMap<>();
+            properties.put("test_value", "FILLED IN");
+            return properties;
+        }).build();
+        swrveSpy.config.setInAppMessageConfig(inAppConfig);
+
+        Bundle bundle = new Bundle();
+        bundle.putString("target_url","swrve://app?ad_content=295413&ad_source=facebook&ad_campaign=BlackFriday");
+
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+
+        //*** 1. Generic Event is queued
+
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jObj = new JSONObject(jsonString);
+
+        assertTrue(jObj.has("time"));
+        assertTrue(jObj.has("seqnum"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
+        assertTrue(jObj.get("id").equals("-1"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295413"));
+
+        // 2. Test In-app message was shown
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+        await().until(campaignShown());
+
+        ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
+        Intent nextIntent = shadowMainActivity.peekNextStartedActivity();
+        assertNotNull(nextIntent);
+        assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, SwrveInAppMessageActivity.class));
+        Bundle extras = nextIntent.getExtras();
+        assertNotNull(extras);
+
+        boolean state = extras.getBoolean(SWRVE_AD_MESSAGE);
+        assertTrue(state);
+
+        SwrveMessage message = swrveSpy.getAdMesage();
+
+        assertEquals(message.getId(), 298085);
+        assertThat(message.getName(), equalTo("Double format"));
+    }
+
+    @Test
+    public void testHandleDeeplink_MessagePersonalisedNotResolved() throws Exception {
+
+        Bundle bundle = new Bundle();
+        bundle.putString("target_url","swrve://app?ad_content=295413&ad_source=facebook&ad_campaign=BlackFriday");
+
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+
+        //*** 1. Generic Event is queued
+
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jObj = new JSONObject(jsonString);
+
+        assertTrue(jObj.has("time"));
+        assertTrue(jObj.has("seqnum"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
+        assertTrue(jObj.get("id").equals("-1"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295413"));
+
+        // 2. Test In-app message was not shown as the personalisation provider is not set
+        assertFalse(campaignShown().call());
+    }
+
+    @Test
+    public void testHandleDeeplink_ConversationShownOncePerAppLoad() {
 
         Bundle bundle = new Bundle();
         bundle.putString("target_url","swrve://app?ad_content=295412&ad_source=facebook&ad_campaign=BlackFriday");
@@ -297,7 +391,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testHandleDeeplink_MessagehownOncePerAppLoad() throws Exception {
+    public void testHandleDeeplink_MessagehownOncePerAppLoad() {
 
         Bundle bundle = new Bundle();
         bundle.putString("target_url","swrve://app?ad_content=295411&ad_source=facebook&ad_campaign=BlackFriday");
@@ -310,7 +404,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testLoadFromCache() throws Exception {
+    public void testLoadFromCache() {
 
         String campaignData = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message.json");
         swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveOfflineCampaign(swrveSpy.getUserId(), "12345", campaignData);
@@ -369,12 +463,10 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     private Callable<Boolean> campaignShown() {
-        return new Callable<Boolean>() {
-            public Boolean call() {
-                ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
-                Intent nextIntent = shadowMainActivity.peekNextStartedActivity();
-                return (nextIntent != null);
-            }
+        return () -> {
+            ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
+            Intent nextIntent = shadowMainActivity.peekNextStartedActivity();
+            return (nextIntent != null);
         };
     }
 }

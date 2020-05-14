@@ -30,7 +30,7 @@ import java.util.Map;
 public class SwrveInAppMessageActivity extends Activity {
 
     public static final String MESSAGE_ID_KEY = "message_id";
-    public static final String SWRVE_PERSONALISATION_KEY = "message_personalisation";
+    public static final String SWRVE_PERSONALISATION_KEY = "message_personalization";
     private static final String SWRVE_AD_MESSAGE = "ad_message_key";
 
 

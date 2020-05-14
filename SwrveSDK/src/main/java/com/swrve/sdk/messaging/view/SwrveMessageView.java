@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
@@ -107,9 +106,9 @@ public class SwrveMessageView extends RelativeLayout {
                         imageView.setImageBitmap(backgroundImage.getBitmap());
                     } else {
                         // Need to render dynamic text
-                        String personalisedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalisation);
+                        String personalizedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalisation);
                         // Add a default dismiss action although it won't be clickable as we set no setOnClickListener
-                        imageView = new SwrvePersonalisedTextView(context, SwrveActionType.Dismiss, inAppConfig, personalisedText,
+                        imageView = new SwrvePersonalizedTextView(context, SwrveActionType.Dismiss, inAppConfig, personalizedText,
                                 backgroundImage.getWidth(), backgroundImage.getHeight(), null);
                     }
                     // Position
@@ -140,23 +139,22 @@ public class SwrveMessageView extends RelativeLayout {
                 final SwrveImageScaler.BitmapResult backgroundImage = SwrveImageScaler.decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
 
                 if (backgroundImage != null && backgroundImage.getBitmap() != null) {
-
                     // Resolve templating in the button action
-                    String personalisedButtonAction = button.getAction();
-                    if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(personalisedButtonAction)) {
-                        personalisedButtonAction = SwrveTextTemplating.apply(personalisedButtonAction, this.inAppPersonalisation);
+                    String personalizedButtonAction = button.getAction();
+                    if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(personalizedButtonAction)) {
+                        personalizedButtonAction = SwrveTextTemplating.apply(personalizedButtonAction, this.inAppPersonalisation);
                     }
 
                     String buttonText = button.getText();
                     SwrveBaseInteractableView _buttonView;
                     if (SwrveHelper.isNullOrEmpty(buttonText)) {
-                        _buttonView = new SwrveButtonView(context, button.getActionType(), inAppConfig.getFocusColor(), inAppConfig.getClickColor(), personalisedButtonAction);
+                        _buttonView = new SwrveButtonView(context, button.getActionType(), inAppConfig.getFocusColor(), inAppConfig.getClickColor(), personalizedButtonAction);
                         _buttonView.setImageBitmap(backgroundImage.getBitmap());
                     } else {
                         // Need to render dynamic text
-                        String personalisedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalisation);
-                        _buttonView = new SwrvePersonalisedTextView(context, button.getActionType(), inAppConfig, personalisedText,
-                                backgroundImage.getWidth(), backgroundImage.getHeight(), personalisedButtonAction);
+                        String personalizedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalisation);
+                        _buttonView = new SwrvePersonalizedTextView(context, button.getActionType(), inAppConfig, personalizedText,
+                                backgroundImage.getWidth(), backgroundImage.getHeight(), personalizedButtonAction);
                         _buttonView.setFocusable(true);
                     }
 

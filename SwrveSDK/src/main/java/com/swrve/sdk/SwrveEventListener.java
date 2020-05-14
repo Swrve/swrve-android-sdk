@@ -16,12 +16,12 @@ import java.util.Map;
  */
 public class SwrveEventListener implements ISwrveEventListener {
 
-    private WeakReference<SwrveBase<?, ?>> talk;
-    private SwrveMessageListener messageListener;
-    private SwrveConversationListener conversationListener;
+    private final WeakReference<SwrveBase<?, ?>> sdk;
+    private final SwrveMessageListener messageListener;
+    private final SwrveConversationListener conversationListener;
 
-    public SwrveEventListener(SwrveBase<?, ?> talk, SwrveMessageListener messageListener, SwrveConversationListener conversationListener) {
-        this.talk = new WeakReference<SwrveBase<?, ?>>(talk);
+    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveMessageListener messageListener, SwrveConversationListener conversationListener) {
+        this.sdk = new WeakReference<>(sdk);
         this.messageListener = messageListener;
         this.conversationListener = conversationListener;
     }
@@ -29,9 +29,9 @@ public class SwrveEventListener implements ISwrveEventListener {
     @Override
     public void onEvent(String eventName, Map<String, String> payload) {
         if (conversationListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
-            SwrveBase<?, ?> talkRef = talk.get();
-            if (talkRef != null) {
-                SwrveConversation conversation = talkRef.getConversationForEvent(eventName, payload);
+            SwrveBase<?, ?> sdkRef = sdk.get();
+            if (sdkRef != null) {
+                SwrveConversation conversation = sdkRef.getConversationForEvent(eventName, payload);
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
                     return;
@@ -40,16 +40,20 @@ public class SwrveEventListener implements ISwrveEventListener {
         }
 
         if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
-            SwrveBase<?, ?> talkRef = talk.get();
-            if (talkRef != null) {
+            SwrveBase<?, ?> sdkRef = sdk.get();
+            if (sdkRef != null) {
                 SwrveOrientation deviceOrientation = SwrveOrientation.Both;
-                Context ctx = talkRef.getContext();
+                Context ctx = sdkRef.getContext();
                 if (ctx != null) {
                     deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
                 }
-                SwrveMessage message = talkRef.getMessageForEvent(eventName, payload, deviceOrientation);
+                SwrveMessage message = sdkRef.getMessageForEvent(eventName, payload, deviceOrientation);
                 if (message != null) {
+                    // Save the last used payload to use inside the default message listener
+                    sdkRef.lastEventPayloadUsed = payload;
                     messageListener.onMessage(message);
+                    // Remove ref
+                    sdkRef.lastEventPayloadUsed = null;
                 }
             }
         }

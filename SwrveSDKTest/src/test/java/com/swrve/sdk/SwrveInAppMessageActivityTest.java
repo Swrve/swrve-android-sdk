@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.google.common.collect.Maps;
+import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
@@ -23,7 +25,7 @@ import com.swrve.sdk.messaging.view.SwrveBaseInteractableView;
 import com.swrve.sdk.messaging.view.SwrveButtonView;
 import com.swrve.sdk.messaging.view.SwrveImageView;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
-import com.swrve.sdk.messaging.view.SwrvePersonalisedTextView;
+import com.swrve.sdk.messaging.view.SwrvePersonalizedTextView;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,10 +54,16 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     private String testDismissButtonName;
     private boolean testDismissButtonBackButton;
 
+    private SwrveConfig config;
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        config = new SwrveConfig();
+    }
+
+    private void initSDK() throws Exception {
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -66,6 +74,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testBuildLayoutCreation() throws Exception {
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         SwrveMessage message = swrveSpy.getMessageForEvent("Swrve.currency_given", new HashMap<String, String>(), SwrveOrientation.Both);
         assertNotNull(message);
@@ -81,8 +90,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testBuildLayoutCreationWithPersonalisation() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalisation.json", "1111111111111111111111111");
-        SwrveMessage message = swrveSpy.getMessageForEvent("show.personalised", new HashMap<>(), SwrveOrientation.Both);
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
+        SwrveMessage message = swrveSpy.getMessageForEvent("show.personalized", new HashMap<>(), SwrveOrientation.Both);
 
         assertNotNull(message);
 
@@ -94,14 +104,15 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, new SwrveInAppMessageConfig.Builder().build(), personalisation);
         assertNotNull(view);
         assertEquals(4, view.getChildCount());
-        assertEquals(2, getPersonalisedButtonCount(view)); // personalisation gets counted as buttons
+        assertEquals(2, getPersonalizedButtonCount(view)); // personalisation gets counted as buttons
         assertEquals(1, getImageCount(view));
     }
 
     @Test
     public void testBuildLayoutWithDefaultColor() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().defaultBackgroundColor(Color.RED);
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
 
         // Trigger IAM
@@ -119,7 +130,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testBuildLayoutColor() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().defaultBackgroundColor(Color.BLUE);
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_color.json", "1111111111111111111111111");
 
         // Trigger IAM
@@ -137,7 +149,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testConfigurationOfButtonFocusClickColors() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().focusColor(Color.BLUE).clickColor(Color.GREEN);
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_color.json", "1111111111111111111111111");
 
         // Trigger IAM
@@ -164,8 +177,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
                 .personalisedTextBackgroundColor(Color.RED)
                 .personalisedTextForegroundColor(Color.YELLOW)
                 .personalisedTextTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalisation_mc.json", "1111111111111111111111111");
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
         // Trigger IAM
         HashMap<String, String> personalisation = new HashMap<>();
@@ -181,14 +195,14 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNotNull(view);
 
-        // Assert image has personalised text
-        assertTrue(view.getChildAt(1) instanceof SwrvePersonalisedTextView);
-        SwrvePersonalisedTextView imageView = (SwrvePersonalisedTextView) view.getChildAt(1);
+        // Assert image has personalized text
+        assertTrue(view.getChildAt(1) instanceof SwrvePersonalizedTextView);
+        SwrvePersonalizedTextView imageView = (SwrvePersonalizedTextView) view.getChildAt(1);
         assertEquals("Image test_coupon", imageView.getText());
 
-        // Assert button has personalised text
-        assertTrue(view.getChildAt(2) instanceof SwrvePersonalisedTextView);
-        SwrvePersonalisedTextView swrveButtonView = (SwrvePersonalisedTextView) view.getChildAt(2);
+        // Assert button has personalized text
+        assertTrue(view.getChildAt(2) instanceof SwrvePersonalizedTextView);
+        SwrvePersonalizedTextView swrveButtonView = (SwrvePersonalizedTextView) view.getChildAt(2);
         assertEquals("Button test_coupon", swrveButtonView.getText());
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
         assertEquals(Color.BLUE, swrveButtonView.focusColor);
@@ -217,8 +231,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
                 .personalisedTextBackgroundColor(Color.RED)
                 .personalisedTextForegroundColor(Color.YELLOW)
                 .personalisedTextTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalisation_mc.json", "1111111111111111111111111");
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
         // Trigger IAM
         HashMap<String, String> personalisation = new HashMap<>();
@@ -242,18 +257,20 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testRenderView() throws Exception {
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         SwrveMessage message = swrveSpy.getMessageForId(165);
         assertNotNull(message);
         SwrveInAppMessageActivity activity = Robolectric.buildActivity(SwrveInAppMessageActivity.class).create().get();
         SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, new SwrveInAppMessageConfig.Builder().build(), null);
 
-        String base64MD5Screnshot = SwrveHelper.md5(SwrveTestUtils.takeScreenshot(view));
-        assertNotNull(base64MD5Screnshot);
+        String base64MD5Screenshot = SwrveHelper.md5(SwrveTestUtils.takeScreenshot(view));
+        assertNotNull(base64MD5Screenshot);
     }
 
     @Test
     public void testActivityLifecycle() throws Exception {
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -278,6 +295,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testCreateActivityWithNoMessageAndFinishes() throws Exception {
+        initSDK();
         Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
@@ -287,6 +305,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testOnBackPressed() throws Exception {
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -305,7 +324,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
             testInstallButtonSuccess = appStoreUrl;
             return false;
         });
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -343,6 +363,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testInstallButtonLaunchesUrl() throws Exception {
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -382,7 +403,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testClipboardButtonCopiesText() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalisation_mc.json", "1111111111111111111111111");
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
         // Trigger IAM
         HashMap<String, String> personalisation = new HashMap<>();
@@ -424,7 +446,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().customButtonListener(customAction -> {
             testCustomButtonSuccess = customAction;
         });
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -461,7 +484,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testDismissButtonListenerIntercept() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName) -> testDismissButtonName = buttonName);
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -486,7 +510,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
                 testDismissButtonBackButton = true;
             }
         });
-        swrveSpy.config.setInAppMessageConfig(inAppConfigBuilder.build());
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -500,36 +525,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertTrue(testDismissButtonBackButton);
     }
 
-    private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
-        for (int i = 0; i < view.getChildCount(); i++) {
-            View childView = view.getChildAt(i);
-            if (childView instanceof SwrveButtonView) {
-                SwrveButtonView swrveButtonView = (SwrveButtonView) childView;
-                if (swrveButtonView.getType() == actionType) {
-                    return swrveButtonView;
-                }
-            }
-        }
-        Assert.fail("Could not find custom button");
-        return null;
-    }
-
-    private ImageView findButtonWithAction(SwrveMessageView view, SwrveActionType actionType) {
-        for (int i = 0; i < view.getChildCount(); i++) {
-            View childView = view.getChildAt(i);
-            if (childView instanceof SwrveBaseInteractableView) {
-                SwrveBaseInteractableView swrvePersonalisedTextView = (SwrveBaseInteractableView) childView;
-                if (swrvePersonalisedTextView.getType() == actionType) {
-                    return swrvePersonalisedTextView;
-                }
-            }
-        }
-        Assert.fail("Could not find custom button");
-        return null;
-    }
-
     @Test
     public void testCustomButtonLaunchesUrl() throws Exception {
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         // Trigger IAM
         swrveSpy.currencyGiven("gold", 20);
@@ -569,6 +567,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testButtonFocusability() throws Exception {
+        initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
         swrveSpy.currencyGiven("gold", 20);
         Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
@@ -589,6 +588,87 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         }
     }
 
+    @Test
+    public void testPersonalisationProvider() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+            Map values = Maps.newHashMap();
+            values.put("test_id", "Replaced " + eventPayload.get("payload1"));
+            return values;
+        });
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalized_trigger.json", "1111111111111111111111111");
+
+        // Trigger IAM
+        Map<String, String> eventPayload = Maps.newHashMap();
+        eventPayload.put("payload1", "payloadValue");
+        swrveSpy.event("trigger_iam", eventPayload);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+
+        assertTrue(view.getChildAt(2) instanceof SwrvePersonalizedTextView);
+        SwrvePersonalizedTextView imageView = (SwrvePersonalizedTextView) view.getChildAt(2);
+        assertEquals("Replaced payloadValue value", imageView.getText());
+    }
+
+    @Test
+    public void testMessageCenterListWithPersonalisation() throws Exception {
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
+
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns().size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait).size());
+
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("test_cp", "shows up");
+
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(personalisation).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, personalisation).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, personalisation).size());
+
+        HashMap<String, String> other = new HashMap<>();
+        other.put("other_value", "shows up");
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(other).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, other).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, other).size());
+    }
+
+    // Helpers
+
+    private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
+        for (int i = 0; i < view.getChildCount(); i++) {
+            View childView = view.getChildAt(i);
+            if (childView instanceof SwrveButtonView) {
+                SwrveButtonView swrveButtonView = (SwrveButtonView) childView;
+                if (swrveButtonView.getType() == actionType) {
+                    return swrveButtonView;
+                }
+            }
+        }
+        Assert.fail("Could not find custom button");
+        return null;
+    }
+
+    private ImageView findButtonWithAction(SwrveMessageView view, SwrveActionType actionType) {
+        for (int i = 0; i < view.getChildCount(); i++) {
+            View childView = view.getChildAt(i);
+            if (childView instanceof SwrveBaseInteractableView) {
+                SwrveBaseInteractableView swrvePersonalizedTextView = (SwrveBaseInteractableView) childView;
+                if (swrvePersonalizedTextView.getType() == actionType) {
+                    return swrvePersonalizedTextView;
+                }
+            }
+        }
+        Assert.fail("Could not find custom button");
+        return null;
+    }
+
     private int getButtonCount(SwrveMessageView view) {
         int buttons = 0;
         for (int i = 0; i < view.getChildCount(); i++) {
@@ -600,11 +680,11 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         return buttons;
     }
 
-    private int getPersonalisedButtonCount(SwrveMessageView view) {
+    private int getPersonalizedButtonCount(SwrveMessageView view) {
         int buttons = 0;
         for (int i = 0; i < view.getChildCount(); i++) {
             Class<?> viewClass = view.getChildAt(i).getClass();
-            if (viewClass == SwrvePersonalisedTextView.class) {
+            if (viewClass == SwrvePersonalizedTextView.class) {
                 buttons++;
             }
         }

@@ -1,11 +1,11 @@
 package com.swrve.sdk;
 
 import android.content.Intent;
-import android.os.Bundle;
 import androidx.annotation.VisibleForTesting;
 
 import com.amazon.device.messaging.ADMMessageHandlerBase;
 
+// Used for old devices
 public class SwrveAdmIntentService extends ADMMessageHandlerBase {
 
     public SwrveAdmIntentService() {
@@ -19,29 +19,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
     @Override
     @VisibleForTesting
     public void onMessage(final Intent intent) {
-        if (!SwrveHelper.sdkAvailable()) {
-            return;
-        }
-
-        if (intent == null) {
-            SwrveLogger.e("ADM messaging runtimes have called onMessage() with unexpected null intent.");
-            return;
-        }
-
-        final Bundle extras = intent.getExtras();
-        if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
-            SwrveLogger.i("Received ADM notification: %s", extras.toString());
-
-            if (!SwrveHelper.isSwrvePush(extras)) {
-                SwrveLogger.i("Received Push: but not processing as it doesn't contain: %s or %s", SwrveNotificationConstants.SWRVE_TRACKING_KEY, SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
-                return;
-            }
-
-            boolean isDupe = new SwrvePushDeDuper(this).isDupe(extras);
-            if (!isDupe) {
-                getSwrvePushServiceManager().processMessage(extras);
-            }
-        }
+        getPushBase().onMessage(this, intent);
     }
 
     @Override
@@ -51,13 +29,7 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
 
     @Override
     protected void onRegistered(final String registrationId) {
-        SwrveLogger.i("ADM Registered. RegistrationId: %s", registrationId);
-        ISwrveBase sdk = SwrveSDK.getInstance();
-        if (sdk != null && sdk instanceof Swrve) {
-            ((Swrve) sdk).onRegistrationIdReceived(registrationId);
-        } else {
-            SwrveLogger.e("Could not notify the SDK of a new token. Consider using the shared instance.");
-        }
+        getPushBase().onRegistered(registrationId);
     }
 
     @Override
@@ -65,8 +37,8 @@ public class SwrveAdmIntentService extends ADMMessageHandlerBase {
         SwrveLogger.i("ADM Unregistered. RegistrationId: %s", registrationId);
     }
 
-    protected SwrvePushServiceManager getSwrvePushServiceManager() {
-        return new SwrvePushServiceManager(this);
+    protected SwrveAdmPushBase getPushBase() {
+        return new SwrveAdmPushBase();
     }
 }
 

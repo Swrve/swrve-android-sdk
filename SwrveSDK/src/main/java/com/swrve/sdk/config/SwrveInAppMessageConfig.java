@@ -7,6 +7,7 @@ import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
+import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
 
 public class SwrveInAppMessageConfig {
 
@@ -23,6 +24,7 @@ public class SwrveInAppMessageConfig {
     protected SwrveCustomButtonListener customButtonListener;
     protected SwrveDismissButtonListener dismissButtonListener;
     protected SwrveClipboardButtonListener clipboardButtonListener;
+    protected SwrveMessagePersonalisationProvider personalisationProvider;
 
     private SwrveInAppMessageConfig(Builder builder) {
         this.defaultBackgroundColor = builder.defaultBackgroundColor;
@@ -37,6 +39,7 @@ public class SwrveInAppMessageConfig {
         this.customButtonListener = builder.customButtonListener;
         this.dismissButtonListener = builder.dismissButtonListener;
         this.clipboardButtonListener = builder.clipboardButtonListener;
+        this.personalisationProvider = builder.personalisationProvider;
     }
 
     /**
@@ -74,7 +77,7 @@ public class SwrveInAppMessageConfig {
     }
 
     /**
-     * The in-app message focus color
+     * The in-app message text background color.
      *
      * @return The in-app message focus color
      */
@@ -83,7 +86,7 @@ public class SwrveInAppMessageConfig {
     }
 
     /**
-     * The in-app message personalised text foreground color
+     * The in-app message personalized text foreground color.
      *
      * @return The in-app message button click color
      */
@@ -92,9 +95,9 @@ public class SwrveInAppMessageConfig {
     }
 
     /**
-     * The in-app message personalised text typeface.
+     * The in-app message personalized text typeface.
      *
-     * @return The in-app message personalised text typeface
+     * @return The in-app message personalized text typeface
      */
     public Typeface getPersonalisedTextTypeface() {
         return this.personalisedTextTypeface;
@@ -146,13 +149,22 @@ public class SwrveInAppMessageConfig {
         return clipboardButtonListener;
     }
 
+    /**
+     * Custom personalisation provider for incoming In app messages.
+     *
+     * @return The personalisation provider
+     */
+    public SwrveMessagePersonalisationProvider getPersonalisationProvider() {
+        return personalisationProvider;
+    }
+
     public static class Builder {
         private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
         private int focusColor = Color.argb(100, 0, 190, 152); // Default button focus color for IAM
-        private int clickColor = Color.TRANSPARENT; // Default button click color for IAM
+        private int clickColor = Color.argb(100, 0, 0, 0); // Default button click color for IAM
         private boolean hideToolbar = true; // Hide the toolbar when displaying in-app messages.
-        private int personalisedTextBackgroundColor = Color.TRANSPARENT; // Default Background color for Personalised Text in IAMs
-        private int personalisedTextForegroundColor = Color.BLACK; // Default Text Color for Personalised Text in IAMs
+        private int personalisedTextBackgroundColor = Color.TRANSPARENT; // Default Background color for Personalized Text in IAMs
+        private int personalisedTextForegroundColor = Color.BLACK; // Default Text Color for Personalized Text in IAMs
         private Typeface personalisedTextTypeface = null; // Default will use System Font
         private long autoShowMessagesMaxDelay = 5000; // Maximum delay for in-app messages to appear after initialization.
 
@@ -160,6 +172,7 @@ public class SwrveInAppMessageConfig {
         protected SwrveCustomButtonListener customButtonListener;
         protected SwrveDismissButtonListener dismissButtonListener;
         protected SwrveClipboardButtonListener clipboardButtonListener;
+        protected SwrveMessagePersonalisationProvider personalisationProvider;
 
         /**
          * Builder constructor
@@ -212,7 +225,7 @@ public class SwrveInAppMessageConfig {
 
 
         /**
-         * Set the in-app message personalised text background color. Used for the background of the text
+         * Set the in-app message personalized text background color. Used for the background of the text
          *
          * @param personalisedTextBackgroundColor A color-int, eg: Color.argb(100, 0, 190, 152)
          * @return this builder
@@ -223,7 +236,7 @@ public class SwrveInAppMessageConfig {
         }
 
         /**
-         * Set the in-app message personalised text color
+         * Set the in-app message personalized text color
          *
          * @param personalisedTextForegroundColor A color-int, eg: Color.argb(100, 0, 190, 152)
          * @return this builder
@@ -234,7 +247,7 @@ public class SwrveInAppMessageConfig {
         }
 
         /**
-         * Set the in-app message personalised text color.
+         * Set the in-app message personalized text color.
          *
          * @param typeface A Font Object containing the default font you want for any IAM text
          * @return this builder
@@ -296,6 +309,17 @@ public class SwrveInAppMessageConfig {
          */
         public Builder clipboardButtonListener(SwrveClipboardButtonListener clipboardButtonListener) {
             this.clipboardButtonListener = clipboardButtonListener;
+            return this;
+        }
+
+        /**
+         * Custom personalisation provider for incoming In App messages.
+         *
+         * @param personalisationProvider The personalisation provider
+         * @return this builder
+         */
+        public Builder personalisationProvider(SwrveMessagePersonalisationProvider personalisationProvider) {
+            this.personalisationProvider = personalisationProvider;
             return this;
         }
 

@@ -187,6 +187,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             if (messageListener == null) {
                 setDefaultMessageListener();
             }
+            if (config.getInAppMessageConfig() != null) {
+                personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
+            }
 
             // Add custom conversation listener
             if (conversationListener == null) {
@@ -288,6 +291,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     if (ctx == null) {
                         SwrveLogger.e("Can't display a in-app message without a context");
                         return;
+                    }
+
+                    if (personalisationProvider != null && (properties == null || properties.size() == 0)) {
+                        properties = personalisationProvider.personalize(lastEventPayloadUsed);
                     }
 
                     if (message.supportsOrientation(getDeviceOrientation())) {
@@ -520,7 +527,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 Iterator<String> userPropertyIterator = realTimeUserPropertiesJSON.keys();
 
                 Map<String, String> mapProperties = new HashMap<>();
-
                 while (userPropertyIterator.hasNext()) {
                     String userPropertyKey = userPropertyIterator.next();
                     try {
@@ -1664,16 +1670,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-
     @Override
-    public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
-        if (!isSdkReady()) return new ArrayList<>();
-
-        return getMessageCenterCampaigns(getDeviceOrientation());
-    }
-
-    @Override
-    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
         List<SwrveBaseCampaign> result = new ArrayList<>();
         if (!isSdkReady()) return result;
 
@@ -1686,12 +1684,45 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             && campaign.isActive(getNow())
                             && campaign.supportsOrientation(orientation)
                             && campaign.areAssetsReady(getAssetsOnDisk())) {
-                        result.add(campaign);
+                        if (properties != null && (campaign instanceof SwrveInAppCampaign)) {
+                            // Check personalisation for the
+                            List<SwrveMessage> messages = ((SwrveInAppCampaign)campaign).getMessages();
+                            boolean messagesCanResolve = true;
+                            for (int mi = 0; mi < messages.size() && messagesCanResolve; mi++) {
+                                SwrveMessage message = messages.get(mi);
+                                if (message.supportsOrientation(orientation)) {
+                                    messagesCanResolve = SwrveMessageTextTemplatingChecks.checkTemplating(message, properties);
+                                }
+                            }
+
+                            // All messages that support the required orientation can be resolved
+                            if (messagesCanResolve) {
+                                result.add(campaign);
+                            }
+                        } else {
+                            result.add(campaign);
+                        }
                     }
                 }
             }
         }
         return result;
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
+        return getMessageCenterCampaigns(getDeviceOrientation(), null);
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
+        return getMessageCenterCampaigns(orientation, null);
+
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
+        return getMessageCenterCampaigns(getDeviceOrientation(), properties);
     }
 
     @Override
@@ -1726,9 +1757,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
-        if (!isSdkReady()) return;
+        if (!isSdkReady() || campaign == null) return;
 
         campaign.setStatus(SwrveCampaignState.Status.Deleted);
+        saveCampaignsState(getUserId());
+    }
+
+    @Override
+    public void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign) {
+        if (!isSdkReady() || campaign == null) return;
+
+        campaign.setStatus(SwrveCampaignState.Status.Seen);
         saveCampaignsState(getUserId());
     }
 

@@ -6,7 +6,11 @@
       "end_date": 2364568900000,
       "triggers": [
         {
-          "event_name": "show.personalised",
+          "event_name": "trigger_iam",
+          "conditions": {}
+        },
+        {
+          "event_name": "Swrve.buy_in",
           "conditions": {}
         }
       ],
@@ -55,37 +59,6 @@
                       "type": "number",
                       "value": 600
                     }
-                  },
-                  {
-                    "name": "Background",
-                    "color": {
-                      "type": "color",
-                      "value": "FFFFFF"
-                    },
-                    "image": {
-                      "type": "asset",
-                      "value": "1111111111111111111111111"
-                    },
-                    "text" : {
-                      "type": "text",
-                      "value": "Image ${test_cp}"
-                    },
-                    "x": {
-                      "type": "number",
-                      "value": 0
-                    },
-                    "y": {
-                      "type": "number",
-                      "value": 0
-                    },
-                    "w": {
-                      "type": "number",
-                      "value": 900
-                    },
-                    "h": {
-                      "type": "number",
-                      "value": 600
-                    }
                   }
                 ],
                 "buttons": [
@@ -113,7 +86,7 @@
                     },
                     "action": {
                       "type": "text",
-                      "value": "${test_cp}"
+                      "value": ""
                     },
                     "game_id": {
                       "type": "number",
@@ -121,7 +94,7 @@
                     },
                     "type": {
                       "type": "text",
-                      "value": "CUSTOM"
+                      "value": "INSTALL"
                     }
                   },
                   {
@@ -146,13 +119,9 @@
                       "type": "asset",
                       "value": "1111111111111111111111111"
                     },
-                    "text": {
-                      "type": "text",
-                      "value": "Text ${test_1|fallback=\"hello\"}"
-                    },
                     "action": {
                       "type": "text",
-                      "value": "${test_1|fallback=\"hello\"}"
+                      "value": "custom_action"
                     },
                     "game_id": {
                       "type": "number",
@@ -160,7 +129,46 @@
                     },
                     "type": {
                       "type": "text",
-                      "value": "COPY_TO_CLIPBOARD"
+                      "value": "CUSTOM"
+                    },
+                    "text": {
+                      "type": "text",
+                      "value": "${test_id} value"
+                    }
+                  },
+                  {
+                    "name": "close",
+                    "x": {
+                      "type": "number",
+                      "value": 932
+                    },
+                    "y": {
+                      "type": "number",
+                      "value": 32
+                    },
+                    "w": {
+                      "type": "number",
+                      "value": 50
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 50
+                    },
+                    "image_up": {
+                      "type": "asset",
+                      "value": "1111111111111111111111111"
+                    },
+                    "action": {
+                      "type": "text",
+                      "value": ""
+                    },
+                    "game_id": {
+                      "type": "number",
+                      "value": ""
+                    },
+                    "type": {
+                      "type": "text",
+                      "value": "DISMISS"
                     }
                   }
                 ],

@@ -30,6 +30,7 @@ import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
+import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
 import com.swrve.sdk.qa.SwrveQAUser;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.RESTClient;
@@ -76,7 +77,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "7.0.0";
+    protected static String version = "7.1.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
@@ -106,6 +107,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected C config;
     protected ISwrveEventListener eventListener;
     protected SwrveMessageListener messageListener;
+    protected SwrveMessagePersonalisationProvider personalisationProvider;
     protected SwrveConversationListener conversationListener;
     protected SwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
@@ -154,6 +156,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected boolean identifiedOnAnotherDevice;
     protected SwrveSessionListener sessionListener;
     protected List<EventQueueItem> pausedEvents = Collections.synchronizedList(new ArrayList<EventQueueItem>());
+    protected Map<String, String> lastEventPayloadUsed;
 
     protected SwrveImp(Application application, int appId, String apiKey, C config) {
         SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());

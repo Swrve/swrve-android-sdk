@@ -14,6 +14,7 @@ import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -111,9 +112,9 @@ class SwrveDeeplinkManager {
                 return;
             }
 
-            String swrveCampaginId = bundle.getString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY);
-            if (SwrveHelper.isNotNullOrEmpty(swrveCampaginId)) {
-                loadCampaign(swrveCampaginId, SWRVE_NOTIFICATION_TO_CAMPAIGN);
+            String swrveCampaignId = bundle.getString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY);
+            if (SwrveHelper.isNotNullOrEmpty(swrveCampaignId)) {
+                loadCampaign(swrveCampaignId, SWRVE_NOTIFICATION_TO_CAMPAIGN);
             }
         }
     }
@@ -202,7 +203,6 @@ class SwrveDeeplinkManager {
                         @Override
                         public void onException(Exception e) {
                             SwrveLogger.e("Error downloading ad campaign", e);
-                            //TODO we need to do a loadCampaignFromCache here but the restclient calls both onResponse and onException, we need to look at this.
                         }
                     });
                 } catch (UnsupportedEncodingException e) {
@@ -306,7 +306,19 @@ class SwrveDeeplinkManager {
 
             } else if (campaign instanceof SwrveInAppCampaign) {
                 SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessages().get(0);
-                if (SwrveMessageTextTemplatingChecks.checkTemplating(message, null)) {
+
+                // Provide personalisation for the message
+                SwrveMessagePersonalisationProvider personalisationProvider = null;
+                if (config != null && config.getInAppMessageConfig() != null) {
+                    personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
+                }
+
+                Map<String, String> properties = null;
+                if (personalisationProvider != null) {
+                    properties = personalisationProvider.personalize(null);
+                }
+
+                if (SwrveMessageTextTemplatingChecks.checkTemplating(message, properties)) {
                     setSwrveMessage(message);
                     if (this.swrveMessageListener == null) {
                         Intent intent = new Intent(context, SwrveInAppMessageActivity.class);

@@ -17,7 +17,7 @@ public class SwrveMessageTextTemplatingChecksTest extends SwrveBaseTest {
 
     @Test
     public void testChecks() throws Exception {
-        String messageJson = SwrveTestUtils.getAssetAsText(mActivity, "personalised_message.json");
+        String messageJson = SwrveTestUtils.getAssetAsText(mActivity, "personalized_message.json");
         SwrveMessage message = new SwrveMessage(null, new JSONObject(messageJson), null);
 
         assertFalse(SwrveMessageTextTemplatingChecks.checkTemplating(message, null));

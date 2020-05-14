@@ -79,7 +79,7 @@ public class SwrveConfigTest extends SwrveBaseTest {
         SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
 
         assertEquals(Color.TRANSPARENT, inAppConfig.getDefaultBackgroundColor());
-        assertEquals(Color.TRANSPARENT, inAppConfig.getClickColor());
+        assertEquals(Color.argb(100, 0, 0, 0), inAppConfig.getClickColor());
         assertEquals(Color.argb(100, 0, 190, 152), inAppConfig.getFocusColor());
         assertEquals(Color.BLACK, inAppConfig.getPersonalisedTextForegroundColor());
         assertEquals(Color.TRANSPARENT, inAppConfig.getPersonalisedTextBackgroundColor());

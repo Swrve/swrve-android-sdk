@@ -9,7 +9,9 @@ import android.graphics.Rect;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.messaging.SwrveActionType;
 
-public class SwrvePersonalisedTextView extends SwrveBaseInteractableView {
+public class SwrvePersonalizedTextView extends SwrveBaseInteractableView {
+
+    private static final float TEST_FONT_SIZE = 200;
 
     public int width;
     public int height;
@@ -18,7 +20,7 @@ public class SwrvePersonalisedTextView extends SwrveBaseInteractableView {
     public Bitmap viewBitmap;
     public String action;
 
-    public SwrvePersonalisedTextView(Context context, SwrveActionType type, SwrveInAppMessageConfig inAppConfig, String text, int canvasWidth, int canvasHeight, String action) {
+    public SwrvePersonalizedTextView(Context context, SwrveActionType type, SwrveInAppMessageConfig inAppConfig, String text, int canvasWidth, int canvasHeight, String action) {
         super(context, type, inAppConfig.getFocusColor(), inAppConfig.getClickColor());
         this.inAppConfig = inAppConfig;
         this.text = text;
@@ -29,54 +31,43 @@ public class SwrvePersonalisedTextView extends SwrveBaseInteractableView {
         this.viewBitmap = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(viewBitmap);
 
-        // Fill the entire canvas with this solid color.
+        // Fill the entire canvas with this solid color
         canvas.drawColor(inAppConfig.getPersonalisedTextBackgroundColor());
 
-        // Create a Paint object for the text.
-        Paint paintText = new Paint(Paint.FAKE_BOLD_TEXT_FLAG);
+        // Create a Paint object for the text
+        Paint paintText = new Paint();
 
         // Set Typeface
         paintText.setTypeface(inAppConfig.getPersonalisedTextTypeface());
 
-        // Set properties of the Paint used to draw on the canvas.
+        // Set properties of the Paint used to draw on the canvas
         paintText.setColor(inAppConfig.getPersonalisedTextForegroundColor());
 
+        // Calculate the text size needed to fill the available space
         fitTextSizeToImage(this.text, paintText, this.width, this.height);
 
-        paintText.getTextAlign();
-
+        // Align text in the center and draw it
         Rect rect = new Rect();
-        canvas.getClipBounds(rect);
-
-        int cHeight = rect.height();
-        int cWidth = rect.width();
         paintText.setTextAlign(Paint.Align.LEFT);
         paintText.getTextBounds(this.text, 0, this.text.length(), rect);
-        float x = cWidth / 2f - rect.width() / 2f - rect.left;
-        float y = cHeight / 2f + rect.height() / 2f - rect.bottom;
+        float x = (width - rect.width()) / 2f - rect.left;
+        float y = (height + rect.height()) / 2f - rect.bottom;
         canvas.drawText(this.text, x, y, paintText);
 
-        // we set the image bitmap after we've generated it.
+        // Set the image bitmap after we've generated it
         this.setImageBitmap(this.viewBitmap);
     }
 
-    private float fitTextSizeToImage(String text, Paint paint, int maxWidth, int maxHeight) {
-        if (text == null || text.isEmpty() || paint == null) return 0;
+    private void fitTextSizeToImage(String text, Paint paint, int maxWidth, int maxHeight) {
+        if (text == null || text.isEmpty() || paint == null) return;
+        paint.setTextSize(TEST_FONT_SIZE);
+
         Rect bound = new Rect();
-        float size = 1.0f;
-        float step= 1.0f;
+        paint.getTextBounds(text, 0, text.length(), bound);
+        float scalex = TEST_FONT_SIZE / (float)bound.width();
+        float scaley = TEST_FONT_SIZE / (float)bound.height();
 
-        while (true) {
-            paint.getTextBounds(text, 0, text.length(), bound);
-            if(bound.width() == 0 && bound.height() == 0) return 0;
-
-            if (bound.width() < maxWidth && bound.height() < maxHeight) {
-                size += step;
-                paint.setTextSize(size);
-            } else {
-                return size - step;
-            }
-        }
+        paint.setTextSize(Math.min(scalex * maxWidth, scaley * maxHeight));
     }
 
     @Override

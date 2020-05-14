@@ -180,7 +180,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testloadCampaginWrittenToDebugCache() throws Exception {
+    public void testloadCampaignWrittenToDebugCache() throws Exception {
         swrveSpy.swrveDeeplinkManager.loadCampaign("295411","notification_to_campaign");
 
         await().until(campaignShown());

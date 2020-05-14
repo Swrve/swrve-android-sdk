@@ -9,7 +9,7 @@ import org.json.JSONObject;
 public class SwrveImage extends SwrveWidget {
     // Cached path of the image file on disk
     protected String file;
-    // Personalised text (render this instead of the image)
+    // Personalized text (render this instead of the image)
     protected String text;
 
     public SwrveImage(JSONObject imageData) throws JSONException {

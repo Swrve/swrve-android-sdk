@@ -274,6 +274,16 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
+        return new ArrayList<>();
+    }
+
+    @Override
     public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
         return false;
     }
@@ -285,6 +295,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
+    }
+
+    @Override
+    public void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign) {
     }
 
     @Override

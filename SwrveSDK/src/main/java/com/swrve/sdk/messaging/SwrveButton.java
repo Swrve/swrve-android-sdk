@@ -19,7 +19,7 @@ public class SwrveButton extends SwrveWidget {
     protected int appId;
     // Action associated with this button
     protected SwrveActionType actionType;
-    // Personalised text (render this instead of the image)
+    // Personalized text (render this instead of the image)
     protected String text;
 
     public SwrveButton() {

@@ -243,9 +243,9 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         assertNotSame(d1, d2);
 
         assertEquals(0, swrveSpy.getMessageCenterCampaigns().size());
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).getMessageCenterCampaigns(Mockito.any(SwrveOrientation.class));
-
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns((Map<String, String>) null).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, null).size());
 
         final boolean[] messageListenerCalled = {false};
         swrveSpy.setMessageListener(new SwrveMessageListener() {
@@ -267,6 +267,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         assertFalse(messageListenerCalled[0]);
 
         swrveSpy.removeMessageCenterCampaign(campaign);
+        swrveSpy.markMessageCenterCampaignAsSeen(campaign);
         assertEquals(campaign.getStatus(), SwrveCampaignState.Status.Unseen);
 
         Bundle bundle = new Bundle();

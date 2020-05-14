@@ -456,7 +456,7 @@ public abstract class SwrveSDKBase {
      * Get the list active MessageCenter campaigns targeted for this user.
      * It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the current orientation.
-     * <p>
+     *
      * To obtain all MessageCenter campaigns independent of their orientation support
      * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
      *
@@ -472,12 +472,42 @@ public abstract class SwrveSDKBase {
      * It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the given orientation.
      *
-     * @param orientation Orientation whcih the messages have to support
+     * @param orientation Orientation which the messages have to support
      * @return list of active MessageCenter campaigns.
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
         checkInstanceCreated();
         return instance.getMessageCenterCampaigns(orientation);
+    }
+
+    /**
+     * Get the list active MessageCenter campaigns targeted for this user.
+     * It will exclude campaigns that have been deleted with the
+     * removeMessageCenterCampaign method and those that do not support the current orientation.
+     * <p>
+     * To obtain all MessageCenter campaigns independent of their orientation support
+     * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
+     *
+     * @param properties additional properties which can be used for IAM personalisation.
+     * @return list of active MessageCenter campaigns.
+     */
+    public static List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
+        checkInstanceCreated();
+        return instance.getMessageCenterCampaigns(properties);
+    }
+
+    /**
+     * Get the list active MessageCenter campaigns targeted for this user.
+     * It will exclude campaigns that have been deleted with the
+     * removeMessageCenterCampaign method and those that do not support the given orientation.
+     *
+     * @param orientation Orientation which the messages have to support
+     * @param properties additional properties which can be used for IAM personalisation.
+     * @return list of active MessageCenter campaigns.
+     */
+    public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
+        checkInstanceCreated();
+        return instance.getMessageCenterCampaigns(orientation, properties);
     }
 
     /**
@@ -513,6 +543,16 @@ public abstract class SwrveSDKBase {
     public static void removeMessageCenterCampaign(SwrveBaseCampaign campaign) {
         checkInstanceCreated();
         instance.removeMessageCenterCampaign(campaign);
+    }
+
+    /**
+     * Mark this campaign as seen. This is done automatically by Swrve but you can call this if you are rendering the messages on your own.
+     *
+     * @param campaign the campaign
+     */
+    public static void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign) {
+        checkInstanceCreated();
+        instance.markMessageCenterCampaignAsSeen(campaign);
     }
 
     protected static void checkInstanceCreated() throws RuntimeException {
