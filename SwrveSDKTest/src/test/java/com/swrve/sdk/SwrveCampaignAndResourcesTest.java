@@ -89,7 +89,7 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
     public void testCheckForCampaignAndResourcesUpdatesTimer() {
         // This test is to simply verify the repeating timer kicks off every 500ms
 
-        // Set up that that the checkForCampaignAndResourcesUpdates is called every 1000ms.
+        // Set up that that the checkForCampaignAndResourcesUpdates is called every 500ms.
         SharedPreferences settings = mActivity.getSharedPreferences("swrve_prefs", 0);
         settings.edit().putInt("swrve_cr_flush_frequency", 500).apply();
 
@@ -99,9 +99,9 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
         swrveSpy.init(mActivity);
 
         Callable<Integer> callable = () -> campaignAndResourcesUpdatesCounter;
-        // await max of 6 seconds and verify checkForCampaignAndResourcesUpdates method is called an arbitrary 10 times.
+        // await max of 7 seconds and verify checkForCampaignAndResourcesUpdates method is called at least an arbitrary 10 times.
         await("The checkForCampaignAndResourcesUpdates method timer should be called repeatedly every 500ms")
-                .atMost(6000, TimeUnit.MILLISECONDS).until(callable, CoreMatchers.equalTo(10));
+                .atMost(7000, TimeUnit.MILLISECONDS).until(callable, CoreMatchers.equalTo(10));
     }
 
     @Test

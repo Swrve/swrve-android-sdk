@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.QaCampaignInfo;
 import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
@@ -90,11 +91,11 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * @param event           trigger event
      * @param payload         payload to compare conditions against
      * @param now             device time
-     * @param campaignDisplayResult will contain the reason the campaign returned no message
+     * @param qaCampaignInfoMap will contain the reason the campaign showed or didn't show
      * @return SwrveConversation message setup to the given trigger or null otherwise.
      */
-    public SwrveConversation getConversationForEvent(String event, Map<String, String> payload, Date now, Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResult) {
-        boolean shouldShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, campaignDisplayResult, 1);
+    public SwrveConversation getConversationForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
+        boolean shouldShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, qaCampaignInfoMap, 1);
         boolean canShowCampaign = shouldShowCampaign && conversation != null && conversation.areAssetsReady(campaignManager.getAssetsOnDisk());
         if (canShowCampaign) {
             SwrveLogger.i("%s matches a trigger in %s", event, id);

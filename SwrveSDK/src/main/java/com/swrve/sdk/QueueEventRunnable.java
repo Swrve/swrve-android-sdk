@@ -2,6 +2,8 @@ package com.swrve.sdk;
 
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 class QueueEventRunnable implements Runnable {
@@ -25,11 +27,14 @@ class QueueEventRunnable implements Runnable {
         String eventString = "";
         try {
             int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();
-            eventString = EventHelper.eventAsJSON(eventType, parameters, payload, seqNum, System.currentTimeMillis());
-            parameters = null;
-            payload = null;
+            long time = System.currentTimeMillis();
+            eventString = EventHelper.eventAsJSON(eventType, parameters, payload, seqNum, time);
             multiLayerLocalStorage.addEvent(userId, eventString);
             SwrveLogger.i("Event queued of type: %s and seqNum:%s for userId:%s", eventType, seqNum, userId);
+
+            List<String> events = new ArrayList<>();
+            events.add(eventString);
+            QaUser.wrappedEvents(events);
         } catch (Exception e) {
             SwrveLogger.e("Unable to insert QueueEvent into local storage. EventString:" + eventString, e);
         }

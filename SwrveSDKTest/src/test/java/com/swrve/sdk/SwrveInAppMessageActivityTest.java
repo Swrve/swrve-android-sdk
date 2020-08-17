@@ -286,11 +286,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<>();
-        payload.put("format", "Kindle (English (US))");
-        payload.put("orientation", "Landscape");
-        payload.put("size", "320x240");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, payload);
+        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
     }
 
     @Test
@@ -347,16 +343,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<>();
-        payload.put("format", "Kindle (English (US))");
-        payload.put("orientation", "Landscape");
-        payload.put("size", "320x240");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, payload);
+        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        payload.clear();
+        Map<String, String> payload = new HashMap<>();
         payload.put("name", "accept");
         assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
     }
@@ -387,16 +379,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<>();
-        payload.put("format", "Kindle (English (US))");
-        payload.put("orientation", "Landscape");
-        payload.put("size", "320x240");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, payload);
+        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        payload.clear();
+        Map<String, String> payload = new HashMap<>();
         payload.put("name", "accept");
         assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
     }
@@ -467,16 +455,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<>();
-        payload.put("format", "Kindle (English (US))");
-        payload.put("orientation", "Landscape");
-        payload.put("size", "320x240");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, payload);
+
+        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        payload.clear();
+        Map<String, String> payload = new HashMap<>();
         payload.put("name", "custom");
         assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
     }
@@ -551,16 +536,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        Map<String, String> payload = new HashMap<>();
-        payload.put("format", "Kindle (English (US))");
-        payload.put("orientation", "Landscape");
-        payload.put("size", "320x240");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, payload);
+        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        payload.clear();
+        Map<String, String> payload = new HashMap<>();
         payload.put("name", "custom");
         assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
     }

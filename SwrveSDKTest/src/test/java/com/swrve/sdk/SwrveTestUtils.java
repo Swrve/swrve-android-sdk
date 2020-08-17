@@ -23,11 +23,11 @@ import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
-import org.junit.Assert;
-
 import org.json.JSONObject;
+import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowActivity;
 
@@ -60,6 +60,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
 
 public class SwrveTestUtils {
 
@@ -128,7 +129,7 @@ public class SwrveTestUtils {
     public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... assets) throws Exception {
         String json = SwrveTestUtils.getAssetAsText(context, campaignFileName);
         JSONObject jsonObject = new JSONObject(json);
-        swrve.loadCampaignsFromJSON(swrve.getUserId(), jsonObject, swrve.campaignsState);
+        swrve.loadCampaignsFromJSON(swrve.getUserId(), jsonObject, swrve.campaignsState, false);
         if (assets.length > 0) {
             Set<String> assetsOnDisk = new HashSet<>();
             for(String asset : assets) {
@@ -447,4 +448,14 @@ public class SwrveTestUtils {
         return swrveSpy;
     }
 
+    public static void runSingleThreaded(Swrve swrveSpy) {
+        Answer<Boolean> answer = invocation -> {
+            Runnable runnable = (Runnable) invocation.getArguments()[0];
+            runnable.run();
+            return true;
+        };
+        // execute the rest and storage calls on same threads
+        doAnswer(answer).when(swrveSpy).restClientExecutorExecute(any(Runnable.class));
+        doAnswer(answer).when(swrveSpy).storageExecutorExecute(any(Runnable.class));
+    }
 }

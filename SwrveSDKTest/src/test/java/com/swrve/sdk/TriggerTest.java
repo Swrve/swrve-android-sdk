@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -16,7 +17,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -192,71 +195,74 @@ public class TriggerTest extends SwrveBaseTest {
 
     @Test
     public void testCampaignTriggerCondition() throws Exception {
+        QaUser qaUserMock = Mockito.mock(QaUser.class);
+        qaUserMock.loggingEnabled = true;
+        QaUser.instance = qaUserMock;
 
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);
-        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(null), jsonObject, new HashSet<SwrveAssetsQueueItem>());
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>());
         assertNotNull(campaign);
 
-        Map<Integer, SwrveCampaignDisplayer.Result> campaignDisplayResults =  new HashMap<>();
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
         Map<String, String> payload = new HashMap<>();
         payload.put("artist", "prince");
         payload.put("song", "PuRpLe RaIn"); // mixed case on purpose
         payload.put("extra", "unused");
-        assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
 
-        campaignDisplayResults =  new HashMap<>();
+        qaCampaignInfoMap = new HashMap<>();
         payload = new HashMap<>();
         payload.put("artist", "this should not match");
-        assertNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        assertNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
 
-        campaignDisplayResults =  new HashMap<>();
+        qaCampaignInfoMap = new HashMap<>();
         payload = new HashMap<>();
         payload.put("artist", "queen");
-        assertNotNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        assertNotNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
 
-        campaignDisplayResults =  new HashMap<>();
+        qaCampaignInfoMap = new HashMap<>();
         payload = new HashMap<>();
         payload.put("artist", "this should not match");
-        assertNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        assertNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
 
-        campaignDisplayResults =  new HashMap<>();
+        qaCampaignInfoMap = new HashMap<>();
         payload = new HashMap<>();
         payload.put("extra", "unused");
-        assertNotNull(campaign.getMessageForEvent("music.condition3", payload, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        assertNotNull(campaign.getMessageForEvent("music.condition3", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
 
-        campaignDisplayResults =  new HashMap<>();
-        assertNull(campaign.getMessageForEvent("random.event", null, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
-
-        // match the event name but null payload
-        campaignDisplayResults =  new HashMap<>();
-        assertNull(campaign.getMessageForEvent("music.condition1", null, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent("random.event", null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
 
         // match the event name but null payload
-        campaignDisplayResults =  new HashMap<>();
-        assertNull(campaign.getMessageForEvent("music.condition2", null, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent("music.condition1", null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        // match the event name but null payload
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent("music.condition2", null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
 
         // null event name
-        campaignDisplayResults =  new HashMap<>();
-        assertNull(campaign.getMessageForEvent(null, null, new Date(), campaignDisplayResults));
-        assertEquals(1, campaignDisplayResults.size());
-        assertEquals(SwrveCampaignDisplayer.DisplayResult.NO_MATCH, campaignDisplayResults.get(campaign.getId()).resultCode);
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent(null, null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
     }
 }

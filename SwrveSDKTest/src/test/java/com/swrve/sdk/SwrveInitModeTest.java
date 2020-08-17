@@ -262,7 +262,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);
-        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(null), jsonObject, new HashSet<>());
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>());
         swrveSpy.showMessageCenterCampaign(campaign);
         assertFalse(messageListenerCalled[0]);
 

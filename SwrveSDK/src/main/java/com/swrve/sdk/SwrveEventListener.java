@@ -2,10 +2,10 @@ package com.swrve.sdk;
 
 import android.content.Context;
 
-import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.messaging.SwrveMessageListener;
+import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import java.lang.ref.WeakReference;
@@ -28,15 +28,20 @@ public class SwrveEventListener implements ISwrveEventListener {
 
     @Override
     public void onEvent(String eventName, Map<String, String> payload) {
+        boolean conversationDisplayed = false;
         if (conversationListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
             SwrveBase<?, ?> sdkRef = sdk.get();
             if (sdkRef != null) {
                 SwrveConversation conversation = sdkRef.getConversationForEvent(eventName, payload);
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
-                    return;
+                    conversationDisplayed = true;
                 }
             }
+        }
+        if (conversationDisplayed) {
+            QaUser.campaignTriggeredMessageNoDisplay(eventName, payload);
+            return;
         }
 
         if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {

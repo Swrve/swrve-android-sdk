@@ -29,12 +29,14 @@ public class SwrveCampaignDeliveryAsyncTask extends AsyncTask<Object, Void, Void
     protected Void doInBackground(Object[] params) {
         try {
             String endPoint = swrveCommon.getEventsServer() + "/1/batch";
-            String batchEvent = getBatchEvent();
-            if (SwrveHelper.isNullOrEmpty(batchEvent))  {
+            ArrayList<String> eventsList = getEventData();
+            String eventsBatch = getBatchEvent(eventsList);
+            if (SwrveHelper.isNullOrEmpty(eventsBatch))  {
                 SwrveLogger.e("Error invalid batchEvent");
                 return null;
             }
-            this.sendPushDelivery(endPoint, batchEvent);
+            this.sendPushDelivery(endPoint, eventsBatch);
+            QaUser.wrappedEvents(eventsList);
         } catch (Exception ex) {
             SwrveLogger.e(" exception", ex);
         }
@@ -62,22 +64,21 @@ public class SwrveCampaignDeliveryAsyncTask extends AsyncTask<Object, Void, Void
         });
     }
 
-    private String getBatchEvent() throws Exception {
+    private String getBatchEvent(ArrayList<String> eventsList) throws Exception {
         final String userId = swrveCommon.getUserId();
         final String appVersion = swrveCommon.getAppVersion();
         final String sessionKey = swrveCommon.getSessionKey();
         final String deviceId = swrveCommon.getDeviceId();
 
-        LinkedHashMap<Long, String> events = new LinkedHashMap<>();
-        String event = getEventData();
-        events.put(-1l, event); // id doesn't matter here so use -1
-        return EventHelper.eventsAsBatch(events, userId, appVersion, sessionKey, deviceId);
+        LinkedHashMap<Long, String> batchEvents = new LinkedHashMap<>();
+        batchEvents.put(-1l, eventsList.get(0)); // id doesn't matter here so use -1
+        return EventHelper.eventsAsBatch(batchEvents, userId, appVersion, sessionKey, deviceId);
     }
 
-    protected String getEventData() throws Exception {
+    protected ArrayList<String> getEventData() throws Exception {
         String id = extras.getString(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
         Map<String, String> payload = new HashMap<>();
-        if(SwrveHelper.isNullOrEmpty(id)){
+        if (SwrveHelper.isNullOrEmpty(id)) {
             id = extras.getString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
             payload.put("silent", String.valueOf(true));
         } else {
@@ -91,6 +92,6 @@ public class SwrveCampaignDeliveryAsyncTask extends AsyncTask<Object, Void, Void
 
         int seqNum = swrveCommon.getNextSequenceNumber();
         ArrayList<String> events = EventHelper.createGenericEvent(id, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_DELIVERED, null, null, payload, seqNum);
-        return events.get(0);
+        return events;
     }
 }

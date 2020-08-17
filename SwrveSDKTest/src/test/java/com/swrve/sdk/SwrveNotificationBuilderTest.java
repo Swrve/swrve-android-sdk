@@ -10,19 +10,13 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import androidx.annotation.RequiresApi;
+
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.notifications.model.SwrveNotification;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
-import com.swrve.sdk.qa.SwrveQAUser;
-import com.swrve.sdk.rest.RESTClient;
 import com.swrve.sdk.test.MainActivity;
 
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,10 +31,8 @@ import org.robolectric.shadows.ShadowPendingIntent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
@@ -83,21 +75,6 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         validBundleCustomSound.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
         pushServiceManager.processMessage(validBundleCustomSound);
         assertNotification("validBundleCustomSound", "android.resource://com.swrve.sdk.test/raw/customSound", validBundleCustomSound);
-    }
-
-    @Test
-    public void testServiceWithQaUser() throws Exception {
-        JSONObject jsonObject = new JSONObject("{\"campaigns\":[],\"logging\":true,\"reset_device_state\":true,\"logging_url\":\"http:\\/\\/1031.qa-log.swrve.com\"}");
-        SwrveQAUser swrveQAUser = new SwrveQAUser(1, "apiKey", "userId", new RESTClient(5000), jsonObject);
-        swrveQAUser.bindToServices();
-
-        Intent intent = new Intent();
-        Bundle validBundle = new Bundle();
-        validBundle.putString(SwrveNotificationConstants.TEXT_KEY, "hello there");
-        validBundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
-        validBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
-        pushServiceManager.processMessage(validBundle);
-        assertNotification("hello there", null, validBundle);
     }
 
     @Test

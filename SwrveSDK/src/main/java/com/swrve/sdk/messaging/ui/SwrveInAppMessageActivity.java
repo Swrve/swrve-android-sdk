@@ -12,6 +12,7 @@ import android.os.Bundle;
 
 import androidx.annotation.VisibleForTesting;
 
+import com.swrve.sdk.QaUser;
 import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveBase;
 import com.swrve.sdk.SwrveHelper;
@@ -161,6 +162,7 @@ public class SwrveInAppMessageActivity extends Activity {
                 SwrveLogger.e("Couldn't launch install action for: %s", exp, appInstallLink);
             }
         }
+        qaUserCampaignButtonClicked(button);
     }
 
     public void notifyOfCustomButtonPress(SwrveButton button, String resolvedButtonAction) {
@@ -178,6 +180,7 @@ public class SwrveInAppMessageActivity extends Activity {
                 SwrveLogger.e("Couldn't launch default custom action: %s", e, resolvedButtonAction);
             }
         }
+        qaUserCampaignButtonClicked(button);
     }
 
     public void notifyOfClipboardButtonPress(SwrveButton button, String stringToCopy) {
@@ -206,6 +209,7 @@ public class SwrveInAppMessageActivity extends Activity {
         if (sdk.getDismissButtonListener() != null) {
             sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), button.getName());
         }
+        qaUserCampaignButtonClicked(button);
     }
 
     @Override
@@ -227,5 +231,28 @@ public class SwrveInAppMessageActivity extends Activity {
         if (message != null && message.getCampaign() != null) {
             message.getCampaign().messageDismissed();
         }
+    }
+
+    private void qaUserCampaignButtonClicked(SwrveButton button) {
+        if (!QaUser.isLoggingEnabled()) {
+            return;
+        }
+        int campaignId = message.getCampaign().getId();
+        int variantId = message.getCampaign().getVariantIdAtIndex(0);
+        String buttonName = button.getName();
+        String actionType = "";
+        switch (button.getActionType()) {
+            case Install:
+                actionType = "install";
+                break;
+            case Dismiss:
+                actionType = "dismiss";
+                break;
+            case Custom:
+                actionType = "deeplink";
+                break;
+        }
+        String actionValue = SwrveHelper.isNullOrEmpty(button.getAction()) ? actionType : button.getAction();
+        QaUser.campaignButtonClicked(campaignId, variantId, buttonName, actionType, actionValue);
     }
 }

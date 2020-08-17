@@ -1,9 +1,9 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.QaCampaignInfo;
 import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
-import com.swrve.sdk.SwrveCampaignDisplayer.Result;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.swrve.sdk.SwrveCampaignDisplayer.DisplayResult.CAMPAIGN_NOT_DOWNLOADED;
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
@@ -71,6 +71,14 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         return messages;
     }
 
+    public int getVariantIdAtIndex(int index) {
+        int variantId = -1;
+        if (messages != null & messages.size() > 0) {
+            variantId = messages.get(index).getId();
+        }
+        return variantId;
+    }
+
     protected void setMessages(List<SwrveMessage> messages) {
         this.messages = messages;
     }
@@ -88,15 +96,15 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
      * @param event           trigger event
      * @param payload         payload to compare conditions against
      * @param now             device time
-     * @param campaignDisplayResult will contain the reason the campaign returned no message
+     * @param qaCampaignInfoMap will contain the reason the campaign showed or didn't show
      * @return SwrveMessage message setup to the given trigger or null
      * otherwise.
      */
-    public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, Result> campaignDisplayResult) {
-        boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, campaignDisplayResult, messages.size());
+    public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
+        boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, qaCampaignInfoMap, messages.size());
         if (canShowCampaign) {
             SwrveLogger.i("%s matches a trigger in %s", event, id);
-            return getNextMessage(campaignDisplayResult);
+            return getNextMessage(qaCampaignInfoMap);
         }
         return null;
     }
@@ -124,7 +132,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         return null;
     }
 
-    protected SwrveMessage getNextMessage(Map<Integer, Result> campaignDisplayResult) {
+    protected SwrveMessage getNextMessage(Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
         if (randomOrder) {
             List<SwrveMessage> randomMessages = new ArrayList<>(messages);
             Collections.shuffle(randomMessages);
@@ -141,8 +149,9 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         }
 
         String resultText = "Campaign " + this.getId() + " hasn't finished downloading.";
-        if (campaignDisplayResult != null) {
-            campaignDisplayResult.put(id, campaignDisplayer.buildResult(CAMPAIGN_NOT_DOWNLOADED, resultText));
+        if (qaCampaignInfoMap != null) {
+            int variantId = getVariantIdAtIndex(0);
+            qaCampaignInfoMap.put(id, new QaCampaignInfo(id, variantId, IAM, false, resultText));
         }
         SwrveLogger.i(resultText);
 

@@ -59,7 +59,7 @@ public class SwrveCampaignDeliveryTest extends SwrveBaseTest {
         mockedPushMsg .putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, pushId);
 
         SwrveCampaignDeliveryAsyncTask deliveryNormalPush = new SwrveCampaignDeliveryAsyncTask(mockedPushMsg);
-        String deliveryNormalPushEventString  = deliveryNormalPush.getEventData();
+        String deliveryNormalPushEventString  = deliveryNormalPush.getEventData().get(0);
         this.testEventData(deliveryNormalPushEventString, false, pushId);
 
 
@@ -67,7 +67,7 @@ public class SwrveCampaignDeliveryTest extends SwrveBaseTest {
         mockedSilentPushMsg.putString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, pushId);
 
         SwrveCampaignDeliveryAsyncTask deliverySilentPush = new SwrveCampaignDeliveryAsyncTask(mockedSilentPushMsg );
-        String silentPushEventString = deliverySilentPush.getEventData();
+        String silentPushEventString = deliverySilentPush.getEventData().get(0);
         this.testEventData(silentPushEventString, true, pushId);
     }
 

@@ -122,13 +122,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     private void _setRegistrationId(String userId, String regId) {
         if (registrationId == null || !registrationId.equals(regId)) {
             registrationId = regId;
-            if (qaUser != null) {
-                qaUser.logDeviceInfo(getDeviceInfo());
-            }
-            // Store registration id
-            multiLayerLocalStorage.setCacheEntry(profileManager.getUserId(), CACHE_REGISTRATION_ID, registrationId);
-            // Send token now
-            sendDeviceTokenUpdateNow(userId);
+            multiLayerLocalStorage.setCacheEntry(profileManager.getUserId(), CACHE_REGISTRATION_ID, registrationId); // Store registration id
+            sendDeviceTokenUpdateNow(userId); // Send token now
         }
     }
 

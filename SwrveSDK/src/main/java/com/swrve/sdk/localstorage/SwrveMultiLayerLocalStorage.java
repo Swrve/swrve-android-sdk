@@ -98,6 +98,12 @@ public class SwrveMultiLayerLocalStorage {
         return null;
     }
 
+    public boolean hasQueuedEvents(String userId) {
+        int numberOfEvents = 1; // only need to query for one event
+        final LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = getCombinedFirstNEvents(numberOfEvents, userId);
+        return !combinedEvents.isEmpty();
+    }
+
     public LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> getCombinedFirstNEvents(Integer n, String userId) {
         synchronized (EVENT_LOCK) {
             LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> result = new LinkedHashMap<>();

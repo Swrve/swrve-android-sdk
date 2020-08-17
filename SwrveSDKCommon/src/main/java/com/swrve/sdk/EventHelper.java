@@ -9,10 +9,12 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_ENGAGED;
@@ -22,7 +24,6 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
-import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 
 /**
  * Used internally to generate JSON batch strings from event data.
@@ -51,6 +52,17 @@ final class EventHelper {
         return events;
     }
 
+    public static List<String> createSessionStartEvent(long time, int seqNum) {
+        List<String> events = new ArrayList<>();
+        try {
+            String eventString = EventHelper.eventAsJSON("session_start", null, null, seqNum, time);
+            events.add(eventString);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception building session start event", e);
+        }
+        return events;
+    }
+
     /*
      * Generate JSON to be stored in EventLocalStorage and eventually sent to
      * the batch API to inform Swrve of these events.
@@ -74,9 +86,8 @@ final class EventHelper {
         return obj.toString();
     }
 
-    public static String qaLogEventAsJSON(int seqnum, long time, String logSource, String logType, String logDetails) throws JSONException {
+    public static String qaLogEventAsJSON(long time, String logSource, String logType, String logDetails) throws JSONException {
         JSONObject obj = new JSONObject();
-        obj.put("seqnum", seqnum);
         obj.put("time", time);
         obj.put("type", "qa_log_event");
         obj.put("log_source", logSource);

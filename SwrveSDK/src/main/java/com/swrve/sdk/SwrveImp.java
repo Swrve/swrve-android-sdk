@@ -9,11 +9,12 @@ import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Build;
 import android.provider.Settings;
-import androidx.core.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
+
+import androidx.core.app.ActivityCompat;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -21,7 +22,6 @@ import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.InMemoryLocalStorage;
-import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
@@ -29,9 +29,8 @@ import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
-import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
-import com.swrve.sdk.qa.SwrveQAUser;
+import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.RESTClient;
 
@@ -50,7 +49,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -69,6 +67,8 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA_RESET_DEVICE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
 
@@ -77,8 +77,8 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "7.1.0";
-    protected static final int CAMPAIGN_ENDPOINT_VERSION = 6;
+    protected static String version = "7.2.0";
+    protected static final int CAMPAIGN_ENDPOINT_VERSION = 7;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -117,7 +117,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected boolean destroyed;
     protected SwrveMultiLayerLocalStorage multiLayerLocalStorage;
     protected IRESTClient restClient;
-    protected IRESTClient qaRestClient;
     protected ExecutorService storageExecutor;
     protected ExecutorService restClientExecutor;
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
@@ -148,7 +147,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected String simOperatorIsoCountryCode;
     protected String simOperatorCode;
     protected String androidId;
-    protected SwrveQAUser qaUser;
     protected SwrveDeeplinkManager swrveDeeplinkManager;
     protected SwrveCampaignInfluence campaignInfluence = new SwrveCampaignInfluence();
     protected String notificationSwrveCampaignId;
@@ -157,6 +155,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected SwrveSessionListener sessionListener;
     protected List<EventQueueItem> pausedEvents = Collections.synchronizedList(new ArrayList<EventQueueItem>());
     protected Map<String, String> lastEventPayloadUsed;
+    protected String foregroundActivity = "";
 
     protected SwrveImp(Application application, int appId, String apiKey, C config) {
         SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
@@ -233,10 +232,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             application.registerActivityLifecycleCallbacks(this);
             SwrveLogger.i("registered ActivityLifecycleCallbacks.");
         }
-    }
-
-    protected void queueSessionStart() {
-        queueEvent("session_start", null, null);
     }
 
     protected Context bindToContext(Activity activity) {
@@ -424,7 +419,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         lastSessionTick = getSessionTime() + newSessionInterval;
     }
 
-    protected void getDeviceInfo(Context context) {
+    protected void buildDeviceInfo(Context context) {
         try {
             Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
             DisplayMetrics metrics = new DisplayMetrics();
@@ -499,15 +494,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_REALTIME_USER_PROPERTIES, userPropertiesContent.toString(), getUniqueKey(userId)));
     }
 
-    protected void saveIsQaUserInCache(final boolean isQaUser) {
+    protected void updateQaUser(final boolean isQaUser, final boolean resetDevice) {
         final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
-        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA, String.valueOf(isQaUser), getUniqueKey(userId)));
-    }
-
-    protected void saveQaUserResetDeviceInCache(JSONObject jsonQa) {
-        final boolean resetDevice = jsonQa.optBoolean("reset_device_state", false);
-        final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
-        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA_RESET_DEVICE, String.valueOf(resetDevice), getUniqueKey(userId)));
+        storageExecutorExecute(() -> {
+            multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA, String.valueOf(isQaUser), getUniqueKey(userId));
+            multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA_RESET_DEVICE, String.valueOf(resetDevice), getUniqueKey(userId));
+            QaUser.update();
+        });
     }
 
     protected void autoShowMessages() {
@@ -522,10 +515,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             return;
         }
 
+        Map<Integer, QaCampaignInfo> dummyQaCampaignInfoMap =  new HashMap<>(); // no qalog triggered from this.
+        Map<String, String> dummyEmptyPayload = new HashMap<>();
         for (final SwrveBaseCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-            Map<String, String> emptyPayload = new HashMap<>();
-            boolean canTrigger = campaignDisplayer.canTrigger(campaign, SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, emptyPayload, null);
+            boolean canTrigger = campaignDisplayer.canTrigger(campaign, SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, dummyEmptyPayload, dummyQaCampaignInfoMap);
             if (canTrigger) {
                 synchronized (this) {
                     if (autoShowMessagesEnabled && activityContext != null) {
@@ -564,6 +558,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 if (conversation != null) {
                     conversationListener.onMessage(conversation);
                     autoShowMessagesEnabled = false;
+                    QaUser.campaignTriggeredMessageNoDisplay(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, null);
                 }
             }
         } catch (Exception exp) {
@@ -586,7 +581,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     @SuppressLint("UseSparseArrays")
-    protected void loadCampaignsFromJSON(String userId, JSONObject json, Map<Integer, SwrveCampaignState> states) {
+    protected void loadCampaignsFromJSON(String userId, JSONObject json, Map<Integer, SwrveCampaignState> states, boolean loadPreviousCampaignState) {
         if (json == null) {
             SwrveLogger.i("NULL JSON for campaigns, aborting load.");
             return;
@@ -649,42 +644,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             SwrveLogger.i("App rules OK: Delay Seconds: %s Max shows: %s", delay, maxShows);
             SwrveLogger.i("Time is %s show messages after %s", now.toString(), showMessagesAfterLaunch.toString());
 
-            Map<Integer, String> campaignsDownloaded = null;
-
-            // QA
-            boolean wasPreviouslyQAUser = (qaUser != null);
-            if (json.has("qa")) {
-                JSONObject jsonQa = json.getJSONObject("qa");
-                campaignsDownloaded = new HashMap<>();
-                SwrveLogger.i("You are a QA user!");
-                if (qaRestClient == null) {
-                    qaRestClient = new RESTClient(config.getHttpTimeout());
-                }
-                qaUser = new SwrveQAUser(appId, apiKey, profileManager.getUserId(), qaRestClient, jsonQa);
-                qaUser.bindToServices();
-
-                if (jsonQa.has("campaigns")) {
-                    JSONArray jsonQaCampaigns = jsonQa.getJSONArray("campaigns");
-                    for (int i = 0; i < jsonQaCampaigns.length(); i++) {
-                        JSONObject jsonQaCampaign = jsonQaCampaigns.getJSONObject(i);
-                        int campaignId = jsonQaCampaign.getInt("id");
-                        String campaignReason = jsonQaCampaign.getString("reason");
-
-                        SwrveLogger.i("Campaign %s not downloaded because: %s", campaignId, campaignReason);
-
-                        // Add campaign for QA purposes
-                        campaignsDownloaded.put(campaignId, campaignReason);
-                    }
-                }
-                saveIsQaUserInCache(true);
-                saveQaUserResetDeviceInCache(jsonQa);
-                QaUser.update();
-            } else if (qaUser != null) {
-                qaUser.unbindToServices();
-                qaUser = null;
-                saveIsQaUserInCache(false);
-            }
-
             JSONArray jsonCampaigns = json.getJSONArray("campaigns");
             List<Integer> newCampaignIds = new ArrayList<>();
 
@@ -705,7 +664,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 }
             }
 
-            boolean mustLoadPreviousState = (wasPreviouslyQAUser || qaUser == null || !qaUser.isResetDevice());
+            List<QaCampaignInfo> qaCampaignInfoList = new ArrayList<>();
             List<SwrveBaseCampaign> newCampaigns = new ArrayList<>();
             Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
             for (int i = 0, j = jsonCampaigns.length(); i < j; i++) {
@@ -741,7 +700,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         assetsQueue.addAll(campaignAssetQueue);
 
                         // Check if we need to reset the device for QA, otherwise load campaign state
-                        if (mustLoadPreviousState) {
+                        if (loadPreviousCampaignState) {
                             SwrveCampaignState state = states.get(campaign.getId());
                             if (state != null) {
                                 campaign.setSaveableState(state);
@@ -752,9 +711,14 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         campaignsState.put(campaign.getId(), campaign.getSaveableState());
                         SwrveLogger.i("Got campaign with id %s", campaign.getId());
 
-                        if (qaUser != null) {
-                            // Add campaign for QA purposes
-                            campaignsDownloaded.put(campaign.getId(), null);
+                        if (QaUser.isLoggingEnabled()) {
+                            if (campaign instanceof SwrveConversationCampaign) {
+                                int variantId = ((SwrveConversationCampaign) campaign).getConversation().getId();
+                                qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, CONVERSATION, false, ""));
+                            } else if (campaign instanceof SwrveInAppCampaign) {
+                                int variantId = ((SwrveInAppCampaign) campaign).getVariantIdAtIndex(0);
+                                qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, IAM, false, ""));
+                            }
                         }
                     }
                 } else {
@@ -762,10 +726,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 }
             }
 
-            // QA logging
-            if (qaUser != null) {
-                qaUser.talkSession(campaignsDownloaded);
-            }
+            QaUser.campaignsDownloaded(qaCampaignInfoList);
 
             // Launch load assets, then add to active campaigns
             // Note that campaign is also added to campaigns list in this function
@@ -981,7 +942,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     // Initialize campaigns with cache content
     protected void initCampaigns(String userId) {
         campaigns = new ArrayList<>();
-        campaignDisplayer = new SwrveCampaignDisplayer(qaUser);
+        campaignDisplayer = new SwrveCampaignDisplayer();
         campaignsState = new HashMap<>();
 
         try {
@@ -991,7 +952,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 // Load campaigns state
                 loadCampaignsStateFromCache();
                 // Update campaigns with the loaded JSON content
-                loadCampaignsFromJSON(userId, campaignsJson, campaignsState);
+                boolean loadPreviousCampaignState = !QaUser.isResetDevice();
+                loadCampaignsFromJSON(userId, campaignsJson, campaignsState, loadPreviousCampaignState);
                 SwrveLogger.i("Loaded campaigns from cache.");
             } else {
                 invalidateETag(userId);
@@ -1056,8 +1018,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
         // If there are any events to be sent, or if any events were sent since last refresh
         // send events queued, wait campaignsAndResourcesFlushRefreshDelay for events to reach servers and refresh
-        final LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = multiLayerLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush(), profileManager.getUserId());
-        if (!combinedEvents.isEmpty() || eventsWereSent) {
+        boolean hasQueuedEvents =  multiLayerLocalStorage.hasQueuedEvents(profileManager.getUserId());
+        if (hasQueuedEvents || eventsWereSent) {
+            SwrveLogger.d("SwrveSDK events recently queued or sent, so sending and executing a delayed refresh of campaigns");
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.sendQueuedEvents();
             eventsWereSent = false;
@@ -1080,18 +1043,22 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             return;
         }
 
-        final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-        // If there is an existing executor, shut it down. This will finish any tasks in progress, but not execute any tasks currently scheduled or accept new tasks
-        shutdownCampaignsAndResourcesTimer();
+        if (campaignsAndResourcesExecutor != null) {
+            SwrveLogger.d("SwrveSDK not creating a new timer for refreshing campaigns because there is already an existing one.");
+            return;
+        }
 
         // For session start, execute immediately.
         if (sessionStart) {
+            SwrveLogger.d("SwrveSDK sessionstart is true so executing an immediate refresh of campaigns before starting a delayed timer for refreshing campaigns.");
+            final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
             swrve.refreshCampaignsAndResources();
+            eventsWereSent = true; // this will force a refresh when the delayed campaignsAndResourcesExecutor executes.
         }
 
         // Start repeating timer to begin checking if campaigns/resources needs updating. It starts straight away.
-        eventsWereSent = true;
 
+        SwrveLogger.d("SwrveSDK starting repeating delayed timer for refreshing campaigns.");
         final ScheduledThreadPoolExecutor localExecutor = new ScheduledThreadPoolExecutor(1);
         localExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         localExecutor.scheduleWithFixedDelay(() -> checkForCampaignAndResourcesUpdates(), 0L, campaignsAndResourcesFlushFrequency.longValue(), TimeUnit.MILLISECONDS);
@@ -1100,11 +1067,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected void shutdownCampaignsAndResourcesTimer() {
         if (campaignsAndResourcesExecutor != null) {
+            SwrveLogger.d("SwrveSDK shutting down campaigns refresh timer.");
             try {
                 campaignsAndResourcesExecutor.shutdown();
             } catch (Exception e) {
                 SwrveLogger.e("Exception occurred shutting down campaignsAndResourcesExecutor", e);
             }
+            campaignsAndResourcesExecutor = null;
         }
     }
 

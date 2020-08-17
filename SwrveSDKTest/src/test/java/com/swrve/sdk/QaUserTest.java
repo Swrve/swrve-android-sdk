@@ -1,24 +1,26 @@
 package com.swrve.sdk;
 
-import android.os.Bundle;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class QaUserTest extends SwrveBaseTest {
@@ -44,15 +46,13 @@ public class QaUserTest extends SwrveBaseTest {
         Mockito.doReturn(appVersion).when(swrveCommonSpy).getAppVersion();
         Mockito.doReturn(deviceId).when(swrveCommonSpy).getDeviceId();
 
-        // robolectric does not clean up singletons correctly
-        SwrveTestUtils.removeSingleton(QaUser.class, "instance");
+        SwrveTestUtils.removeSingleton(QaUser.class, "instance"); // robolectric does not clean up singletons correctly
     }
 
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-        // robolectric does not clean up singletons correctly
-        SwrveTestUtils.removeSingleton(QaUser.class, "instance");
+        SwrveTestUtils.removeSingleton(QaUser.class, "instance"); // robolectric does not clean up singletons correctly
     }
 
     @Test
@@ -88,7 +88,7 @@ public class QaUserTest extends SwrveBaseTest {
         QaUser qaUserSpy = Mockito.spy(qaUser);
         QaUser.instance = qaUserSpy;
 
-        Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
         Mockito.doReturn(999L).when(qaUserSpy).getTime();
 
         Collection<QaGeoCampaignInfo> geoCampignInfoList = new ArrayList<>();
@@ -98,23 +98,22 @@ public class QaUserTest extends SwrveBaseTest {
 
         String logDetails =
                 "{" +
-                    "\"geoplace_id\":123," +
-                    "\"geofence_id\":456," +
-                    "\"action_type\":\"enter\"," +
-                    "\"campaigns\":[" +
-                    "{" +
+                        "\"geoplace_id\":123," +
+                        "\"geofence_id\":456," +
+                        "\"action_type\":\"enter\"," +
+                        "\"campaigns\":[" +
+                        "{" +
                         "\"variant_id\":1," +
                         "\"displayed\":true," +
                         "\"reason\":\"reason1\"" +
-                    "},{" +
+                        "},{" +
                         "\"variant_id\":4," +
                         "\"displayed\":false," +
                         "\"reason\":\"reason2\"" +
-                     "}" +
-                 "]}";
-        String body = getExpectedBody(qaUser, "geo-sdk","geo-campaign-triggered", logDetails);
-
-        verifyRestRequest(qaUserSpy, body);
+                        "}" +
+                        "]}";
+        String event = getExpectedEvent("geo-sdk", "geo-campaign-triggered", logDetails);
+        verifyEventQueued(qaUserSpy, event);
     }
 
     @Test
@@ -129,7 +128,7 @@ public class QaUserTest extends SwrveBaseTest {
         QaUser qaUserSpy = Mockito.spy(qaUser);
         QaUser.instance = qaUserSpy;
 
-        Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
         Mockito.doReturn(999L).when(qaUserSpy).getTime();
 
         QaUser.geoCampaignsDownloaded(123, 456, "enter", Collections.<QaGeoCampaignInfo>emptyList());
@@ -140,9 +139,8 @@ public class QaUserTest extends SwrveBaseTest {
                 "\"action_type\":\"enter\"," +
                 "\"campaigns\":[]" +
                 "}";
-        String body = getExpectedBody(qaUser, "geo-sdk","geo-campaigns-downloaded", logDetails);
-
-        verifyRestRequest(qaUserSpy, body);
+        String event = getExpectedEvent("geo-sdk", "geo-campaigns-downloaded", logDetails);
+        verifyEventQueued(qaUserSpy, event);
     }
 
     @Test
@@ -157,7 +155,7 @@ public class QaUserTest extends SwrveBaseTest {
         QaUser qaUserSpy = Mockito.spy(qaUser);
         QaUser.instance = qaUserSpy;
 
-        Mockito.doNothing().when(qaUserSpy).executeRestClient(Mockito.anyString(), Mockito.anyString());
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
         Mockito.doReturn(999L).when(qaUserSpy).getTime();
 
         List<QaGeoCampaignInfo> geoCampaignsDownloaded = new ArrayList();
@@ -168,46 +166,496 @@ public class QaUserTest extends SwrveBaseTest {
 
         String logDetails =
                 "{" +
-                    "\"geoplace_id\":123," +
-                    "\"geofence_id\":456," +
-                    "\"action_type\":\"enter\"," +
-                     "\"campaigns\":[" +
+                        "\"geoplace_id\":123," +
+                        "\"geofence_id\":456," +
+                        "\"action_type\":\"enter\"," +
+                        "\"campaigns\":[" +
                         "{\"variant_id\":1}," +
                         "{\"variant_id\":2}" +
-                     "]" +
+                        "]" +
+                        "}";
+        String event = getExpectedEvent("geo-sdk", "geo-campaigns-downloaded", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testCampaignsDownloaded() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        List<QaCampaignInfo> campaignInfoList = new ArrayList<>();
+        campaignInfoList.add(new QaCampaignInfo(1, 11, IAM, false, ""));
+        campaignInfoList.add(new QaCampaignInfo(2, 22, CONVERSATION, false, ""));
+
+        QaUser.campaignsDownloaded(campaignInfoList);
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"campaigns\":[" +
+                            "{" +
+                                "\"id\":1," +
+                                "\"variant_id\":11," +
+                                "\"type\":\"iam\"" +
+                            "}," +
+                            "{" +
+                                "\"id\":2," +
+                                "\"variant_id\":22," +
+                                "\"type\":\"conversation\"" +
+                            "}" +
+                        "]" +
                  "}";
-        String body = getExpectedBody(qaUser, "geo-sdk","geo-campaigns-downloaded", logDetails);
-
-        verifyRestRequest(qaUserSpy, body);
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaigns-downloaded", logDetails);
+        verifyEventQueued(qaUserSpy, event);
     }
 
-    private String getExpectedBody(QaUser qaUser, String logSource, String logType, String logDetails) {
+    @Test
+    public void testCampaignsAppRuleTriggered() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        List<QaCampaignInfo> campaignInfoList = new ArrayList<>();
+        campaignInfoList.add(new QaCampaignInfo(1, 11, IAM, false, ""));
+        campaignInfoList.add(new QaCampaignInfo(2, 22, CONVERSATION, false, ""));
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("k1", "v1");
+        payload.put("k2", "v2");
+        QaUser.campaignsAppRuleTriggered("myevent", payload, "Too soon");
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"event_name\":\"myevent\"," +
+                        "\"event_payload\":{" +
+                                "\"k1\":\"v1\"," +
+                                "\"k2\":\"v2\"" +
+                            "}," +
+                        "\"displayed\":false," +
+                        "\"reason\":\"Too soon\"," +
+                        "\"campaigns\":[]" +
+                 "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testCampaignTriggeredConversation() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, CONVERSATION, false, ""));
+        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, CONVERSATION, false, ""));
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("k1", "v1");
+        payload.put("k2", "v2");
+        QaUser.campaignTriggeredConversation("myevent", payload, false, qaCampaignInfoMap);
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"event_name\":\"myevent\"," +
+                        "\"event_payload\":{" +
+                                "\"k1\":\"v1\"," +
+                                "\"k2\":\"v2\"" +
+                            "}," +
+                        "\"displayed\":false," +
+                        "\"reason\":\"The loaded campaigns returned no conversation\"," +
+                        "\"campaigns\":[" +
+                            "{" +
+                                "\"id\":1," +
+                                "\"variant_id\":11," +
+                                "\"type\":\"conversation\"," +
+                                "\"displayed\":false," +
+                                "\"reason\":\"\"" +
+                            "}," +
+                            "{" +
+                                "\"id\":2," +
+                                "\"variant_id\":22," +
+                                "\"type\":\"conversation\"," +
+                                "\"displayed\":false," +
+                                "\"reason\":\"\"" +
+                            "}" +
+                        "]" +
+                 "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testCampaignTriggeredConversationDisplayed() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, CONVERSATION, false, ""));
+        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, CONVERSATION, true, ""));
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("k1", "v1");
+        payload.put("k2", "v2");
+        QaUser.campaignTriggeredConversation("myevent", payload, true, qaCampaignInfoMap);
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"event_name\":\"myevent\"," +
+                        "\"event_payload\":{" +
+                                "\"k1\":\"v1\"," +
+                                "\"k2\":\"v2\"" +
+                            "}," +
+                        "\"displayed\":true," +
+                        "\"reason\":\"\"," +
+                        "\"campaigns\":[" +
+                            "{" +
+                                "\"id\":1," +
+                                "\"variant_id\":11," +
+                                "\"type\":\"conversation\"," +
+                                "\"displayed\":false," +
+                                "\"reason\":\"\"" +
+                            "}," +
+                            "{" +
+                                "\"id\":2," +
+                                "\"variant_id\":22," +
+                                "\"type\":\"conversation\"," +
+                                "\"displayed\":true," +
+                                "\"reason\":\"\"" +
+                            "}" +
+                        "]" +
+                 "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testCampaignTriggeredIam() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, IAM, false, ""));
+        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, IAM, false, ""));
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("k1", "v1");
+        payload.put("k2", "v2");
+        QaUser.campaignTriggeredMessage("myevent", payload, false, qaCampaignInfoMap);
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                    "\"event_name\":\"myevent\"," +
+                    "\"event_payload\":{" +
+                        "\"k1\":\"v1\"," +
+                        "\"k2\":\"v2\"" +
+                    "}," +
+                    "\"displayed\":false," +
+                    "\"reason\":\"The loaded campaigns returned no message\"," +
+                    "\"campaigns\":[" +
+                        "{" +
+                            "\"id\":1," +
+                            "\"variant_id\":11," +
+                            "\"type\":\"iam\"," +
+                            "\"displayed\":false," +
+                            "\"reason\":\"\"" +
+                        "}," +
+                        "{" +
+                            "\"id\":2," +
+                            "\"variant_id\":22," +
+                            "\"type\":\"iam\"," +
+                            "\"displayed\":false," +
+                            "\"reason\":\"\"" +
+                        "}" +
+                    "]" +
+                "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testCampaignTriggeredIamNoDisplay() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, IAM, false, ""));
+        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, IAM, false, ""));
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("k1", "v1");
+        payload.put("k2", "v2");
+        QaUser.campaignTriggeredMessageNoDisplay("myevent", payload);
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                    "\"event_name\":\"myevent\"," +
+                    "\"event_payload\":{" +
+                        "\"k1\":\"v1\"," +
+                        "\"k2\":\"v2\"" +
+                    "}," +
+                    "\"displayed\":false," +
+                    "\"reason\":\"No In App Message triggered because Conversation displayed\"," +
+                    "\"campaigns\":[]" +
+                "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testCampaignTriggeredIamDisplayed() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, IAM, false, ""));
+        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, IAM, true, ""));
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("k1", "v1");
+        payload.put("k2", "v2");
+        QaUser.campaignTriggeredConversation("myevent", payload, true, qaCampaignInfoMap);
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"event_name\":\"myevent\"," +
+                        "\"event_payload\":{" +
+                                "\"k1\":\"v1\"," +
+                                "\"k2\":\"v2\"" +
+                            "}," +
+                        "\"displayed\":true," +
+                        "\"reason\":\"\"," +
+                        "\"campaigns\":[" +
+                            "{" +
+                                "\"id\":1," +
+                                "\"variant_id\":11," +
+                                "\"type\":\"iam\"," +
+                                "\"displayed\":false," +
+                                "\"reason\":\"\"" +
+                            "}," +
+                            "{" +
+                                "\"id\":2," +
+                                "\"variant_id\":22," +
+                                "\"type\":\"iam\"," +
+                                "\"displayed\":true," +
+                                "\"reason\":\"\"" +
+                            "}" +
+                        "]" +
+                 "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testCampaignButtonClicked() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        QaUser.campaignButtonClicked(1, 2, "mybutton", "deeplink", "some_url");
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                    "\"campaign_id\":1," +
+                    "\"variant_id\":2," +
+                    "\"button_name\":\"mybutton\"," +
+                    "\"action_type\":\"deeplink\"," +
+                    "\"action_value\":\"some_url\"" +
+                 "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "campaign-button-clicked", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testWrappedEvent() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        // @formatter:off
+        String event1 =
+                "{" +
+                        "\"type\":\"session_start\"," +
+                        "\"time\":\"123\"," +
+                        "\"seqnum\":\"1\"" +
+                 "}";
+        String event2 =
+                "{" +
+                        "\"type\":\"device_update\"," +
+                        "\"time\":\"124\"," +
+                        "\"seqnum\":\"2\"," +
+                        "\"attributes\":" +
+                            "{" +
+                                "\"swrve.device_name\":\"Google Android\"," +
+                                "\"swrve.os_version\":9" +
+                            "}" +
+                 "}";
+        // @formatter:on
+        List<String> events = new ArrayList<>();
+        events.add(event1);
+        events.add(event2);
+
+        QaUser.wrappedEvents(events);
+
+        // @formatter:off
+        String expectedEvent1 =
+                "{" +
+                        "\"time\":999," +
+                        "\"type\":\"qa_log_event\"," +
+                        "\"log_source\":\"sdk\"," +
+                        "\"log_type\":\"event\"," +
+                        "\"log_details\":" +
+                        "{" +
+                            "\"type\":\"session_start\"," +
+                            "\"seqnum\":1," +
+                            "\"client_time\":123," +
+                            "\"payload\":\"{}\"," +
+                            "\"parameters\":{}" +
+                        "}" +
+                 "}";
+        String expectedEvent2 =
+                "{" +
+                        "\"time\":999," +
+                        "\"type\":\"qa_log_event\"," +
+                        "\"log_source\":\"sdk\"," +
+                        "\"log_type\":\"event\"," +
+                        "\"log_details\":" +
+                        "{" +
+                            "\"type\":\"device_update\"," +
+                            "\"seqnum\":2," +
+                            "\"client_time\":124," +
+                            "\"payload\":\"{}\"," +
+                            "\"parameters\":" +
+                            "{" +
+                                "\"attributes\":" +
+                                "{" +
+                                    "\"swrve.device_name\":\"Google Android\"," +
+                                    "\"swrve.os_version\":9" +
+                                "}" +
+                            "}" +
+                        "}" +
+                "}";
+        // @formatter:on
+
+        assertEquals(2, qaUserSpy.qaLogQueue.size());
+        assertEquals(expectedEvent1, qaUserSpy.qaLogQueue.get(0));
+        assertEquals(expectedEvent2, qaUserSpy.qaLogQueue.get(1));
+    }
+
+    // @formatter:off
+    private String getExpectedEvent(String logSource, String logType, String logDetails) {
         return "{" +
-                   "\"user\":\"" + qaUser.userId + "\"," +
-                   "\"session_token\":\"" + qaUser.sessionToken + "\"," +
-                   "\"version\":\"3\"," +
-                   "\"app_version\":\"" + appVersion + "\"," +
-                   "\"unique_device_id\":\"" + deviceId + "\"," +
-                   "\"data\":[" +
-                       "{" +
-                           "\"seqnum\":1," +
-                           "\"time\":999," +
-                           "\"type\":\"qa_log_event\"," +
-                           "\"log_source\":\"" + logSource + "\"," +
-                           "\"log_type\":\"" + logType + "\"," +
-                           "\"log_details\":" + logDetails +
-                       "}" +
-                   "]" +
-               "}";
+                    "\"time\":999," +
+                    "\"type\":\"qa_log_event\"," +
+                    "\"log_source\":\"" + logSource + "\"," +
+                    "\"log_type\":\"" + logType + "\"," +
+                    "\"log_details\":" + logDetails +
+                "}";
     }
+    // @formatter:on
 
-    private void verifyRestRequest(QaUser qaUserSpy, String body) {
-        ArgumentCaptor<String> endPointCaptor= ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(qaUserSpy, Mockito.atLeastOnce()).executeRestClient(endPointCaptor.capture(), bodyCaptor.capture());
-        assertEquals(1, endPointCaptor.getAllValues().size());
-        assertEquals(batchUrl, endPointCaptor.getAllValues().get(0) );
-        assertEquals(1, bodyCaptor.getAllValues().size());
-        assertEquals(body, bodyCaptor.getAllValues().get(0));
+    private void verifyEventQueued(QaUser qaUserSpy, String event) {
+        assertEquals(1, qaUserSpy.qaLogQueue.size());
+        assertEquals(event, qaUserSpy.qaLogQueue.get(0));
     }
 }

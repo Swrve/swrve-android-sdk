@@ -68,10 +68,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
         try {
             if (registrationId == null || !registrationId.equals(regId)) {
                 registrationId = regId;
-                if (qaUser != null) {
-                    qaUser.logDeviceInfo(getDeviceInfo());
-                }
-
                 queueDeviceUpdateNow(getUserId(), profileManager.getSessionToken(), true);
             }
         } catch (Exception ex) {

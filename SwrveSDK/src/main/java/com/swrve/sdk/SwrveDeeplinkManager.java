@@ -85,7 +85,7 @@ class SwrveDeeplinkManager {
         this.config = config;
         this.context = context;
         this.swrveAssetsManager = swrveAssetsManager;
-        this.swrveCampaignDisplayer = new SwrveCampaignDisplayer(null);
+        this.swrveCampaignDisplayer = new SwrveCampaignDisplayer();
         setRestClient(restClient);
     }
 

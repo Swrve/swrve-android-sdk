@@ -1,42 +1,62 @@
 package com.swrve.sdk;
 
+import android.content.Intent;
 import android.os.Build;
 
 import com.google.common.collect.Lists;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
-
-import org.junit.Assert;
+import com.swrve.sdk.conversations.ui.ConversationActivity;
 
 import org.json.JSONObject;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
+import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.android.controller.ActivityController;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class SwrveUnitTest extends SwrveBaseTest {
 
+    private static final String iso8601regex = "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2]\\d|3[0-1])T(?:[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d.\\d\\d\\d(Z|[+]\\d\\d:\\d\\d)";
     private Swrve swrveSpy;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         swrveSpy = SwrveTestUtils.createSpyInstance();
+        SwrveTestUtils.disableRestClientExecutor(swrveSpy);
         swrveSpy.init(mActivity);
     }
 
@@ -84,19 +104,19 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         swrveSpy = SwrveTestUtils.createSpyInstance();
 
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
+        verify(swrveSpy, atMost(0)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued
+        verify(swrveSpy, atMost(0)).deviceUpdate(anyString(), any(JSONObject.class));
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info queued once upon init
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
+        verify(swrveSpy, atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info queued once upon init
+        verify(swrveSpy, atMost(1)).deviceUpdate(anyString(), any(JSONObject.class));
 
         swrveSpy.onCreate(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
+        verify(swrveSpy, atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        verify(swrveSpy, atMost(1)).deviceUpdate(anyString(), any(JSONObject.class));
 
         swrveSpy.onResume(mActivity);
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).deviceUpdate(anyString(),Mockito.any(JSONObject.class));
+        verify(swrveSpy, atMost(1)).queueDeviceUpdateNow(anyString(), anyString(), Mockito.anyBoolean()); // device info not queued, because sdk already initialised
+        verify(swrveSpy, atMost(1)).deviceUpdate(anyString(), any(JSONObject.class));
     }
 
     @Test
@@ -132,12 +152,12 @@ public class SwrveUnitTest extends SwrveBaseTest {
         Map<String, String> payloadInvalid = new HashMap<>();
         payloadInvalid.put(null, null);
         SwrveSDK.event("this_name", payloadInvalid);
-        Mockito.verify(swrveSpy, Mockito.never()).queueEvent(anyString(), anyMap(), anyMap());
+        verify(swrveSpy, never()).queueEvent(anyString(), anyMap(), anyMap());
 
         Map<String, String> payloadValid = new HashMap<>();
         payloadValid.put("valid", null);
         SwrveSDK.event("this_name", payloadValid);
-        Mockito.verify(swrveSpy, Mockito.times(1)).queueEvent(anyString(), anyMap(), anyMap());
+        verify(swrveSpy, Mockito.times(1)).queueEvent(anyString(), anyMap(), anyMap());
     }
 
     @Test
@@ -258,12 +278,12 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         // create instance should not call disableAutoShowAfterDelay and the default for autoShowMessagesEnabled should be false
         Assert.assertEquals("AutoDisplayMessages should be true upon sdk init.", false, swrveSpy.autoShowMessagesEnabled);
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).disableAutoShowAfterDelay();
+        verify(swrveSpy, atMost(0)).disableAutoShowAfterDelay();
 
         swrveSpy.onCreate(mActivity);
 
         // After init of sdk the disableAutoShowAfterDelay should be called
-        Mockito.verify(swrveSpy, Mockito.atMost(1)).disableAutoShowAfterDelay();
+        verify(swrveSpy, atMost(1)).disableAutoShowAfterDelay();
 
         // sleep 2 seconds and test autoShowMessagesEnabled has been disabled.
         Thread.sleep(1000l);
@@ -289,32 +309,152 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertEquals(joined2, joined1);
     }
 
-//    Intermittent test commented for now.
-//    @Test
-//    public void testSessionListener() {
-//
-//        assertNull(swrveSpy.sessionListener); // null to start with
-//        SwrveSessionListener mockSessionListener = Mockito.mock(SwrveSessionListener.class);
-//        swrveSpy.setSessionListener(mockSessionListener);
-//        assertEquals(mockSessionListener, swrveSpy.sessionListener);
-//
-//        Mockito.verify(mockSessionListener, Mockito.never()).sessionStarted();
-//
-//        // init is called in setup which will start first session tick
-//
-//        // calling onResume should not invoke sessionStarted because its the same session
-//        swrveSpy.onResume(mActivity);
-//        Mockito.verify(mockSessionListener, Mockito.times(0)).sessionStarted();
-//
-//        // calling onResume 2nd and 3rd time should not invoke sessionStarted because its the same session
-//        swrveSpy.onResume(mActivity);
-//        Mockito.verify(mockSessionListener, Mockito.times(0)).sessionStarted();
-//        swrveSpy.onResume(mActivity);
-//        Mockito.verify(mockSessionListener, Mockito.times(0)).sessionStarted();
-//
-//        // fast forward to time after session expires and calling onResume should invoke sessionStarted once more
-//        Mockito.doReturn(swrveSpy.lastSessionTick + 40000).when(swrveSpy).getSessionTime();
-//        swrveSpy.onResume(mActivity);
-//        Mockito.verify(mockSessionListener, Mockito.times(1)).sessionStarted();
-//    }
+    @Test
+    public void testStartStopCampaignsAndResourcesTimer() {
+
+        doNothing().when(swrveSpy).shutdownCampaignsAndResourcesTimer();
+        doNothing().when(swrveSpy).startCampaignsAndResourcesTimer(anyBoolean());
+
+        // blank to begin with until onResume is called
+        assertEquals("", swrveSpy.foregroundActivity);
+
+        // Resume MainActivity
+        swrveSpy.onResume(mActivity);
+
+        // verify MainActivity is foregroundActivity and startCampaignsAndResourcesTimer is called
+        assertEquals(mActivity.getClass().getCanonicalName(), swrveSpy.foregroundActivity);
+        verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(true);
+
+        // Resume ConversationActivity
+        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
+        ConversationActivity conversationActivity = activityController.get();
+        swrveSpy.onResume(conversationActivity);
+
+        // verify conversationActivity is foregroundActivity and startCampaignsAndResourcesTimer is called
+        assertEquals(conversationActivity.getClass().getCanonicalName(), swrveSpy.foregroundActivity);
+        verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(false); // session start is false this time
+
+        // Stop main activity
+        swrveSpy.onStop(mActivity);
+
+        // verify foregroundActivity is still conversationActivity and shutdownCampaignsAndResourcesTimer is not called
+        assertEquals(conversationActivity.getClass().getCanonicalName(), swrveSpy.foregroundActivity);
+        verify(swrveSpy, never()).shutdownCampaignsAndResourcesTimer();
+
+        // Stop conversation activity
+        swrveSpy.onStop(conversationActivity);
+
+        // verify foregroundActivity is blank and shutdownCampaignsAndResourcesTimer is called
+        assertEquals("", swrveSpy.foregroundActivity);
+        verify(swrveSpy, atLeastOnce()).shutdownCampaignsAndResourcesTimer();
+    }
+
+    @Test
+    public void testSessionStartUponInit() throws Exception {
+        // verify that sessionStart is first and then startCampaignsAndResourcesTimer.
+        InOrder inOrder = inOrder(swrveSpy, swrveSpy);
+        inOrder.verify(swrveSpy, times(1)).sessionStart();
+        inOrder.verify(swrveSpy, times(1)).startCampaignsAndResourcesTimer(true);
+    }
+
+    @Test
+    public void testSessionStart() {
+        SwrveSessionListener sessionListenerMock =  mock(SwrveSessionListener.class);
+        swrveSpy.sessionListener = sessionListenerMock;
+        SwrveSDK.sessionStart();
+        verify(swrveSpy, atLeastOnce()).restClientExecutorExecute(any(Runnable.class));
+        verify(sessionListenerMock, atLeastOnce()).sessionStarted();
+    }
+
+    @Test
+    public void testSendSessionStart() throws Exception {
+
+        ISwrveEventListener eventListenerMock = mock(ISwrveEventListener.class);
+        swrveSpy.eventListener = eventListenerMock;
+
+        SwrveEventsManager eventsManagerMock =  mock(SwrveEventsManager.class);
+        doReturn(eventsManagerMock).when(swrveSpy).getSwrveEventsManager(anyString(), anyString(), anyString());
+        doReturn(100).when(swrveSpy).getNextSequenceNumber();
+
+        swrveSpy.sendSessionStart(123);
+
+        String deviceId = swrveSpy.multiLayerLocalStorage.getCacheEntry(swrveSpy.getUserId(), "device_id");
+        verify(swrveSpy, atLeastOnce()).getSwrveEventsManager(swrveSpy.getUserId(), deviceId, swrveSpy.getSessionKey());
+
+        verify(swrveSpy, atLeastOnce()).restClientExecutorExecute(any(Runnable.class));
+        List<String> list = new ArrayList<>();
+        list.add("{\"type\":\"session_start\",\"time\":123,\"seqnum\":100}");
+        verify(eventsManagerMock, atLeastOnce()).storeAndSendEvents(list, swrveSpy.multiLayerLocalStorage.getPrimaryStorage());
+
+        // verify eventlistener triggered for auto showing new session campaigns
+        verify(eventListenerMock, atLeastOnce()).onEvent("Swrve.session.start", null);
+    }
+
+    @Test
+    public void testOnResumeNewSession() throws Exception {
+
+        verify(swrveSpy, times(1)).sessionStart(); // init was called in setup so sessionStart already called
+
+        // fast forward time but not far enough for a new session to be started
+        long newSessionTime = swrveSpy.lastSessionTick - 100;
+        doReturn(newSessionTime).when(swrveSpy).getSessionTime();
+        swrveSpy.onResume(mActivity);
+        verify(swrveSpy, times(1)).sessionStart(); // session start is ill only once
+
+        // fast forward time for a new session to be started
+        newSessionTime = swrveSpy.lastSessionTick + 100;
+        doReturn(newSessionTime).when(swrveSpy).getSessionTime();
+        swrveSpy.onResume(mActivity);
+        // verify that new session "sessionStart" is first and then startCampaignsAndResourcesTimer.
+        InOrder inOrder = inOrder(swrveSpy, swrveSpy);
+        inOrder.verify(swrveSpy, times(2)).sessionStart();
+        inOrder.verify(swrveSpy, times(1)).generateNewSessionInterval();
+        inOrder.verify(swrveSpy, times(1)).startCampaignsAndResourcesTimer(true);
+        inOrder.verify(swrveSpy, times(1)).disableAutoShowAfterDelay();
+    }
+
+    @Test
+    public void testUserUpdateDate() throws Exception {
+
+        doNothing().when(swrveSpy).queueEvent(anyString(), anyMap(), anyMap());
+
+        SwrveSDK.userUpdate("a0", new Date());
+
+        ArgumentCaptor<String> eventStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Map> parametersMapCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map> payloadMapCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(swrveSpy, times(2)).queueEvent(eventStringCaptor.capture(), parametersMapCaptor.capture(), payloadMapCaptor.capture());
+
+        String eventType = eventStringCaptor.getValue();
+        assertEquals("user", eventType);
+        Map<String, Object> parameters = parametersMapCaptor.getValue();
+        Object attributes = parameters.get("attributes");
+        assertNotNull(attributes);
+        JSONObject jsonObject = (JSONObject)attributes;
+        String date = jsonObject.getString("a0");
+        assertNotNull(date);
+        Pattern regex = Pattern.compile(iso8601regex);
+        assertTrue(regex.matcher(date).matches());
+        Map<String, String> payload = payloadMapCaptor.getValue();
+        assertNull(payload);
+    }
+
+    @Test
+    public void testiso8601Regex() {
+        Pattern regex = Pattern.compile(iso8601regex);
+        String[] badinputs = new String[]{"2015-03-16T23:59:59+00:00", "2015-03-16T23:59:59+00", "2015-03-16T23:59:59+0000", "2015-03-16T23:59:59.000+00", "2015-03-16T23:59:59.000+0000",
+                "2015-03-16T23:59:59+09:00", "2015-17-16T23:59:59+10", "2015-03-16T23:59:59-0100", "2015-03-16T23:59:59.000+00", "2015-03-16T23:59:59.000+0000", "2015-03-16T23:59:59.500+00", "2015-03-16T23:59:59.600+0000", "2016-22-11T17:08:50.000Z"};
+        String[] goodInputs = new String[]{"2016-03-11T09:29:33.915Z", "2016-02-11T17:08:50.000Z", "2015-03-16T23:59:59.000Z", "2015-03-16T23:59:59.000+00:00", "2015-03-16T23:59:59.999Z", "2015-03-16T23:59:59.999+00:00"};
+        verifyRegex(regex, badinputs, goodInputs);
+    }
+
+    protected void verifyRegex(Pattern regex, String[] shouldFail, String[] shouldPass){
+        for (String candit : shouldFail) {
+            Assert.assertFalse(regex.matcher(candit).matches());
+        }
+        for (String candit : shouldPass) {
+            Assert.assertTrue(regex.matcher(candit).matches());
+        }
+    }
 }
