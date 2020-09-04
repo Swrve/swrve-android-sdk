@@ -813,7 +813,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         throw e;
                                     }
 
-
                                     boolean loadPreviousCampaignState = true;
                                     if (responseJson.toString().equals("{}")) { // if response is {} then etag hasn't changed.
                                         SwrveLogger.d("SwrveSDK etag has not changed");
@@ -825,9 +824,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         if (!wasPreviouslyResetDevice && resetDevice) {
                                             loadPreviousCampaignState = false;
                                         }
-                                        updateQaUser(true, resetDevice);
+                                        updateQaUser(jsonQa.toString());
                                     } else {
-                                        updateQaUser(false, false);
+                                        updateQaUser("");
                                     }
 
                                     if (responseJson.has("flush_frequency")) {

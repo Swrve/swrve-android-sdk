@@ -11,6 +11,9 @@ public class SwrveWakefulService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        if (intent == null) {
+            return;
+        }
         try {
             SwrveBackgroundEventSender sender = getBackgroundEventSender();
             sender.handleSendEvents(intent.getExtras());

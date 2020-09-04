@@ -64,7 +64,6 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
-import static com.swrve.sdk.ISwrveCommon.CACHE_QA_RESET_DEVICE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
@@ -77,7 +76,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "7.2.0";
+    protected static String version = "7.2.1";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 7;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
@@ -494,11 +493,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_REALTIME_USER_PROPERTIES, userPropertiesContent.toString(), getUniqueKey(userId)));
     }
 
-    protected void updateQaUser(final boolean isQaUser, final boolean resetDevice) {
+    protected void updateQaUser(final String qaUserJson) {
         final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
         storageExecutorExecute(() -> {
-            multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA, String.valueOf(isQaUser), getUniqueKey(userId));
-            multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA_RESET_DEVICE, String.valueOf(resetDevice), getUniqueKey(userId));
+            multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_QA, qaUserJson, getUniqueKey(userId));
             QaUser.update();
         });
     }

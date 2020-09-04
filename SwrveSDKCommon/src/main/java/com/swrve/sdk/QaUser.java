@@ -21,7 +21,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
-import static com.swrve.sdk.ISwrveCommon.CACHE_QA_RESET_DEVICE;
 
 public class QaUser {
 
@@ -89,10 +88,23 @@ public class QaUser {
         try {
             ISwrveCommon swrveCommon = SwrveCommon.getInstance();
             userId = swrveCommon.getUserId();
-            String qaString = swrveCommon.getCachedData(userId, CACHE_QA);
-            loggingEnabled = Boolean.parseBoolean(qaString);
-            String resetDeviceString = swrveCommon.getCachedData(userId, CACHE_QA_RESET_DEVICE);
-            resetDevice = Boolean.parseBoolean(resetDeviceString);
+            String qaJson = swrveCommon.getCachedData(userId, CACHE_QA);
+            if (SwrveHelper.isNullOrEmpty(qaJson)) {
+                loggingEnabled = false;
+                resetDevice = false;
+            } else {
+                try {
+                    JSONObject qaJsonObject = new JSONObject(qaJson);
+                    if (qaJsonObject.has("logging")) {
+                        loggingEnabled = qaJsonObject.optBoolean("logging", false);
+                    }
+                    if (qaJsonObject.has("reset_device_state")) {
+                        resetDevice = qaJsonObject.optBoolean("reset_device_state", false);
+                    }
+                } catch (Exception e) {
+                    SwrveLogger.e("SwrveSDK problem with decoding qauser json: %s", e, qaJson);
+                }
+            }
             if (loggingEnabled) {
                 appId = swrveCommon.getAppId();
                 apiKey = swrveCommon.getApiKey();

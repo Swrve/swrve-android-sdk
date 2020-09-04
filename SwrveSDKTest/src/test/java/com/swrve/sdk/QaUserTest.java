@@ -32,6 +32,7 @@ public class QaUserTest extends SwrveBaseTest {
     private String batchUrl = "https://someendpoint.com";
     private String appVersion = "appversion";
     private String deviceId = "4567";
+    private String qaJsonTrue = "{\"reset_device_state\":true,\"logging\":true}";
 
     @Before
     public void setUp() throws Exception {
@@ -60,13 +61,15 @@ public class QaUserTest extends SwrveBaseTest {
 
         QaUser qaUser = QaUser.getInstance();
         assertFalse(QaUser.isLoggingEnabled());
+        assertFalse(QaUser.isResetDevice());
         assertNotNull(QaUser.restClient);
         assertNull(qaUser.restClientExecutor);
 
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
+        assertTrue(QaUser.isResetDevice());
 
         assertEquals(appId, qaUser.appId);
         assertEquals(apiKey, qaUser.apiKey);
@@ -77,10 +80,33 @@ public class QaUserTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testInitAndUpdateNonQaUser() {
+
+        QaUser qaUser = QaUser.getInstance();
+        assertFalse(QaUser.isLoggingEnabled());
+        assertFalse(QaUser.isResetDevice());
+        assertNotNull(QaUser.restClient);
+        assertNull(qaUser.restClientExecutor);
+
+        Mockito.doReturn("{\"reset_device_state\":false,\"logging\":false}").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertFalse(QaUser.isLoggingEnabled());
+        assertFalse(QaUser.isResetDevice());
+
+        assertEquals(0, qaUser.appId);
+        assertNull(apiKey, qaUser.apiKey);
+        assertNull(batchUrl, qaUser.endpoint);
+        assertNull(appVersion, qaUser.appVersion);
+        assertNull(deviceId, qaUser.deviceId);
+        assertNull(qaUser.restClientExecutor);
+    }
+
+    @Test
     public void testGeoCampaignTriggered() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -120,7 +146,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testGeoCampaignsDownloadedWithNoCampaigns() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -147,7 +173,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testGeoCampaignsDownloadedWithCampaigns() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -182,7 +208,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignsDownloaded() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -224,7 +250,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignsAppRuleTriggered() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -265,7 +291,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignTriggeredConversation() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -321,7 +347,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignTriggeredConversationDisplayed() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -377,7 +403,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignTriggeredIam() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -433,7 +459,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignTriggeredIamNoDisplay() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -474,7 +500,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignTriggeredIamDisplayed() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -530,7 +556,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testCampaignButtonClicked() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());
@@ -561,7 +587,7 @@ public class QaUserTest extends SwrveBaseTest {
     public void testWrappedEvent() {
 
         QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn("true").when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
         QaUser.update();
         qaUser = QaUser.getInstance();
         assertTrue(QaUser.isLoggingEnabled());

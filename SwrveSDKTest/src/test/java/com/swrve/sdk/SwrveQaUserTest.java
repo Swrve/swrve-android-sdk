@@ -92,4 +92,24 @@ public class SwrveQaUserTest extends SwrveBaseTest {
         assertFalse(QaUser.isLoggingEnabled());
         assertFalse(QaUser.isResetDevice());
     }
+
+    @Test
+    public void testQAUserThenEtag() {
+
+        // execute the rest and storage calls on same threads
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+
+        // There should be a QA user
+        String campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "campaign_qa_reset.json");
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.init(mActivity);
+        assertTrue(QaUser.isLoggingEnabled());
+        assertTrue(QaUser.isResetDevice());
+
+        // Should remain a qauser when etag'ed response is received
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, "{}");
+        swrveSpy.refreshCampaignsAndResources();
+        assertTrue(QaUser.isLoggingEnabled());
+        assertTrue(QaUser.isResetDevice());
+    }
 }
