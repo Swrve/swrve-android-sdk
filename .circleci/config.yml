@@ -19,7 +19,7 @@ jobs:
           key: jars-{{ checksum "build.gradle" }}-{{ checksum "SwrveConversationSDK/build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
           name: Build and Test
-          command: CIRCLE_CI=1 ./gradlew build test
+          command: CIRCLE_CI=1 ./gradlew build test --no-daemon
       - store_test_results: # for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: SwrveSDKTest/build/test-results
 
