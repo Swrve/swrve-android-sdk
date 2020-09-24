@@ -382,4 +382,8 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     public boolean isStarted() {
         return false;
     }
+
+    @Override
+    public void saveEvent(String event) {
+    }
 }

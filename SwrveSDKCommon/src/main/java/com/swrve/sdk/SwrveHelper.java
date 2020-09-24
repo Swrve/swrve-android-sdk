@@ -36,6 +36,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import static android.content.Context.UI_MODE_SERVICE;
+import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_MOBILE;
+import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_TV;
 
 /**
  * Used internally to provide MD5, token generation and other helper methods.
@@ -243,12 +245,12 @@ public final class SwrveHelper {
         return targetSdkVersion;
     }
 
-    public static String getPlatformOS(Context context) {
+    public static String getPlatformDeviceType(Context context) {
         UiModeManager uiModeManager = (UiModeManager) context.getSystemService(UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            return "AndroidTV";
+            return DEVICE_TYPE_TV;
         }
-        return "Android";
+        return DEVICE_TYPE_MOBILE;
     }
 
     // Used by Unity

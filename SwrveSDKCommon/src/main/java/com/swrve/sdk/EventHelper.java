@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import android.content.Context;
+import android.os.Bundle;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,11 +13,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_APP_VERSION;
+import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_DATA;
+import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_SESSION_TOKEN;
+import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_UNIQUE_DEVICE_ID;
+import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_USER;
+import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_VERSION;
 import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DELIVERED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_ENGAGED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_ID_KEY;
@@ -36,6 +44,10 @@ final class EventHelper {
     }
 
     public static ArrayList<String> createGenericEvent(String id, String campaignType, String actionType, String contextId, String campaignId, Map<String, String> payload, int seqnum) throws JSONException {
+        return createGenericEvent(System.currentTimeMillis(), id, campaignType, actionType, contextId, campaignId, payload, seqnum);
+    }
+
+    public static ArrayList<String> createGenericEvent(long time, String id, String campaignType, String actionType, String contextId, String campaignId, Map<String, String> payload, int seqnum) throws JSONException {
         ArrayList<String> events = new ArrayList<>();
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(EVENT_ID_KEY, id);
@@ -47,7 +59,7 @@ final class EventHelper {
         if (SwrveHelper.isNotNullOrEmpty(campaignId)) {
             parameters.put(GENERIC_EVENT_CAMPAIGN_ID_KEY, campaignId);
         }
-        String eventAsJSON = EventHelper.eventAsJSON(EVENT_TYPE_GENERIC_CAMPAIGN, parameters, payload, seqnum, System.currentTimeMillis());
+        String eventAsJSON = EventHelper.eventAsJSON(EVENT_TYPE_GENERIC_CAMPAIGN, parameters, payload, seqnum, time);
         events.add(eventAsJSON);
         return events;
     }
@@ -102,12 +114,12 @@ final class EventHelper {
      */
     public static String eventsAsBatch(LinkedHashMap<Long, String> events, String userId, String appVersion, String sessionToken, String deviceId) throws JSONException {
         JSONObject batch = new JSONObject();
-        batch.put("user", userId);
-        batch.put("session_token", sessionToken);
-        batch.put("version", BATCH_API_VERSION);
-        batch.put("app_version", appVersion);
-        batch.put("unique_device_id", deviceId);
-        batch.put("data", orderedMapToJSONArray(events));
+        batch.put(BATCH_EVENT_KEY_USER, userId);
+        batch.put(BATCH_EVENT_KEY_SESSION_TOKEN, sessionToken);
+        batch.put(BATCH_EVENT_KEY_VERSION, BATCH_API_VERSION);
+        batch.put(BATCH_EVENT_KEY_APP_VERSION, appVersion);
+        batch.put(BATCH_EVENT_KEY_UNIQUE_DEVICE_ID, deviceId);
+        batch.put(BATCH_EVENT_KEY_DATA, orderedMapToJSONArray(events));
         return batch.toString();
     }
 
@@ -186,5 +198,49 @@ final class EventHelper {
         } catch (Exception e) {
             SwrveLogger.e("Exception trying to send button click event.", e);
         }
+    }
+
+    public static String getPushDeliveredBatchEvent(ArrayList<String> eventsList) throws Exception {
+        final String userId = SwrveCommon.getInstance().getUserId();
+        final String appVersion = SwrveCommon.getInstance().getAppVersion();
+        final String sessionKey = SwrveCommon.getInstance().getSessionKey();
+        final String deviceId = SwrveCommon.getInstance().getDeviceId();
+
+        LinkedHashMap<Long, String> batchEvents = new LinkedHashMap<>();
+        batchEvents.put(-1l, eventsList.get(0)); // id doesn't matter here so use -1
+        return EventHelper.eventsAsBatch(batchEvents, userId, appVersion, sessionKey, deviceId);
+    }
+
+    public static ArrayList<String> getPushDeliveredEvent(Bundle extras, long time) throws Exception {
+
+        if (extras == null || !SwrveHelper.isSwrvePush(extras)) {
+            return new ArrayList<>();
+        }
+
+        String id = extras.getString(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+
+        Map<String, String> payload = new HashMap<>();
+        if (SwrveHelper.isNullOrEmpty(id)) {
+            id = extras.getString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
+            payload.put("silent", String.valueOf(true));
+        } else {
+            payload.put("silent", String.valueOf(false));
+        }
+
+        int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();
+        ArrayList<String> events = EventHelper.createGenericEvent(time, id, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_DELIVERED, null, null, payload, seqNum);
+        return events;
+    }
+
+    public static String extractEventFromBatch(String batchEvent) throws Exception {
+        String event = "";
+        JSONObject batchEventJSONObject = new JSONObject(batchEvent);
+        if (batchEventJSONObject.has(BATCH_EVENT_KEY_DATA)) {
+            JSONArray eventsJSONArray = batchEventJSONObject.getJSONArray(BATCH_EVENT_KEY_DATA);
+            if (eventsJSONArray != null && eventsJSONArray.length() > 0) {
+                event = eventsJSONArray.getString(0); // could be more than one event but just returning the first one.
+            }
+        }
+        return event;
     }
 }

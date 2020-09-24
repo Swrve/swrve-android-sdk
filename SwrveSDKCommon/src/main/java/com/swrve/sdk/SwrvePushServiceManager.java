@@ -5,9 +5,12 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Bundle;
+
 import androidx.core.app.NotificationCompat;
 
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Date;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
@@ -65,9 +68,17 @@ class SwrvePushServiceManager {
         campaignInfluence.saveInfluencedCampaign(context, trackingId, msg, getNow());
     }
 
-    private void sendPushDeliveredEvent(Bundle extras) {
-        SwrveCampaignDeliveryAsyncTask task = new SwrveCampaignDeliveryAsyncTask(extras);
-        task.execute();
+    protected void sendPushDeliveredEvent(Bundle extras) {
+        try {
+            ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(extras, getTime());
+            if (eventsList != null && eventsList.size() > 0) {
+                String eventBody = EventHelper.getPushDeliveredBatchEvent(eventsList);
+                String endPoint = SwrveCommon.getInstance().getEventsServer() + "/1/batch";
+                getCampaignDeliveryManager().sendCampaignDelivery(endPoint, eventBody);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception in sendPushDeliveredEvent.", e);
+        }
     }
 
     private void processSilent(final Bundle msg, final  String silentId) {
@@ -152,11 +163,19 @@ class SwrvePushServiceManager {
         return new Date();
     }
 
+    protected long getTime() {
+        return getNow().getTime();
+    }
+
     protected SwrveNotificationBuilder getSwrveNotificationBuilder() {
         if (notificationBuilder == null) {
             ISwrveCommon swrveCommon = SwrveCommon.getInstance();
             notificationBuilder = new SwrveNotificationBuilder(context, swrveCommon.getNotificationConfig());
         }
         return notificationBuilder;
+    }
+
+    protected CampaignDeliveryManager getCampaignDeliveryManager() {
+        return new CampaignDeliveryManager(context);
     }
 }

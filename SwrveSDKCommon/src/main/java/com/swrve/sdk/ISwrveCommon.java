@@ -58,7 +58,14 @@ interface ISwrveCommon {
     String SWRVE_NOTIFICATIONS_ATTACHMENT   = "swrve.support.rich_attachment";
     String SWRVE_CAN_RECEIVE_AUTH_PUSH      = "swrve.can_receive_authenticated_push";
     String SWRVE_INIT_MODE                  = "swrve.sdk_init_mode";
-    String SWRVE_MANAGED_AUTO_START         = "swrve.managed_mode_autostart";
+
+    // batch event
+    String BATCH_EVENT_KEY_USER                     = "user";
+    String BATCH_EVENT_KEY_SESSION_TOKEN            = "session_token";
+    String BATCH_EVENT_KEY_VERSION                  = "version";
+    String BATCH_EVENT_KEY_APP_VERSION              = "app_version";
+    String BATCH_EVENT_KEY_UNIQUE_DEVICE_ID         = "unique_device_id";
+    String BATCH_EVENT_KEY_DATA                     = "data";
 
     // events
     String EVENT_ID_KEY                             = "id";
@@ -77,7 +84,16 @@ interface ISwrveCommon {
     String GENERIC_EVENT_CONTEXT_ID_KEY             = "contextId";
     String GENERIC_EVENT_CAMPAIGN_ID_KEY            = "campaignId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_TEXT        = "buttonText";
+    String GENERIC_EVENT_PAYLOAD_RUN_NUMBER         = "runNumber";
     String EVENT_FIRST_SESSION                      = "Swrve.first_session";
+
+    // platform information
+    String OS_ANDROID                         = "android";
+    String OS_ANDROID_TV                      = "android-tv";
+    String OS_AMAZON                          = "amazon-android";
+    String OS_AMAZON_TV                       = "amazon-android-tv";
+    String DEVICE_TYPE_MOBILE                 = "mobile";
+    String DEVICE_TYPE_TV                     = "tv";
 
     String getApiKey();
 
@@ -136,4 +152,6 @@ interface ISwrveCommon {
     void fetchNotificationCampaigns(Set<Long> campaignIds);
 
     File getCacheDir(Context context);
+
+    void saveEvent(String event);
 }

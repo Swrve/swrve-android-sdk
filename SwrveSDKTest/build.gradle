@@ -23,6 +23,13 @@ android {
         unitTests {
             includeAndroidResources = true
         }
+        def isCIRCLECI = System.getenv('CIRCLECI')
+        if(isCIRCLECI != null) {
+            project.logger.lifecycle('Running in CIRCLECI. Setting maxHeapSize 1024m')
+            unitTests.all {
+                maxHeapSize = "1024m"
+            }
+        }
     }
 
     flavorDimensions "swrve-sdk"
@@ -55,6 +62,7 @@ dependencies {
     api project(path: ':SwrveSDK')
     implementation 'androidx.legacy:legacy-support-v4:' + project.ANDROIDX_LEGACY_SUPPORT_V4_VERSION
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
+    implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
 
     // Unit tests
     testImplementation 'org.mockito:mockito-core:1.9.0'
@@ -67,7 +75,6 @@ dependencies {
     }
     testImplementation 'androidx.test:core:1.0.0'
 
-    testImplementation 'com.squareup.okhttp3:mockwebserver:3.9.0'
     testImplementation 'org.awaitility:awaitility:3.0.0'
 
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out

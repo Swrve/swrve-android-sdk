@@ -8,11 +8,13 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+
 import androidx.core.app.NotificationCompat;
 
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.json.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -50,6 +52,19 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
 
     private int dummyIconResource = 12345;
     private NotificationChannel dummyChannel = null;
+    private ISwrveCommon swrveCommonSpy;
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        swrveCommonSpy = mock(ISwrveCommon.class);
+        Mockito.doReturn("some_app_version").when(swrveCommonSpy).getAppVersion();
+        Mockito.doReturn("some_device_id").when(swrveCommonSpy).getDeviceId();
+        Mockito.doReturn("some_session_key").when(swrveCommonSpy).getSessionKey();
+        Mockito.doReturn("some_endpoint").when(swrveCommonSpy).getEventsServer();
+        Mockito.doReturn(1).when(swrveCommonSpy).getNextSequenceNumber();
+        SwrveCommon.setSwrveCommon(swrveCommonSpy);
+    }
 
     @Test
     public void testNotificationConfigAccentColorHex() {
@@ -480,4 +495,89 @@ public class SwrvePushServiceManagerTest extends SwrveBaseTest {
                 .filterNotification(any(NotificationCompat.Builder.class), anyInt(), any(SwrveNotificationDetails.class), eq("{\"customKey\":\"customValues\",\"passKey\":\"passValue\"}"));
     }
 
+    @Test
+    public void testSendPushDelivery() {
+        Bundle pushBundle = new Bundle();
+        pushBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
+        SwrvePushServiceManager pushServiceManagerSpy = Mockito.spy(new SwrvePushServiceManager(mActivity));
+        doReturn(9876l).when(pushServiceManagerSpy).getTime();
+        CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.spy(new CampaignDeliveryManager(mActivity));
+        doReturn(campaignDeliveryManagerSpy).when(pushServiceManagerSpy).getCampaignDeliveryManager();
+
+        pushServiceManagerSpy.sendPushDeliveredEvent(pushBundle);
+
+        // @formatter:off
+        String expectedJson = "{" +
+                    "\"session_token\":\"some_session_key\"," +
+                    "\"version\":\"3\"," +
+                    "\"app_version\":\"some_app_version\"," +
+                    "\"unique_device_id\":\"some_device_id\"," +
+                    "\"data\":[" +
+                        "{" +
+                            "\"type\":\"generic_campaign_event\"," +
+                            "\"time\":9876," +
+                            "\"seqnum\":1," +
+                            "\"actionType\":\"delivered\"," +
+                            "\"campaignType\":\"push\"," +
+                            "\"id\":\"123\"," +
+                            "\"payload\":{" +
+                                "\"silent\":\"false\"" +
+                            "}" +
+                        "}" +
+                    "]" +
+                "}";
+        // @formatter:on
+
+        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("some_endpoint/1/batch", expectedJson);
+    }
+
+    @Test
+    public void testSendPushDeliverySilent()  {
+        Bundle pushBundle = new Bundle();
+        pushBundle.putString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, "456");
+        SwrvePushServiceManager pushServiceManagerSpy = Mockito.spy(new SwrvePushServiceManager(mActivity));
+        doReturn(9876l).when(pushServiceManagerSpy).getTime();
+        CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.spy(new CampaignDeliveryManager(mActivity));
+        doReturn(campaignDeliveryManagerSpy).when(pushServiceManagerSpy).getCampaignDeliveryManager();
+
+        pushServiceManagerSpy.sendPushDeliveredEvent(pushBundle);
+
+        // @formatter:off
+        String expectedJson = "{" +
+                    "\"session_token\":\"some_session_key\"," +
+                    "\"version\":\"3\"," +
+                    "\"app_version\":\"some_app_version\"," +
+                    "\"unique_device_id\":\"some_device_id\"," +
+                    "\"data\":[" +
+                        "{" +
+                            "\"type\":\"generic_campaign_event\"," +
+                            "\"time\":9876," +
+                            "\"seqnum\":1," +
+                            "\"actionType\":\"delivered\"," +
+                            "\"campaignType\":\"push\"," +
+                            "\"id\":\"456\"," +
+                            "\"payload\":{" +
+                                "\"silent\":\"true\"" +
+                            "}" +
+                        "}" +
+                    "]" +
+                "}";
+        // @formatter:on
+
+        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("some_endpoint/1/batch", expectedJson);
+    }
+
+    @Test
+    public void testSendPushDeliveryNotSwrvePush() {
+        Bundle pushBundle = new Bundle();
+        pushBundle.putString("not_a_swrve_push", "456");
+        SwrvePushServiceManager pushServiceManagerSpy = Mockito.spy(new SwrvePushServiceManager(mActivity));
+        doReturn(9876l).when(pushServiceManagerSpy).getTime();
+        CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.spy(new CampaignDeliveryManager(mActivity));
+        doReturn(campaignDeliveryManagerSpy).when(pushServiceManagerSpy).getCampaignDeliveryManager();
+
+        pushServiceManagerSpy.sendPushDeliveredEvent(pushBundle);
+
+        verify(campaignDeliveryManagerSpy, never()).sendCampaignDelivery(anyString(), anyString());
+    }
 }

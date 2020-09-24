@@ -358,7 +358,7 @@ public class QaUser {
         }
     }
 
-    private void _wrappedEvents(List<String> events) throws Exception {
+    protected void _wrappedEvents(List<String> events) throws Exception {
         if (loggingEnabled) {
 
             for(String eventJson: events) {
@@ -456,7 +456,9 @@ public class QaUser {
 
         @Override
         public void onResponse(RESTResponse response) {
-            if (!SwrveHelper.successResponseCode(response.responseCode)) {
+            if (SwrveHelper.successResponseCode(response.responseCode)) {
+                SwrveLogger.v("QaUser request to %s sent with response code %s: %s", endpoint, response.responseCode, response.responseBody);
+            } else {
                 SwrveLogger.e("QaUser request to %s failed with error code %s: %s", endpoint, response.responseCode, response.responseBody);
             }
         }

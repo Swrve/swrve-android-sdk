@@ -2,25 +2,30 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/android:api-28-alpha
+      - image: circleci/android:api-29
     environment:
       JVM_OPTS: -Xmx2048m
       JAVA_OPTS: -Xms518m -Xmx2048m
     steps:
       - checkout
-      - restore_cache:
-          key: jars-{{ checksum "build.gradle" }}-{{ checksum "SwrveConversationSDK/build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
-          name: Download Dependencies
-          command: ./gradlew androidDependencies
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: jars-{{ checksum "build.gradle" }}-{{ checksum "SwrveConversationSDK/build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
+          name: Build and Test SwrveSDKTest Firebase flavour
+          command: |
+            mkdir -p SwrveSDKTest/test-results/testFirebaseDebug/
+            ./gradlew :SwrveSDKTest:testFirebaseDebug --no-daemon --max-workers 2
+            find ./SwrveSDKTest/ -type f -regex ".*/build/test-results/.*xml" -exec cp {} SwrveSDKTest/test-results/testFirebaseDebug \;
+            cp -r SwrveSDKTest/build/reports/tests/testFirebaseDebugUnitTest/* SwrveSDKTest/test-results/testFirebaseDebug/
+      - store_test_results:
+          path: SwrveSDKTest/test-results/testAmazonDebug
       - run:
-          name: Build and Test
-          command: CIRCLE_CI=1 ./gradlew build test
-      - store_test_results: # for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
-          path: SwrveSDKTest/build/test-results
-
-# See https://circleci.com/docs/2.0/deployment-integrations/ for deploy examples
+          name: Build MinimalIntegrationSample App
+          command: ./gradlew :MinimalIntegrationSample:build
+      - run:
+          name: Build MultipleFCMProviders App
+          command: ./gradlew :MultipleFCMProviders:build
+      - run:
+          name: Build MessageCenter App
+          command: ./gradlew :MessageCenter:build
+      - run:
+          name: Build CustomUserId App
+          command: ./gradlew :CustomUserId:build

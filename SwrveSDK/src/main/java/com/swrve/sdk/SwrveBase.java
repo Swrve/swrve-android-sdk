@@ -333,6 +333,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected abstract void extraDeviceInfo(JSONObject deviceInfo) throws JSONException;
 
+    protected abstract String getPlatformOS(Context context);
+
     protected void _sessionStart() {
         long sessionTime = getSessionTime();
         restClientExecutorExecute(() -> sendSessionStart(sessionTime));
@@ -723,7 +725,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 SwrveLogger.e("Get device screen info failed", exp);
             }
             //OS
-            deviceInfo.put(SWRVE_OS, SwrveHelper.getPlatformOS(contextRef));
+            deviceInfo.put(SWRVE_OS, SwrveBase.this.getPlatformOS(contextRef));
             deviceInfo.put(SWRVE_LANGUAGE, SwrveBase.this.language);
             String deviceRegion = Locale.getDefault().getCountry();
             deviceInfo.put(SWRVE_DEVICE_REGION, deviceRegion);
@@ -1775,6 +1777,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         params.put("device_name", getDeviceName());
         params.put("os_version", Build.VERSION.RELEASE);
 
+        Context contextRef = context.get();
+        if (contextRef != null) {
+            params.put("os", this.getPlatformOS(contextRef));
+            params.put("device_type", SwrveHelper.getPlatformDeviceType(contextRef));
+        }
+        
         return params;
     }
 
@@ -2276,5 +2284,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected SwrveEventsManager getSwrveEventsManager(String userId, String deviceId, String sessionToken) {
         return new SwrveEventsManagerImp(context.get(), config, restClient, userId, appVersion, sessionToken, deviceId);
+    }
+
+    @Override
+    public void saveEvent(String event) {
+        try {
+            openLocalStorageConnection();
+            multiLayerLocalStorage.addEvent(getUserId(), event); // Not calling QaUser.wrappedEvents on purpose. Use queueEvent if that is desired.
+            multiLayerLocalStorage.flush();
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK: Exception saving event to storage.", e);
+        }
     }
 }
