@@ -38,6 +38,12 @@ import javax.crypto.spec.SecretKeySpec;
 import static android.content.Context.UI_MODE_SERVICE;
 import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_MOBILE;
 import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_TV;
+import static com.swrve.sdk.ISwrveCommon.OS_AMAZON;
+import static com.swrve.sdk.ISwrveCommon.OS_AMAZON_TV;
+import static com.swrve.sdk.ISwrveCommon.OS_ANDROID;
+import static com.swrve.sdk.ISwrveCommon.OS_ANDROID_TV;
+
+import com.swrve.sdk.ISwrveCommon.SupportedUIMode;
 
 /**
  * Used internally to provide MD5, token generation and other helper methods.
@@ -153,7 +159,8 @@ public final class SwrveHelper {
             } else {
                 body.append("&");
             }
-            body.append(URLEncoder.encode(pair.getKey(), CHARSET) + "=" + ((pair.getValue() == null) ? "null" : URLEncoder.encode(pair.getValue(), CHARSET)));
+            body.append(URLEncoder.encode(pair.getKey(), CHARSET) + "="
+                    + ((pair.getValue() == null) ? "null" : URLEncoder.encode(pair.getValue(), CHARSET)));
         }
         return body.toString();
     }
@@ -195,7 +202,8 @@ public final class SwrveHelper {
         return body.toString();
     }
 
-    public static String createHMACWithMD5(String source, String key) throws NoSuchAlgorithmException, InvalidKeyException {
+    public static String createHMACWithMD5(String source, String key)
+            throws NoSuchAlgorithmException, InvalidKeyException {
         Mac hmac = Mac.getInstance("HmacMD5");
         SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), hmac.getAlgorithm());
         hmac.init(secretKey);
@@ -246,11 +254,71 @@ public final class SwrveHelper {
     }
 
     public static String getPlatformDeviceType(Context context) {
+        switch (SwrveHelper.getSupportedUIMode(context)) {
+            case TV:
+                return DEVICE_TYPE_TV;
+            case MOBILE:
+            default:
+                return DEVICE_TYPE_MOBILE;
+        }
+    }
+
+    // Used by Unity / Core Flavour
+    public static String getPlatformOS(Context context) {
+        return SwrveHelper.getPlatformOS(context, null);
+    }
+
+    public static String getPlatformOS(Context context, String sdkFlavour) {
+        if (SwrveHelper.isNullOrEmpty(sdkFlavour)) {
+            if (SwrveHelper.isNullOrEmpty(Build.MANUFACTURER)) {
+                // if MANUFACTURER is empty or null, default to 'android'
+                return OS_ANDROID;
+            }
+            if ((android.os.Build.MANUFACTURER.equalsIgnoreCase("amazon"))) {
+                switch (SwrveHelper.getSupportedUIMode(context)) {
+                    case TV:
+                        return OS_AMAZON_TV;
+                    case MOBILE:
+                    default:
+                        return OS_AMAZON;
+                }
+            } else {
+                switch (SwrveHelper.getSupportedUIMode(context)) {
+                    case TV:
+                        return OS_ANDROID_TV;
+                    case MOBILE:
+                    default:
+                        return OS_ANDROID;
+                }
+            }
+        }
+        // We can infer the OS based flavour
+        if (sdkFlavour.equalsIgnoreCase("amazon")) {
+            switch (SwrveHelper.getSupportedUIMode(context)) {
+                case TV:
+                    return OS_AMAZON_TV;
+                case MOBILE:
+                default:
+                    return OS_AMAZON;
+            }
+        } else {
+            switch (SwrveHelper.getSupportedUIMode(context)) {
+                case TV:
+                    return OS_ANDROID_TV;
+                case MOBILE:
+                default:
+                    return OS_ANDROID;
+            }
+        }
+    }
+
+    public static SupportedUIMode getSupportedUIMode(Context context) {
         UiModeManager uiModeManager = (UiModeManager) context.getSystemService(UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            return DEVICE_TYPE_TV;
+            return SupportedUIMode.TV;
         }
-        return DEVICE_TYPE_MOBILE;
+
+        return SupportedUIMode.MOBILE;
     }
 
     // Used by Unity
@@ -265,7 +333,7 @@ public final class SwrveHelper {
     // Obtains the normal push or silent push tracking id
     public static String getRemotePushId(final Bundle msg) {
         String pushId = null;
-        if(msg == null) {
+        if (msg == null) {
             return pushId;
         }
         Object rawId = msg.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
@@ -297,7 +365,8 @@ public final class SwrveHelper {
         if (appInstallTime == null) {
             long appInstallTimeMillis = System.currentTimeMillis();
             try {
-                appInstallTimeMillis = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).firstInstallTime;
+                appInstallTimeMillis = context.getPackageManager().getPackageInfo(context.getPackageName(),
+                        0).firstInstallTime;
             } catch (PackageManager.NameNotFoundException e) {
                 SwrveLogger.e("Could not get package info to retrieve appInstallTime so using current date.", e);
             }
@@ -306,12 +375,14 @@ public final class SwrveHelper {
         return appInstallTime;
     }
 
-    // Convert Bundle root keys to JSONObject and promote the _s.JsonPayload ones to root level
+    // Convert Bundle root keys to JSONObject and promote the _s.JsonPayload ones to
+    // root level
     public static JSONObject convertPayloadToJSONObject(Bundle bundle) {
 
         JSONObject payload = new JSONObject();
 
-        // the "_s.JsonPayload" is only included if the payload has json more than one level deep. So
+        // the "_s.JsonPayload" is only included if the payload has json more than one
+        // level deep. So
         // promote its contents to root level if its there. (Not ideal)
         if (bundle.containsKey(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {
             try {
@@ -321,7 +392,8 @@ public final class SwrveHelper {
             }
         }
 
-        // One level deep payload is mixed with swrve keys so include all keys. (Again, not ideal).
+        // One level deep payload is mixed with swrve keys so include all keys. (Again,
+        // not ideal).
         // Exclude the "_s.JsonPayload" key as already added from above.
         for (String key : bundle.keySet()) {
             if (!key.equals(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY)) {

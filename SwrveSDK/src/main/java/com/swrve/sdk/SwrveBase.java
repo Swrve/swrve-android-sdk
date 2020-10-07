@@ -1856,6 +1856,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void sendEventsInBackground(Context context, String userId, ArrayList<String> events) {
+        QaUser.wrappedEvents(new ArrayList<>(events)); // use copy of events
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             // Avoid using the deprecated wakeful receiver
             SwrveEventSenderJobIntentService.enqueueWork(context, userId, events);
@@ -1865,7 +1866,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             intent.putStringArrayListExtra(SwrveBackgroundEventSender.EXTRA_EVENTS, events);
             context.sendBroadcast(intent);
         }
-        QaUser.wrappedEvents(events);
     }
 
     @Override

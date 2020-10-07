@@ -1,10 +1,9 @@
 package com.swrve.sdk;
 
 import android.app.Application;
-import android.app.UiModeManager;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.os.AsyncTask;
+
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
@@ -24,10 +23,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import static android.content.Context.UI_MODE_SERVICE;
-import static com.swrve.sdk.ISwrveCommon.OS_ANDROID;
-import static com.swrve.sdk.ISwrveCommon.OS_ANDROID_TV;
 
 /**
  * Main implementation of the Firebase Swrve SDK.
@@ -199,11 +194,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected String getPlatformOS(Context context) {
-        UiModeManager uiModeManager = (UiModeManager) context.getSystemService(UI_MODE_SERVICE);
-        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            return OS_ANDROID_TV;
-        }
-        return OS_ANDROID;
+        return SwrveHelper.getPlatformOS(context, FLAVOUR_NAME);
     }
 
     @Override

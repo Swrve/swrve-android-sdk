@@ -251,6 +251,9 @@ public class SwrveInAppMessageActivity extends Activity {
             case Custom:
                 actionType = "deeplink";
                 break;
+            case CopyToClipboard:
+                actionType = "clipboard";
+                break;
         }
         String actionValue = SwrveHelper.isNullOrEmpty(button.getAction()) ? actionType : button.getAction();
         QaUser.campaignButtonClicked(campaignId, variantId, buttonName, actionType, actionValue);

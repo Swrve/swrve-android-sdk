@@ -95,6 +95,11 @@ interface ISwrveCommon {
     String DEVICE_TYPE_MOBILE                 = "mobile";
     String DEVICE_TYPE_TV                     = "tv";
 
+    enum SupportedUIMode {
+        MOBILE,
+        TV
+    }
+
     String getApiKey();
 
     String getSessionKey();
