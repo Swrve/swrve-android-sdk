@@ -55,7 +55,7 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
         if (eventsJson == null || (eventsJson != null && eventsJson.size() == 0)) {
             return 0;
         }
-        synchronized(SwrveMultiLayerLocalStorage.EVENT_LOCK) {
+        synchronized (SwrveMultiLayerLocalStorage.EVENT_LOCK) {
             LinkedHashMap<Long, String> storedEvents = storeEvents(eventsJson, localStorage);
             LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = new LinkedHashMap<>();
             combinedEvents.put(localStorage, storedEvents);
@@ -78,7 +78,7 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
      */
     @Override
     public int sendStoredEvents(SwrveMultiLayerLocalStorage multiLayerLocalStorage) {
-        synchronized(SwrveMultiLayerLocalStorage.EVENT_LOCK) {
+        synchronized (SwrveMultiLayerLocalStorage.EVENT_LOCK) {
             final LinkedHashMap<LocalStorage, LinkedHashMap<Long, String>> combinedEvents = multiLayerLocalStorage.getCombinedFirstNEvents(config.getMaxEventsPerFlush(), userId);
             return sendEvents(combinedEvents);
         }

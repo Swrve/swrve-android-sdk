@@ -102,7 +102,11 @@ public class SwrveConversation extends SwrveBaseConversation implements Serializ
      * @return the first ConversationPage (Page)
      */
     public ConversationPage getFirstPage() {
-        return pages.get(0);
+        if (pages != null && pages.size() > 0) {
+            return pages.get(0);
+        }
+
+        return null;
     }
 
     /**

@@ -137,8 +137,13 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
 
     public void openFirstPage() {
         page = swrveConversation.getFirstPage();
-        sendStartNavigationEvent(page.getTag());
-        openConversationOnPage(page);
+        if (page == null) {
+            // Could not rebuild state correctly
+            getActivity().finish();
+        } else {
+            sendStartNavigationEvent(page.getTag());
+            openConversationOnPage(page);
+        }
     }
 
     public void openConversationOnPage(ConversationPage conversationPage) {

@@ -107,39 +107,54 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
     @Test
     public void testCheckForCampaignAndResourcesUpdates() throws Exception {
 
+        final String userId = swrveSpy.profileManager.getUserId();
+        final String sessionToken = swrveSpy.profileManager.getSessionToken();
+
         swrveSpy.campaignsAndResourcesFlushRefreshDelay = 500;
         swrveSpy.initialisedTime = new Date();
 
         // Mock calls to refreshCampaignsAndResources to do nothing and count them
         mockAndCheckCallsToRefreshCampaignsAndResources();
 
-        // verify no refresh as first test
+        // -verify no refresh
         swrveSpy.eventsWereSent = false;
         swrveSpy.checkForCampaignAndResourcesUpdates();
         Callable<Boolean> callable = () -> refreshCampaignsAndResourcesCalled;
         // await max of 2 seconds and verify refreshCampaignsAndResources IS NOT called.
         await().atMost(2000, TimeUnit.MILLISECONDS).until(callable, CoreMatchers.equalTo(false));
-        verify(swrveSpy, never()).sendQueuedEvents();
+        verify(swrveSpy, never())._sendQueuedEvents(userId, sessionToken, false);
+        verify(swrveSpy, never())._sendQueuedEvents(userId, sessionToken, true);
 
-        // verify refresh happens when eventsWereSent==true as second test
+        // -verify refresh happens when eventsWereSent==true
         swrveSpy.eventsWereSent = true;
         swrveSpy.checkForCampaignAndResourcesUpdates();
         callable = () -> refreshCampaignsAndResourcesCalled;
         // await max of 2 seconds and verify refreshCampaignsAndResources IS called.
         await().atMost(2000, TimeUnit.MILLISECONDS).until(callable, CoreMatchers.equalTo(true));
         assertEquals("eventsWereSent should be reset to false if refreshing ", false, swrveSpy.eventsWereSent);
-        verify(swrveSpy, times(1)).sendQueuedEvents();
+        verify(swrveSpy, never())._sendQueuedEvents(userId, sessionToken, false);
 
-        // verify no refresh happens as third test
+        // -verify no refresh happens
         refreshCampaignsAndResourcesCalled = false; // reset to false
         swrveSpy.eventsWereSent = false;
         swrveSpy.checkForCampaignAndResourcesUpdates();
         callable = () -> refreshCampaignsAndResourcesCalled;
         // await max of 2 seconds and verify refreshCampaignsAndResources IS NOT called.
         await().atMost(2000, TimeUnit.MILLISECONDS).until(callable, CoreMatchers.equalTo(false));
-        verify(swrveSpy, times(1)).sendQueuedEvents();
+        verify(swrveSpy, never())._sendQueuedEvents(userId, sessionToken, false);
+        verify(swrveSpy, never())._sendQueuedEvents(userId, sessionToken, true);
 
-        // verify refresh happens when events in the queue as fourth test
+        // -verify refresh happens and events are sent when eventsWereSent==true and an event is queued
+        swrveSpy.eventsWereSent = true;
+        swrveSpy.multiLayerLocalStorage.addEvent(swrveSpy.getUserId(), "eventString");
+        swrveSpy.checkForCampaignAndResourcesUpdates();
+        callable = () -> refreshCampaignsAndResourcesCalled;
+        // await max of 2 seconds and verify refreshCampaignsAndResources IS called.
+        await().atMost(2000, TimeUnit.MILLISECONDS).until(callable, CoreMatchers.equalTo(true));
+        assertEquals("eventsWereSent should be reset to false if refreshing ", false, swrveSpy.eventsWereSent);
+        verify(swrveSpy, times(1))._sendQueuedEvents(userId, sessionToken, false);
+
+        // -verify refresh happens when events in the queue
         refreshCampaignsAndResourcesCalled = false; // reset to false
         swrveSpy.eventsWereSent = false;
         swrveSpy.multiLayerLocalStorage.addEvent(swrveSpy.getUserId(), "eventString");
@@ -148,7 +163,7 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
         // await max of 2 seconds and verify refreshCampaignsAndResources IS called.
         await().atMost(2000, TimeUnit.MILLISECONDS).until(callable, CoreMatchers.equalTo(true));
         assertEquals("eventsWereSent should be reset to false if refreshing ", false, swrveSpy.eventsWereSent);
-        verify(swrveSpy, times(2)).sendQueuedEvents();
+        verify(swrveSpy, times(2))._sendQueuedEvents(userId, sessionToken, false);
     }
 
     private void mockAndCountCallsToCheckForCampaignAndResourcesUpdates() {

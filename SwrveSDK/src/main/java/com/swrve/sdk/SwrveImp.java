@@ -76,7 +76,7 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "7.3.1";
+    protected static String version = "7.3.2";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 7;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
@@ -849,7 +849,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             if (sendNow) {
                 storageExecutorExecute(() -> {
                     SwrveLogger.i("Sending device info for userId:%s", userId);
-                    swrve._sendQueuedEvents(userId, sessionToken);
+                    swrve._sendQueuedEvents(userId, sessionToken, true);
                 });
             }
         });
@@ -1010,18 +1010,24 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
      * This function should be called periodically.
      */
     protected void checkForCampaignAndResourcesUpdates() {
-        if(initialisedTime == null) {
+        if (initialisedTime == null) {
             SwrveLogger.w("Not executing checkForCampaignAndResourcesUpdates because initialisedTime is null indicating the sdk is not initialised.");
             return;
         }
         // If there are any events to be sent, or if any events were sent since last refresh
         // send events queued, wait campaignsAndResourcesFlushRefreshDelay for events to reach servers and refresh
-        boolean hasQueuedEvents =  multiLayerLocalStorage.hasQueuedEvents(profileManager.getUserId());
+        final String userId = profileManager.getUserId();
+        final String sessionToken = profileManager.getSessionToken();
+        boolean hasQueuedEvents =  multiLayerLocalStorage.hasQueuedEvents(userId);
         if (hasQueuedEvents || eventsWereSent) {
             SwrveLogger.d("SwrveSDK events recently queued or sent, so sending and executing a delayed refresh of campaigns");
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-            swrve.sendQueuedEvents();
+            if (hasQueuedEvents) {
+                swrve._sendQueuedEvents(userId, sessionToken, false);
+            }
+
             eventsWereSent = false;
+
             final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
             timedService.schedule(() -> {
                 try {

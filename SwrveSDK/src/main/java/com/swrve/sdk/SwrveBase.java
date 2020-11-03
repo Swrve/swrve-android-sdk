@@ -543,22 +543,25 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _sendQueuedEvents(final String userId, final String sessionToken) {
+    protected void _sendQueuedEvents(final String userId, final String sessionToken, final boolean updateSentFlag) {
         if (trackingState == EVENT_SENDING_PAUSED) {
             SwrveLogger.d("SwrveSDK tracking state:%s so cannot send events now.", trackingState);
             return;
         }
         if (SwrveHelper.isNotNullOrEmpty(userId) && SwrveHelper.isNotNullOrEmpty(sessionToken)) {
-            boolean hasQueuedEvents = multiLayerLocalStorage.hasQueuedEvents(profileManager.getUserId());
-            if (!hasQueuedEvents) {
-                SwrveLogger.d("SwrveSDK no event to send");
-                return;
-            }
-            eventsWereSent = true;
             restClientExecutorExecute(() -> {
-                String deviceId = getDeviceId();
-                SwrveEventsManager swrveEventsManager = getSwrveEventsManager(userId, deviceId, sessionToken);
-                swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
+                boolean hasQueuedEvents = multiLayerLocalStorage.hasQueuedEvents(userId);
+                if (hasQueuedEvents) {
+                    if (updateSentFlag) {
+                        eventsWereSent = true;
+                    }
+
+                    String deviceId = getDeviceId();
+                    SwrveEventsManager swrveEventsManager = getSwrveEventsManager(userId, deviceId, sessionToken);
+                    swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
+                } else {
+                    SwrveLogger.d("SwrveSDK no event to send");
+                }
             });
         }
     }
@@ -1342,7 +1345,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             final String userId = profileManager.getUserId();
             final String sessionToken = profileManager.getSessionToken();
-            _sendQueuedEvents(userId, sessionToken);
+            _sendQueuedEvents(userId, sessionToken, true);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
