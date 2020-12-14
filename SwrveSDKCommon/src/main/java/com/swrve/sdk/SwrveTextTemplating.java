@@ -2,6 +2,7 @@ package com.swrve.sdk;
 
 import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,9 +14,10 @@ public class SwrveTextTemplating {
     private static final Pattern patternFallback = Pattern.compile(patternFallbackMatch);
 
     public static String apply(String text, Map<String, String> properties) throws SwrveSDKTextTemplatingException {
-        if (text == null || properties == null) {
+        if (text == null) {
             return text;
         }
+
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             String templateFullValue = matcher.group(0);
@@ -25,7 +27,7 @@ public class SwrveTextTemplating {
                 property = property.substring(0, property.indexOf("|fallback=\"")); // remove fallback text
             }
 
-            if (!SwrveHelper.isNullOrEmpty(properties.get(property))) {
+            if (properties != null && !SwrveHelper.isNullOrEmpty(properties.get(property))) {
                 text = text.replace(templateFullValue, properties.get(property));
             } else if (fallback != null) {
                 text = text.replace(templateFullValue, fallback);

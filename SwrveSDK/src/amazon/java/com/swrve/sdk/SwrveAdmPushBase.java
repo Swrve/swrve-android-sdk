@@ -26,7 +26,7 @@ public class SwrveAdmPushBase {
 
             boolean isDupe = new SwrvePushDeDuper(context).isDupe(extras);
             if (!isDupe) {
-                getSwrvePushServiceManager(context).processMessage(extras);
+                getSwrvePushManager(context).processMessage(extras);
             }
         }
     }
@@ -41,7 +41,7 @@ public class SwrveAdmPushBase {
         }
     }
 
-    protected SwrvePushServiceManager getSwrvePushServiceManager(Context context) {
-        return new SwrvePushServiceManager(context);
+    protected SwrvePushManager getSwrvePushManager(Context context) {
+        return new SwrvePushManagerImp(context);
     }
 }

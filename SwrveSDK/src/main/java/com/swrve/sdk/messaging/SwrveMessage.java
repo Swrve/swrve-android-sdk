@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * In-app message inside a campaign, with different formats.
  */
-public class SwrveMessage {
+public class SwrveMessage implements SwrveBaseMessage {
     // Identifies the message in a campaign
     protected int id;
     // Name of the message

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -12,6 +13,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.swrve.sdk.localstorage.LocalStorageTestUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,9 +33,13 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_REGISTRATION_ID;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -48,23 +55,30 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
         super.setUp();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveCommon.setSwrveCommon(swrveSpy);
+        SwrveBackgroundEventSender backgroundEventSenderMock = mock(SwrveBackgroundEventSender.class);
+        doNothing().when(backgroundEventSenderMock).send(anyString(), anyList());
+        doReturn(backgroundEventSenderMock).when(swrveSpy).getSwrveBackgroundEventSender(any(Context.class));
+        doNothing().when(swrveSpy).shutdown();
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         swrveSpy.init(mActivity);
     }
 
     @After
     public void tearDown() throws Exception {
-        super.tearDown();
-        swrveSpy.shutdown();
         SwrveTestUtils.removeSwrveSDKSingletonInstance();
+        SwrveCommon.setSwrveCommon(null);
+        LocalStorageTestUtils.closeSQLiteOpenHelperInstance();
     }
 
     @Test
     public void testSetRegistrationId() throws JSONException {
         // Call executors right away to remove threading problems in test
         Mockito.doAnswer((Answer<Void>) invocation -> {
-            Runnable runnable = (Runnable) invocation.getArguments()[0];
-            runnable.run();
+            if (invocation.getArguments().length > 0) {
+                Runnable runnable = (Runnable) invocation.getArguments()[0];
+                runnable.run();
+            }
             return null;
         }).when(swrveSpy).storageExecutorExecute(Mockito.any(Runnable.class));
 
@@ -74,8 +88,10 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
         assertEquals("reg1", swrveSpy.getRegistrationId());
         Mockito.verify(swrveSpy, Mockito.atLeast(1)).sendDeviceTokenUpdateNow(Mockito.anyString()); // device info queued again so atLeast== 2
 
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
-        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(Mockito.any(), Mockito.any(), events.capture());
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), events.capture());
 
         List<ArrayList> capturedProperties = events.getAllValues();
         String jsonString = capturedProperties.get(0).get(0).toString();
@@ -97,14 +113,14 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testBeforeSendDeviceInfo() throws Exception {
+    public void testBeforeSendDeviceInfo() {
         reset(swrveSpy); // reset so the beforeSendDeviceInfo method is not disabled which is part of setup
         swrveSpy.initialised = false; // reset, due to initialised check added to init
 
         assertNull(swrveSpy.registrationId);
         Mockito.verify(swrveSpy, never()).queueDeviceUpdateNow(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean());
 
-        Task<InstanceIdResult> task = new Task<InstanceIdResult>() {
+        Task<String> task = new Task<String>() {
             @Override
             public boolean isComplete() {
                 return false;
@@ -118,11 +134,11 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
                 return false;
             }
             @Override
-            public InstanceIdResult getResult() {
+            public String getResult() {
                 return null;
             }
             @Override
-            public <X extends Throwable> InstanceIdResult getResult(@NonNull Class<X> aClass) throws X {
+            public <X extends Throwable> String getResult(@NonNull Class<X> aClass) throws X {
                 return null;
             }
             @Nullable
@@ -133,43 +149,41 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
             @NonNull
             @Override
-            public Task<InstanceIdResult> addOnSuccessListener(@NonNull OnSuccessListener<? super InstanceIdResult> onSuccessListener) {
-                InstanceIdResult instanceIdResult = mock(InstanceIdResult.class);
-                doReturn("some_reg_token_id").when(instanceIdResult).getToken();
-                onSuccessListener.onSuccess(instanceIdResult);
+            public Task<String> addOnSuccessListener(@NonNull OnSuccessListener<? super String> onSuccessListener) {
+                onSuccessListener.onSuccess("some_reg_token_id");
                 return this;
             }
 
             @NonNull
             @Override
-            public Task<InstanceIdResult> addOnSuccessListener(@NonNull Executor executor, @NonNull OnSuccessListener<? super InstanceIdResult> onSuccessListener) {
+            public Task<String> addOnSuccessListener(@NonNull Executor executor, @NonNull OnSuccessListener<? super String> onSuccessListener) {
                 return this;
             }
             @NonNull
             @Override
-            public Task<InstanceIdResult> addOnSuccessListener(@NonNull Activity activity, @NonNull OnSuccessListener<? super InstanceIdResult> onSuccessListener) {
+            public Task<String> addOnSuccessListener(@NonNull Activity activity, @NonNull OnSuccessListener<? super String> onSuccessListener) {
                 return this;
             }
             @NonNull
             @Override
-            public Task<InstanceIdResult> addOnFailureListener(@NonNull OnFailureListener onFailureListener) {
+            public Task<String> addOnFailureListener(@NonNull OnFailureListener onFailureListener) {
                 return this;
             }
             @NonNull
             @Override
-            public Task<InstanceIdResult> addOnFailureListener(@NonNull Executor executor, @NonNull OnFailureListener onFailureListener) {
+            public Task<String> addOnFailureListener(@NonNull Executor executor, @NonNull OnFailureListener onFailureListener) {
                 return this;
             }
             @NonNull
             @Override
-            public Task<InstanceIdResult> addOnFailureListener(@NonNull Activity activity, @NonNull OnFailureListener onFailureListener) {
+            public Task<String> addOnFailureListener(@NonNull Activity activity, @NonNull OnFailureListener onFailureListener) {
                 return this;
             }
         };
 
-        FirebaseInstanceId firebaseInstanceIdMock = mock(FirebaseInstanceId.class);
-        doReturn(firebaseInstanceIdMock).when(swrveSpy).getFirebaseInstanceId();
-        doReturn(task).when(firebaseInstanceIdMock).getInstanceId();
+        FirebaseMessaging firebaseMessagingMock = mock(FirebaseMessaging.class);
+        doReturn(firebaseMessagingMock).when(swrveSpy).getFirebaseMessagingInstance();
+        doReturn(task).when(firebaseMessagingMock).getToken();
 
         swrveSpy.init(mActivity);
 
@@ -183,7 +197,7 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testPushListener() throws Exception {
+    public void testPushListener() {
         TestPushListener pushListener = new TestPushListener();
 
         Intent intent = new Intent();

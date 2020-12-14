@@ -1,21 +1,33 @@
 package com.swrve.sdk;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.provider.Settings;
+
+import androidx.core.app.NotificationManagerCompat;
 
 import com.google.common.collect.Lists;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
+import com.swrve.sdk.device.ITelephonyManager;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
+import com.swrve.sdk.rest.RESTResponse;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
@@ -23,22 +35,29 @@ import org.robolectric.android.controller.ActivityController;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
+import static com.ibm.icu.impl.Assert.fail;
+import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
@@ -56,7 +75,6 @@ public class SwrveUnitTest extends SwrveBaseTest {
     public void setUp() throws Exception {
         super.setUp();
         swrveSpy = SwrveTestUtils.createSpyInstance();
-        SwrveTestUtils.disableRestClientExecutor(swrveSpy);
         swrveSpy.init(mActivity);
     }
 
@@ -74,6 +92,15 @@ public class SwrveUnitTest extends SwrveBaseTest {
         config.setAppVersion(appVersion);
         Swrve swrve = SwrveTestUtils.createSpyInstance(config);
         assertEquals(appVersion, swrve.appVersion);
+    }
+
+    @Test
+    public void testInitWithoutAppVersion() throws Exception {
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        config.setAppVersion(null);
+        Swrve swrve = SwrveTestUtils.createSpyInstance(config);
+        assertNotNull(swrve.appVersion); // // Check generated app version
     }
 
     @Test
@@ -312,9 +339,6 @@ public class SwrveUnitTest extends SwrveBaseTest {
     @Test
     public void testStartStopCampaignsAndResourcesTimer() {
 
-        doNothing().when(swrveSpy).shutdownCampaignsAndResourcesTimer();
-        doNothing().when(swrveSpy).startCampaignsAndResourcesTimer(anyBoolean());
-
         // blank to begin with until onResume is called
         assertEquals("", swrveSpy.foregroundActivity);
 
@@ -416,9 +440,6 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
     @Test
     public void testUserUpdateDate() throws Exception {
-
-        doNothing().when(swrveSpy).queueEvent(anyString(), anyMap(), anyMap());
-
         SwrveSDK.userUpdate("a0", new Date());
 
         ArgumentCaptor<String> eventStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -457,4 +478,406 @@ public class SwrveUnitTest extends SwrveBaseTest {
             Assert.assertTrue(regex.matcher(candit).matches());
         }
     }
+
+    @Test
+    public void testSendEventsInBackground() throws Exception {
+
+        // setup mocks
+        QaUser qaUserMock = mock(QaUser.class);
+        QaUser.instance = qaUserMock;
+        SwrveBackgroundEventSender backgroundEventSenderMock = mock(SwrveBackgroundEventSender.class);
+        doNothing().when(backgroundEventSenderMock).send(anyString(), anyList());
+        doReturn(backgroundEventSenderMock).when(swrveSpy).getSwrveBackgroundEventSender(any(Context.class));
+
+        ArrayList<String> events = Lists.newArrayList("some_event_json");
+        swrveSpy.sendEventsInBackground(mActivity, "userId", events);
+
+        verify(backgroundEventSenderMock, times(1)).send("userId", events);
+        verify(qaUserMock, atLeastOnce())._wrappedEvents(events);
+    }
+
+    @Test
+    public void testRestrictedEventName() {
+        SwrveSDK.event("valid.event.name1");
+        Mockito.verify(swrveSpy, Mockito.times(1))._event("valid.event.name1");
+
+        SwrveSDK.event("Swrve.thisEventIsRestrictedAndWillNotBeQueued");
+        Mockito.verify(swrveSpy, Mockito.never())._event("Swrve.thisEventIsRestrictedAndWillNotBeQueued");
+
+        SwrveSDK.event("valid.event.name2");
+        Mockito.verify(swrveSpy, Mockito.times(1))._event("valid.event.name2");
+    }
+
+    @Test
+    public void testUserInfo() throws Exception {
+        Settings.Secure.putString(mActivity.getContentResolver(), Settings.Secure.ANDROID_ID, "my_android_id");
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        config.setAndroidIdLoggingEnabled(true);
+        config.setAutoDownloadCampaignsAndResources(false);
+        Swrve swrveSpy = SwrveTestUtils.createSpyInstance(config);
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+
+        ITelephonyManager telephonyManagerMock = mock(ITelephonyManager.class);
+        doReturn("vodafone IE").when(telephonyManagerMock).getSimOperatorName();
+        doReturn("ie").when(telephonyManagerMock).getSimCountryIso();
+        doReturn("27201").when(telephonyManagerMock).getSimOperator();
+        doReturn(telephonyManagerMock).when(swrveSpy).getTelephonyManager(any(Context.class));
+
+        swrveSpy.onCreate(mActivity);
+
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<JSONObject> jsonObjectCaptor = ArgumentCaptor.forClass(JSONObject.class);
+        verify(swrveSpy, atLeastOnce()).deviceUpdate(userIdStringCaptor.capture(), jsonObjectCaptor.capture());
+
+        JSONObject attributeDevices = jsonObjectCaptor.getValue();
+
+        // Check that the user update event contains all the device info
+        assertTrue(attributeDevices.has("swrve.device_name"));
+        assertTrue(attributeDevices.has("swrve.os"));
+        assertTrue(attributeDevices.has("swrve.os_version"));
+        assertTrue(attributeDevices.has("swrve.device_width"));
+        assertTrue(attributeDevices.has("swrve.device_height"));
+        assertTrue(attributeDevices.has("swrve.device_dpi"));
+        assertTrue(attributeDevices.has("swrve.android_device_xdpi"));
+        assertTrue(attributeDevices.has("swrve.android_device_ydpi"));
+        assertTrue(attributeDevices.has("swrve.language"));
+        assertTrue(attributeDevices.has("swrve.device_region"));
+        assertEquals(2, attributeDevices.getString("swrve.device_region").length());
+        assertTrue(attributeDevices.has("swrve.utc_offset_seconds"));
+        assertTrue(attributeDevices.has("swrve.timezone_name"));
+        assertTrue(attributeDevices.has("swrve.sdk_version"));
+        assertTrue(attributeDevices.has("swrve.sdk_flavour"));
+        assertTrue(attributeDevices.has("swrve.sdk_init_mode"));
+        assertTrue(attributeDevices.has("swrve.device_type"));
+        assertEquals("auto", attributeDevices.get("swrve.sdk_init_mode"));
+        List<String> expectedDeviceTypes = new ArrayList<>();
+        expectedDeviceTypes.add("tv");
+        expectedDeviceTypes.add("mobile");
+        assertTrue(expectedDeviceTypes.contains(attributeDevices.get("swrve.device_type")));
+        assertEquals("my_android_id", attributeDevices.get("swrve.android_id"));
+        assertEquals(swrveSpy.getConfig().getAppStore(), attributeDevices.get("swrve.app_store"));
+        assertTrue(attributeDevices.has("swrve.install_date"));
+        // Carrier info
+        assertEquals("vodafone IE", attributeDevices.get("swrve.sim_operator.name"));
+        assertEquals("ie", attributeDevices.get("swrve.sim_operator.iso_country_code"));
+        assertEquals("27201", attributeDevices.get("swrve.sim_operator.code"));
+
+        assertEquals(true, attributeDevices.get("swrve.permission.notifications_enabled"));
+        assertEquals(NotificationManagerCompat.IMPORTANCE_UNSPECIFIED, attributeDevices.get("swrve.permission.notifications_importance"));
+    }
+
+    @Test
+    public void testUserInfoManagedMode() throws Exception {
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.MANAGED);
+        Swrve swrveSpy = SwrveTestUtils.createSpyInstance(config);
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+
+        swrveSpy.onCreate(mActivity);
+
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<JSONObject> jsonObjectCaptor = ArgumentCaptor.forClass(JSONObject.class);
+        verify(swrveSpy, atLeastOnce()).deviceUpdate(userIdStringCaptor.capture(), jsonObjectCaptor.capture());
+
+        JSONObject attributeDevices = jsonObjectCaptor.getValue();
+        assertTrue(attributeDevices.has("swrve.sdk_init_mode"));
+        assertEquals("managed_auto", attributeDevices.get("swrve.sdk_init_mode"));
+    }
+
+    @Test
+    public void testUserInfoManagedAutoMode() throws Exception {
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.MANAGED);
+        config.setManagedModeAutoStartLastUser(false); // Note the auto start false
+        Swrve swrveSpy = SwrveTestUtils.createSpyInstance(config);
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+
+        swrveSpy.start(mActivity);
+
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<JSONObject> jsonObjectCaptor = ArgumentCaptor.forClass(JSONObject.class);
+        verify(swrveSpy, atLeastOnce()).deviceUpdate(userIdStringCaptor.capture(), jsonObjectCaptor.capture());
+
+        JSONObject attributeDevices = jsonObjectCaptor.getValue();
+        assertTrue(attributeDevices.has("swrve.sdk_init_mode"));
+        assertEquals("managed", attributeDevices.get("swrve.sdk_init_mode"));
+    }
+
+    @Test
+    public void testNoCarrierInfo() throws Exception {
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        Swrve swrveSpy = SwrveTestUtils.createSpyInstance(config);
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+
+        ITelephonyManager telephonyManagerMock = mock(ITelephonyManager.class);
+        doReturn(null).when(telephonyManagerMock).getSimOperatorName();
+        doReturn(null).when(telephonyManagerMock).getSimCountryIso();
+        doReturn(null).when(telephonyManagerMock).getSimOperator();
+        doReturn(telephonyManagerMock).when(swrveSpy).getTelephonyManager(any(Context.class));
+
+        swrveSpy.onCreate(mActivity);
+
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<JSONObject> jsonObjectCaptor = ArgumentCaptor.forClass(JSONObject.class);
+        verify(swrveSpy, atLeastOnce()).deviceUpdate(userIdStringCaptor.capture(), jsonObjectCaptor.capture());
+
+        JSONObject attributeDevices = jsonObjectCaptor.getValue();
+
+        // Check that the user update event contains all the device info
+        assertFalse(attributeDevices.has("swrve.sim_operator.name"));
+        assertFalse(attributeDevices.has("swrve.sim_operator.iso_country_code"));
+        assertFalse(attributeDevices.has("swrve.sim_operator.code"));
+    }
+
+    @Test
+    public void testSwrveResourceManager() throws Exception {
+        final String cacheFileContents = "[{\"uid\": \"animal.ant\", \"name\": \"ant\", \"cost\": \"5.50\", \"quantity\": \"6\", \"tail\": \"false\"},{\"uid\": \"animal.bear\",\"name\": \"bear\", \"cost\": \"9.99\",\"quantity\": \"20\", \"tail\": \"true\"}]";
+        JSONArray resourceJson = new JSONArray(cacheFileContents);
+
+        swrveSpy.onCreate(mActivity);
+
+        SwrveResourceManager resourceManager = swrveSpy.getResourceManager();
+        resourceManager.setResourcesFromJSON(resourceJson);
+
+        // Check the resources were written correctly to resource manager and functions to retrieve individual values work as expected
+        assertEquals(2, resourceManager.getResources().size());
+
+        SwrveResource resource1 = resourceManager.getResource("animal.ant");
+        assertNotNull(resource1);
+        assertTrue(resource1.getAttributeKeys().contains("name"));
+        assertTrue(resource1.getAttributeKeys().contains("cost"));
+        assertTrue(resource1.getAttributeKeys().contains("quantity"));
+        assertTrue(resource1.getAttributeKeys().contains("tail"));
+        assertEquals("ant", resourceManager.getAttributeAsString("animal.ant", "name", "anonymous"));
+        assertEquals("5.50", resourceManager.getAttributeAsString("animal.ant", "cost", "0"));
+        assertEquals(6, resourceManager.getAttributeAsInt("animal.ant", "quantity", 0));
+        assertFalse(resourceManager.getAttributeAsBoolean("animal.ant", "tail", true));
+
+        SwrveResource resource2 = resourceManager.getResource("animal.bear");
+        assertNotNull(resource2);
+        assertTrue(resource2.getAttributeKeys().contains("name"));
+        assertTrue(resource2.getAttributeKeys().contains("cost"));
+        assertTrue(resource2.getAttributeKeys().contains("quantity"));
+        assertTrue(resource2.getAttributeKeys().contains("tail"));
+        assertEquals("bear", resourceManager.getAttributeAsString("animal.bear", "name", "anonymous"));
+        assertEquals("9.99", resourceManager.getAttributeAsString("animal.bear", "cost", "0"));
+        assertEquals(20, resourceManager.getAttributeAsInt("animal.bear", "quantity", 0));
+        assertTrue(resourceManager.getAttributeAsBoolean("animal.bear", "tail", false));
+
+        // Test that when new resources are loaded, old ones are removed correctly
+        final String newCacheFileContents = "[{\"uid\": \"animal.ant\", \"name\": \"ant\", \"cost\": \"5.95\", \"quantity\": \"6\", \"tail\": \"false\"}]";
+        try {
+            resourceJson = new JSONArray(newCacheFileContents);
+        } catch (JSONException e) {
+            assertTrue(false); // Invalid JSON
+        }
+        resourceManager.setResourcesFromJSON(resourceJson);
+
+        assertEquals(1, resourceManager.getResources().size());
+        assertNotNull(resourceManager.getResource("animal.ant"));
+        assertEquals("5.95", resourceManager.getAttributeAsString("animal.ant", "cost", "0"));
+
+        // Check default value is used correctly for unknown resources
+        assertEquals(5, resourceManager.getAttributeAsInt("unknown", "invalid", 5));
+        assertFalse(resourceManager.getAttributeAsBoolean("unknown", "invalid", false));
+        assertEquals("defaultvalue", resourceManager.getAttributeAsString("unknown", "invalid", "defaultvalue"));
+        assertEquals("4.5", resourceManager.getAttributeAsString("unknown", "invalid", "4.5"));
+    }
+
+    @Test
+    public void testGetUserResources() throws Exception {
+        final String originalResponseBody = "[{ 'uid': 'animal.ant', 'name': 'ant', 'cost': '550', 'cost_type': 'gold'}, { 'uid': 'animal.bear', 'name': 'bear', 'cost': '999', 'cost_type': 'gold'}]";
+        String userId = swrveSpy.getUserId();
+        swrveSpy.multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_RESOURCES, originalResponseBody , swrveSpy.getUniqueKey(userId));
+        swrveSpy.getUserResources(new SwrveUserResourcesListener() {
+            @Override
+            public void onUserResourcesSuccess(Map<String, Map<String, String>> resources, String resourcesAsJSON) {
+
+                assertEquals(2, resources.size());
+
+                try {
+                    JSONArray json = new JSONArray(resourcesAsJSON);
+                    assertEquals(json.length(), 2);
+                    for (int i = 0, j = json.length(); i < j; i++) {
+                        JSONObject resource = json.getJSONObject(i);
+                        assert (resource.has("uid"));
+                        if (resource.getString("uid").equals("animal.ant")) {
+                            assertEquals(resource.getString("name"), "ant");
+                            assertEquals(resource.getInt("cost"), 550);
+                            assertEquals(resource.getString("cost_type"), "gold");
+                        } else if (resource.getString("uid").equals("animal.bear")) {
+                            assertEquals(resource.getString("name"), "bear");
+                            assertEquals(resource.getInt("cost"), 999);
+                            assertEquals(resource.getString("cost_type"), "gold");
+                        } else {
+                            assertFalse(true); // shouldn't be any other resources
+                        }
+                    }
+                } catch (Exception e) {
+                    SwrveLogger.e("Exception", e);
+                }
+            }
+
+            @Override
+            public void onUserResourcesError(Exception exception) {
+                fail(exception);
+            }
+        });
+    }
+
+    @Ignore("SWRVE-27318 unstable test, so rewrite")
+    @Test
+    public void testGetUserResourcesDiff() throws Exception {
+
+        final AtomicBoolean waitCallback = new AtomicBoolean(false);
+        Mockito.when( swrveSpy.restClientExecutorExecute(Mockito.any(Runnable.class)) ).thenCallRealMethod();
+
+        final String originalResponseBody = "[{ 'uid': 'animal.ant', 'diff': { 'cost': { 'old': '550', 'new': '666' }}}, { 'uid': 'animal.bear', 'diff': { 'level': { 'old': '10', 'new': '9000' }}}]";
+        final Set<String> resourceIds = new HashSet<>();
+        resourceIds.add("animal.ant");
+        resourceIds.add("animal.bear");
+
+        IRESTClient restClientMock = mock(IRESTClient.class);
+        doAnswer((Answer<Void>) invocation -> {
+            RESTCacheResponseListener callback = (RESTCacheResponseListener) invocation.getArguments()[2];
+            callback.onResponse(new RESTResponse(200, originalResponseBody, null));
+            return null;
+        }).when(restClientMock).get(anyString(), anyMap(), any(IRESTResponseListener.class));
+        swrveSpy.restClient = restClientMock;
+
+        swrveSpy.getUserResourcesDiff(new SwrveUserResourcesDiffListener() {
+            @Override
+            public void onUserResourcesDiffSuccess(Map<String, Map<String, String>> oldResourcesValues, Map<String, Map<String, String>> newResourcesValues, String resourcesAsJSON) {
+                assertEquals(originalResponseBody, resourcesAsJSON);
+                assertEquals(resourceIds, oldResourcesValues.keySet());
+                assertEquals(resourceIds, newResourcesValues.keySet());
+                waitCallback.set(true);
+            }
+
+            @Override
+            public void onUserResourcesDiffError(Exception exception) {
+            }
+        });
+
+        await().untilTrue(waitCallback);
+    }
+
+    @Test
+    public void testGetApiKey() {
+        swrveSpy.onCreate(mActivity);
+        assertEquals("apiKey", swrveSpy.getApiKey());
+    }
+
+    @Test
+    public void testGetContextActivity() {
+        swrveSpy.onCreate(mActivity);
+        assertEquals(mActivity, mActivity);
+    }
+
+    @Test
+    public void testGetConfig() throws Exception {
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        Swrve swrve = SwrveTestUtils.createSpyInstance(config);
+        assertEquals(config, swrve.getConfig());
+    }
+
+    @Test
+    public void testDisableSendQueuedEventsOnResume() throws Exception {
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        config.setSendQueuedEventsOnResume(false);
+        swrveSpy = SwrveTestUtils.createSpyInstance(config);
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        swrveSpy.onCreate(mActivity);
+
+        swrveSpy.event("generic_event_1", null);
+        swrveSpy.event("generic_event_2", null);
+        swrveSpy.event("generic_event_3", null);
+
+        int numberOfStoredEventsBefore = getAllEventsInPrimaryStorage(swrveSpy);
+        assertTrue(numberOfStoredEventsBefore >= 3);
+        swrveSpy.lastSessionTick = swrveSpy.getNow().getTime() + 200000;
+        swrveSpy.onResume(mActivity);
+
+        // should be same amount of events stored after resume called
+        int numberOfStoredEventsAfter= getAllEventsInPrimaryStorage(swrveSpy);
+        assertEquals(numberOfStoredEventsBefore, numberOfStoredEventsAfter);
+    }
+
+    private int getAllEventsInPrimaryStorage(Swrve swrve) {
+        return swrve.multiLayerLocalStorage.getPrimaryStorage().getFirstNEvents(Integer.MAX_VALUE, swrve.getUserId()).size();
+    }
+
+    @Test
+    public void testNoInvalidSignature() {
+
+        final String originalResponseBody = "[]";
+        String userId = swrveSpy.getUserId();
+        swrveSpy.multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_RESOURCES, originalResponseBody , swrveSpy.getUniqueKey(userId));
+        swrveSpy.getUserResources(new SwrveUserResourcesListener() {
+            @Override
+            public void onUserResourcesSuccess(Map<String, Map<String, String>> resources, String resourcesAsJSON) {
+            }
+            @Override
+            public void onUserResourcesError(Exception exception) {
+            }
+        });
+
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> eventStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Map> parametersMapCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map> payloadMapCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Boolean> triggerEventListenerCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(swrveSpy, times(2)).queueEvent(userIdStringCaptor.capture(),
+                eventStringCaptor.capture(), parametersMapCaptor.capture(), payloadMapCaptor.capture(), triggerEventListenerCaptor.capture());
+
+        assertTrue(eventStringCaptor.getAllValues().size() > 0);
+        List<String> events1 = eventStringCaptor.getAllValues();
+        List<Map> parameters1 = parametersMapCaptor.getAllValues();
+        assertFalse(hasEventName("Swrve.signature_invalid", events1, parameters1));
+
+        // Force a cache invalid, fake modification to resource cache signature
+        swrveSpy.multiLayerLocalStorage.getPrimaryStorage().setCacheEntry(userId, CACHE_RESOURCES, "fake_new_content");
+
+        swrveSpy.getUserResources(new SwrveUserResourcesListener() {
+            @Override
+            public void onUserResourcesSuccess(Map<String, Map<String, String>> resources, String resourcesAsJSON) {
+            }
+            @Override
+            public void onUserResourcesError(Exception exception) {
+            }
+        });
+
+        verify(swrveSpy, times(3)).queueEvent(userIdStringCaptor.capture(),
+                eventStringCaptor.capture(), parametersMapCaptor.capture(), payloadMapCaptor.capture(), triggerEventListenerCaptor.capture());
+        assertTrue(eventStringCaptor.getAllValues().size() > 0);
+        List<String> events2 = eventStringCaptor.getAllValues();
+        List<Map> parameters2 = parametersMapCaptor.getAllValues();
+        assertTrue(hasEventName("Swrve.signature_invalid", events2, parameters2));
+    }
+
+    private boolean hasEventName(String eventName, List<String> events, List<Map> parameters) {
+        boolean foundEvent = false;
+        for (int i = 0; i < events.size(); i++) {
+            String event = events.get(i);
+            if(event.equals("event")) {
+                if(parameters.get(i).containsKey("name")) {
+                    if(parameters.get(i).get("name").equals(eventName)) {
+                        foundEvent = true;
+                    }
+                }
+            }
+        }
+        return foundEvent;
+    }
+
 }

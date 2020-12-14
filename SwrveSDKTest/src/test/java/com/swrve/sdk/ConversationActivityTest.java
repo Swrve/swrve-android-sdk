@@ -212,6 +212,8 @@ public class ConversationActivityTest extends SwrveBaseTest {
         outsideParams.width = maxModalWidthPx + 1;
         conversationRelativeLayout.requestLayout();
 
+        Shadows.shadowOf(activity.getMainLooper()).idle();
+
         conversationLayoutModal = conversationRelativeLayout.findViewById(com.swrve.sdk.conversations.R.id.swrve__conversation_modal);
         modalParams = (RelativeLayout.LayoutParams) conversationLayoutModal.getLayoutParams();
         int topBottomPaddingPx = mActivity.getResources().getDimensionPixelSize(com.swrve.sdk.conversations.R.dimen.swrve__conversation_min_modal_top_bottom_padding);

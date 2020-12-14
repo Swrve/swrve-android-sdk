@@ -26,12 +26,15 @@ import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
+import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
+import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -67,6 +70,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.EMBEDDED;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
@@ -184,8 +188,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             if (messageListener == null) {
                 setDefaultMessageListener();
             }
+
             if (config.getInAppMessageConfig() != null) {
-                personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
+                if (config.getInAppMessageConfig().getPersonalisationProvider() != null) {
+                    personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
+                }
+            }
+
+            if (config.getEmbeddedMessageConfig() != null) {
+                if (config.getEmbeddedMessageConfig().getEmbeddedMessageListener() != null) {
+                    embeddedMessageListener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
+                }
             }
 
             // Add custom conversation listener
@@ -224,8 +237,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     }
                 });
             }
-
-            sendCrashlyticsMetadata();
 
             SwrveLogger.i("Init finished");
         } catch (Exception exp) {
@@ -724,6 +735,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 if (!SwrveHelper.isNullOrEmpty(androidId)) {
                     deviceInfo.put(SWRVE_ANDROID_ID, androidId);
                 }
+                deviceInfo.put(SWRVE_DEVICE_TYPE, SwrveHelper.getPlatformDeviceType(contextRef));
             } catch (Exception exp) {
                 SwrveLogger.e("Get device screen info failed", exp);
             }
@@ -754,7 +766,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             int notificationsImportance = notificationManagerCompat.getImportance();
             deviceInfo.put(SWRVE_NOTIFICATIONS_IMPORTANCE, notificationsImportance);
 
-            if(notificationsEnabled) {
+            if (notificationsEnabled) {
                 // Rich Push Capabilities
                 deviceInfo.put(SWRVE_NOTIFICATIONS_BUTTONS, true);
                 deviceInfo.put(SWRVE_NOTIFICATIONS_ATTACHMENT, true);
@@ -813,7 +825,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     JSONObject responseJson;
                                     try {
                                         responseJson = new JSONObject(response.responseBody);
-                                    } catch(JSONException e) {
+                                    } catch (JSONException e) {
                                         SwrveLogger.e("SwrveSDK unable to decode user_content JSON : \"%s\".", response.responseBody);
                                         throw e;
                                     }
@@ -917,11 +929,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @SuppressLint("UseSparseArrays")
     protected SwrveConversation _getConversationForEvent(String event, Map<String, String> payload) {
         SwrveConversation result = null;
-        SwrveInAppCampaign campaign = null;
+        SwrveConversationCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, Integer> availableCampaignsIgnoredList = new HashMap<>();
-        Map<Integer, QaCampaignInfo> qaCampaignInfoMap =  new HashMap<>();
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
 
         if (campaigns != null) {
             if (!campaignDisplayer.checkAppCampaignRules(campaigns.size(), "conversation", event, payload, now)) {
@@ -934,7 +946,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 List<SwrveConversation> candidateConversations = new ArrayList<>();
                 for (SwrveBaseCampaign nextCampaign : campaigns) {
                     if (nextCampaign instanceof SwrveConversationCampaign) {
-                        SwrveConversation nextConversation = ((SwrveConversationCampaign)nextCampaign).getConversationForEvent(event, payload, now, qaCampaignInfoMap);
+                        SwrveConversation nextConversation = ((SwrveConversationCampaign) nextCampaign).getConversationForEvent(event, payload, now, qaCampaignInfoMap);
                         if (nextConversation != null) {
                             // Add to list of returned messages
                             availableConversations.add(nextConversation);
@@ -955,6 +967,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     // Select randomly
                     Collections.shuffle(candidateConversations);
                     result = candidateConversations.get(0);
+                    campaign = candidateConversations.get(0).getCampaign();
                 }
                 if (QaUser.isLoggingEnabled() && campaign != null && result != null) {
                     // A message was chosen, set the reason for the others
@@ -982,48 +995,102 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return result;
     }
 
-    @SuppressLint("UseSparseArrays")
-    protected SwrveMessage _getMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation) {
+    protected SwrveMessage _getMessageForId(int messageId) {
         SwrveMessage result = null;
-        SwrveInAppCampaign campaign = null;
+
+        if (campaigns != null && campaigns.size() > 0) {
+            synchronized (campaigns) {
+                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
+                while (itCampaign.hasNext() && result == null) {
+                    SwrveBaseCampaign campaign = itCampaign.next();
+                    if (campaign instanceof SwrveInAppCampaign) {
+                        result = ((SwrveInAppCampaign) campaign).getMessageForId(messageId);
+                    }
+                }
+            }
+        }
+
+        if (result == null) {
+            SwrveLogger.i("Not showing messages: no candidate messages");
+        }
+
+        return result;
+    }
+
+    protected SwrveEmbeddedMessage _getEmbeddedMessageForId(int messageId) {
+        SwrveEmbeddedMessage result = null;
+
+        if (campaigns != null && campaigns.size() > 0) {
+            synchronized (campaigns) {
+                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
+                while (itCampaign.hasNext() && result == null) {
+                    SwrveBaseCampaign campaign = itCampaign.next();
+                    if (campaign instanceof SwrveEmbeddedCampaign) {
+                        SwrveEmbeddedMessage candidateMessage = ((SwrveEmbeddedCampaign) campaign).getMessage();
+                        if (messageId == candidateMessage.getId()) {
+                            result = candidateMessage;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (result == null) {
+            SwrveLogger.i("Not returning embedded message: no candidate embedded messages");
+        }
+
+        return result;
+    }
+
+    @SuppressLint("UseSparseArrays")
+    protected SwrveBaseMessage _getBaseMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation) {
+        SwrveBaseMessage result = null;
+        SwrveBaseCampaign campaign = null;
 
         Date now = getNow();
         Map<Integer, Integer> availableCampaignsIgnoredList = new HashMap<>();
-        Map<Integer, QaCampaignInfo> qaCampaignInfoMap =  new HashMap<>();
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
 
         if (campaigns != null) {
             if (!campaignDisplayer.checkAppCampaignRules(campaigns.size(), "message", event, payload, now)) {
                 return null;
             }
             synchronized (campaigns) {
-                List<SwrveMessage> availableMessages = new ArrayList<>();
+                List<SwrveBaseMessage> availableMessages = new ArrayList<>();
                 // Select messages with higher priority
                 int minPriority = Integer.MAX_VALUE;
-                List<SwrveMessage> candidateMessages = new ArrayList<>();
+                List<SwrveBaseMessage> candidateMessages = new ArrayList<>();
                 for (SwrveBaseCampaign nextCampaign : campaigns) {
+                    SwrveBaseMessage nextMessage = null;
                     if (nextCampaign instanceof SwrveInAppCampaign) {
-                        SwrveMessage nextMessage = ((SwrveInAppCampaign)nextCampaign).getMessageForEvent(event, payload, now, qaCampaignInfoMap);
-                        if (nextMessage != null) {
-                            // Add to list of returned messages
-                            availableMessages.add(nextMessage);
-                            // Check if it is a candidate to be shown
-                            if (nextMessage.getPriority() <= minPriority) {
-                                if (nextMessage.getPriority() < minPriority) {
-                                    // If it is lower than any of the previous ones remove those from being candidates
-                                    candidateMessages.clear();
-                                }
-                                minPriority = nextMessage.getPriority();
-                                candidateMessages.add(nextMessage);
-                            }
+                        nextMessage = ((SwrveInAppCampaign) nextCampaign).getMessageForEvent(event, payload, now, qaCampaignInfoMap);
+                    } else if (nextCampaign instanceof SwrveEmbeddedCampaign) {
+                        nextMessage = ((SwrveEmbeddedCampaign) nextCampaign).getMessageForEvent(event, payload, now, qaCampaignInfoMap);
+                    }
+
+                    if (nextMessage != null) {
+                        availableMessages.add((nextMessage));
+                    }
+                }
+
+                // rank all of them by priority
+                for (SwrveBaseMessage nextMessage : availableMessages) {
+                    // Check if it is a candidate to be shown
+                    if (nextMessage.getPriority() <= minPriority) {
+                        if (nextMessage.getPriority() < minPriority) {
+                            // If it is lower than any of the previous ones remove those from being candidates
+                            candidateMessages.clear();
                         }
+                        minPriority = nextMessage.getPriority();
+                        candidateMessages.add(nextMessage);
                     }
                 }
 
                 // Select randomly from the highest messages
                 Collections.shuffle(candidateMessages);
-                Iterator<SwrveMessage> itCandidateMessage = candidateMessages.iterator();
+                Iterator<SwrveBaseMessage> itCandidateMessage = candidateMessages.iterator();
                 while (campaign == null && itCandidateMessage.hasNext()) {
-                    SwrveMessage candidateMessage = itCandidateMessage.next();
+                    SwrveBaseMessage candidateMessage = itCandidateMessage.next();
                     // Check that the message supports the current orientation
                     if (candidateMessage.supportsOrientation(orientation)) {
                         result = candidateMessage;
@@ -1034,22 +1101,23 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             availableCampaignsIgnoredList.put(campaignId, candidateMessage.getId());
                             String resultText = "Message didn't support the given orientation: " + orientation;
                             int variantId = candidateMessage.getId();
-                            qaCampaignInfoMap.put(campaignId, new QaCampaignInfo(campaignId, variantId, IAM, false, resultText));
+                            qaCampaignInfoMap.put(campaignId, new QaCampaignInfo(campaignId, variantId, candidateMessage.getCampaign().getCampaignType(), false, resultText));
                         }
                     }
                 }
 
                 if (QaUser.isLoggingEnabled() && campaign != null && result != null) {
                     // A message was chosen, set the reason for the others
-                    for (SwrveMessage otherMessage : availableMessages) {
+                    for (SwrveBaseMessage otherMessage : availableMessages) {
                         if (otherMessage != result) {
                             int otherCampaignId = otherMessage.getCampaign().getId();
                             if (!availableCampaignsIgnoredList.containsKey(otherCampaignId)) {
                                 availableCampaignsIgnoredList.put(otherCampaignId, otherMessage.getId());
                                 String resultText = "Campaign " + campaign.getId() + " was selected for display ahead of this campaign";
                                 int variantId = otherMessage.getId();
-                                qaCampaignInfoMap.put(otherCampaignId, new QaCampaignInfo(otherCampaignId, variantId, IAM, false, resultText));
+                                qaCampaignInfoMap.put(otherCampaignId, new QaCampaignInfo(otherCampaignId, variantId, otherMessage.getCampaign().getCampaignType(), false, resultText));
                             }
+
                         }
                     }
                 }
@@ -1065,34 +1133,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return result;
     }
 
-    protected SwrveMessage _getMessageForId(int messageId) {
-        SwrveMessage result = null;
-
-        if (campaigns != null && campaigns.size() > 0) {
-            synchronized (campaigns) {
-                Iterator<SwrveBaseCampaign> itCampaign = campaigns.iterator();
-                while (itCampaign.hasNext() && result == null) {
-                    SwrveBaseCampaign campaign = itCampaign.next();
-                    if (campaign instanceof SwrveInAppCampaign) {
-                        result = ((SwrveInAppCampaign)campaign).getMessageForId(messageId);
-                    }
-                }
-            }
-        }
-
-        if (result == null) {
-            SwrveLogger.i("Not showing messages: no candidate messages");
-        }
-
-        return result;
-    }
-
     protected void _buttonWasPressedByUser(SwrveButton button) {
         if (button.getActionType() != SwrveActionType.Dismiss) {
             String clickEvent = "Swrve.Messages.Message-" + button.getMessage().getId() + ".click";
             SwrveLogger.i("Sending click event: %s(%s)", clickEvent, button.getName());
             Map<String, String> payload = new HashMap<>();
             payload.put("name", button.getName());
+            payload.put("embedded", "false");
+
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("name", clickEvent);
             queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
@@ -1111,12 +1159,49 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 campaign.messageWasShownToUser();
             }
 
-            String viewEvent = "Swrve.Messages.Message-" + message.getId() + ".impression";
-            SwrveLogger.i("Sending view event: %s" + viewEvent);
+            Map<String, String> payload = new HashMap<>();
+            payload.put("embedded", "false");
+            queueMessageImpressionEvent(message, payload);
+        }
+    }
+
+    protected void _embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
+        if (message != null) {
+            campaignDisplayer.setMessageMinDelayThrottle(getNow());
+            campaignDisplayer.decrementMessagesLeftToShow();
+
+            // Update next for round robin
+            SwrveEmbeddedCampaign campaign = message.getCampaign();
+            if (campaign != null) {
+                campaign.messageWasShownToUser();
+            }
+
+            Map<String, String> payload = new HashMap<>();
+            payload.put("embedded", "true");
+            queueMessageImpressionEvent(message, payload);
+        }
+    }
+
+    protected void queueMessageImpressionEvent(SwrveBaseMessage message, Map<String, String> payload) {
+        String viewEvent = "Swrve.Messages.Message-" + message.getId() + ".impression";
+        SwrveLogger.i("Sending view event: %s" + viewEvent);
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", viewEvent);
+        queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
+        saveCampaignsState(profileManager.getUserId());
+    }
+
+    protected void _embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName) {
+        if (message != null) {
+            String clickEvent = "Swrve.Messages.Message-" + message.getId() + ".click";
+            SwrveLogger.i("Sending click event: %s(%s)", clickEvent, buttonName);
+            Map<String, String> payload = new HashMap<>();
+            payload.put("name", buttonName);
+            payload.put("embedded", "true");
             Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", viewEvent);
-            queueEvent(profileManager.getUserId(), "event", parameters, null, false);
-            saveCampaignsState(profileManager.getUserId());
+            parameters.put("name", clickEvent);
+            queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
         }
     }
 
@@ -1131,7 +1216,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _setMessageListener(SwrveMessageListener messageListener) {
         this.messageListener = messageListener;
         if (messageListener != null) {
-            eventListener = new SwrveEventListener(this, messageListener, conversationListener);
+            eventListener = new SwrveEventListener(this, messageListener, conversationListener, embeddedMessageListener);
         } else {
             eventListener = null;
         }
@@ -1140,7 +1225,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected void _setConversationListener(SwrveConversationListener listener) {
         this.conversationListener = listener;
         if (conversationListener != null) {
-            eventListener = new SwrveEventListener(this, messageListener, conversationListener);
+            eventListener = new SwrveEventListener(this, messageListener, conversationListener, embeddedMessageListener);
         } else {
             eventListener = null;
         }
@@ -1189,7 +1274,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (!isSdkReady()) return;
 
         try {
-            if(isValidEventName(name)) {
+            if (isValidEventName(name)) {
                 _event(name);
             }
         } catch (Exception e) {
@@ -1202,7 +1287,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (!isSdkReady()) return;
 
         try {
-            if(isValidEventName(name)) {
+            if (isValidEventName(name)) {
                 _event(name, payload);
             }
         } catch (Exception e) {
@@ -1216,8 +1301,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             add("swrve.");
         }};
 
-        for(String restricted: restrictedNamesStartWith) {
-            if(name==null || name.startsWith(restricted)) {
+        for (String restricted : restrictedNamesStartWith) {
+            if (name == null || name.startsWith(restricted)) {
                 SwrveLogger.e("Event names cannot begin with %s* This event will not be sent. Eventname:%s", restricted, name);
                 return false;
             }
@@ -1469,33 +1554,51 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (!isSdkReady()) return;
 
         try {
-              _refreshCampaignsAndResources();
+            _refreshCampaignsAndResources();
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
-    }
-
-    protected SwrveMessage getMessageForEvent(String event) {
-        try {
-            return getMessageForEvent(event, new HashMap<String, String>(), SwrveOrientation.Both);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-        return null;
-    }
-
-    protected SwrveMessage getMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation) {
-        try {
-            return _getMessageForEvent(event, payload, orientation);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-        return null;
     }
 
     public SwrveMessage getMessageForId(int messageId) {
         try {
             return _getMessageForId(messageId);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    public SwrveEmbeddedMessage getEmbeddedMessageForId(int messageId) {
+        try {
+            return _getEmbeddedMessageForId(messageId);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    protected SwrveBaseMessage getBaseMessageForEvent(String event) {
+        try {
+            return getBaseMessageForEvent(event, new HashMap<String, String>(), SwrveOrientation.Both);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    protected SwrveBaseMessage getBaseMessageForEvent(String event, Map<String, String> payload) {
+        try {
+            return _getBaseMessageForEvent(event, payload, SwrveOrientation.Both);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    protected SwrveBaseMessage getBaseMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation) {
+        try {
+            return _getBaseMessageForEvent(event, payload, orientation);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1543,6 +1646,28 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         try {
             _messageWasShownToUser(messageFormat);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
+    public void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
+        if (!isSdkReady()) return;
+
+        try {
+            _embeddedMessageWasShownToUser(message);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
+    public void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName) {
+        if (!isSdkReady()) return;
+
+        try {
+            _embeddedMessageButtonWasPressed(message, buttonName);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1665,8 +1790,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             && campaign.supportsOrientation(orientation)
                             && campaign.areAssetsReady(getAssetsOnDisk())) {
                         if (properties != null && (campaign instanceof SwrveInAppCampaign)) {
-                            // Check personalisation for the
-                            List<SwrveMessage> messages = ((SwrveInAppCampaign)campaign).getMessages();
+                            // Check personalisation for matching key/value pairs
+                            List<SwrveMessage> messages = ((SwrveInAppCampaign) campaign).getMessages();
                             boolean messagesCanResolve = true;
                             for (int mi = 0; mi < messages.size() && messagesCanResolve; mi++) {
                                 SwrveMessage message = messages.get(mi);
@@ -1715,7 +1840,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (!isSdkReady()) return false;
 
         if (campaign instanceof SwrveInAppCampaign) {
-            SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign)campaign;
+            SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign) campaign;
             if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
                 // Display first message in the in-app campaign
                 messageListener.onMessage(iamCampaign.getMessages().get(0), properties);
@@ -1724,12 +1849,20 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 SwrveLogger.e("No in-app message or message listener.");
             }
         } else if (campaign instanceof SwrveConversationCampaign) {
-            SwrveConversationCampaign conversationCampaign = (SwrveConversationCampaign)campaign;
+            SwrveConversationCampaign conversationCampaign = (SwrveConversationCampaign) campaign;
             if (conversationCampaign != null && conversationCampaign.getConversation() != null && conversationListener != null) {
                 conversationListener.onMessage(conversationCampaign.getConversation());
                 return true;
             } else {
                 SwrveLogger.e("No conversation campaign or conversation listener.");
+            }
+        } else if (campaign instanceof SwrveEmbeddedCampaign) {
+            SwrveEmbeddedCampaign embeddedCampaign = (SwrveEmbeddedCampaign) campaign;
+            if (embeddedCampaign != null && embeddedMessageListener != null) {
+                embeddedMessageListener.onMessage(getContext(), embeddedCampaign.getMessage());
+                return true;
+            } else {
+                SwrveLogger.e("No embedded message or embedded message listener.");
             }
         }
         return false;
@@ -1754,8 +1887,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected Map<String, String> getContentRequestParams(String userId) {
 
         String userJoinedTime = multiLayerLocalStorage.getCacheEntry(userId, CACHE_USER_JOINED_TIME);
-
-
         Map<String, String> params = new HashMap<>();
 
         // General params
@@ -1769,6 +1900,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         params.put("conversation_version", String.valueOf(ISwrveConversationSDK.CONVERSATION_VERSION));
         params.put("language", language);
         params.put("app_store", config.getAppStore());
+        params.put("embedded_campaign_version", String.valueOf(EMBEDDED_CAMPAIGN_VERSION));
 
         // Device info
         params.put("device_width", String.valueOf(deviceWidth));
@@ -1785,7 +1917,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             params.put("os", this.getPlatformOS(contextRef));
             params.put("device_type", SwrveHelper.getPlatformDeviceType(contextRef));
         }
-        
+
         return params;
     }
 
@@ -1831,7 +1963,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public String getBatchURL() {
-        return getEventsServer() +  BATCH_EVENTS_ACTION;
+        return getEventsServer() + BATCH_EVENTS_ACTION;
     }
 
     @Override
@@ -1860,15 +1992,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public void sendEventsInBackground(Context context, String userId, ArrayList<String> events) {
         QaUser.wrappedEvents(new ArrayList<>(events)); // use copy of events
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            // Avoid using the deprecated wakeful receiver
-            SwrveEventSenderJobIntentService.enqueueWork(context, userId, events);
-        } else {
-            Intent intent = new Intent(context, SwrveWakefulReceiver.class);
-            intent.putExtra(SwrveBackgroundEventSender.EXTRA_USER_ID, userId);
-            intent.putStringArrayListExtra(SwrveBackgroundEventSender.EXTRA_EVENTS, events);
-            context.sendBroadcast(intent);
-        }
+        getSwrveBackgroundEventSender(context).send(userId, events);
+    }
+
+    protected SwrveBackgroundEventSender getSwrveBackgroundEventSender(Context context) {
+        return new SwrveBackgroundEventSender(this, context);
     }
 
     @Override
@@ -2089,7 +2217,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     private void identifyUnknownUser(final String externalUserId, final SwrveIdentityResponse identityResponse, SwrveUser cachedSwrveUser) {
 
         final String unidentifiedUserId = getUnidentifiedUserId(externalUserId, cachedSwrveUser);
-        identifiedOnAnotherDevice =  false; // reset the flag
+        identifiedOnAnotherDevice = false; // reset the flag
         profileManager.identify(externalUserId, unidentifiedUserId, getDeviceId(), new SwrveIdentityResponse() {
             @Override
             public void onSuccess(String status, String swrveId) {
@@ -2259,11 +2387,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     private boolean isSdkReady() {
-       if (config.getInitMode() == SwrveInitMode.MANAGED && !started) {
-           SwrveLogger.w("Warning: SwrveSDK needs to be started in SwrveInitMode.MANAGED mode before calling this api.");
-           return false;
-       }
-       return true;
+        if (config.getInitMode() == SwrveInitMode.MANAGED && !started) {
+            SwrveLogger.w("Warning: SwrveSDK needs to be started in SwrveInitMode.MANAGED mode before calling this api.");
+            return false;
+        }
+        return true;
     }
 
     protected void sendSessionStart(long time) {

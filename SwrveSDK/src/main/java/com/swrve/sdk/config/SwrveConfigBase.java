@@ -49,6 +49,7 @@ public abstract class SwrveConfigBase {
     private SwrvePushNotificationListener notificationListener;
     private SwrveSilentPushListener silentPushListener;
     private SwrveInAppMessageConfig inAppMessageConfig = new SwrveInAppMessageConfig.Builder().build(); // All default values set in the init
+    private SwrveEmbeddedMessageConfig embeddedMessageConfig = null;
     private SwrveInitMode initMode = SwrveInitMode.AUTO;
     private boolean managedModeAutoStartLastUser = true;
 
@@ -568,5 +569,23 @@ public abstract class SwrveConfigBase {
      */
     public void setInAppMessageConfig(SwrveInAppMessageConfig inAppMessageConfig) {
         this.inAppMessageConfig = inAppMessageConfig;
+    }
+
+    /**
+     * The configuration file for EmbeddedMessages.
+     *
+     * @return the embeddedMessage config object
+     */
+    public SwrveEmbeddedMessageConfig getEmbeddedMessageConfig() {
+        return embeddedMessageConfig;
+    }
+
+    /**
+     * The configuration file for EmbeddedMessages.
+     *
+     * @param embeddedMessageConfig object with in app configuration
+     */
+    public void setEmbeddedMessageConfig(SwrveEmbeddedMessageConfig embeddedMessageConfig) {
+        this.embeddedMessageConfig = embeddedMessageConfig;
     }
 }

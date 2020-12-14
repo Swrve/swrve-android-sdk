@@ -40,12 +40,12 @@ public class SwrveQaUserTest extends SwrveBaseTest {
         assertFalse(QaUser.isResetDevice());
 
         // First impression
-        SwrveMessage message = swrveSpy.getMessageForEvent("Swrve.currency_given");
+        SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNotNull(message);
         swrveSpy.messageWasShownToUser(message.getFormats().get(0));
 
         // Impression rule still applies
-        message = swrveSpy.getMessageForEvent("Swrve.currency_given");
+        message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNull(message);
 
         // Becomes a QA user
@@ -56,19 +56,19 @@ public class SwrveQaUserTest extends SwrveBaseTest {
         assertTrue(QaUser.isResetDevice());
 
         // First impression
-        message = swrveSpy.getMessageForEvent("Swrve.currency_given");
+        message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNotNull(message);
         swrveSpy.messageWasShownToUser(message.getFormats().get(0));
 
         // Impression rule still applies
-        message = swrveSpy.getMessageForEvent("Swrve.currency_given");
+        message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNull(message);
 
         // Reload campaigns
         swrveSpy.refreshCampaignsAndResources();
 
         // Impression rule still applies
-        message = swrveSpy.getMessageForEvent("Swrve.currency_given");
+        message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNull(message);
     }
 

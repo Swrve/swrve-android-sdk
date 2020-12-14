@@ -65,17 +65,17 @@ dependencies {
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
 
     // Unit tests
-    testImplementation 'org.mockito:mockito-core:1.9.0'
+    testImplementation 'org.mockito:mockito-core:3.6.28'
 
     // Robolectric tests
-    testImplementation 'junit:junit:4.12'
-    testImplementation('org.robolectric:robolectric:4.2') {
+    testImplementation 'junit:junit:4.13'
+    testImplementation('org.robolectric:robolectric:4.4') {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
-    testImplementation 'androidx.test:core:1.0.0'
+    testImplementation 'androidx.test:core:1.3.0'
 
-    testImplementation 'org.awaitility:awaitility:3.0.0'
+    testImplementation 'org.awaitility:awaitility:3.1.6'
 
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead.

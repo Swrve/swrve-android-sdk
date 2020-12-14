@@ -8,6 +8,8 @@ import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -128,11 +130,11 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void getRealTimeUserProperties(SwrveRealTimeUserPropertiesListener listener){
-       if (listener != null) {
-           listener.onRealTimeUserPropertiesSuccess(new HashMap<>(), null);
-       }
-    };
+    public void getRealTimeUserProperties(SwrveRealTimeUserPropertiesListener listener) {
+        if (listener != null) {
+            listener.onRealTimeUserPropertiesSuccess(new HashMap<>(), null);
+        }
+    }
 
     @Override
     public void sendQueuedEvents() {
@@ -237,6 +239,14 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
+    }
+
+    @Override
+    public void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName) {
+    }
+
+    @Override
+    public void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
     }
 
     @Override

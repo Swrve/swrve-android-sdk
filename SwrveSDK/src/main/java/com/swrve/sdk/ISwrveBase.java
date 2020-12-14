@@ -2,9 +2,12 @@ package com.swrve.sdk;
 
 import android.app.Activity;
 import android.os.Bundle;
+
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -71,6 +74,10 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     void buttonWasPressedByUser(SwrveButton button);
 
     void messageWasShownToUser(SwrveMessageFormat messageFormat);
+
+    void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName);
+
+    void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message);
 
     String getAppStoreURLForApp(int appId);
 

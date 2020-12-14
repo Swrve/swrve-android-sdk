@@ -15,17 +15,18 @@ import java.util.Date;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 
-class SwrvePushServiceManager {
+class SwrvePushManagerImp implements SwrvePushManager {
 
     private final Context context;
     private SwrveNotificationBuilder notificationBuilder;
     private String authenticatedUserId;
 
-    SwrvePushServiceManager(Context context) {
+    SwrvePushManagerImp(Context context) {
         this.context = context;
     }
 
-    void processMessage(final Bundle msg) {
+    @Override
+    public void processMessage(final Bundle msg) {
         sendPushDeliveredEvent(msg);
         String silentId = SwrveHelper.getSilentPushId(msg);
         if (!SwrveHelper.isNullOrEmpty(silentId)) {
@@ -114,12 +115,12 @@ class SwrvePushServiceManager {
             Notification notification = applyCustomFilter(notificationCompatBuilder, notificationId, msg, swrveNotificationBuilder.getNotificationDetails());
 
             if (notification == null) {
-                SwrveLogger.d("SwrvePushServiceManager: notification suppressed via custom filter. notificationId: %s", notificationId);
+                SwrveLogger.d("SwrvePushManager: notification suppressed via custom filter. notificationId: %s", notificationId);
             } else {
                 saveInfluencedCampaign(msg, pushId);
                 final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
                 notificationManager.notify(notificationId, notification);
-                SwrveLogger.d("SwrvePushServiceManager: displayed notificationId: %s", notificationId);
+                SwrveLogger.d("SwrvePushManager: displayed notificationId: %s", notificationId);
 
                 // Save notification id so existing authenticated notifications can be dismissed later if different user identifies
                 if (authenticatedUserId != null) {
@@ -144,7 +145,7 @@ class SwrvePushServiceManager {
         } else {
             SwrveLogger.d("SwrveNotificationFilter configured. Passing builder to custom filter.");
             try {
-                String payload = SwrvePushServiceHelper.getPayload(msg);
+                String payload = SwrvePushManagerHelper.getPayload(msg);
                 if (notificationConfig.getNotificationFilter() != null) {
                     SwrveNotificationFilter filter = notificationConfig.getNotificationFilter();
                     notification = filter.filterNotification(builder, notificationId, notificationDetails, payload);

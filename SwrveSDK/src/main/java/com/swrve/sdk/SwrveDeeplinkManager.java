@@ -11,6 +11,9 @@ import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
@@ -247,6 +250,9 @@ class SwrveDeeplinkManager {
         } else if (jsonCampaign.has("messages")) {
             Swrve swrve = (Swrve) SwrveSDK.getInstance();
             campaign = new SwrveInAppCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue);
+        } else if (jsonCampaign.has("embedded_message")) {
+            Swrve swrve = (Swrve) SwrveSDK.getInstance();
+            campaign = new SwrveEmbeddedCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign);
         }
 
         downloadAssets(assetsQueue, callback);
@@ -328,6 +334,16 @@ class SwrveDeeplinkManager {
                     } else {
                         this.swrveMessageListener.onMessage(message);
                     }
+                }
+            } else if (campaign instanceof SwrveEmbeddedCampaign) {
+                SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
+                SwrveEmbeddedMessageListener embeddedMessageListener = null;
+                if (config != null && config.getEmbeddedMessageConfig() != null){
+                    embeddedMessageListener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
+                }
+
+                if(embeddedMessageListener != null){
+                    embeddedMessageListener.onMessage(context, message);
                 }
             }
         }

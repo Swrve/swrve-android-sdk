@@ -24,8 +24,12 @@ import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.InMemoryLocalStorage;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
+import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
@@ -67,6 +71,7 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.EMBEDDED;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
@@ -76,8 +81,9 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "7.3.2";
-    protected static final int CAMPAIGN_ENDPOINT_VERSION = 7;
+    protected static String version = "7.4.0";
+    protected static final int CAMPAIGN_ENDPOINT_VERSION = 8;
+    protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -106,6 +112,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected C config;
     protected ISwrveEventListener eventListener;
     protected SwrveMessageListener messageListener;
+    protected SwrveEmbeddedMessageListener embeddedMessageListener;
     protected SwrveMessagePersonalisationProvider personalisationProvider;
     protected SwrveConversationListener conversationListener;
     protected SwrveResourcesListener resourcesListener;
@@ -212,7 +219,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     private void initDefaultUrls(C config) {
         try {
             config.generateUrls(appId); // Generate default urls for the given app id
-        }catch (MalformedURLException ex) {
+        } catch (MalformedURLException ex) {
             SwrveLogger.e("Couldn't generate urls for appId:" + appId, ex);
         }
     }
@@ -238,20 +245,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.context = new WeakReference<>(activity.getApplicationContext());
         this.activityContext = new WeakReference<>(activity);
         return this.context.get();
-    }
-
-    protected void sendCrashlyticsMetadata() {
-        try {
-            Class c = Class.forName("com.crashlytics.android.Crashlytics");
-            if (c != null) {
-                Method m = c.getMethod("setString", new Class[]{String.class, String.class});
-                if (m != null) {
-                    m.invoke(null, "Swrve_version", version);
-                }
-            }
-        } catch (Exception exp) {
-            SwrveLogger.i("Could not set Crashlytics metadata");
-        }
     }
 
     // Internal function to add a Swrve.iap event to the event queue.
@@ -513,7 +506,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             return;
         }
 
-        Map<Integer, QaCampaignInfo> dummyQaCampaignInfoMap =  new HashMap<>(); // no qalog triggered from this.
+        Map<Integer, QaCampaignInfo> dummyQaCampaignInfoMap = new HashMap<>(); // no qalog triggered from this.
         Map<String, String> dummyEmptyPayload = new HashMap<>();
         for (final SwrveBaseCampaign campaign : campaigns) {
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
@@ -525,7 +518,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
                                 autoShowConversation(swrve);
-                                autoShowInAppMessage(swrve);
+                                autoShowMessage(swrve);
                             });
                         }
                     }
@@ -535,12 +528,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    protected void autoShowInAppMessage(SwrveBase<T, C> swrve) {
+    protected void autoShowMessage(SwrveBase<T, C> swrve) {
         try {
-            if (messageListener != null && autoShowMessagesEnabled) {
-                SwrveMessage message = swrve.getMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+            if (autoShowMessagesEnabled && messageListener != null) {
+                SwrveBaseMessage message = swrve.getBaseMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
+
                 if (message != null && message.supportsOrientation(getDeviceOrientation())) {
-                    messageListener.onMessage(message);
+                    if (message instanceof SwrveMessage) {
+                        messageListener.onMessage((SwrveMessage) message);
+                    } else if (embeddedMessageListener != null && message instanceof SwrveEmbeddedMessage) {
+                        embeddedMessageListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message);
+                    }
                     autoShowMessagesEnabled = false;
                 }
             }
@@ -602,7 +600,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             // Version check
             String version = json.getString("version");
             if (!version.equals(CAMPAIGN_RESPONSE_VERSION)) {
-                SwrveLogger.i("Campaign JSON (%s) has the wrong version for this sdk (%s). No campaigns loaded.", version, CAMPAIGN_RESPONSE_VERSION );
+                SwrveLogger.i("Campaign JSON (%s) has the wrong version for this sdk (%s). No campaigns loaded.", version, CAMPAIGN_RESPONSE_VERSION);
                 return;
             }
 
@@ -690,8 +688,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         } else {
                             SwrveLogger.i("Conversation version %s cannot be loaded with this SDK version", conversationVersionDownloaded);
                         }
-                    } else {
+                    } else if (campaignData.has("messages")) {
                         campaign = loadCampaignFromJSON(campaignData, campaignAssetQueue);
+                    } else if (campaignData.has("embedded_message")) {
+                        campaign = loadEmbeddedCampaignFromJSON(campaignData);
                     }
 
                     if (campaign != null) {
@@ -712,10 +712,13 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         if (QaUser.isLoggingEnabled()) {
                             if (campaign instanceof SwrveConversationCampaign) {
                                 int variantId = ((SwrveConversationCampaign) campaign).getConversation().getId();
-                                qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, CONVERSATION, false, ""));
+                                qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, campaign.getCampaignType(), false, ""));
                             } else if (campaign instanceof SwrveInAppCampaign) {
                                 int variantId = ((SwrveInAppCampaign) campaign).getVariantIdAtIndex(0);
-                                qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, IAM, false, ""));
+                                qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, campaign.getCampaignType(), false, ""));
+                            } else if (campaign instanceof SwrveEmbeddedCampaign) {
+                                int variantId = ((SwrveEmbeddedCampaign) campaign).getMessage().getId();
+                                qaCampaignInfoList.add((new QaCampaignInfo(campaign.getId(), variantId, campaign.getCampaignType(), false, "")));
                             }
                         }
                     }
@@ -738,11 +741,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     private void updateCdnPaths(JSONObject json) throws JSONException {
-        if(json.has("cdn_root")) {
+        if (json.has("cdn_root")) {
             String cdnRoot = json.getString("cdn_root");
             swrveAssetsManager.setCdnImages(cdnRoot);
             SwrveLogger.i("CDN URL %s", cdnRoot);
-        } else if(json.has("cdn_paths")) {
+        } else if (json.has("cdn_paths")) {
             JSONObject cdnPaths = json.getJSONObject("cdn_paths");
             String cdnImages = cdnPaths.getString("message_images");
             String cdnFonts = cdnPaths.getString("message_fonts");
@@ -768,6 +771,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue);
+    }
+
+    protected SwrveEmbeddedCampaign loadEmbeddedCampaignFromJSON(JSONObject campaignData) throws JSONException {
+        return new SwrveEmbeddedCampaign(this, campaignDisplayer, campaignData);
     }
 
     protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
@@ -797,7 +804,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected Context getContext() {
         Context appCtx = context.get();
-        if(appCtx == null) {
+        if (appCtx == null) {
             return getActivityContext();
         }
         return appCtx;
@@ -912,7 +919,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             }
 
             SwrveLogger.i("Loaded realtime user properties from cache.");
-        } catch(JSONException e) {
+        } catch (JSONException e) {
             SwrveLogger.e("Could not load real time user properties, bad JSON", e);
         }
     }
@@ -985,7 +992,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     }
                 }
             }
-        } catch(JSONException e) {
+        } catch (JSONException e) {
             SwrveLogger.e("Could not load state of campaigns, bad JSON", e);
         }
     }
@@ -1016,9 +1023,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
         // If there are any events to be sent, or if any events were sent since last refresh
         // send events queued, wait campaignsAndResourcesFlushRefreshDelay for events to reach servers and refresh
+
         final String userId = profileManager.getUserId();
         final String sessionToken = profileManager.getSessionToken();
-        boolean hasQueuedEvents =  multiLayerLocalStorage.hasQueuedEvents(userId);
+        boolean hasQueuedEvents = multiLayerLocalStorage.hasQueuedEvents(userId);
         if (hasQueuedEvents || eventsWereSent) {
             SwrveLogger.d("SwrveSDK events recently queued or sent, so sending and executing a delayed refresh of campaigns");
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;

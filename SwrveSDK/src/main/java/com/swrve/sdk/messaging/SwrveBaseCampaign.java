@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
@@ -222,6 +223,12 @@ public abstract class SwrveBaseCampaign {
     }
 
     public abstract boolean supportsOrientation(SwrveOrientation orientation);
+
+    /**
+     * Used by QAUser to determine what kind of campaign we are reporting
+     * @return CAMPAIGN_TYPE enum
+     */
+    public abstract CAMPAIGN_TYPE getCampaignType();
 
     /**
      * Determine if the assets for this campaign have been downloaded.

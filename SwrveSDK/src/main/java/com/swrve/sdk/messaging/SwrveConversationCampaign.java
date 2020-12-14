@@ -2,6 +2,7 @@ package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.QaCampaignInfo;
+import com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE;
 import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
@@ -112,6 +113,11 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     @Override
     public boolean supportsOrientation(SwrveOrientation orientation) {
         return true;
+    }
+
+    @Override
+    public CAMPAIGN_TYPE getCampaignType() {
+        return CAMPAIGN_TYPE.CONVERSATION;
     }
 
     @Override

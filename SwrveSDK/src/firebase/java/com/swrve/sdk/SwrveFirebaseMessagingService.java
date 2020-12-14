@@ -35,14 +35,14 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService {
                     return;
                 }
 
-                getSwrvePushServiceManager().processMessage(extras);
+                getSwrvePushManager().processMessage(extras);
             }
         } catch (Exception ex) {
             SwrveLogger.e("Swrve exception: ", ex);
         }
     }
 
-    protected SwrvePushServiceManager getSwrvePushServiceManager() {
-        return new SwrvePushServiceManager(this);
+    protected SwrvePushManager getSwrvePushManager() {
+        return new SwrvePushManagerImp(this);
     }
 }

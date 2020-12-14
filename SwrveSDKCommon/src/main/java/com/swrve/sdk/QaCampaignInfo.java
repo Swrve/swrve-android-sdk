@@ -12,6 +12,9 @@ public class QaCampaignInfo {
             public String toString() {
                 return "conversation";
             }
+        },
+        EMBEDDED {
+            public String toString() { return "embedded"; }
         }
     }
 

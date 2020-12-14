@@ -25,6 +25,7 @@ import org.mockito.Mockito;
 import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,9 +43,12 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 public class SwrveInitModeTest extends SwrveBaseTest {
 
@@ -63,10 +67,11 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     private void createSwrveSpy(SwrveConfig config) throws Exception {
         swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
-        Mockito.doNothing().when(swrveSpy).beforeSendDeviceInfo(any(Context.class));
+        doNothing().when(swrveSpy).beforeSendDeviceInfo(any(Context.class));
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
         doReturn(true).when(swrveSpy).restClientExecutorExecute(any(Runnable.class)); // disable rest
+        doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
     }
 
     @Test
@@ -217,16 +222,16 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         assertFalse(userResourcesDiffSuccessCalled[0]);
 
         swrveSpy.sendQueuedEvents();
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).restClientExecutorExecute(Mockito.any(Runnable.class));
+        verify(swrveSpy, Mockito.atMost(0)).restClientExecutorExecute(Mockito.any(Runnable.class));
 
         swrveSpy.flushToDisk();
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).storageExecutorExecute(Mockito.any(Runnable.class));
+        verify(swrveSpy, Mockito.atMost(0)).storageExecutorExecute(Mockito.any(Runnable.class));
 
         assertEquals(null, swrveSpy.getJoined());
         assertEquals(0, swrveSpy.getDeviceInfo().length());
 
         swrveSpy.refreshCampaignsAndResources();
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).restClientExecutorExecute(Mockito.any(Runnable.class));
+        verify(swrveSpy, Mockito.atMost(0)).restClientExecutorExecute(Mockito.any(Runnable.class));
 
         swrveSpy.buttonWasPressedByUser(null);
         assertNoEventsWereQueued();
@@ -319,13 +324,19 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         engageReceiver.onReceive(mActivity, engageEventIntent);
 
         List<Intent> broadcastIntentsAfterOnReceive = mShadowActivity.getBroadcastIntents();
-        assertEquals(2, broadcastIntentsAfterOnReceive.size());
-        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntentsAfterOnReceive.get(1).getAction());
+        assertEquals(1, broadcastIntentsAfterOnReceive.size());
+        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntentsAfterOnReceive.get(0).getAction());
 
         // Should send an engagement event
-        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(1, events.size());
-        SwrveNotificationTestUtils.assertEngagedEvent(events.get(0), "Swrve.Messages.Push-1.engaged");
+        String expectedEvent = "{" +
+                "\"type\":\"event\"," +
+                "\"time\":987654321," +
+                "\"seqnum\":1," +
+                "\"name\":\"Swrve.Messages.Push-1.engaged\"" +
+                "}";
+        ArrayList<String> expectedEventArrayList = new ArrayList<>();
+        expectedEventArrayList.add(expectedEvent);
+        verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(mActivity, SwrveSDK.getUserId(), expectedEventArrayList);
     }
 
     @Test
@@ -352,8 +363,8 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     }
 
     private void assertNoEventsWereQueued() {
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueEvent(anyString(), Mockito.any(Map.class), Mockito.any(Map.class));
-        Mockito.verify(swrveSpy, Mockito.atMost(0)).queueEvent(anyString(), anyString(), Mockito.any(Map.class), Mockito.any(Map.class), anyBoolean());
+        verify(swrveSpy, Mockito.atMost(0)).queueEvent(anyString(), Mockito.any(Map.class), Mockito.any(Map.class));
+        verify(swrveSpy, Mockito.atMost(0)).queueEvent(anyString(), anyString(), Mockito.any(Map.class), Mockito.any(Map.class), anyBoolean());
     }
 
     private String getStoredUserId() {

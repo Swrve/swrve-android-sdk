@@ -1,4 +1,5 @@
 package com.swrve.sdk;
+
 import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 
 import org.junit.Test;
@@ -97,5 +98,16 @@ public class SwrveTextTemplatingTest extends SwrveBaseTest {
 
         String plainText = "plain ol text";
         assertFalse("plain text is still falase", SwrveTextTemplating.hasPatternMatch(plainText));
+    }
+
+    @Test
+    public void testFallbackWorksWithoutProperties() throws SwrveSDKTextTemplatingException {
+        String text = "Welcome to ${item.label|fallback=\"fallback property\"}";
+
+        String templated = SwrveTextTemplating.apply(text, new HashMap<>());
+        assertEquals("Welcome to fallback property", templated);
+
+        templated = SwrveTextTemplating.apply(text, null);
+        assertEquals("Welcome to fallback property", templated);
     }
 }

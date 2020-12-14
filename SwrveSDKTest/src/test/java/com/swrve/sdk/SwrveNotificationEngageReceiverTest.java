@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import com.swrve.sdk.test.MainActivity;
@@ -15,14 +15,15 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import androidx.test.core.app.ApplicationProvider;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_ENGAGED;
@@ -31,6 +32,10 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
@@ -50,6 +55,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
+        doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
 
         mShadowActivity.getBroadcastIntents().clear();
     }
@@ -166,8 +172,8 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
         List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
         assertNotNull(broadcastIntents);
-        assertEquals(2, broadcastIntents.size());
-        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(1).getAction());
+        assertEquals(1, broadcastIntents.size());
+        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(0).getAction());
     }
 
     @Test
@@ -181,9 +187,6 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
         SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
-
-        Robolectric.flushBackgroundThreadScheduler();
-        Robolectric.flushForegroundThreadScheduler();
 
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
         assertNotNull(nextStartedActivity);
@@ -206,9 +209,6 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
         pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
-        Robolectric.flushBackgroundThreadScheduler();
-        Robolectric.flushForegroundThreadScheduler();
-
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
         assertNotNull(nextStartedActivity);
         assertEquals("swrve://deeplink/campaigns", nextStartedActivity.getData().toString());
@@ -230,9 +230,6 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         Mockito.doNothing().when(receiverSpy).closeNotification(1); // assets are manually mocked
         receiverSpy.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
         Mockito.verify(receiverSpy).closeNotification(1);
-
-        Robolectric.flushBackgroundThreadScheduler();
-        Robolectric.flushForegroundThreadScheduler();
     }
 
     private Intent createPushEngagedIntent(Bundle eventPayload) {
@@ -255,14 +252,17 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
         receiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
 
-        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(1, events.size());
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(1)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
+        ArrayList engagementEvents = (ArrayList) arrayListCaptor.getAllValues().get(0);
         Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-        SwrveNotificationTestUtils.assertEngagedEvent(events.get(0), "Swrve.Messages.Push-4567.engaged", expectedPayload);
+        SwrveNotificationTestUtils.assertEngagedEvent((String) engagementEvents.get(0), "Swrve.Messages.Push-4567.engaged", expectedPayload);
     }
 
     @Test
-    public void testEventGeoEngaged() {
+    public void testEventGeoEngaged() throws Exception {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "4567");
@@ -275,10 +275,14 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
         receiver.onReceive(mActivity, intent);
 
-        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(1, events.size());
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(1)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
+
+        ArrayList events = (ArrayList) arrayListCaptor.getAllValues().get(0);
         Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-        SwrveTestUtils.assertGenericEvent(events.get(0), "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
+        SwrveTestUtils.assertGenericEvent((String)events.get(0), "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
     }
 
     private Intent createPushButtonEngagedIntent(Bundle eventPayload) {
@@ -304,18 +308,14 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
         receiver.onReceive(mActivity, intent);
 
-        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(2, events.size());
-        for(String event : events) { // can't guarantee which event is in list first so just iterate through them
-            if(event.contains("generic_campaign_event")) {
-                Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-                expectedPayload.put("buttonText", "btn3");
-                SwrveTestUtils.assertGenericEvent(event, "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, expectedPayload);
-            } else {
-                Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-                SwrveNotificationTestUtils.assertEngagedEvent(event, "Swrve.Messages.Push-4567.engaged", expectedPayload);
-            }
-        }
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(1)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
+
+        ArrayList events = (ArrayList) arrayListCaptor.getAllValues().get(0);
+        Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
+        SwrveNotificationTestUtils.assertEngagedEvent((String)events.get(0), "Swrve.Messages.Push-4567.engaged", expectedPayload);
     }
 
     @Test
@@ -335,17 +335,13 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
         receiver.onReceive(mActivity, intent);
 
-        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(2, events.size());
-        for(String event : events) { // can't guarantee which event is in list first so just iterate through them
-            if(event.contains("button_click")) {
-                Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-                expectedPayload.put("buttonText", "btn3");
-                SwrveTestUtils.assertGenericEvent(event, "2", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, expectedPayload);
-            } else {
-                Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
-                SwrveTestUtils.assertGenericEvent(event, "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
-            }
-        }
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(1)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
+
+        ArrayList events = (ArrayList) arrayListCaptor.getAllValues().get(0);
+        Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
+        SwrveTestUtils.assertGenericEvent((String)events.get(0), "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
     }
 }

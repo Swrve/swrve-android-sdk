@@ -34,6 +34,7 @@ class CampaignDeliveryManager {
     protected static final String KEY_BODY = "BODY";
 
     private final Context context;
+    protected OneTimeWorkRequest workRequest; // exposed for testing
 
     CampaignDeliveryManager(Context context) {
         this.context = context;
@@ -41,7 +42,7 @@ class CampaignDeliveryManager {
 
     protected void sendCampaignDelivery(String endpoint, String body) {
         try {
-            OneTimeWorkRequest workRequest = getRestWorkRequest(endpoint, body);
+            workRequest = getRestWorkRequest(endpoint, body);
             enqueueWorkRequest(context, workRequest);
         } catch (Exception ex) {
             SwrveLogger.e("SwrveSDK: Error trying to queue campaign delivery event.", ex);

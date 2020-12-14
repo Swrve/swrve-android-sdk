@@ -19,10 +19,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -127,7 +127,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         assertEquals(11, Integer.parseInt(seqnum));
 
         // 9 events queued via queueEvent method
-        verify(swrveSpy, times(9)).queueEvent(anyString(), anyString(), anyMap(), anyMap(), anyBoolean());
+        verify(swrveSpy, times(9)).queueEvent(anyString(), anyString(), nullable(Map.class), nullable(Map.class), anyBoolean());
 
         // 2 events queued via sendSessionStart (via init and SwrveSDK.sessionStart())
         verify(swrveSpy, times(2)).sendSessionStart(123);

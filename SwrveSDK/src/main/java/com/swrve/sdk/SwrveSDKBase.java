@@ -5,6 +5,8 @@ import android.os.Bundle;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -409,6 +411,31 @@ public abstract class SwrveSDKBase {
     public static void messageWasShownToUser(SwrveMessageFormat messageFormat) {
         checkInstanceCreated();
         instance.messageWasShownToUser(messageFormat);
+    }
+
+
+    /**
+     * Process an embedded message engagement event. This function should be called by your
+     * implementation to inform Swrve of a button event.
+     *
+     * @param message embedded message that has been processed
+     * @param buttonName button that was pressed.
+     */
+    public static void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName) {
+        checkInstanceCreated();
+        instance.embeddedMessageButtonWasPressed(message, buttonName);
+    }
+
+    /**
+     * Inform that am embedded message has been served and processed. This function should be called
+     * by your implementation to update the campaign information and send the appropriate data to
+     * Swrve.
+     *
+     * @param message embedded message that has been processed
+     */
+    public static void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
+        checkInstanceCreated();
+        instance.embeddedMessageWasShownToUser(message);
     }
 
     /**

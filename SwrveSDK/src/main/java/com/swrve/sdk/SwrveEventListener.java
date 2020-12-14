@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.SwrveConversationListener;
+import com.swrve.sdk.messaging.SwrveBaseMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -19,11 +22,13 @@ public class SwrveEventListener implements ISwrveEventListener {
     private final WeakReference<SwrveBase<?, ?>> sdk;
     private final SwrveMessageListener messageListener;
     private final SwrveConversationListener conversationListener;
+    private final SwrveEmbeddedMessageListener embeddedMessageListener;
 
-    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveMessageListener messageListener, SwrveConversationListener conversationListener) {
+    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveMessageListener messageListener, SwrveConversationListener conversationListener, SwrveEmbeddedMessageListener embeddedMessageListener) {
         this.sdk = new WeakReference<>(sdk);
         this.messageListener = messageListener;
         this.conversationListener = conversationListener;
+        this.embeddedMessageListener = embeddedMessageListener;
     }
 
     @Override
@@ -44,7 +49,7 @@ public class SwrveEventListener implements ISwrveEventListener {
             return;
         }
 
-        if (messageListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
+        if ((messageListener != null || embeddedMessageListener != null) && !SwrveHelper.isNullOrEmpty(eventName)) {
             SwrveBase<?, ?> sdkRef = sdk.get();
             if (sdkRef != null) {
                 SwrveOrientation deviceOrientation = SwrveOrientation.Both;
@@ -52,13 +57,28 @@ public class SwrveEventListener implements ISwrveEventListener {
                 if (ctx != null) {
                     deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
                 }
-                SwrveMessage message = sdkRef.getMessageForEvent(eventName, payload, deviceOrientation);
+
+                // check message pool
+                SwrveBaseMessage message = sdkRef.getBaseMessageForEvent(eventName, payload, deviceOrientation);
                 if (message != null) {
                     // Save the last used payload to use inside the default message listener
                     sdkRef.lastEventPayloadUsed = payload;
-                    messageListener.onMessage(message);
+
+                    if (message instanceof SwrveMessage) {
+
+                        if (messageListener != null) {
+                            messageListener.onMessage((SwrveMessage) message);
+                        }
+                    } else if (message instanceof SwrveEmbeddedMessage) {
+
+                        if (embeddedMessageListener != null) {
+                            embeddedMessageListener.onMessage(ctx, (SwrveEmbeddedMessage) message);
+                        }
+                    }
+
                     // Remove ref
                     sdkRef.lastEventPayloadUsed = null;
+
                 }
             }
         }

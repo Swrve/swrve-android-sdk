@@ -1,6 +1,11 @@
 package com.swrve.sdk;
 
-import android.os.Bundle;
+import androidx.work.Data;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.impl.model.WorkSpec;
+
+import com.google.common.collect.Lists;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -9,7 +14,15 @@ import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
 
+import static com.swrve.sdk.SwrveBackgroundEventSender.DATA_KEY_EVENTS;
+import static com.swrve.sdk.SwrveBackgroundEventSender.DATA_KEY_USER_ID;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 public class SwrveBackgroundEventEventSenderTest extends SwrveBaseTest {
 
@@ -29,22 +42,47 @@ public class SwrveBackgroundEventEventSenderTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testGetOneTimeWorkRequest() {
+
+        SwrveBackgroundEventSender backgroundEventSenderSpy = spy(new SwrveBackgroundEventSender(swrveSpy, mActivity));
+        ArrayList<String> events = Lists.newArrayList("event1", "event2");
+        OneTimeWorkRequest workRequest = backgroundEventSenderSpy.getOneTimeWorkRequest("userId", events);
+
+        WorkSpec workSpec = workRequest.getWorkSpec();
+        assertEquals(NetworkType.CONNECTED, workSpec.constraints.getRequiredNetworkType());
+        assertEquals("userId", workSpec.input.getString(DATA_KEY_USER_ID));
+        assertArrayEquals(new String[]{"event1", "event2"}, workSpec.input.getStringArray(DATA_KEY_EVENTS));
+    }
+
+    @Test
+    public void testSend() {
+
+        SwrveBackgroundEventSender backgroundEventSenderSpy = spy(new SwrveBackgroundEventSender(swrveSpy, mActivity));
+        doNothing().when(backgroundEventSenderSpy).enqueueWorkRequest(any(OneTimeWorkRequest.class));
+
+        ArrayList<String> events = Lists.newArrayList("event1", "event2");
+        backgroundEventSenderSpy.send("userId", events);
+
+        verify(backgroundEventSenderSpy, atLeastOnce()).getOneTimeWorkRequest("userId", events);
+        verify(backgroundEventSenderSpy, atLeastOnce()).enqueueWorkRequest(any(OneTimeWorkRequest.class));
+    }
+
+    @Test
     public void testServiceWithInvalidEventExtras() throws Exception {
         SwrveBackgroundEventSender sender = new SwrveBackgroundEventSender(swrveSpy, mActivity);
 
-        Bundle bundle = new Bundle();
-        bundle.putStringArrayList(SwrveBackgroundEventSender.EXTRA_EVENTS, null); // null array list
-        int eventsSent = sender.handleSendEvents(bundle);
+        Data data = new Data.Builder()
+                .putString(DATA_KEY_USER_ID, "userId")
+                .putStringArray(DATA_KEY_EVENTS, null) // null array
+                .build();
+        int eventsSent = sender.handleSendEvents(data);
         assertEquals(0, eventsSent);
 
-        bundle = new Bundle();
-        bundle.putInt(SwrveBackgroundEventSender.EXTRA_EVENTS, 1); // not an array list
-        eventsSent = sender.handleSendEvents(bundle);
-        assertEquals(0, eventsSent);
-
-        bundle = new Bundle();
-        bundle.putStringArrayList(SwrveBackgroundEventSender.EXTRA_EVENTS, new ArrayList<String>()); // empty array list
-        eventsSent = sender.handleSendEvents(bundle);
+        data = new Data.Builder()
+                .putString(DATA_KEY_USER_ID, "userId")
+                .putStringArray(DATA_KEY_EVENTS, new String[]{}) // empty array
+                .build();
+        eventsSent = sender.handleSendEvents(data);
         assertEquals(0, eventsSent);
     }
 
@@ -55,11 +93,11 @@ public class SwrveBackgroundEventEventSenderTest extends SwrveBaseTest {
         events.add("my_awesome_event");
         events.add("my_awesome_event2");
         events.add("my_awesome_event3");
-        ArrayList<Integer> messageIds = new ArrayList<>();
-        messageIds.add(99);
-        Bundle bundle = new Bundle();
-        bundle.putStringArrayList(SwrveBackgroundEventSender.EXTRA_EVENTS, events);
-        int eventsSent = sender.handleSendEvents(bundle);
+        Data data = new Data.Builder()
+                .putString(DATA_KEY_USER_ID, "userId")
+                .putStringArray(DATA_KEY_EVENTS, events.toArray(new String[events.size()]))
+                .build();
+        int eventsSent = sender.handleSendEvents(data);
         assertEquals(3, eventsSent);
     }
 }

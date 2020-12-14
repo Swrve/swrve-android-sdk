@@ -616,6 +616,9 @@ public class ConversationFragmentTest extends SwrveBaseTest {
         assertNotNull(fragment);
         ConversationActivity conversationActivity = Robolectric.buildActivity(ConversationActivity.class).create().start().resume().get();
         fragment.commitConversationFragment(conversationActivity.getSupportFragmentManager());
+
+        Shadows.shadowOf(conversationActivity.getMainLooper()).idle();
+
         return fragment;
     }
 

@@ -5,16 +5,6 @@
         <receiver
             android:name="com.swrve.sdk.SwrveNotificationEngageReceiver"
             android:exported="true" />
-
-        <service
-            android:name="com.swrve.sdk.SwrvePushServiceDefaultJobIntentService"
-            android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
-
-        <receiver
-            android:name="com.swrve.sdk.SwrvePushServiceDefaultReceiver"
-            android:exported="false" />
-
     </application>
 </manifest>
 

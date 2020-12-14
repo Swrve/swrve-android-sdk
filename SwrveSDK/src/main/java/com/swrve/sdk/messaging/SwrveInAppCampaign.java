@@ -188,6 +188,11 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         return false;
     }
 
+    @Override
+    public QaCampaignInfo.CAMPAIGN_TYPE getCampaignType() {
+        return QaCampaignInfo.CAMPAIGN_TYPE.IAM;
+    }
+
     /**
      * Notify that a message was dismissed.
      */

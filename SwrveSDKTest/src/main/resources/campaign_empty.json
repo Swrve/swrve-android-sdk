@@ -1,0 +1,11 @@
+{
+  "cdn_root": "http://localhost:8083/cdn/",
+  "campaigns": [],
+  "game_data": {},
+  "rules": {
+    "min_delay_between_messages": 30,
+    "max_messages_per_session": 10,
+    "delay_first_message": 60
+  },
+  "version": 1
+}

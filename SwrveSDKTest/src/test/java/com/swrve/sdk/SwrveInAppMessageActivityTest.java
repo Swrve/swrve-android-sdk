@@ -1,12 +1,15 @@
 package com.swrve.sdk;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,14 +40,21 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.util.Pair;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
 
 public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
@@ -76,7 +86,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     public void testBuildLayoutCreation() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
-        SwrveMessage message = swrveSpy.getMessageForEvent("Swrve.currency_given", new HashMap<String, String>(), SwrveOrientation.Both);
+        SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given", new HashMap<String, String>(), SwrveOrientation.Both);
         assertNotNull(message);
 
         SwrveInAppMessageActivity activity = Robolectric.buildActivity(SwrveInAppMessageActivity.class).create().get();
@@ -92,7 +102,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     public void testBuildLayoutCreationWithPersonalisation() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
-        SwrveMessage message = swrveSpy.getMessageForEvent("show.personalized", new HashMap<>(), SwrveOrientation.Both);
+        SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("show.personalized", new HashMap<>(), SwrveOrientation.Both);
 
         assertNotNull(message);
 
@@ -256,6 +266,22 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testPersonalizedMessageDoesNotShow() throws Exception {
+
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
+        swrveSpy.event("currency_given"); // deliberately wrong event
+
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNull(view);
+    }
+
+    @Test
     public void testRenderView() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
@@ -285,8 +311,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
     @Test
@@ -342,15 +370,18 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
+        payload.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        Map<String, String> payload = new HashMap<>();
         payload.put("name", "accept");
-        assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
     @Test
@@ -378,15 +409,18 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
+        payload.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        Map<String, String> payload = new HashMap<>();
         payload.put("name", "accept");
-        assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
     @Test
@@ -454,16 +488,19 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
+        payload.put("embedded", "false");
 
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
+        payload.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        Map<String, String> payload = new HashMap<>();
         payload.put("name", "custom");
-        assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
     @Test
@@ -535,15 +572,19 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
-        assertQueueEvent("Swrve.Messages.Message-165.impression", parameters, null);
+        payload.put("embedded", "false");
+
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Swrve.Messages.Message-165.click
         parameters.clear();
+        payload.clear();
         parameters.put("name", "Swrve.Messages.Message-165.click");
-        Map<String, String> payload = new HashMap<>();
         payload.put("name", "custom");
-        assertQueueEvent("Swrve.Messages.Message-165.click", parameters, payload);
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
     @Test
@@ -620,6 +661,112 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, other).size());
     }
 
+    @Test
+    public void testMessageBothOrientationsPortrait() throws Exception {
+
+        RuntimeEnvironment.setQualifiers("+port");
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_both_orientations.json",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb",
+                "8721fd4e657980a5e12d498e73aed6e6a565dfca",
+                "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb",
+                "8721fd4e657980a5e12d498e73aed6e6a565dfca",
+                "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e");
+
+        swrveSpy.event("trigger_iam");
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        assertEquals(SwrveOrientation.Portrait, activity.getFormat().getOrientation());
+        // No requested orientation, as we can flip
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, activity.getRequestedOrientation());
+    }
+
+    @Test
+    public void testMessageBothOrientationsLandscape() throws Exception {
+
+        RuntimeEnvironment.setQualifiers("+land");
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_both_orientations.json",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb",
+                "8721fd4e657980a5e12d498e73aed6e6a565dfca",
+                "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb",
+                "8721fd4e657980a5e12d498e73aed6e6a565dfca",
+                "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e");
+
+        swrveSpy.event("trigger_iam");
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        assertEquals(SwrveOrientation.Landscape, activity.getFormat().getOrientation());
+        // No requested orientation, as we can flip
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, activity.getRequestedOrientation());
+    }
+
+    @Test
+    public void testMessageOnlyFormatForPortrait() throws Exception {
+
+        RuntimeEnvironment.setQualifiers("+port");
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_portrait_orientation.json",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb",
+                "8721fd4e657980a5e12d498e73aed6e6a565dfca",
+                "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e");
+
+        swrveSpy.event("trigger_iam");
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT, activity.getRequestedOrientation());
+        } else {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT, activity.getRequestedOrientation());
+        }
+    }
+
+    @Test
+    public void testMessageOnlyFormatForLandscape() throws Exception {
+
+        RuntimeEnvironment.setQualifiers("+land");
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_landscape_orientation.json",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb",
+                "8721fd4e657980a5e12d498e73aed6e6a565dfca",
+                "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e");
+
+        swrveSpy.event("trigger_iam");
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE, activity.getRequestedOrientation());
+        } else {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, activity.getRequestedOrientation());
+        }
+    }
+
+    @Test
+    public void testMessageHideToolbarDisabled() throws Exception {
+
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().hideToolbar(false);
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
+        // Trigger IAM
+        swrveSpy.currencyGiven("gold", 20);
+
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+        assertEquals(R.style.Theme_InAppMessageWithToolbar, getThemeResourceId(activity));
+    }
+
     // Helpers
 
     private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
@@ -688,47 +835,24 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
         return new Pair(activityController, activityController.create().start().visible().get());
     }
-
-    /**
-     * Look through the arguments sent to queueEvent and search for an event of certain name. Presume this is a unique event.
-     *
-     * @param eventName  The event name
-     * @param parameters Map conating the event name
-     * @param payload    Map of payload parameters
-     */
-    private void assertQueueEvent(String eventName, Map<String, Object> parameters, Map<String, String> payload) {
-
-        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> eventTypeCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<Map> parametersCaptor = ArgumentCaptor.forClass(Map.class);
-        ArgumentCaptor<Map> payloadCaptor = ArgumentCaptor.forClass(Map.class);
-        ArgumentCaptor<Boolean> triggerEventListenerCaptor = ArgumentCaptor.forClass(Boolean.class);
-        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).queueEvent(userIdCaptor.capture(), eventTypeCaptor.capture(), parametersCaptor.capture(), payloadCaptor.capture(), triggerEventListenerCaptor.capture());
-
-        List<String> userIds = userIdCaptor.getAllValues();
-        List<String> capturedEventTypes = eventTypeCaptor.getAllValues();
-        List<Map> capturedParameters = parametersCaptor.getAllValues();
-        List<Map> capturedPayload = payloadCaptor.getAllValues();
-
-        // Find index of correct event that was called, assuming the event is unique
-        int index = -1;
-        for (int i = 0; i < capturedEventTypes.size(); i++) {
-            if (capturedEventTypes.get(i).equals("event")) {
-                Map<String, Object> capturedParametersMap = capturedParameters.get(i);
-                if (capturedParametersMap.containsKey("name")) {
-                    String obj = (String) capturedParametersMap.get("name");
-                    if (eventName.equals(obj)) {
-                        index = i;
-                    }
-                }
-            }
+    
+    private int getThemeResourceId(Activity activity) {
+        String TAG = "SwrveInAppMessageActivityTest";
+        int themeResId = 0;
+        try {
+            Class<?> clazz = Context.class;
+            Method method = clazz.getMethod("getThemeResId");
+            method.setAccessible(true);
+            themeResId = (Integer) method.invoke(activity);
+        } catch (NoSuchMethodException e) {
+            Log.e(TAG, "Failed to get theme resource ID", e);
+        } catch (IllegalAccessException e) {
+            Log.e(TAG, "Failed to get theme resource ID", e);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Failed to get theme resource ID", e);
+        } catch (InvocationTargetException e) {
+            Log.e(TAG, "Failed to get theme resource ID", e);
         }
-        assertTrue(index > -1);
-        assertEquals(swrveSpy.getUserId(), userIds.get(index));
-        assertEquals("event", capturedEventTypes.get(index));
-        Map capturedParametersMap = capturedParameters.get(index);
-        assertEquals(parameters, capturedParametersMap);
-        Map capturedPayloadMap = capturedPayload.get(index);
-        assertEquals(payload, capturedPayloadMap);
+        return themeResId;
     }
 }

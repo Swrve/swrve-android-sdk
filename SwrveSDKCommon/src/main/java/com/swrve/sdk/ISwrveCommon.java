@@ -58,6 +58,7 @@ interface ISwrveCommon {
     String SWRVE_NOTIFICATIONS_ATTACHMENT   = "swrve.support.rich_attachment";
     String SWRVE_CAN_RECEIVE_AUTH_PUSH      = "swrve.can_receive_authenticated_push";
     String SWRVE_INIT_MODE                  = "swrve.sdk_init_mode";
+    String SWRVE_DEVICE_TYPE                = "swrve.device_type";
 
     // batch event
     String BATCH_EVENT_KEY_USER                     = "user";

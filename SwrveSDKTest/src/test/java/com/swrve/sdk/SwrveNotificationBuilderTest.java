@@ -20,6 +20,7 @@ import com.swrve.sdk.test.MainActivity;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -31,6 +32,7 @@ import org.robolectric.shadows.ShadowPendingIntent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -40,17 +42,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
-    private SwrvePushServiceManager pushServiceManager;
+    private SwrvePushManagerImp pushServiceManager;
     private SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
             .activityClass(MainActivity.class)
             .build();
@@ -62,7 +69,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveCommon.setSwrveCommon(swrveCommonSpy);
         doReturn(notificationConfig).when(swrveCommonSpy).getNotificationConfig();
         doReturn(RuntimeEnvironment.application.getCacheDir()).when(swrveCommonSpy).getCacheDir(RuntimeEnvironment.application);
-        pushServiceManager = new SwrvePushServiceManager(RuntimeEnvironment.application);
+        pushServiceManager = new SwrvePushManagerImp(RuntimeEnvironment.application);
+        doNothing().when(swrveCommonSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
     }
 
     @Test
@@ -840,7 +848,9 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
         SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveCommon.setSwrveCommon(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class));
         swrveSpy.init(mActivity);
 
@@ -877,29 +887,30 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(actions.length, 3);
         Notification.Action testAction = actions[2];
         assertEquals(testAction.title, "[button text 3]");
+
         Intent buttonClickIntent = getIntent(testAction.actionIntent);
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
         receiver.onReceive(mActivity, buttonClickIntent);
 
-        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
-        assertEquals(2, broadcastIntents.size());
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(2)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
 
-        // Should send a button click event and an engagement event
-        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(2, events.size());
-        for (String event : events) { // can't guarantee which event is in list first so just iterate through them
-            if (event.contains("generic_campaign_event")) {
-                SwrveTestUtils.assertGenericEvent(event, "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, null);
-            } else {
-                SwrveNotificationTestUtils.assertEngagedEvent(event, "Swrve.Messages.Push-1.engaged");
-            }
-        }
+        // Should send an engagement event
+        ArrayList engagementEvents = (ArrayList) arrayListCaptor.getAllValues().get(0);
+        SwrveNotificationTestUtils.assertEngagedEvent((String) engagementEvents.get(0), "Swrve.Messages.Push-1.engaged", null);
+
+        // Should send a button click event
+        ArrayList buttonClickEvents= (ArrayList) arrayListCaptor.getAllValues().get(1);
+        SwrveTestUtils.assertGenericEvent((String)buttonClickEvents.get(0), "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, null);
+
+        reset(swrveSpy); // reset so verify sendEventsInBackground is not called when resumed
 
         // Should not send an influence event when the app is opened (emulate app start/resume)
         swrveSpy.onResume(mActivity);
         // No new events should be queued
-        events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(2, events.size());
+        verify(swrveSpy, never()).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -911,7 +922,9 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
         SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveCommon.setSwrveCommon(swrveSpy);
         Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class));
         swrveSpy.init(mActivity);
 
@@ -943,19 +956,24 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         engageReceiver.onReceive(mActivity, engageEventIntent);
 
         broadcastIntents = mShadowActivity.getBroadcastIntents();
-        assertEquals(2, broadcastIntents.size());
-        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(1).getAction());
+        assertEquals(1, broadcastIntents.size());
+        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(0).getAction());
 
-        // Should send a button click event and an engagement event
-        List<String> events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(1, events.size());
-        SwrveNotificationTestUtils.assertEngagedEvent(events.get(0), "Swrve.Messages.Push-1.engaged");
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(1)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
+
+        // Should send an engagement event
+        ArrayList engagementEvents = (ArrayList) arrayListCaptor.getAllValues().get(0);
+        SwrveNotificationTestUtils.assertEngagedEvent((String) engagementEvents.get(0), "Swrve.Messages.Push-1.engaged", null);
+
+        reset(swrveSpy); // reset so verify sendEventsInBackground is not called when resumed
 
         // Should not send an influence event when the app is opened (emulate app start/resume)
         swrveSpy.onResume(mActivity);
         // No new events should be queued
-        events = SwrveTestUtils.getEventsQueued(mShadowActivity);
-        assertEquals(1, events.size());
+        verify(swrveSpy, never()).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
     }
 
     @Config(sdk = Build.VERSION_CODES.O)
@@ -1113,7 +1131,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);
 
         assertNotNull(bitmap);
-        Mockito.verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
+        verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
     }
 
     @Test
@@ -1126,7 +1144,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);
 
         assertNull(bitmap);
-        Mockito.verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
+        verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
     }
 
     // HELPER METHODS

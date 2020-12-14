@@ -47,6 +47,7 @@ dependencies {
     api project(':SwrveConversationSDK')
     api 'androidx.legacy:legacy-support-v4:' + project.ANDROIDX_LEGACY_SUPPORT_V4_VERSION
     api 'com.google.code.gson:gson:' + project.GSON_VERSION
+    api 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead. If compiling amazon flavour from source you should delete the
     // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon

@@ -1,14 +1,18 @@
 package com.swrve.sdk;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 
 import com.swrve.sdk.config.SwrveConfig;
+import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.config.SwrveStack;
 import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 
 import org.junit.Before;
@@ -137,6 +141,18 @@ public class SwrveConfigTest extends SwrveBaseTest {
 
     }
 
+    @Test
+    public void testSwrveEmbeddedMessageConfig() {
+        EmbedddedButtonListener embedddedButtonListener = new EmbedddedButtonListener();
+        SwrveConfig config = new SwrveConfig();
+        SwrveEmbeddedMessageConfig.Builder builder = new SwrveEmbeddedMessageConfig.Builder()
+                .embeddedMessageListener(embedddedButtonListener);
+
+        config.setEmbeddedMessageConfig(builder.build());
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = config.getEmbeddedMessageConfig();
+        assertEquals(embedddedButtonListener, embeddedMessageConfig.getEmbeddedMessageListener());
+    }
+
     private class CustomButtonListener implements SwrveCustomButtonListener {
         @Override
         public void onAction(String customAction) {
@@ -160,6 +176,13 @@ public class SwrveConfigTest extends SwrveBaseTest {
 
         @Override
         public void onAction(String clipboardContents) {
+        }
+    }
+
+    private class EmbedddedButtonListener implements SwrveEmbeddedMessageListener {
+
+        @Override
+        public void onMessage(Context context, SwrveEmbeddedMessage message) {
         }
     }
 }

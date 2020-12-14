@@ -22,18 +22,23 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY;
+import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY;
+
 
 public class SwrveCampaignInfluence {
 
-    public static final String INFLUENCED_PREFS = "swrve.influenced_data";
+    public static final String INFLUENCED_PREFS = "swrve.influenced_data_v2";
 
     public List<InfluenceData> getSavedInfluencedData(SharedPreferences prefs) {
         Set<String> keys = prefs.getAll().keySet();
         ArrayList<InfluenceData> influencedData = new ArrayList<>();
         for (String trackingId : keys) {
-            long maxInfluenceMillis = prefs.getLong(trackingId, 0);
-            if (maxInfluenceMillis > 0) {
-                influencedData.add(new InfluenceData(trackingId, maxInfluenceMillis));
+            String influenceCachedString = prefs.getString(trackingId, null);
+            if (SwrveHelper.isNotNullOrEmpty(influenceCachedString)) {
+                InfluenceData influenceCached = new InfluenceData(influenceCachedString);
+                if(influenceCached.maxInfluencedMillis > 0) {
+                    influencedData.add(influenceCached);
+                }
             }
         }
         return influencedData;
@@ -59,8 +64,11 @@ public class SwrveCampaignInfluence {
         cal.add(Calendar.MINUTE, influencedWindowMins);
         Date influencedDate = cal.getTime();
 
+        // Check if is a silent Push
+        boolean silentPush = (msg.containsKey(SWRVE_SILENT_TRACKING_KEY));
+
         // Add the new push influenced data to the list
-        InfluenceData newInfluenceData = new InfluenceData(trackingId, influencedDate.getTime());
+        InfluenceData newInfluenceData = new InfluenceData(trackingId, influencedDate.getTime(), silentPush);
         SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
         List<InfluenceData> influencedData = getSavedInfluencedData(sharedPreferences);
         influencedData.add(newInfluenceData);
@@ -68,7 +76,7 @@ public class SwrveCampaignInfluence {
         // Save the list
         SharedPreferences.Editor edit = sharedPreferences.edit();
         for (InfluenceData influenceData : influencedData) {
-            edit.putLong(influenceData.trackingId, influenceData.maxInfluencedMillis);
+            edit.putString(influenceData.trackingId, influenceData.toJson().toString());
         }
         edit.commit();
     }
@@ -97,6 +105,7 @@ public class SwrveCampaignInfluence {
                         Map<String, String> payload = new HashMap<>();
                         // Add delta time in minutes
                         payload.put("delta", String.valueOf(deltaMillis / (1000 * 60)));
+                        payload.put("silent", String.valueOf(influenceData.silent));
 
                         String eventAsJSON = EventHelper.eventAsJSON(EVENT_TYPE_GENERIC_CAMPAIGN, parameters, payload, swrveCommon.getNextSequenceNumber(), System.currentTimeMillis());
                         influencedEvents.add(eventAsJSON);
@@ -121,10 +130,23 @@ public class SwrveCampaignInfluence {
     public class InfluenceData {
         String trackingId;
         long maxInfluencedMillis;
+        boolean silent;
 
-        public InfluenceData(String trackingId, long maxInfluenceMillis) {
+        public InfluenceData(String influenceCachedJson) {
+            try {
+                JSONObject jsonInfluenceObj = new JSONObject(influenceCachedJson);
+                this.trackingId = jsonInfluenceObj.getString("trackingId");
+                this.maxInfluencedMillis = jsonInfluenceObj.getLong("maxInfluencedMillis");
+                this.silent = jsonInfluenceObj.getBoolean("silent");
+            } catch (JSONException e) {
+                SwrveLogger.e("Could not serialize influence data:", e);
+            }
+        }
+
+        public InfluenceData(String trackingId, long maxInfluenceMillis, boolean silent) {
             this.trackingId = trackingId;
             this.maxInfluencedMillis = maxInfluenceMillis;
+            this.silent = silent;
         }
 
         public long getIntTrackingId() {
@@ -136,6 +158,7 @@ public class SwrveCampaignInfluence {
                 JSONObject result = new JSONObject();
                 result.put("trackingId", trackingId);
                 result.put("maxInfluencedMillis", maxInfluencedMillis);
+                result.put("silent", silent);
                 return result;
             } catch (Exception e) {
                 SwrveLogger.e("Could not serialize influence data:", e);

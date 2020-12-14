@@ -23,6 +23,7 @@ import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
@@ -53,6 +54,7 @@ import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DELIVERED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
@@ -396,18 +398,6 @@ public class SwrveTestUtils {
 
     public static void onCreate(ISwrve swrve, Activity activity) {
         ((Swrve)swrve).onCreate(activity);
-    }
-
-    public static List<String> getEventsQueued(ShadowActivity mShadowActivity) {
-        List<String> events = new ArrayList<>();
-        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
-        for (Intent intent : broadcastIntents) {
-            if (intent.getComponent() != null && intent.getComponent().toString().contains("SwrveWakefulReceiver")) {
-                Bundle extras = intent.getExtras();
-                events.addAll((List) extras.get(SwrveBackgroundEventSender.EXTRA_EVENTS));
-            }
-        }
-        return events;
     }
 
     public static void assertGenericEvent(String eventJson, String expectedContextId, String expectedCampaignType, String expectedActionType, Map<String, String> expectedPayload) {

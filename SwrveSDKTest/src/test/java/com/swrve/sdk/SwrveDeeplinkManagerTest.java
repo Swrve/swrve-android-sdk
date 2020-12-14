@@ -5,11 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
-import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS_DEBUG;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
@@ -94,9 +94,14 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message_personalised.json");
                     httpCode = 200;
                 }
+                else if (params.containsValue("295422")) {
+                    response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message_embedded.json");
+                    httpCode = 200;
+                }
                 else if (params.containsValue("12345")) {
                     httpCode = 500;
                 }
+
                 callback.onResponse(new RESTResponse(httpCode, response, null));
             }
 
@@ -375,6 +380,45 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
 
         // 2. Test In-app message was not shown as the personalisation provider is not set
         assertFalse(campaignShown().call());
+    }
+
+    @Test
+    public void testHandleDeeplink_MessageEmbedded() throws Exception {
+        final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
+
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message) -> {
+            embeddedCallbackBool.set(true);
+        }).build();
+
+        swrveSpy.config.setEmbeddedMessageConfig(embeddedMessageConfig);
+
+        Bundle bundle = new Bundle();
+        bundle.putString("target_url","swrve://app?ad_content=295422&ad_source=facebook&ad_campaign=BlackFriday");
+
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+
+        //*** 1. Generic Event is queued
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jObj = new JSONObject(jsonString);
+
+        assertTrue(jObj.has("time"));
+        assertTrue(jObj.has("seqnum"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
+        assertTrue(jObj.get("id").equals("-1"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295422"));
+
+        // 2. Test EmbeddedMessageListener was fired
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+        await().untilTrue(embeddedCallbackBool);
     }
 
     @Test

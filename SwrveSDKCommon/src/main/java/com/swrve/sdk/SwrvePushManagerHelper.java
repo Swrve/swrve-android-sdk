@@ -7,7 +7,7 @@ import java.util.Set;
 import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.PUSH_INTERNAL_KEYS;
 import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY;
 
-public class SwrvePushServiceHelper {
+public class SwrvePushManagerHelper {
 
     public static String getPayload(final Bundle msg) {
         String payload = "";
