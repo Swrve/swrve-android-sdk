@@ -3,11 +3,12 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public class SwrveInstallReferrerReceiverTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);

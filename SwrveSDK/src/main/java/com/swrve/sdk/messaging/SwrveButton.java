@@ -21,6 +21,8 @@ public class SwrveButton extends SwrveWidget {
     protected SwrveActionType actionType;
     // Personalized text (render this instead of the image)
     protected String text;
+    // Dynamic Image Url
+    protected String dynamicImageUrl;
 
     public SwrveButton() {
     }
@@ -31,7 +33,15 @@ public class SwrveButton extends SwrveWidget {
         }
         setPosition(getCenterFrom(buttonData));
         setSize(getSizeFrom(buttonData));
-        setImage(buttonData.getJSONObject("image_up").getString("value"));
+
+        if (buttonData.has("image_up")) {
+            setImage(buttonData.getJSONObject("image_up").getString("value"));
+        }
+
+        if (buttonData.has("dynamic_image_url")) {
+            setDynamicImageUrl(buttonData.getString("dynamic_image_url"));
+        }
+
         setMessage(message);
         if (buttonData.has("game_id")) {
             String appIdStr = buttonData.getJSONObject("game_id").getString("value");
@@ -46,6 +56,7 @@ public class SwrveButton extends SwrveWidget {
         if (buttonData.has("text")) {
             setText(buttonData.getJSONObject("text").getString("value"));
         }
+
     }
 
     /**
@@ -68,6 +79,17 @@ public class SwrveButton extends SwrveWidget {
 
     protected void setImage(String image) {
         this.image = image;
+    }
+
+    /**
+     * @return the cached path of the button dynamic image url.
+     */
+    public String getDynamicImageUrl() {
+        return dynamicImageUrl;
+    }
+
+    protected void setDynamicImageUrl(String dynamicImageUrl) {
+        this.dynamicImageUrl = dynamicImageUrl;
     }
 
     /**

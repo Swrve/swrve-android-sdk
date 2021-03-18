@@ -1,5 +1,7 @@
 package com.swrve.sdk.messaging;
 
+import androidx.annotation.Nullable;
+
 import java.util.Map;
 
 public interface SwrveMessagePersonalisationProvider {
@@ -10,5 +12,5 @@ public interface SwrveMessagePersonalisationProvider {
      * @param eventPayload payload of the event that triggered the campaign, if any
      * @return Personalisation for in-app message
      */
-    Map<String, String> personalize(Map<String, String> eventPayload);
+    Map<String, String> personalize(@Nullable Map<String, String> eventPayload);
 }

@@ -15,12 +15,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.google.common.collect.Maps;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
+import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
@@ -33,7 +36,6 @@ import com.swrve.sdk.messaging.view.SwrvePersonalizedTextView;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
@@ -42,19 +44,17 @@ import org.robolectric.util.Pair;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doReturn;
 
 public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
@@ -73,7 +73,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     private void initSDK() throws Exception {
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -266,8 +266,56 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testPersonalizedMessageDoesNotShow() throws Exception {
+    public void testImagePersonalizationFromMessageCenter() throws Exception {
+        initSDK();
+        String personalAssetSha1 = SwrveHelper.sha1("https://fakeitem/asset1.png".getBytes());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_image_mc.json", "1111111111111111111111111", personalAssetSha1);
 
+        // Trigger IAM
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("test_cp", "shows up");
+        personalisation.put("test_image_key", "asset1");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalisation);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalisation);
+
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+    }
+
+    @Test
+    public void testImagePersonalizationFromMessageCenterDoesNotShow() throws Exception {
+        initSDK();
+        String personalAssetSha1 = SwrveHelper.sha1("https://fakeitem/asset1.png".getBytes());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_image_mc.json", "1111111111111111111111111", personalAssetSha1);
+
+        // retrieve the list with the correct personalization
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("test_cp", "shows up");
+        personalisation.put("test_image_key", "asset1");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalisation);
+
+        // Attempt to Trigger the IAM without the wrong personalization
+        HashMap<String, String> wrongPersonalization = new HashMap<>();
+        wrongPersonalization.put("test_cp", "shows up");
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), wrongPersonalization);
+
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNull(view);
+
+    }
+
+    @Test
+    public void testPersonalizedMessageDoesNotShow() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
         swrveSpy.event("currency_given"); // deliberately wrong event
@@ -320,7 +368,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testCreateActivityWithNoMessageAndFinishes() throws Exception {
         initSDK();
-        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
@@ -613,9 +661,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testPersonalisationProvider() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
-            Map values = Maps.newHashMap();
-            values.put("test_id", "Replaced " + eventPayload.get("payload1"));
-            return values;
+            if (eventPayload != null && !eventPayload.isEmpty()) {
+                Map values = Maps.newHashMap();
+                values.put("test_id", "Replaced " + eventPayload.get("payload1"));
+                return values;
+            } else {
+                return null;
+            }
         });
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
@@ -639,7 +691,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testMessageCenterListWithPersonalisation() throws Exception {
+    public void testMessageCenterListWithTextPersonalization() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
@@ -659,6 +711,183 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(other).size());
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, other).size());
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, other).size());
+    }
+
+    @Test
+    public void testMessageCenterListWithImagePersonalization() throws Exception {
+        initSDK();
+        String personalAssetSha1 = SwrveHelper.sha1("https://fakeitem/asset1.png".getBytes());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_image_mc.json", "1111111111111111111111111", personalAssetSha1);
+
+        // no personalization values provided
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns().size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait).size());
+
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("test_cp", "shows up");
+        personalisation.put("test_image_key", "asset1");
+
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(personalisation).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, personalisation).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, personalisation).size());
+
+        HashMap<String, String> other = new HashMap<>();
+        other.put("test_cp", "shows up");
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(other).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, other).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, other).size());
+    }
+
+    @Test
+    public void testDynamicImageWithPersonalizationProvider() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+            Map values = Maps.newHashMap();
+            values.put("test_key_with_fallback", "asset1");
+            values.put("test_key_no_fallback", "asset2");
+            // third value has fallback in the url text
+            return values;
+        });
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+
+        String testAsset1 = SwrveHelper.sha1(("https://fakeitem/asset1.png").getBytes());
+        String testAsset2 = SwrveHelper.sha1(("https://fakeitem/asset2.gif").getBytes());
+        String testAsset3 = SwrveHelper.sha1(("https://fakeitem/asset3.jpg").getBytes());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalized_image_trigger.json", "1111111111111111111111111", testAsset1, testAsset2, testAsset3);
+
+        // Trigger IAM
+        Map<String, String> eventPayload = Maps.newHashMap();
+        //eventPayload.put("payload1", "payloadValue");
+        swrveSpy.event("trigger_iam", eventPayload);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+
+        // ensure that it loaded the right dynamic views
+        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView imageView = (SwrveImageView) view.getChildAt(0);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, imageView.getScaleType());
+        assertTrue("dynamic image url images should have adjustViewBounds Enabled", imageView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView buttonView = (SwrveButtonView) view.getChildAt(1);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
+        assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getChildAt(2);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
+        assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getChildAt(3);
+        assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
+        assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
+
+    }
+
+    @Test
+    public void testDynamicImageWithPersonalizationProviderImageFallback() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+            Map values = Maps.newHashMap();
+            // have no value for test_key_with_fallback
+            values.put("test_key_no_fallback", "asset2");
+            return values;
+        });
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+        String testAsset1 = SwrveHelper.sha1(("https://fakeitem/asset1.gif").getBytes());
+        String testAsset2 = SwrveHelper.sha1(("https://fakeitem/asset2.gif").getBytes());
+        String testAsset3 = SwrveHelper.sha1(("https://fakeitem/asset3.jpg").getBytes());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalized_image_trigger.json", "1111111111111111111111111", testAsset1, testAsset2, testAsset3);
+
+        // Trigger IAM
+        Map<String, String> eventPayload = Maps.newHashMap();
+        //eventPayload.put("payload1", "payloadValue");
+        swrveSpy.event("trigger_iam", eventPayload);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+
+        // message still appears with fallback image as background
+        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView imageView = (SwrveImageView) view.getChildAt(0);
+        assertEquals(ImageView.ScaleType.FIT_XY, imageView.getScaleType());
+        assertFalse("regular images should have adjustViewBounds Disabled", imageView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView buttonView = (SwrveButtonView) view.getChildAt(1);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
+        assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getChildAt(2);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
+        assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getChildAt(3);
+        assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
+        assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
+    }
+
+    @Test
+    public void testDynamicImageWithPersonalizationProviderImageMissingAssetFallback() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+            Map values = Maps.newHashMap();
+            values.put("test_key_with_fallback", "asset1");
+            values.put("test_key_no_fallback", "asset2");
+            return values;
+        });
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+
+        // purposefully do not have testAsset1 in the cache
+        String testAsset2 = SwrveHelper.sha1(("https://fakeitem/asset2.gif").getBytes());
+        String testAsset3 = SwrveHelper.sha1(("https://fakeitem/asset3.jpg").getBytes());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalized_image_trigger.json", "1111111111111111111111111", testAsset2, testAsset3);
+
+        // Trigger IAM
+        Map<String, String> eventPayload = Maps.newHashMap();
+        //eventPayload.put("payload1", "payloadValue");
+        swrveSpy.event("trigger_iam", eventPayload);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+
+        // message still appears with fallback image as background
+        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView imageView = (SwrveImageView) view.getChildAt(0);
+        assertEquals(ImageView.ScaleType.FIT_XY, imageView.getScaleType());
+        assertFalse("regular images should have adjustViewBounds Disabled", imageView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView buttonView = (SwrveButtonView) view.getChildAt(1);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
+        assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getChildAt(2);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
+        assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
+
+        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getChildAt(3);
+        assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
+        assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
     }
 
     @Test
@@ -767,6 +996,31 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(R.style.Theme_InAppMessageWithToolbar, getThemeResourceId(activity));
     }
 
+    @Test
+    public void testWindowListener() throws Exception {
+
+        final AtomicBoolean callback = new AtomicBoolean(false);
+        SwrveInAppWindowListener windowListener = window -> {
+            callback.set(true);
+        };
+
+        SwrveInAppMessageConfig inAppConfig = new SwrveInAppMessageConfig.Builder()
+                .windowListener(windowListener)
+                .build();
+        config.setInAppMessageConfig(inAppConfig);
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
+
+        // Trigger IAM
+        swrveSpy.currencyGiven("gold", 20);
+
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        await().untilTrue(callback);
+    }
+
     // Helpers
 
     private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
@@ -835,7 +1089,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
         return new Pair(activityController, activityController.create().start().visible().get());
     }
-    
+
     private int getThemeResourceId(Activity activity) {
         String TAG = "SwrveInAppMessageActivityTest";
         int themeResId = 0;

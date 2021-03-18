@@ -32,6 +32,11 @@ public class SwrveEmbeddedCampaign extends SwrveBaseCampaign {
 
     @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
+        return areAssetsReady(assetsOnDisk, null);
+    }
+
+    @Override
+    public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
         return (this.message.data != null);
     }
 
@@ -49,10 +54,9 @@ public class SwrveEmbeddedCampaign extends SwrveBaseCampaign {
     }
 
     /**
-     *
-     * @param event           trigger event
-     * @param payload         payload to compare conditions against
-     * @param now             device time
+     * @param event             trigger event
+     * @param payload           payload to compare conditions against
+     * @param now               device time
      * @param qaCampaignInfoMap will contain the reason the campaign wasn't triggered
      * @return SwrveEmbeddedMessage message setup to the given trigger or null
      * otherwise.

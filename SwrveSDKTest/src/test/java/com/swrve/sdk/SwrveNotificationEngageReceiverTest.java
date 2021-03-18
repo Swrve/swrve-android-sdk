@@ -17,15 +17,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_ENGAGED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
@@ -51,7 +48,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
                 .build();
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig);
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
@@ -164,7 +161,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH);
 
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
-        receiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        receiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
 
         Intent nextIntent = shadowApplication.peekNextStartedActivity();
         assertNotNull(nextIntent);
@@ -186,7 +183,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
 
         SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
-        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        pushEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
 
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
         assertNotNull(nextStartedActivity);
@@ -207,7 +204,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_URL_KEY, "swrve://deeplink/campaigns");
 
         SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
-        pushEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        pushEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
 
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
         assertNotNull(nextStartedActivity);
@@ -228,7 +225,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
         SwrveNotificationEngageReceiver receiverSpy = Mockito.spy(pushEngageReceiver);
         Mockito.doNothing().when(receiverSpy).closeNotification(1); // assets are manually mocked
-        receiverSpy.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        receiverSpy.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
         Mockito.verify(receiverSpy).closeNotification(1);
     }
 
@@ -250,7 +247,7 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
         Intent intent = createPushEngagedIntent(eventPayload);
 
         SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
-        receiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        receiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
 
         ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
         ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);

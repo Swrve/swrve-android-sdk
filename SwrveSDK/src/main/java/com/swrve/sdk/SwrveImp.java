@@ -43,7 +43,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,9 +69,6 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.EMBEDDED;
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
 
@@ -81,9 +77,10 @@ import static com.swrve.sdk.SwrveTrackingState.ON;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "7.4.0";
+    protected static String version = "7.5.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 8;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 3;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -415,10 +412,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         try {
             Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
             DisplayMetrics metrics = new DisplayMetrics();
-            Point sizePoint = new Point();
-            display.getSize(sizePoint);
-            int width = sizePoint.x;
-            int height = sizePoint.y;
+            int width = SwrveHelper.getDisplayWidth(context);
+            int height = SwrveHelper.getDisplayHeight(context);
             display.getMetrics(metrics);
             float xdpi = metrics.xdpi;
             float ydpi = metrics.ydpi;
@@ -660,6 +655,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 }
             }
 
+            // Call Personalization provider once in case messages need it
+            SwrveMessagePersonalisationProvider personalisationProvider = null;
+            if (config != null && config.getInAppMessageConfig() != null) {
+                personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
+            }
+
+            Map<String, String> personalizationProperties = null;
+            if (personalisationProvider != null) {
+                personalizationProperties = personalisationProvider.personalize(null);
+            }
+
             List<QaCampaignInfo> qaCampaignInfoList = new ArrayList<>();
             List<SwrveBaseCampaign> newCampaigns = new ArrayList<>();
             Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
@@ -689,7 +695,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                             SwrveLogger.i("Conversation version %s cannot be loaded with this SDK version", conversationVersionDownloaded);
                         }
                     } else if (campaignData.has("messages")) {
-                        campaign = loadCampaignFromJSON(campaignData, campaignAssetQueue);
+                        campaign = loadCampaignFromJSON(campaignData, campaignAssetQueue, personalizationProperties);
                     } else if (campaignData.has("embedded_message")) {
                         campaign = loadEmbeddedCampaignFromJSON(campaignData);
                     }
@@ -769,8 +775,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
-    protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
-        return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue);
+    protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties) throws JSONException {
+        return new SwrveInAppCampaign(this, campaignDisplayer, campaignData, assetsQueue, properties);
     }
 
     protected SwrveEmbeddedCampaign loadEmbeddedCampaignFromJSON(JSONObject campaignData) throws JSONException {

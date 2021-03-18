@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.config.SwrveConfig;
 
 import org.junit.After;
@@ -7,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import static org.junit.Assert.assertTrue;
 
@@ -17,7 +18,7 @@ public class SwrveAmazonConfigTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
     }
 
     @After

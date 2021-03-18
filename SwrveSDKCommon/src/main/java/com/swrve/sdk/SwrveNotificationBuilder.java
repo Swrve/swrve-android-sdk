@@ -95,11 +95,8 @@ public class SwrveNotificationBuilder {
         this.eventPayload = eventPayload;
 
         if (deviceWidth == 0 && deviceHeight == 0) {
-            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            Point sizePoint = new Point();
-            display.getSize(sizePoint);
-            deviceWidth = sizePoint.x;
-            deviceHeight = sizePoint.y;
+            deviceWidth = SwrveHelper.getDisplayWidth(context);
+            deviceHeight = SwrveHelper.getDisplayHeight(context);
             if (deviceWidth > deviceHeight) {
                 int tmp = this.deviceWidth;
                 deviceWidth = deviceHeight;

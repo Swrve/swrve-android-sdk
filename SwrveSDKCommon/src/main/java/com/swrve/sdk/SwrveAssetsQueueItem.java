@@ -5,11 +5,13 @@ public class SwrveAssetsQueueItem {
     private String name;
     private String digest;
     private boolean isImage;
+    private boolean isExternalSource;
 
-    public SwrveAssetsQueueItem(String name, String digest, boolean isImage) {
+    public SwrveAssetsQueueItem(String name, String digest, boolean isImage, boolean isExternalSource) {
         this.name = name;
         this.digest = digest;
         this.isImage = isImage;
+        this.isExternalSource = isExternalSource;
     }
 
     public String getName() {
@@ -22,6 +24,10 @@ public class SwrveAssetsQueueItem {
 
     public boolean isImage() {
         return isImage;
+    }
+
+    public boolean isExternalSource() {
+        return isExternalSource;
     }
 
     // SwrveAssetsQueueItem used in a Set, so equals() and hashCode() are important

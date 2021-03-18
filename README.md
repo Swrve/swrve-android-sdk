@@ -1,11 +1,9 @@
+[![CircleCI](https://circleci.com/gh/Swrve/swrve-android-sdk.svg?style=shield)](https://circleci.com/gh/Swrve/swrve-android-sdk)
+
 What is Swrve
 -------------
 Swrve is a single integrated platform delivering everything you need to drive mobile engagement and create valuable consumer relationships on mobile.  
 This native Android SDK will enable your app to use all of these features.
-
-Deprecations
-------------
-Google Cloud Messaging SDK will be fully deprecated in 6.0 as Google will remove support in April of 2019. Please migrate to use Firebase and follow these steps to migrate your app: https://docs.swrve.com/faqs/sdk-integration/migrate-gcm-to-firebase/
 
 Getting started
 ---------------
@@ -19,13 +17,9 @@ The SDK supports Android API 14+ but will handle older versions with a dummy SDK
 ### Gradle (distributed with the SDK)
 Used to build the SDK and its dependencies.
 
-How to run the demo
--------------------
-Import the SwrveSDKDemo project or any of the samples in the samples folder into your IDE and replace YOUR_APP_ID and YOUR_API_KEY with the values provided by Swrve. Run as a normal Android application on your device or emulator.
-
-Advanced samples
-----------------
-Have a look at the advanced samples in the [samples folder.](samples/README.md)
+Samples
+-------
+Have a look at the samples in the [samples folder.](samples/README.md)
 
 How to build the SDK
 --------------------

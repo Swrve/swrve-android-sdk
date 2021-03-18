@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
@@ -22,7 +24,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
-import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -43,7 +44,6 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -65,7 +65,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     }
 
     private void createSwrveSpy(SwrveConfig config) throws Exception {
-        swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
         doNothing().when(swrveSpy).beforeSendDeviceInfo(any(Context.class));
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -128,7 +128,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
 
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         swrve.identify("exernal", new SwrveIdentityResponse() {
             @Override
             public void onSuccess(String status, String swrveId) {
@@ -145,7 +145,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("Cannot call start method when running on SwrveInitMode.AUTO mode");
 
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrve.start(mActivity);
     }
 
@@ -154,7 +154,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("Cannot call start method when running on SwrveInitMode.AUTO mode");
 
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrve.start(mActivity, "another_user");
     }
 
@@ -267,7 +267,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);
-        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>());
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>(), null);
         swrveSpy.showMessageCenterCampaign(campaign);
         assertFalse(messageListenerCalled[0]);
 
@@ -306,7 +306,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         int firstTimestamp = (int) (new Date().getTime() % Integer.MAX_VALUE);
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         SwrveNotificationTestUtils.displayNotification(mActivity, builderSpy, bundle);
 
         Notification notification = SwrveNotificationTestUtils.assertNotification("body", "content://settings/system/notification_sound", bundle);

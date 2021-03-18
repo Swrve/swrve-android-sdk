@@ -1,25 +1,37 @@
-version: 2
-jobs:
-  build:
+version: 2.1
+
+executors:
+  swrve-executor:
     docker:
-      - image: circleci/android:api-29
+      - image: circleci/android:api-30
     environment:
       JVM_OPTS: -Xmx2048m
       JAVA_OPTS: -Xms518m -Xmx2048m
+
+jobs:
+  build:
+    executor: swrve-executor
     steps:
       - checkout
+      - restore_cache:
+          key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveConversationSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
           name: Build and Test SwrveSDKTest Firebase flavour
-          command: |
-            mkdir -p SwrveSDKTest/test-results/testFirebaseDebug/
-            ./gradlew :SwrveSDKTest:testFirebaseDebug --no-daemon --max-workers 2
-            find ./SwrveSDKTest/ -type f -regex ".*/build/test-results/.*xml" -exec cp {} SwrveSDKTest/test-results/testFirebaseDebug \;
-            cp -r SwrveSDKTest/build/reports/tests/testFirebaseDebugUnitTest/* SwrveSDKTest/test-results/testFirebaseDebug/
+          command: ./gradlew :SwrveSDKTest:testFirebaseDebug
+      - store_artifacts:
+          path: SwrveSDKTest/build/reports/
+          destination: reports
       - store_test_results:
-          path: SwrveSDKTest/test-results/testAmazonDebug
+          path: SwrveSDKTest/build/test-results/
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveConversationSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
-          name: Build MinimalIntegrationSample App
-          command: ./gradlew :MinimalIntegrationSample:build
+          name: Build MinimalIntegrationFirebase App
+          command: |
+              cd samples/MinimalIntegrationFirebase
+              ./gradlew build
       - run:
           name: Build MultipleFCMProviders App
           command: ./gradlew :MultipleFCMProviders:build

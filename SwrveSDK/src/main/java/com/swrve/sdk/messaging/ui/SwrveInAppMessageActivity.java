@@ -126,6 +126,10 @@ public class SwrveInAppMessageActivity extends Activity {
         } catch (SwrveMessageViewBuildException e) {
             SwrveLogger.e("Error while creating the SwrveMessageView", e);
         }
+
+        if (inAppConfig.getWindowListener() != null) {
+            inAppConfig.getWindowListener().onCreate(getWindow()); // This must not be called before setContentView
+        }
     }
 
     private SwrveOrientation getDeviceOrientation() {

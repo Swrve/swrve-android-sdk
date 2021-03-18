@@ -2,6 +2,7 @@ package com.swrve.sdk.messaging;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveTextTemplating;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -10,6 +11,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -161,20 +163,42 @@ public class SwrveMessage implements SwrveBaseMessage {
     }
 
     protected boolean assetInCache(Set<String> assetsOnDisk, String asset) {
-        return SwrveHelper.isNullOrEmpty(asset) || assetsOnDisk.contains(asset);
+        return SwrveHelper.isNotNullOrEmpty(asset) && assetsOnDisk.contains(asset);
     }
 
     /**
      * @param assetsOnDisk Already downloaded assets on disk
      * @return true if all assets for this message have been downloaded.
      */
+    @Deprecated
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
+        return areAssetsReady(assetsOnDisk, null);
+    }
+
+    /**
+     * @param assetsOnDisk Already downloaded assets on disk
+     * @param properties   properties, when applied are used to resolve the dynamic image urls that may occur
+     * @return true if all assets for this message have been downloaded.
+     */
+    public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
         if (this.formats != null) {
             for (SwrveMessageFormat format : formats) {
-
                 for (SwrveButton button : format.buttons) {
                     String buttonAsset = button.getImage();
-                    if (!this.assetInCache(assetsOnDisk, buttonAsset)) {
+                    boolean hasButtonImage = this.assetInCache(assetsOnDisk, buttonAsset);
+
+                    if (SwrveHelper.isNotNullOrEmpty(button.getDynamicImageUrl())) {
+                        try {
+                            String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
+                            if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
+                                hasButtonImage = true;
+                            }
+                        } catch (Exception e) {
+                            SwrveLogger.i("Could not resolve personalization", e);
+                        }
+                    }
+
+                    if (!hasButtonImage) {
                         SwrveLogger.i("Button asset not yet downloaded: %s", buttonAsset);
                         return false;
                     }
@@ -182,8 +206,21 @@ public class SwrveMessage implements SwrveBaseMessage {
 
                 for (SwrveImage image : format.images) {
                     String imageAsset = image.getFile();
-                    if (!this.assetInCache(assetsOnDisk, imageAsset)) {
-                        SwrveLogger.i("Image asset not yet downloaded: %s", imageAsset);
+                    boolean hasImage = this.assetInCache(assetsOnDisk, imageAsset);
+
+                    if (SwrveHelper.isNotNullOrEmpty(image.getDynamicImageUrl())) {
+                        try {
+                            String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
+                            if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
+                                hasImage = true;
+                            }
+                        } catch (Exception e) {
+                            SwrveLogger.i("Could not resolve personalization", e);
+                        }
+                    }
+
+                    if (!hasImage) {
+                        SwrveLogger.i("Button asset not yet downloaded: %s", hasImage);
                         return false;
                     }
                 }

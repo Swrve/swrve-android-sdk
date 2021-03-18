@@ -5,9 +5,14 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
+import android.view.Display;
+import android.view.WindowManager;
+
+import com.swrve.sdk.ISwrveCommon.SupportedUIMode;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,8 +47,7 @@ import static com.swrve.sdk.ISwrveCommon.OS_AMAZON;
 import static com.swrve.sdk.ISwrveCommon.OS_AMAZON_TV;
 import static com.swrve.sdk.ISwrveCommon.OS_ANDROID;
 import static com.swrve.sdk.ISwrveCommon.OS_ANDROID_TV;
-
-import com.swrve.sdk.ISwrveCommon.SupportedUIMode;
+import static com.swrve.sdk.SwrveFlavour.AMAZON;
 
 /**
  * Used internally to provide MD5, token generation and other helper methods.
@@ -165,6 +169,39 @@ public final class SwrveHelper {
         return body.toString();
     }
 
+    public static int getDisplayWidth(final Context context) {
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (windowManager == null) {
+            SwrveLogger.i("Current device does not have a Window Service active");
+            return 0;
+        }
+        Display display = windowManager.getDefaultDisplay();
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return display.getWidth();
+        } else {
+            Point size = new Point();
+            display.getSize(size);
+            return size.x;
+        }
+    }
+
+    public static int getDisplayHeight(final Context context) {
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (windowManager == null) {
+            SwrveLogger.i("Current device does not have a Window Service active");
+            return 0;
+        }
+
+        Display display = windowManager.getDefaultDisplay();
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return display.getHeight();
+        } else {
+            Point size = new Point();
+            display.getSize(size);
+            return size.y;
+        }
+    }
+
     public static boolean userErrorResponseCode(int responseCode) {
         return (responseCode >= 400 && responseCode < 500);
     }
@@ -268,8 +305,8 @@ public final class SwrveHelper {
         return SwrveHelper.getPlatformOS(context, null);
     }
 
-    public static String getPlatformOS(Context context, String sdkFlavour) {
-        if (SwrveHelper.isNullOrEmpty(sdkFlavour)) {
+    public static String getPlatformOS(Context context, SwrveFlavour sdkFlavour) {
+        if (sdkFlavour == null) {
             if (SwrveHelper.isNullOrEmpty(Build.MANUFACTURER)) {
                 // if MANUFACTURER is empty or null, default to 'android'
                 return OS_ANDROID;
@@ -293,7 +330,7 @@ public final class SwrveHelper {
             }
         }
         // We can infer the OS based flavour
-        if (sdkFlavour.equalsIgnoreCase("amazon")) {
+        if (sdkFlavour == AMAZON) {
             switch (SwrveHelper.getSupportedUIMode(context)) {
                 case TV:
                     return OS_AMAZON_TV;

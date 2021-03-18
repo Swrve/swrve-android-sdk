@@ -24,11 +24,11 @@ interface ISwrveCommon {
     String CACHE_USER_JOINED_TIME = "SwrveSDK.userJoinedTime";
     String CACHE_CAMPAIGNS_STATE = "SwrveCampaignSettings";
     String CACHE_SEQNUM = "seqnum";
-    String CACHE_GOOGLE_ADVERTISING_ID = "GoogleAdvertisingId";
-    String CACHE_GOOGLE_ADVERTISING_AD_TRACK_LIMIT = "GoogleAdvertisingLimitAdTrackingEnabled";
-    String CACHE_REGISTRATION_ID = "RegistrationId";
     String CACHE_QA = "swrve.q1";
     String CACHE_ETAG = "swrve.etag";
+
+    // Blank key for saving device properties that are userId agnostic.
+    String CACHE_DEVICE_PROP_KEY = "";
 
     // device info
     String SWRVE_DEVICE_NAME                = "swrve.device_name";

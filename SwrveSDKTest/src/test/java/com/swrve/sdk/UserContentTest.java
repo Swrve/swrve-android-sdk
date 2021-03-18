@@ -1,10 +1,12 @@
 package com.swrve.sdk;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
+
 import org.junit.Assert;
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,7 +18,7 @@ public class UserContentTest extends SwrveBaseTest {
     @Test
     public void testUserContentParamsUponInit() {
 
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         final AtomicBoolean callbackCompleted = new AtomicBoolean(false);
         swrve.restClient = new IRESTClient() {
 
@@ -39,6 +41,7 @@ public class UserContentTest extends SwrveBaseTest {
                     Assert.assertEquals(swrve.getUserId(), params.get("user"));
                     Assert.assertEquals("1", params.get("embedded_campaign_version"));
                     Assert.assertEquals("8", params.get("version"));
+                    Assert.assertEquals("3", params.get("in_app_version"));
                     Assert.assertNotNull(params.get("device_name"));
                     Assert.assertNotNull(params.get("os_version"));
                     Assert.assertNotNull(params.get("app_store"));

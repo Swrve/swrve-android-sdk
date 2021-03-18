@@ -1,10 +1,16 @@
 package com.swrve.sdk;
 
 import com.swrve.sdk.localstorage.LocalStorage;
+import com.swrve.sdk.messaging.SwrveActionType;
+import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -12,10 +18,15 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -32,7 +43,8 @@ import static org.mockito.Mockito.verify;
 public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
     private Swrve swrveSpy;
-    IRESTClient restClientMock = Mockito.mock(IRESTClient.class);
+    private IRESTClient restClientMock = Mockito.mock(IRESTClient.class);
+    private int messageShownId;
 
     @Before
     public void setUp() throws Exception {
@@ -172,5 +184,200 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         assertEquals("generic_event_0", data2.getJSONObject(4).getString("name"));
         assertEquals("generic_event_1", data2.getJSONObject(5).getString("name"));
         assertEquals("generic_event_2", data2.getJSONObject(6).getString("name"));
+    }
+
+    @Test
+    public void testDeviceIDUniqueBetweenInstances() throws Exception {
+
+        String deviceID = swrveSpy.getDeviceId();
+        assertNotNull(deviceID);
+
+        // shutdown current instance and call setup again to recreate it
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        String swrve1Instance = ((Object)swrveSpy).toString();
+        setUp();
+        String swrve2Instance = ((Object)swrveSpy).toString();
+        assertNotEquals(swrve1Instance, swrve2Instance); // verify its a new instance
+
+        assertEquals(deviceID, swrveSpy.getDeviceId());
+    }
+
+    @Test
+    public void testFlush() {
+        int eventsAddedOnInit = 3;
+        String userId = swrveSpy.getUserId();
+        swrveSpy.onCreate(mActivity);
+        for (int i = 0; i < 50; i++) {
+            swrveSpy.sessionEnd();
+            swrveSpy.multiLayerLocalStorage.getPrimaryStorage().setCacheEntry(userId, "category" + i, "rawData" + i);
+        }
+
+        // 50 events plus firstsession event, and user device prop event
+        assertEquals(50 + eventsAddedOnInit, getAllEventsInPrimaryStorage(userId).size());
+        swrveSpy.flushToDisk();
+        // Data has been moved to the other storage
+        assertEquals(0, getAllEventsInPrimaryStorage(userId).size());
+
+        int storageCount = swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getFirstNEvents(150, userId).size();
+        assertEquals(50 + eventsAddedOnInit, storageCount);
+        for (int i = 0; i < 50; i++) {
+            assertNotNull(swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getCacheItem(userId, "category" + i));
+        }
+    }
+
+    private LinkedHashMap<Long, String> getAllEventsInPrimaryStorage(String userId) {
+        return swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getFirstNEvents(Integer.MAX_VALUE, userId);
+    }
+
+    @Test
+    public void testSessionStartTrigger() throws Exception {
+        swrveSpy.init(mActivity);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_session_start.json",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e");
+
+        swrveSpy.setMessageListener(new SwrveMessageListener() {
+            @Override
+            public void onMessage(SwrveMessage message) {
+                onMessage(message, null);
+            }
+
+            @Override
+            public void onMessage(SwrveMessage message, Map<String, String> properties) {
+                assertNotNull(message);
+                swrveSpy.messageWasShownToUser(message.getFormats().get(0));
+                messageShownId = message.getId();
+            }
+        });
+
+        swrveSpy.sessionStart();
+        assertEquals(165, messageShownId);
+    }
+
+    @Test
+    public void testButtonDismissWasPressed() throws Exception {
+        swrveSpy.init(mActivity);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
+        SwrveButton buttonDismiss = createButton(SwrveActionType.Dismiss, "campaign.json", null, null);
+        int originalEvents = getAllEvents().size();
+        swrveSpy.buttonWasPressedByUser(buttonDismiss);
+        int lastEvents = getAllEvents().size();
+
+        // One dismissal less
+        assertEquals(originalEvents, lastEvents);
+    }
+
+    @Test
+    public void testButtonInstallWasPressed() throws Exception {
+        swrveSpy.init(mActivity);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
+        SwrveButton buttonInstall = createButton(SwrveActionType.Install, "campaign.json", null, null);
+        swrveSpy.buttonWasPressedByUser(buttonInstall);
+
+        boolean clickFound = false;
+        Object[] events = getAllEvents().values().toArray();
+        for (int i = 0, j = events.length; i < j && !clickFound; i++) {
+            String eventData = (String) events[i];
+            clickFound = eventData.contains("Swrve.Messages.Message-" + buttonInstall.getMessage().getId());
+        }
+        assertTrue(clickFound);
+    }
+
+    @Test
+    public void testButtonCustomWasPressed() throws Exception {
+        swrveSpy.init(mActivity);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
+        SwrveButton buttonCustom = createButton(SwrveActionType.Custom, "campaign.json", null, null);
+        int originalEvents = getAllEvents().size();
+        swrveSpy.buttonWasPressedByUser(buttonCustom);
+        int lastEvents = getAllEvents().size();
+
+        // One click event
+        assertEquals(1, lastEvents - originalEvents);
+
+        boolean clickFound = false;
+        Object[] events = getAllEvents().values().toArray();
+        for (int i = 0, j = events.length; i < j && !clickFound; i++) {
+            String eventData = (String) events[i];
+            clickFound = eventData.contains("Swrve.Messages.Message-" + buttonCustom.getMessage().getId());
+        }
+        assertTrue(clickFound);
+    }
+
+    private SwrveButton createButton(SwrveActionType type, String dummyJson, String action, Integer appId) {
+        CustomSwrveCampaign campaign = null;
+        try {
+            String json = SwrveTestUtils.getAssetAsText(mActivity, dummyJson);
+            JSONObject jsonObj = new JSONObject(json);
+            JSONObject campaigns = jsonObj.getJSONArray("campaigns").getJSONObject(0);
+            campaign = new CustomSwrveCampaign(swrveSpy, new SwrveCampaignDisplayer(), campaigns, new HashSet<SwrveAssetsQueueItem>());
+        } catch (Exception exp) {
+            SwrveLogger.e("Error createButton.", exp);
+        }
+
+        CustomSwrveMessage message = new CustomSwrveMessage(campaign, swrveSpy.getCacheDir());
+        message.setId(303);
+        message.setName("myMessage");
+        campaign.addMessage(message);
+
+        CustomSwrveButton btn = new CustomSwrveButton();
+        btn.setAction(action);
+        btn.setActionType(type);
+        btn.setMessage(message);
+        if (appId != null) {
+            btn.setAppId(appId);
+        }
+        return btn;
+    }
+
+    class CustomSwrveCampaign extends SwrveInAppCampaign {
+
+        public CustomSwrveCampaign(SwrveBase<?, ?> controller, SwrveCampaignDisplayer campaignManager, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
+            super(controller, campaignManager, campaignData, assetsQueue, null);
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public void addMessage(SwrveMessage message) {
+            super.addMessage(message);
+        }
+    }
+
+    class CustomSwrveMessage extends SwrveMessage {
+
+        public CustomSwrveMessage(SwrveInAppCampaign campaign, File cacheDir) {
+            super(campaign, cacheDir);
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    class CustomSwrveButton extends SwrveButton {
+        public void setAction(String action) {
+            super.setAction(action);
+        }
+
+        public void setActionType(SwrveActionType type) {
+            super.setActionType(type);
+        }
+
+        public void setMessage(SwrveMessage message) {
+            super.setMessage(message);
+        }
+
+        public void setAppId(int appId) {
+            super.setAppId(appId);
+        }
+    }
+
+    private LinkedHashMap<Long, String> getAllEvents() {
+        return swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getFirstNEvents(Integer.MAX_VALUE, swrveSpy.getUserId());
     }
 }

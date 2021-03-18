@@ -6,8 +6,5 @@ project(":MultipleFCMProviders").projectDir = file("samples/MultipleFCMProviders
 include ':MessageCenter'
 project(":MessageCenter").projectDir = file("samples/MessageCenter")
 
-include ':MinimalIntegrationSample'
-project(':MinimalIntegrationSample').projectDir = new File("samples/MinimalIntegrationSample")
-
 include ':CustomUserId'
 project(":CustomUserId").projectDir = file("samples/CustomUserId")

@@ -1,16 +1,21 @@
 package com.swrve.sdk;
 
+import android.content.Context;
 import android.os.Bundle;
+
+import androidx.test.core.app.ApplicationProvider;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DELIVERED;
@@ -22,15 +27,17 @@ import static org.mockito.Mockito.mock;
 @RunWith(RobolectricTestRunner.class)
 public class EventHelperTest extends SwrveBaseTest {
 
+    private ISwrveCommon swrveCommonMock;
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        ISwrveCommon swrveCommonSpy = mock(ISwrveCommon.class);
-        Mockito.doReturn("some_app_version").when(swrveCommonSpy).getAppVersion();
-        Mockito.doReturn("some_device_id").when(swrveCommonSpy).getDeviceId();
-        Mockito.doReturn("some_session_key").when(swrveCommonSpy).getSessionKey();
-        Mockito.doReturn(1).when(swrveCommonSpy).getNextSequenceNumber();
-        SwrveCommon.setSwrveCommon(swrveCommonSpy);
+        swrveCommonMock = mock(ISwrveCommon.class);
+        Mockito.doReturn("some_app_version").when(swrveCommonMock).getAppVersion();
+        Mockito.doReturn("some_device_id").when(swrveCommonMock).getDeviceId();
+        Mockito.doReturn("some_session_key").when(swrveCommonMock).getSessionKey();
+        Mockito.doReturn(1).when(swrveCommonMock).getNextSequenceNumber();
+        SwrveCommon.setSwrveCommon(swrveCommonMock);
     }
 
     @Test
@@ -123,5 +130,31 @@ public class EventHelperTest extends SwrveBaseTest {
 
         String extractedEvent = EventHelper.extractEventFromBatch(batchEvent);
         assertEquals(event, extractedEvent);
+    }
+
+    @Test
+    public void testSendUninitiatedDeviceUpdateEvent() throws Exception {
+
+        JSONObject deviceUpdateAttributes = new JSONObject();
+        deviceUpdateAttributes.put("testkey1", "testvalue1");
+        EventHelper.sendUninitiatedDeviceUpdateEvent(ApplicationProvider.getApplicationContext(), "userId", deviceUpdateAttributes);
+
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveCommonMock, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jsonObject = new JSONObject(jsonString);
+
+        assertTrue(jsonObject.has("time"));
+        assertTrue(jsonObject.has("seqnum"));
+        assertEquals("device_update", jsonObject.get("type"));
+        assertEquals("false", jsonObject.get("user_initiated"));
+        assertTrue(jsonObject.has("attributes"));
+        JSONObject attributes = (JSONObject) jsonObject.get("attributes");
+        assertTrue(attributes.length() == 1);
+        assertEquals("testvalue1", attributes.get("testkey1"));
     }
 }

@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 
@@ -8,7 +10,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +24,7 @@ public class SwrveFirebaseDeviceInfoTest extends SwrveBaseTest {
         // Following the same pattern as EventsTest by creating a customRestClient to verify what is
         // sent with an init. Only this test specifically looks at the device update properties.
 
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         final AtomicBoolean callbackCompleted = new AtomicBoolean(false);
         swrve.restClient = new IRESTClient() {
 
@@ -88,7 +89,7 @@ public class SwrveFirebaseDeviceInfoTest extends SwrveBaseTest {
     @Test
     public void testUserContentParamsUponInit() {
 
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         final AtomicBoolean callbackCompleted = new AtomicBoolean(false);
         swrve.restClient = new IRESTClient() {
 

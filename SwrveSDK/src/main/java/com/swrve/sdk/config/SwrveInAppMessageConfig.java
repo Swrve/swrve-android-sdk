@@ -6,6 +6,7 @@ import android.graphics.Typeface;
 import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
+import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
 
@@ -25,6 +26,7 @@ public class SwrveInAppMessageConfig {
     protected SwrveDismissButtonListener dismissButtonListener;
     protected SwrveClipboardButtonListener clipboardButtonListener;
     protected SwrveMessagePersonalisationProvider personalisationProvider;
+    private SwrveInAppWindowListener windowListener;
 
     private SwrveInAppMessageConfig(Builder builder) {
         this.defaultBackgroundColor = builder.defaultBackgroundColor;
@@ -40,6 +42,7 @@ public class SwrveInAppMessageConfig {
         this.dismissButtonListener = builder.dismissButtonListener;
         this.clipboardButtonListener = builder.clipboardButtonListener;
         this.personalisationProvider = builder.personalisationProvider;
+        this.windowListener = builder.windowListener;
     }
 
     /**
@@ -158,6 +161,15 @@ public class SwrveInAppMessageConfig {
         return personalisationProvider;
     }
 
+    /**
+     * Custom IAM window listener
+     *
+     * @return the custom listener
+     */
+    public SwrveInAppWindowListener getWindowListener() {
+        return windowListener;
+    }
+
     public static class Builder {
         private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
         private int focusColor = Color.argb(100, 0, 190, 152); // Default button focus color for IAM
@@ -173,6 +185,7 @@ public class SwrveInAppMessageConfig {
         protected SwrveDismissButtonListener dismissButtonListener;
         protected SwrveClipboardButtonListener clipboardButtonListener;
         protected SwrveMessagePersonalisationProvider personalisationProvider;
+        protected SwrveInAppWindowListener windowListener;
 
         /**
          * Builder constructor
@@ -320,6 +333,18 @@ public class SwrveInAppMessageConfig {
          */
         public Builder personalisationProvider(SwrveMessagePersonalisationProvider personalisationProvider) {
             this.personalisationProvider = personalisationProvider;
+            return this;
+        }
+
+        /**
+         * Custom IAM window listener which is invoked after the Activity onCreate is finished and
+         * setContentView is called.
+         *
+         * @param windowListener The custom window listener
+         * @return this builder
+         */
+        public Builder windowListener(SwrveInAppWindowListener windowListener) {
+            this.windowListener = windowListener;
             return this;
         }
 

@@ -9,7 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+
 import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.localstorage.LocalStorage;
@@ -23,7 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.robolectric.RuntimeEnvironment;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,15 +35,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.swrve.sdk.ISwrveCommon.EVENT_FIRST_SESSION;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
@@ -68,7 +69,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -83,22 +84,6 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testDeviceIDUniqueBetweenInstances() throws Exception {
-
-        String deviceID = swrveSpy.getDeviceId();
-        assertNotNull(deviceID);
-
-        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
-        swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-
-        assertEquals(deviceID, swrveReal.getDeviceId());
-    }
-
-    @Test
     public void testIdentityCanGetCachedUserBefore_SDKInit() throws Exception {
 
         //  Add current swrve user to cache to mock that it has been identified.
@@ -108,7 +93,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
 
         // create a new instance , but dont call init.
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -125,7 +110,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
             @Override
             public void onError(int responseCode, String errorMessage) {
-                fail("Couldn't get user from cache");
+                fail("Couldn't get user from cache. errorMessage:" + errorMessage);
                 identityCallback.set(true);
             }
         });
@@ -179,7 +164,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
         } catch (Exception ex) {
             SwrveLogger.e("Null SwrveIdentityResponse may have caused an exception", ex);
-            fail("Null SwrveIdentityResponse may have caused an exception");
+            fail("Null SwrveIdentityResponse may have caused an exception:" + ex.getMessage());
         }
     }
 
@@ -448,7 +433,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
         assertNumberOfNotification(3);
 
-        LocalStorage localStorage = new SQLiteLocalStorage(RuntimeEnvironment.application, "test", 2024 * 1024 * 1024);
+        LocalStorage localStorage = new SQLiteLocalStorage(ApplicationProvider.getApplicationContext(), "test", 2024 * 1024 * 1024);
         SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
 
         SwrveUser user = new SwrveUser(swrveSpy.getUserId(), "SomeExternalId", true);
@@ -512,7 +497,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     // Helper methods below
 
     private void assertNumberOfNotification(int numberOfNotifications) {
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(numberOfNotifications, notifications.size());
     }

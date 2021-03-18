@@ -3,12 +3,13 @@ package com.swrve.sdk;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
-
 
 import org.json.JSONObject;
 import org.junit.After;
@@ -16,12 +17,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -42,7 +41,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -93,7 +92,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
         Intent intent = createPushEngagedIntent();
 
         SwrveNotificationEngageReceiver notifcationEngageReceiver = new SwrveNotificationEngageReceiver();
-        notifcationEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        notifcationEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
 
         ArgumentCaptor<String> campiganIdCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(swrveSpy, Mockito.atLeastOnce()).setNotificationSwrveCampaignId(campiganIdCaptor.capture());
@@ -120,7 +119,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
         Intent intent = createPushButtonClickedIntent();
 
         SwrveNotificationEngageReceiver notifcationEngageReceiver = new SwrveNotificationEngageReceiver();
-        notifcationEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), intent);
+        notifcationEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
 
         ArgumentCaptor<String> campiganIdCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(swrveSpy, Mockito.atLeastOnce()).setNotificationSwrveCampaignId(campiganIdCaptor.capture());
@@ -208,7 +207,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
 
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-        Swrve swrveRealTest = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveRealTest = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         swrveSpy = Mockito.spy(swrveRealTest);
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -218,8 +217,8 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
         Intent buttonIntent = createPushButtonClickedIntent();
 
         SwrveNotificationEngageReceiver notifcationEngageReceiver = new SwrveNotificationEngageReceiver();
-        notifcationEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), engagedIntent);
-        notifcationEngageReceiver.onReceive(RuntimeEnvironment.application.getApplicationContext(), buttonIntent);
+        notifcationEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), engagedIntent);
+        notifcationEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), buttonIntent);
 
         ArgumentCaptor<String> campiganIdCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(swrveSpy, Mockito.atLeastOnce()).setNotificationSwrveCampaignId(campiganIdCaptor.capture());
@@ -235,7 +234,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
         config.setManagedModeAutoStartLastUser(false);
-        Swrve swrveRealTest = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveRealTest = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         swrveSpy = Mockito.spy(swrveRealTest);
         SwrveTestUtils.setSDKInstance(swrveSpy);

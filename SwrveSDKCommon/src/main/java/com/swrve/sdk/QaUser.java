@@ -28,7 +28,6 @@ public class QaUser {
     protected static final int LOG_QUEUE_FLUSH_INTERVAL_MILLIS = 4000;
     protected static final int REST_CLIENT_TIMEOUT_MILLIS = 15000;
     private static final String LOG_SOURCE_GEO = "geo-sdk";
-    private static final String LOG_SOURCE_PUSH = "push-sdk";
     private static final String LOG_SOURCE_SDK = "sdk";
 
     protected static QaUser instance;
@@ -349,6 +348,58 @@ public class QaUser {
         }
     }
 
+    public static void assetFailedToDownload(String assetName, String resolvedUrl, String reason) {
+        try {
+            QaUser qaUser = QaUser.getInstance();
+            qaUser._assetFailedToDownload(assetName, resolvedUrl, reason);
+        } catch (Exception e) {
+            SwrveLogger.e("Error trying to queue asset-failed-to-download qalogevent.", e);
+        }
+    }
+
+    private void _assetFailedToDownload(String assetName, String resolvedUrl, String reason) throws Exception {
+        if (loggingEnabled) {
+            JSONObject logDetailsCampaignsJson = new JSONObject();
+            logDetailsCampaignsJson.put("asset_name", assetName);
+            logDetailsCampaignsJson.put("image_url", resolvedUrl);
+            logDetailsCampaignsJson.put("reason", reason);
+
+            queueQaLogEvent(LOG_SOURCE_SDK, "asset-failed-to-download", logDetailsCampaignsJson.toString());
+        }
+    }
+
+    public static void assetFailedToDisplay(int campaignId, int variantId, String assetName, String unresolvedUrl, String resolvedUrl, boolean hasFallback, String reason) {
+        try {
+            QaUser qaUser = QaUser.getInstance();
+            qaUser._assetFailedToDisplay(campaignId, variantId, assetName, unresolvedUrl, resolvedUrl, hasFallback, reason);
+
+        } catch (Exception e) {
+            SwrveLogger.e("Error trying to queue asset-failed-to-display qalogevent.", e);
+        }
+    }
+
+    private void _assetFailedToDisplay(int campaignId, int variantId, String assetName, String unresolvedUrl, String resolvedUrl, boolean hasFallback, String reason) throws Exception {
+        if (loggingEnabled) {
+            JSONObject logDetailsJson = new JSONObject();
+            logDetailsJson.put("campaign_id", campaignId);
+            logDetailsJson.put("variant_id", variantId);
+            logDetailsJson.put("unresolved_url", unresolvedUrl);
+            logDetailsJson.put("has_fallback", hasFallback);
+            logDetailsJson.put("reason", reason);
+
+            // two optional fields depending on the situation
+            if (SwrveHelper.isNotNullOrEmpty(resolvedUrl)) {
+                logDetailsJson.put("image_url", resolvedUrl);
+            }
+
+            if (SwrveHelper.isNotNullOrEmpty(assetName)) {
+                logDetailsJson.put("asset_name", assetName);
+            }
+
+            queueQaLogEvent(LOG_SOURCE_SDK, "asset-failed-to-display", logDetailsJson.toString());
+        }
+    }
+
     static void wrappedEvents(List<String> events) {
         try {
             QaUser qaUser = QaUser.getInstance();
@@ -361,21 +412,21 @@ public class QaUser {
     protected void _wrappedEvents(List<String> events) throws Exception {
         if (loggingEnabled) {
 
-            for(String eventJson: events) {
+            for (String eventJson : events) {
 
                 JSONObject event = new JSONObject(eventJson);
 
                 // Build
                 JSONObject logDetailsJson = new JSONObject();
-                if(event.has("type")){
+                if (event.has("type")) {
                     logDetailsJson.put("type", event.getString("type"));
                     event.remove("type");
                 }
-                if(event.has("seqnum")){
+                if (event.has("seqnum")) {
                     logDetailsJson.put("seqnum", event.getLong("seqnum"));
                     event.remove("seqnum");
                 }
-                if(event.has("time")){
+                if (event.has("time")) {
                     logDetailsJson.put("client_time", event.getLong("time"));
                     event.remove("time");
                 }
@@ -437,7 +488,6 @@ public class QaUser {
             @Override
             public void run() {
                 SwrveLogger.v("QaUser request with body:\n %s", body);
-                IRESTClient restClient = new RESTClient(REST_CLIENT_TIMEOUT_MILLIS);
                 restClient.post(endpoint, body, new RESTResponseListener(endpoint));
             }
         });

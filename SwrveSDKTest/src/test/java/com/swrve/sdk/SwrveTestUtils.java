@@ -1,15 +1,16 @@
 package com.swrve.sdk;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
+
+import androidx.test.core.app.ApplicationProvider;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -23,14 +24,11 @@ import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.robolectric.RuntimeEnvironment;
-import org.robolectric.shadows.ShadowActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -54,7 +52,6 @@ import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DELIVERED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
@@ -108,7 +105,7 @@ public class SwrveTestUtils {
             Assert.assertFalse(result.length() == 0);
         } catch (IOException ex) {
             SwrveLogger.e("Error getting asset as text:%s", ex, assetName);
-            fail("Error getting asset as text:" + assetName);
+            fail("Error getting asset as text:" + assetName + " ex:" + ex.getMessage());
         } finally {
             if (in != null) {
                 try {
@@ -136,6 +133,7 @@ public class SwrveTestUtils {
             Set<String> assetsOnDisk = new HashSet<>();
             for(String asset : assets) {
                 assetsOnDisk.add(asset);
+                SwrveTestUtils.writeFileToCache(ApplicationProvider.getApplicationContext().getCacheDir(), asset);
             }
             ((SwrveAssetsManagerImp)swrve.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
         }
@@ -236,7 +234,8 @@ public class SwrveTestUtils {
     }
 
     public static void disableBeforeSendDeviceInfo(Swrve swrveReal, Swrve swrveSpy) {
-        RuntimeEnvironment.application.unregisterActivityLifecycleCallbacks(swrveReal);
+        Application application = ApplicationProvider.getApplicationContext();
+        application.unregisterActivityLifecycleCallbacks(swrveReal);
         swrveSpy.registerActivityLifecycleCallbacks();
         Mockito.doNothing().when(swrveSpy).beforeSendDeviceInfo(any(Context.class));
     }
@@ -428,7 +427,7 @@ public class SwrveTestUtils {
     }
 
     public static Swrve createSpyInstance(SwrveConfig config) throws Exception {
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);

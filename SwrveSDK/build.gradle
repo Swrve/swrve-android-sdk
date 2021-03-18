@@ -31,6 +31,12 @@ android {
         }
     }
 
+    sourceSets {
+        firebase {
+            java.srcDirs += java.srcDirs += 'src/google/java/'
+        }
+    }
+
     lintOptions {
         abortOnError true
         baseline file("../lint/lint-baseline-swrvesdk.xml")

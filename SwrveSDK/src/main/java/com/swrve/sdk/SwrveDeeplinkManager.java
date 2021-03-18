@@ -231,6 +231,17 @@ class SwrveDeeplinkManager {
             return;
         }
 
+        // retrieve personalization from the SDK to facilitate potentially loading dynamic image urls
+        SwrveMessagePersonalisationProvider personalisationProvider = null;
+        if (config != null && config.getInAppMessageConfig() != null) {
+            personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
+        }
+
+        Map<String, String> properties = null;
+        if (personalisationProvider != null) {
+            properties = personalisationProvider.personalize(null);
+        }
+
         JSONObject jsonCampaign = json.getJSONObject("campaign");
         final Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
 
@@ -249,7 +260,7 @@ class SwrveDeeplinkManager {
             }
         } else if (jsonCampaign.has("messages")) {
             Swrve swrve = (Swrve) SwrveSDK.getInstance();
-            campaign = new SwrveInAppCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue);
+            campaign = new SwrveInAppCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue, properties);
         } else if (jsonCampaign.has("embedded_message")) {
             Swrve swrve = (Swrve) SwrveSDK.getInstance();
             campaign = new SwrveEmbeddedCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign);
@@ -324,7 +335,7 @@ class SwrveDeeplinkManager {
                     properties = personalisationProvider.personalize(null);
                 }
 
-                if (SwrveMessageTextTemplatingChecks.checkTemplating(message, properties)) {
+                if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, properties)) {
                     setSwrveMessage(message);
                     if (this.swrveMessageListener == null) {
                         Intent intent = new Intent(context, SwrveInAppMessageActivity.class);

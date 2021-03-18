@@ -1,10 +1,11 @@
 package com.swrve.sdk;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +17,6 @@ import java.util.Map;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +37,7 @@ public class QaUserTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        ISwrveCommon swrveCommonReal = (ISwrveCommon) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        ISwrveCommon swrveCommonReal = (ISwrveCommon) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveCommonSpy = Mockito.spy(swrveCommonReal);
         SwrveCommon.setSwrveCommon(swrveCommonSpy);
 
@@ -580,6 +580,68 @@ public class QaUserTest extends SwrveBaseTest {
                  "}";
         // @formatter:on
         String event = getExpectedEvent("sdk", "campaign-button-clicked", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testAssetFailedToDownload() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        QaUser.assetFailedToDownload("aaaabbbbccccdddd", "httsdaohasdsa.co", "malformed url");
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"asset_name\":\"aaaabbbbccccdddd\"," +
+                        "\"image_url\":\"httsdaohasdsa.co\"," +
+                        "\"reason\":\"malformed url\"" +
+                "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "asset-failed-to-download", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testAssetFailedToDisplay() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        QaUser.assetFailedToDisplay(1, 2, "test_asset_name", "${url}", "resolved.url", true, "Asset not in Cache");
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"campaign_id\":1," +
+                        "\"variant_id\":2," +
+                        "\"unresolved_url\":\"${url}\"," +
+                        "\"has_fallback\":true," +
+                        "\"reason\":\"Asset not in Cache\"," +
+                        "\"image_url\":\"resolved.url\"," +
+                        "\"asset_name\":\"test_asset_name\"" +
+                "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "asset-failed-to-display", logDetails);
         verifyEventQueued(qaUserSpy, event);
     }
 

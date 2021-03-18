@@ -7,9 +7,12 @@ import com.swrve.sdk.rest.SwrveFilterInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
@@ -70,13 +73,20 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     }
 
     protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
-        if(assetsQueue == null) {
+        if (assetsQueue == null) {
             return;
         }
 
         Set<SwrveAssetsQueueItem> assetsToDownload = filterExistingFiles(assetsQueue);
         for (SwrveAssetsQueueItem assetItem : assetsToDownload) {
-            boolean success = downloadAsset(assetItem);
+            boolean success;
+
+            if (assetItem.isExternalSource()) {
+                success = downloadAssetFromExternalSource(assetItem);
+            } else {
+                success = downloadAsset(assetItem);
+            }
+
             if (success) {
                 synchronized (assetsOnDisk) {
                     assetsOnDisk.add(assetItem.getName()); // store the font name
@@ -140,6 +150,64 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             }
         } catch (Exception e) {
             SwrveLogger.e("Error downloading asset:%s", e, assetItem);
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (Exception e) {
+                    SwrveLogger.e("Error closing assets stream.", e);
+                }
+            }
+        }
+        return success;
+    }
+
+    protected boolean downloadAssetFromExternalSource(final SwrveAssetsQueueItem assetItem) {
+        boolean success = false;
+
+        // since this is coming from a source other than the Swrve CDN. Digest is the url
+        String url = assetItem.getDigest();
+        if (SwrveHelper.isNullOrEmpty(url)) {
+            SwrveLogger.e("Error downloading asset. No cdn url for %s", assetItem);
+            return success;
+        }
+
+        InputStream inputStream = null;
+        try {
+            URLConnection openConnection = new URL(url).openConnection();
+            openConnection.setRequestProperty("Accept-Encoding", "gzip");
+            inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
+
+            // Support gzip if possible
+            String encoding = openConnection.getContentEncoding();
+            if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
+                inputStream = new GZIPInputStream(inputStream);
+            }
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[2048];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                stream.write(buffer, 0, bytesRead);
+            }
+            byte[] fileContents = stream.toByteArray();
+            // asset name is a sha1 of the url done in constructor
+            FileOutputStream fileStream = new FileOutputStream(new File(storageDir, assetItem.getName()));
+            fileStream.write(fileContents); // Save to file
+            fileStream.close();
+            success = true;
+        } catch (MalformedURLException e) {
+            SwrveLogger.e("Error downloading asset: %s", e, assetItem);
+            QaUser.assetFailedToDownload(assetItem.getName(), url, "Image url was malformed");
+        } catch (UnknownHostException e) {
+            SwrveLogger.e("Error downloading asset: %s", e, assetItem);
+            QaUser.assetFailedToDownload(assetItem.getName(), url, "Host name could not be resolved");
+        } catch (IOException e) {
+            SwrveLogger.e("Error downloading asset: %s", e, assetItem);
+            QaUser.assetFailedToDownload(assetItem.getName(), url, "Asset file could not be retrieved");
+        } catch (Exception e) {
+            SwrveLogger.e("Error downloading asset: %s", e, assetItem);
+            QaUser.assetFailedToDownload(assetItem.getName(), url, "Asset could not be downloaded");
         } finally {
             if (inputStream != null) {
                 try {

@@ -12,7 +12,7 @@ import java.util.Map;
 // Check the validity of all message formats with the given personalisation before displaying the message.
 class SwrveMessageTextTemplatingChecks {
 
-    public static boolean checkTemplating(SwrveMessage message, Map<String, String> properties) {
+    public static boolean checkTextTemplating(SwrveMessage message, Map<String, String> properties) {
         try {
             for (final SwrveMessageFormat format : message.getFormats()) {
                 for (final SwrveImage image : format.getImages()) {
@@ -53,6 +53,46 @@ class SwrveMessageTextTemplatingChecks {
                             return false;
                         } else if (SwrveTextTemplating.hasPatternMatch(personalizedButtonAction)) {
                             SwrveLogger.i("Not showing campaign with personalisation outside of Message Center / without personalisation info provided.");
+                            return false;
+                        }
+                    }
+                }
+            }
+        } catch(SwrveSDKTextTemplatingException exp) {
+            SwrveLogger.e("Not showing campaign, error with personalisation", exp);
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkImageUrlTemplating(SwrveMessage message, Map<String, String> properties) {
+        try {
+            for (final SwrveMessageFormat format : message.getFormats()) {
+                for (final SwrveImage image : format.getImages()) {
+                    String imageUrl = image.getDynamicImageUrl();
+                    // if we already have a fallback image to resolve so we don't need to check
+                    if (SwrveHelper.isNotNullOrEmpty(imageUrl) && SwrveHelper.isNullOrEmpty(image.getFile())) {
+                        String personalizedText = SwrveTextTemplating.apply(imageUrl, properties);
+                        if (SwrveHelper.isNullOrEmpty(personalizedText)) {
+                            SwrveLogger.i(" Dynamic image url text template could not be resolved: " + imageUrl + " in given properties.");
+                            return false;
+                        } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
+                            SwrveLogger.i("Not showing personalized image / without personalisation info provided.");
+                            return false;
+                        }
+                    }
+                }
+
+                for (final SwrveButton button : format.getButtons()) {
+                    String buttonImageUrl = button.getDynamicImageUrl();
+                    // if we already have a fallback image to resolve so we don't need to check
+                    if (SwrveHelper.isNotNullOrEmpty(buttonImageUrl) && SwrveHelper.isNullOrEmpty(button.getImage())) {
+                        String personalizedText = SwrveTextTemplating.apply(buttonImageUrl, properties);
+                        if (SwrveHelper.isNullOrEmpty(personalizedText)) {
+                            SwrveLogger.i("Dynamic button image url text template could not be resolved: " + buttonImageUrl + " in given properties.");
+                            return false;
+                        } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
+                            SwrveLogger.i("Not showing personalized image / without personalisation info provided.");
                             return false;
                         }
                     }

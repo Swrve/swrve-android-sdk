@@ -7,6 +7,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.SwrveHelper;
@@ -18,7 +20,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.Arrays;
 
@@ -26,13 +27,13 @@ import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATE
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVENT;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_JSON;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID;
@@ -61,7 +62,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
     public void testNewDatabase() {
         // test brand new instance that table created ok
         String dbName = "testNewDatabase";
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = SwrveSQLiteOpenHelper.getInstance(RuntimeEnvironment.application, dbName, SWRVE_DB_VERSION);
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = SwrveSQLiteOpenHelper.getInstance(ApplicationProvider.getApplicationContext(), dbName, SWRVE_DB_VERSION);
         SQLiteDatabase database = sqLiteOpenHelper.getWritableDatabase();
 
         Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table'", null);
@@ -130,12 +131,12 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         String dbName = "testOnUpgrade_cache";
 
         //Set fake etag
-        SharedPreferences settings = RuntimeEnvironment.application.getSharedPreferences("swrve_prefs", 0);
+        SharedPreferences settings = ApplicationProvider.getApplicationContext().getSharedPreferences("swrve_prefs", 0);
         SharedPreferences.Editor settingsEditor = settings.edit();
         settingsEditor.putString("campaigns_and_resources_etag", "ExistingEtag");
         settingsEditor.apply();
 
-        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
+        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(ApplicationProvider.getApplicationContext(), dbName);
         SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
         Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='server_cache'", null);
         assertEquals("Should be 1 table called server_cache in database v1.", 1, cursor.getCount());
@@ -158,7 +159,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         database.close();
 
         // increment db version to 2 to trigger onUpgrade
-        SwrveSQLiteOpenHelper_v2 swrveSQLiteOpenHelper_v2 = new SwrveSQLiteOpenHelper_v2(RuntimeEnvironment.application, dbName);
+        SwrveSQLiteOpenHelper_v2 swrveSQLiteOpenHelper_v2 = new SwrveSQLiteOpenHelper_v2(ApplicationProvider.getApplicationContext(), dbName);
         database = swrveSQLiteOpenHelper_v2.getWritableDatabase();
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='server_cache'", null);
         assertEquals("Should be no table called server_cache in database v2.", 0, cursor.getCount());
@@ -175,7 +176,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         database.close();
 
         // increment db version to latest by using SwrveSQLiteOpenHelper
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(ApplicationProvider.getApplicationContext(), dbName, 3);
         database = sqLiteOpenHelper.getWritableDatabase();
         assertCacheEntry(1, database, SwrveSDK.getUserId(), "swrve.etag", "ExistingEtag");
         assertCacheEntry(1, database, "", "SwrveSDK.installTime", "12345"); // blank userId on purpose
@@ -213,7 +214,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
 
         String dbName = "testOnUpgradeEvents_1_to_3";
 
-        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
+        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(ApplicationProvider.getApplicationContext(), dbName);
         SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
         long rowId = 0;
         for (int i = 0; i < 50; i++) {
@@ -229,7 +230,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         database.close();
 
         // increment db version to latest by using SwrveSQLiteOpenHelper
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(ApplicationProvider.getApplicationContext(), dbName, 3);
         database = sqLiteOpenHelper.getWritableDatabase();
 
         cursor = database.rawQuery("SELECT * FROM " + EVENTS_TABLE_NAME, null);
@@ -252,12 +253,12 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
 
         String dbName = "testOnUpgradeUsers_1_to_3";
 
-        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
+        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(ApplicationProvider.getApplicationContext(), dbName);
         SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
         database.close();
 
         // increment db version to latest by using SwrveSQLiteOpenHelper
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(ApplicationProvider.getApplicationContext(), dbName, 3);
         database = sqLiteOpenHelper.getWritableDatabase();
 
         Cursor cursor = database.rawQuery("SELECT * FROM users", null);
@@ -271,12 +272,12 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
 
         String dbName = "testOnUpgradeNotificationsAuthenticated_1_to_3";
 
-        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(RuntimeEnvironment.application, dbName);
+        SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(ApplicationProvider.getApplicationContext(), dbName);
         SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase();
         database.close();
 
         // increment db version to latest by using SwrveSQLiteOpenHelper
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(RuntimeEnvironment.application, dbName, 3);
+        SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(ApplicationProvider.getApplicationContext(), dbName, 3);
         database = sqLiteOpenHelper.getWritableDatabase();
 
         Cursor cursor = database.rawQuery("SELECT * FROM notifications_authenticated", null);

@@ -11,14 +11,24 @@ public class SwrveImage extends SwrveWidget {
     protected String file;
     // Personalized text (render this instead of the image)
     protected String text;
+    // Dynamic Image Url
+    protected String dynamicImageUrl;
+
 
     public SwrveImage(JSONObject imageData) throws JSONException {
         setPosition(getCenterFrom(imageData));
         setSize(getSizeFrom(imageData));
-        setFile(imageData.getJSONObject("image").getString("value"));
+
+        if (imageData.has("image")) {
+            setFile(imageData.getJSONObject("image").getString("value"));
+        }
 
         if (imageData.has("text")) {
             setText(imageData.getJSONObject("text").getString("value"));
+        }
+        
+        if (imageData.has("dynamic_image_url")) {
+            setDynamicImageUrl(imageData.getString("dynamic_image_url"));
         }
     }
 
@@ -42,5 +52,16 @@ public class SwrveImage extends SwrveWidget {
 
     protected void setText(String text) {
         this.text = text;
+    }
+
+    /**
+     * @return the cached path of the button dynamic image url.
+     */
+    public String getDynamicImageUrl() {
+        return dynamicImageUrl;
+    }
+
+    protected void setDynamicImageUrl(String dynamicImageUrl) {
+        this.dynamicImageUrl = dynamicImageUrl;
     }
 }

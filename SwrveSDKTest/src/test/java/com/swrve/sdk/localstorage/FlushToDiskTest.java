@@ -3,13 +3,14 @@ package com.swrve.sdk.localstorage;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.SwrveLogger;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
@@ -29,7 +30,7 @@ public class FlushToDiskTest  {
         SwrveLogger.setLogLevel(Log.VERBOSE);
         ShadowLog.stream = System.out;
         primaryLocalStorage = new InMemoryLocalStorage();
-        secondaryLocalStorage = new SQLiteLocalStorage(RuntimeEnvironment.application, "flushToDiskTest", 2024 * 2024 * 2024);
+        secondaryLocalStorage = new SQLiteLocalStorage(ApplicationProvider.getApplicationContext(), "flushToDiskTest", 2024 * 2024 * 2024);
         multiLayerLocalStorage = new SwrveMultiLayerLocalStorage(primaryLocalStorage);
         multiLayerLocalStorage.setSecondaryStorage(secondaryLocalStorage);
     }

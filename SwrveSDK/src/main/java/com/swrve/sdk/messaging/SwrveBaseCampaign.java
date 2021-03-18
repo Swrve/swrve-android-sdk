@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /*
@@ -226,19 +227,33 @@ public abstract class SwrveBaseCampaign {
 
     /**
      * Used by QAUser to determine what kind of campaign we are reporting
+     *
      * @return CAMPAIGN_TYPE enum
      */
     public abstract CAMPAIGN_TYPE getCampaignType();
 
     /**
      * Determine if the assets for this campaign have been downloaded.
+     *
      * @param assetsOnDisk All assets that are already downloaded.
      * @return if the assets are ready
      */
+
+    @Deprecated
     public abstract boolean areAssetsReady(Set<String> assetsOnDisk);
 
     /**
+     * Determine if the assets for this campaign have been downloaded.
+     *
+     * @param assetsOnDisk All assets that are already downloaded.
+     * @param properties   String map of personalized properties.
+     * @return if the assets are ready
+     */
+    public abstract boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties);
+
+    /**
      * Obtain the serializable state of the campaign.
+     *
      * @return the serializable state of the campaign.
      */
     public SwrveCampaignState getSaveableState() {
@@ -247,6 +262,7 @@ public abstract class SwrveBaseCampaign {
 
     /**
      * Set the previous state of this campaign.
+     *
      * @param saveableState The state to save
      */
     public void setSaveableState(SwrveCampaignState saveableState) {

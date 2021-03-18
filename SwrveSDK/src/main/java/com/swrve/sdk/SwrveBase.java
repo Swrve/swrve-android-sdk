@@ -70,8 +70,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.EMBEDDED;
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.ON;
 
@@ -180,8 +178,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             if (preloadRandC) {
-                initCampaigns(userId); // Initialize campaigns from cache
                 initRealTimeUserProperties(userId); // Initialize realtime user properties
+                initCampaigns(userId); // Initialize campaigns from cache
             }
 
             // Add default message listener
@@ -228,9 +226,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 storageExecutorExecute(() -> {
                     initResources(userId);
 
-                    initCampaigns(userId);
-
                     initRealTimeUserProperties(userId);
+
+                    initCampaigns(userId);
 
                     if (config.isABTestDetailsEnabled()) {
                         initABTestDetails(userId);
@@ -306,11 +304,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     }
 
                     if (message.supportsOrientation(getDeviceOrientation())) {
-                        if (SwrveMessageTextTemplatingChecks.checkTemplating(message, properties)) {
+                        if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, properties)) {
                             Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
-
+                            
                             if (properties != null) {
                                 // Cannot pass a Map to intent, converting to HashMap
                                 HashMap<String, String> personalisation = new HashMap<>(properties);
@@ -746,7 +744,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceInfo.put(SWRVE_DEVICE_REGION, deviceRegion);
             deviceInfo.put(SWRVE_SDK_VERSION, PLATFORM + version);
             deviceInfo.put(SWRVE_APP_STORE, config.getAppStore());
-            deviceInfo.put(SWRVE_SDK_FLAVOUR, Swrve.FLAVOUR_NAME);
+            deviceInfo.put(SWRVE_SDK_FLAVOUR, Swrve.FLAVOUR);
             SwrveInitMode mode = config.getInitMode();
             if (mode == SwrveInitMode.MANAGED && config.isManagedModeAutoStartLastUser()) {
                 deviceInfo.put(SWRVE_INIT_MODE, "managed_auto");
@@ -1051,6 +1049,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<Integer, Integer> availableCampaignsIgnoredList = new HashMap<>();
         Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
 
+        Map<String, String> properties = null;
+        if (personalisationProvider != null) {
+            properties = personalisationProvider.personalize(payload);
+        }
+
         if (campaigns != null) {
             if (!campaignDisplayer.checkAppCampaignRules(campaigns.size(), "message", event, payload, now)) {
                 return null;
@@ -1063,7 +1066,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 for (SwrveBaseCampaign nextCampaign : campaigns) {
                     SwrveBaseMessage nextMessage = null;
                     if (nextCampaign instanceof SwrveInAppCampaign) {
-                        nextMessage = ((SwrveInAppCampaign) nextCampaign).getMessageForEvent(event, payload, now, qaCampaignInfoMap);
+                        nextMessage = ((SwrveInAppCampaign) nextCampaign).getMessageForEvent(event, payload, now, qaCampaignInfoMap, properties);
                     } else if (nextCampaign instanceof SwrveEmbeddedCampaign) {
                         nextMessage = ((SwrveEmbeddedCampaign) nextCampaign).getMessageForEvent(event, payload, now, qaCampaignInfoMap);
                     }
@@ -1788,7 +1791,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             && campaign.getStatus() != SwrveCampaignState.Status.Deleted
                             && campaign.isActive(getNow())
                             && campaign.supportsOrientation(orientation)
-                            && campaign.areAssetsReady(getAssetsOnDisk())) {
+                            && campaign.areAssetsReady(getAssetsOnDisk(), properties)) {
                         if (properties != null && (campaign instanceof SwrveInAppCampaign)) {
                             // Check personalisation for matching key/value pairs
                             List<SwrveMessage> messages = ((SwrveInAppCampaign) campaign).getMessages();
@@ -1796,7 +1799,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             for (int mi = 0; mi < messages.size() && messagesCanResolve; mi++) {
                                 SwrveMessage message = messages.get(mi);
                                 if (message.supportsOrientation(orientation)) {
-                                    messagesCanResolve = SwrveMessageTextTemplatingChecks.checkTemplating(message, properties);
+                                    messagesCanResolve = SwrveMessageTextTemplatingChecks.checkTextTemplating(message, properties);
                                 }
                             }
 
@@ -1901,6 +1904,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         params.put("language", language);
         params.put("app_store", config.getAppStore());
         params.put("embedded_campaign_version", String.valueOf(EMBEDDED_CAMPAIGN_VERSION));
+        params.put("in_app_version", String.valueOf(IN_APP_CAMPAIGN_VERSION));
 
         // Device info
         params.put("device_width", String.valueOf(deviceWidth));

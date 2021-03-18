@@ -1,0 +1,208 @@
+{
+  "cdn_root": "http://localhost:8083/cdn/",
+  "campaigns": [
+    {
+      "id": 102,
+      "end_date": 2364568900000,
+      "triggers": [
+        {
+          "event_name": "Swrve.currency_given",
+          "conditions": {}
+        },
+        {
+          "event_name": "Swrve.buy_in",
+          "conditions": {}
+        }
+      ],
+      "start_date": 1362671700000,
+      "messages": [
+        {
+          "template": {
+            "template_id": "20",
+            "formats": [
+              {
+                "orientation": "landscape",
+                "size": {
+                  "w": {
+                    "type": "number",
+                    "value": 320
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 240
+                  }
+                },
+                "images": [
+                  {
+                    "name": "Background",
+                    "color": {
+                      "type": "color",
+                      "value": "FFFFFF"
+                    },
+                    "dynamic_image_url": "https://fakeitem/asset1.png",
+                    "image_height": 114,
+                    "image_width": 229,
+                    "x": {
+                      "type": "number",
+                      "value": 0
+                    },
+                    "y": {
+                      "type": "number",
+                      "value": 0
+                    },
+                    "w": {
+                      "type": "number",
+                      "value": 900
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 600
+                    }
+                  }
+                ],
+                "buttons": [
+                  {
+                    "name": "accept",
+                    "x": {
+                      "type": "number",
+                      "value": -200
+                    },
+                    "y": {
+                      "type": "number",
+                      "value": 80
+                    },
+                    "w": {
+                      "type": "number",
+                      "value": 229
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 114
+                    },
+                    "image_up": {
+                      "type": "asset",
+                      "value": "8721fd4e657980a5e12d498e73aed6e6a565dfca"
+                    },
+                    "dynamic_image_url": "https://fakeitem/${test_key_two}.png",
+                    "image_height": 114,
+                    "image_width": 229,
+                    "action": {
+                      "type": "text",
+                      "value": ""
+                    },
+                    "game_id": {
+                      "type": "number",
+                      "value": "150"
+                    },
+                    "type": {
+                      "type": "text",
+                      "value": "INSTALL"
+                    }
+                  },
+                  {
+                    "name": "custom",
+                    "x": {
+                      "type": "number",
+                      "value": 0
+                    },
+                    "y": {
+                      "type": "number",
+                      "value": 80
+                    },
+                    "w": {
+                      "type": "number",
+                      "value": 229
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 114
+                    },
+                    "image_up": {
+                      "type": "asset",
+                      "value": "8721fd4e657980a5e12d498e73aed6e6a565dfca"
+                    },
+                    "dynamic_image_url": "https://fakeitem/${test_key_three|fallback=\"asset3\"}.png",
+                    "image_height": 114,
+                    "image_width": 229,
+                    "action": {
+                      "type": "text",
+                      "value": "custom_action"
+                    },
+                    "game_id": {
+                      "type": "number",
+                      "value": ""
+                    },
+                    "type": {
+                      "type": "text",
+                      "value": "CUSTOM"
+                    }
+                  },
+                  {
+                    "name": "close",
+                    "x": {
+                      "type": "number",
+                      "value": 932
+                    },
+                    "y": {
+                      "type": "number",
+                      "value": 32
+                    },
+                    "w": {
+                      "type": "number",
+                      "value": 50
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 50
+                    },
+                    "image_up": {
+                      "type": "asset",
+                      "value": "8721fd4e657980a5e12d498e73aed6e6a565dfca"
+                    },
+                    "dynamic_image_url": "https://fakeitem/${no_key_intended}.png",
+                    "image_height": 114,
+                    "image_width": 229,
+                    "action": {
+                      "type": "text",
+                      "value": ""
+                    },
+                    "game_id": {
+                      "type": "number",
+                      "value": ""
+                    },
+                    "type": {
+                      "type": "text",
+                      "value": "DISMISS"
+                    }
+                  }
+                ],
+                "name": "Kindle (English (US))",
+                "language": "en-US"
+              }
+            ]
+          },
+          "id": 165,
+          "name": "Kindle",
+          "rules": {}
+        }
+      ],
+      "rules": {
+        "display_order": "random",
+        "dismiss_after_views": 20,
+        "delay_first_message": 10,
+        "min_delay_between_messages": 10
+      }
+    }
+  ],
+  "game_data": {
+    "150": {
+      "app_store_url": "https://itunes.apple.com/us/app/ascension-chronicle-godslayer/id441838733?mt=8"
+    }
+  },
+  "rules": {
+    "min_delay_between_messages": 30,
+    "max_messages_per_session": 10,
+    "delay_first_message": 60
+  },
+  "version": 2
+}

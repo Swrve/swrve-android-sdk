@@ -13,6 +13,7 @@ import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
+import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 
 import org.junit.Before;
@@ -90,11 +91,13 @@ public class SwrveConfigTest extends SwrveBaseTest {
         assertNull(inAppConfig.getPersonalisedTextTypeface());
         assertTrue(inAppConfig.isHideToolbar());
         assertEquals(inAppConfig.getAutoShowMessagesMaxDelay(), 5000);
+        assertNull(inAppConfig.getWindowListener());
     }
 
     @Test
     public void testSwrveInAppMessageConfig() {
         SwrveConfig config = new SwrveConfig();
+        SwrveInAppWindowListener inAppWindowListener = window -> { };
         SwrveInAppMessageConfig.Builder builder = new SwrveInAppMessageConfig.Builder()
                 .defaultBackgroundColor(Color.BLACK)
                 .clickColor(Color.RED)
@@ -103,7 +106,8 @@ public class SwrveConfigTest extends SwrveBaseTest {
                 .personalisedTextBackgroundColor(Color.GREEN)
                 .personalisedTextTypeface(Typeface.MONOSPACE)
                 .hideToolbar(false)
-                .autoShowMessagesMaxDelay(55);
+                .autoShowMessagesMaxDelay(55)
+                .windowListener(inAppWindowListener);
 
         config.setInAppMessageConfig(builder.build());
         SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
@@ -116,6 +120,7 @@ public class SwrveConfigTest extends SwrveBaseTest {
         assertEquals(Typeface.MONOSPACE, inAppConfig.getPersonalisedTextTypeface());
         assertFalse("hideToolbar should be set to 'false'" ,inAppConfig.isHideToolbar());
         assertEquals(inAppConfig.getAutoShowMessagesMaxDelay(), 55);
+        assertEquals(inAppConfig.getWindowListener(), inAppWindowListener);
     }
 
     @Test

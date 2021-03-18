@@ -243,4 +243,23 @@ final class EventHelper {
         }
         return event;
     }
+
+    // Send device update (such as token) in the background without affecting DAU/sessions (user_initiated = false)
+    protected static void sendUninitiatedDeviceUpdateEvent(Context context, String userId, JSONObject attributes) {
+        try {
+            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
+
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("attributes", attributes);
+            parameters.put("user_initiated", "false"); // important this is false, hence the name of the method send "Uninitiated"
+
+            int seqnum = swrveCommon.getNextSequenceNumber();
+            String event = EventHelper.eventAsJSON("device_update", parameters, null, seqnum, System.currentTimeMillis());
+            ArrayList<String> events = new ArrayList<>();
+            events.add(event);
+            swrveCommon.sendEventsInBackground(context, userId, events);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK couldn't send uninitiated device_update event.", e);
+        }
+    }
 }

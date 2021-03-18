@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.RequiresApi;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
@@ -23,7 +24,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowNotification;
@@ -68,8 +68,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         ISwrveCommon swrveCommonSpy = mock(ISwrveCommon.class);
         SwrveCommon.setSwrveCommon(swrveCommonSpy);
         doReturn(notificationConfig).when(swrveCommonSpy).getNotificationConfig();
-        doReturn(RuntimeEnvironment.application.getCacheDir()).when(swrveCommonSpy).getCacheDir(RuntimeEnvironment.application);
-        pushServiceManager = new SwrvePushManagerImp(RuntimeEnvironment.application);
+        doReturn(ApplicationProvider.getApplicationContext().getCacheDir()).when(swrveCommonSpy).getCacheDir(ApplicationProvider.getApplicationContext());
+        pushServiceManager = new SwrvePushManagerImp(ApplicationProvider.getApplicationContext());
         doNothing().when(swrveCommonSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
     }
 
@@ -119,7 +119,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotification("text", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -154,7 +154,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotification("text", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -199,7 +199,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         pushServiceManager.processMessage(bundle);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -241,7 +241,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         mockAllImageDownloads(builderSpy);
         displayNotification(builderSpy, bundle);
 
@@ -278,7 +278,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         mockAllImageDownloads(builderSpy);
         displayNotification(builderSpy, bundle);
 
@@ -317,7 +317,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         mockAllImageDownloads(builderSpy);
         displayNotification(builderSpy, bundle);
 
@@ -325,7 +325,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotification("original push notification - testAdvancedPushLockScreenMessage", "content://settings/system/notification_sound", bundle);
 
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -354,14 +354,14 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         mockAllImageDownloads(builderSpy);
         displayNotification(builderSpy, bundle);
 
         assertNotification("original push notification - testAdvancedPushLockScreenMessageNoMedia", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -401,7 +401,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
         doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
@@ -411,7 +411,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotification("[rich body]", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -455,7 +455,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
         doReturn(null).when(builderSpy).getImageFromUrl(anyString());
@@ -464,7 +464,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         displayNotification(builderSpy, bundle);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -519,7 +519,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
         doReturn(null).when(builderSpy).getImageFromUrl(anyString());
@@ -530,7 +530,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -576,7 +576,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         when(builderSpy.getImageFromUrl(anyString())).thenReturn(null);
         when(builderSpy.getImageFromUrl("https://fail-image.png")).thenReturn(null);
 
@@ -584,13 +584,13 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
         assertEquals("fallback body", notification.tickerText);
         ShadowNotification shadowNotification = shadowOf(notification);
-        assertEquals("fallback title", shadowNotification.getBigContentTitle());
+        assertEquals("fallback title", shadowNotification.getContentTitle());
 
         assertNull(shadowNotification.getBigPicture());
     }
@@ -621,13 +621,13 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         displayNotification(builderSpy, bundle);
 
         assertNotification(SwrveNotificationConstants.TEXT_KEY, "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -684,7 +684,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
         doReturn(null).when(builderSpy).getImageFromUrl(anyString());
@@ -695,7 +695,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotification("[rich body]", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -756,13 +756,13 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         displayNotification(builderSpy, bundle);
 
         assertNotification("text", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -823,12 +823,12 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
         bundle.putString(SwrveNotificationConstants.TEXT_KEY, "text");
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         int requestCodeStart = builderSpy.requestCode;
 
         displayNotification(builderSpy, bundle);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
 
         Notification notification = notifications.get(0);
@@ -845,7 +845,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     @Test
     public void testButtonClickEvents() throws Exception {
         SwrveConfig config = new SwrveConfig();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
@@ -877,7 +877,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         displayNotification(builderSpy, bundle);
 
         Notification notification = assertNotification("text", "content://settings/system/notification_sound", bundle);
@@ -919,7 +919,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     public void testEngagedEvents() throws Exception {
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig);
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
@@ -938,7 +938,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         displayNotification(builderSpy, bundle);
 
         Notification notification = assertNotification("body", "content://settings/system/notification_sound", bundle);
@@ -1007,12 +1007,12 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveNotificationConfig notificationConfigWithChannel = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, channel)
                 .activityClass(MainActivity.class)
                 .build();
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfigWithChannel));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfigWithChannel));
         displayNotification(builderSpy, bundle);
 
         assertNumberOfNotifications(1);
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -1028,7 +1028,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     public void testNotificationChannelIdFromPayload() {
 
         String channelId = "my_channel_id";
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.createNotificationChannel(new NotificationChannel(channelId, "some channel", NotificationManager.IMPORTANCE_DEFAULT));
 
         Intent intent = new Intent();
@@ -1050,7 +1050,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(bundle);
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         displayNotification(builderSpy, bundle);
 
         assertNumberOfNotifications(1);
@@ -1071,7 +1071,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveCommon.setSwrveCommon(mockSwrveCommon);
 
         String channelId = "my_channel_id";
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
         Intent intent = new Intent();
         // Send a valid Rich Payload
@@ -1095,7 +1095,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(bundle);
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         displayNotification(builderSpy, bundle);
 
         assertNumberOfNotifications(1);
@@ -1117,7 +1117,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         String image1Url = "https://someimage.com/image_blah";
         String image1FileName = "fc5d3fd9bc7b8bc9960d91851da9dc48";
-        File cacheDir = SwrveCommon.getInstance().getCacheDir(RuntimeEnvironment.application);
+        File cacheDir = SwrveCommon.getInstance().getCacheDir(ApplicationProvider.getApplicationContext());
 
         // save a file so bitmap is returned
         File file = new File(cacheDir, image1FileName);
@@ -1125,7 +1125,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         writer.write("");
         writer.close();
 
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         doReturn(null).when(builderSpy).downloadBitmapImageFromUrl(anyString());
 
         Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);
@@ -1138,7 +1138,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     public void testGetImageFromUrl_notInCache() {
 
         String image1Url = "https://someimage.com/image_blah";
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(RuntimeEnvironment.application, notificationConfig));
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
         doReturn(null).when(builderSpy).downloadBitmapImageFromUrl(anyString());
 
         Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);

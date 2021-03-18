@@ -8,7 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-import com.swrve.sdk.config.SwrveConfig;
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.ConversationAtom;
 import com.swrve.sdk.conversations.engine.model.ConversationPage;
@@ -21,22 +22,20 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.shadows.ShadowActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class ConversationActivityTest extends SwrveBaseTest {
 
@@ -45,7 +44,7 @@ public class ConversationActivityTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -60,7 +59,7 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("conversation", conversation);
         ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
@@ -75,7 +74,7 @@ public class ConversationActivityTest extends SwrveBaseTest {
 
     @Test
     public void testCreateActivityWithNoConvAndFinishes() throws Exception {
-        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
         ConversationActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
@@ -88,7 +87,7 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("conversation", conversation);
         ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
@@ -106,23 +105,23 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-
-        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("conversation", conversation);
         ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
         ConversationActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
+        activityController.resume();
 
-        final AtomicInteger countCalls = new AtomicInteger();
-        Mockito.doAnswer((Answer<Void>) invocation -> {
-            countCalls.incrementAndGet();
-            return null;
-        }).when(swrveSpy).sendQueuedEvents();
+        // reset the swrveSpy mock and verify that sendQueuedEvents has been called zero times
+        Mockito.reset(swrveSpy);
+        verify(swrveSpy, times(0)).sendQueuedEvents();
 
-        activityController.resume().pause();
-        // Events should have been sent at least once
-        assertTrue(countCalls.intValue() >= 1);
+        // pause activity
+        activityController.pause();
+
+        // verify sendQueuedEvents called once
+        verify(swrveSpy, times(1)).sendQueuedEvents();
     }
 
     @Test
@@ -131,7 +130,7 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        Intent intent1 = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent1 = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent1.putExtra("conversation", conversation);
         ActivityController<ConversationActivity> activityController1 = Robolectric.buildActivity(ConversationActivity.class, intent1);
@@ -143,12 +142,12 @@ public class ConversationActivityTest extends SwrveBaseTest {
         int currentOrientation = activityOrientation1.getResources().getConfiguration().orientation;
         boolean isPortraitOrUndefined = currentOrientation == Configuration.ORIENTATION_PORTRAIT || currentOrientation == Configuration.ORIENTATION_UNDEFINED;
         int toOrientation = isPortraitOrUndefined ? Configuration.ORIENTATION_LANDSCAPE : Configuration.ORIENTATION_PORTRAIT;
-        RuntimeEnvironment.application.getResources().getConfiguration().orientation = toOrientation;
+        ApplicationProvider.getApplicationContext().getResources().getConfiguration().orientation = toOrientation;
 
         Bundle bundle = new Bundle();
         activityController1.saveInstanceState(bundle).pause().stop().destroy();
 
-        Intent intent2 = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent2 = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent2.putExtra("conversation", conversation);
         ActivityController<ConversationActivity> activityController2 = Robolectric.buildActivity(ConversationActivity.class, intent2);
@@ -185,7 +184,7 @@ public class ConversationActivityTest extends SwrveBaseTest {
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
 
-        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("conversation", conversation);
         ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);

@@ -1,13 +1,13 @@
 package com.swrve.sdk;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.robolectric.RuntimeEnvironment;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class SwrveRealTimeUserPropertiesTest extends SwrveBaseTest {
@@ -17,7 +17,7 @@ public class SwrveRealTimeUserPropertiesTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration

@@ -3,15 +3,15 @@ package com.swrve.sdk.localstorage;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.SwrveUser;
 
 import org.junit.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -19,11 +19,11 @@ import java.util.List;
 
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
-import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(RobolectricTestRunner.class)
 public class SQLiteLocalStorageTest extends BaseLocalStorage {
@@ -33,7 +33,7 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        localStorage = new SQLiteLocalStorage(RuntimeEnvironment.application, "test", maxSize);
+        localStorage = new SQLiteLocalStorage(ApplicationProvider.getApplicationContext(), "test", maxSize);
     }
 
     @Test

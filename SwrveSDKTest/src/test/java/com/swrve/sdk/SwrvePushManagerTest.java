@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.test.MainActivity;
@@ -21,7 +22,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -82,13 +82,13 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                 .accentColorHex(colorHexMocked);
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
         sendSimpleBundleToPushManager();
         assertNumberOfNotification(1); // there can only be one notification for this test
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(Color.parseColor(colorHexMocked), notifications.get(0).color);
     }
@@ -99,13 +99,13 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).accentColorHex("SomeInvalidHeColor123");;
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
         sendSimpleBundleToPushManager();
         assertNumberOfNotification(1); // there can only be one notification for this test
 
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(0, notifications.get(0).color); // if we don't set color the default there is 0;
     }
@@ -119,7 +119,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
 
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
 
@@ -148,7 +148,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
 
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
 
@@ -156,7 +156,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         assertTickerText("plain text");
 
         // clear all and test modifying a notification
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
         assertNumberOfNotification(0);
 
@@ -183,7 +183,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationFilter(notificationFilter).build();
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig);
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         sendSimpleBundleToPushManager();
 
@@ -206,7 +206,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationFilter(notificationFilter).build();
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig);
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         sendRichBundleToPushManager(notificationConfig);
 
@@ -220,7 +220,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationFilter(notificationFilterSpy);
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
 
         assertNumberOfNotification(0); // 0 to begin with because nothing has been processed
 
@@ -237,7 +237,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel);
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
@@ -276,7 +276,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel);
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
@@ -311,7 +311,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
     @Test
     public void testSilentPush() throws Exception {
 
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         Swrve swrveSpy = spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
@@ -382,14 +382,14 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
     }
 
     private void assertNumberOfNotification(int numberOfNotifications) {
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(numberOfNotifications, notifications.size());
     }
 
     private void assertTickerText(String tickerText) {
         assertNumberOfNotification(1); // there can only be one notification for this test
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(tickerText, notifications.get(0).tickerText);
     }
@@ -485,7 +485,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel).notificationFilter(notificationFilterSpy);
         SwrveConfig config = new SwrveConfig();
         config.setNotificationConfig(notificationConfig.build());
-        SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         
         Bundle bundle = new Bundle();
         String payloadJson = "{}";

@@ -15,6 +15,8 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.ChoiceInputItem;
@@ -44,7 +46,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
@@ -71,7 +72,7 @@ public class ConversationFragmentTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -213,6 +214,8 @@ public class ConversationFragmentTest extends SwrveBaseTest {
 
     @Test
     public void testContentImage() {
+        // write a fake image file
+        SwrveTestUtils.writeFileToCache(ApplicationProvider.getApplicationContext().getCacheDir(), "value0");
         partialMockSwrveConversation.setPages(getMockContentConversationPages(1, 1, ControlActions.CALL_ACTION, ConversationAtom.TYPE.CONTENT_IMAGE, "solid", 50));
         ConversationFragment fragment = createConversationFragment(partialMockSwrveConversation);
         LinearLayout content = fragment.getView().findViewById(R.id.swrve__content);

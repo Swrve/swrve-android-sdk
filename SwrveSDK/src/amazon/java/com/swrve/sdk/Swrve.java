@@ -9,11 +9,13 @@ import com.swrve.sdk.config.SwrveConfig;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import static com.swrve.sdk.SwrveFlavour.AMAZON;
+
 /**
  * Main implementation of the Amazon Swrve SDK.
  */
 public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
-    protected static final String FLAVOUR_NAME = "amazon";
+    protected static final SwrveFlavour FLAVOUR = AMAZON;
     protected static final String SWRVE_ADM_TOKEN = "swrve.adm_token";
 
     protected String registrationId;
@@ -66,7 +68,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     protected String getPlatformOS(Context context) {
-        return SwrveHelper.getPlatformOS(context, FLAVOUR_NAME);
+        return SwrveHelper.getPlatformOS(context, FLAVOUR);
     }
 
     private void setRegistrationId(String regId) {

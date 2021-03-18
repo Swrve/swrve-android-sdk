@@ -6,6 +6,8 @@ import com.swrve.sdk.SwrveAssetsQueueItem;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveTextTemplating;
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,7 +30,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected List<SwrveMessage> messages;
 
-    public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
+    public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
         this.messages = new ArrayList<>();
 
@@ -47,13 +49,31 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                             // Add all images to the download queue
                             for (SwrveButton button : format.getButtons()) {
                                 if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
-                                    assetsQueue.add(new SwrveAssetsQueueItem(button.getImage(), button.getImage(), true));
+                                    assetsQueue.add(new SwrveAssetsQueueItem(button.getImage(), button.getImage(), true, false));
+                                }
+
+                                if (!SwrveHelper.isNullOrEmpty(button.getDynamicImageUrl())) {
+                                    try {
+                                        String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
+                                        assetsQueue.add(new SwrveAssetsQueueItem(SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                                    } catch (SwrveSDKTextTemplatingException exception) {
+                                        SwrveLogger.e("Text Templating could not be resolved", exception);
+                                    }
                                 }
                             }
 
                             for (SwrveImage image : format.getImages()) {
                                 if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
-                                    assetsQueue.add(new SwrveAssetsQueueItem(image.getFile(), image.getFile(), true));
+                                    assetsQueue.add(new SwrveAssetsQueueItem(image.getFile(), image.getFile(), true, false));
+                                }
+
+                                if (!SwrveHelper.isNullOrEmpty(image.getDynamicImageUrl())) {
+                                    try {
+                                        String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
+                                        assetsQueue.add(new SwrveAssetsQueueItem(SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                                    } catch (SwrveSDKTextTemplatingException exception) {
+                                        SwrveLogger.e("Text Templating could not be resolved", exception);
+                                    }
                                 }
                             }
                         }
@@ -93,18 +113,36 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
      * the campaign start is in the future, the campaign end is in the past or
      * the given event is not contained in the trigger set.
      *
-     * @param event           trigger event
-     * @param payload         payload to compare conditions against
-     * @param now             device time
+     * @param event             trigger event
+     * @param payload           payload to compare conditions against
+     * @param now               device time
      * @param qaCampaignInfoMap will contain the reason the campaign showed or didn't show
      * @return SwrveMessage message setup to the given trigger or null
      * otherwise.
      */
     public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
+        return getMessageForEvent(event, payload, now, qaCampaignInfoMap, null);
+    }
+
+    /**
+     * Search for a message related to the given trigger event at the given
+     * time. This function will return null if too many messages were dismissed,
+     * the campaign start is in the future, the campaign end is in the past or
+     * the given event is not contained in the trigger set.
+     *
+     * @param event             trigger event
+     * @param payload           payload to compare conditions against
+     * @param now               device time
+     * @param qaCampaignInfoMap will contain the reason the campaign showed or didn't show
+     * @param properties        personalization properties which can be applied to the getMessageEvent
+     * @return SwrveMessage message setup to the given trigger or null
+     * otherwise.
+     */
+    public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> properties) {
         boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, qaCampaignInfoMap, messages.size());
         if (canShowCampaign) {
             SwrveLogger.i("%s matches a trigger in %s", event, id);
-            return getNextMessage(qaCampaignInfoMap);
+            return getNextMessage(qaCampaignInfoMap, properties);
         }
         return null;
     }
@@ -132,18 +170,18 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         return null;
     }
 
-    protected SwrveMessage getNextMessage(Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
+    protected SwrveMessage getNextMessage(Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> properties) {
         if (randomOrder) {
             List<SwrveMessage> randomMessages = new ArrayList<>(messages);
             Collections.shuffle(randomMessages);
             for (SwrveMessage msg : randomMessages) {
-                if (msg.areAssetsReady(campaignManager.getAssetsOnDisk())) {
+                if (msg.areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
                     return msg;
                 }
             }
         } else if (saveableState.next < messages.size()) {
             SwrveMessage msg = messages.get(saveableState.next);
-            if (msg.areAssetsReady(campaignManager.getAssetsOnDisk())) {
+            if (msg.areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
                 return messages.get(saveableState.next);
             }
         }
@@ -203,7 +241,17 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
     @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
         for (SwrveMessage message : messages) {
-            if (!message.areAssetsReady(assetsOnDisk)) {
+            if (!message.areAssetsReady(assetsOnDisk, null)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
+        for (SwrveMessage message : messages) {
+            if (!message.areAssetsReady(assetsOnDisk, properties)) {
                 return false;
             }
         }

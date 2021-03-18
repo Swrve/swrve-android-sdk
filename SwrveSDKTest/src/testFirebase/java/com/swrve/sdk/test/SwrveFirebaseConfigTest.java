@@ -1,6 +1,5 @@
 package com.swrve.sdk.test;
 
-import com.swrve.sdk.SwrveAppStore;
 import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.config.SwrveConfig;
 
@@ -33,9 +32,9 @@ public class SwrveFirebaseConfigTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSDKAppStore() throws Exception {
+    public void testSDKAppStore() {
         SwrveConfig swrveConfig = new SwrveConfig();
-        assertTrue(swrveConfig.getAppStore().equals(SwrveAppStore.Google));
+        assertTrue(swrveConfig.getAppStore().equals("google"));
     }
 
     @Test

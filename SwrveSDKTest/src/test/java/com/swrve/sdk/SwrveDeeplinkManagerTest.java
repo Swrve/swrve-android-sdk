@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
@@ -19,8 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 
@@ -61,7 +61,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
@@ -98,6 +98,11 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message_embedded.json");
                     httpCode = 200;
                 }
+                else if(params.containsValue("295433")) {
+                    response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message_image_personalized.json");
+                    httpCode = 200;
+                }
+
                 else if (params.containsValue("12345")) {
                     httpCode = 500;
                 }
@@ -419,6 +424,59 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         // 2. Test EmbeddedMessageListener was fired
         swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
         await().untilTrue(embeddedCallbackBool);
+    }
+
+    @Test
+    public void testHandleDeeplink_MessagePersonalizedImage() throws Exception {
+
+        // Set the personalisation provider and the value that is required for the campaign
+        SwrveInAppMessageConfig inAppConfig = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+            Map<String, String> properties = new HashMap<>();
+            properties.put("test_image_key", "asset1");
+            return properties;
+        }).build();
+        swrveSpy.config.setInAppMessageConfig(inAppConfig);
+
+        Bundle bundle = new Bundle();
+        bundle.putString("target_url","swrve://app?ad_content=295433&ad_source=facebook&ad_campaign=BlackFriday");
+
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+
+        //*** 1. Generic Event is queued
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jObj = new JSONObject(jsonString);
+
+        assertTrue(jObj.has("time"));
+        assertTrue(jObj.has("seqnum"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
+        assertTrue(jObj.get("id").equals("-1"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295433"));
+
+        // 2. Test In-app message was shown
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+        await().until(campaignShown());
+
+        ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
+        Intent nextIntent = shadowMainActivity.peekNextStartedActivity();
+        assertNotNull(nextIntent);
+        assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, SwrveInAppMessageActivity.class));
+        Bundle extras = nextIntent.getExtras();
+        assertNotNull(extras);
+
+        boolean state = extras.getBoolean(SWRVE_AD_MESSAGE);
+        assertTrue(state);
+
+        SwrveMessage message = swrveSpy.getAdMesage();
+        assertEquals(message.getId(), 298099);
     }
 
     @Test

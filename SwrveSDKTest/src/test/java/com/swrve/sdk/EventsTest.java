@@ -1,10 +1,11 @@
 package com.swrve.sdk;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 
 import org.junit.Test;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +22,7 @@ public class EventsTest extends SwrveBaseTest {
         // test below will wait until these 3 events are sent to the rest client. It will timeout if they do
         // not get sent.
 
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         final AtomicBoolean restCallback = new AtomicBoolean(false);
         swrve.restClient = new IRESTClient() {
 

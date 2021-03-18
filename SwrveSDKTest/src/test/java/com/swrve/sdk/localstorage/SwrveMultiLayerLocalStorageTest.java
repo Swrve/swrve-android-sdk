@@ -1,12 +1,12 @@
 package com.swrve.sdk.localstorage;
 
-import org.junit.Assert;
+import androidx.test.core.app.ApplicationProvider;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,7 +23,7 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
     @Before
     public void setUp() throws Exception {
         primaryLocalStorage = new InMemoryLocalStorage();
-        secondaryLocalStorage = new SQLiteLocalStorage(RuntimeEnvironment.application, "flushToDiskTest", 2024 * 2024 * 2024);
+        secondaryLocalStorage = new SQLiteLocalStorage(ApplicationProvider.getApplicationContext(), "flushToDiskTest", 2024 * 2024 * 2024);
         multiLayerLocalStorage = new SwrveMultiLayerLocalStorage(primaryLocalStorage);
         multiLayerLocalStorage.setSecondaryStorage(secondaryLocalStorage);
         localStorage = secondaryLocalStorage;

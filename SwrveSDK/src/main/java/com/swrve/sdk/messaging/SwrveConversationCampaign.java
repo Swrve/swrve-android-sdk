@@ -34,7 +34,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     public SwrveConversationCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
 
-        if(campaignData.has("conversation")) {
+        if (campaignData.has("conversation")) {
             JSONObject conversationData = campaignData.getJSONObject("conversation");
             this.conversation = createConversation(this, conversationData, campaignManager);
 
@@ -70,12 +70,12 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     }
 
     private void queueImageAsset(Set<SwrveAssetsQueueItem> assetQueue, Content content) {
-        assetQueue.add(new SwrveAssetsQueueItem(content.getValue(), content.getValue(), true));
+        assetQueue.add(new SwrveAssetsQueueItem(content.getValue(), content.getValue(), true, false));
     }
 
     private void queueFontAsset(Set<SwrveAssetsQueueItem> assetQueue, ConversationStyle style) {
         if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile()) && SwrveHelper.isNotNullOrEmpty(style.getFontDigest()) && !style.isSystemFont()) {
-            assetQueue.add(new SwrveAssetsQueueItem(style.getFontFile(), style.getFontDigest(), false));
+            assetQueue.add(new SwrveAssetsQueueItem(style.getFontFile(), style.getFontDigest(), false, false));
         }
     }
 
@@ -89,9 +89,9 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
      * the campaign start is in the future, the campaign end is in the past or
      * the given event is not contained in the trigger set.
      *
-     * @param event           trigger event
-     * @param payload         payload to compare conditions against
-     * @param now             device time
+     * @param event             trigger event
+     * @param payload           payload to compare conditions against
+     * @param now               device time
      * @param qaCampaignInfoMap will contain the reason the campaign showed or didn't show
      * @return SwrveConversation message setup to the given trigger or null otherwise.
      */
@@ -122,6 +122,11 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
 
     @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
+        return conversation.areAssetsReady(assetsOnDisk);
+    }
+
+    @Override
+    public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
         return conversation.areAssetsReady(assetsOnDisk);
     }
 }

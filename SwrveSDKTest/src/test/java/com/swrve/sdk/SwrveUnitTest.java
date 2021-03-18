@@ -6,6 +6,7 @@ import android.os.Build;
 import android.provider.Settings;
 
 import androidx.core.app.NotificationManagerCompat;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.google.common.collect.Lists;
 import com.swrve.sdk.config.SwrveConfig;
@@ -29,7 +30,6 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 
 import java.util.ArrayList;
@@ -70,11 +70,17 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
     private static final String iso8601regex = "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2]\\d|3[0-1])T(?:[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d.\\d\\d\\d(Z|[+]\\d\\d:\\d\\d)";
     private Swrve swrveSpy;
+    private SwrveBackgroundEventSender backgroundEventSenderMock;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         swrveSpy = SwrveTestUtils.createSpyInstance();
+
+        backgroundEventSenderMock = mock(SwrveBackgroundEventSender.class);
+        doNothing().when(backgroundEventSenderMock).send(anyString(), anyList());
+        doReturn(backgroundEventSenderMock).when(swrveSpy).getSwrveBackgroundEventSender(any(Context.class));
+
         swrveSpy.init(mActivity);
     }
 
@@ -273,7 +279,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
         SwrveConfig config = new SwrveConfig();
         SwrveHelper.buildModel = "Calypso AppCrawler";
-        ISwrve sdk = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        ISwrve sdk = SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         assertTrue(sdk instanceof SwrveEmpty);
         assertNotNull(SwrveSDK.getInstance());
 
@@ -282,13 +288,13 @@ public class SwrveUnitTest extends SwrveBaseTest {
         config = new SwrveConfig();
         config.setModelBlackList(Lists.newArrayList("custom_model"));
         SwrveHelper.buildModel = "custom_model";
-        sdk = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        sdk = SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         assertTrue(sdk instanceof SwrveEmpty);
         assertNotNull(SwrveSDK.getInstance());
 
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
         SwrveHelper.buildModel = "not_custom_model";
-        sdk = SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey", config);
+        sdk = SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         assertTrue(sdk instanceof Swrve);
         assertNotNull(SwrveSDK.getInstance());
     }
@@ -328,7 +334,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         // recreate the sdk but make sure its not initialised.
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(RuntimeEnvironment.application, 1, "apiKey");
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
 
         assertFalse("Test getting the joined value when sdk has NOT been initialised.", swrveSpy.initialised);
@@ -350,7 +356,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(true);
 
         // Resume ConversationActivity
-        Intent intent = new Intent(RuntimeEnvironment.application, ConversationActivity.class);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
         ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
         ConversationActivity conversationActivity = activityController.get();
         swrveSpy.onResume(conversationActivity);
@@ -485,9 +491,6 @@ public class SwrveUnitTest extends SwrveBaseTest {
         // setup mocks
         QaUser qaUserMock = mock(QaUser.class);
         QaUser.instance = qaUserMock;
-        SwrveBackgroundEventSender backgroundEventSenderMock = mock(SwrveBackgroundEventSender.class);
-        doNothing().when(backgroundEventSenderMock).send(anyString(), anyList());
-        doReturn(backgroundEventSenderMock).when(swrveSpy).getSwrveBackgroundEventSender(any(Context.class));
 
         ArrayList<String> events = Lists.newArrayList("some_event_json");
         swrveSpy.sendEventsInBackground(mActivity, "userId", events);
@@ -565,7 +568,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertEquals("27201", attributeDevices.get("swrve.sim_operator.code"));
 
         assertEquals(true, attributeDevices.get("swrve.permission.notifications_enabled"));
-        assertEquals(NotificationManagerCompat.IMPORTANCE_UNSPECIFIED, attributeDevices.get("swrve.permission.notifications_importance"));
+        assertEquals(NotificationManagerCompat.IMPORTANCE_NONE, attributeDevices.get("swrve.permission.notifications_importance"));
     }
 
     @Test
@@ -837,7 +840,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         ArgumentCaptor<Map> parametersMapCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<Map> payloadMapCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<Boolean> triggerEventListenerCaptor = ArgumentCaptor.forClass(Boolean.class);
-        verify(swrveSpy, times(2)).queueEvent(userIdStringCaptor.capture(),
+        verify(swrveSpy, atLeastOnce()).queueEvent(userIdStringCaptor.capture(),
                 eventStringCaptor.capture(), parametersMapCaptor.capture(), payloadMapCaptor.capture(), triggerEventListenerCaptor.capture());
 
         assertTrue(eventStringCaptor.getAllValues().size() > 0);
@@ -857,7 +860,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
             }
         });
 
-        verify(swrveSpy, times(3)).queueEvent(userIdStringCaptor.capture(),
+        verify(swrveSpy, atLeastOnce()).queueEvent(userIdStringCaptor.capture(),
                 eventStringCaptor.capture(), parametersMapCaptor.capture(), payloadMapCaptor.capture(), triggerEventListenerCaptor.capture());
         assertTrue(eventStringCaptor.getAllValues().size() > 0);
         List<String> events2 = eventStringCaptor.getAllValues();
@@ -879,5 +882,14 @@ public class SwrveUnitTest extends SwrveBaseTest {
         }
         return foundEvent;
     }
-
+    
+    @Test
+    public void testOnPause() {
+        String userId = swrveSpy.getUserId();
+        swrveSpy.onPause();
+        InOrder inOrder = inOrder(swrveSpy, swrveSpy);
+        inOrder.verify(swrveSpy, times(1)).flushToDisk();
+        inOrder.verify(swrveSpy, times(1)).generateNewSessionInterval();
+        inOrder.verify(swrveSpy, times(1)).saveCampaignsState(userId);
+    }
 }

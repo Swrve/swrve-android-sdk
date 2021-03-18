@@ -9,13 +9,13 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.notifications.model.SwrveNotification;
 
 import org.junit.Assert;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowNotification;
 import org.robolectric.shadows.ShadowPendingIntent;
 
@@ -73,7 +73,7 @@ public class SwrveNotificationTestUtils {
     }
 
     public static Notification assertNotification(String tickerText, String sound, Bundle extras) {
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(1, notifications.size());
         Notification notification = notifications.get(0);
@@ -114,7 +114,7 @@ public class SwrveNotificationTestUtils {
     }
 
     public static void assertNumberOfNotifications(int expectedNumberOfNotifications) {
-        NotificationManager notificationManager = (NotificationManager) RuntimeEnvironment.application.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
         assertEquals(expectedNumberOfNotifications, notifications.size());
     }

@@ -4,19 +4,19 @@ import android.app.Activity;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.RelativeLayout;
 
+import com.swrve.sdk.QaUser;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveImageScaler;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveTextTemplating;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveImage;
@@ -70,10 +70,10 @@ public class SwrveMessageView extends RelativeLayout {
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
         List<String> loadErrorReasons = new ArrayList<>();
         try {
+
             // Get device screen metrics
-            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            int screenWidth = display.getWidth();
-            int screenHeight = display.getHeight();
+            int screenWidth = SwrveHelper.getDisplayWidth(context);
+            int screenHeight = SwrveHelper.getDisplayHeight(context);
 
             // Set background
             Integer backgroundColor = format.getBackgroundColor();
@@ -88,7 +88,19 @@ public class SwrveMessageView extends RelativeLayout {
             setMinimumHeight(format.getSize().y);
             setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             for (final SwrveImage image : format.getImages()) {
+
+                // set fallback first
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + image.getFile();
+                boolean usingDynamic = false;
+                // check if we can change filepath to personalized
+                if (SwrveHelper.isNotNullOrEmpty(image.getDynamicImageUrl())) {
+                    String candidateAsset = resolveUrlPersonalization(image.getDynamicImageUrl(), message, SwrveHelper.isNotNullOrEmpty(image.getFile()));
+                    if (SwrveHelper.isNotNullOrEmpty(candidateAsset)) {
+                        filePath = candidateAsset;
+                        usingDynamic = true;
+                    }
+                }
+
                 if (!SwrveHelper.hasFileAccess(filePath)) {
                     SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
@@ -115,10 +127,20 @@ public class SwrveMessageView extends RelativeLayout {
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
                     lparams.leftMargin = image.getPosition().x;
                     lparams.topMargin = image.getPosition().y;
-                    lparams.width = backgroundImage.getWidth();
-                    lparams.height = backgroundImage.getHeight();
-                    imageView.setLayoutParams(lparams);
-                    imageView.setScaleType(ScaleType.FIT_XY);
+
+                    if (usingDynamic) {
+                        lparams.width = image.getSize().x;
+                        lparams.height = image.getSize().y;
+                        imageView.setLayoutParams(lparams);
+                        imageView.setScaleType(ScaleType.FIT_CENTER);
+                        imageView.setAdjustViewBounds(true);
+                    } else {
+                        lparams.width = backgroundImage.getWidth();
+                        lparams.height = backgroundImage.getHeight();
+                        imageView.setLayoutParams(lparams);
+                        imageView.setScaleType(ScaleType.FIT_XY);
+                    }
+
                     // Add to parent
                     addView(imageView);
                 } else {
@@ -128,7 +150,18 @@ public class SwrveMessageView extends RelativeLayout {
             }
 
             for (final SwrveButton button : format.getButtons()) {
+                // set fallback first
                 String filePath = message.getCacheDir().getAbsolutePath() + "/" + button.getImage();
+                boolean usingDynamic = false;
+                // check if we can change filepath to personalized
+                if (SwrveHelper.isNotNullOrEmpty(button.getDynamicImageUrl())) {
+                    String candidateAsset = resolveUrlPersonalization(button.getDynamicImageUrl(), message, SwrveHelper.isNotNullOrEmpty(button.getImage()));
+                    if (SwrveHelper.isNotNullOrEmpty(candidateAsset)) {
+                        filePath = candidateAsset;
+                        usingDynamic = true;
+                    }
+                }
+
                 if (!SwrveHelper.hasFileAccess(filePath)) {
                     SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
@@ -166,10 +199,20 @@ public class SwrveMessageView extends RelativeLayout {
                     RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(backgroundImage.getWidth(), backgroundImage.getHeight());
                     lparams.leftMargin = button.getPosition().x;
                     lparams.topMargin = button.getPosition().y;
-                    lparams.width = backgroundImage.getWidth();
-                    lparams.height = backgroundImage.getHeight();
-                    buttonView.setLayoutParams(lparams);
-                    buttonView.setScaleType(ScaleType.FIT_XY);
+
+                    if (usingDynamic) {
+                        lparams.width = button.getSize().x;
+                        lparams.height = button.getSize().y;
+                        buttonView.setLayoutParams(lparams);
+                        buttonView.setScaleType(ScaleType.FIT_CENTER);
+                        buttonView.setAdjustViewBounds(true);
+                    } else {
+                        lparams.width = backgroundImage.getWidth();
+                        lparams.height = backgroundImage.getHeight();
+                        buttonView.setLayoutParams(lparams);
+                        buttonView.setScaleType(ScaleType.FIT_XY);
+                    }
+
                     buttonView.setOnClickListener(buttonView1 -> {
                         try {
                             dismiss();
@@ -225,6 +268,37 @@ public class SwrveMessageView extends RelativeLayout {
         if (ctx instanceof Activity) {
             ((Activity) ctx).finish();
         }
+    }
+
+    private String resolveUrlPersonalization(String url, SwrveMessage message, boolean hasFallback) {
+
+        if (SwrveHelper.isNullOrEmpty(url)) {
+            SwrveLogger.i("cannot resolve url personalization");
+            return null;
+        }
+
+        try {
+            String personalizedUrl = SwrveTextTemplating.apply(url, this.inAppPersonalisation);
+            if (SwrveHelper.isNotNullOrEmpty(personalizedUrl)) {
+                // then there might be an asset saved, get the sha1 and check
+                String candidateAsset = SwrveHelper.sha1(personalizedUrl.getBytes());
+                String candidateFilePath = message.getCacheDir().getAbsolutePath() + "/" + candidateAsset;
+                if (SwrveHelper.hasFileAccess(candidateFilePath)) {
+                    return candidateFilePath;
+                } else {
+                    SwrveLogger.i("Personalized asset not found in cache: " + candidateAsset);
+                    // Log the failed retrieval
+                    QaUser.assetFailedToDisplay(message.getCampaign().getId(), message.getId(), candidateAsset, url, personalizedUrl, hasFallback, "Asset not found in cache");
+                }
+            }
+        } catch (SwrveSDKTextTemplatingException e) {
+            SwrveLogger.e("Cannot resolve personalized asset: ", e);
+            QaUser.assetFailedToDisplay(message.getCampaign().getId(), message.getId(), null, url, null, hasFallback, "Could not resolve url personalization");
+        } catch (Exception e) {
+            SwrveLogger.e("Cannot resolve personalized asset: ", e);
+        }
+
+        return null;
     }
 
     @Override
