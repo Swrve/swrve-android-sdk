@@ -33,6 +33,11 @@ jobs:
               cd samples/MinimalIntegrationFirebase
               ./gradlew build
       - run:
+          name: Build MinimalIntegrationHuawei App
+          command: |
+              cd samples/MinimalIntegrationHuawei
+              ./gradlew build
+      - run:
           name: Build MultipleFCMProviders App
           command: ./gradlew :MultipleFCMProviders:build
       - run:

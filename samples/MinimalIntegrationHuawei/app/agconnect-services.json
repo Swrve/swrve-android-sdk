@@ -1,0 +1,12 @@
+{
+	"client":{
+		"cp_id":"1111111111111111111",
+		"product_id":"222222222222222222",
+		"client_id":"333333333333333333",
+		"client_secret":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"app_id":"123456789",
+		"package_name":"com.swrve.sdk.sample.minimalintegration.huawei",
+		"api_key":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/Dr"
+	},
+	"configuration_version":"1.0"
+}

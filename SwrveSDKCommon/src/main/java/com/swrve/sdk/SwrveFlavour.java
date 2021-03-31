@@ -1,7 +1,7 @@
 package com.swrve.sdk;
 
 public enum SwrveFlavour {
-    AMAZON, CORE, FIREBASE;
+    AMAZON, CORE, FIREBASE, HUAWEI;
 
     @Override
     public String toString() {
@@ -12,6 +12,8 @@ public enum SwrveFlavour {
                 return "core";
             case FIREBASE:
                 return "firebase";
+            case HUAWEI:
+                return "huawei";
             default:
                 throw new IllegalArgumentException();
         }

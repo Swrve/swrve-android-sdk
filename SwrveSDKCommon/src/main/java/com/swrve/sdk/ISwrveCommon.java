@@ -93,6 +93,7 @@ interface ISwrveCommon {
     String OS_ANDROID_TV                      = "android-tv";
     String OS_AMAZON                          = "amazon-android";
     String OS_AMAZON_TV                       = "amazon-android-tv";
+    String OS_HUAWEI                          = "huawei-android";
     String DEVICE_TYPE_MOBILE                 = "mobile";
     String DEVICE_TYPE_TV                     = "tv";
 

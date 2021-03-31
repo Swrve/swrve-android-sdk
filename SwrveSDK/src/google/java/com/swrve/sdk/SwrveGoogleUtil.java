@@ -13,8 +13,8 @@ import org.json.JSONObject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// This class executes google specific functions such as getting fcm token and advertising id.
-// See build.gradle where it is included  as an extra
+// This class executes google specific functions such as getting fcm token and advertising id. It is
+// common to both the firebase and huawei flavours. See build.gradle where it is included  as an extra
 // sourceSet to both those flavours.
 class SwrveGoogleUtil implements SwrvePlatformUtil {
 

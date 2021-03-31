@@ -47,7 +47,9 @@ import static com.swrve.sdk.ISwrveCommon.OS_AMAZON;
 import static com.swrve.sdk.ISwrveCommon.OS_AMAZON_TV;
 import static com.swrve.sdk.ISwrveCommon.OS_ANDROID;
 import static com.swrve.sdk.ISwrveCommon.OS_ANDROID_TV;
+import static com.swrve.sdk.ISwrveCommon.OS_HUAWEI;
 import static com.swrve.sdk.SwrveFlavour.AMAZON;
+import static com.swrve.sdk.SwrveFlavour.HUAWEI;
 
 /**
  * Used internally to provide MD5, token generation and other helper methods.
@@ -338,6 +340,8 @@ public final class SwrveHelper {
                 default:
                     return OS_AMAZON;
             }
+        } else if (sdkFlavour == HUAWEI) {
+            return OS_HUAWEI;
         } else {
             switch (SwrveHelper.getSupportedUIMode(context)) {
                 case TV:

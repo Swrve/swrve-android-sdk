@@ -29,10 +29,18 @@ android {
         firebase {
             flavorDimensions "swrve-sdk"
         }
+        huawei {
+            flavorDimensions "swrve-sdk"
+            consumerProguardFiles 'huawei-proguard-rules.pro'
+            minSdkVersion Integer.parseInt(project.HUAWEI_BUILD_MIN_SDK_VERSION)
+        }
     }
 
     sourceSets {
         firebase {
+            java.srcDirs += java.srcDirs += 'src/google/java/'
+        }
+        huawei {
             java.srcDirs += java.srcDirs += 'src/google/java/'
         }
     }
@@ -61,6 +69,9 @@ dependencies {
     amazonCompileOnly fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
     firebaseApi 'com.google.android.gms:play-services-ads-identifier:' + project.PLAY_SERVICES_ADS_VERSION
     firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
+    huaweiApi 'com.google.android.gms:play-services-ads-identifier:' + project.PLAY_SERVICES_ADS_VERSION
+    huaweiApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
+    huaweiApi 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION
 }
 
 apply plugin: 'maven-publish'
@@ -144,6 +155,32 @@ task androidFirebaseSourcesJar(type: Jar) {
     description "Package sources for Firebase."
     classifier = 'sources'
     from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
+}
+
+task androidHuaweiJavadoc(type: Javadoc, dependsOn: "assembleHuaweiRelease") {
+    description "Generates Javadoc for Huawei release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "huaweiRelease") {
+            source = variant.javaCompileProvider.get().source
+            classpath += files(variant.javaCompileProvider.get().classpath)
+        }
+    }
+}
+task androidHuaweiJavadocsJar(type: Jar) {
+    description "Package Javadoc for Huawei."
+    classifier = 'javadoc'
+    from androidHuaweiJavadoc
+}
+task androidHuaweiSourcesJar(type: Jar) {
+    description "Package sources for Huawei."
+    classifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.huawei.java.srcDirs)
 }
 
 bintray {
@@ -262,6 +299,43 @@ publishing {
 
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
                 configurations.getByName("firebaseReleaseCompileClasspath").allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrveConversationSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+            }
+        }
+        huawei(MavenPublication) {
+            artifactId project.SWRVE_HUAWEI_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = [androidHuaweiJavadocsJar, "$buildDir/outputs/aar/${project.name}-huawei-release.aar", androidHuaweiSourcesJar]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.getByName("huaweiReleaseCompileClasspath").allDependencies.each {
                     if (it.group == null || it.name == null || it.version == null) {
                         logger.log(LogLevel.ERROR, "Invalid dependency")
                     } else {

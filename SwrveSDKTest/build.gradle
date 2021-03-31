@@ -43,7 +43,11 @@ android {
         }
         firebase {
             flavorDimensions "swrve-sdk"
-        }        
+        }
+        huawei {
+            flavorDimensions "swrve-sdk"
+            minSdkVersion Integer.parseInt(project.HUAWEI_BUILD_MIN_SDK_VERSION)
+        }
     }
 
     lintOptions {
@@ -63,6 +67,8 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:' + project.ANDROIDX_LEGACY_SUPPORT_V4_VERSION
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
+
+    huaweiImplementation 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION
 
     // Unit tests
     testImplementation 'org.mockito:mockito-core:3.6.28'
