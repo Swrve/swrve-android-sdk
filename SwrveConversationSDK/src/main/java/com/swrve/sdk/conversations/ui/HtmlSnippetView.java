@@ -26,6 +26,7 @@ public class HtmlSnippetView extends WebView {
         initCss();
         initFont(model);
         initHtml(model);
+        getSettings().setAllowFileAccess(true);
     }
 
     private void initCss() {

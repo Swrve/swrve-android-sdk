@@ -16,9 +16,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter {
-            url  "https://dl.bintray.com/swrve-inc/android"
-        }
         maven { url "https://maven.google.com" }
         jcenter()
     }
