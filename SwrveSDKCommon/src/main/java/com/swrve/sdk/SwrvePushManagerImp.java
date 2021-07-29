@@ -17,6 +17,7 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 
 class SwrvePushManagerImp implements SwrvePushManager {
 
+    private ISwrveCommon swrveCommon = SwrveCommon.getInstance();
     private final Context context;
     private SwrveNotificationBuilder notificationBuilder;
     private String authenticatedUserId;
@@ -27,13 +28,37 @@ class SwrvePushManagerImp implements SwrvePushManager {
 
     @Override
     public void processMessage(final Bundle msg) {
-        sendPushDeliveredEvent(msg);
+
+        if (swrveCommon == null) {
+            SwrveLogger.e("SwrveSDK cannot process push because SwrveCommon is null. Please check integration.");
+            return;
+        }
+
         String silentId = SwrveHelper.getSilentPushId(msg);
+
         if (!SwrveHelper.isNullOrEmpty(silentId)) {
-            processSilent(msg,silentId);
+            sendPushDeliveredEvent(msg, false, "");
+            processSilent(msg, silentId);
         } else {
-            String pushId = SwrveHelper.getRemotePushId(msg);
-            processNotification(msg, pushId);
+
+            boolean displayed = true;
+            String reason = "";
+
+            authenticatedUserId = msg.getString(SwrveNotificationConstants.SWRVE_AUTH_USER_KEY);
+            boolean isAuthenticatedPush = isAuthenticatedPush(authenticatedUserId);
+            if (isAuthenticatedPush && isDifferentUser(authenticatedUserId)) {
+                displayed = false;
+                reason = "different_user";
+            } else if (isAuthenticatedPush && isTrackingStateStopped()) {
+                displayed = false;
+                reason = "stopped";
+            }
+            sendPushDeliveredEvent(msg, displayed, reason);
+
+            if (displayed) {
+                String pushId = SwrveHelper.getRemotePushId(msg);
+                processNotification(msg, pushId);
+            }
         }
     }
 
@@ -52,16 +77,26 @@ class SwrvePushManagerImp implements SwrvePushManager {
         return silentPayload;
     }
 
-    private boolean isTargetUser(Bundle msg) {
-        boolean isTargetUser = true;
-        authenticatedUserId = msg.getString(SwrveNotificationConstants.SWRVE_AUTH_USER_KEY);
-        if (authenticatedUserId != null) {
-            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-            if (swrveCommon != null && !swrveCommon.getUserId().equals(authenticatedUserId)) {
-                isTargetUser = false;
-            }
+    private boolean isAuthenticatedPush(String authenticatedUserId) {
+        return SwrveHelper.isNotNullOrEmpty(authenticatedUserId);
+    }
+
+    private boolean isDifferentUser(String authenticatedUserId) {
+        boolean isDifferentUser = false;
+        if (!swrveCommon.getUserId().equals(authenticatedUserId)) {
+            SwrveLogger.w("Swrve cannot display push notification because its intended for different user.");
+            isDifferentUser = true;
         }
-        return isTargetUser;
+        return isDifferentUser;
+    }
+
+    private boolean isTrackingStateStopped() {
+        boolean isTrackingStateStopped = false;
+        if (swrveCommon.isTrackingStateStopped()) {
+            SwrveLogger.w("Swrve cannot display push notification because sdk is stopped.");
+            isTrackingStateStopped = true;
+        }
+        return isTrackingStateStopped;
     }
 
     private void saveInfluencedCampaign(final Bundle msg, String trackingId) {
@@ -69,12 +104,12 @@ class SwrvePushManagerImp implements SwrvePushManager {
         campaignInfluence.saveInfluencedCampaign(context, trackingId, msg, getNow());
     }
 
-    protected void sendPushDeliveredEvent(Bundle extras) {
+    protected void sendPushDeliveredEvent(Bundle extras, boolean displayed, String reason) {
         try {
-            ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(extras, getTime());
+            ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(extras, getTime(), displayed, reason);
             if (eventsList != null && eventsList.size() > 0) {
                 String eventBody = EventHelper.getPushDeliveredBatchEvent(eventsList);
-                String endPoint = SwrveCommon.getInstance().getEventsServer() + "/1/batch";
+                String endPoint = swrveCommon.getEventsServer() + "/1/batch";
                 getCampaignDeliveryManager().sendCampaignDelivery(endPoint, eventBody);
             }
         } catch (Exception e) {
@@ -85,7 +120,6 @@ class SwrvePushManagerImp implements SwrvePushManager {
     private void processSilent(final Bundle msg, final  String silentId) {
         saveInfluencedCampaign(msg, silentId);
 
-        ISwrveCommon swrveCommon = SwrveCommon.getInstance();
         SwrveSilentPushListener silentPushListener = swrveCommon.getSilentPushListener();
 
         if (silentPushListener != null) {
@@ -96,12 +130,7 @@ class SwrvePushManagerImp implements SwrvePushManager {
         }
     }
 
-    private void processNotification(final Bundle msg, String pushId) {
-
-        if (!isTargetUser(msg)) {
-            SwrveLogger.w("Swrve cannot process push because its intended for different user.");
-            return;
-        }
+    protected void processNotification(final Bundle msg, String pushId) {
 
         try {
             String msgText = msg.getString(SwrveNotificationConstants.TEXT_KEY);
@@ -125,7 +154,6 @@ class SwrvePushManagerImp implements SwrvePushManager {
                 // Save notification id so existing authenticated notifications can be dismissed later if different user identifies
                 if (authenticatedUserId != null) {
                     // Notification ids are persisted to db because NotificationManager.getActiveNotifications is only api 23 and current minVersion is below that
-                    ISwrveCommon swrveCommon = SwrveCommon.getInstance();
                     swrveCommon.saveNotificationAuthenticated(notificationId);
                 }
             }
@@ -137,7 +165,7 @@ class SwrvePushManagerImp implements SwrvePushManager {
 
     private Notification applyCustomFilter(NotificationCompat.Builder builder, int notificationId, final Bundle msg, SwrveNotificationDetails notificationDetails) {
         Notification notification;
-        SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
+        SwrveNotificationConfig notificationConfig = swrveCommon.getNotificationConfig();
         if (notificationConfig == null ||
                 notificationConfig.getNotificationFilter() == null) {
             SwrveLogger.d("SwrveNotificationFilter not configured.");
@@ -170,7 +198,6 @@ class SwrvePushManagerImp implements SwrvePushManager {
 
     protected SwrveNotificationBuilder getSwrveNotificationBuilder() {
         if (notificationBuilder == null) {
-            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
             notificationBuilder = new SwrveNotificationBuilder(context, swrveCommon.getNotificationConfig());
         }
         return notificationBuilder;

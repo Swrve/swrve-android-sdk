@@ -17,7 +17,6 @@ import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
-import com.swrve.sdk.messaging.SwrveMessagePersonalisationProvider;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -27,7 +26,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -158,48 +156,21 @@ class SwrveDeeplinkManager {
         }
     }
 
-    protected void loadCampaign(final String campaignID, final String actionType) {
-        //AD Campaign ID
-        standardParams.put("in_app_campaign_id", campaignID);
+    protected void loadCampaign(final String campaignId, final String actionType) {
+
+        standardParams.put("in_app_campaign_id", campaignId);
 
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
-            executorService.execute(SwrveRunnables.withoutExceptions(() -> {
-
+            Runnable runnable = () -> {
                 try {
                     restClient.get(config.getContentUrl() + SWRVE_AD_CAMPAIGN_URL, standardParams, new IRESTResponseListener() {
                         @Override
                         public void onResponse(RESTResponse response) {
-
-                            if (response.responseCode == HttpURLConnection.HTTP_OK) {
-
-                                try {
-                                    JSONObject responseJson;
-                                    try {
-                                        responseJson = new JSONObject(response.responseBody);
-                                    } catch (JSONException e) {
-                                        SwrveLogger.e("SwrveSDK unable to decode ad_journey_campaign JSON : \"%s\".", response.responseBody);
-                                        throw e;
-                                    }
-
-                                    updateCdnPaths(responseJson);
-
-                                    final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
-                                        @Override
-                                        public void complete() {
-                                            showCampaign(campaign, context, config);
-                                        }
-                                    };
-
-                                    getCampaignAssets(responseJson, callback);
-                                    writeCampaignDataToCache(responseJson, actionType);
-
-                                } catch (JSONException e) {
-                                    SwrveLogger.e("Could not parse JSON for ad campaign", e);
-                                }
-                            } else {
-                                SwrveLogger.e("SwrveSDK unable to get ad_journey_campaign JSON : \"%s\".", response.responseBody);
-                                loadCampaignFromCache(campaignID);
+                            try {
+                                displayCampaign(campaignId, actionType, response);
+                            } catch (Exception e) {
+                                SwrveLogger.e("SwrveSDK: Error displaying ad campaign", e);
                             }
                         }
 
@@ -208,12 +179,26 @@ class SwrveDeeplinkManager {
                             SwrveLogger.e("Error downloading ad campaign", e);
                         }
                     });
-                } catch (UnsupportedEncodingException e) {
+                } catch (Exception e) {
                     SwrveLogger.e("Could not update ad campaign, invalid parameters", e);
                 }
-            }));
+            };
+            executorService.execute(SwrveRunnables.withoutExceptions(runnable));
         } finally {
             executorService.shutdown();
+        }
+    }
+
+    protected void displayCampaign(final String campaignID, final String actionType, RESTResponse response) throws Exception {
+        if (response.responseCode == HttpURLConnection.HTTP_OK) {
+            JSONObject responseJson = new JSONObject(response.responseBody);
+            updateCdnPaths(responseJson);
+            final SwrveAssetsCompleteCallback callback = () -> showCampaign(campaign, context, config);
+            getCampaignAssets(responseJson, callback);
+            writeCampaignDataToCache(responseJson, actionType);
+        } else {
+            SwrveLogger.e("SwrveSDK unable to get ad_journey_campaign JSON : \"%s\".", response.responseBody);
+            loadCampaignFromCache(campaignID);
         }
     }
 
@@ -229,17 +214,6 @@ class SwrveDeeplinkManager {
 
         if (!isValidCampaignJson(json)) {
             return;
-        }
-
-        // retrieve personalization from the SDK to facilitate potentially loading dynamic image urls
-        SwrveMessagePersonalisationProvider personalisationProvider = null;
-        if (config != null && config.getInAppMessageConfig() != null) {
-            personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
-        }
-
-        Map<String, String> properties = null;
-        if (personalisationProvider != null) {
-            properties = personalisationProvider.personalize(null);
         }
 
         JSONObject jsonCampaign = json.getJSONObject("campaign");
@@ -258,8 +232,9 @@ class SwrveDeeplinkManager {
             } else {
                 SwrveLogger.i("SwrveDeeplinkManager: Conversation version %s cannot be loaded with this SDK version", conversationVersionDownloaded);
             }
-        } else if (jsonCampaign.has("messages")) {
+        } else if (jsonCampaign.has("message")) {
             Swrve swrve = (Swrve) SwrveSDK.getInstance();
+            Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);;
             campaign = new SwrveInAppCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue, properties);
         } else if (jsonCampaign.has("embedded_message")) {
             Swrve swrve = (Swrve) SwrveSDK.getInstance();
@@ -322,18 +297,10 @@ class SwrveDeeplinkManager {
                 }
 
             } else if (campaign instanceof SwrveInAppCampaign) {
-                SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessages().get(0);
+                SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessage();
 
-                // Provide personalisation for the message
-                SwrveMessagePersonalisationProvider personalisationProvider = null;
-                if (config != null && config.getInAppMessageConfig() != null) {
-                    personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
-                }
-
-                Map<String, String> properties = null;
-                if (personalisationProvider != null) {
-                    properties = personalisationProvider.personalize(null);
-                }
+                Swrve swrve = (Swrve) SwrveSDK.getInstance();
+                Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);;
 
                 if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, properties)) {
                     setSwrveMessage(message);
@@ -353,8 +320,10 @@ class SwrveDeeplinkManager {
                     embeddedMessageListener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
                 }
 
-                if(embeddedMessageListener != null){
-                    embeddedMessageListener.onMessage(context, message);
+                if(embeddedMessageListener != null) {
+                    Swrve swrve = (Swrve) SwrveSDK.getInstance();
+                    Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);;
+                    embeddedMessageListener.onMessage(context, message, properties);
                 }
             }
         }

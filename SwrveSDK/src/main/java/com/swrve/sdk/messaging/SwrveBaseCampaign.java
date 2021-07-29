@@ -36,7 +36,6 @@ public abstract class SwrveBaseCampaign {
     protected List<Trigger> triggers;
     protected boolean messageCenter;
     protected String subject; // MessageCenter subject of the campaign
-    protected boolean randomOrder; // Indicates if the campaign serves messages randomly or using round robin
     protected int maxImpressions;
     protected int minDelayBetweenMessage;
     protected Date showMessagesAfterLaunch; // Time we can show the first message after launch
@@ -72,7 +71,6 @@ public abstract class SwrveBaseCampaign {
         if (campaignData.has("rules")) {
 
             JSONObject rules = campaignData.getJSONObject("rules");
-            this.randomOrder = rules.getString("display_order").equals("random");
             if (rules.has("dismiss_after_views")) {
                 int totalImpressions = rules.getInt("dismiss_after_views");
                 this.maxImpressions = totalImpressions;
@@ -128,25 +126,10 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
-     * @return the next message to show.
-     */
-    public int getNext() {
-        return saveableState.next;
-    }
-
-    /**
      * @return the triggers for this campaign.
      */
     public List<Trigger> getTriggers() {
         return triggers;
-    }
-
-    /**
-     * @return if the campaign serves messages in random order and not round
-     * robin.
-     */
-    public boolean isRandomOrder() {
-        return randomOrder;
     }
 
     /**

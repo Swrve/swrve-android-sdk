@@ -39,7 +39,7 @@ public class SwrveInAppMessageActivity extends Activity {
     private SwrveMessage message;
     private int minSampleSize;
     private SwrveInAppMessageConfig inAppConfig;
-    private Map<String, String> inAppPersonalisation;
+    private Map<String, String> inAppPersonalization;
 
     private SwrveMessageFormat format;
 
@@ -66,7 +66,7 @@ public class SwrveInAppMessageActivity extends Activity {
                     }
                 }
 
-                this.inAppPersonalisation = (Map<String, String>) extras.getSerializable(SWRVE_PERSONALISATION_KEY);
+                this.inAppPersonalization = (Map<String, String>) extras.getSerializable(SWRVE_PERSONALISATION_KEY);
 
                 SwrveConfigBase config = sdk.getConfig();
                 this.minSampleSize = config.getMinSampleSize();
@@ -118,7 +118,7 @@ public class SwrveInAppMessageActivity extends Activity {
 
         try {
             // Create view and add as root of the activity
-            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize, inAppConfig, inAppPersonalisation);
+            SwrveMessageView view = new SwrveMessageView(this, message, format, minSampleSize, inAppConfig, inAppPersonalization);
             setContentView(view);
             if(savedInstanceState == null) {
                 notifyOfImpression(format);
@@ -242,7 +242,7 @@ public class SwrveInAppMessageActivity extends Activity {
             return;
         }
         int campaignId = message.getCampaign().getId();
-        int variantId = message.getCampaign().getVariantIdAtIndex(0);
+        int variantId = message.getCampaign().getVariantId();
         String buttonName = button.getName();
         String actionType = "";
         switch (button.getActionType()) {

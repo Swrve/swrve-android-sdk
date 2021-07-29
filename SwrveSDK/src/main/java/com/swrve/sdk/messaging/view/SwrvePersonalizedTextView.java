@@ -32,16 +32,16 @@ public class SwrvePersonalizedTextView extends SwrveBaseInteractableView {
         Canvas canvas = new Canvas(viewBitmap);
 
         // Fill the entire canvas with this solid color
-        canvas.drawColor(inAppConfig.getPersonalisedTextBackgroundColor());
+        canvas.drawColor(inAppConfig.getPersonalizedTextBackgroundColor());
 
         // Create a Paint object for the text
         Paint paintText = new Paint();
 
         // Set Typeface
-        paintText.setTypeface(inAppConfig.getPersonalisedTextTypeface());
+        paintText.setTypeface(inAppConfig.getPersonalizedTextTypeface());
 
         // Set properties of the Paint used to draw on the canvas
-        paintText.setColor(inAppConfig.getPersonalisedTextForegroundColor());
+        paintText.setColor(inAppConfig.getPersonalizedTextForegroundColor());
 
         // Calculate the text size needed to fill the available space
         fitTextSizeToImage(this.text, paintText, this.width, this.height);

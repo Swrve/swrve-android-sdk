@@ -9,7 +9,6 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -185,6 +184,11 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public boolean isTrackingStateStopped() {
+        return true;
+    }
+
+    @Override
     public String getAppVersion() {
         return null;
     }
@@ -247,6 +251,16 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
+    }
+
+    @Override
+    public String getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
+        return null;
+    }
+
+    @Override
+    public String getPersonalizedText(String text, Map<String, String> personalizationProperties) {
+        return null;
     }
 
     @Override
@@ -313,6 +327,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void shutdown() {
+    }
+
+    @Override
+    public void stopTracking() {
     }
 
     private class SwrveConfigBaseImp extends SwrveConfigBase {

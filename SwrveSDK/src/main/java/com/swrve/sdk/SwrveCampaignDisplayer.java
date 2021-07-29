@@ -205,7 +205,7 @@ public class SwrveCampaignDisplayer {
                 int variantId = ((SwrveConversationCampaign) swrveCampaign).getConversation().getId();
                 qaCampaignInfoMap.put(swrveCampaign.getId(), new QaCampaignInfo(swrveCampaign.getId(), variantId, CONVERSATION, displayed, resultText));
             } else if (swrveCampaign instanceof SwrveInAppCampaign) {
-                int variantId = ((SwrveInAppCampaign) swrveCampaign).getVariantIdAtIndex(0);
+                int variantId = ((SwrveInAppCampaign) swrveCampaign).getVariantId();
                 qaCampaignInfoMap.put(swrveCampaign.getId(), new QaCampaignInfo(swrveCampaign.getId(), variantId, IAM, displayed, resultText));
             }
         }

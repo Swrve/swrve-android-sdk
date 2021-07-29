@@ -1,7 +1,7 @@
 {
   "campaign": {
     "id": 295413,
-    "messages": [
+    "message":
       {
         "id": 298085,
         "template": {
@@ -72,8 +72,7 @@
           ]
         },
         "name": "Double format"
-      }
-    ],
+      },
     "subject": "Facebook Ad Message"
   },
   "additional_info": {

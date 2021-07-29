@@ -1,0 +1,103 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+task androidCommonJavadoc(type: Javadoc, dependsOn: "assembleRelease") {
+    description "Generates Javadoc for release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**', 'androidx/core/app/SwrveJobIntentService.java'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "release") {
+            source = variant.sourceSets.collect { it.java.sourceFiles }.inject { t, fc -> t + fc }
+            doFirst {
+                classpath += files(variant.javaCompileProvider.get().classpath.files)
+            }
+        }
+    }
+}
+task androidCommonJavadocsJar(type: Jar, dependsOn: androidCommonJavadoc) {
+    description "Package Javadoc for Common."
+    archiveClassifier = 'javadoc'
+    from androidCommonJavadoc
+}
+task androidCommonSourcesJar(type: Jar) {
+    description "Package sources for Common."
+    archiveClassifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs)
+}
+
+if (project.hasProperty('SWRVE_COMMON_ARTIFACT_ID')) {
+
+    if (System.getenv('GPG_KEY_ID') != null) {
+        project.ext['signing.keyId'] = System.getenv('GPG_KEY_ID')
+        project.ext['signing.password'] = System.getenv('GPG_KEY_PASSPHRASE')
+        project.ext['signing.secretKeyRingFile'] = System.getenv('GPG_KEYRING_FILE')
+    }
+
+    publishing {
+        repositories {
+            maven {
+                if (System.getenv('CIRCLECI') != null) {
+                    url "$buildDir/../publish" // SwrveCommonSDK/publish
+                } else {
+                    url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+                    name = "sonatype"
+                    credentials {
+                        username System.getenv('SONATYPE_USER')
+                        password System.getenv('SONATYPE_PASSWORD')
+                    }
+                }
+            }
+        }
+
+        publications {
+            common(MavenPublication) {
+                artifactId project.SWRVE_COMMON_ARTIFACT_ID
+                groupId project.SWRVE_GROUP_ID
+                version project.SWRVE_SDK_VERSION
+                artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidCommonJavadocsJar, androidCommonSourcesJar]
+
+                // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+                // so we have to manually add them to the pom
+                pom.withXml {
+                    Node root = asNode()
+                    root.appendNode('name', 'SwrveSDKCommon')
+                    root.appendNode('description', 'SwrveSDKCommon is the common module to be used with SwrveSDK')
+                    root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
+
+                    def dependenciesNode = root.appendNode('dependencies')
+                    // Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                    configurations.getByName("releaseCompileClasspath").allDependencies.each {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', 'compile')
+                    }
+
+                    def scm = root.appendNode('scm')
+                    scm.appendNode('url', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                    scm.appendNode('connection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                    scm.appendNode('developerConnection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+
+                    def license = root.appendNode('licenses').appendNode('license')
+                    license.appendNode('name', 'The Apache Software License, Version 2.0')
+                    license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+
+                    def developer = root.appendNode('developers').appendNode('developer')
+                    developer.appendNode('id', 'sdkdev')
+                    developer.appendNode('name', 'Swrve SDK Developer')
+                }
+            }
+        }
+    }
+
+    if (System.getenv('CIRCLECI') == null) {
+        signing {
+            sign publishing.publications
+        }
+    }
+}

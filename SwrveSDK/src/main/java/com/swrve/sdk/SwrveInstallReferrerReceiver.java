@@ -20,8 +20,8 @@ public class SwrveInstallReferrerReceiver extends BroadcastReceiver {
         if (!SwrveHelper.isNullOrEmpty(referrer)) {
             try {
                 String decodedReferrer = URLDecoder.decode(referrer, "UTF-8");
-                SharedPreferences.Editor prefs = context.getSharedPreferences(SwrveImp.SDK_PREFS_NAME, 0).edit();
-                prefs.putString(SwrveImp.SWRVE_REFERRER_ID, decodedReferrer).apply();
+                SharedPreferences.Editor prefs = context.getSharedPreferences(ISwrveCommon.SDK_PREFS_NAME, 0).edit();
+                prefs.putString(ISwrveCommon.SDK_PREFS_REFERRER_ID, decodedReferrer).apply();
             } catch (UnsupportedEncodingException e) {
                 SwrveLogger.e("Error decoding the referrer:" + referrer, e);
             }

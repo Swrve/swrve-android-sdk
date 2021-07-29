@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.net.URL;
 import java.util.Locale;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -86,9 +87,9 @@ public class SwrveConfigTest extends SwrveBaseTest {
         assertEquals(Color.TRANSPARENT, inAppConfig.getDefaultBackgroundColor());
         assertEquals(Color.argb(100, 0, 0, 0), inAppConfig.getClickColor());
         assertEquals(Color.argb(100, 0, 190, 152), inAppConfig.getFocusColor());
-        assertEquals(Color.BLACK, inAppConfig.getPersonalisedTextForegroundColor());
-        assertEquals(Color.TRANSPARENT, inAppConfig.getPersonalisedTextBackgroundColor());
-        assertNull(inAppConfig.getPersonalisedTextTypeface());
+        assertEquals(Color.BLACK, inAppConfig.getPersonalizedTextForegroundColor());
+        assertEquals(Color.TRANSPARENT, inAppConfig.getPersonalizedTextBackgroundColor());
+        assertNull(inAppConfig.getPersonalizedTextTypeface());
         assertTrue(inAppConfig.isHideToolbar());
         assertEquals(inAppConfig.getAutoShowMessagesMaxDelay(), 5000);
         assertNull(inAppConfig.getWindowListener());
@@ -102,9 +103,9 @@ public class SwrveConfigTest extends SwrveBaseTest {
                 .defaultBackgroundColor(Color.BLACK)
                 .clickColor(Color.RED)
                 .focusColor(Color.BLUE)
-                .personalisedTextForegroundColor(Color.YELLOW)
-                .personalisedTextBackgroundColor(Color.GREEN)
-                .personalisedTextTypeface(Typeface.MONOSPACE)
+                .personalizedTextForegroundColor(Color.YELLOW)
+                .personalizedTextBackgroundColor(Color.GREEN)
+                .personalizedTextTypeface(Typeface.MONOSPACE)
                 .hideToolbar(false)
                 .autoShowMessagesMaxDelay(55)
                 .windowListener(inAppWindowListener);
@@ -115,9 +116,9 @@ public class SwrveConfigTest extends SwrveBaseTest {
         assertEquals(Color.BLACK, inAppConfig.getDefaultBackgroundColor());
         assertEquals(Color.RED, inAppConfig.getClickColor());
         assertEquals(Color.BLUE, inAppConfig.getFocusColor());
-        assertEquals(Color.YELLOW, inAppConfig.getPersonalisedTextForegroundColor());
-        assertEquals(Color.GREEN, inAppConfig.getPersonalisedTextBackgroundColor());
-        assertEquals(Typeface.MONOSPACE, inAppConfig.getPersonalisedTextTypeface());
+        assertEquals(Color.YELLOW, inAppConfig.getPersonalizedTextForegroundColor());
+        assertEquals(Color.GREEN, inAppConfig.getPersonalizedTextBackgroundColor());
+        assertEquals(Typeface.MONOSPACE, inAppConfig.getPersonalizedTextTypeface());
         assertFalse("hideToolbar should be set to 'false'" ,inAppConfig.isHideToolbar());
         assertEquals(inAppConfig.getAutoShowMessagesMaxDelay(), 55);
         assertEquals(inAppConfig.getWindowListener(), inAppWindowListener);
@@ -187,7 +188,7 @@ public class SwrveConfigTest extends SwrveBaseTest {
     private class EmbedddedButtonListener implements SwrveEmbeddedMessageListener {
 
         @Override
-        public void onMessage(Context context, SwrveEmbeddedMessage message) {
+        public void onMessage(Context context, SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
         }
     }
 }

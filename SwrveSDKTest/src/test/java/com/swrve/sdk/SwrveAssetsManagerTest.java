@@ -59,8 +59,8 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         writeFileToCache("asset2", "digest2");
 
         Set<SwrveAssetsQueueItem> assetsQueueImages = new HashSet<>();
-        assetsQueueImages.add(new SwrveAssetsQueueItem("asset1", "digest1", true, false));
-        assetsQueueImages.add(new SwrveAssetsQueueItem("asset2", "digest2", true, false));
+        assetsQueueImages.add(new SwrveAssetsQueueItem(1, "asset1", "digest1", true, false));
+        assetsQueueImages.add(new SwrveAssetsQueueItem(1, "asset2", "digest2", true, false));
 
         assetsManagerSpy.downloadAssets(assetsQueueImages, null);
 
@@ -80,8 +80,8 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         writeFileToCache(assetUrl2, "https://www.testitem/asset2.png");
 
         Set<SwrveAssetsQueueItem> assetsQueueImages = new HashSet<>();
-        assetsQueueImages.add(new SwrveAssetsQueueItem(assetUrl1, "https://www.testitem/asset1.png", true, true));
-        assetsQueueImages.add(new SwrveAssetsQueueItem(assetUrl2, "https://www.testitem/asset2.png", true, true));
+        assetsQueueImages.add(new SwrveAssetsQueueItem(1, assetUrl1, "https://www.testitem/asset1.png", true, true));
+        assetsQueueImages.add(new SwrveAssetsQueueItem(1, assetUrl2, "https://www.testitem/asset2.png", true, true));
 
         assetsManagerSpy.downloadAssets(assetsQueueImages, null);
 
@@ -123,10 +123,10 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         writeFileToCache("asset1", digest1);
 
         Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
-        SwrveAssetsQueueItem item1 = new SwrveAssetsQueueItem("asset1", digest1, true, false);
-        SwrveAssetsQueueItem item2 = new SwrveAssetsQueueItem("asset2", digest2, true, false);
-        SwrveAssetsQueueItem item3 = new SwrveAssetsQueueItem("asset3", digest3, true, false);
-        SwrveAssetsQueueItem item4 = new SwrveAssetsQueueItem(assetUrlSha1, (cdnPath + "externalAsset1"), true, true);
+        SwrveAssetsQueueItem item1 = new SwrveAssetsQueueItem(1, "asset1", digest1, true, false);
+        SwrveAssetsQueueItem item2 = new SwrveAssetsQueueItem(1, "asset2", digest2, true, false);
+        SwrveAssetsQueueItem item3 = new SwrveAssetsQueueItem(1, "asset3", digest3, true, false);
+        SwrveAssetsQueueItem item4 = new SwrveAssetsQueueItem(1, assetUrlSha1, (cdnPath + "externalAsset1"), true, true);
 
         assetsQueue.add(item1);
         assetsQueue.add(item2);
@@ -169,7 +169,7 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assetsManager.setStorageDir(mActivity.getCacheDir());
 
         Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
-        assetsQueue.add(new SwrveAssetsQueueItem("someAsset", "someAsset", true, false));
+        assetsQueue.add(new SwrveAssetsQueueItem(1, "someAsset", "someAsset", true, false));
 
         SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
             @Override
@@ -217,7 +217,7 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         SwrveAssetsManagerImp assetsManagerSpy = Mockito.spy(assetsManager);
 
         Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
-        SwrveAssetsQueueItem item2 = new SwrveAssetsQueueItem("asset2", digest2, true, false);
+        SwrveAssetsQueueItem item2 = new SwrveAssetsQueueItem(1, "asset2", digest2, true, false);
         assetsQueue.add(item2);
 
         assertCacheFileDoesNotExist(digest2);

@@ -3,13 +3,13 @@ package com.swrve.sdk.messaging.view;
 import android.content.Context;
 import android.graphics.Rect;
 import android.view.MotionEvent;
-import android.widget.ImageView;
 
 import com.swrve.sdk.messaging.SwrveActionType;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
 
-public abstract class SwrveBaseInteractableView extends ImageView {
+public abstract class SwrveBaseInteractableView extends AppCompatImageView {
 
     public int clickColor;
     public int focusColor;

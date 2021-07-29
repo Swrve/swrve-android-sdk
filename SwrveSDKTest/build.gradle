@@ -64,7 +64,6 @@ android {
 dependencies {
     // SDK
     api project(path: ':SwrveSDK')
-    implementation 'androidx.legacy:legacy-support-v4:' + project.ANDROIDX_LEGACY_SUPPORT_V4_VERSION
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
 

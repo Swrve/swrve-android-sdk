@@ -1,0 +1,358 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+if (System.getenv('GPG_KEY_ID') != null) {
+    project.ext['signing.keyId'] = System.getenv('GPG_KEY_ID')
+    project.ext['signing.password'] =  System.getenv('GPG_KEY_PASSPHRASE')
+    project.ext['signing.secretKeyRingFile'] = System.getenv('GPG_KEYRING_FILE')
+}
+
+task androidCoreJavadoc(type: Javadoc, dependsOn: "assembleCoreRelease") {
+    description "Generates Javadoc for Core release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "coreRelease") {
+            source = variant.sourceSets.collect { it.java.sourceFiles }.inject { t, fc -> t + fc }
+            doFirst {
+                classpath += files(variant.javaCompileProvider.get().classpath.files)
+            }
+        }
+    }
+}
+task androidCoreJavadocsJar(type: Jar) {
+    description "Package Javadoc for Core."
+    archiveClassifier = 'javadoc'
+    from androidCoreJavadoc
+}
+task androidCoreSourcesJar(type: Jar) {
+    description "Package sources for Core."
+    archiveClassifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.core.java.srcDirs)
+}
+
+task androidAmazonJavadoc(type: Javadoc, dependsOn: "assembleAmazonRelease") {
+    description "Generates Javadoc for Amazon release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "amazonRelease") {
+            source = variant.javaCompileProvider.get().source
+            classpath += files(variant.javaCompileProvider.get().classpath)
+        }
+    }
+}
+task androidAmazonJavadocsJar(type: Jar) {
+    description "Package Javadoc for Amazon."
+    archiveClassifier = 'javadoc'
+    from androidAmazonJavadoc
+}
+task androidAmazonSourcesJar(type: Jar) {
+    description "Package sources for Amazon."
+    archiveClassifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.amazon.java.srcDirs)
+}
+
+task androidFirebaseJavadoc(type: Javadoc, dependsOn: "assembleFirebaseRelease") {
+    description "Generates Javadoc for Firebase release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "firebaseRelease") {
+            source = variant.javaCompileProvider.get().source
+            classpath += files(variant.javaCompileProvider.get().classpath)
+        }
+    }
+}
+task androidFirebaseJavadocsJar(type: Jar) {
+    description "Package Javadoc for Firebase."
+    archiveClassifier = 'javadoc'
+    from androidFirebaseJavadoc
+}
+task androidFirebaseSourcesJar(type: Jar) {
+    description "Package sources for Firebase."
+    archiveClassifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.firebase.java.srcDirs)
+}
+
+task androidHuaweiJavadoc(type: Javadoc, dependsOn: "assembleHuaweiRelease") {
+    description "Generates Javadoc for Huawei release."
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += files(ext.androidJar)
+    failOnError true
+    include 'com/swrve/**'
+
+    // Use the release variant classpath
+    android.libraryVariants.all { variant ->
+        if (variant.name == "huaweiRelease") {
+            source = variant.javaCompileProvider.get().source
+            classpath += files(variant.javaCompileProvider.get().classpath)
+        }
+    }
+}
+task androidHuaweiJavadocsJar(type: Jar) {
+    description "Package Javadoc for Huawei."
+    archiveClassifier = 'javadoc'
+    from androidHuaweiJavadoc
+}
+task androidHuaweiSourcesJar(type: Jar) {
+    description "Package sources for Huawei."
+    archiveClassifier = 'sources'
+    from files(android.sourceSets.main.java.srcDirs) + files(android.sourceSets.huawei.java.srcDirs)
+}
+
+publishing {
+
+    publications {
+        core(MavenPublication) {
+
+            artifactId project.SWRVE_CORE_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = [androidCoreJavadocsJar, "$buildDir/outputs/aar/${project.name}-core-release.aar", androidCoreSourcesJar]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                Node root = asNode()
+                root.appendNode('name', 'SwrveSDK - Core')
+                root.appendNode('description', 'SwrveSDK Core is the SwrveSDK Core flavor')
+                root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
+
+                def dependenciesNode = root.appendNode('dependencies')
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.getByName("coreReleaseCompileClasspath").allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrveConversationSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+
+                def scm = root.appendNode('scm')
+                scm.appendNode('url', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('connection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('developerConnection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'The Apache Software License, Version 2.0')
+                license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+
+                def developer = root.appendNode('developers').appendNode('developer')
+                developer.appendNode('id', 'sdkdev')
+                developer.appendNode('name', 'Swrve SDK Developer')
+            }
+        }
+        amazon(MavenPublication) {
+            artifactId project.SWRVE_AMAZON_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = [androidAmazonJavadocsJar, "$buildDir/outputs/aar/${project.name}-amazon-release.aar", androidAmazonSourcesJar]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                Node root = asNode()
+                root.appendNode('name', 'SwrveSDK - Amazon')
+                root.appendNode('description', 'SwrveSDK Amazon is the SwrveSDK Amazon flavor')
+                root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
+
+                def dependenciesNode = root.appendNode('dependencies')
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.getByName("amazonReleaseCompileClasspath").allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrveConversationSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+
+                def scm = root.appendNode('scm')
+                scm.appendNode('url', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('connection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('developerConnection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'The Apache Software License, Version 2.0')
+                license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+
+                def developer = root.appendNode('developers').appendNode('developer')
+                developer.appendNode('id', 'sdkdev')
+                developer.appendNode('name', 'Swrve SDK Developer')
+            }
+        }
+        firebase(MavenPublication) {
+            artifactId project.SWRVE_FIREBASE_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = [androidFirebaseJavadocsJar, "$buildDir/outputs/aar/${project.name}-firebase-release.aar", androidFirebaseSourcesJar]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                Node root = asNode()
+                root.appendNode('name', 'SwrveSDK - Firebase')
+                root.appendNode('description', 'SwrveSDK Firebase is the SwrveSDK Firebase flavor')
+                root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
+
+                def dependenciesNode = root.appendNode('dependencies')
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.getByName("firebaseReleaseCompileClasspath").allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrveConversationSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+
+                def scm = root.appendNode('scm')
+                scm.appendNode('url', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('connection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('developerConnection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'The Apache Software License, Version 2.0')
+                license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+
+                def developer = root.appendNode('developers').appendNode('developer')
+                developer.appendNode('id', 'sdkdev')
+                developer.appendNode('name', 'Swrve SDK Developer')
+            }
+        }
+        huawei(MavenPublication) {
+            artifactId project.SWRVE_HUAWEI_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = [androidHuaweiJavadocsJar, "$buildDir/outputs/aar/${project.name}-huawei-release.aar", androidHuaweiSourcesJar]
+
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                Node root = asNode()
+                root.appendNode('name', 'SwrveSDK - Huawei')
+                root.appendNode('description', 'SwrveSDK Huawei is the SwrveSDK Huawei flavor')
+                root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
+
+                def dependenciesNode = root.appendNode('dependencies')
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.getByName("huaweiReleaseCompileClasspath").allDependencies.each {
+                    if (it.group == null || it.name == null || it.version == null) {
+                        logger.log(LogLevel.ERROR, "Invalid dependency")
+                    } else {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        if (it.name == 'SwrveSDKCommon') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else if (it.name == 'SwrveConversationSDK') {
+                            dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
+                            dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
+                            dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
+                            dependencyNode.appendNode('scope', 'compile')
+                        } else {
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            dependencyNode.appendNode('scope', 'compile')
+                        }
+                    }
+                }
+
+                def scm = root.appendNode('scm')
+                scm.appendNode('url', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('connection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('developerConnection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'The Apache Software License, Version 2.0')
+                license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+
+                def developer = root.appendNode('developers').appendNode('developer')
+                developer.appendNode('id', 'sdkdev')
+                developer.appendNode('name', 'Swrve SDK Developer')
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            if(System.getenv('CIRCLECI') != null) {
+                url "$buildDir/../publish" // SwrveSDK/publish
+            } else {
+                url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+                name = "sonatype"
+                credentials {
+                    username System.getenv('SONATYPE_USER')
+                    password System.getenv('SONATYPE_PASSWORD')
+                }
+            }
+        }
+    }
+}
+
+if(System.getenv('CIRCLECI') == null) {
+    signing {
+        sign publishing.publications
+    }
+}

@@ -39,7 +39,6 @@ public abstract class SwrveConfigBase {
     private int minSampleSize = 1; // Sample size to use when loading in-app message images. Has to be a power of two.
     private File cacheDir;
     private boolean sendQueuedEventsOnResume = true;
-    private boolean loadCachedCampaignsAndResourcesOnUIThread = true; // Will load the campaign and resources cache on the UI thread.
     private int httpTimeout = 60000; // HTTP timeout used when contacting the Swrve APIs, in milliseconds.
     private boolean androidIdLoggingEnabled; // Automatically log Android ID as "swrve.android_id".
     private boolean abTestDetailsEnabled; // Obtain information about the AB Tests a user is part of.
@@ -51,7 +50,7 @@ public abstract class SwrveConfigBase {
     private SwrveInAppMessageConfig inAppMessageConfig = new SwrveInAppMessageConfig.Builder().build(); // All default values set in the init
     private SwrveEmbeddedMessageConfig embeddedMessageConfig = null;
     private SwrveInitMode initMode = SwrveInitMode.AUTO;
-    private boolean managedModeAutoStartLastUser = true;
+    private boolean autoStartLastUser = true;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -384,26 +383,6 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Load campaigns and resources cache on the UI thread. Allows to get user resources and
-     * campaigns on the early start.
-     *
-     * @return Whether the SDK will load this data on the UI thread.
-     */
-    public boolean isLoadCachedCampaignsAndResourcesOnUIThread() {
-        return loadCachedCampaignsAndResourcesOnUIThread;
-    }
-
-    /**
-     * Load campaigns and resources cache on the UI thread. Allows to get user resources and
-     * campaigns on the early start.
-     *
-     * @param loadOnUIThread true if cached campaigns should be retreived on UI thread
-     */
-    public void setLoadCachedCampaignsAndResourcesOnUIThread(boolean loadOnUIThread) {
-        this.loadCachedCampaignsAndResourcesOnUIThread = loadOnUIThread;
-    }
-
-    /**
      * Set the HTTP timeout.
      *
      * @param httpTimeout the http timeout for rest calls
@@ -537,20 +516,21 @@ public abstract class SwrveConfigBase {
 
     /**
      * This configuration can only be used in initMode MANAGED.
-     * @param managedModeAutoStartLastUser If true, the sdk will delay starting until the start api is
-     *                                     called and the userId is set. Once set, it will autostart
-     *                                     when UI is shown. Set to false to force the sdk to always
-     *                                     delay tracking until a start api is called.
+     *
+     * @param autoStartLastUser If true, the sdk will delay starting until the start api is
+     *                          called and the userId is set. Once set, it will autostart
+     *                          when UI is shown. Set to false to force the sdk to always
+     *                          delay tracking until a start api is called.
      */
-    public void setManagedModeAutoStartLastUser(boolean managedModeAutoStartLastUser) {
-        this.managedModeAutoStartLastUser = managedModeAutoStartLastUser;
+    public void setAutoStartLastUser(boolean autoStartLastUser) {
+        this.autoStartLastUser = autoStartLastUser;
     }
 
     /**
-     * @return the current value of managedModeAutoStartLastUser
+     * @return the current value of autoStartLastUser
      */
-    public boolean isManagedModeAutoStartLastUser() {
-        return managedModeAutoStartLastUser;
+    public boolean isAutoStartLastUser() {
+        return autoStartLastUser;
     }
 
     /**

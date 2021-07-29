@@ -18,7 +18,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.swrve.sdk.SwrveImp.SDK_PREFS_NAME;
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_KEY_USER_ID;
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
 
 class SwrveProfileManager<C extends SwrveConfigBase> {
 
@@ -29,58 +30,83 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
     protected IRESTClient restclient;
     private String userId;
     private String sessionToken;
+    private SwrveTrackingState trackingState;
 
     protected SwrveProfileManager(Context context, int appId, String apiKey, C config, IRESTClient restClient) {
         this.context = context;
-
-        String savedUserIdFromPrefs = getSavedUserIdFromPrefs(context);
-        if (SwrveHelper.isNullOrEmpty(savedUserIdFromPrefs)) {
-            this.userId = UUID.randomUUID().toString(); // Create a random UUID
-        } else {
-            this.userId = savedUserIdFromPrefs;
-        }
-
-        SwrveLogger.i("Your user id is: %s", this.userId);
-
-        this.sessionToken = SwrveHelper.generateSessionToken(apiKey, appId, userId);
+        this.appId = appId;
+        this.apiKey = apiKey;
         this.config = config;
         this.restclient = restClient;
-        this.apiKey = apiKey;
-        this.appId = appId;
+    }
+
+    // This method will not persist the userId to enable control of when tracking the anonymous userId begins in MANAGED mode
+    synchronized void initUserId() {
+        if (userId == null) { // double-checked lock
+            String savedUserIdFromPrefs = getSavedUserIdFromPrefs();
+            if (SwrveHelper.isNullOrEmpty(savedUserIdFromPrefs)) {
+                userId = UUID.randomUUID().toString(); // Create a random UUID
+            } else {
+                userId = savedUserIdFromPrefs;
+            }
+            SwrveLogger.i("SwrveSDK: userId is: %s", userId);
+        }
     }
 
     void persistUser() {
-        saveUserIdToPrefs(this.userId);
+        String userIdToSave = getUserId(); // ensure userId has been initialised by calling getUserId()
+        SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit(); // Save new user id
+        editor.putString(SDK_PREFS_KEY_USER_ID, userIdToSave).commit();
     }
 
-    protected String getUserId() {
+    String getUserId() {
+        if (userId == null) {
+            initUserId();
+        }
         return userId;
     }
 
-    private void saveUserIdToPrefs(String userId) {
-        SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
-        SharedPreferences.Editor editor = settings.edit(); // Save new user id
-        editor.putString("userId", userId).commit();
+    void setUserId(String userId) {
+        this.userId = userId;
+        persistUser();
+        SwrveLogger.i("SwrveSDK: userId is set to: %s", userId);
     }
 
-    static String getSavedUserIdFromPrefs(Context context) {
+    String getSavedUserIdFromPrefs() {
         SharedPreferences settings = context.getSharedPreferences(SDK_PREFS_NAME, 0);
-        return settings.getString("userId", null);
+        return settings.getString(SDK_PREFS_KEY_USER_ID, null);
+    }
+
+    synchronized void initTrackingState() {
+        if (trackingState == null) { // double-checked lock
+            trackingState = SwrveTrackingState.getTrackingState(context);
+            SwrveLogger.i("SwrveSDK: trackingState:%s", trackingState);
+        }
+    }
+
+    SwrveTrackingState getTrackingState() {
+        if (trackingState == null) {
+            initTrackingState();
+        }
+        return trackingState;
+    }
+
+    void setTrackingState(SwrveTrackingState trackingState) {
+        this.trackingState = trackingState;
+        SwrveTrackingState.saveTrackingState(context, trackingState);
+        SwrveLogger.i("SwrveSDK: trackingState is set to: %s", trackingState);
     }
 
     protected String getSessionToken() {
+        if (sessionToken == null) {
+            sessionToken = SwrveHelper.generateSessionToken(apiKey, appId, userId);
+        }
         return sessionToken;
     }
 
     void updateSessionToken() {
         this.sessionToken = SwrveHelper.generateSessionToken(apiKey, appId, userId);
-    }
-
-    String updateUserId(String userId) {
-        saveUserIdToPrefs(userId);
-        this.userId = userId;
-        SwrveLogger.i("Your user id is: %s", userId);
-        return userId;
     }
 
     protected String getIdentityUrl() {
@@ -105,12 +131,7 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
         SwrveLogger.d("Identity call: %s  body:  %s ", identityUrl, postString);
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    restclient.post(identityUrl, postString, callback);
-                }
-            };
+            Runnable runnable = () -> restclient.post(identityUrl, postString, callback);
             executorService.execute(SwrveRunnables.withoutExceptions(runnable));
         } finally {
             executorService.shutdown();

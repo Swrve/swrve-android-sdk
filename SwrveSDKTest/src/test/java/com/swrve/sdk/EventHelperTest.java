@@ -44,7 +44,7 @@ public class EventHelperTest extends SwrveBaseTest {
     public void testPushDeliveredEventRegular() throws Exception {
         Bundle mockedPushMsg = new Bundle();
         mockedPushMsg.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
-        String deliveryNormalPushEventString = EventHelper.getPushDeliveredEvent(mockedPushMsg, 123).get(0);
+        String deliveryNormalPushEventString = EventHelper.getPushDeliveredEvent(mockedPushMsg, 123, true, "").get(0);
         assertPushDeliveredEvent(deliveryNormalPushEventString, false);
     }
 
@@ -52,7 +52,7 @@ public class EventHelperTest extends SwrveBaseTest {
     public void testPushDeliveredEventSilent() throws Exception {
         Bundle mockedSilentPushMsg = new Bundle();
         mockedSilentPushMsg.putString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, "1");
-        String silentPushEventString = EventHelper.getPushDeliveredEvent(mockedSilentPushMsg, 123).get(0);
+        String silentPushEventString = EventHelper.getPushDeliveredEvent(mockedSilentPushMsg, 123, false, "").get(0);
         assertPushDeliveredEvent(silentPushEventString, true);
     }
 
@@ -69,10 +69,10 @@ public class EventHelperTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testPushDeliveredBatchEvent() throws Exception {
+    public void testPushDeliveredBatchEventDisplayedTrue() throws Exception {
         Bundle bundle = new Bundle();
         bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
-        ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(bundle, 123);
+        ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(bundle, 123, true, "");
         String event = EventHelper.getPushDeliveredBatchEvent(eventsList);
         // @formatter:off
         String expectedEvent =
@@ -91,7 +91,42 @@ public class EventHelperTest extends SwrveBaseTest {
                             "\"campaignType\":\"push\"," +
                             "\"id\":\"1\"," +
                             "\"payload\":{" +
+                                "\"displayed\":\"true\"," +
                                 "\"silent\":\"false\"" +
+                            "}" +
+                        "}" +
+                    "]" +
+                "}";
+        // @formatter:on
+        assertEquals(expectedEvent, event);
+    }
+
+    @Test
+    public void testPushDeliveredBatchEventDisplayedFalse() throws Exception {
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(bundle, 123, false, "some_reason");
+        String event = EventHelper.getPushDeliveredBatchEvent(eventsList);
+        // @formatter:off
+        String expectedEvent =
+                "{" +
+                    "\"session_token\":\"some_session_key\"," +
+                    "\"version\":\"3\"," +
+                    "\"app_version\":\"some_app_version\"," +
+                    "\"unique_device_id\":\"some_device_id\"," +
+                    "\"data\":" +
+                        "[" +
+                            "{" +
+                                "\"type\":\"generic_campaign_event\"," +
+                                "\"time\":123," +
+                                "\"seqnum\":1," +
+                                "\"actionType\":\"delivered\"," +
+                                "\"campaignType\":\"push\"," +
+                                "\"id\":\"1\"," +
+                                "\"payload\":{" +
+                                    "\"displayed\":\"false\"," +
+                                    "\"reason\":\"some_reason\"," +
+                                    "\"silent\":\"false\"" +
                             "}" +
                         "}" +
                     "]" +

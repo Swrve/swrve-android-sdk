@@ -44,7 +44,7 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
     public void testGetEmbeddedMessageFromMessageCenter() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
 
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message) -> {
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
             embeddedCallbackBool.set(true);
         }).build();
 
@@ -60,10 +60,37 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testGetEmbeddedMessageFromMessageCenterWithPersonalization() throws Exception {
+        final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
+
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
+            String resolvedData = SwrveSDK.getPersonalizedEmbeddedMessageData(message, personalizationProperties);
+            embeddedCallbackBool.set((resolvedData != null && resolvedData.equalsIgnoreCase("personalization: WORKING")));
+        }).build();
+
+        config.setEmbeddedMessageConfig(embeddedMessageConfig);
+
+        initSDK();
+
+        // Set the personalization provider and the value that is required for the campaign
+        swrveSpy.personalizationProvider = eventPayload -> {
+            Map<String, String> properties = new HashMap<>();
+            properties.put("test_key", "WORKING");
+            return properties;
+        };
+
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded_mc_personalization.json");
+
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0));
+        await().untilTrue(embeddedCallbackBool);
+    }
+
+    @Test
     public void testEmbeddedMessageCallbackFromTrigger() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
 
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message) -> {
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
             embeddedCallbackBool.set(true);
         }).build();
 
@@ -80,7 +107,7 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
     @Test
     public void testEmbeddedMessageCallbackFromTriggerWithPayload() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message) -> {
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
             embeddedCallbackBool.set(true);
         }).build();
 
@@ -97,9 +124,37 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testEmbeddedMessageCallbackFromTriggerWithPersonalization() throws Exception {
+        final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
+            String resolvedData = SwrveSDK.getPersonalizedText(message.getData(), personalizationProperties);
+            embeddedCallbackBool.set((resolvedData != null));
+        }).build();
+
+        config.setEmbeddedMessageConfig(embeddedMessageConfig);
+
+        initSDK();
+
+        // Set the personalization provider and the value that is required for the campaign
+        swrveSpy.personalizationProvider = eventPayload -> {
+            Map<String, String> properties = new HashMap<>();
+            properties.put("new_key", "WORKING");
+            return properties;
+        };
+
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
+
+        HashMap<String, String> testPayload = new HashMap<String, String>();
+        testPayload.put("test", "value");
+
+        swrveSpy.event("embedded_personalized", testPayload);
+        await().untilTrue(embeddedCallbackBool);
+    }
+
+    @Test
     public void testEmbeddedMessageImpressionAndEngagementEventCallback() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message) -> {
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
             swrveSpy.embeddedMessageWasShownToUser(message);
             swrveSpy.embeddedMessageButtonWasPressed(message, message.getButtons().get(0));
             embeddedCallbackBool.set(true);

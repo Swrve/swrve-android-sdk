@@ -317,7 +317,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         CustomSwrveMessage message = new CustomSwrveMessage(campaign, swrveSpy.getCacheDir());
         message.setId(303);
         message.setName("myMessage");
-        campaign.addMessage(message);
+        campaign.setMessage(message);
 
         CustomSwrveButton btn = new CustomSwrveButton();
         btn.setAction(action);
@@ -339,8 +339,8 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
             this.id = id;
         }
 
-        public void addMessage(SwrveMessage message) {
-            super.addMessage(message);
+        public void setMessage(SwrveMessage message) {
+            this.message = message;
         }
     }
 

@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.swrve.sdk.ISwrveCommon.EVENT_FIRST_SESSION;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
-import static com.swrve.sdk.SwrveTrackingState.ON;
+import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -70,17 +70,21 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         super.setUp();
 
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal); // wait until swrve instance is fully created before getting a mockito spy.
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
         doReturn(true).when(swrveSpy).restClientExecutorExecute(any(Runnable.class)); // disable rest
         profileManagerSpy = Mockito.spy(swrveSpy.profileManager);
+        profileManagerSpy.initUserId();
         swrveSpy.profileManager = profileManagerSpy;
 
         profileManagerRestClientSpy = Mockito.spy(profileManagerSpy.restclient);
         profileManagerSpy.restclient = profileManagerRestClientSpy;
-        swrveSpy.init(mActivity);
+        swrveSpy.profileManager.setTrackingState(STARTED);
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
     }
 
     @Test
@@ -368,16 +372,16 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
     @Test
     public void testTrackingState() {
-        SwrveTrackingState trackingState = swrveSpy.trackingState;
-        assertTrue(trackingState == ON);
+        SwrveTrackingState trackingState = swrveSpy.profileManager.getTrackingState();;
+        assertTrue(trackingState == STARTED);
 
         swrveSpy.pauseEventSending();
-        trackingState = swrveSpy.trackingState;
+        trackingState = swrveSpy.profileManager.getTrackingState();;
         assertTrue(trackingState == EVENT_SENDING_PAUSED);
 
         swrveSpy.enableEventSending();
-        trackingState = swrveSpy.trackingState;
-        assertTrue(trackingState == ON);
+        trackingState = swrveSpy.profileManager.getTrackingState();;
+        assertTrue(trackingState == STARTED);
     }
 
     @Test
@@ -388,7 +392,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         assertEquals(swrveSpy.pausedEvents.size(), 0);
 
         swrveSpy.pauseEventSending();
-        assertTrue(swrveSpy.trackingState == EVENT_SENDING_PAUSED);
+        assertTrue(swrveSpy.profileManager.getTrackingState() == EVENT_SENDING_PAUSED);
 
         SwrveSDK.event("someEvent");
         SwrveSDK.event("anotherEvent", new HashMap<>());
@@ -466,12 +470,12 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     public void testSwitchUserDiffUserId() {
 
         reset(swrveSpy); // reset the setup init calls on swrveSpy so the times() test can be done below
-        swrveSpy.trackingState = EVENT_SENDING_PAUSED;
-        assertEquals("Setup of this test will be that event sending is paused.", EVENT_SENDING_PAUSED, swrveSpy.trackingState);
+        swrveSpy.profileManager.setTrackingState(EVENT_SENDING_PAUSED);
+        assertEquals("Setup of this test will be that event sending is paused.", EVENT_SENDING_PAUSED, swrveSpy.profileManager.getTrackingState());
 
         swrveSpy.switchUser("some_diff_userId"); // call switchuser with the diff userId
 
-        assertEquals("switchUser should always enable event sending.", ON, swrveSpy.trackingState);
+        assertEquals("switchUser should always enable event sending.", STARTED, swrveSpy.profileManager.getTrackingState());
         Mockito.verify(swrveSpy, times(1)).clearAllAuthenticatedNotifications();
         Mockito.verify(swrveSpy, times(1)).init(any(Activity.class));
         Mockito.verify(swrveSpy, times(1)).queuePausedEvents();
@@ -483,12 +487,13 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         reset(swrveSpy); // reset the setup init calls on swrveSpy so the never() test can be done below
 
         final String currentUserId = swrveSpy.getUserId();
-        swrveSpy.trackingState = EVENT_SENDING_PAUSED;
-        assertEquals("Setup of this test will be that event sending is paused.", EVENT_SENDING_PAUSED, swrveSpy.trackingState);
+        swrveSpy.profileManager.setTrackingState(EVENT_SENDING_PAUSED);
+        assertEquals("Setup of this test will be that event sending is paused.", EVENT_SENDING_PAUSED, swrveSpy.profileManager.getTrackingState());
+        swrveSpy.profileManager.setTrackingState(STARTED);
 
         swrveSpy.switchUser(currentUserId); // call switchuser with the current userId (simulates identify twice in a row with same userId)
 
-        assertEquals("switchUser should always enable event sending.", ON, swrveSpy.trackingState);
+        assertEquals("switchUser should always enable event sending.", STARTED, swrveSpy.profileManager.getTrackingState());
         Mockito.verify(swrveSpy, never()).clearAllAuthenticatedNotifications();
         Mockito.verify(swrveSpy, never()).init(any(Activity.class));
         Mockito.verify(swrveSpy, times(1)).queuePausedEvents();

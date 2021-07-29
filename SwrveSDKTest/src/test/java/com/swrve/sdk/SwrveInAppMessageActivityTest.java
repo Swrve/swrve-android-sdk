@@ -99,7 +99,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testBuildLayoutCreationWithPersonalisation() throws Exception {
+    public void testBuildLayoutCreationWithPersonalization() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
         SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("show.personalized", new HashMap<>(), SwrveOrientation.Both);
@@ -108,13 +108,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         SwrveInAppMessageActivity activity = Robolectric.buildActivity(SwrveInAppMessageActivity.class).create().get();
 
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "shows up");
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "shows up");
 
-        SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, new SwrveInAppMessageConfig.Builder().build(), personalisation);
+        SwrveMessageView view = new SwrveMessageView(activity, message, message.getFormats().get(0), 1, new SwrveInAppMessageConfig.Builder().build(), personalization);
         assertNotNull(view);
         assertEquals(4, view.getChildCount());
-        assertEquals(2, getPersonalizedButtonCount(view)); // personalisation gets counted as buttons
+        assertEquals(2, getPersonalizedButtonCount(view)); // personalization gets counted as buttons
         assertEquals(1, getImageCount(view));
     }
 
@@ -180,22 +180,22 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testConfigurationOfButtonFocusClickAndPersonalisationOptions() throws Exception {
+    public void testConfigurationOfButtonFocusClickAndPersonalizationOptions() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
                 .focusColor(Color.BLUE)
                 .clickColor(Color.GREEN)
-                .personalisedTextBackgroundColor(Color.RED)
-                .personalisedTextForegroundColor(Color.YELLOW)
-                .personalisedTextTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
+                .personalizedTextBackgroundColor(Color.RED)
+                .personalizedTextForegroundColor(Color.YELLOW)
+                .personalizedTextTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
         // Trigger IAM
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "test_coupon");
-        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalisation);
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "test_coupon");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalization);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalization);
 
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
@@ -216,9 +216,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals("Button test_coupon", swrveButtonView.getText());
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
         assertEquals(Color.BLUE, swrveButtonView.focusColor);
-        assertEquals(Color.RED, swrveButtonView.inAppConfig.getPersonalisedTextBackgroundColor());
-        assertEquals(Color.YELLOW, swrveButtonView.inAppConfig.getPersonalisedTextForegroundColor());
-        assertNotNull("Typeface should be set", swrveButtonView.inAppConfig.getPersonalisedTextTypeface());
+        assertEquals(Color.RED, swrveButtonView.inAppConfig.getPersonalizedTextBackgroundColor());
+        assertEquals(Color.YELLOW, swrveButtonView.inAppConfig.getPersonalizedTextForegroundColor());
+        assertNotNull("Typeface should be set", swrveButtonView.inAppConfig.getPersonalizedTextTypeface());
 
         // Assert button to clipboard
         assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
@@ -234,23 +234,58 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testCustomButtonActionPersonalisation() throws Exception {
+    public void testCustomButtonActionPersonalization() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
                 .focusColor(Color.BLUE)
                 .clickColor(Color.GREEN)
-                .personalisedTextBackgroundColor(Color.RED)
-                .personalisedTextForegroundColor(Color.YELLOW)
-                .personalisedTextTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
+                .personalizedTextBackgroundColor(Color.RED)
+                .personalizedTextForegroundColor(Color.YELLOW)
+                .personalizedTextTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
         // Trigger IAM
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "test_coupon");
-        personalisation.put("test_deeplink", "user-name");
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "test_coupon");
+        personalization.put("test_deeplink", "user-name");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalization);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalization);
+
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+        assertTrue(view.getChildAt(4) instanceof SwrveButtonView);
+        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(4);
+
+        assertEquals("http://www.google.com?a=user-name", swrveButtonView.getAction());
+    }
+
+    @Test
+    public void testPersonalizationFromRealTimeUserProperties() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
+                .focusColor(Color.BLUE)
+                .clickColor(Color.GREEN)
+                .personalizedTextBackgroundColor(Color.RED)
+                .personalizedTextForegroundColor(Color.YELLOW)
+                .personalizedTextTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+
+        HashMap<String, String> rtups = new HashMap<>();
+        rtups.put("test_cp", "test_coupon");
+        rtups.put("test_deeplink", "user-name");
+        swrveSpy.realTimeUserProperties = rtups;
+
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_rtups_mc.json", "1111111111111111111111111");
+
+        // Trigger IAM
         List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalisation);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), null);
 
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
@@ -272,11 +307,11 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_image_mc.json", "1111111111111111111111111", personalAssetSha1);
 
         // Trigger IAM
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "shows up");
-        personalisation.put("test_image_key", "asset1");
-        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalisation);
-        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalisation);
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "shows up");
+        personalization.put("test_image_key", "asset1");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalization);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalization);
 
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
@@ -294,10 +329,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_image_mc.json", "1111111111111111111111111", personalAssetSha1);
 
         // retrieve the list with the correct personalization
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "shows up");
-        personalisation.put("test_image_key", "asset1");
-        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalisation);
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "shows up");
+        personalization.put("test_image_key", "asset1");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalization);
 
         // Attempt to Trigger the IAM without the wrong personalization
         HashMap<String, String> wrongPersonalization = new HashMap<>();
@@ -477,11 +512,11 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
         // Trigger IAM
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "test_coupon");
-        personalisation.put("test_1", "test_coupon_in_action");
-        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalisation);
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "test_coupon");
+        personalization.put("test_1", "test_coupon_in_action");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalization);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalization);
 
         Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = pair.second;
@@ -659,8 +694,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testPersonalisationProvider() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+    public void testPersonalizationProvider() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalizationProvider(eventPayload -> {
             if (eventPayload != null && !eventPayload.isEmpty()) {
                 Map values = Maps.newHashMap();
                 values.put("test_id", "Replaced " + eventPayload.get("payload1"));
@@ -695,16 +730,16 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
 
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns().size());
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns().size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait).size());
 
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "shows up");
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "shows up");
 
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns(personalisation).size());
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, personalisation).size());
-        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, personalisation).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(personalization).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, personalization).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, personalization).size());
 
         HashMap<String, String> other = new HashMap<>();
         other.put("other_value", "shows up");
@@ -724,13 +759,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait).size());
 
-        HashMap<String, String> personalisation = new HashMap<>();
-        personalisation.put("test_cp", "shows up");
-        personalisation.put("test_image_key", "asset1");
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "shows up");
+        personalization.put("test_image_key", "asset1");
 
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns(personalisation).size());
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, personalisation).size());
-        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, personalisation).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(personalization).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, personalization).size());
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, personalization).size());
 
         HashMap<String, String> other = new HashMap<>();
         other.put("test_cp", "shows up");
@@ -741,7 +776,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testDynamicImageWithPersonalizationProvider() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalizationProvider(eventPayload -> {
             Map values = Maps.newHashMap();
             values.put("test_key_with_fallback", "asset1");
             values.put("test_key_no_fallback", "asset2");
@@ -793,7 +828,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testDynamicImageWithPersonalizationProviderImageFallback() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalizationProvider(eventPayload -> {
             Map values = Maps.newHashMap();
             // have no value for test_key_with_fallback
             values.put("test_key_no_fallback", "asset2");
@@ -842,7 +877,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testDynamicImageWithPersonalizationProviderImageMissingAssetFallback() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalizationProvider(eventPayload -> {
             Map values = Maps.newHashMap();
             values.put("test_key_with_fallback", "asset1");
             values.put("test_key_no_fallback", "asset2");

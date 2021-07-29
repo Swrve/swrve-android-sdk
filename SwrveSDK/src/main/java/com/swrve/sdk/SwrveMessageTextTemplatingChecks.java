@@ -9,7 +9,7 @@ import com.swrve.sdk.messaging.SwrveMessageFormat;
 
 import java.util.Map;
 
-// Check the validity of all message formats with the given personalisation before displaying the message.
+// Check the validity of all message formats with the given personalization before displaying the message.
 class SwrveMessageTextTemplatingChecks {
 
     public static boolean checkTextTemplating(SwrveMessage message, Map<String, String> properties) {
@@ -24,7 +24,7 @@ class SwrveMessageTextTemplatingChecks {
                             SwrveLogger.i("Text template could not be resolved: " + imageText + " in given properties.");
                             return false;
                         } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                            SwrveLogger.i("Not showing campaign with personalisation outside of Message Center / without personalisation info provided.");
+                            SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
                             return false;
                         }
                     }
@@ -39,7 +39,7 @@ class SwrveMessageTextTemplatingChecks {
                             SwrveLogger.i("Text template could not be resolved: " + buttonText + " in given properties.");
                             return false;
                         } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                            SwrveLogger.i("Not showing campaign with personalisation outside of Message Center / without personalisation info provided.");
+                            SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
                             return false;
                         }
                     }
@@ -52,14 +52,14 @@ class SwrveMessageTextTemplatingChecks {
                             SwrveLogger.i("Button action template could not be resolved: " + button.getAction() + " in given properties.");
                             return false;
                         } else if (SwrveTextTemplating.hasPatternMatch(personalizedButtonAction)) {
-                            SwrveLogger.i("Not showing campaign with personalisation outside of Message Center / without personalisation info provided.");
+                            SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
                             return false;
                         }
                     }
                 }
             }
         } catch(SwrveSDKTextTemplatingException exp) {
-            SwrveLogger.e("Not showing campaign, error with personalisation", exp);
+            SwrveLogger.e("Not showing campaign, error with personalization", exp);
             return false;
         }
         return true;
@@ -77,7 +77,7 @@ class SwrveMessageTextTemplatingChecks {
                             SwrveLogger.i(" Dynamic image url text template could not be resolved: " + imageUrl + " in given properties.");
                             return false;
                         } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                            SwrveLogger.i("Not showing personalized image / without personalisation info provided.");
+                            SwrveLogger.i("Not showing personalized image / without personalization info provided.");
                             return false;
                         }
                     }
@@ -92,14 +92,14 @@ class SwrveMessageTextTemplatingChecks {
                             SwrveLogger.i("Dynamic button image url text template could not be resolved: " + buttonImageUrl + " in given properties.");
                             return false;
                         } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                            SwrveLogger.i("Not showing personalized image / without personalisation info provided.");
+                            SwrveLogger.i("Not showing personalized image / without personalization info provided.");
                             return false;
                         }
                     }
                 }
             }
         } catch(SwrveSDKTextTemplatingException exp) {
-            SwrveLogger.e("Not showing campaign, error with personalisation", exp);
+            SwrveLogger.e("Not showing campaign, error with personalization", exp);
             return false;
         }
         return true;

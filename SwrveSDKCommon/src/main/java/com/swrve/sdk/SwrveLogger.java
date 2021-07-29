@@ -2,8 +2,6 @@ package com.swrve.sdk;
 
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.Iterator;
 
 import timber.log.Timber;
@@ -15,7 +13,6 @@ public class SwrveLogger {
 
     public static final String LOG_TAG = "SwrveSDK";
 
-    private static final int LOG_LEVEL_DEFAULT = Log.WARN;
     private static int logLevel = -1;
     private static boolean enabled = true;
     private static Timber.Tree swrveLoggerTree;
@@ -187,47 +184,23 @@ public class SwrveLogger {
     }
 
     protected static int getLogLevelFromSystemProps() {
-        int logLevel = LOG_LEVEL_DEFAULT;
+        int logLevel = Log.INFO; // this is the default defined by Log.isLoggable
 
-        // Do not get log level for old Android OS versions as it might cause a freeze, leave default
-        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-          return logLevel;
+        if (Log.isLoggable(LOG_TAG, Log.VERBOSE)) {
+            logLevel = Log.VERBOSE;
+        } else if (Log.isLoggable(LOG_TAG, Log.DEBUG)) {
+            logLevel = Log.DEBUG;
+        } else if (Log.isLoggable(LOG_TAG, Log.INFO)) {
+            logLevel = Log.INFO;
+        } else if (Log.isLoggable(LOG_TAG, Log.WARN)) {
+            logLevel = Log.WARN;
+        } else if (Log.isLoggable(LOG_TAG, Log.ERROR)) {
+            logLevel = Log.ERROR;
+        } else if (Log.isLoggable(LOG_TAG, Log.ASSERT)) {
+            logLevel = Log.ASSERT;
         }
 
-        String systemProp = getSystemProp("log.tag." + LOG_TAG);
-        if (SwrveHelper.isNotNullOrEmpty(systemProp)) {
-            try {
-                logLevel = Integer.valueOf(systemProp);
-            } catch (Exception ex) {
-                // using Android Log here instead of SwrveLogger
-                Log.e(LOG_TAG, "Found SwrveLogger system loglevel prop but failed to read it. systemProp:" + systemProp, ex);
-            }
-        }
         return logLevel;
-    }
-
-    /*
-     * Note this is reading the native System Properties and not the java System properties.
-     * Hence it doesn't use System.getProperty.
-     */
-    private static String getSystemProp(String propName) {
-        String propValue = null;
-        InputStreamReader inputStreamReader = null;
-        BufferedReader bufferedReader = null;
-        try {
-            String command = "/system/bin/getprop";
-            Process process = Runtime.getRuntime().exec(new String[]{command, propName});
-            inputStreamReader = new InputStreamReader(process.getInputStream());
-            bufferedReader = new BufferedReader(inputStreamReader);
-            propValue = bufferedReader.readLine();
-        } catch (Exception e) {
-            // using Android Log here instead of SwrveLogger
-            Log.w(LOG_TAG, "Failure to read prop:" + propName + ". Using Swrve default log level:" + LOG_LEVEL_DEFAULT);
-        } finally {
-            if (inputStreamReader != null) try { inputStreamReader.close(); } catch (Exception ex) { }
-            if (bufferedReader != null) try { bufferedReader.close(); } catch (Exception ex) { }
-        }
-        return propValue;
     }
 
     protected static class SwrveLoggerTree extends Timber.DebugTree {

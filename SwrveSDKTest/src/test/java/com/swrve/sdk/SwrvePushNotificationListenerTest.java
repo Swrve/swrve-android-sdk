@@ -6,7 +6,6 @@ import android.os.Bundle;
 import androidx.test.core.app.ApplicationProvider;
 
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,14 +26,10 @@ public class SwrvePushNotificationListenerTest extends SwrveBaseTest {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        SwrveTestUtils.disableSwrveBackgroundEventSender(swrveSpy);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveCommon.setSwrveCommon(swrveSpy);
         swrveSpy.init(mActivity);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        swrveSpy.shutdown();
-        SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
     @Test

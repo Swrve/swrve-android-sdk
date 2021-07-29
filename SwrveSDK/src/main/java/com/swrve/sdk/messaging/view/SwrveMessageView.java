@@ -49,10 +49,10 @@ public class SwrveMessageView extends RelativeLayout {
     // In App Config
     protected SwrveInAppMessageConfig inAppConfig;
 
-    protected Map<String, String> inAppPersonalisation;
+    protected Map<String, String> inAppPersonalization;
 
     public SwrveMessageView(SwrveInAppMessageActivity activity, SwrveMessage message,
-                            SwrveMessageFormat format, int minSampleSize, SwrveInAppMessageConfig inAppConfig, Map<String, String> inAppPersonalisation) throws SwrveMessageViewBuildException {
+                            SwrveMessageFormat format, int minSampleSize, SwrveInAppMessageConfig inAppConfig, Map<String, String> inAppPersonalization) throws SwrveMessageViewBuildException {
         super(activity);
         this.activity = activity;
         this.format = format;
@@ -61,12 +61,12 @@ public class SwrveMessageView extends RelativeLayout {
             this.minSampleSize = minSampleSize;
         }
 
-        this.inAppPersonalisation = inAppPersonalisation;
+        this.inAppPersonalization = inAppPersonalization;
         this.inAppConfig = inAppConfig;
         initializeLayout(activity, message, format);
     }
 
-    // Personalisation is guarded by SwrveMessageTextTemplatingChecks
+    // Personalization is guarded by SwrveMessageTextTemplatingChecks
     protected void initializeLayout(final Context context, final SwrveMessage message, final SwrveMessageFormat format) throws SwrveMessageViewBuildException {
         List<String> loadErrorReasons = new ArrayList<>();
         try {
@@ -118,7 +118,7 @@ public class SwrveMessageView extends RelativeLayout {
                         imageView.setImageBitmap(backgroundImage.getBitmap());
                     } else {
                         // Need to render dynamic text
-                        String personalizedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalisation);
+                        String personalizedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalization);
                         // Add a default dismiss action although it won't be clickable as we set no setOnClickListener
                         imageView = new SwrvePersonalizedTextView(context, SwrveActionType.Dismiss, inAppConfig, personalizedText,
                                 backgroundImage.getWidth(), backgroundImage.getHeight(), null);
@@ -175,7 +175,7 @@ public class SwrveMessageView extends RelativeLayout {
                     // Resolve templating in the button action
                     String personalizedButtonAction = button.getAction();
                     if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(personalizedButtonAction)) {
-                        personalizedButtonAction = SwrveTextTemplating.apply(personalizedButtonAction, this.inAppPersonalisation);
+                        personalizedButtonAction = SwrveTextTemplating.apply(personalizedButtonAction, this.inAppPersonalization);
                     }
 
                     String buttonText = button.getText();
@@ -185,7 +185,7 @@ public class SwrveMessageView extends RelativeLayout {
                         _buttonView.setImageBitmap(backgroundImage.getBitmap());
                     } else {
                         // Need to render dynamic text
-                        String personalizedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalisation);
+                        String personalizedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalization);
                         _buttonView = new SwrvePersonalizedTextView(context, button.getActionType(), inAppConfig, personalizedText,
                                 backgroundImage.getWidth(), backgroundImage.getHeight(), personalizedButtonAction);
                         _buttonView.setFocusable(true);
@@ -278,7 +278,7 @@ public class SwrveMessageView extends RelativeLayout {
         }
 
         try {
-            String personalizedUrl = SwrveTextTemplating.apply(url, this.inAppPersonalisation);
+            String personalizedUrl = SwrveTextTemplating.apply(url, this.inAppPersonalization);
             if (SwrveHelper.isNotNullOrEmpty(personalizedUrl)) {
                 // then there might be an asset saved, get the sha1 and check
                 String candidateAsset = SwrveHelper.sha1(personalizedUrl.getBytes());

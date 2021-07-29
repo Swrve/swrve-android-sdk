@@ -58,6 +58,7 @@ public class SwrvePushWorkerHelper {
     }
 
     public boolean handle() {
+        SwrveLogger.i("SwrveSDK: Attempt to handle push message via SwrvePushWorkerHelper.");
         boolean handled = false;
         try {
             if (isSwrvePush) {
@@ -66,6 +67,7 @@ public class SwrvePushWorkerHelper {
                         .build();
                 enqueueWorkRequest(context, workRequest);
                 handled = true;
+                SwrveLogger.i("SwrveSDK: Swrve push worker queued with data via SwrvePushWorkerHelper.");
             } else {
                 SwrveLogger.i("SwrveSDK: Swrve will not handle this push because it is not a swrve push.");
             }

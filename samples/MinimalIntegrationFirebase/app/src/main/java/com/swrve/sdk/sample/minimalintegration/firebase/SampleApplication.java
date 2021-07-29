@@ -8,7 +8,6 @@ import android.content.Context;
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.sample.minimalintegration.firebase.R;
 
 public class SampleApplication extends Application {
 

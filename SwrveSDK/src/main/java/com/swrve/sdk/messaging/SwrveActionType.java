@@ -11,7 +11,9 @@ public enum SwrveActionType {
     // Go to the url specified in the action string
     Install,
     // Copy the contents of the action string associated to clipboard
-    CopyToClipboard;
+    CopyToClipboard,
+    // Request capability
+    RequestCapabilty;
 
     /**
      * Convert from string to SwrveActionType.
@@ -28,6 +30,8 @@ public enum SwrveActionType {
             return Dismiss;
         } else if (type.equalsIgnoreCase("copy_to_clipboard")){
             return CopyToClipboard;
+        } else if (type.equalsIgnoreCase("request_capability")){
+            return RequestCapabilty;
         }
         return Custom;
     }

@@ -31,8 +31,22 @@ public class SwrveRealTimeUserPropertiesTest extends SwrveBaseTest {
         SwrveTestUtils.removeSwrveSDKSingletonInstance();
     }
 
+    @Test
+    public void testRealTimeUserProperties() {
+        String campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "real_time_user_properties_test.json");
+        SwrveTestUtils.runSingleThreaded(swrveSpy); // need to run it single threaded because setting the value is a multi-threaded procedure
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+
+        swrveSpy.init(mActivity);
+        Mockito.reset(swrveSpy);
+
+        Assert.assertNotNull(swrveSpy.realTimeUserProperties);
+        Assert.assertTrue("property key should be present", swrveSpy.realTimeUserProperties.containsKey("test_id"));
+        Assert.assertEquals("test_value", swrveSpy.realTimeUserProperties.get("test_id"));
+    }
+
     @Test(timeout = 5000)
-    public void testRealTimeUserProperties() throws Exception {
+    public void testRealTimeUserPropertiesGetterFromCache() throws Exception {
         String campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "real_time_user_properties_test.json");
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
 
@@ -42,7 +56,7 @@ public class SwrveRealTimeUserPropertiesTest extends SwrveBaseTest {
         swrveSpy.getRealTimeUserProperties(new SwrveRealTimeUserPropertiesListener() {
             @Override
             public void onRealTimeUserPropertiesSuccess(Map<String, String> properties, String propertiesAsJSON) {
-                Assert.assertTrue("property key should be present" , properties.containsKey("test_id"));
+                Assert.assertTrue("property key should be present", properties.containsKey("test_id"));
                 Assert.assertEquals("{\"test_id\": \"test_value\"}", propertiesAsJSON);
                 Assert.assertEquals("test_value", properties.get("test_id"));
             }

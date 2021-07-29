@@ -16,11 +16,11 @@ public interface SwrveMessageListener {
     void onMessage(SwrveMessage message);
 
     /**
-     * This method is invoked when a message with additional personalisation should be shown
+     * This method is invoked when a message with additional personalization should be shown
      * in your app. Only available with IAMs
      *
      * @param message   message to be shown.
-     * @param properties additional properties included for personalisation options.
+     * @param properties additional properties included for personalization options.
      */
     void onMessage(SwrveMessage message, Map<String, String> properties);
 }

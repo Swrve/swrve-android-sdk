@@ -72,7 +72,8 @@ public class SwrveEventListener implements ISwrveEventListener {
                     } else if (message instanceof SwrveEmbeddedMessage) {
 
                         if (embeddedMessageListener != null) {
-                            embeddedMessageListener.onMessage(ctx, (SwrveEmbeddedMessage) message);
+                            Map<String, String> personalizationProperties = sdkRef.retrievePersonalizationProperties(payload, null);
+                            embeddedMessageListener.onMessage(ctx, (SwrveEmbeddedMessage) message, personalizationProperties);
                         }
                     }
 

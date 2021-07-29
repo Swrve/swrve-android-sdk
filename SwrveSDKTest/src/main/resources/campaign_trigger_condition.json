@@ -34,7 +34,7 @@
         "conditions": {}
     }],
     "message_center": false,
-    "messages": [{
+    "message": {
         "id": 456,
         "template": {
             "formats": [{
@@ -100,6 +100,6 @@
             "orientations": "portrait"
         },
         "priority": 1
-    }],
+    },
     "subject": null
 }

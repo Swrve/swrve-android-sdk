@@ -14,6 +14,24 @@ abstract class SwrveWidget {
     // Size of the widget
     protected Point size;
 
+    // Personalized text (render this instead of the image)
+    protected String text;
+    // Dynamic Image Url
+    protected String dynamicImageUrl;
+
+    public SwrveWidget() {
+    }
+
+    public SwrveWidget(JSONObject buttonData) throws JSONException {
+        if (buttonData.has("dynamic_image_url")) {
+            setDynamicImageUrl(buttonData.getString("dynamic_image_url"));
+        }
+
+        if (buttonData.has("text")) {
+            setText(buttonData.getJSONObject("text").getString("value"));
+        }
+    }
+
     // Get size from the format data
     protected static Point getSizeFrom(JSONObject data) throws JSONException {
         return new Point(data.getJSONObject("w").getInt("value"), data.getJSONObject("h").getInt("value"));
@@ -44,5 +62,27 @@ abstract class SwrveWidget {
 
     protected void setSize(Point size) {
         this.size = size;
+    }
+
+    /**
+     * @return the cached path of the button dynamic image url.
+     */
+    public String getDynamicImageUrl() {
+        return dynamicImageUrl;
+    }
+
+    protected void setDynamicImageUrl(String dynamicImageUrl) {
+        this.dynamicImageUrl = dynamicImageUrl;
+    }
+
+    /**
+     * @return the button text to render.
+     */
+    public String getText() {
+        return text;
+    }
+
+    protected void setText(String text) {
+        this.text = text;
     }
 }

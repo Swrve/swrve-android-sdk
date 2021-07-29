@@ -1,0 +1,13 @@
+{
+  "user_resources": [
+    {
+      "uid": "item02",
+      "name": "item02 - DONT DELETE - DONT ABTEST",
+      "description": "Item 02",
+      "thumbnail": "",
+      "item_class": "item02",
+      "item02property01": "a"
+    }
+  ],
+  "real_time_user_properties": {"test_id": "test_value"}
+}

@@ -7,7 +7,6 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -59,6 +58,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void shutdown();
 
+    void stopTracking();
+
     void setLanguage(Locale locale);
 
     String getLanguage();
@@ -78,6 +79,10 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName);
 
     void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message);
+
+    String getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties);
+
+    String getPersonalizedText(String text, Map<String, String> personalizationProperties);
 
     String getAppStoreURLForApp(int appId);
 

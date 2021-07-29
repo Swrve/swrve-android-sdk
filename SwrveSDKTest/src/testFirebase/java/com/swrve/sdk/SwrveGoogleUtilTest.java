@@ -66,6 +66,8 @@ public class SwrveGoogleUtilTest extends SwrveBaseTest {
         doReturn(task).when(firebaseMessagingMock).getToken();
 
         googleUtilSpy.obtainRegistrationId(multiLayerLocalStorage, userId);
+
+        await().until(() -> googleUtilSpy.registrationId != null);
         assertEquals("some_reg_token_id", googleUtilSpy.registrationId);
     }
 

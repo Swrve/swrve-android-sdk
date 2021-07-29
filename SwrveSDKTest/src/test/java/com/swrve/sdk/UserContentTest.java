@@ -40,8 +40,8 @@ public class UserContentTest extends SwrveBaseTest {
                     Assert.assertEquals("apiKey", params.get("api_key"));
                     Assert.assertEquals(swrve.getUserId(), params.get("user"));
                     Assert.assertEquals("1", params.get("embedded_campaign_version"));
-                    Assert.assertEquals("8", params.get("version"));
-                    Assert.assertEquals("3", params.get("in_app_version"));
+                    Assert.assertEquals("9", params.get("version"));
+                    Assert.assertEquals("4", params.get("in_app_version"));
                     Assert.assertNotNull(params.get("device_name"));
                     Assert.assertNotNull(params.get("os_version"));
                     Assert.assertNotNull(params.get("app_store"));

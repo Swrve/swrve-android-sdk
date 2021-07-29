@@ -42,7 +42,7 @@
                 }]
             },
             "rules": {
-                "display_order": "robin",
+                "display_order": "random",
                 "dismiss_after_views": 1,
                 "delay_first_message": 0,
                 "min_delay_between_messages": 0
@@ -90,7 +90,7 @@
                 }]
             },
             "rules": {
-                "display_order": "robin",
+                "display_order": "random",
                 "dismiss_after_views": 1,
                 "delay_first_message": 0,
                 "min_delay_between_messages": 0
@@ -138,7 +138,7 @@
                 }]
             },
             "rules": {
-                "display_order": "robin",
+                "display_order": "random",
                 "dismiss_after_views": 1,
                 "delay_first_message": 0,
                 "min_delay_between_messages": 0
@@ -153,7 +153,7 @@
                 "event_name": "Swrve.buy_in",
                 "conditions": {}
             }],
-            "messages": [
+            "message":
                 {
                     "template": {
                         "template_id": "20",
@@ -181,10 +181,9 @@
                     "name": "Message One",
                     "rules": {},
                     "priority": 1
-                }
-            ],
+                },
             "rules": {
-                "display_order": "robin",
+                "display_order": "random",
                 "dismiss_after_views": 1,
                 "delay_first_message": 0,
                 "min_delay_between_messages": 0

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -329,6 +328,14 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Stop the SDK from tracking. The sdk will remain stopped until a start api is called.
+     */
+    public static void stopTracking() {
+        checkInstanceCreated();
+        instance.stopTracking();
+    }
+
+    /**
      * Set the current language
      *
      * @param locale Language locale to use.
@@ -427,7 +434,7 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Inform that am embedded message has been served and processed. This function should be called
+     * Inform that an embedded message has been served and processed. This function should be called
      * by your implementation to update the campaign information and send the appropriate data to
      * Swrve.
      *
@@ -436,6 +443,32 @@ public abstract class SwrveSDKBase {
     public static void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
         checkInstanceCreated();
         instance.embeddedMessageWasShownToUser(message);
+    }
+
+    /**
+     * Get the personalized data string from a SwrveEmbeddedMessage campaign with a map of custom
+     * personalization properties.
+     *
+     * @param message Embedded message campaign to personalize
+     * @param personalizationProperties Custom properties which are used for personalization.
+     * @return The data string with personalization properties applied. Null is returned if personalization fails with the custom properties passed in.
+     */
+    public static String getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
+        checkInstanceCreated();
+        return instance.getPersonalizedEmbeddedMessageData(message, personalizationProperties);
+    }
+
+    /**
+     * Get the personalized data string from a piece of text with a map of custom personalization
+     * properties.
+     *
+     * @param text String value which will be personalized
+     * @param personalizationProperties Custom properties which are used for personalization.
+     * @return The data string with personalization properties applied. Null is returned if personalization fails with the custom properties passed in.
+     */
+    public static String getPersonalizedText(String text, Map<String, String> personalizationProperties) {
+        checkInstanceCreated();
+        return instance.getPersonalizedText(text, personalizationProperties);
     }
 
     /**
@@ -452,7 +485,7 @@ public abstract class SwrveSDKBase {
     /**
      * Get location of the chosen cache folder where the resources will be  downloaded.
      *
-     * @return File path to the choosen cache folder
+     * @return File path to the chosen cache folder
      */
     public static File getCacheDir() {
         checkInstanceCreated();
@@ -515,7 +548,7 @@ public abstract class SwrveSDKBase {
      * To obtain all MessageCenter campaigns independent of their orientation support
      * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
      *
-     * @param properties additional properties which can be used for IAM personalisation.
+     * @param properties additional properties which can be used for IAM personalization.
      * @return list of active MessageCenter campaigns.
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
@@ -529,7 +562,7 @@ public abstract class SwrveSDKBase {
      * removeMessageCenterCampaign method and those that do not support the given orientation.
      *
      * @param orientation Orientation which the messages have to support
-     * @param properties additional properties which can be used for IAM personalisation.
+     * @param properties additional properties which can be used for IAM personalization.
      * @return list of active MessageCenter campaigns.
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
@@ -554,7 +587,7 @@ public abstract class SwrveSDKBase {
      * the configured rules.
      *
      * @param campaign The campaign
-     * @param properties additional properties which can be used for IAM personalisation.
+     * @param properties additional properties which can be used for IAM personalization.
      * @return true if the campaign was displayed.
      */
     public static boolean showMessageCenterCampaign(SwrveBaseCampaign campaign, Map<String, String> properties) {
@@ -620,9 +653,8 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Start the sdk when in SwrveInitMode.MANAGED mode.
+     * Start the sdk if stopped or in SwrveInitMode.MANAGED mode.
      * Tracking will begin using the last user or an auto generated userId if the first time the sdk is started.
-     * Throws RunTimeException if called in SwrveInitMode.AUTO mode.
      *
      * @param activity Activity where the session was started.
      */
@@ -648,9 +680,9 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Check if the SDK has been started.
+     * Check if the SDK is started and currently tracking.
      *
-     * @return true when in SwrveInitMode.AUTO mode. When in SwrveInitMode.MANAGED mode it will return true after one of the 'start' api's has been called.
+     * @return true if sdk is not waiting to be started and hasn't been stopped using the stopTracking api.
      */
     public static boolean isStarted() {
         checkInstanceCreated();

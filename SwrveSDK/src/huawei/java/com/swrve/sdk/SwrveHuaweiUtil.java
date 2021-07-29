@@ -6,7 +6,6 @@ import com.huawei.agconnect.config.AGConnectServicesConfig;
 import com.huawei.hms.aaid.HmsInstanceId;
 
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
-import static com.swrve.sdk.ISwrveCommon.CACHE_DEVICE_PROP_KEY;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.huawei.hms.push.HmsMessaging.DEFAULT_TOKEN_SCOPE;
+import static com.swrve.sdk.ISwrveCommon.CACHE_DEVICE_PROP_KEY;
 
 class SwrveHuaweiUtil implements SwrvePlatformUtil {
 

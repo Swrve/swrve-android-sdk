@@ -42,9 +42,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -66,7 +68,9 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         super.setUp();
         swrveSpy = SwrveTestUtils.createSpyInstance();
         SwrveTestUtils.disableRestClientExecutor(swrveSpy);
-        swrveSpy.init(mActivity);
+        swrveSpy.profileManager.setTrackingState(STARTED);
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
     }
 
     @Test
@@ -156,7 +160,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveConfig config = new SwrveConfig();
 
         SwrveInAppMessageConfig inAppConfig = new SwrveInAppMessageConfig.Builder()
-                .personalisationProvider(eventPayload -> {
+                .personalizationProvider(eventPayload -> {
                     Map<String, String> result = new HashMap<>();
                     result.put("test_key_two", "asset2"); // resolve one by personalization
                     return result;
@@ -210,10 +214,11 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
         HashSet<SwrveAssetsQueueItem> assetsQueueItemHashSet = (HashSet<SwrveAssetsQueueItem>) setArgumentCaptor.getValue();
         assertEquals(4, assetsQueueItemHashSet.size()); // all of the fallback assets are the same. the only new assets are dynamic urls, one should not be present as it fails personalization
-        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem(SwrveHelper.sha1("https://fakeitem/asset1.png".getBytes()), "https://fakeitem/asset1.png", true, true)));
-        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem(SwrveHelper.sha1("https://fakeitem/asset2.png".getBytes()), "https://fakeitem/asset2.png", true, true)));
-        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem(SwrveHelper.sha1("https://fakeitem/asset3.png".getBytes()), "https://fakeitem/asset3.png", true, true)));
-        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem("8721fd4e657980a5e12d498e73aed6e6a565dfca", "8721fd4e657980a5e12d498e73aed6e6a565dfca", true, false)));
+        int randomInt = new Random().nextInt(1000); // random int verifies the set.contains is based off of name/digest/isImage properties only, and campaignId is not used.
+        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem(randomInt, SwrveHelper.sha1("https://fakeitem/asset1.png".getBytes()), "https://fakeitem/asset1.png", true, true)));
+        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem(randomInt, SwrveHelper.sha1("https://fakeitem/asset2.png".getBytes()), "https://fakeitem/asset2.png", true, true)));
+        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem(randomInt, SwrveHelper.sha1("https://fakeitem/asset3.png".getBytes()), "https://fakeitem/asset3.png", true, true)));
+        assertTrue(assetsQueueItemHashSet.contains(new SwrveAssetsQueueItem(randomInt, "8721fd4e657980a5e12d498e73aed6e6a565dfca", "8721fd4e657980a5e12d498e73aed6e6a565dfca", true, false)));
     }
 
     @Test
@@ -365,45 +370,6 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testGetMessageWithRoundRobin() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_robin.json");
-        for (int i = 1; i < 6; i++) {
-            SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
-            assertNotNull(message);
-            assertEquals(i, message.getId());
-            swrveSpy.messageWasShownToUser(message.getFormats().get(0));
-        }
-    }
-
-    @Test
-    public void testGetMessageWithRandom() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_random.json");
-        int hits = 0;
-        int sameMessage = 0;
-        int messageIndex = 1;
-        int previousIndex = 0;
-        Date date = new Date(System.currentTimeMillis());
-        for (int i = 1; i < 60; i++) {
-            date = new Date(date.getTime() + 60000l);
-            doReturn(date).when(swrveSpy).getNow();
-            SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
-            assertNotNull(message);
-            if (message.getCampaign().getMessages().size() != 1 && message.getId() == previousIndex) {
-                sameMessage++;
-            }
-            if (message.getId() == messageIndex) {
-                hits++;
-            }
-            messageIndex++;
-            previousIndex = message.getId();
-            swrveSpy.messageWasShownToUser(message.getFormats().get(0));
-        }
-
-        assertFalse("Message order should be random, we have shown the messages in order", hits == 59);
-        assertFalse("Message order should be random, we have shown the same message each time", sameMessage == 58); // We have shown the same message 60 times
-    }
-
-    @Test
     public void testMessagePriority() throws Exception {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_priority_2.json");
         // Highest priority first
@@ -412,22 +378,12 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         assertEquals(1, message1.getId());
         swrveSpy.messageWasShownToUser(message1.getFormats().get(0));
 
-        // Second highest priority (first in round robin)
+        // Second highest priority
         SwrveMessage message2 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
         assertNotNull(message2);
         assertEquals(2, message2.getId());
         swrveSpy.messageWasShownToUser(message2.getFormats().get(0));
 
-        // Round robin later
-        SwrveMessage message3 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
-        assertNotNull(message3);
-        assertEquals(3, message3.getId());
-        swrveSpy.messageWasShownToUser(message2.getFormats().get(0));
-
-        // Round robin again
-        message2 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
-        assertNotNull(message2);
-        assertEquals(2, message2.getId());
     }
 
     @Test
@@ -436,22 +392,21 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         // We were not clearing the bucket of candidate messages, ever...
 
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_priority_reverse.json");
-        // Highest priority first (first in round robin)
+        // Highest priority first
         SwrveMessage message1 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
         assertNotNull(message1);
         assertEquals(2, message1.getId());
         swrveSpy.messageWasShownToUser(message1.getFormats().get(0));
 
-        // Round robin later
         SwrveMessage message2 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
         assertNotNull(message2);
-        assertEquals(3, message2.getId());
+        assertEquals(2, message2.getId());
         swrveSpy.messageWasShownToUser(message2.getFormats().get(0));
 
-        // Lowest priority (first message in JSON)
-        message2 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
-        assertNotNull(message2);
-        assertEquals(1, message2.getId());
+        SwrveMessage message3 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
+        assertNotNull(message3);
+        assertEquals(1, message3.getId());
+        swrveSpy.messageWasShownToUser(message3.getFormats().get(0));
     }
 
     @Test
@@ -521,7 +476,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testIAMMessageCenterWithPersonalisation() throws Exception {
+    public void testIAMMessageCenterWithPersonalization() throws Exception {
 
         Date futureDate = SwrveTestUtils.parseDate("2035/1/1 00:00");
         doReturn(futureDate).when(swrveSpy).getNow();
@@ -557,8 +512,8 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         assertNotNull(nextIntent);
 
         Bundle extras = nextIntent.getExtras();
-        HashMap<String, String> personalisationResponse = (HashMap<String, String>) extras.getSerializable(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY);
-        assertNotNull(personalisationResponse);
+        HashMap<String, String> personalizationResponse = (HashMap<String, String>) extras.getSerializable(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY);
+        assertNotNull(personalizationResponse);
         assertEquals("working", testProperties.get("test"));
 
         assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, SwrveInAppMessageActivity.class));
@@ -970,5 +925,12 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         assertEquals(1, swrveSpy.campaigns.size());
         message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNull(message);
+    }
+
+    @Test
+    public void testGetMessagesWithCapabilityButton() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_capabilities.json");
+        // there is 2 campaigns in test file, 1 has button request capability which should be filtered out.
+        assertEquals(1, swrveSpy.campaigns.size());
     }
 }

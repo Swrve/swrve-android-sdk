@@ -3,27 +3,30 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        jcenter()
         maven { url 'https://maven.google.com' }
         maven { url 'https://developer.huawei.com/repo/' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.2'
+        classpath 'com.android.tools.build:gradle:4.2.0'
         classpath 'com.google.gms:google-services:4.3.3'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath 'com.huawei.agconnect:agcp:1.4.2.301'
+        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.22.0"
     }
+}
+
+apply plugin: 'io.codearte.nexus-staging'
+nexusStaging {
+    packageGroup = project.SWRVE_GROUP_ID
+    stagingProfileId = System.getenv('SONATYPE_STAGING_ID')
+    username = System.getenv('SONATYPE_USER')
+    password = System.getenv('SONATYPE_PASSWORD')
 }
 
 allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter {
-            url  "https://dl.bintray.com/swrve-inc/android"
-        }
         maven { url "https://maven.google.com" }
-        jcenter()
         maven { url 'https://developer.huawei.com/repo/' }
     }
 

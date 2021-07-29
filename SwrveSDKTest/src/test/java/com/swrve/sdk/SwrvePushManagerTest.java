@@ -46,6 +46,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
@@ -56,6 +57,8 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
     private int dummyIconResource = 12345;
     private NotificationChannel dummyChannel = null;
     private ISwrveCommon swrveCommonSpy;
+    private Swrve swrveSpy;
+    private SwrvePushManagerImp pushManagerSpy;
 
     @Before
     public void setUp() throws Exception {
@@ -234,78 +237,61 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
     @Test
     public void testNotificationAuthenticatedSavedToDB() throws Exception {
 
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel);
-        SwrveConfig config = new SwrveConfig();
-        config.setNotificationConfig(notificationConfig.build());
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
-        Swrve swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveCommon.setSwrveCommon(swrveSpy);
-
+        createSwrveSpy();
         assertNumberOfNotification(0);
 
-        Bundle bundleWithAUI = new Bundle();
-        bundleWithAUI.putString(SwrveNotificationConstants.SWRVE_AUTH_USER_KEY, SwrveSDK.getUserId());
-        bundleWithAUI.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
-        String json = "{\n" +
-                "\"notification_id\": 123,\n" +
-                "\"title\": \"title\",\n" +
-                "\"subtitle\": \"subtitle\",\n" +
-                "\"version\": 1,\n" +
-                "\"expanded\": {" +
-                "\"title\": \"expanded title\",\n" +
-                "\"body\": \"expanded body\"}" +
-                "}";
-        bundleWithAUI.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
-        bundleWithAUI.putString(SwrveNotificationConstants.TEXT_KEY, "plain text");
-        bundleWithAUI.putString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "{ 'customKey': 'customValues' }");
-        bundleWithAUI.putString("sound", "default");
+        // send authenticated message which should display notification and save it
+        sendMessage(true);
 
-        SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
-        doReturn(Mockito.mock(CampaignDeliveryManager.class)).when(pushManagerSpy).getCampaignDeliveryManager();
-        pushManagerSpy.processMessage(bundleWithAUI);
-
+        assertSendPushDeliveredEvent(true, "");
+        verify(pushManagerSpy, times(1)).processNotification(any(Bundle.class), anyString());
         assertNumberOfNotification(1);
+        verify(swrveSpy).saveNotificationAuthenticated(123);
+    }
 
-        Mockito.verify(swrveSpy).saveNotificationAuthenticated(123);
+    @Test
+    public void testNotificationAuthenticatedTrackingStateStopped() throws Exception {
+
+        createSwrveSpy();
+        assertNumberOfNotification(0);
+        SwrveSDK.stopTracking();
+
+        // send authenticated message in stopped state which should not display notification
+        sendMessage(true);
+
+        assertSendPushDeliveredEvent(false, "stopped");
+        verify(pushManagerSpy, never()).processNotification(any(Bundle.class), anyString());
+        assertNumberOfNotification(0);
+        verify(swrveSpy, never()).saveNotificationAuthenticated(anyInt());
+    }
+
+    @Test
+    public void testNotificationTrackingStateStopped() throws Exception {
+
+        createSwrveSpy();
+        assertNumberOfNotification(0);
+        SwrveSDK.stopTracking();
+
+        // send non authenticated message in stopped state which should display notification
+        sendMessage(false);
+
+        assertSendPushDeliveredEvent(true, "");
+        verify(pushManagerSpy, times(1)).processNotification(any(Bundle.class), anyString());
+        assertNumberOfNotification(1);
+        verify(swrveSpy, never()).saveNotificationAuthenticated(anyInt());
     }
 
     @Test
     public void testNonNotificationAuthenticatedNotSavedToDB() throws Exception {
 
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel);
-        SwrveConfig config = new SwrveConfig();
-        config.setNotificationConfig(notificationConfig.build());
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
-        Swrve swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveCommon.setSwrveCommon(swrveSpy);
-
+        createSwrveSpy();
         assertNumberOfNotification(0);
 
-        Bundle bundleWithoutAUI = new Bundle();
-        bundleWithoutAUI.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
-        String json = "{\n" +
-                "\"notification_id\": 123,\n" +
-                "\"title\": \"title\",\n" +
-                "\"subtitle\": \"subtitle\",\n" +
-                "\"version\": 1,\n" +
-                "\"expanded\": {" +
-                "\"title\": \"expanded title\",\n" +
-                "\"body\": \"expanded body\"}" +
-                "}";
-        bundleWithoutAUI.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
-        bundleWithoutAUI.putString(SwrveNotificationConstants.TEXT_KEY, "plain text");
-        bundleWithoutAUI.putString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "{ 'customKey': 'customValues' }");
-        bundleWithoutAUI.putString("sound", "default");
-
-        SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
-        doReturn(Mockito.mock(CampaignDeliveryManager.class)).when(pushManagerSpy).getCampaignDeliveryManager();
-        pushManagerSpy.processMessage(bundleWithoutAUI);
+        // send non authenticated message which should display notification
+        sendMessage(false);
 
         assertNumberOfNotification(1);
-
-        Mockito.verify(swrveSpy, never()).saveNotificationAuthenticated(anyInt());
+        verify(swrveSpy, never()).saveNotificationAuthenticated(anyInt());
     }
 
     @Test
@@ -512,7 +498,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSendPushDelivery() {
+    public void testSendPushDeliveryDisplayedTrue() {
         Bundle pushBundle = new Bundle();
         pushBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
         SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
@@ -520,7 +506,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.mock(CampaignDeliveryManager.class);
         doReturn(campaignDeliveryManagerSpy).when(pushManagerSpy).getCampaignDeliveryManager();
 
-        pushManagerSpy.sendPushDeliveredEvent(pushBundle);
+        pushManagerSpy.sendPushDeliveredEvent(pushBundle, true, "");
 
         // @formatter:off
         String expectedJson = "{" +
@@ -538,6 +524,46 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                             "\"campaignType\":\"push\"," +
                             "\"id\":\"123\"," +
                             "\"payload\":{" +
+                                "\"displayed\":\"true\"," +
+                                "\"silent\":\"false\"" +
+                            "}" +
+                        "}" +
+                    "]" +
+                "}";
+        // @formatter:on
+
+        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("some_endpoint/1/batch", expectedJson);
+    }
+
+    @Test
+    public void testSendPushDeliveryDisplayedFalse() {
+        Bundle pushBundle = new Bundle();
+        pushBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
+        SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
+        doReturn(9876l).when(pushManagerSpy).getTime();
+        CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.mock(CampaignDeliveryManager.class);
+        doReturn(campaignDeliveryManagerSpy).when(pushManagerSpy).getCampaignDeliveryManager();
+
+        pushManagerSpy.sendPushDeliveredEvent(pushBundle, false, "some_reason");
+
+        // @formatter:off
+        String expectedJson = "{" +
+                    "\"user\":\"testUserId\"," +
+                    "\"session_token\":\"some_session_key\"," +
+                    "\"version\":\"3\"," +
+                    "\"app_version\":\"some_app_version\"," +
+                    "\"unique_device_id\":\"some_device_id\"," +
+                    "\"data\":[" +
+                        "{" +
+                            "\"type\":\"generic_campaign_event\"," +
+                            "\"time\":9876," +
+                            "\"seqnum\":1," +
+                            "\"actionType\":\"delivered\"," +
+                            "\"campaignType\":\"push\"," +
+                            "\"id\":\"123\"," +
+                            "\"payload\":{" +
+                                "\"displayed\":\"false\"," +
+                                "\"reason\":\"some_reason\"," +
                                 "\"silent\":\"false\"" +
                             "}" +
                         "}" +
@@ -557,7 +583,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.mock(CampaignDeliveryManager.class);
         doReturn(campaignDeliveryManagerSpy).when(pushManagerSpy).getCampaignDeliveryManager();
 
-        pushManagerSpy.sendPushDeliveredEvent(pushBundle);
+        pushManagerSpy.sendPushDeliveredEvent(pushBundle, false, "");
 
         // @formatter:off
         String expectedJson = "{" +
@@ -575,6 +601,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                             "\"campaignType\":\"push\"," +
                             "\"id\":\"456\"," +
                             "\"payload\":{" +
+                                "\"displayed\":\"false\"," +
                                 "\"silent\":\"true\"" +
                             "}" +
                         "}" +
@@ -594,7 +621,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.spy(new CampaignDeliveryManager(mActivity));
         doReturn(campaignDeliveryManagerSpy).when(pushManagerSpy).getCampaignDeliveryManager();
 
-        pushManagerSpy.sendPushDeliveredEvent(pushBundle);
+        pushManagerSpy.sendPushDeliveredEvent(pushBundle, false, "some_reason");
 
         verify(campaignDeliveryManagerSpy, never()).sendCampaignDelivery(anyString(), anyString());
     }
@@ -649,5 +676,50 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SharedPreferences sharedPreferences = mActivity.getSharedPreferences(SwrveCampaignInfluence.INFLUENCED_PREFS, Context.MODE_PRIVATE);
         List<SwrveCampaignInfluence.InfluenceData> influenceData = new SwrveCampaignInfluence().getSavedInfluencedData(sharedPreferences);
         assertTrue(influenceData.size() == 1);
+    }
+
+    private void createSwrveSpy() throws Exception {
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(dummyIconResource, dummyIconResource, dummyChannel);
+        SwrveConfig config = new SwrveConfig();
+        config.setNotificationConfig(notificationConfig.build());
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
+        swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+        SwrveCommon.setSwrveCommon(swrveSpy);
+    }
+
+    private void sendMessage(boolean authenticated) {
+
+        Bundle bundle = new Bundle();
+        if (authenticated) {
+            bundle.putString(SwrveNotificationConstants.SWRVE_AUTH_USER_KEY, SwrveSDK.getUserId());
+        }
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        String json = "{\n" +
+                "\"notification_id\": 123,\n" +
+                "\"title\": \"title\",\n" +
+                "\"subtitle\": \"subtitle\",\n" +
+                "\"version\": 1,\n" +
+                "\"expanded\": {" +
+                "\"title\": \"expanded title\",\n" +
+                "\"body\": \"expanded body\"}" +
+                "}";
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "plain text");
+        bundle.putString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "{ 'customKey': 'customValues' }");
+        bundle.putString("sound", "default");
+
+        pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
+        doReturn(Mockito.mock(CampaignDeliveryManager.class)).when(pushManagerSpy).getCampaignDeliveryManager();
+        pushManagerSpy.processMessage(bundle);
+    }
+
+    private void assertSendPushDeliveredEvent(boolean displayed, String reason) {
+        ArgumentCaptor<Bundle> bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
+        ArgumentCaptor<Boolean> displayedCaptor = ArgumentCaptor.forClass(Boolean.class);
+        ArgumentCaptor<String> reasonCaptor = ArgumentCaptor.forClass(String.class);
+        verify(pushManagerSpy, times(1)).sendPushDeliveredEvent(bundleCaptor.capture(), displayedCaptor.capture(), reasonCaptor.capture());
+        assertEquals(displayed, displayedCaptor.getValue());
+        assertEquals(reason, reasonCaptor.getValue());
     }
 }

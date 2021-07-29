@@ -2,12 +2,14 @@ package com.swrve.sdk;
 
 public class SwrveAssetsQueueItem {
 
-    private String name;
-    private String digest;
-    private boolean isImage;
-    private boolean isExternalSource;
+    private final int campaignId;
+    private final String name;
+    private final String digest;
+    private final boolean isImage;
+    private final boolean isExternalSource;
 
-    public SwrveAssetsQueueItem(String name, String digest, boolean isImage, boolean isExternalSource) {
+    public SwrveAssetsQueueItem(int campaignId, String name, String digest, boolean isImage, boolean isExternalSource) {
+        this.campaignId = campaignId;
         this.name = name;
         this.digest = digest;
         this.isImage = isImage;
@@ -28,6 +30,10 @@ public class SwrveAssetsQueueItem {
 
     public boolean isExternalSource() {
         return isExternalSource;
+    }
+
+    public int getCampaignId() {
+        return campaignId;
     }
 
     // SwrveAssetsQueueItem used in a Set, so equals() and hashCode() are important
@@ -56,9 +62,11 @@ public class SwrveAssetsQueueItem {
     @Override
     public String toString() {
         return "SwrveAssetsQueueItem{" +
-                "name='" + name + '\'' +
+                "campaignId='" + campaignId + '\'' +
+                ", name='" + name + '\'' +
                 ", digest='" + digest + '\'' +
                 ", isImage=" + isImage +
+                ", isExternalSource=" + isExternalSource +
                 '}';
     }
 }

@@ -60,11 +60,8 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
         FirebaseMessaging firebaseMessaging = getFirebaseMessagingInstance();
         if (firebaseMessaging != null) {
             Task<String> task = firebaseMessaging.getToken();
-            task.addOnSuccessListener(newRegistrationId -> {
-                if (!SwrveHelper.isNullOrEmpty(newRegistrationId)) {
-                    saveAndSendRegistrationId(multiLayerLocalStorage, userId, newRegistrationId);
-                }
-            }).addOnFailureListener(e -> SwrveLogger.e("SwrveSDK Couldn't obtain the Firebase registration id for the device", e));
+            task.addOnSuccessListener(newRegistrationId -> registerForTokenOnSuccessListener(multiLayerLocalStorage, userId, newRegistrationId))
+                    .addOnFailureListener(e -> SwrveLogger.e("SwrveSDK Couldn't obtain the Firebase registration id for the device", e));
         }
     }
 
@@ -76,6 +73,19 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
             SwrveLogger.e("SwrveSDK cannot get instance of FirebaseMessaging and therefore cannot get token registration id.", e);
         }
         return firebaseInstanceId;
+    }
+
+    void registerForTokenOnSuccessListener(SwrveMultiLayerLocalStorage multiLayerLocalStorage, String userId, String newRegistrationId) {
+        if (!SwrveHelper.isNullOrEmpty(newRegistrationId)) {
+            // Execute off the main thread
+            final ExecutorService executorService = Executors.newSingleThreadExecutor();
+            try {
+                Runnable runnable = () -> saveAndSendRegistrationId(multiLayerLocalStorage, userId, newRegistrationId);
+                executorService.execute(runnable);
+            } finally {
+                executorService.shutdown();
+            }
+        }
     }
 
     String getRegistrationId(SwrveMultiLayerLocalStorage multiLayerLocalStorage, final String userId) {

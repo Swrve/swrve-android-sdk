@@ -1,8 +1,6 @@
 package com.swrve.sdk.sample;
 
 import android.app.Application;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.swrve.sdk.SwrveInitMode;
@@ -22,11 +20,10 @@ public class SampleApplication extends Application {
         try {
             SwrveConfig config = new SwrveConfig();
             // On MANAGED mode the SDK will be delayed until start() or start(userId) is called.
-            // On next application start the last user will be used to auto initialise the
-            // SDK.
+            // On next application start the last user will be used to auto initialise the SDK.
             //
             // If you want the SDK to always delay until you provide the current user you can call
-            // config.setManagedModeAutoStartLastUser(false);
+            // config.setAutoStartLastUser(false);
             // Note: with this flag to false push-to-in-app won't work.
             config.setInitMode(SwrveInitMode.MANAGED);
 

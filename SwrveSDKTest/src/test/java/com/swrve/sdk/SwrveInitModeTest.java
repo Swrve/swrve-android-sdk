@@ -19,11 +19,11 @@ import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.test.MainActivity;
 
 import org.json.JSONObject;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -33,9 +33,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.swrve.sdk.SwrveImp.SDK_PREFS_NAME;
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
 import static junit.framework.TestCase.assertTrue;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -45,6 +47,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -59,11 +62,6 @@ public class SwrveInitModeTest extends SwrveBaseTest {
             .activityClass(MainActivity.class)
             .build();
 
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-    }
-
     private void createSwrveSpy(SwrveConfig config) throws Exception {
         swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
@@ -72,6 +70,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         SwrveCommon.setSwrveCommon(swrveSpy);
         doReturn(true).when(swrveSpy).restClientExecutorExecute(any(Runnable.class)); // disable rest
         doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
+        SwrveTestUtils.disableSwrveBackgroundEventSender(swrveSpy);
     }
 
     @Test
@@ -82,7 +81,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         createSwrveSpy(config);
 
         swrveSpy.onCreate(mActivity);
-        assertTrue(swrveSpy.isStarted());
+        assertTrue(swrveReal.isStarted());
         assertTrue(isLifecycleRegistered(swrveReal));
     }
 
@@ -90,17 +89,18 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     public void testManagedInitMode() throws Exception {
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-        config.setManagedModeAutoStartLastUser(false);
+        config.setAutoStartLastUser(false);
 
         createSwrveSpy(config);
 
-        swrveSpy.onCreate(mActivity);
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy); // required so previous line call to onActivityCreated fully executes.
         assertFalse(swrveSpy.isStarted());
         assertFalse(isLifecycleRegistered(swrveSpy));
 
         swrveSpy.start(mActivity);
         assertTrue(swrveSpy.isStarted());
-        assertTrue(isLifecycleRegistered(swrveSpy));
+        assertTrue(isLifecycleRegistered(swrveReal));
     }
 
     private boolean isLifecycleRegistered(Swrve swrveSpy) throws Exception {
@@ -121,7 +121,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     @Test
-    public void testManagedInitModeIdentityThrowsException() {
+    public void testManagedInitModeIdentityThrowsException() throws Exception {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("Cannot call Identify when running on SwrveInitMode.MANAGED mode");
 
@@ -141,15 +141,6 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testAutoInitModeCannotCallStart() {
-        expectedEx.expect(RuntimeException.class);
-        expectedEx.expectMessage("Cannot call start method when running on SwrveInitMode.AUTO mode");
-
-        Swrve swrve = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
-        swrve.start(mActivity);
-    }
-
-    @Test
     public void testAutoInitModeCannotCallStartWithUserId() {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("Cannot call start method when running on SwrveInitMode.AUTO mode");
@@ -165,14 +156,24 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testManagedModeMethodsDoNothing() throws Exception {
-        HashMap testMap = new HashMap();
-        testMap.put("key", "value");
-
+    public void testMethodsDoNothingManagedMode() throws Exception {
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-
         createSwrveSpy(config);
+        assertMethodsDoNothing();
+    }
+
+    @Test
+    public void testMethodsDoNothingAutoMode() throws Exception {
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.AUTO);
+        createSwrveSpy(config);
+        assertMethodsDoNothing();
+    }
+
+    private void assertMethodsDoNothing() throws Exception {
+        HashMap testMap = new HashMap();
+        testMap.put("key", "value");
 
         // Cannot call these methods when it is not inited
         swrveSpy.sessionStart();
@@ -355,7 +356,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
 
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-        config.setManagedModeAutoStartLastUser(false);
+        config.setAutoStartLastUser(false);
 
         createSwrveSpy(config);
 
@@ -374,54 +375,198 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testManagedModeAutoStartOn() throws Exception {
+    public void testAutoStartOnManagedMode() throws Exception {
         mockPreviousUserInStorage("previous_user_id");
 
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-        assertTrue(config.isManagedModeAutoStartLastUser());
+        assertTrue(config.isAutoStartLastUser());
 
         createSwrveSpy(config);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
 
         swrveSpy.onCreate(mActivity);
-        assertTrue(swrveSpy.isStarted());
+        assertTrue(swrveReal.isStarted());
         assertTrue(isLifecycleRegistered(swrveReal));
         assertEquals("previous_user_id", swrveSpy.getUserId());
         assertEquals("previous_user_id", getStoredUserId());
+
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
+        assertTrue(swrveReal.isStarted());
     }
 
     @Test
-    public void testManagedModeAutoStartOnNoPreviousUser() throws Exception {
+    public void testAutoStartOnAutoMode() throws Exception {
+        mockPreviousUserInStorage("previous_user_id");
+
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.AUTO);
+        assertTrue(config.isAutoStartLastUser());
+
+        createSwrveSpy(config);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
+
+        swrveSpy.onCreate(mActivity);
+        assertTrue(swrveReal.isStarted());
+        assertTrue(isLifecycleRegistered(swrveReal));
+        assertEquals("previous_user_id", swrveSpy.getUserId());
+        assertEquals("previous_user_id", getStoredUserId());
+
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
+        assertTrue(swrveReal.isStarted());
+    }
+
+    @Test
+    public void testAutoStartOnNoPreviousUserManagedMode() throws Exception {
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-        assertTrue(config.isManagedModeAutoStartLastUser());
+        assertTrue(config.isAutoStartLastUser());
 
         createSwrveSpy(config);
 
-        swrveSpy.onCreate(mActivity);
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy); // required so previous line call to onActivityCreated fully executes.
         assertFalse(swrveSpy.isStarted());
-        assertFalse(isLifecycleRegistered(swrveReal));
-        assertNotNull(swrveSpy.getUserId());
+        assertTrue(isLifecycleRegistered(swrveReal)); // lifecycle is always registered as of SDK 8.0
 
         // Should not be stored
         assertNull(getStoredUserId());
+
+        swrveReal.onActivityCreated(mActivity, null); // fake activity lifecycle called and verify lifecycle gets unregistered
+        assertTrue(isLifecycleRegistered(swrveReal)); // lifecycle is always registered as of SDK 8.0
+        assertFalse(swrveReal.isStarted());
+
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
+        assertFalse(swrveReal.isStarted());
     }
 
     @Test
-    public void testManagedModeAutoStartOff() throws Exception {
+    public void testAutoStartOnNoPreviousUserAutoMode() throws Exception {
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.AUTO);
+        assertTrue(config.isAutoStartLastUser());
+
+        createSwrveSpy(config);
+
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal); // required so previous line call to onActivityCreated fully executes.
+        assertTrue(swrveReal.isStarted());
+        assertTrue(isLifecycleRegistered(swrveReal)); // lifecycle is always registered as of SDK 8.0
+        // userid should be stored
+        assertNotNull(getStoredUserId());
+    }
+
+    @Test
+    public void testAutoStartOffManagedMode() throws Exception {
         mockPreviousUserInStorage("previous_user_id");
 
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-        config.setManagedModeAutoStartLastUser(false);
+        config.setAutoStartLastUser(false);
 
         createSwrveSpy(config);
 
-        swrveSpy.onCreate(mActivity);
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy); // required so previous line call to onActivityCreated fully executes.
         assertFalse(swrveSpy.isStarted());
-        assertFalse(isLifecycleRegistered(swrveReal));
+        assertTrue(isLifecycleRegistered(swrveReal)); // lifecycle is always registered as of SDK 8.0
         assertEquals("previous_user_id", swrveSpy.getUserId());
         assertEquals("previous_user_id", getStoredUserId());
+
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
+        assertFalse(swrveReal.isStarted());
+
+        SwrveSDK.start(mActivity);
+        assertTrue(swrveSpy.isStarted());
+
+        // Create another instance with same config and verify it is not started.
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        createSwrveSpy(config);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
+        assertFalse(swrveSpy.isStarted());
+    }
+
+    @Test
+    public void testAutoStartOffAutoMode() throws Exception {
+        mockPreviousUserInStorage("previous_user_id");
+
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.AUTO);
+        config.setAutoStartLastUser(false);
+
+        createSwrveSpy(config);
+
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy); // required so previous line call to onActivityCreated fully executes.
+        assertFalse(swrveSpy.isStarted());
+        assertTrue(isLifecycleRegistered(swrveReal)); // lifecycle is always registered as of SDK 8.0
+        assertEquals("previous_user_id", swrveSpy.getUserId());
+        assertEquals("previous_user_id", getStoredUserId());
+
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
+        assertFalse(swrveReal.isStarted());
+
+        // start the sdk
+        swrveSpy.start(mActivity);
+        assertTrue(swrveSpy.isStarted());
+
+        // Create another instance with same config and verify it is not started.
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        createSwrveSpy(config);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
+        assertFalse(swrveSpy.isStarted());
+    }
+
+    @Test
+    public void testAutoStartOffAutoMode_startViaIdentify() throws Exception {
+        mockPreviousUserInStorage("previous_user_id");
+
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.AUTO);
+        config.setAutoStartLastUser(false);
+
+        createSwrveSpy(config);
+
+        swrveSpy.onActivityCreated(mActivity, null);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy); // required so previous line call to onActivityCreated fully executes.
+        assertFalse(swrveSpy.isStarted());
+        assertTrue(isLifecycleRegistered(swrveReal)); // lifecycle is always registered as of SDK 8.0
+        assertEquals("previous_user_id", swrveSpy.getUserId());
+        assertEquals("previous_user_id", getStoredUserId());
+
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal);
+        assertFalse(swrveReal.isStarted());
+
+        // mock the profileManager identify so it does returns successfully
+        SwrveProfileManager profileManagerSpy = Mockito.spy(swrveSpy.profileManager);
+        swrveSpy.profileManager = profileManagerSpy;
+        doAnswer((Answer<Void>) invocation -> {
+            SwrveIdentityResponse callback = (SwrveIdentityResponse) invocation.getArguments()[3];
+            callback.onSuccess("", "previous_user_id");
+
+            return null;
+        }).when(swrveSpy.profileManager).identify(anyString(), anyString(), anyString(), any(SwrveIdentityResponse.class));
+
+        // start the sdk by calling identify method
+        final AtomicBoolean identityCallback = new AtomicBoolean(false);
+        swrveSpy.identify("externalUserId", new SwrveIdentityResponse() {
+            @Override
+            public void onSuccess(String status, String swrveId) {
+                identityCallback.set(true);
+            }
+            @Override
+            public void onError(int responseCode, String errorMessage) {
+                identityCallback.set(true);
+            }
+        });
+        await().untilTrue(identityCallback);
+
+        assertTrue(swrveSpy.isStarted());
+
+        // Create another instance with same config and verify it is not started.
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        createSwrveSpy(config);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
+        assertFalse(swrveSpy.isStarted());
     }
 }
-

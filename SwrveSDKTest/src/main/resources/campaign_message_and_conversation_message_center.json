@@ -8,7 +8,7 @@
       "message_center": true,
       "subject": "IAM subject",
       "start_date": 1362671700000,
-      "messages": [
+      "message":
         {
           "template": {
             "template_id": "20",
@@ -135,8 +135,7 @@
           "name": "Kindle",
           "rules": {
           }
-        }
-      ],
+        },
       "rules": {
         "display_order": "random",
         "dismiss_after_views": 1,

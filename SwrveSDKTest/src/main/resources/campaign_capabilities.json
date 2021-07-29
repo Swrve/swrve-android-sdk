@@ -1,0 +1,174 @@
+{
+    "cdn_root": "http://localhost:8083/cdn/",
+    "campaigns": [
+        {
+            "id": 1,
+            "end_date": 1927994560000,
+            "triggers": [{
+                "event_name": "Swrve.Messages.showAtSessionStart",
+                "conditions": {}
+            }
+            ],
+            "start_date": 1362671700000,
+            "message":
+                {
+                    "template": {
+                        "template_id": "20",
+                        "formats": [
+                            {
+                                "orientation" : "portrait",
+                                "size": {
+                                    "w": {
+                                        "type": "number",
+                                        "value": 320
+                                    },
+                                    "h": {
+                                        "type": "number",
+                                        "value": 240
+                                    }
+                                },
+                                "images": [
+                                ],
+                                "buttons": [
+                                    {
+                                        "name": "request1",
+                                        "x": {
+                                            "type": "number",
+                                            "value": 100
+                                        },
+                                        "y": {
+                                            "type": "number",
+                                            "value": 100
+                                        },
+                                        "w": {
+                                            "type": "number",
+                                            "value": 100
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 100
+                                        },
+                                        "action": {
+                                            "type": "text",
+                                            "value": "swrve.contacts"
+                                        },
+                                        "image_up": {
+                                            "type": "asset",
+                                            "value": "8721fd4e657980a5e12d498e73aed6e6a565dfca"
+                                        },
+                                        "type": {
+                                            "type": "text",
+                                            "value": "REQUEST_CAPABILITY"
+                                        }
+                                    }
+                                ],
+                                "name": "Kindle (English (US))",
+                                "language": "en-US"
+                            }
+                        ]
+                    },
+                    "id": 1,
+                    "name": "Kindle",
+                    "rules": {}
+                },
+            "rules": {
+                "display_order": "random",
+                "dismiss_after_views": 2,
+                "delay_first_message": 0,
+                "min_delay_between_messages": 0
+            }
+        },
+        {
+            "id": 2,
+            "end_date": 1927994560000,
+                "triggers": [{
+                    "event_name": "Swrve.Messages.showAtSessionStart",
+                    "conditions": {}
+                }
+            ],
+            "start_date": 1362671700000,
+            "message":
+                {
+                    "template": {
+                    	"template_id": "20",
+                        "formats": [
+                            {
+                            	"orientation" : "portrait",
+                                "size": {
+                                    "w": {
+                                        "type": "number",
+                                        "value": 320
+                                    },
+                                    "h": {
+                                        "type": "number",
+                                        "value": 240
+                                    }
+                                },
+                                "images": [
+                                ],
+                                "buttons": [
+                                    {
+                                        "name": "accept",
+                                        "x": {
+                                            "type": "number",
+                                            "value": 0
+                                        },
+                                        "y": {
+                                            "type": "number",
+                                            "value": 0
+                                        },
+                                        "w": {
+                                            "type": "number",
+                                            "value": 0
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 0
+                                        },
+                                        "image_up": {
+                                            "type": "asset",
+                                            "value": "8721fd4e657980a5e12d498e73aed6e6a565dfca"
+                                        },
+                                        "action": {
+                                            "type": "text",
+                                            "value": ""
+                                        },
+                                        "game_id": {
+                                            "type": "number",
+                                            "value": "1"
+                                        },
+                                        "type": {
+                                            "type": "text",
+                                            "value": "INSTALL"
+                                        }
+                                    }
+                                ],
+                                "name": "Kindle (English (US))",
+                                "language": "en-US"
+                            }
+                        ]
+                    },
+                    "id": 2,
+                    "name": "Kindle",
+                    "rules": {}
+                },
+            "rules": {
+                "display_order": "random",
+                "dismiss_after_views": 2,
+                "delay_first_message": 0,
+                "min_delay_between_messages": 0
+            }
+        }
+    ],
+    "game_data": {
+        "150": {
+            "app_store_url": "https://itunes.apple.com/us/app/ascension-chronicle-godslayer/id441838733?mt=8"
+        }
+    },
+    "rules": {
+        "min_delay_between_messages": 0,
+        "max_messages_per_session": 99999,
+        "delay_first_message": 0
+    },
+    "version": 2
+}

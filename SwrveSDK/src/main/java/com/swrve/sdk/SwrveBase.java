@@ -21,6 +21,7 @@ import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
@@ -71,7 +72,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
-import static com.swrve.sdk.SwrveTrackingState.ON;
+import static com.swrve.sdk.SwrveTrackingState.STARTED;
+import static com.swrve.sdk.SwrveTrackingState.STOPPED;
 
 /**
  * Main base class implementation of the Swrve SDK.
@@ -96,32 +98,26 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    protected T onCreate(final Activity activity) throws IllegalArgumentException {
-        if (destroyed) {
-            destroyed = initialised = false;
-            bindCounter.set(0);
-        }
+    protected void onCreate(final Activity activity) throws IllegalArgumentException {
         if (!initialised) {
-            // First time it is initialized
-            return init(activity);
+            init(activity); // First time it is initialized
         }
-
-        bindToContext(activity);
-        return (T) this;
     }
 
-    protected synchronized T init(final Activity activity) throws IllegalArgumentException {
+    protected synchronized void init(final Activity activity) throws IllegalArgumentException {
 
+        // if tracking was stopped, then this is a restart so reset the initialised flag.
+        if (profileManager.getTrackingState() == STOPPED) {
+            initialised = false;
+        }
+        profileManager.setTrackingState(STARTED);
+        started = true;
         if (initialised) {
-            return (T) this;
+            return;
         }
         initialised = true;
 
         try {
-            trackingState = ON;
-            final Context resolvedContext = bindToContext(activity);
-            final boolean preloadRandC = config.isLoadCachedCampaignsAndResourcesOnUIThread();
-
             final String userId = profileManager.getUserId();
             initialisedTime = getNow();
 
@@ -138,16 +134,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             openLocalStorageConnection();
 
             // Obtain extra device info
-            beforeSendDeviceInfo(resolvedContext);
+            beforeSendDeviceInfo(application.get());
 
             if (this.resourceManager == null) {
                 this.resourceManager = new SwrveResourceManager();
             }
 
-            if (preloadRandC) {
-                // Initialize resources from cache
-                initResources(userId);
-            }
+            initResources(userId); // Initialize resources from cache
 
             sessionStart(); // this should be sent immediately and then refresh campaigns executes
             generateNewSessionInterval();
@@ -156,17 +149,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             // Android referrer information
             SharedPreferences settings = activity.getSharedPreferences(SDK_PREFS_NAME, 0);
-            String referrer = settings.getString(SWRVE_REFERRER_ID, null);
+            String referrer = settings.getString(SDK_PREFS_REFERRER_ID, null);
             if (!SwrveHelper.isNullOrEmpty(referrer)) {
                 Map<String, String> attributes = new HashMap<>();
                 attributes.put(SWRVE_REFERRER_ID, referrer);
                 SwrveLogger.i("Received install referrer, so sending userUpdate:%s", attributes);
                 userUpdate(attributes);
-                settings.edit().remove(SWRVE_REFERRER_ID).apply();
+                settings.edit().remove(SDK_PREFS_REFERRER_ID).apply();
             }
 
             // Get device info
-            buildDeviceInfo(resolvedContext);
+            buildDeviceInfo(application.get());
             queueDeviceUpdateNow(userId, profileManager.getSessionToken(), true);
 
             // Messaging initialization
@@ -177,20 +170,20 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 SwrveHelper.logAndThrowException("App store needed to use in-app messages");
             }
 
-            if (preloadRandC) {
-                initRealTimeUserProperties(userId); // Initialize realtime user properties
-                initCampaigns(userId); // Initialize campaigns from cache
+            initRealTimeUserProperties(userId); // Initialize realtime user properties
+
+            // we need to initialize these at the time AFTER real time user properties
+            if (config.getInAppMessageConfig() != null) {
+                if (config.getInAppMessageConfig().getPersonalizationProvider() != null) {
+                    personalizationProvider = config.getInAppMessageConfig().getPersonalizationProvider();
+                }
             }
+
+            initCampaigns(userId); // Initialize campaigns from cache
 
             // Add default message listener
             if (messageListener == null) {
                 setDefaultMessageListener();
-            }
-
-            if (config.getInAppMessageConfig() != null) {
-                if (config.getInAppMessageConfig().getPersonalisationProvider() != null) {
-                    personalisationProvider = config.getInAppMessageConfig().getPersonalisationProvider();
-                }
             }
 
             if (config.getEmbeddedMessageConfig() != null) {
@@ -210,37 +203,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 });
             }
 
-            if (preloadRandC && config.isABTestDetailsEnabled()) {
-                initABTestDetails(userId);
-            }
+            initABTestDetails(userId);
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
-            campaignsAndResourcesFlushFrequency = settings.getInt("swrve_cr_flush_frequency", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
+            campaignsAndResourcesFlushFrequency = settings.getInt(SDK_PREFS_KEY_FLUSH_FREQ, SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
             campaignsAndResourcesFlushRefreshDelay = getFlushRefreshDelay();
             campaignsAndResourcesLastETag = multiLayerLocalStorage.getCacheEntry(userId, CACHE_ETAG);
 
             startCampaignsAndResourcesTimer(true);
 
-            if (!preloadRandC) {
-                // Load campaigns and resources in a background thread
-                storageExecutorExecute(() -> {
-                    initResources(userId);
-
-                    initRealTimeUserProperties(userId);
-
-                    initCampaigns(userId);
-
-                    if (config.isABTestDetailsEnabled()) {
-                        initABTestDetails(userId);
-                    }
-                });
-            }
-
             SwrveLogger.i("Init finished");
         } catch (Exception exp) {
             SwrveLogger.e("Swrve init failed", exp);
         }
-        return (T) this;
     }
 
     private void initCacheDir(Activity activity) {
@@ -299,20 +274,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                         return;
                     }
 
-                    if (personalisationProvider != null && (properties == null || properties.size() == 0)) {
-                        properties = personalisationProvider.personalize(lastEventPayloadUsed);
-                    }
+                    Map<String, String> personalizationProperties = retrievePersonalizationProperties(lastEventPayloadUsed, properties);
 
                     if (message.supportsOrientation(getDeviceOrientation())) {
-                        if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, properties)) {
+                        if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizationProperties)) {
                             Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
                             
-                            if (properties != null) {
+                            if (personalizationProperties != null) {
                                 // Cannot pass a Map to intent, converting to HashMap
-                                HashMap<String, String> personalisation = new HashMap<>(properties);
-                                intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalisation);
+                                HashMap<String, String> personalization = new HashMap<>(personalizationProperties);
+                                intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
                             }
 
                             ctx.startActivity(intent);
@@ -553,8 +526,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _sendQueuedEvents(final String userId, final String sessionToken, final boolean updateSentFlag) {
-        if (trackingState == EVENT_SENDING_PAUSED) {
-            SwrveLogger.d("SwrveSDK tracking state:%s so cannot send events now.", trackingState);
+        if (profileManager.getTrackingState() == EVENT_SENDING_PAUSED) {
+            SwrveLogger.d("SwrveSDK tracking state:EVENT_SENDING_PAUSED so cannot send events now.");
             return;
         }
         if (SwrveHelper.isNotNullOrEmpty(userId) && SwrveHelper.isNotNullOrEmpty(sessionToken)) {
@@ -590,12 +563,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _onPause() {
 
-        mustCleanInstance = true;
-        Activity activity = getActivityContext();
-        if (activity != null) {
-            mustCleanInstance = isActivityFinishing(activity);
-        }
-
         SwrveLogger.i("onPause");
         flushToDisk();
         // Session management
@@ -613,9 +580,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected void _onResume(Activity activity) {
         SwrveLogger.i("onResume");
-        if (activity != null) {
-            bindToContext(activity);
-        }
         foregroundActivity = activity.getClass().getCanonicalName();
 
         long currentTime = getSessionTime();
@@ -635,54 +599,69 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         // Detect if user is influenced by a push notification
         campaignInfluence.processInfluenceData(getContext(), this);
 
-        loadCampaignFromNotification(this.notificationSwrveCampaignId);
+        loadCampaignFromNotification();
     }
 
-    protected void loadCampaignFromNotification(String swrveCampaignId) {
-        if (swrveCampaignId != null) {
-            if (canProcessPushToInapp()) {
-                Bundle b = new Bundle();
-                b.putString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, swrveCampaignId);
-                initSwrveDeepLinkManager();
-                this.swrveDeeplinkManager.handleDeeplink(b);
-            }
+    protected void loadCampaignFromNotification() {
+        if (notificationSwrveCampaignId != null) {
+            Bundle b = new Bundle();
+            b.putString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, notificationSwrveCampaignId);
+            initSwrveDeepLinkManager();
+            this.swrveDeeplinkManager.handleDeeplink(b);
             notificationSwrveCampaignId = null;
         }
     }
 
-    protected void _onDestroy() {
-        unbindAndShutdown();
+    protected void _shutdown() {
+
+        SwrveLogger.i("Shutting down the SDK");
+
+        // Forget the initialised time
+        initialisedTime = null;
+
+        // Do not accept any more jobs but try to finish sending data
+        if (restClientExecutor != null) {
+            try {
+                restClientExecutor.shutdown();
+                restClientExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred shutting down restClientExecutor", e);
+            }
+        }
+        if (storageExecutor != null) {
+            try {
+                storageExecutor.shutdown();
+                storageExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred shutting down storageExecutor", e);
+            }
+        }
+        shutdownCampaignsAndResourcesTimer();
+
+        if (lifecycleExecutor != null) {
+            try {
+                lifecycleExecutor.shutdown();
+                lifecycleExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred shutting down lifecycleExecutorQueue", e);
+            }
+        }
+        unregisterActivityLifecycleCallbacks();
     }
 
-    protected void _shutdown() {
-        if (!destroyed) {
-            SwrveLogger.i("Shutting down the SDK");
-            destroyed = true;
+    protected void _stopTracking() {
 
-            // Forget the initialised time
-            initialisedTime = null;
+        started = false;
+        profileManager.setTrackingState(STOPPED);
+        queueDeviceUpdateNow(profileManager.getUserId(), profileManager.getSessionToken(), true);
 
-            // Remove the binding to the current activity, if any
-            this.activityContext = null;
+        shutdownCampaignsAndResourcesTimer();
 
-            // Do not accept any more jobs but try to finish sending data
-            if (restClientExecutor != null) {
-                try {
-                    restClientExecutor.shutdown();
-                    restClientExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    SwrveLogger.e("Exception occurred shutting down restClientExecutor", e);
-                }
-            }
-            if (storageExecutor != null) {
-                try {
-                    storageExecutor.shutdown();
-                    storageExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    SwrveLogger.e("Exception occurred shutting down storageExecutor", e);
-                }
-            }
-            shutdownCampaignsAndResourcesTimer();
+        clearAllAuthenticatedNotifications();
+
+        Activity currentActivity = getActivityContext();
+        if (currentActivity != null && (currentActivity instanceof SwrveInAppMessageActivity || currentActivity instanceof ConversationActivity)) {
+            currentActivity.finish();
         }
     }
 
@@ -746,11 +725,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceInfo.put(SWRVE_APP_STORE, config.getAppStore());
             deviceInfo.put(SWRVE_SDK_FLAVOUR, Swrve.FLAVOUR);
             SwrveInitMode mode = config.getInitMode();
-            if (mode == SwrveInitMode.MANAGED && config.isManagedModeAutoStartLastUser()) {
-                deviceInfo.put(SWRVE_INIT_MODE, "managed_auto");
-            } else {
-                deviceInfo.put(SWRVE_INIT_MODE, mode.toString().toLowerCase(Locale.ENGLISH));
+            String initModeDeviceInfo = mode.toString().toLowerCase(Locale.ENGLISH);
+            if (config.isAutoStartLastUser()) {
+                initModeDeviceInfo += "_auto";
             }
+            deviceInfo.put(SWRVE_INIT_MODE, initModeDeviceInfo);
+            deviceInfo.put(SWRVE_TRACKING_STATE, profileManager.getTrackingState());
             Calendar cal = new GregorianCalendar();
             deviceInfo.put(SWRVE_TIMEZONE_NAME, cal.getTimeZone().getID());
             deviceInfo.put(SWRVE_UTC_OFFSET_SECONDS, cal.getTimeZone().getOffset(System.currentTimeMillis()) / 1000);
@@ -847,13 +827,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     if (responseJson.has("flush_frequency")) {
                                         Integer flushFrequency = responseJson.getInt("flush_frequency");
                                         campaignsAndResourcesFlushFrequency = flushFrequency;
-                                        settingsEditor.putInt("swrve_cr_flush_frequency", campaignsAndResourcesFlushFrequency);
+                                        settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_FREQ, campaignsAndResourcesFlushFrequency);
                                     }
 
                                     if (responseJson.has("flush_refresh_delay")) {
                                         Integer flushDelay = responseJson.getInt("flush_refresh_delay");
                                         campaignsAndResourcesFlushRefreshDelay = flushDelay;
-                                        settingsEditor.putInt("swrve_cr_flush_delay", campaignsAndResourcesFlushRefreshDelay);
+                                        settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_DELAY, campaignsAndResourcesFlushRefreshDelay);
                                     }
 
                                     if (responseJson.has("campaigns")) {
@@ -875,16 +855,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         JSONArray resourceJson = responseJson.getJSONArray("user_resources");
                                         resourceManager.setResourcesFromJSON(resourceJson);
                                         saveResourcesInCache(resourceJson);
-
-                                        // Call resource listener
-                                        if (campaignsAndResourcesInitialized) {
-                                            invokeResourceListener();
-                                        }
                                     }
 
                                     if (responseJson.has("real_time_user_properties")) {
                                         JSONObject realTimeUserPropertiesJson = responseJson.getJSONObject("real_time_user_properties");
+                                        realTimeUserProperties = SwrveHelper.JSONToMap(realTimeUserPropertiesJson);
                                         saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
+                                    }
+
+                                    if (responseJson.has("user_resources") || responseJson.has("real_time_user_properties")) {
+                                        // Call resource listener
+                                        if (campaignsAndResourcesInitialized) {
+                                            invokeResourceListener();
+                                        }
                                     }
 
                                 } catch (JSONException e) {
@@ -1049,10 +1032,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<Integer, Integer> availableCampaignsIgnoredList = new HashMap<>();
         Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
 
-        Map<String, String> properties = null;
-        if (personalisationProvider != null) {
-            properties = personalisationProvider.personalize(payload);
-        }
+        Map<String, String> properties = retrievePersonalizationProperties(lastEventPayloadUsed, null);
 
         if (campaigns != null) {
             if (!campaignDisplayer.checkAppCampaignRules(campaigns.size(), "message", event, payload, now)) {
@@ -1206,6 +1186,35 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             parameters.put("name", clickEvent);
             queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
         }
+    }
+
+    protected String _getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
+        if (message != null) {
+            try {
+                if(message.getType() == SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON) {
+                    return SwrveTextTemplating.applytoJSON(message.getData(), personalizationProperties);
+                } else {
+                    return SwrveTextTemplating.apply(message.getData(), personalizationProperties);
+                }
+
+            } catch(SwrveSDKTextTemplatingException exception) {
+                SwrveEmbeddedCampaign campaign = message.getCampaign();
+                QaUser.embeddedPersonalizationFailed(campaign.getId(), message.getId(), message.getData(), "Failed to resolve personalization");
+                SwrveLogger.e("Campaign id:%s Could not resolve, error with personalization", exception, campaign.getId());
+            }
+        }
+        return null;
+    }
+
+    protected String _getPersonalizedText(String text, Map<String, String> personalizationProperties) {
+        if (text != null) {
+            try {
+                return SwrveTextTemplating.apply(text, personalizationProperties);
+            } catch(SwrveSDKTextTemplatingException exception) {
+                SwrveLogger.e("Could not resolve, error with personalization", exception);
+            }
+        }
+        return null;
     }
 
     protected String _getAppStoreURLForApp(int appId) {
@@ -1474,18 +1483,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void onDestroy(Activity ctx) {
+    @Override
+    public void shutdown() {
         try {
-            _onDestroy();
+            _shutdown();
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
     }
 
     @Override
-    public void shutdown() {
+    public void stopTracking() {
         try {
-            _shutdown();
+            _stopTracking();
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1538,6 +1548,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
+    }
+
+    @Override
+    public boolean isTrackingStateStopped() {
+        try {
+            return profileManager.getTrackingState() == STOPPED;
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return true;
     }
 
     @Override
@@ -1677,6 +1697,30 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public String getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
+        if (!isSdkReady()) return null;
+
+        try {
+            return _getPersonalizedEmbeddedMessageData(message, personalizationProperties);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    @Override
+    public String getPersonalizedText(String text, Map<String, String> personalizationProperties) {
+        if (!isSdkReady()) return null;
+
+        try {
+            return _getPersonalizedText(text, personalizationProperties);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return null;
+    }
+
+    @Override
     public String getAppStoreURLForApp(int appId) {
         if (!isSdkReady()) return null;
 
@@ -1783,6 +1827,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         List<SwrveBaseCampaign> result = new ArrayList<>();
         if (!isSdkReady()) return result;
 
+        Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
+
         if (campaigns != null) {
             synchronized (campaigns) {
                 for (int i = 0; i < campaigns.size(); i++) {
@@ -1791,19 +1837,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             && campaign.getStatus() != SwrveCampaignState.Status.Deleted
                             && campaign.isActive(getNow())
                             && campaign.supportsOrientation(orientation)
-                            && campaign.areAssetsReady(getAssetsOnDisk(), properties)) {
-                        if (properties != null && (campaign instanceof SwrveInAppCampaign)) {
-                            // Check personalisation for matching key/value pairs
-                            List<SwrveMessage> messages = ((SwrveInAppCampaign) campaign).getMessages();
+                            && campaign.areAssetsReady(getAssetsOnDisk(), personalizedProperties)) {
+                        if (campaign instanceof SwrveInAppCampaign) {
+                            // Check personalization for matching key/value pairs
+                            SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessage();
                             boolean messagesCanResolve = true;
-                            for (int mi = 0; mi < messages.size() && messagesCanResolve; mi++) {
-                                SwrveMessage message = messages.get(mi);
-                                if (message.supportsOrientation(orientation)) {
-                                    messagesCanResolve = SwrveMessageTextTemplatingChecks.checkTextTemplating(message, properties);
-                                }
+                            if (message.supportsOrientation(orientation)) {
+                                messagesCanResolve = SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizedProperties);
                             }
-
-                            // All messages that support the required orientation can be resolved
                             if (messagesCanResolve) {
                                 result.add(campaign);
                             }
@@ -1843,10 +1884,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (!isSdkReady()) return false;
 
         if (campaign instanceof SwrveInAppCampaign) {
+            Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
             SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign) campaign;
-            if (iamCampaign != null && iamCampaign.getMessages().size() > 0 && messageListener != null) {
-                // Display first message in the in-app campaign
-                messageListener.onMessage(iamCampaign.getMessages().get(0), properties);
+            if (iamCampaign != null && iamCampaign.getMessage() != null && messageListener != null) {
+                // Display message in the in-app campaign
+                messageListener.onMessage(iamCampaign.getMessage(), personalizedProperties);
                 return true;
             } else {
                 SwrveLogger.e("No in-app message or message listener.");
@@ -1862,7 +1904,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         } else if (campaign instanceof SwrveEmbeddedCampaign) {
             SwrveEmbeddedCampaign embeddedCampaign = (SwrveEmbeddedCampaign) campaign;
             if (embeddedCampaign != null && embeddedMessageListener != null) {
-                embeddedMessageListener.onMessage(getContext(), embeddedCampaign.getMessage());
+                Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
+                embeddedMessageListener.onMessage(getContext(), embeddedCampaign.getMessage(), personalizedProperties);
                 return true;
             } else {
                 SwrveLogger.e("No embedded message or embedded message listener.");
@@ -2095,10 +2138,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     /*
      * Implementation of Application.ActivityLifecycleCallbacks methods
      */
-
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-        onCreate(activity);
+        bindToActivity(activity);
+        lifecycleExecutorExecute(() -> {
+            if (isStarted()) {
+                onCreate(activity);
+            }
+        });
     }
 
     @Override
@@ -2108,18 +2155,30 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityResumed(Activity activity) {
-        onResume(activity);
+        bindToActivity(activity);
+        lifecycleExecutorExecute(() -> {
+            if (isStarted()) {
+                onResume(activity);
+            }
+        });
     }
 
     @Override
     public void onActivityPaused(Activity activity) {
-        onPause();
+        lifecycleExecutorExecute(() -> {
+            if (isStarted()) {
+                onPause();
+            }
+        });
     }
 
     @Override
     public void onActivityStopped(Activity activity) {
-        // empty
-        onStop(activity);
+        lifecycleExecutorExecute(() -> {
+            if (isStarted()) {
+                onStop(activity);
+            }
+        });
     }
 
     @Override
@@ -2129,7 +2188,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityDestroyed(Activity activity) {
-        onDestroy(activity);
+        // empty
     }
 
     /*
@@ -2138,13 +2197,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void setNotificationSwrveCampaignId(String swrveCampaignId) {
+        if (!isSdkReady()) return;
         notificationSwrveCampaignId = swrveCampaignId;
     }
 
     protected void switchUser(String newUserId) {
 
         // don't do anything if the current user id is the same as the new one
-        if (started) {
+        if (isStarted()) {
             if (SwrveHelper.isNullOrEmpty(newUserId) || newUserId.equals(getUserId())) {
                 enableEventSending();
                 queuePausedEvents();
@@ -2154,7 +2214,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         clearAllAuthenticatedNotifications();
 
-        profileManager.updateUserId(newUserId);
+        profileManager.setUserId(newUserId);
         profileManager.updateSessionToken();
 
         if (getActivityContext() != null) {
@@ -2193,7 +2253,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         openLocalStorageConnection();
 
         // always flush events and pause event sending
-        sendQueuedEvents();
+        if (isStarted()) {
+            sendQueuedEvents();
+        }
         pauseEventSending();
 
         SwrveUser cachedSwrveUser = multiLayerLocalStorage.getUserByExternalUserId(externalUserId);
@@ -2284,13 +2346,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void enableEventSending() {
-        trackingState = ON;
+        profileManager.setTrackingState(STARTED);
         startCampaignsAndResourcesTimer(false);
         sendQueuedEvents();
     }
 
     protected void pauseEventSending() {
-        trackingState = EVENT_SENDING_PAUSED;
+        profileManager.setTrackingState(EVENT_SENDING_PAUSED);
         shutdownCampaignsAndResourcesTimer();
     }
 
@@ -2328,7 +2390,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public int getFlushRefreshDelay() {
         SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
-        return settings.getInt("swrve_cr_flush_delay", SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
+        return settings.getInt(SDK_PREFS_KEY_FLUSH_DELAY, SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
     }
 
     @Override
@@ -2346,17 +2408,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-
     @Override
     public void start(Activity activity) {
-        if (config.getInitMode() == SwrveInitMode.AUTO) {
-            throw new RuntimeException("Cannot call start method when running on SwrveInitMode.AUTO mode");
-        }
-
-        if (!started) {
-            started = true;
+        if (!isStarted()) {
             this.profileManager.persistUser();
-            registerActivityLifecycleCallbacks();
             clearAllAuthenticatedNotifications();
             init(activity);
         }
@@ -2368,10 +2423,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             throw new RuntimeException("Cannot call start method when running on SwrveInitMode.AUTO mode");
         }
 
-        if (!started) {
-            started = true;
-            registerActivityLifecycleCallbacks();
-            profileManager.updateUserId(userId);
+        if (!isStarted()) {
+            profileManager.setUserId(userId);
             profileManager.updateSessionToken();
             clearAllAuthenticatedNotifications();
             init(activity);
@@ -2385,17 +2438,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return started;
     }
 
-    // Push-to-in app won't work on MANAGED mode with no auto session start as we can't guarantee a user is present.
-    private boolean canProcessPushToInapp() {
-        return (config.getInitMode() == SwrveInitMode.AUTO || (config.getInitMode() == SwrveInitMode.MANAGED && config.isManagedModeAutoStartLastUser()));
-    }
-
-    private boolean isSdkReady() {
-        if (config.getInitMode() == SwrveInitMode.MANAGED && !started) {
-            SwrveLogger.w("Warning: SwrveSDK needs to be started in SwrveInitMode.MANAGED mode before calling this api.");
-            return false;
+    protected boolean isSdkReady() {
+        boolean isSdkReady = true;
+        if (profileManager.getTrackingState() == STOPPED) {
+            SwrveLogger.w("Warning: SwrveSDK is stopped and needs to be started before calling this api.");
+            isSdkReady = false;
+        } else if (!isStarted()) {
+            SwrveLogger.w("Warning: SwrveSDK needs to be started before calling this api.");
+            isSdkReady = false;
         }
-        return true;
+        return isSdkReady;
     }
 
     protected void sendSessionStart(long time) {

@@ -32,6 +32,9 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_DISPLAYED;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_REASON;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SILENT;
 
 /**
  * Used internally to generate JSON batch strings from event data.
@@ -211,7 +214,7 @@ final class EventHelper {
         return EventHelper.eventsAsBatch(batchEvents, userId, appVersion, sessionKey, deviceId);
     }
 
-    public static ArrayList<String> getPushDeliveredEvent(Bundle extras, long time) throws Exception {
+    public static ArrayList<String> getPushDeliveredEvent(Bundle extras, long time, boolean displayed, String reason) throws Exception {
 
         if (extras == null || !SwrveHelper.isSwrvePush(extras)) {
             return new ArrayList<>();
@@ -222,9 +225,13 @@ final class EventHelper {
         Map<String, String> payload = new HashMap<>();
         if (SwrveHelper.isNullOrEmpty(id)) {
             id = extras.getString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
-            payload.put("silent", String.valueOf(true));
+            payload.put(GENERIC_EVENT_PAYLOAD_SILENT, String.valueOf(true));
         } else {
-            payload.put("silent", String.valueOf(false));
+            payload.put(GENERIC_EVENT_PAYLOAD_SILENT, String.valueOf(false));
+        }
+        payload.put(GENERIC_EVENT_PAYLOAD_DISPLAYED, String.valueOf(displayed));
+        if (SwrveHelper.isNotNullOrEmpty(reason)) {
+            payload.put(GENERIC_EVENT_PAYLOAD_REASON, reason);
         }
 
         int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();

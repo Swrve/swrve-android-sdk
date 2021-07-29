@@ -10,11 +10,13 @@ import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 
+import androidx.appcompat.widget.AppCompatButton;
+
 import com.swrve.sdk.conversations.R;
 import com.swrve.sdk.conversations.engine.model.ButtonControl;
 import com.swrve.sdk.conversations.engine.model.styles.ConversationStyle;
 
-public class ConversationButton extends android.widget.Button implements IConversationControl {
+public class ConversationButton extends AppCompatButton implements IConversationControl {
     private ButtonControl model;
     private ConversationStyle style;
     private int textColor;
@@ -87,7 +89,7 @@ public class ConversationButton extends android.widget.Button implements IConver
 
     private StateListDrawable getStateListDrawable(Drawable pressedDrawable, Drawable focusedDrawable, Drawable normalDrawable) {
         StateListDrawable states = new StateListDrawable();
-        states.addState(new int[] {android.R.attr.state_pressed}, pressedDrawable);
+        states.addState(new int[]{android.R.attr.state_pressed}, pressedDrawable);
         states.addState(new int[]{android.R.attr.state_focused}, focusedDrawable);
         states.addState(new int[]{}, normalDrawable);
         return states;
@@ -100,6 +102,8 @@ public class ConversationButton extends android.widget.Button implements IConver
             setGravity(Gravity.CENTER | Gravity.CENTER);
         } else if (style.getAlignment() == ConversationStyle.ALIGNMENT.RIGHT) {
             setGravity(Gravity.CENTER | Gravity.RIGHT);
+        } else {
+            setGravity(Gravity.CENTER | Gravity.CENTER);
         }
     }
 
@@ -123,7 +127,7 @@ public class ConversationButton extends android.widget.Button implements IConver
     }
 
     private boolean isLight(int color) {
-        return ((0.2126*(Color.red(color)/255f) + 0.7152*(Color.green(color)/255f) + 0.0722*(Color.blue(color)/255f)) > 0.5f);
+        return ((0.2126 * (Color.red(color) / 255f) + 0.7152 * (Color.green(color) / 255f) + 0.0722 * (Color.blue(color) / 255f)) > 0.5f);
     }
 
     public float getBorderRadius() {

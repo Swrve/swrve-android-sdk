@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
@@ -55,21 +56,29 @@ import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 public class SwrveTestUtils {
 
     public static void shutdownAndRemoveSwrveSDKSingletonInstance() throws Exception {
+        SwrveLogger.i("SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance() start");
         ISwrveBase swrve = SwrveSDK.getInstance();
         if (swrve != null) {
             swrve.shutdown();
         }
         removeSingleton(SwrveSDKBase.class, "instance");
         LocalStorageTestUtils.closeSQLiteOpenHelperInstance();
+        SwrveLogger.i("SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance() finish");
     }
 
     public static void removeSwrveSDKSingletonInstance() throws Exception{
@@ -229,7 +238,7 @@ public class SwrveTestUtils {
 
     public static void disableAssetsManager(Swrve swrve) {
         SwrveAssetsManager swrveAssetsManagerSpy = Mockito.spy(swrve.swrveAssetsManager);
-        Mockito.doNothing().when(swrveAssetsManagerSpy).downloadAssets(Mockito.anySet(), Mockito.any(SwrveAssetsCompleteCallback.class));
+        doNothing().when(swrveAssetsManagerSpy).downloadAssets(Mockito.anySet(), Mockito.any(SwrveAssetsCompleteCallback.class));
         swrve.swrveAssetsManager = swrveAssetsManagerSpy;
     }
 
@@ -237,11 +246,11 @@ public class SwrveTestUtils {
         Application application = ApplicationProvider.getApplicationContext();
         application.unregisterActivityLifecycleCallbacks(swrveReal);
         swrveSpy.registerActivityLifecycleCallbacks();
-        Mockito.doNothing().when(swrveSpy).beforeSendDeviceInfo(any(Context.class));
+        doNothing().when(swrveSpy).beforeSendDeviceInfo(any(Context.class));
     }
 
     public static void disableRestClientExecutor(Swrve swrveSpy) {
-        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
+        doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
     }
 
     /*
@@ -428,13 +437,20 @@ public class SwrveTestUtils {
 
     public static Swrve createSpyInstance(SwrveConfig config) throws Exception {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal); // wait until swrve instance is fully created before getting a mockito spy.
         Swrve swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
-        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
-        Mockito.doNothing().when(swrveSpy).checkForCampaignAndResourcesUpdates();
+        doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
+        doNothing().when(swrveSpy).checkForCampaignAndResourcesUpdates();
         return swrveSpy;
+    }
+
+    public static void disableSwrveBackgroundEventSender(Swrve swrveSpy) {
+        SwrveBackgroundEventSender backgroundEventSenderMock = mock(SwrveBackgroundEventSender.class);
+        doNothing().when(backgroundEventSenderMock).send(anyString(), anyList());
+        doReturn(backgroundEventSenderMock).when(swrveSpy).getSwrveBackgroundEventSender(any(Context.class));
     }
 
     public static void runSingleThreaded(Swrve swrveSpy) {
@@ -446,5 +462,15 @@ public class SwrveTestUtils {
         // execute the rest and storage calls on same threads
         doAnswer(answer).when(swrveSpy).restClientExecutorExecute(any(Runnable.class));
         doAnswer(answer).when(swrveSpy).storageExecutorExecute(any(Runnable.class));
+        doAnswer(answer).when(swrveSpy).lifecycleExecutorExecute(any(Runnable.class));
+    }
+
+    public static void flushLifecycleExecutorQueue(Swrve swrve) {
+        // flush the strictmode penaltyListener on the lifecycleExecutorQueue by adding a runnable and waiting.
+        final AtomicBoolean callback = new AtomicBoolean(false);
+        swrve.lifecycleExecutorExecute(() -> {
+            callback.set(true);
+        });
+        await().untilTrue(callback);
     }
 }

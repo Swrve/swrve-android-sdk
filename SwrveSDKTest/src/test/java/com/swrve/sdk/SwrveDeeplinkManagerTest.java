@@ -5,12 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessagePersonalizationProvider;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -91,7 +93,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
                     httpCode = 200;
                 }
                 else if (params.containsValue("295413")) {
-                    response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message_personalised.json");
+                    response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message_personalized.json");
                     httpCode = 200;
                 }
                 else if (params.containsValue("295422")) {
@@ -296,19 +298,18 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         JSONObject campaignJson = rootJson.getJSONObject("campaign");
         assertEquals(campaignJson.getInt("id"), 295411);
         assertEquals(campaignJson.get("subject"), "Facebook Ad Message");
-        assertTrue(campaignJson.has("messages"));
+        assertTrue(campaignJson.has("message"));
     }
 
     @Test
-    public void testHandleDeeplink_MessagePersonalised() throws Exception {
+    public void testHandleDeeplink_MessagePersonalized() throws Exception {
 
-        // Set the personalisation provider and the value that is required for the campaign
-        SwrveInAppMessageConfig inAppConfig = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+        // Set the personalization provider and the value that is required for the campaign
+        swrveSpy.personalizationProvider = eventPayload -> {
             Map<String, String> properties = new HashMap<>();
             properties.put("test_value", "FILLED IN");
             return properties;
-        }).build();
-        swrveSpy.config.setInAppMessageConfig(inAppConfig);
+        };
 
         Bundle bundle = new Bundle();
         bundle.putString("target_url","swrve://app?ad_content=295413&ad_source=facebook&ad_campaign=BlackFriday");
@@ -356,7 +357,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testHandleDeeplink_MessagePersonalisedNotResolved() throws Exception {
+    public void testHandleDeeplink_MessagePersonalizedNotResolved() throws Exception {
 
         Bundle bundle = new Bundle();
         bundle.putString("target_url","swrve://app?ad_content=295413&ad_source=facebook&ad_campaign=BlackFriday");
@@ -383,7 +384,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
         assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295413"));
 
-        // 2. Test In-app message was not shown as the personalisation provider is not set
+        // 2. Test In-app message was not shown as the personalization provider is not set
         assertFalse(campaignShown().call());
     }
 
@@ -391,7 +392,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     public void testHandleDeeplink_MessageEmbedded() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
 
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message) -> {
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
             embeddedCallbackBool.set(true);
         }).build();
 
@@ -427,15 +428,64 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testHandleDeeplink_MessageEmbedded_withPersonalization() throws Exception {
+        final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
+
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
+            if(!personalizationProperties.isEmpty()) {
+                if(personalizationProperties.containsKey("key")){
+                    embeddedCallbackBool.set(true);
+                }
+            }
+        }).build();
+
+        // Set the personalization provider and the value that is required for the campaign
+        swrveSpy.personalizationProvider = eventPayload -> {
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", "value");
+            return properties;
+        };
+
+        swrveSpy.config.setEmbeddedMessageConfig(embeddedMessageConfig);
+
+        Bundle bundle = new Bundle();
+        bundle.putString("target_url","swrve://app?ad_content=295422&ad_source=facebook&ad_campaign=BlackFriday");
+
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+
+        //*** 1. Generic Event is queued
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jObj = new JSONObject(jsonString);
+
+        assertTrue(jObj.has("time"));
+        assertTrue(jObj.has("seqnum"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
+        assertTrue(jObj.get("id").equals("-1"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295422"));
+
+        // 2. Test EmbeddedMessageListener was fired
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+        await().untilTrue(embeddedCallbackBool);
+    }
+
+    @Test
     public void testHandleDeeplink_MessagePersonalizedImage() throws Exception {
 
-        // Set the personalisation provider and the value that is required for the campaign
-        SwrveInAppMessageConfig inAppConfig = new SwrveInAppMessageConfig.Builder().personalisationProvider(eventPayload -> {
+        // Set the personalization provider and the value that is required for the campaign
+        swrveSpy.personalizationProvider = eventPayload -> {
             Map<String, String> properties = new HashMap<>();
             properties.put("test_image_key", "asset1");
             return properties;
-        }).build();
-        swrveSpy.config.setInAppMessageConfig(inAppConfig);
+        };
 
         Bundle bundle = new Bundle();
         bundle.putString("target_url","swrve://app?ad_content=295433&ad_source=facebook&ad_campaign=BlackFriday");

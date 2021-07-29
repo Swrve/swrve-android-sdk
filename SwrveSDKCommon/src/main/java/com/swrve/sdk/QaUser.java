@@ -9,7 +9,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -151,67 +150,6 @@ public class QaUser {
             SwrveLogger.e("Error calling QaUser.isResetDevice", e);
         }
         return isResetDevice;
-    }
-
-    // TODO Remove this later when all users have moved off version 4.0.0 of geosdk
-    static void geoCampaignTriggered(long geoplaceId, long geofenceId, String actionType, Collection<QaGeoCampaignInfo> geoCampaignTriggeredList) {
-        try {
-            QaUser qaUser = QaUser.getInstance();
-            qaUser._geoCampaignTriggered(geoplaceId, geofenceId, actionType, geoCampaignTriggeredList);
-        } catch (Exception e) {
-            SwrveLogger.e("Error trying to send geo campaign triggered qa log event.", e);
-        }
-    }
-
-    private void _geoCampaignTriggered(long geoplaceId, long geofenceId, String actionType, Collection<QaGeoCampaignInfo> geoCampaignInfoList) throws Exception {
-        if (loggingEnabled) {
-            JSONArray campaignsArray = new JSONArray();
-            for (QaGeoCampaignInfo geoCampaignInfo : geoCampaignInfoList) {
-                JSONObject campaignJson = new JSONObject();
-                campaignJson.put("variant_id", geoCampaignInfo.variantId);
-                campaignJson.put("displayed", geoCampaignInfo.displayed);
-                campaignJson.put("reason", geoCampaignInfo.reason);
-                campaignsArray.put(campaignJson);
-            }
-            if (campaignsArray.length() > 0) {
-                JSONObject campaignsJson = new JSONObject();
-                campaignsJson.put("geoplace_id", geoplaceId);
-                campaignsJson.put("geofence_id", geofenceId);
-                campaignsJson.put("action_type", actionType);
-                campaignsJson.put("campaigns", campaignsArray);
-                queueQaLogEvent(LOG_SOURCE_GEO, "geo-campaign-triggered", campaignsJson.toString());
-            }
-        }
-    }
-
-    // TODO Remove this later when all users have moved off version 4.0.0 of geosdk
-    static void geoCampaignsDownloaded(long geoplaceId, long geofenceId, String actionType, Collection<QaGeoCampaignInfo> geoCampaignInfoList) {
-        try {
-            QaUser qaUser = QaUser.getInstance();
-            qaUser._geoCampaignsDownloaded(geoplaceId, geofenceId, actionType, geoCampaignInfoList);
-        } catch (Exception e) {
-            SwrveLogger.e("Error trying to send geo campaign downloaded qa log event.", e);
-        }
-    }
-
-    private void _geoCampaignsDownloaded(long geoplaceId, long geofenceId, String actionType, Collection<QaGeoCampaignInfo> geoCampaignInfoList) throws Exception {
-        if (loggingEnabled) {
-            JSONArray logDetailsCampaignsArray = new JSONArray();
-
-            JSONObject logDetailsCampaignsJson = new JSONObject();
-            logDetailsCampaignsJson.put("geoplace_id", geoplaceId);
-            logDetailsCampaignsJson.put("geofence_id", geofenceId);
-            logDetailsCampaignsJson.put("action_type", actionType);
-
-            for (QaGeoCampaignInfo geoCampaignInfo : geoCampaignInfoList) {
-                JSONObject logDetailsCampaignJson = new JSONObject();
-                logDetailsCampaignJson.put("variant_id", geoCampaignInfo.variantId);
-                logDetailsCampaignsArray.put(logDetailsCampaignJson);
-            }
-            logDetailsCampaignsJson.put("campaigns", logDetailsCampaignsArray);
-
-            queueQaLogEvent(LOG_SOURCE_GEO, "geo-campaigns-downloaded", logDetailsCampaignsJson.toString());
-        }
     }
 
     static void campaignsDownloaded(List<QaCampaignInfo> campaignInfoList) {
@@ -397,6 +335,27 @@ public class QaUser {
             }
 
             queueQaLogEvent(LOG_SOURCE_SDK, "asset-failed-to-display", logDetailsJson.toString());
+        }
+    }
+
+    public static void embeddedPersonalizationFailed(int campaignId, int variantId, String unresolvedData, String reason) {
+        try {
+            QaUser qaUser = QaUser.getInstance();
+            qaUser._embeddedPersonalizationFailed(campaignId, variantId, unresolvedData, reason);
+
+        } catch (Exception e) {
+            SwrveLogger.e("Error trying to queue embedded-personalization-failed qalogevent.", e);
+        }
+    }
+
+    private void _embeddedPersonalizationFailed(int campaignId, int variantId, String unresolvedData, String reason)throws Exception {
+        if (loggingEnabled) {
+            JSONObject logDetailsJson = new JSONObject();
+            logDetailsJson.put("campaign_id", campaignId);
+            logDetailsJson.put("variant_id", variantId);
+            logDetailsJson.put("unresolved_data", unresolvedData);
+            logDetailsJson.put("reason", reason);
+            queueQaLogEvent(LOG_SOURCE_SDK, "embedded-personalization-failed", logDetailsJson.toString());
         }
     }
 

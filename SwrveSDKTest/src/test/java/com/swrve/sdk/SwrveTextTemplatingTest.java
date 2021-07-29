@@ -89,6 +89,45 @@ public class SwrveTextTemplatingTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testTemplatingOnJSON() throws Exception {
+
+        Map<String, String> properties = new HashMap<>();
+        properties.put("campaignId", "1");
+        properties.put("item.label", "swrve");
+        properties.put("key1", "value1");
+        properties.put("key2", "value2");
+
+        String text = "{\"${item.label}\": \"${key1}/${key2}\", \"keys\": \"${key1}/${key2}\"}";
+        String templated = SwrveTextTemplating.applytoJSON(text, properties);
+        assertEquals("{\"swrve\": \"value1/value2\", \"keys\": \"value1/value2\"}", templated);
+
+        try {
+            text = "{\"${item.label}\": \"${key1}/${key2}\", \"keys\": \"${key3}/${key4}\"}"; // these values aren't in the customFields
+            templated = SwrveTextTemplating.applytoJSON(text, properties);
+            assertEquals("", templated);
+            fail("This line should not be reached. An exception should have been thrown.");
+        } catch (SwrveSDKTextTemplatingException e) {
+            // empty
+        } catch (Exception e) {
+            fail("This line should not be reached. An exception should have been thrown." + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testTemplatingOnJSONWithFallback() throws Exception {
+
+        Map<String, String> properties = new HashMap<>();
+        String text = "{\"key\":\"${user.firstname|fallback=\\\"working\\\"}\"}";
+        String templated = SwrveTextTemplating.applytoJSON(text, properties);
+        assertEquals("{\"key\":\"working\"}", templated);
+
+        properties = new HashMap<>();
+        text = "{\"${user.firstname|fallback=\\\"key\\\"}\":\"${user.firstname|fallback=\\\"working\\\"}\"}";
+        templated = SwrveTextTemplating.applytoJSON(text, properties);
+        assertEquals("{\"key\":\"working\"}", templated);
+    }
+
+    @Test
     public void testTemplatingHasPatternMatch() {
         String hasPattern = "Welcome to ${item.label}. And another ${key1}/${key2}";
         assertTrue("text should be recognised to have pattern in it", SwrveTextTemplating.hasPatternMatch(hasPattern));

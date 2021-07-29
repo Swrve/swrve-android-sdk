@@ -8,8 +8,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,108 +98,6 @@ public class QaUserTest extends SwrveBaseTest {
         assertNull(appVersion, qaUser.appVersion);
         assertNull(deviceId, qaUser.deviceId);
         assertNull(qaUser.restClientExecutor);
-    }
-
-    @Test
-    public void testGeoCampaignTriggered() {
-
-        QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
-        QaUser.update();
-        qaUser = QaUser.getInstance();
-        assertTrue(QaUser.isLoggingEnabled());
-
-        QaUser qaUserSpy = Mockito.spy(qaUser);
-        QaUser.instance = qaUserSpy;
-
-        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
-        Mockito.doReturn(999L).when(qaUserSpy).getTime();
-
-        Collection<QaGeoCampaignInfo> geoCampignInfoList = new ArrayList<>();
-        geoCampignInfoList.add(new QaGeoCampaignInfo(1, true, "reason1"));
-        geoCampignInfoList.add(new QaGeoCampaignInfo(4, false, "reason2"));
-        QaUser.geoCampaignTriggered(123, 456, "enter", geoCampignInfoList);
-
-        String logDetails =
-                "{" +
-                        "\"geoplace_id\":123," +
-                        "\"geofence_id\":456," +
-                        "\"action_type\":\"enter\"," +
-                        "\"campaigns\":[" +
-                        "{" +
-                        "\"variant_id\":1," +
-                        "\"displayed\":true," +
-                        "\"reason\":\"reason1\"" +
-                        "},{" +
-                        "\"variant_id\":4," +
-                        "\"displayed\":false," +
-                        "\"reason\":\"reason2\"" +
-                        "}" +
-                        "]}";
-        String event = getExpectedEvent("geo-sdk", "geo-campaign-triggered", logDetails);
-        verifyEventQueued(qaUserSpy, event);
-    }
-
-    @Test
-    public void testGeoCampaignsDownloadedWithNoCampaigns() {
-
-        QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
-        QaUser.update();
-        qaUser = QaUser.getInstance();
-        assertTrue(QaUser.isLoggingEnabled());
-
-        QaUser qaUserSpy = Mockito.spy(qaUser);
-        QaUser.instance = qaUserSpy;
-
-        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
-        Mockito.doReturn(999L).when(qaUserSpy).getTime();
-
-        QaUser.geoCampaignsDownloaded(123, 456, "enter", Collections.<QaGeoCampaignInfo>emptyList());
-
-        String logDetails = "{" +
-                "\"geoplace_id\":123," +
-                "\"geofence_id\":456," +
-                "\"action_type\":\"enter\"," +
-                "\"campaigns\":[]" +
-                "}";
-        String event = getExpectedEvent("geo-sdk", "geo-campaigns-downloaded", logDetails);
-        verifyEventQueued(qaUserSpy, event);
-    }
-
-    @Test
-    public void testGeoCampaignsDownloadedWithCampaigns() {
-
-        QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
-        QaUser.update();
-        qaUser = QaUser.getInstance();
-        assertTrue(QaUser.isLoggingEnabled());
-
-        QaUser qaUserSpy = Mockito.spy(qaUser);
-        QaUser.instance = qaUserSpy;
-
-        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
-        Mockito.doReturn(999L).when(qaUserSpy).getTime();
-
-        List<QaGeoCampaignInfo> geoCampaignsDownloaded = new ArrayList();
-        geoCampaignsDownloaded.add(new QaGeoCampaignInfo(1, false, ""));
-        geoCampaignsDownloaded.add(new QaGeoCampaignInfo(2, false, ""));
-
-        QaUser.geoCampaignsDownloaded(123, 456, "enter", geoCampaignsDownloaded);
-
-        String logDetails =
-                "{" +
-                        "\"geoplace_id\":123," +
-                        "\"geofence_id\":456," +
-                        "\"action_type\":\"enter\"," +
-                        "\"campaigns\":[" +
-                        "{\"variant_id\":1}," +
-                        "{\"variant_id\":2}" +
-                        "]" +
-                        "}";
-        String event = getExpectedEvent("geo-sdk", "geo-campaigns-downloaded", logDetails);
-        verifyEventQueued(qaUserSpy, event);
     }
 
     @Test
@@ -642,6 +538,36 @@ public class QaUserTest extends SwrveBaseTest {
                 "}";
         // @formatter:on
         String event = getExpectedEvent("sdk", "asset-failed-to-display", logDetails);
+        verifyEventQueued(qaUserSpy, event);
+    }
+
+    @Test
+    public void testEmbeddedPersonalizationFailed() {
+
+        QaUser qaUser = QaUser.getInstance();
+        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
+        QaUser.update();
+        qaUser = QaUser.getInstance();
+        assertTrue(QaUser.isLoggingEnabled());
+
+        QaUser qaUserSpy = Mockito.spy(qaUser);
+        QaUser.instance = qaUserSpy;
+
+        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
+        Mockito.doReturn(999L).when(qaUserSpy).getTime();
+
+        QaUser.embeddedPersonalizationFailed(1, 2, "${user.broken}", "Failed to resolve personalization");
+
+        // @formatter:off
+        String logDetails =
+                "{" +
+                        "\"campaign_id\":1," +
+                        "\"variant_id\":2," +
+                        "\"unresolved_data\":\"${user.broken}\"," +
+                        "\"reason\":\"Failed to resolve personalization\"" +
+                        "}";
+        // @formatter:on
+        String event = getExpectedEvent("sdk", "embedded-personalization-failed", logDetails);
         verifyEventQueued(qaUserSpy, event);
     }
 

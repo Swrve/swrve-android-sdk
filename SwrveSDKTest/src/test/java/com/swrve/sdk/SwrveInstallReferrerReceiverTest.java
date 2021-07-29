@@ -32,7 +32,7 @@ public class SwrveInstallReferrerReceiverTest extends SwrveBaseTest {
 
     @Test
     public void testSwrveInstallReferrerReceiver() throws Exception {
-        SharedPreferences settings = mActivity.getSharedPreferences(swrveSpy.SDK_PREFS_NAME, 0);
+        SharedPreferences settings = mActivity.getSharedPreferences(ISwrveCommon.SDK_PREFS_NAME, 0);
         settings.edit().remove("swrve.referrer_id").apply();
 
         SwrveInstallReferrerReceiver receiver1 = new SwrveInstallReferrerReceiver();
@@ -48,7 +48,7 @@ public class SwrveInstallReferrerReceiverTest extends SwrveBaseTest {
 
     @Test
     public void testReferrerUserUpdateCalled() throws Exception {
-        SharedPreferences settings = mActivity.getSharedPreferences(swrveSpy.SDK_PREFS_NAME, 0);
+        SharedPreferences settings = mActivity.getSharedPreferences(ISwrveCommon.SDK_PREFS_NAME, 0);
 
         settings.edit().remove("swrve.referrer_id").apply();
         swrveSpy.initialised = false;

@@ -26,7 +26,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     @Override
     public void onTokenRefresh() {
-        if (!started) return;
+        if (!isStarted()) return;
 
         final String userId = getUserId();
         googleUtil.registerForTokenInBackground(multiLayerLocalStorage, userId);
@@ -66,7 +66,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     }
 
     private void _iapPlay(String productId, double productPrice, String currency, SwrveIAPRewards rewards, String purchaseData, String dataSignature) {
-        if (!started) return;
+        if (!isStarted()) return;
 
         try {
             if (checkPlayStoreSpecificArguments(purchaseData, dataSignature)) {

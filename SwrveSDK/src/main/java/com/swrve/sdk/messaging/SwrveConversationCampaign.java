@@ -70,12 +70,12 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     }
 
     private void queueImageAsset(Set<SwrveAssetsQueueItem> assetQueue, Content content) {
-        assetQueue.add(new SwrveAssetsQueueItem(content.getValue(), content.getValue(), true, false));
+        assetQueue.add(new SwrveAssetsQueueItem(getId(), content.getValue(), content.getValue(), true, false));
     }
 
     private void queueFontAsset(Set<SwrveAssetsQueueItem> assetQueue, ConversationStyle style) {
         if (style != null && SwrveHelper.isNotNullOrEmpty(style.getFontFile()) && SwrveHelper.isNotNullOrEmpty(style.getFontDigest()) && !style.isSystemFont()) {
-            assetQueue.add(new SwrveAssetsQueueItem(style.getFontFile(), style.getFontDigest(), false, false));
+            assetQueue.add(new SwrveAssetsQueueItem(getId(), style.getFontFile(), style.getFontDigest(), false, false));
         }
     }
 

@@ -2,6 +2,7 @@ package com.swrve.sdk;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.provider.Settings;
 
@@ -45,6 +46,7 @@ import java.util.regex.Pattern;
 
 import static com.ibm.icu.impl.Assert.fail;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -260,7 +262,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testDeviceUpdate() throws Exception {
+    public void testDeviceUpdate() {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("attributes", swrveSpy.getDeviceInfo());
         swrveSpy.deviceUpdate(swrveSpy.getUserId(),swrveSpy.getDeviceInfo());
@@ -381,7 +383,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSessionStartUponInit() throws Exception {
+    public void testSessionStartUponInit() {
         // verify that sessionStart is first and then startCampaignsAndResourcesTimer.
         InOrder inOrder = inOrder(swrveSpy, swrveSpy);
         inOrder.verify(swrveSpy, times(1)).sessionStart();
@@ -554,7 +556,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertTrue(attributeDevices.has("swrve.sdk_flavour"));
         assertTrue(attributeDevices.has("swrve.sdk_init_mode"));
         assertTrue(attributeDevices.has("swrve.device_type"));
-        assertEquals("auto", attributeDevices.get("swrve.sdk_init_mode"));
+        assertEquals("auto_auto", attributeDevices.get("swrve.sdk_init_mode"));
         List<String> expectedDeviceTypes = new ArrayList<>();
         expectedDeviceTypes.add("tv");
         expectedDeviceTypes.add("mobile");
@@ -569,6 +571,36 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         assertEquals(true, attributeDevices.get("swrve.permission.notifications_enabled"));
         assertEquals(NotificationManagerCompat.IMPORTANCE_NONE, attributeDevices.get("swrve.permission.notifications_importance"));
+    }
+
+    @Test
+    public void testUserInfoInitMode() throws Exception {
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        config.setInitMode(SwrveInitMode.AUTO);
+        config.setAutoStartLastUser(true);
+        Swrve swrveSpy = SwrveTestUtils.createSpyInstance(config);
+
+        assertDeviceUpdateInitMode(swrveSpy, "auto_auto");
+
+        config.setInitMode(SwrveInitMode.AUTO);
+        config.setAutoStartLastUser(false);
+        assertDeviceUpdateInitMode(swrveSpy, "auto");
+
+        config.setInitMode(SwrveInitMode.MANAGED);
+        config.setAutoStartLastUser(true);
+        assertDeviceUpdateInitMode(swrveSpy, "managed_auto");
+
+        config.setInitMode(SwrveInitMode.MANAGED);
+        config.setAutoStartLastUser(false);
+        assertDeviceUpdateInitMode(swrveSpy, "managed");
+    }
+
+    private void assertDeviceUpdateInitMode(Swrve swrveSpy, String expectedInitMode) throws Exception {
+        JSONObject attributeDevices = swrveSpy._getDeviceInfo();
+        assertTrue(attributeDevices.has("swrve.sdk_init_mode"));
+        assertEquals(expectedInitMode, attributeDevices.get("swrve.sdk_init_mode"));
     }
 
     @Test
@@ -595,9 +627,13 @@ public class SwrveUnitTest extends SwrveBaseTest {
     public void testUserInfoManagedAutoMode() throws Exception {
 
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SharedPreferences settings = mActivity.getSharedPreferences(SDK_PREFS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("trackingState", "").commit(); // blank out the state from the setup()
+
         SwrveConfig config = new SwrveConfig();
         config.setInitMode(SwrveInitMode.MANAGED);
-        config.setManagedModeAutoStartLastUser(false); // Note the auto start false
+        config.setAutoStartLastUser(false); // Note the auto start false
         Swrve swrveSpy = SwrveTestUtils.createSpyInstance(config);
         SwrveTestUtils.runSingleThreaded(swrveSpy);
 
@@ -696,7 +732,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testGetUserResources() throws Exception {
+    public void testGetUserResources() {
         final String originalResponseBody = "[{ 'uid': 'animal.ant', 'name': 'ant', 'cost': '550', 'cost_type': 'gold'}, { 'uid': 'animal.bear', 'name': 'bear', 'cost': '999', 'cost_type': 'gold'}]";
         String userId = swrveSpy.getUserId();
         swrveSpy.multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_RESOURCES, originalResponseBody , swrveSpy.getUniqueKey(userId));
@@ -891,5 +927,63 @@ public class SwrveUnitTest extends SwrveBaseTest {
         inOrder.verify(swrveSpy, times(1)).flushToDisk();
         inOrder.verify(swrveSpy, times(1)).generateNewSessionInterval();
         inOrder.verify(swrveSpy, times(1)).saveCampaignsState(userId);
+    }
+
+    @Test
+    public void testRetrievePersonalizationProperties() {
+        Map<String, String> testRealtimeUserProperties = new HashMap<>();
+        testRealtimeUserProperties.put("key1", "value1");
+
+        Map<String, String> providerResponse = new HashMap<>();
+        providerResponse.put("key2", "value2");
+
+        Map<String, String> messageCenterResponse = new HashMap<>();
+        messageCenterResponse.put("key3", "value3");
+
+        // verify when there's nothing return null and don't crash
+        Map<String, String> resultProperties = swrveSpy.retrievePersonalizationProperties(null, null);
+        assertEquals(null, resultProperties);
+
+        swrveSpy.realTimeUserProperties = testRealtimeUserProperties;
+
+        Map<String, String> expectedProperties = new HashMap<>();
+        expectedProperties.put("user.key1", "value1");
+
+        // verify with no callback, just real time user properties
+        resultProperties = swrveSpy.retrievePersonalizationProperties(null, null);
+        assertEquals(expectedProperties, resultProperties);
+
+        // verify from trigger / setting off personalization provider
+        swrveSpy.personalizationProvider = eventPayload -> {
+            if (!SwrveHelper.isNullOrEmpty(eventPayload) && eventPayload.containsKey("change_value")) {
+                Map<String, String> map = providerResponse;
+                map.put("key3", "event_payload");
+                return map;
+            }
+            return providerResponse;
+        };
+
+        expectedProperties = new HashMap<>();
+        expectedProperties.put("user.key1", "value1");
+        expectedProperties.put("key2", "value2");
+
+        resultProperties = swrveSpy.retrievePersonalizationProperties(null, null);
+        assertEquals(resultProperties, expectedProperties);
+
+        // verify with event payload
+        expectedProperties.put("key3", "event_payload");
+
+        Map<String, String> eventPayload = new HashMap<>();
+        eventPayload.put("change_value", "value");
+        resultProperties = swrveSpy.retrievePersonalizationProperties(eventPayload, null);
+        assertEquals(resultProperties, expectedProperties);
+
+        // verify from message center (directly passing in properties)
+        expectedProperties = new HashMap<>();
+        expectedProperties.put("user.key1", "value1");
+        expectedProperties.put("key3", "value3");
+
+        resultProperties = swrveSpy.retrievePersonalizationProperties(null, messageCenterResponse);
+        assertEquals(resultProperties, expectedProperties);
     }
 }

@@ -27,7 +27,7 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     //ADM callbacks
     @Override
     public void onRegistrationIdReceived(String registrationId) {
-        if (!started) return;
+        if (!isStarted()) return;
 
         if (!SwrveHelper.isNullOrEmpty(registrationId)) {
             setRegistrationId(registrationId);

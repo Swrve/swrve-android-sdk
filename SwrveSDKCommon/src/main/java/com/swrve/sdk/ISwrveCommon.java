@@ -13,6 +13,13 @@ import java.util.Set;
 
 interface ISwrveCommon {
 
+    String SDK_PREFS_NAME               = "swrve_prefs";
+    String SDK_PREFS_KEY_USER_ID        = "userId";
+    String SDK_PREFS_KEY_TRACKING_STATE = "trackingState";
+    String SDK_PREFS_KEY_FLUSH_FREQ     = "swrve_cr_flush_frequency";
+    String SDK_PREFS_KEY_FLUSH_DELAY    = "swrve_cr_flush_delay";
+    String SDK_PREFS_REFERRER_ID        = "swrve.referrer_id";
+
     // cache constants
     String CACHE_DEVICE_ID = "device_id";
     String CACHE_CAMPAIGNS = "CMCC2";
@@ -59,6 +66,10 @@ interface ISwrveCommon {
     String SWRVE_CAN_RECEIVE_AUTH_PUSH      = "swrve.can_receive_authenticated_push";
     String SWRVE_INIT_MODE                  = "swrve.sdk_init_mode";
     String SWRVE_DEVICE_TYPE                = "swrve.device_type";
+    String SWRVE_TRACKING_STATE             = "swrve.tracking_state";
+
+    // user Update
+    String SWRVE_REFERRER_ID                = "swrve.referrer_id";
 
     // batch event
     String BATCH_EVENT_KEY_USER                     = "user";
@@ -86,6 +97,9 @@ interface ISwrveCommon {
     String GENERIC_EVENT_CAMPAIGN_ID_KEY            = "campaignId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_TEXT        = "buttonText";
     String GENERIC_EVENT_PAYLOAD_RUN_NUMBER         = "runNumber";
+    String GENERIC_EVENT_PAYLOAD_SILENT             = "silent";
+    String GENERIC_EVENT_PAYLOAD_DISPLAYED          = "displayed";
+    String GENERIC_EVENT_PAYLOAD_REASON             = "reason";
     String EVENT_FIRST_SESSION                      = "Swrve.first_session";
 
     // platform information
@@ -111,6 +125,8 @@ interface ISwrveCommon {
     int getAppId();
 
     String getUserId();
+
+    boolean isTrackingStateStopped();
 
     String getAppVersion();
 

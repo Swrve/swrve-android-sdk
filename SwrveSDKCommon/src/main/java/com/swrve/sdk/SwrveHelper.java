@@ -71,6 +71,10 @@ public final class SwrveHelper {
         return !isNullOrEmpty(val);
     }
 
+    public static boolean isNullOrEmpty(Map<String, String> val) {
+        return (val == null || val.isEmpty());
+    }
+
     public static String generateSessionToken(String apiKey, int appId, String userId) {
         String timestamp = Long.toString((new Date().getTime()) / 1000);
 
@@ -447,5 +451,26 @@ public final class SwrveHelper {
         }
 
         return payload;
+    }
+
+
+    // Simple function to combine two maps, this will be used primarily around the Real Time User Property Personalization Logic
+    // Utilizes Hashmap conversion to achieve this. baseMap will be the initial map added, then overriding will override any duplicates when
+    // putAll is called.
+    public static Map<String, String> combineTwoStringMaps(Map<String, String> baseMap, Map<String, String> overridingMap) {
+
+        if (isNullOrEmpty(baseMap) && isNullOrEmpty(overridingMap)) {
+            return null;
+        }
+
+        HashMap<String, String> result = new HashMap<>();
+        if (baseMap != null) {
+            result.putAll(baseMap);
+        }
+        if (overridingMap != null) {
+            result.putAll(overridingMap);
+        }
+
+        return result;
     }
 }

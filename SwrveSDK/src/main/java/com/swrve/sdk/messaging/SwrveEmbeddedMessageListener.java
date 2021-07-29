@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import android.content.Context;
+import java.util.Map;
 
 /**
  * Implement this interface if you plan on using embedded campaigns
@@ -14,6 +15,7 @@ public interface SwrveEmbeddedMessageListener {
      *
      * @param context context
      * @param message message contents
+     * @param personalizationProperties string map of personalization key / value pairs.
      */
-    void onMessage(Context context, SwrveEmbeddedMessage message);
+    void onMessage(Context context, SwrveEmbeddedMessage message, Map<String, String> personalizationProperties);
 }

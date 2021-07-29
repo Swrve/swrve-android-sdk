@@ -167,6 +167,67 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
         verify(swrveSpy, times(2))._sendQueuedEvents(userId, sessionToken, false);
     }
 
+    @Test
+    public void testInvokeListenerOnceUserResources() {
+        // execute the rest and storage calls on same threads
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        String campaignsResponseJson  = "{\"user_resources\": [{\"test_id\": \"test_value\"}]}";
+
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.campaignsAndResourcesInitialized = true;
+        swrveSpy.init(mActivity);
+
+        verify(swrveSpy, times(1)).invokeResourceListener();
+    }
+
+    @Test
+    public void testInvokeListenerOnceRTUP() {
+        // execute the rest and storage calls on same threads
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        String campaignsResponseJson  = "{\"real_time_user_properties\": {\"test_id\": \"test_value\"}}";
+
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.campaignsAndResourcesInitialized = false;
+        swrveSpy.init(mActivity);
+
+        verify(swrveSpy, times(1)).invokeResourceListener();
+    }
+
+    @Test
+    public void testInvokeListenerOnceForBoth() {
+        // execute the rest and storage calls on same threads
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        String campaignsResponseJson  = SwrveTestUtils.getAssetAsText(mActivity, "rtup_resources.json");
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.init(mActivity);
+
+        verify(swrveSpy, times(1)).invokeResourceListener();
+    }
+
+    @Test
+    public void testInvokeListenerOnceFirstTime() {
+        // execute the rest and storage calls on same threads
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        String campaignsResponseJson = "{}";
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.campaignsAndResourcesInitialized = false;
+        swrveSpy.init(mActivity);
+
+        verify(swrveSpy, times(1)).invokeResourceListener();
+    }
+
+    @Test
+    public void testInvokeListenerNotCalled() {
+        // execute the rest and storage calls on same threads
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        String campaignsResponseJson = "{}";
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.campaignsAndResourcesInitialized = true;
+        swrveSpy.init(mActivity);
+
+        verify(swrveSpy, times(0)).invokeResourceListener();
+    }
+
     private void mockAndCountCallsToCheckForCampaignAndResourcesUpdates() {
         doAnswer((Answer<Void>) invocation -> {
             SwrveLogger.d("checkForCampaignAndResourcesUpdates method is mocked to do nothing. Called counter:%s", campaignAndResourcesUpdatesCounter);

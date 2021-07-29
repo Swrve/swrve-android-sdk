@@ -19,15 +19,14 @@ public class SwrveButton extends SwrveWidget {
     protected int appId;
     // Action associated with this button
     protected SwrveActionType actionType;
-    // Personalized text (render this instead of the image)
-    protected String text;
-    // Dynamic Image Url
-    protected String dynamicImageUrl;
 
     public SwrveButton() {
+        super();
     }
 
     public SwrveButton(SwrveMessage message, JSONObject buttonData) throws JSONException {
+        super(buttonData);
+
         if (buttonData.has("name")) {
             setName(buttonData.getString("name"));
         }
@@ -36,10 +35,6 @@ public class SwrveButton extends SwrveWidget {
 
         if (buttonData.has("image_up")) {
             setImage(buttonData.getJSONObject("image_up").getString("value"));
-        }
-
-        if (buttonData.has("dynamic_image_url")) {
-            setDynamicImageUrl(buttonData.getString("dynamic_image_url"));
         }
 
         setMessage(message);
@@ -52,11 +47,6 @@ public class SwrveButton extends SwrveWidget {
         }
         setAction(buttonData.getJSONObject("action").getString("value"));
         setActionType(SwrveActionType.parse(buttonData.getJSONObject("type").getString("value")));
-
-        if (buttonData.has("text")) {
-            setText(buttonData.getJSONObject("text").getString("value"));
-        }
-
     }
 
     /**
@@ -79,17 +69,6 @@ public class SwrveButton extends SwrveWidget {
 
     protected void setImage(String image) {
         this.image = image;
-    }
-
-    /**
-     * @return the cached path of the button dynamic image url.
-     */
-    public String getDynamicImageUrl() {
-        return dynamicImageUrl;
-    }
-
-    protected void setDynamicImageUrl(String dynamicImageUrl) {
-        this.dynamicImageUrl = dynamicImageUrl;
     }
 
     /**
@@ -134,16 +113,5 @@ public class SwrveButton extends SwrveWidget {
 
     protected void setActionType(SwrveActionType actionType) {
         this.actionType = actionType;
-    }
-
-    /**
-     * @return the button text to render.
-     */
-    public String getText() {
-        return text;
-    }
-
-    protected void setText(String text) {
-        this.text = text;
     }
 }

@@ -28,17 +28,14 @@ import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
  */
 public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
-    protected List<SwrveMessage> messages;
+    protected SwrveMessage message;
 
     public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
-        this.messages = new ArrayList<>();
 
-        if (campaignData.has("messages")) {
-            JSONArray jsonMessages = campaignData.getJSONArray("messages");
-            for (int k = 0, t = jsonMessages.length(); k < t; k++) {
-                JSONObject messageData = jsonMessages.getJSONObject(k);
-                SwrveMessage message = createMessage(this, messageData, campaignManager.getCacheDir());
+        if (campaignData.has("message")) {
+            JSONObject messageData = campaignData.getJSONObject("message");
+            message = createMessage(this, messageData, campaignManager.getCacheDir());
 
                 // If the message has some format
                 List<SwrveMessageFormat> formats = message.getFormats();
@@ -49,62 +46,56 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                             // Add all images to the download queue
                             for (SwrveButton button : format.getButtons()) {
                                 if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
-                                    assetsQueue.add(new SwrveAssetsQueueItem(button.getImage(), button.getImage(), true, false));
+                                    assetsQueue.add(new SwrveAssetsQueueItem(getId(), button.getImage(), button.getImage(), true, false));
                                 }
 
                                 if (!SwrveHelper.isNullOrEmpty(button.getDynamicImageUrl())) {
                                     try {
                                         String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
-                                        assetsQueue.add(new SwrveAssetsQueueItem(SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                                        assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
                                     } catch (SwrveSDKTextTemplatingException exception) {
-                                        SwrveLogger.e("Text Templating could not be resolved", exception);
+                                        SwrveLogger.e("Campaign id:%s text templating could not be resolved", exception, getId());
                                     }
                                 }
                             }
 
                             for (SwrveImage image : format.getImages()) {
                                 if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
-                                    assetsQueue.add(new SwrveAssetsQueueItem(image.getFile(), image.getFile(), true, false));
+                                    assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFile(), image.getFile(), true, false));
                                 }
 
                                 if (!SwrveHelper.isNullOrEmpty(image.getDynamicImageUrl())) {
                                     try {
                                         String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
-                                        assetsQueue.add(new SwrveAssetsQueueItem(SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                                        assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
                                     } catch (SwrveSDKTextTemplatingException exception) {
-                                        SwrveLogger.e("Text Templating could not be resolved", exception);
+                                        SwrveLogger.e("Campaign id:%s text templating could not be resolved", exception, getId());
                                     }
                                 }
                             }
                         }
                     }
-                    addMessage(message);
                 }
-            }
         }
     }
 
     /**
      * @return the campaign messages.
      */
-    public List<SwrveMessage> getMessages() {
-        return messages;
+    public SwrveMessage getMessage() {
+        return message;
     }
 
-    public int getVariantIdAtIndex(int index) {
+    public int getVariantId() {
         int variantId = -1;
-        if (messages != null & messages.size() > 0) {
-            variantId = messages.get(index).getId();
+        if (message != null) {
+            variantId = message.getId();
         }
         return variantId;
     }
 
-    protected void setMessages(List<SwrveMessage> messages) {
-        this.messages = messages;
-    }
-
-    protected void addMessage(SwrveMessage message) {
-        this.messages.add(message);
+    protected void setMessage(SwrveMessage message) {
+        this.message = message;
     }
 
     /**
@@ -139,7 +130,8 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
      * otherwise.
      */
     public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> properties) {
-        boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, qaCampaignInfoMap, messages.size());
+        int messageSize = (message == null) ? 0 : 1;
+        boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, qaCampaignInfoMap, messageSize);
         if (canShowCampaign) {
             SwrveLogger.i("%s matches a trigger in %s", event, id);
             return getNextMessage(qaCampaignInfoMap, properties);
@@ -155,40 +147,26 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
      * null.
      */
     public SwrveMessage getMessageForId(int messageId) {
-        int messagesCount = messages.size();
-        if (messagesCount == 0) {
+        if (message == null) {
             SwrveLogger.i("No messages in campaign %s", id);
             return null;
         }
 
-        for (SwrveMessage message : messages) {
-            if (message.getId() == messageId) {
-                return message;
-            }
+        if (message.getId() == messageId) {
+            return message;
         }
 
         return null;
     }
 
     protected SwrveMessage getNextMessage(Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> properties) {
-        if (randomOrder) {
-            List<SwrveMessage> randomMessages = new ArrayList<>(messages);
-            Collections.shuffle(randomMessages);
-            for (SwrveMessage msg : randomMessages) {
-                if (msg.areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
-                    return msg;
-                }
-            }
-        } else if (saveableState.next < messages.size()) {
-            SwrveMessage msg = messages.get(saveableState.next);
-            if (msg.areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
-                return messages.get(saveableState.next);
-            }
+        if (this.message != null && this.message .areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
+            return this.message ;
         }
 
         String resultText = "Campaign " + this.getId() + " hasn't finished downloading.";
         if (qaCampaignInfoMap != null) {
-            int variantId = getVariantIdAtIndex(0);
+            int variantId = getVariantId();
             qaCampaignInfoMap.put(id, new QaCampaignInfo(id, variantId, IAM, false, resultText));
         }
         SwrveLogger.i(resultText);
@@ -206,22 +184,12 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
     @Override
     public void messageWasShownToUser() {
         super.messageWasShownToUser();
-        // Set next message to be shown
-        if (!isRandomOrder()) {
-            int nextMessage = (getNext() + 1) % getMessages().size();
-            this.saveableState.next = nextMessage;
-            SwrveLogger.i("Round Robin: Next message in campaign %s is %s", getId(), nextMessage);
-        } else {
-            SwrveLogger.i("Next message in campaign %s is random", getId());
-        }
     }
 
     @Override
     public boolean supportsOrientation(SwrveOrientation orientation) {
-        for (SwrveMessage message : messages) {
-            if (message.supportsOrientation(orientation)) {
-                return true;
-            }
+        if (message.supportsOrientation(orientation)) {
+            return true;
         }
         return false;
     }
@@ -240,20 +208,16 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk) {
-        for (SwrveMessage message : messages) {
-            if (!message.areAssetsReady(assetsOnDisk, null)) {
-                return false;
-            }
+        if (!message.areAssetsReady(assetsOnDisk, null)) {
+            return false;
         }
         return true;
     }
 
     @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
-        for (SwrveMessage message : messages) {
-            if (!message.areAssetsReady(assetsOnDisk, properties)) {
-                return false;
-            }
+        if (!message.areAssetsReady(assetsOnDisk, properties)) {
+            return false;
         }
         return true;
     }

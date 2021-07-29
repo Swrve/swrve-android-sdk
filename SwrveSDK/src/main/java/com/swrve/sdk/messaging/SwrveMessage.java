@@ -177,7 +177,7 @@ public class SwrveMessage implements SwrveBaseMessage {
 
     /**
      * @param assetsOnDisk Already downloaded assets on disk
-     * @param properties   properties, when applied are used to resolve the dynamic image urls that may occur
+     * @param properties properties, when applied are used to resolve the dynamic image urls that may occur
      * @return true if all assets for this message have been downloaded.
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
@@ -187,11 +187,14 @@ public class SwrveMessage implements SwrveBaseMessage {
                     String buttonAsset = button.getImage();
                     boolean hasButtonImage = this.assetInCache(assetsOnDisk, buttonAsset);
 
-                    if (SwrveHelper.isNotNullOrEmpty(button.getDynamicImageUrl())) {
+                    if (!hasButtonImage && SwrveHelper.isNotNullOrEmpty(button.getDynamicImageUrl())) {
                         try {
                             String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
                             if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
                                 hasButtonImage = true;
+                            } else {
+                                SwrveLogger.i("Button dynamic asset not yet downloaded: %s", resolvedUrl);
+                                return false;
                             }
                         } catch (Exception e) {
                             SwrveLogger.i("Could not resolve personalization", e);
@@ -208,11 +211,14 @@ public class SwrveMessage implements SwrveBaseMessage {
                     String imageAsset = image.getFile();
                     boolean hasImage = this.assetInCache(assetsOnDisk, imageAsset);
 
-                    if (SwrveHelper.isNotNullOrEmpty(image.getDynamicImageUrl())) {
+                    if (!hasImage && SwrveHelper.isNotNullOrEmpty(image.getDynamicImageUrl())) {
                         try {
                             String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
                             if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
                                 hasImage = true;
+                            } else {
+                                SwrveLogger.i("Image dynamic asset not yet downloaded: %s", resolvedUrl);
+                                return false;
                             }
                         } catch (Exception e) {
                             SwrveLogger.i("Could not resolve personalization", e);
@@ -220,7 +226,7 @@ public class SwrveMessage implements SwrveBaseMessage {
                     }
 
                     if (!hasImage) {
-                        SwrveLogger.i("Button asset not yet downloaded: %s", hasImage);
+                        SwrveLogger.i("Image asset not yet downloaded: %s", imageAsset);
                         return false;
                     }
                 }

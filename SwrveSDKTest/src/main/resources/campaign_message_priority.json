@@ -70,7 +70,7 @@
         }
       ],
       "start_date": 1362671700000,
-      "messages": [
+      "message":
         {
           "template": {
             "template_id": "20",
@@ -197,8 +197,7 @@
           "name": "Kindle",
           "rules": {},
           "priority": 1
-        }
-      ],
+        },
       "rules": {
         "display_order": "random",
         "dismiss_after_views": 999,
@@ -220,7 +219,7 @@
         }
       ],
       "start_date": 1362671700000,
-      "messages": [
+      "message":
         {
           "template": {
             "template_id": "20",
@@ -347,8 +346,7 @@
           "name": "Kindle",
           "rules": {},
           "priority": 1
-        }
-      ],
+        } ,
       "rules": {
         "display_order": "random",
         "dismiss_after_views": 999,
