@@ -1,5 +1,11 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.CACHE_NOTIFICATION_CAMPAIGNS_DEBUG;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.doNothing;
+
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -22,12 +28,6 @@ import org.robolectric.shadows.ShadowActivity;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.Callable;
-
-import static com.swrve.sdk.ISwrveCommon.CACHE_NOTIFICATION_CAMPAIGNS_DEBUG;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.doNothing;
 
 public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
 
@@ -101,8 +101,8 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
 
     public void assertNotificationSwrveCampaignId(Intent intent, String notificationSwrveCampaignId) {
         assertNull(swrveSpy.notificationSwrveCampaignId);
-        SwrveNotificationEngageReceiver notificationEngageReceiver = new SwrveNotificationEngageReceiver();
-        notificationEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
+        notificationEngage.processIntent(intent);
         assertEquals(swrveSpy.notificationSwrveCampaignId, notificationSwrveCampaignId);
     }
 
@@ -219,9 +219,9 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
         Intent engagedIntent = createPushEngagedIntent();
         Intent buttonIntent = createPushButtonClickedIntent();
 
-        SwrveNotificationEngageReceiver notificationEngageReceiver = new SwrveNotificationEngageReceiver();
-        notificationEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), engagedIntent);
-        notificationEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), buttonIntent);
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
+        notificationEngage.processIntent(engagedIntent);
+        notificationEngage.processIntent(buttonIntent);
 
         ArgumentCaptor<String> campaignIdCaptor = ArgumentCaptor.forClass(String.class);
         Mockito.verify(swrveSpy, Mockito.atLeastOnce()).setNotificationSwrveCampaignId(campaignIdCaptor.capture());

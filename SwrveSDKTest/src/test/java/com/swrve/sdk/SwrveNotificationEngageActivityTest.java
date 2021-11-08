@@ -15,22 +15,23 @@ import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import java.util.List;
 
 @RunWith(RobolectricTestRunner.class)
-public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
+public class SwrveNotificationEngageActivityTest extends SwrveBaseTest {
 
     Context context = ApplicationProvider.getApplicationContext();
 
     @Test
     public void testReceiverInManifest() {
-        Intent intent = new Intent(context, SwrveNotificationEngageReceiver.class);
-        List<ResolveInfo> receiverDataList = context.getPackageManager().queryBroadcastReceivers(intent, 0);
+        Intent intent = new Intent(context, SwrveNotificationEngageActivity.class);
+        List<ResolveInfo> receiverDataList = context.getPackageManager().queryIntentActivities(intent, 0);
         boolean inManifest = false;
         for (ResolveInfo receiverData : receiverDataList) {
-            if (receiverData.activityInfo.name.equals("com.swrve.sdk.SwrveNotificationEngageReceiver")) {
+            if (receiverData.activityInfo.name.equals("com.swrve.sdk.SwrveNotificationEngageActivity")) {
                 inManifest = true;
                 break;
             }
@@ -40,11 +41,11 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
     @Test
     public void testEngage() {
-        SwrveNotificationEngageReceiver receiverSpy = spy(new SwrveNotificationEngageReceiver());
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveNotificationEngageActivity.class);
+        SwrveNotificationEngageActivity activitySpy = spy(Robolectric.buildActivity(SwrveNotificationEngageActivity.class, intent).create().visible().get());
         SwrveNotificationEngage notificationEngageMock = mock(SwrveNotificationEngage.class);
-        doReturn(notificationEngageMock).when(receiverSpy).getSwrveNotificationEngage(context);
-        Intent intent = new Intent();
-        receiverSpy.onReceive(context, intent);
+        doReturn(notificationEngageMock).when(activitySpy).getSwrveNotificationEngage(context);
+        activitySpy.onCreate(null);
         verify(notificationEngageMock, times(1)).processIntent(intent);
     }
 }

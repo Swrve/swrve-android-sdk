@@ -2,7 +2,6 @@ package com.swrve.sdk;
 
 import android.content.Context;
 
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
@@ -10,6 +9,7 @@ import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,6 +26,7 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
     protected final Context context;
     protected String registrationId;
     protected String advertisingId;
+    protected boolean logAdvertisingId;
 
     public SwrveGoogleUtil(Context context) {
         this.context = context;
@@ -37,6 +38,7 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
             obtainRegistrationId(multiLayerLocalStorage, userId);
         }
 
+        this.logAdvertisingId = logAdvertisingId;
         if (logAdvertisingId) {
             obtainGAID(multiLayerLocalStorage, userId);
         }
@@ -136,6 +138,9 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
                     // Obtain and save the new Google Advertising Id
                     advertisingId = getAdvertisingId();
                     if (SwrveHelper.isNotNullOrEmpty(advertisingId)) {
+                        if (advertisingId.equals("00000000-0000-0000-0000-000000000000")) {
+                            SwrveLogger.e("SwrveSDK: Advertising Id has been redacted. Please check permissions.");
+                        }
                         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
                         String uniqueKey = swrveCommon.getUniqueKey(userId);
                         multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_GOOGLE_ADVERTISING_ID, advertisingId, uniqueKey);
@@ -150,11 +155,38 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
         }
     }
 
-    String getAdvertisingId() throws Exception {
+    // The play-services-ads-identifier library adds a permission that may cause play store rejection for family rated apps.
+    // This library needs to be added by the customer to build.gradle if they want access to advertising id. Eg:
+    // api 'com.google.android.gms:play-services-ads-identifier:17.1.0'
+    String getAdvertisingId() {
         String advertisingId = null;
-        AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context);
-        if (adInfo != null) {
-            advertisingId = adInfo.getId();
+        try {
+            // Use reflection to access api: AdvertisingIdClient.getAdvertisingIdInfo(context).getId();
+            Class advertisingIdClientClass = Class.forName("com.google.android.gms.ads.identifier.AdvertisingIdClient");
+            if (advertisingIdClientClass != null) {
+                Class<?> params[] = new Class[]{Context.class};
+                Method getAdvertisingIdInfoMethod = advertisingIdClientClass.getMethod("getAdvertisingIdInfo", params);
+                if (getAdvertisingIdInfoMethod != null) {
+                    Object advertisingIdClientIInfoObject = getAdvertisingIdInfoMethod.invoke(null, context);
+                    if (advertisingIdClientIInfoObject != null) {
+                        Class infoClass = Class.forName("com.google.android.gms.ads.identifier.AdvertisingIdClient$Info");
+                        Method getIdMethod = infoClass.getMethod("getId");
+                        if (getIdMethod != null) {
+                            advertisingId = (String) getIdMethod.invoke(advertisingIdClientIInfoObject);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            if (logAdvertisingId) {
+                SwrveLogger.e("SwrveSDK: Error getting Advertising Id. The play-services-ads-identifier library may not be a dependency or may be incorrect version. See docs.", ex);
+            } else {
+                SwrveLogger.v("SwrveSDK: Not getting Advertising Id. The play-services-ads-identifier library may not be a dependency.");
+            }
+        } finally {
+            if (logAdvertisingId && SwrveHelper.isNullOrEmpty(advertisingId)) {
+                SwrveLogger.e("SwrveSDK: Error getting Advertising Id. The play-services-ads-identifier library may not be a dependency or may be incorrect version. See docs.");
+            }
         }
         return advertisingId;
     }

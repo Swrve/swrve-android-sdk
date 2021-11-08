@@ -168,15 +168,6 @@ public class SwrveMessage implements SwrveBaseMessage {
 
     /**
      * @param assetsOnDisk Already downloaded assets on disk
-     * @return true if all assets for this message have been downloaded.
-     */
-    @Deprecated
-    public boolean areAssetsReady(Set<String> assetsOnDisk) {
-        return areAssetsReady(assetsOnDisk, null);
-    }
-
-    /**
-     * @param assetsOnDisk Already downloaded assets on disk
      * @param properties properties, when applied are used to resolve the dynamic image urls that may occur
      * @return true if all assets for this message have been downloaded.
      */

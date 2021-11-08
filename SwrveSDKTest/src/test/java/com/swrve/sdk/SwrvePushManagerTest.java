@@ -477,7 +477,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         String payloadJson = "{}";
         for (String internalKey : SwrveNotificationInternalPayloadConstants.PUSH_INTERNAL_KEYS) {
             if (!internalKey.equals(SwrveNotificationInternalPayloadConstants.SWRVE_AUTH_USER_KEY)) {
-                bundle.putString(internalKey, "value");
+                bundle.putString(internalKey, "456");
             }
         }
 
@@ -655,7 +655,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         Bundle bundle = new Bundle();
         bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
         bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
-        bundle.putString(SwrveNotificationConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value1\"}");
+        bundle.putString(SwrveNotificationConstants.SILENT_PAYLOAD_KEY, "{\"custom\":\"value\"}");
         bundle.putString(SwrveNotificationConstants.SWRVE_AUTH_USER_KEY, "testUserId");
         String json = "{\n" +
                 "\"title\": \"title\",\n" +
@@ -667,7 +667,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                 "}";
         bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
         bundle.putString(SwrveNotificationConstants.TEXT_KEY, "plain text");
-        bundle.putString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "some custom values");
+        bundle.putString(SwrveNotificationConstants.SWRVE_NESTED_JSON_PAYLOAD_KEY, "{\"custom\":\"values\"}");
         bundle.putString("sound", "default");
         doReturn(SwrveTestUtils.parseDate("2017/01/01 0:00")).when(pushManagerSpy).getNow();
         pushManagerSpy.processMessage(bundle);

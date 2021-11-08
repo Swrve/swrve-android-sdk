@@ -5,14 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
-import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessagePersonalizationProvider;
 import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -44,11 +41,9 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
 import static com.swrve.sdk.SwrveDeeplinkManager.SWRVE_AD_MESSAGE;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -224,7 +219,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
 
         SwrveBaseConversation conversation = (SwrveBaseConversation) nextIntent.getSerializableExtra("conversation");
         assertEquals(conversation.getId(), 8587);
-        assertThat(conversation.getName(), equalTo("FB Ad Journey Conversation Test"));
+        assertEquals(conversation.getName(), ("FB Ad Journey Conversation Test"));
 
         // 3. Conversation Cached
 
@@ -287,7 +282,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         SwrveMessage message = swrveSpy.getAdMesage();
 
         assertEquals(message.getId(), 298085);
-        assertThat(message.getName(), equalTo("Double format"));
+        assertEquals(message.getName(), ("Double format"));
 
         // 3. Message Cached
 
@@ -353,7 +348,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         SwrveMessage message = swrveSpy.getAdMesage();
 
         assertEquals(message.getId(), 298085);
-        assertThat(message.getName(), equalTo("Double format"));
+        assertEquals(message.getName(), ("Double format"));
     }
 
     @Test

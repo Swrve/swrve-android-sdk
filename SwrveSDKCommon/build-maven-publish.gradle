@@ -6,7 +6,7 @@ task androidCommonJavadoc(type: Javadoc, dependsOn: "assembleRelease") {
     ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
     classpath += files(ext.androidJar)
     failOnError true
-    include 'com/swrve/**', 'androidx/core/app/SwrveJobIntentService.java'
+    include 'com/swrve/**'
 
     // Use the release variant classpath
     android.libraryVariants.all { variant ->

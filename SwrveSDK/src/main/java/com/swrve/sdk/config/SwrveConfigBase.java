@@ -44,7 +44,7 @@ public abstract class SwrveConfigBase {
     private boolean abTestDetailsEnabled; // Obtain information about the AB Tests a user is part of.
     private List<String> modelBlackList;
     private boolean loggingEnabled = true;
-    private SwrveNotificationConfig notificationConfig; // null as default, but attempts to populate from manifest if not instantiated. The manifest logic is deprecated and will be removed later
+    private SwrveNotificationConfig notificationConfig; // null as default, but attempts to populate from manifest if not instantiated.
     private SwrvePushNotificationListener notificationListener;
     private SwrveSilentPushListener silentPushListener;
     private SwrveInAppMessageConfig inAppMessageConfig = new SwrveInAppMessageConfig.Builder().build(); // All default values set in the init
@@ -457,7 +457,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return The custom SwrveNotificationConfig if one is set. If null, configuration from manifest will be attempted. Note that manifest logic is deprecated and will be removed.
+     * @return The custom SwrveNotificationConfig if one is set. If null, configuration from manifest will be attempted.
      */
     public SwrveNotificationConfig getNotificationConfig() {
         return notificationConfig;

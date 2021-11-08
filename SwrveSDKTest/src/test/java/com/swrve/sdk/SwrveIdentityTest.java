@@ -36,12 +36,9 @@ import static com.swrve.sdk.ISwrveCommon.EVENT_FIRST_SESSION;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -235,7 +232,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         mockRestResponse(403, "some_response");
         identifyAndWait("anotherEmail@gmail.com");
         assertEquals(1, getAllSwrveUsers().size());
-        assertThat(currentSwrveUserId, not(equalTo(swrveSpy.getUserId())));
+        assertNotEquals(currentSwrveUserId, swrveSpy.getUserId());
     }
 
     @Test
@@ -250,7 +247,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         mockRestResponse(404, "some_response");
         identifyAndWait("NewExternalUser");
         // switch users failed, so should be tracking under a new anonymous swrve user id
-        assertThat(currentSwrveUserId, not(equalTo(swrveSpy.getUserId())));
+        assertNotEquals(currentSwrveUserId, (swrveSpy.getUserId()));
     }
 
     @Test

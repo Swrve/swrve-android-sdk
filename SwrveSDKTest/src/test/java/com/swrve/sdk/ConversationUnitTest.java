@@ -22,12 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -54,16 +52,16 @@ public class ConversationUnitTest extends SwrveBaseTest {
     public void testCdnRootV3() throws Exception {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_v3.json");
         String cdnRoot = ((SwrveAssetsManagerImp)swrveSpy.swrveAssetsManager).cdnImages;
-        assertThat("Version 3 might be already cached, so need to make sure it does not fail", cdnRoot, equalTo("http://fake_cdn_root.com/someurl/image/"));
+        assertEquals("Version 3 might be already cached, so need to make sure it does not fail", cdnRoot, ("http://fake_cdn_root.com/someurl/image/"));
     }
 
     @Test
     public void testCdnPaths() throws Exception {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json");
         String cdnImages = ((SwrveAssetsManagerImp) swrveSpy.swrveAssetsManager).cdnImages;
-        assertThat("cdnImages is not being read correctly", cdnImages, equalTo("http://fake_cdn_root.com/someurl/image/"));
+        assertEquals("cdnImages is not being read correctly", cdnImages, ("http://fake_cdn_root.com/someurl/image/"));
         String cdnFonts = ((SwrveAssetsManagerImp) swrveSpy.swrveAssetsManager).cdnFonts;
-        assertThat("cdnFonts is not being read correctly", cdnFonts, equalTo("http://fake_cdn_root.com/someurl/font/"));
+        assertEquals("cdnFonts is not being read correctly", cdnFonts, ("http://fake_cdn_root.com/someurl/font/"));
     }
 
     @Test
@@ -71,11 +69,11 @@ public class ConversationUnitTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
-        assertThat(conversation.getPages().size(), equalTo(1));
+        assertEquals(conversation.getPages().size(), (1));
 
         ConversationPage conversationPage = conversation.getFirstPage();
         assertNotNull(conversationPage);
-        assertThat(conversationPage.getTitle(), equalTo("Page 1 of x"));
+        assertEquals(conversationPage.getTitle(), ("Page 1 of x"));
     }
 
     @Test
@@ -155,7 +153,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
 
         SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<String, String>());
         assertNotNull(conversation);
-        assertThat(conversation.getPages().size(), equalTo(1));
+        assertEquals(conversation.getPages().size(), (1));
     }
 
     @Test
@@ -192,7 +190,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
         assertNotNull(swrveSpy.campaigns);
-        assertThat(swrveSpy.campaigns.size(), equalTo(1));
+        assertEquals(swrveSpy.campaigns.size(), (1));
         SwrveBaseCampaign swrveCampaign = swrveSpy.campaigns.get(0);
         assertTrue(swrveCampaign instanceof SwrveConversationCampaign);
         SwrveConversation conversation = ((SwrveConversationCampaign) swrveCampaign).getConversation();
@@ -472,8 +470,8 @@ public class ConversationUnitTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_versions.json");
         assertNotNull(swrveSpy.campaigns);
         // One campaign with no version (defaulted to 1), another campaign with v1, and another high version is not loaded
-        assertThat("Only 2 valid conversations can be parsed in this test. The raw json used in this test should contain one conversation that should not be parsed.\n " +
-                "If current feature increments the version, then be sure the raw json in this test gets incremented also.", swrveSpy.campaigns.size(), equalTo(2));
+        assertEquals("Only 2 valid conversations can be parsed in this test. The raw json used in this test should contain one conversation that should not be parsed.\n " +
+                "If current feature increments the version, then be sure the raw json in this test gets incremented also.", swrveSpy.campaigns.size(), (2));
     }
 
     @Test
@@ -481,7 +479,7 @@ public class ConversationUnitTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_filters.json");
         assertNotNull(swrveSpy.campaigns);
         // One with no requirements, another with "android" and a campaign with "ios_permissions" that will be rejected.
-        assertThat(swrveSpy.campaigns.size(), equalTo(2));
+        assertEquals(swrveSpy.campaigns.size(), (2));
     }
 
     private SwrveConversation getMockSwrveConversation(int id) {

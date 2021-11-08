@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    compileSdkVersion 31
+    buildToolsVersion "31.0.0"
 
     defaultConfig {
         applicationId "com.swrve.sdk.sample.minimalintegration.firebase"
         minSdkVersion 16
-        targetSdkVersion 30
+        targetSdkVersion 31
         consumerProguardFiles 'proguard-rules.pro'
     }
 
@@ -25,7 +25,7 @@ android {
 
 dependencies {
     api 'com.google.android.material:material:1.0.0'
-    api 'com.swrve.sdk.android:swrve-firebase:8.0.0'
+    api 'com.swrve.sdk.android:swrve-firebase:9.0.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

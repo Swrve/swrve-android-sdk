@@ -1,5 +1,8 @@
 package com.swrve.sdk;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -11,9 +14,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrvePushNotificationListenerTest extends SwrveBaseTest {
@@ -42,8 +42,8 @@ public class SwrvePushNotificationListenerTest extends SwrveBaseTest {
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1234");
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
 
-        SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
-        pushEngageReceiver.onReceive(ApplicationProvider.getApplicationContext(), intent);
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
+        notificationEngage.processIntent(intent);
 
         assertTrue(pushListener.pushEngaged == false);
         assertTrue(pushListener.receivedPayload == null);
@@ -51,7 +51,7 @@ public class SwrvePushNotificationListenerTest extends SwrveBaseTest {
         // Set listener and generate another message
         SwrveSDK.getConfig().setNotificationListener(pushListener);
 
-        pushEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
+        notificationEngage.processIntent(intent);
 
         // Expect bundle to have been received
         assertTrue(pushListener.pushEngaged == true);
@@ -70,8 +70,8 @@ public class SwrvePushNotificationListenerTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
 
         SwrveSDK.getConfig().setNotificationListener(pushListener);
-        SwrveNotificationEngageReceiver pushEngageReceiver = new SwrveNotificationEngageReceiver();
-        pushEngageReceiver.onReceive(ApplicationProvider.getApplicationContext().getApplicationContext(), intent);
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
+        notificationEngage.processIntent(intent);
 
         // Expect bundle to have been received
         assertTrue(pushListener.pushEngaged == true);

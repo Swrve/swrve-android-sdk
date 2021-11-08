@@ -172,7 +172,8 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
                     Cursor cursor = db.rawQuery("SELECT * FROM cache WHERE category='SwrveSDK.installTime'", null);
                     cursor.moveToFirst();
                     if (!cursor.isAfterLast()) {
-                        String installDate = cursor.getString(cursor.getColumnIndex("raw_data"));
+                        int index = cursor.getColumnIndex("raw_data");
+                        String installDate = cursor.getString(index);
                         if (SwrveHelper.isNotNullOrEmpty(installDate)) {
                             ContentValues values = new ContentValues();
                             values.put("user_id", userId);

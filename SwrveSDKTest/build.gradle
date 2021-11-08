@@ -52,7 +52,7 @@ android {
 
     lintOptions {
         abortOnError true
-        baseline file("../lint/lint-baseline-swrvesdktest.xml")
+        baseline file("../lint/lint-baseline-swrvesdktest-firebase.xml")
     }
 
     compileOptions {
@@ -76,7 +76,7 @@ dependencies {
 
     // Robolectric tests
     testImplementation 'junit:junit:4.13'
-    testImplementation('org.robolectric:robolectric:4.4') {
+    testImplementation('org.robolectric:robolectric:' + project.TEST_ROBOLECTRIC_VERSION) {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }

@@ -46,7 +46,7 @@ android {
 
     lintOptions {
         abortOnError true
-        baseline file("../lint/lint-baseline-swrvesdk.xml")
+        baseline file("../lint/lint-baseline-swrvesdk-firebase.xml")
     }
 
     compileOptions {
@@ -66,9 +66,7 @@ dependencies {
     // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon
     // Developer portal (https://developer.amazon.com/device-messaging).
     amazonCompileOnly fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
-    firebaseApi 'com.google.android.gms:play-services-ads-identifier:' + project.PLAY_SERVICES_ADS_VERSION
     firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
-    huaweiApi 'com.google.android.gms:play-services-ads-identifier:' + project.PLAY_SERVICES_ADS_VERSION
     huaweiApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
     huaweiApi 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION
 }

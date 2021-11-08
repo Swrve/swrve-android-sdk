@@ -121,11 +121,6 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
     }
 
     @Override
-    public boolean areAssetsReady(Set<String> assetsOnDisk) {
-        return conversation.areAssetsReady(assetsOnDisk);
-    }
-
-    @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
         return conversation.areAssetsReady(assetsOnDisk);
     }

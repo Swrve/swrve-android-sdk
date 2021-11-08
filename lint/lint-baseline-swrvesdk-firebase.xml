@@ -1,26 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="4" by="lint 3.1.3">
+<issues format="6" by="lint 7.0.1" type="baseline" client="gradle" name="AGP (7.0.1)" variant="all" version="7.0.1">
+
+    <issue
+        id="IidCompatibilityCheckFailure"
+        message="Check failed with exception: java.lang.NoSuchMethodException: com.android.tools.lint.detector.api.LintModelModuleProject.getGradleProjectModel()">
+        <location
+            file="SwrveSDK"/>
+    </issue>
 
     <issue
         id="ApplySharedPref"
         message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
-        errorLine1="        editor.putString(&quot;userId&quot;, userId).commit();"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="        editor.putString(SDK_PREFS_KEY_USER_ID, userIdToSave).commit();"
+        errorLine2="                                                              ~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/SwrveProfileManager.java"
             line="60"
-            column="9"/>
+            column="63"/>
     </issue>
 
     <issue
-        id="OldTargetApi"
-        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
-        errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        editor.putString(SDK_PREFS_KEY_TRACKING_STATE, state.toString()).commit();"
+        errorLine2="                                                                         ~~~~~~~~">
         <location
-            file="src/firebase/AndroidManifest.xml"
-            line="8"
-            column="9"/>
+            file="src/main/java/com/swrve/sdk/SwrveTrackingState.java"
+            line="34"
+            column="74"/>
     </issue>
 
     <issue
@@ -30,40 +37,40 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/SwrveBase.java"
-            line="386"
+            line="394"
             column="33"/>
     </issue>
 
     <issue
-        id="GradleOverrides"
-        message="This `minSdkVersion` value (`14`) is not used; it is always overridden by the value specified in the Gradle build script (`14`)"
-        errorLine1="        android:minSdkVersion=&quot;14&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="SourceLockedOrientationActivity"
+        message="You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
+        errorLine1="                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/firebase/AndroidManifest.xml"
-            line="7"
-            column="9"/>
+            file="src/main/java/com/swrve/sdk/messaging/ui/SwrveInAppMessageActivity.java"
+            line="100"
+            column="25"/>
     </issue>
 
     <issue
-        id="GradleOverrides"
-        message="This `targetSdkVersion` value (`25`) is not used; it is always overridden by the value specified in the Gradle build script (`27`)"
-        errorLine1="        android:targetSdkVersion=&quot;25&quot; />"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="SourceLockedOrientationActivity"
+        message="You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
+        errorLine1="                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/firebase/AndroidManifest.xml"
-            line="8"
-            column="9"/>
+            file="src/main/java/com/swrve/sdk/messaging/ui/SwrveInAppMessageActivity.java"
+            line="106"
+            column="25"/>
     </issue>
 
     <issue
         id="HardwareIds"
-        message="Using `getString` to get device identifiers is not recommended."
+        message="Using `getString` to get device identifiers is not recommended"
         errorLine1="                this.androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);"
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/SwrveImp.java"
-            line="445"
+            line="479"
             column="34"/>
     </issue>
 
@@ -74,26 +81,13 @@
         errorLine2="                                       ~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/localstorage/SwrveSQLiteOpenHelper.java"
-            line="159"
+            line="172"
             column="40"/>
     </issue>
 
     <issue
         id="StaticFieldLeak"
-        message="This AsyncTask class should be static or leaks might occur (anonymous android.os.AsyncTask)"
-        errorLine1="        new AsyncTask&lt;Void, Integer, Void>() {"
-        errorLine2="        ^"
-        includedVariants="firebaseDebug,firebaseRelease"
-        excludedVariants="amazonDebug,amazonRelease,coreDebug,coreRelease">
-        <location
-            file="src/firebase/java/com/swrve/sdk/Swrve.java"
-            line="86"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StaticFieldLeak"
-        message="Do not place Android context classes in static fields (static reference to `SwrveSQLiteOpenHelper` which has field `context` pointing to `Context`); this is a memory leak (and also breaks Instant Run)"
+        message="Do not place Android context classes in static fields (static reference to `SwrveSQLiteOpenHelper` which has field `context` pointing to `Context`); this is a memory leak"
         errorLine1="    private static SwrveSQLiteOpenHelper instance;"
         errorLine2="            ~~~~~~">
         <location
@@ -103,24 +97,13 @@
     </issue>
 
     <issue
-        id="UseSparseArrays"
-        message="Use `new SparseArray&lt;SwrveCampaignState>(...)` instead for better performance"
-        errorLine1="        campaignsState = new HashMap&lt;>();"
-        errorLine2="                         ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/swrve/sdk/SwrveImp.java"
-            line="980"
-            column="26"/>
-    </issue>
-
-    <issue
         id="ViewConstructor"
         message="Custom view `SwrveButtonView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
-        errorLine1="public class SwrveButtonView extends ImageView {"
+        errorLine1="public class SwrveButtonView extends SwrveBaseInteractableView {"
         errorLine2="             ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
-            line="16"
+            line="9"
             column="14"/>
     </issue>
 
@@ -131,19 +114,19 @@
         errorLine2="             ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
-            line="38"
+            line="36"
             column="14"/>
     </issue>
 
     <issue
-        id="ClickableViewAccessibility"
-        message="Custom view `SwrveButtonView` overrides `onTouchEvent` but not `performClick`"
-        errorLine1="    public boolean onTouchEvent(MotionEvent event) {"
-        errorLine2="                   ~~~~~~~~~~~~">
+        id="ViewConstructor"
+        message="Custom view `SwrvePersonalizedTextView` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class SwrvePersonalizedTextView extends SwrveBaseInteractableView {"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/swrve/sdk/messaging/view/SwrveButtonView.java"
-            line="43"
-            column="20"/>
+            file="src/main/java/com/swrve/sdk/messaging/view/SwrvePersonalizedTextView.java"
+            line="12"
+            column="14"/>
     </issue>
 
     <issue
@@ -153,7 +136,7 @@
         errorLine2="                   ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/messaging/view/SwrveImageView.java"
-            line="17"
+            line="18"
             column="20"/>
     </issue>
 
@@ -164,7 +147,7 @@
         errorLine2="                   ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/swrve/sdk/messaging/view/SwrveMessageView.java"
-            line="282"
+            line="331"
             column="20"/>
     </issue>
 

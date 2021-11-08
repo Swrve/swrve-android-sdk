@@ -33,7 +33,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.android.controller.ActivityController;
-import org.robolectric.util.Pair;
 
 import java.io.File;
 import java.util.Date;
@@ -58,6 +57,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+
+import androidx.core.util.Pair;
 
 public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 

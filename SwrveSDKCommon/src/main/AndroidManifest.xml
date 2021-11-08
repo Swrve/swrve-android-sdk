@@ -4,8 +4,12 @@
     <application>
         <receiver
             android:name="com.swrve.sdk.SwrveNotificationEngageReceiver"
-            android:exported="true" />
+            android:exported="false" />
+        <activity
+            android:name="com.swrve.sdk.SwrveNotificationEngageActivity"
+            android:theme="@android:style/Theme.Light"
+            android:exported="false" />
+
     </application>
+
 </manifest>
-
-

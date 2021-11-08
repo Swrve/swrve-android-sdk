@@ -219,16 +219,6 @@ public abstract class SwrveBaseCampaign {
      * Determine if the assets for this campaign have been downloaded.
      *
      * @param assetsOnDisk All assets that are already downloaded.
-     * @return if the assets are ready
-     */
-
-    @Deprecated
-    public abstract boolean areAssetsReady(Set<String> assetsOnDisk);
-
-    /**
-     * Determine if the assets for this campaign have been downloaded.
-     *
-     * @param assetsOnDisk All assets that are already downloaded.
      * @param properties   String map of personalized properties.
      * @return if the assets are ready
      */

@@ -14,9 +14,8 @@ import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class SwrveIntentHelperTest extends SwrveBaseTest {
 
@@ -32,8 +31,8 @@ public class SwrveIntentHelperTest extends SwrveBaseTest {
         SwrveIntentHelper.openDialer(Uri.parse("tel:0123456789"), mainActivity);
         ShadowActivity shadowMainActivity = Shadows.shadowOf(mainActivity);
         Intent nextIntent = shadowMainActivity.peekNextStartedActivityForResult().intent;
-        assertThat(nextIntent.getAction(), equalTo(Intent.ACTION_VIEW));
-        assertThat(nextIntent.getData().toString(), equalTo("tel:0123456789"));
+        assertEquals(nextIntent.getAction(), (Intent.ACTION_VIEW));
+        assertEquals(nextIntent.getData().toString(), ("tel:0123456789"));
     }
 
     @Test
@@ -41,11 +40,11 @@ public class SwrveIntentHelperTest extends SwrveBaseTest {
         SwrveIntentHelper.openIntentWebView(Uri.parse("www.google.com"), mainActivity, "some_referrer");
         ShadowActivity shadowMainActivity = Shadows.shadowOf(mainActivity);
         Intent nextIntent = shadowMainActivity.peekNextStartedActivityForResult().intent;
-        assertThat(nextIntent.getAction(), equalTo(Intent.ACTION_VIEW));
-        assertThat(nextIntent.getData().toString(), equalTo("www.google.com"));
+        assertEquals(nextIntent.getAction(), (Intent.ACTION_VIEW));
+        assertEquals(nextIntent.getData().toString(), ("www.google.com"));
         Bundle bundle = nextIntent.getBundleExtra(Browser.EXTRA_HEADERS);
         assertNotNull(bundle);
-        assertThat(bundle.getString("referrer"), equalTo("some_referrer"));
+        assertEquals(bundle.getString("referrer"), ("some_referrer"));
     }
 
     @Test
@@ -53,7 +52,7 @@ public class SwrveIntentHelperTest extends SwrveBaseTest {
         SwrveIntentHelper.openDeepLink(mainActivity, "www.google.com");
         ShadowActivity shadowMainActivity = Shadows.shadowOf(mainActivity);
         Intent nextIntent = shadowMainActivity.peekNextStartedActivityForResult().intent;
-        assertThat(nextIntent.getAction(), equalTo(Intent.ACTION_VIEW));
-        assertThat(nextIntent.getData().toString(), equalTo("www.google.com"));
+        assertEquals(nextIntent.getAction(), (Intent.ACTION_VIEW));
+        assertEquals(nextIntent.getData().toString(), ("www.google.com"));
     }
 }

@@ -1,5 +1,8 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
+
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -13,14 +16,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.FileUtils;
-import android.view.Display;
-import android.view.WindowManager;
 
 import androidx.core.app.NotificationCompat;
 
@@ -32,9 +31,7 @@ import com.swrve.sdk.notifications.model.SwrveNotificationMedia;
 import com.swrve.sdk.rest.SwrveFilterInputStream;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -43,8 +40,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
-
-import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
 
 public class SwrveNotificationBuilder {
 
@@ -61,7 +56,7 @@ public class SwrveNotificationBuilder {
     private SwrveNotification swrveNotification;
     private Bundle msg;
     private String msgText;
-    private String campaignType;
+    protected String campaignType; // accessed in unity subclass
     private Bundle eventPayload;
     private int notificationId;
     protected int requestCode;
@@ -104,7 +99,7 @@ public class SwrveNotificationBuilder {
             }
         }
 
-        boolean materialDesignIcon = (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP);
+        boolean materialDesignIcon = (getSDKVersion() >= android.os.Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
 
         String notificationChannelId = getNotificationChannelId();
@@ -175,7 +170,7 @@ public class SwrveNotificationBuilder {
     @TargetApi(value = 26)
     private String getNotificationChannelId() {
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (getSDKVersion() < Build.VERSION_CODES.O) {
             return null;
         }
 
@@ -360,8 +355,9 @@ public class SwrveNotificationBuilder {
         }
     }
 
+    @SuppressLint("WrongConstant")
     private void buildLockScreen(NotificationCompat.Builder builder, SwrveNotification pushPayload) {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (getSDKVersion() >= Build.VERSION_CODES.LOLLIPOP) {
             if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
                 // Use the notification builder to build a copy of the private notification with different lock screen message text
 
@@ -369,7 +365,9 @@ public class SwrveNotificationBuilder {
                 builder.setTicker(pushPayload.getLockScreenMsg());
                 builder.setContentText(pushPayload.getLockScreenMsg());
                 Notification lockScreenNotification = builder.build();
-                lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
+                }
                 builder.setPublicVersion(lockScreenNotification);
 
                 // Reset changed values
@@ -506,19 +504,25 @@ public class SwrveNotificationBuilder {
     }
 
     private NotificationCompat.Action createNotificationAction(String buttonText, int icon, String actionKey, SwrveNotificationButton.ActionType actionType, String actionUrl) {
-        Intent intent = createButtonIntent(context, msg);
+        boolean isDismissAction = actionType == SwrveNotificationButton.ActionType.DISMISS;
+        Intent intent = createButtonIntent(context, msg, actionType, isDismissAction);
         intent.putExtra(SwrveNotificationConstants.CONTEXT_ID_KEY, actionKey);
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY, actionType);
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_URL_KEY, actionUrl);
         intent.putExtra(SwrveNotificationConstants.BUTTON_TEXT_KEY, buttonText);
         intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
-        PendingIntent pendingIntentButton = PendingIntent.getBroadcast(context, requestCode++, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
+        if (getSDKVersion() >= Build.VERSION_CODES.M) {
+            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pendingIntentButton = getPendingIntent(getSDKVersion(), intent, flags, isDismissAction);
         return new NotificationCompat.Action.Builder(icon, buttonText, pendingIntentButton).build();
     }
 
-    // Called by Unity
-    public Intent createButtonIntent(Context context, Bundle msg) {
-        Intent intent = new Intent(context, SwrveNotificationEngageReceiver.class);
+    // Called by Unity - overridden in Unity version of SwrveNotificationBuilder
+    public Intent createButtonIntent(Context context, Bundle msg, SwrveNotificationButton.ActionType actionType, boolean isDismissAction) {
+        Class clazz = getIntentClass(getSDKVersion(), isDismissAction);
+        Intent intent = new Intent(context, clazz);
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
         intent.putExtra(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, notificationId);
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, campaignType);
@@ -527,16 +531,44 @@ public class SwrveNotificationBuilder {
 
     protected PendingIntent createPendingIntent(Bundle msg, String campaignType, Bundle eventPayload) {
         Intent intent = createIntent(msg, campaignType, eventPayload);
-        return PendingIntent.getBroadcast(context, requestCode++, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
+        if (getSDKVersion() >= Build.VERSION_CODES.M) {
+            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pendingIntent = getPendingIntent(getSDKVersion(), intent, flags, false);
+        return pendingIntent;
     }
 
-    protected Intent createIntent(Bundle msg, String campaignType, Bundle eventPayload) {
-        Intent intent = new Intent(context, SwrveNotificationEngageReceiver.class);
+    private Intent createIntent(Bundle msg, String campaignType, Bundle eventPayload) {
+        Class clazz = getIntentClass(getSDKVersion(), false);
+        Intent intent = new Intent(context, clazz);
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
         intent.putExtra(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, notificationId);
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, campaignType);
         intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
         return intent;
+    }
+
+    // Called by Unity - overridden in Unity version of SwrveNotificationBuilder
+    public Class getIntentClass(int sdkVersion, boolean isDismissAction) {
+        Class clazz;
+        // A dismiss action should dismiss the notification without opening the app
+        if (sdkVersion >= 31 && !isDismissAction) { // Unity compile level is 30 has does not contain Build.VERSION_CODES.S constant
+            clazz = SwrveNotificationEngageActivity.class;
+        } else {
+            clazz = SwrveNotificationEngageReceiver.class;
+        }
+        return clazz;
+    }
+
+    protected PendingIntent getPendingIntent(int sdkVersion, Intent intent, int flags, boolean isDismissAction) {
+        PendingIntent pendingIntent;
+        if (sdkVersion >= 31 && !isDismissAction) { // Unity compile level is 30 has does not contain Build.VERSION_CODES.S constant
+            pendingIntent = PendingIntent.getActivity(context, requestCode++, intent, flags);
+        } else {
+            pendingIntent = PendingIntent.getBroadcast(context, requestCode++, intent, flags);
+        }
+        return pendingIntent;
     }
 
     protected Date getNow() {
@@ -623,6 +655,10 @@ public class SwrveNotificationBuilder {
             SwrveLogger.e("Exception trying to get notification image from cache.", e);
         }
         return bitmap;
+    }
+
+    protected int getSDKVersion() {
+        return Build.VERSION.SDK_INT;
     }
 
     public int getNotificationId() {

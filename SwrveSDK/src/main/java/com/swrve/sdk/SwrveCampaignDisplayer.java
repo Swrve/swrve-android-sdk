@@ -200,7 +200,7 @@ public class SwrveCampaignDisplayer {
     }
 
     private void logAndAddReason(SwrveBaseCampaign swrveCampaign, String resultText, boolean displayed, Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
-        if (QaUser.isLoggingEnabled()) {
+        if (QaUser.isLoggingEnabled() && swrveCampaign != null && qaCampaignInfoMap != null) {
             if (swrveCampaign instanceof SwrveConversationCampaign) {
                 int variantId = ((SwrveConversationCampaign) swrveCampaign).getConversation().getId();
                 qaCampaignInfoMap.put(swrveCampaign.getId(), new QaCampaignInfo(swrveCampaign.getId(), variantId, CONVERSATION, displayed, resultText));

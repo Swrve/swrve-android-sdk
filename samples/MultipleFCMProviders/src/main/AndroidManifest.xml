@@ -15,7 +15,8 @@
 
         <!-- Add this to your AndroidManifest.xml if you want to support push notifications  -->
         <!-- Example of another push receiver in your app -->
-        <service android:name="com.swrve.sdk.sample.MyFirebaseMessagingService" >
+        <service android:name="com.swrve.sdk.sample.MyFirebaseMessagingService"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
@@ -24,7 +25,8 @@
 
         <activity
             android:name="com.swrve.sdk.sample.MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

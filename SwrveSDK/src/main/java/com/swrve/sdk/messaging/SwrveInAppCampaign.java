@@ -1,5 +1,7 @@
 package com.swrve.sdk.messaging;
 
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
+
 import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.QaCampaignInfo;
 import com.swrve.sdk.SwrveAssetsQueueItem;
@@ -9,19 +11,14 @@ import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveTextTemplating;
 import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 
 /**
  * Swrve campaign containing an in-app message targeted to the current device and user id.
@@ -204,14 +201,6 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
      */
     public void messageDismissed() {
         setMessageMinDelayThrottle();
-    }
-
-    @Override
-    public boolean areAssetsReady(Set<String> assetsOnDisk) {
-        if (!message.areAssetsReady(assetsOnDisk, null)) {
-            return false;
-        }
-        return true;
     }
 
     @Override

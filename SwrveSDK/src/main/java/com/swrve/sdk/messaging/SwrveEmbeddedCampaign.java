@@ -31,11 +31,6 @@ public class SwrveEmbeddedCampaign extends SwrveBaseCampaign {
     }
 
     @Override
-    public boolean areAssetsReady(Set<String> assetsOnDisk) {
-        return areAssetsReady(assetsOnDisk, null);
-    }
-
-    @Override
     public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
         return (this.message.data != null);
     }

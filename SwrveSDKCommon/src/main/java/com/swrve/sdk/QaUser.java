@@ -408,11 +408,13 @@ public class QaUser {
         try {
             long time = getTime();
             String qaLogEventAsJSON = EventHelper.qaLogEventAsJSON(time, logSource, logType, logDetails);
-            qaLogQueue.add(qaLogEventAsJSON);
-            synchronized (qaLogQueue) {
-                if (startFlushLogQueueService) {
-                    scheduleRepeatingQueueFlush(LOG_QUEUE_FLUSH_INTERVAL_MILLIS);
-                    startFlushLogQueueService = false;
+            if (qaLogQueue != null) {
+                qaLogQueue.add(qaLogEventAsJSON);
+                synchronized (qaLogQueue) {
+                    if (startFlushLogQueueService) {
+                        scheduleRepeatingQueueFlush(LOG_QUEUE_FLUSH_INTERVAL_MILLIS);
+                        startFlushLogQueueService = false;
+                    }
                 }
             }
         } catch (Exception ex) {

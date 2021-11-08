@@ -81,7 +81,7 @@ import static com.swrve.sdk.SwrveTrackingState.UNKNOWN;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "8.0.0";
+    protected static String version = "9.0.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
     protected static final int IN_APP_CAMPAIGN_VERSION = 4;

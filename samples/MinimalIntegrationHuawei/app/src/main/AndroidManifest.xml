@@ -21,6 +21,7 @@
         <activity
             android:name="com.swrve.sdk.sample.minimalintegration.huawei.MainActivity"
             android:label="@string/app_name"
+            android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

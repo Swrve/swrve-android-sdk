@@ -1,5 +1,23 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
+import static junit.framework.TestCase.assertTrue;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import android.app.Application;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -34,24 +52,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
-import static junit.framework.TestCase.assertTrue;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 public class SwrveInitModeTest extends SwrveBaseTest {
 
@@ -319,10 +319,10 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
         assertEquals(1, broadcastIntents.size());
         Intent engageEventIntent = broadcastIntents.get(0);
-        SwrveNotificationEngageReceiver engageReceiver = new SwrveNotificationEngageReceiver();
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
         // Clear pending intents
         mShadowActivity.getBroadcastIntents().clear();
-        engageReceiver.onReceive(mActivity, engageEventIntent);
+        notificationEngage.processIntent(engageEventIntent);
 
         List<Intent> broadcastIntentsAfterOnReceive = mShadowActivity.getBroadcastIntents();
         assertEquals(1, broadcastIntentsAfterOnReceive.size());

@@ -1,5 +1,23 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.robolectric.Shadows.shadowOf;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -35,24 +53,6 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(RobolectricTestRunner.class)
 public class SwrveNotificationBuilderTest extends SwrveBaseTest {
@@ -889,8 +889,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(testAction.title, "[button text 3]");
 
         Intent buttonClickIntent = getIntent(testAction.actionIntent);
-        SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
-        receiver.onReceive(mActivity, buttonClickIntent);
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
+        notificationEngage.processIntent(buttonClickIntent);
 
         ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
         ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -950,10 +950,10 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
         assertEquals(1, broadcastIntents.size());
         Intent engageEventIntent = broadcastIntents.get(0);
-        SwrveNotificationEngageReceiver engageReceiver = new SwrveNotificationEngageReceiver();
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
         // Clear pending intents
         mShadowActivity.getBroadcastIntents().clear();
-        engageReceiver.onReceive(mActivity, engageEventIntent);
+        notificationEngage.processIntent(engageEventIntent);
 
         broadcastIntents = mShadowActivity.getBroadcastIntents();
         assertEquals(1, broadcastIntents.size());
@@ -1145,6 +1145,49 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         assertNull(bitmap);
         verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
+    }
+
+    @Test
+    public void testGetPendingIntent() {
+        SwrveNotificationBuilder builder = new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig);
+
+        PendingIntent pendingIntent;
+        ShadowPendingIntent shadowPendingIntent;
+        Intent shadowIntent;
+
+        // api level 30 --> use SwrveNotificationEngageReceiver
+        Intent intentApi30 = new Intent(mActivity, builder.getIntentClass(30, false));
+        pendingIntent = builder.getPendingIntent(30, intentApi30, PendingIntent.FLAG_CANCEL_CURRENT, false);
+        shadowPendingIntent = shadowOf(pendingIntent);
+        assertTrue(shadowPendingIntent.isBroadcastIntent());
+        shadowIntent = shadowPendingIntent.getSavedIntents()[0];
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
+
+        // api level 31 - dismiss action --> use SwrveNotificationEngageReceiver
+        Intent intentApi31Dismiss = new Intent(mActivity, builder.getIntentClass(31, true));
+        pendingIntent = builder.getPendingIntent(31, intentApi31Dismiss, PendingIntent.FLAG_CANCEL_CURRENT, true);
+        shadowPendingIntent = shadowOf(pendingIntent);
+        assertTrue(shadowPendingIntent.isBroadcastIntent());
+        shadowIntent = shadowPendingIntent.getSavedIntents()[0];
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
+
+        // api level 31 - NOT a dismiss action --> use SwrveNotificationEngageActivity
+        Intent intentApi31 = new Intent(mActivity, builder.getIntentClass(31, false));
+        pendingIntent = builder.getPendingIntent(31, intentApi31, PendingIntent.FLAG_CANCEL_CURRENT, false);
+        shadowPendingIntent = shadowOf(pendingIntent);
+        assertTrue(shadowPendingIntent.isActivityIntent());
+        shadowIntent = shadowPendingIntent.getSavedIntents()[0];
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", shadowIntent.getComponent().getClassName());
+    }
+
+    @Test
+    public void testGetIntentClass() {
+        SwrveNotificationBuilder builder = new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig);
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", builder.getIntentClass(30, false).getName());
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", builder.getIntentClass(30, true).getName());
+
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", builder.getIntentClass(31, true).getName());
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", builder.getIntentClass(31, false).getName());
     }
 
     // HELPER METHODS

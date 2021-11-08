@@ -1,5 +1,10 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
+import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
+import static com.swrve.sdk.SwrveTrackingState.STARTED;
+import static com.swrve.sdk.SwrveTrackingState.STOPPED;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -21,8 +26,8 @@ import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
-import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.SwrveActionType;
@@ -69,11 +74,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
-import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
-import static com.swrve.sdk.SwrveTrackingState.STARTED;
-import static com.swrve.sdk.SwrveTrackingState.STOPPED;
 
 /**
  * Main base class implementation of the Swrve SDK.
@@ -2140,6 +2140,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      */
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+        if (isEngageActivity(activity)) {
+            return;
+        }
         bindToActivity(activity);
         lifecycleExecutorExecute(() -> {
             if (isStarted()) {
@@ -2155,6 +2158,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityResumed(Activity activity) {
+        if (isEngageActivity(activity)) {
+            return;
+        }
         bindToActivity(activity);
         lifecycleExecutorExecute(() -> {
             if (isStarted()) {
@@ -2165,6 +2171,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityPaused(Activity activity) {
+        if (isEngageActivity(activity)) {
+            return;
+        }
         lifecycleExecutorExecute(() -> {
             if (isStarted()) {
                 onPause();
@@ -2174,6 +2183,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityStopped(Activity activity) {
+        if (isEngageActivity(activity)) {
+            return;
+        }
         lifecycleExecutorExecute(() -> {
             if (isStarted()) {
                 onStop(activity);
@@ -2194,6 +2206,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     /*
      * eo Application.ActivityLifecycleCallbacks
      */
+
+    private boolean isEngageActivity(Activity activity) {
+        boolean isEngageActivity = false;
+        String activityName = activity.getClass().getCanonicalName();
+        if (activityName != null && activityName.contains("SwrveNotificationEngageActivity")) {
+            isEngageActivity = true;
+            SwrveLogger.v("SwrveNotificationEngageActivity has been launched so skip ActivityLifecycleCallbacks method and use next Activity that is launched");
+        }
+        return isEngageActivity;
+    }
 
     @Override
     public void setNotificationSwrveCampaignId(String swrveCampaignId) {
