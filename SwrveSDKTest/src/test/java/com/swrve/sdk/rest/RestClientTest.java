@@ -3,6 +3,8 @@ package com.swrve.sdk.rest;
 import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveSSLSocketFactoryConfig;
+import com.swrve.sdk.SwrveTestUtils;
 
 import org.json.JSONObject;
 import org.junit.After;
@@ -11,6 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.robolectric.shadows.ShadowLog;
+
+import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -44,7 +48,10 @@ public class RestClientTest extends SwrveBaseTest {
 
     @Test
     public void testForMetrics() throws Exception {
-        RESTClient restClient = new RESTClient(httpTimeout);
+        SSLSocketFactory socketFactory = SwrveTestUtils.setupLocalSllSocketFactory(server);
+        SwrveSSLSocketFactoryConfig sslSocketFactoryConfig = SwrveTestUtils.mockCommonSocketFactory(socketFactory);
+
+        RESTClient restClient = new RESTClient(httpTimeout, sslSocketFactoryConfig);
         restClient.metrics.clear();
 
         Dispatcher dispatcher = getDispatcherWithLastMetricsInBody();
@@ -128,6 +135,9 @@ public class RestClientTest extends SwrveBaseTest {
         String body = "{}";
         Dispatcher dispatcher = getDispatcher(body, 200, false);
         server.setDispatcher(dispatcher);
+        SSLSocketFactory socketFactory = SwrveTestUtils.setupLocalSllSocketFactory(server);
+        SwrveSSLSocketFactoryConfig sslConfig = SwrveTestUtils.mockCommonSocketFactory(socketFactory);
+
         server.start();
         String endPoint = server.url("/").toString();
 
@@ -144,7 +154,7 @@ public class RestClientTest extends SwrveBaseTest {
             }
         };
         IRESTResponseListener restResponseListenerSpy = Mockito.spy(restResponseListener);
-        RESTClient restClient = new RESTClient(httpTimeout);
+        RESTClient restClient = new RESTClient(httpTimeout, sslConfig);
         restClient.get(endPoint, restResponseListenerSpy);
 
         Mockito.verify(restResponseListenerSpy, Mockito.atLeastOnce()).onResponse(Mockito.any(RESTResponse.class));
@@ -160,6 +170,11 @@ public class RestClientTest extends SwrveBaseTest {
                 "}";
         Dispatcher dispatcher = getDispatcher(body, 403, true);
         server.setDispatcher(dispatcher);
+
+        SSLSocketFactory socketFactory = SwrveTestUtils.setupLocalSllSocketFactory(server);
+        SwrveSSLSocketFactoryConfig sslConfig = SwrveTestUtils.mockCommonSocketFactory(socketFactory);
+        ;
+
         server.start();
         String endPoint = server.url("/").toString();
 
@@ -177,7 +192,7 @@ public class RestClientTest extends SwrveBaseTest {
             }
         };
         IRESTResponseListener restResponseListenerSpy = Mockito.spy(restResponseListener);
-        RESTClient restClient = new RESTClient(httpTimeout);
+        RESTClient restClient = new RESTClient(httpTimeout, sslConfig);
         restClient.get(endPoint, restResponseListenerSpy);
 
         Mockito.verify(restResponseListenerSpy, Mockito.atLeastOnce()).onResponse(Mockito.any(RESTResponse.class));
@@ -193,7 +208,7 @@ public class RestClientTest extends SwrveBaseTest {
                         .setBody(body)
                         .setResponseCode(reponseCode)
                         .addHeader("Content-Type", "application/json; charset=utf-8");
-                if(SwrveHelper.isNotNullOrEmpty(swrveMetric)) {
+                if (SwrveHelper.isNotNullOrEmpty(swrveMetric)) {
                     response.addHeader("swrve-latency-metrics", swrveMetric);
                 }
                 if (gZipContentEncoding) {

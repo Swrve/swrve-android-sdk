@@ -126,7 +126,7 @@ publishing {
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
             pom.withXml {
-                Node root = asNode()
+                def root = asNode()
                 root.appendNode('name', 'SwrveSDK - Core')
                 root.appendNode('description', 'SwrveSDK Core is the SwrveSDK Core flavor')
                 root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
@@ -180,7 +180,7 @@ publishing {
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
             pom.withXml {
-                Node root = asNode()
+                def root = asNode()
                 root.appendNode('name', 'SwrveSDK - Amazon')
                 root.appendNode('description', 'SwrveSDK Amazon is the SwrveSDK Amazon flavor')
                 root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
@@ -234,7 +234,7 @@ publishing {
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
             pom.withXml {
-                Node root = asNode()
+                def root = asNode()
                 root.appendNode('name', 'SwrveSDK - Firebase')
                 root.appendNode('description', 'SwrveSDK Firebase is the SwrveSDK Firebase flavor')
                 root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
@@ -288,7 +288,7 @@ publishing {
             // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
             // so we have to manually add them to the pom
             pom.withXml {
-                Node root = asNode()
+                def root = asNode()
                 root.appendNode('name', 'SwrveSDK - Huawei')
                 root.appendNode('description', 'SwrveSDK Huawei is the SwrveSDK Huawei flavor')
                 root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
@@ -337,22 +337,26 @@ publishing {
 
     repositories {
         maven {
-            if(System.getenv('CIRCLECI') != null) {
-                url "$buildDir/../publish" // SwrveSDK/publish
-            } else {
+            if (System.getenv('PUBLISH_TO_SONATYPE') != null) {
                 url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
                 name = "sonatype"
                 credentials {
                     username System.getenv('SONATYPE_USER')
                     password System.getenv('SONATYPE_PASSWORD')
                 }
+            } else {
+                url "$buildDir/../publish" // SwrveSDK/publish
             }
         }
     }
 }
 
-if(System.getenv('CIRCLECI') == null) {
+String isSignAndroidRelease = System.getenv('SIGN_ANDROID_RELEASE')
+if (isSignAndroidRelease != null && isSignAndroidRelease.toBoolean()) {
+    project.logger.lifecycle('Swrve: Setting sign publishing.publications')
     signing {
         sign publishing.publications
     }
+} else {
+    project.logger.lifecycle('Swrve: Not setting sign publishing.publications')
 }

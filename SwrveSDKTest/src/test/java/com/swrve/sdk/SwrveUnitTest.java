@@ -1,5 +1,29 @@
 package com.swrve.sdk;
 
+import static com.ibm.icu.impl.Assert.fail;
+import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -43,30 +67,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
-
-import static com.ibm.icu.impl.Assert.fail;
-import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
-import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 public class SwrveUnitTest extends SwrveBaseTest {
 
@@ -123,6 +123,17 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertEquals("ja", swrve.getLanguage());
         swrve.setLanguage(language2);
         assertEquals("zh", swrve.getLanguage());
+    }
+
+    @Test
+    public void testSwitchAppId() throws Exception {
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        Swrve swrve1 = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
+        assertTrue(swrve1.isStarted());
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        Swrve swrve2 = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 2, "apiKey_different");
+        assertTrue(swrve2.isStarted()); // after switching appId, the sdk will still be started.
     }
 
     @Test

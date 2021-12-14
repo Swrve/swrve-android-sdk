@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
+import javax.net.ssl.SSLSocketFactory;
+
 interface ISwrveCommon {
 
     String SDK_PREFS_NAME               = "swrve_prefs";
@@ -177,4 +179,7 @@ interface ISwrveCommon {
     File getCacheDir(Context context);
 
     void saveEvent(String event);
+
+    SwrveSSLSocketFactoryConfig getSSLSocketFactoryConfig();
+
 }

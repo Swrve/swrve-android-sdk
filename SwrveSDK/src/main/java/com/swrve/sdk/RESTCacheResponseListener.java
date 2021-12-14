@@ -4,9 +4,6 @@ import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Used internally to automatically save responses to local storage.
  */
@@ -41,11 +38,8 @@ abstract class RESTCacheResponseListener implements IRESTResponseListener {
             try {
                 String cachedResponse = multiLayerLocalStorage.getSecureCacheEntryForUser(userId, cacheCategory, swrve.getUniqueKey(userId));
                 rawResponse = cachedResponse;
-            } catch (SecurityException e) {
-                SwrveLogger.i("Signature for %s invalid; could not retrieve data from cache", cacheCategory);
-                Map<String, Object> parameters = new HashMap<>();
-                parameters.put("name", "Swrve.signature_invalid");
-                swrve.queueEvent(userId, "event", parameters, null, false);
+            }  catch (SecurityException e) {
+                swrve.invalidSignatureError(userId, cacheCategory);
             }
         }
 

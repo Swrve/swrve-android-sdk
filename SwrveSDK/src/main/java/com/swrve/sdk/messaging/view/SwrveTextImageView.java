@@ -6,10 +6,12 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.messaging.SwrveActionType;
 
-public class SwrvePersonalizedTextView extends SwrveBaseInteractableView {
+// Single line text view which generates a canvas image
+public class SwrveTextImageView extends SwrveBaseInteractableView {
 
     private static final float TEST_FONT_SIZE = 200;
 
@@ -20,7 +22,7 @@ public class SwrvePersonalizedTextView extends SwrveBaseInteractableView {
     public Bitmap viewBitmap;
     public String action;
 
-    public SwrvePersonalizedTextView(Context context, SwrveActionType type, SwrveInAppMessageConfig inAppConfig, String text, int canvasWidth, int canvasHeight, String action) {
+    public SwrveTextImageView(Context context, SwrveActionType type, SwrveInAppMessageConfig inAppConfig, String text, int canvasWidth, int canvasHeight, String action) {
         super(context, type, inAppConfig.getFocusColor(), inAppConfig.getClickColor());
         this.inAppConfig = inAppConfig;
         this.text = text;
@@ -59,15 +61,11 @@ public class SwrvePersonalizedTextView extends SwrveBaseInteractableView {
     }
 
     private void fitTextSizeToImage(String text, Paint paint, int maxWidth, int maxHeight) {
-        if (text == null || text.isEmpty() || paint == null) return;
-        paint.setTextSize(TEST_FONT_SIZE);
-
-        Rect bound = new Rect();
-        paint.getTextBounds(text, 0, text.length(), bound);
-        float scalex = TEST_FONT_SIZE / (float)bound.width();
-        float scaley = TEST_FONT_SIZE / (float)bound.height();
-
-        paint.setTextSize(Math.min(scalex * maxWidth, scaley * maxHeight));
+        if (text == null || text.isEmpty() || paint == null) {
+            return;
+        }
+        float textSizeToFitImage = SwrveHelper.getTextSizeToFitImage(paint, text, maxWidth, maxHeight);
+        paint.setTextSize(textSizeToFitImage);
     }
 
     @Override

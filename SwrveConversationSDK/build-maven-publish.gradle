@@ -47,7 +47,7 @@ if (project.hasProperty('SWRVE_CONVERSATIONS_ARTIFACT_ID')) {
                 artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidConversationsJavadocsJar, androidConversationsSourcesJar]
 
                 pom.withXml {
-                    Node root = asNode()
+                    def root = asNode()
                     root.appendNode('name', 'SwrveConversationSDK')
                     root.appendNode('description', 'SwrveConversationSDK is the conversation module to be used with SwrveSDK')
                     root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
@@ -85,23 +85,27 @@ if (project.hasProperty('SWRVE_CONVERSATIONS_ARTIFACT_ID')) {
         }
         repositories {
             maven {
-                if (System.getenv('CIRCLECI') != null) {
-                    url "$buildDir/../publish" // SwrveConversationSDK/publish
-                } else {
+                if (System.getenv('PUBLISH_TO_SONATYPE') != null) {
                     url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
                     name = "sonatype"
                     credentials {
                         username System.getenv('SONATYPE_USER')
                         password System.getenv('SONATYPE_PASSWORD')
                     }
+                } else {
+                    url "$buildDir/../publish" // SwrveConversationSDK/publish
                 }
             }
         }
     }
 
-    if (System.getenv('CIRCLECI') == null) {
+    String isSignAndroidRelease = System.getenv('SIGN_ANDROID_RELEASE')
+    if (isSignAndroidRelease != null && isSignAndroidRelease.toBoolean()) {
+        project.logger.lifecycle('Swrve: Setting sign publishing.publications')
         signing {
             sign publishing.publications
         }
+    } else {
+        project.logger.lifecycle('Swrve: Not setting sign publishing.publications')
     }
 }

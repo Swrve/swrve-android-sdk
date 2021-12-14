@@ -2,6 +2,8 @@ package com.swrve.sdk.messaging;
 
 import android.graphics.Point;
 
+import com.swrve.sdk.messaging.view.SwrveTextViewStyle.TextAlignment;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -9,6 +11,7 @@ import org.json.JSONObject;
  * Base in-app message element widget class.
  */
 abstract class SwrveWidget {
+
     // Position of the widget
     protected Point position;
     // Size of the widget
@@ -18,17 +21,35 @@ abstract class SwrveWidget {
     protected String text;
     // Dynamic Image Url
     protected String dynamicImageUrl;
+    // if true, text value will have the below items applied to it
+    protected boolean isMultiLine;
+    // Font Size (used primarily for multi-line)
+    protected float fontSize;
+    // If it's text, is it scrollable? (used primarily for multi-line)
+    protected boolean isScrollable;
+    // What is the alignment of the text?
+    protected TextAlignment horizontalAlignment;
 
     public SwrveWidget() {
     }
 
-    public SwrveWidget(JSONObject buttonData) throws JSONException {
-        if (buttonData.has("dynamic_image_url")) {
-            setDynamicImageUrl(buttonData.getString("dynamic_image_url"));
+    public SwrveWidget(JSONObject data) throws JSONException {
+        if (data.has("dynamic_image_url")) {
+            setDynamicImageUrl(data.getString("dynamic_image_url"));
         }
 
-        if (buttonData.has("text")) {
-            setText(buttonData.getJSONObject("text").getString("value"));
+        if (data.has("text")) {
+            setText(data.getJSONObject("text").getString("value"));
+        }
+
+        if (data.has("multiline_text")) {
+            setMultiLine(true);
+            JSONObject multiLineData = data.getJSONObject("multiline_text");
+            setText(multiLineData.getString("value"));
+            Double font_size = multiLineData.getDouble("font_size");
+            setFontSize(font_size.floatValue());
+            setScrollable(multiLineData.getBoolean("scrollable"));
+            setHorizontalAlignment(TextAlignment.parse(multiLineData.getString("h_align")));
         }
     }
 
@@ -85,4 +106,37 @@ abstract class SwrveWidget {
     protected void setText(String text) {
         this.text = text;
     }
+
+    public boolean isMultiLine() {
+        return isMultiLine;
+    }
+
+    public void setMultiLine(boolean multiLine) {
+        isMultiLine = multiLine;
+    }
+
+    public float getFontSize() {
+        return fontSize;
+    }
+
+    public void setFontSize(float fontSize) {
+        this.fontSize = fontSize;
+    }
+
+    public boolean isScrollable() {
+        return isScrollable;
+    }
+
+    public void setScrollable(boolean scrollable) {
+        isScrollable = scrollable;
+    }
+
+    public TextAlignment getHorizontalAlignment() {
+        return horizontalAlignment;
+    }
+
+    public void setHorizontalAlignment(TextAlignment horizontalAlignment) {
+        this.horizontalAlignment = horizontalAlignment;
+    }
+
 }

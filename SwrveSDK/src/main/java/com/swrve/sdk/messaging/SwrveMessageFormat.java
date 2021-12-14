@@ -5,6 +5,7 @@ import android.graphics.Point;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.messaging.view.SwrveCalibration;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +36,7 @@ public class SwrveMessageFormat {
     protected List<SwrveImage> images;
     // Parent in-app message
     protected SwrveMessage message;
+    protected SwrveCalibration calibration;
 
     public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData) throws JSONException {
         this.message = message;
@@ -75,6 +77,10 @@ public class SwrveMessageFormat {
         for (int ii = 0, ji = jsonImages.length(); ii < ji; ii++) {
             SwrveImage image = new SwrveImage(jsonImages.getJSONObject(ii));
             getImages().add(image);
+        }
+
+        if (messageFormatData.has("calibration")) {
+            this.calibration = new SwrveCalibration(messageFormatData.getJSONObject("calibration"));
         }
     }
 
@@ -167,5 +173,9 @@ public class SwrveMessageFormat {
 
     protected void setBackgroundColor(Integer backgroundColor) {
         this.backgroundColor = backgroundColor;
+    }
+
+    public SwrveCalibration getCalibration() {
+        return calibration;
     }
 }

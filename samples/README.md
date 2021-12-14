@@ -5,3 +5,5 @@ Swrve SDK Samples
 - [Integrate push notifications with another provider](MultipleFCMProviders/)
 - [Message Center API](MessageCenter/)
 - [Custom User Id](CustomUserId/)
+- [Geo](GeoSample/)
+- [Geo With Foreground Notification](GeoWithForegroundNotificationSample/)

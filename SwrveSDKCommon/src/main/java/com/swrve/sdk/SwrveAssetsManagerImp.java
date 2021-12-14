@@ -19,6 +19,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+
 class SwrveAssetsManagerImp implements SwrveAssetsManager {
 
     protected Set<String> assetsOnDisk = new HashSet<>();
@@ -121,13 +124,20 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         String url = cdnRoot + assetItem.getName();
         InputStream inputStream = null;
         try {
-            URLConnection openConnection = new URL(url).openConnection();
-            openConnection.setRequestProperty("Accept-Encoding", "gzip");
+            URL assetUrl = new URL(url);
+            HttpsURLConnection httpsConnection = (HttpsURLConnection) assetUrl.openConnection();
+            if (SwrveCommon.getInstance().getSSLSocketFactoryConfig() != null) {
+                SSLSocketFactory socketFactory = SwrveCommon.getInstance().getSSLSocketFactoryConfig().getFactory(assetUrl.getHost());
+                if (socketFactory != null) {
+                    httpsConnection.setSSLSocketFactory(socketFactory);
+                }
+            }
+            httpsConnection.setRequestProperty("Accept-Encoding", "gzip");
 
-            inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
+            inputStream = new SwrveFilterInputStream(httpsConnection.getInputStream());
 
             // Support gzip if possible
-            String encoding = openConnection.getContentEncoding();
+            String encoding = httpsConnection.getContentEncoding();
             if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
                 inputStream = new GZIPInputStream(inputStream);
             }
@@ -174,12 +184,19 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
 
         InputStream inputStream = null;
         try {
-            URLConnection openConnection = new URL(url).openConnection();
-            openConnection.setRequestProperty("Accept-Encoding", "gzip");
-            inputStream = new SwrveFilterInputStream(openConnection.getInputStream());
+            URL assetUrl = new URL(url);
+            HttpsURLConnection httpsConnection = (HttpsURLConnection) assetUrl.openConnection();
+            if (SwrveCommon.getInstance().getSSLSocketFactoryConfig() != null) {
+                SSLSocketFactory socketFactory = SwrveCommon.getInstance().getSSLSocketFactoryConfig().getFactory(assetUrl.getHost());
+                if (socketFactory != null) {
+                    httpsConnection.setSSLSocketFactory(socketFactory);
+                }
+            }
+            httpsConnection.setRequestProperty("Accept-Encoding", "gzip");
+            inputStream = new SwrveFilterInputStream(httpsConnection.getInputStream());
 
             // Support gzip if possible
-            String encoding = openConnection.getContentEncoding();
+            String encoding = httpsConnection.getContentEncoding();
             if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
                 inputStream = new GZIPInputStream(inputStream);
             }

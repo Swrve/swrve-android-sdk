@@ -1,5 +1,16 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS;
+import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
+import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
+import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
+import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
+import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
+import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
+import static com.swrve.sdk.SwrveTrackingState.STARTED;
+import static com.swrve.sdk.SwrveTrackingState.STOPPED;
+import static com.swrve.sdk.SwrveTrackingState.UNKNOWN;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
@@ -65,26 +76,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS;
-import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
-import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
-import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
-import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
-import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
-import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
-import static com.swrve.sdk.SwrveTrackingState.STARTED;
-import static com.swrve.sdk.SwrveTrackingState.STOPPED;
-import static com.swrve.sdk.SwrveTrackingState.UNKNOWN;
-
 /**
  * Internal base class implementation of the Swrve SDK.
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "9.0.0";
+    protected static String version = "9.1.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
-    protected static final int IN_APP_CAMPAIGN_VERSION = 4;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 5;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -172,7 +172,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         Context applicationContext = application.getApplicationContext();
         this.context = new WeakReference<>(applicationContext);
         this.application = new WeakReference<>(application);
-        this.restClient = new RESTClient(config.getHttpTimeout());
+        this.restClient = new RESTClient(config.getHttpTimeout(), config.getSSlSocketFactoryConfig());
         this.swrveAssetsManager = new SwrveAssetsManagerImp(applicationContext);
         this.newSessionInterval = config.getNewSessionInterval();
         this.multiLayerLocalStorage = new SwrveMultiLayerLocalStorage(new InMemoryLocalStorage());
@@ -889,31 +889,35 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return userId + this.apiKey;
     }
 
-    // Invalidates the currently stored ETag
-    // Should be called when a refresh of campaigns and resources needs to be forced (eg. when cached data cannot be read)
-    protected void invalidateETag(final String userId) {
+    // Clear the etag to force a refresh of content.
+    private void invalidateETag(final String userId) {
+        SwrveLogger.v("SwrveSDK: clearing stored etag to force a content refresh.");
         multiLayerLocalStorage.setCacheEntry(userId, CACHE_ETAG, "");
     }
 
-    // Initialize Resource Manager with cache content
+    // Cached content is corrupt or has been tampered with. Clear the etag to force a refresh of content and send an event.
+    protected void invalidSignatureError(final String userId, String content) {
+        SwrveLogger.e("SwrveSDK: Signature for %s invalid; could not retrieve data from cache. Forcing a refresh.", content);
+        invalidateETag(userId);
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", "Swrve.signature_invalid");
+        queueEvent(userId, "event", parameters, null, false);
+    }
+
     protected void initResources(String userId) {
         String cachedResources = null;
 
         try {
             cachedResources = multiLayerLocalStorage.getSecureCacheEntryForUser(userId, CACHE_RESOURCES, getUniqueKey(userId));
         } catch (SecurityException e) {
-            invalidateETag(userId);
-            SwrveLogger.i("Signature for %s invalid; could not retrieve data from cache", CACHE_RESOURCES);
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", "Swrve.signature_invalid");
-            queueEvent(userId, "event", parameters, null, false);
+            invalidSignatureError(userId, CACHE_RESOURCES);
         }
 
         if (cachedResources != null) {
             try {
                 JSONArray resourceJson = new JSONArray(cachedResources);
                 this.resourceManager.setResourcesFromJSON(resourceJson);
-            } catch (JSONException e) {
+            } catch (Exception e) {
                 SwrveLogger.e("Could not parse cached json content for resources", e);
             }
         } else {
@@ -939,10 +943,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     }
                 }
             }
-
             SwrveLogger.i("Loaded realtime user properties from cache.");
-        } catch (JSONException e) {
-            SwrveLogger.e("Could not load real time user properties, bad JSON", e);
+        } catch (SecurityException e) {
+            invalidSignatureError(userId, CACHE_REALTIME_USER_PROPERTIES);
+        } catch (Exception e) {
+            SwrveLogger.e("Could not load real time user properties", e);
         }
     }
 
@@ -963,10 +968,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     }
                 }
             }
-        } catch (JSONException e) {
-            SwrveLogger.e("Invalid json in cache, cannot load ab test information", e);
         } catch (SecurityException e) {
-            SwrveLogger.e("Signature validation failed when trying to load ab test information from cache.", e);
+            invalidSignatureError(userId, "ab_test_details");
+        } catch (Exception e) {
+            SwrveLogger.e("Could not load ab test information", e);
         }
     }
 
@@ -975,7 +980,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         campaigns = new ArrayList<>();
         campaignDisplayer = new SwrveCampaignDisplayer();
         campaignsState = new HashMap<>();
-
+        loadCampaignsFromCache(userId);
+    }
+    
+    // load or refresh campaigns with cache content
+    protected void loadCampaignsFromCache(String userId) {
         try {
             String campaignsFromCache = multiLayerLocalStorage.getSecureCacheEntryForUser(userId, CACHE_CAMPAIGNS, getUniqueKey(userId));
             if (!SwrveHelper.isNullOrEmpty(campaignsFromCache)) {
@@ -989,17 +998,14 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             } else {
                 invalidateETag(userId);
             }
-        } catch (JSONException e) {
-            invalidateETag(userId);
-            SwrveLogger.e("Invalid json in cache, cannot load campaigns", e);
         } catch (SecurityException e) {
+            invalidSignatureError(userId, CACHE_CAMPAIGNS);
+        } catch (Exception e) {
+            SwrveLogger.e("Could not load campaigns", e);
             invalidateETag(userId);
-            SwrveLogger.e("Signature validation failed when trying to load campaigns from cache.", e);
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", "Swrve.signature_invalid");
-            queueEvent(userId, "event", parameters, null, false);
         }
     }
+
 
     private void loadCampaignsStateFromCache() {
         try {

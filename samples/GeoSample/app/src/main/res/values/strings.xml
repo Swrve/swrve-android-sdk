@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Swrve Geo Sample</string>
+    <string name="pre_prompt_rationale">&lt;Rationale for location use&gt; Please press the Proceed button and \"Allow\" location permission.</string>
+    <string name="pre_prompt_proceed_button_text">Proceed</string>
+    <string name="pre_prompt_cancel_button_text">Cancel</string>
+    <string name="post_prompt_text">&lt;Secondary rationale for location use&gt; If you change your mind, please grant the location permission via Settings.\n\nPermit via Settings --> Permissions --> Location</string>
+    <string name="post_prompt_settings_button_text">Permit via Settings</string>
+    <string name="post_prompt_cancel_button_text">Cancel</string>
+</resources>

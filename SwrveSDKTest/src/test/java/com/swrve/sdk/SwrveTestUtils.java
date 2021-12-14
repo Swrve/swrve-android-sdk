@@ -49,6 +49,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.ssl.SSLSocketFactory;
+
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.tls.HandshakeCertificates;
+
 import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
@@ -56,6 +61,7 @@ import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -472,5 +478,22 @@ public class SwrveTestUtils {
             callback.set(true);
         });
         await().untilTrue(callback);
+    }
+
+    public static SSLSocketFactory setupLocalSllSocketFactory(MockWebServer server) {
+        //sdk v9.1.0 enforced https connections, need to add https support to MockWebServer
+        HandshakeCertificates handshakeCertificates = localhost();
+        SSLSocketFactory socketFactory = handshakeCertificates.sslSocketFactory();
+        server.useHttps(socketFactory, false);
+        return socketFactory;
+    }
+
+    public static SwrveSSLSocketFactoryConfig mockCommonSocketFactory(SSLSocketFactory socketFactory) {
+        ISwrveCommon swrveCommonSpy = mock(ISwrveCommon.class);
+        SwrveSSLSocketFactoryConfig sslSocketFactoryConfig = mock(SwrveSSLSocketFactoryConfig.class);
+        Mockito.doReturn(sslSocketFactoryConfig).when(swrveCommonSpy).getSSLSocketFactoryConfig();
+        Mockito.doReturn(socketFactory).when(sslSocketFactoryConfig).getFactory(Mockito.anyString());
+        SwrveCommon.setSwrveCommon(swrveCommonSpy);
+        return sslSocketFactoryConfig;
     }
 }

@@ -5,6 +5,7 @@ import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveInitMode;
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrvePushNotificationListener;
+import com.swrve.sdk.SwrveSSLSocketFactoryConfig;
 import com.swrve.sdk.SwrveSilentPushListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
@@ -14,6 +15,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Configuration for the Swrve SDK.
@@ -51,6 +55,15 @@ public abstract class SwrveConfigBase {
     private SwrveEmbeddedMessageConfig embeddedMessageConfig = null;
     private SwrveInitMode initMode = SwrveInitMode.AUTO;
     private boolean autoStartLastUser = true;
+    private SwrveSSLSocketFactoryConfig sslSocketFactoryConfig = null;
+
+    public SwrveSSLSocketFactoryConfig getSSlSocketFactoryConfig() {
+        return sslSocketFactoryConfig;
+    }
+
+    public void setSSlSocketFactoryConfig(SwrveSSLSocketFactoryConfig sslSocketFactoryConfig) {
+        this.sslSocketFactoryConfig = sslSocketFactoryConfig;
+    }
 
     /**
      * Create an instance of the SDK advance preferences.

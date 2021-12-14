@@ -1,0 +1,130 @@
+{
+  "cdn_root": "http://www.sonecdn.com/",
+  "campaigns": [
+    {
+      "id": 133,
+      "end_date": 2364568900000,
+      "triggers": [],
+      "message_center": true,
+      "start_date": 1362671700000,
+      "message": {
+        "template": {
+          "template_id": "20",
+          "formats": [
+            {
+              "calibration": {
+                "width": 5000,
+                "height": 500,
+                "base_font_size": 20,
+                "text": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+              },
+              "orientation": "landscape",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 320
+                },
+                "h": {
+                  "type": "number",
+                  "value": 240
+                }
+              },
+              "images": [
+                {
+                  "name": "Multi Line text",
+                  "color": {
+                    "type": "color",
+                    "value": "FFFFFF"
+                  },
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 900
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 600
+                  },
+                  "multiline_text": {
+                    "type": "text",
+                    "value": "Multiline Text \\n with a ${test_line}.",
+                    "h_align": "left",
+                    "font_size": 30.5,
+                    "scrollable": true
+                  }
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "text",
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 80
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 229
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 114
+                  },
+                  "image_up": {
+                    "type": "asset",
+                    "value": "1111111111111111111111111"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": "${test_1|fallback=\"hello\"}"
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "COPY_TO_CLIPBOARD"
+                  }
+                }
+              ],
+              "name": "Kindle (English (US))",
+              "language": "en-US"
+            }
+          ]
+        },
+        "id": 165,
+        "name": "Kindle",
+        "rules": {
+        }
+      },
+      "rules": {
+        "display_order": "random",
+        "dismiss_after_views": 9999,
+        "delay_first_message": 0,
+        "min_delay_between_messages": 0
+      }
+    }
+  ],
+  "game_data": {
+    "150": {
+      "app_store_url": "https://www.someurl.com"
+    }
+  },
+  "rules": {
+    "min_delay_between_messages": 0,
+    "max_messages_per_session": 9999,
+    "delay_first_message": 0
+  },
+  "version": 2
+}

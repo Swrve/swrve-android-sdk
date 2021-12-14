@@ -1,0 +1,4 @@
+<resources>
+    <string name="pre_prompt_rationale">&lt;Rationale for location use&gt; Please press the Proceed button, Allow Precise location permission \"While using the app\" and then \"Allow all the time\" location permission.</string>
+    <string name="post_prompt_text">&lt;Secondary rationale for location use&gt; If you change your mind, please grant the Precise location permission and \"Allow all the time\" via Settings.\n\nPermit via Settings --> Permissions --> Location</string>
+</resources>

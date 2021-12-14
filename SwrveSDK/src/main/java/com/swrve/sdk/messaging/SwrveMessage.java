@@ -216,7 +216,7 @@ public class SwrveMessage implements SwrveBaseMessage {
                         }
                     }
 
-                    if (!hasImage) {
+                    if (!hasImage && !image.isMultiLine()) {
                         SwrveLogger.i("Image asset not yet downloaded: %s", imageAsset);
                         return false;
                     }

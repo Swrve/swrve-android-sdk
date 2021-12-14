@@ -1,14 +1,28 @@
 package com.swrve.sdk;
 
+import static android.content.Context.UI_MODE_SERVICE;
+import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_MOBILE;
+import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_TV;
+import static com.swrve.sdk.ISwrveCommon.OS_AMAZON;
+import static com.swrve.sdk.ISwrveCommon.OS_AMAZON_TV;
+import static com.swrve.sdk.ISwrveCommon.OS_ANDROID;
+import static com.swrve.sdk.ISwrveCommon.OS_ANDROID_TV;
+import static com.swrve.sdk.ISwrveCommon.OS_HUAWEI;
+import static com.swrve.sdk.SwrveFlavour.AMAZON;
+import static com.swrve.sdk.SwrveFlavour.HUAWEI;
+
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -40,17 +54,6 @@ import java.util.Map.Entry;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import static android.content.Context.UI_MODE_SERVICE;
-import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_MOBILE;
-import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_TV;
-import static com.swrve.sdk.ISwrveCommon.OS_AMAZON;
-import static com.swrve.sdk.ISwrveCommon.OS_AMAZON_TV;
-import static com.swrve.sdk.ISwrveCommon.OS_ANDROID;
-import static com.swrve.sdk.ISwrveCommon.OS_ANDROID_TV;
-import static com.swrve.sdk.ISwrveCommon.OS_HUAWEI;
-import static com.swrve.sdk.SwrveFlavour.AMAZON;
-import static com.swrve.sdk.SwrveFlavour.HUAWEI;
-
 /**
  * Used internally to provide MD5, token generation and other helper methods.
  */
@@ -61,6 +64,9 @@ public final class SwrveHelper {
     protected static String buildModel = Build.MODEL;
 
     private static final SimpleDateFormat appInstallTimeFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
+
+    private static final float TEST_FONT_SIZE = 200;
+
     private static String appInstallTime;
 
     public static boolean isNullOrEmpty(String val) {
@@ -366,6 +372,10 @@ public final class SwrveHelper {
         return SupportedUIMode.MOBILE;
     }
 
+    public static boolean isMobile(Context context) {
+        return getSupportedUIMode(context).equals(SupportedUIMode.MOBILE);
+    }
+
     // Used by Unity
     public static boolean isSwrvePush(final Bundle msg) {
         String pushId = SwrveHelper.getRemotePushId(msg);
@@ -472,5 +482,21 @@ public final class SwrveHelper {
         }
 
         return result;
+    }
+
+    public static float getTextSizeToFitImage(Paint paint, String text, int width, int height) {
+        paint.setTextSize(TEST_FONT_SIZE); // hardcoded large size
+
+        Rect bound = new Rect();
+        paint.getTextBounds(text, 0, text.length(), bound);
+        float scalex = TEST_FONT_SIZE / (float) bound.width();
+        float scaley = TEST_FONT_SIZE / (float) bound.height();
+
+        float textSizeToFitImage = Math.min(scalex * width, scaley * height);
+        return textSizeToFitImage;
+    }
+
+    public static float convertPixelsToDp(float px, Context context) {
+        return px / ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 }

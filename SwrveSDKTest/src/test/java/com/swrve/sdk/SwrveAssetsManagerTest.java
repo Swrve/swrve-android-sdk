@@ -20,6 +20,7 @@ import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -110,6 +111,10 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
             }
         };
         server.setDispatcher(dispatcher);
+
+        SSLSocketFactory socketFactory = SwrveTestUtils.setupLocalSllSocketFactory(server);
+        SwrveTestUtils.mockCommonSocketFactory(socketFactory);
+
         server.start();
         String cdnPath = server.url("/").toString();
         final String assetUrlSha1 = SwrveHelper.sha1((cdnPath + "externalAsset1").getBytes()); // made the url the same as the one expected by the mockwebserver for testing.
@@ -207,6 +212,10 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
             }
         };
         server.setDispatcher(dispatcher);
+
+        SSLSocketFactory socketFactory = SwrveTestUtils.setupLocalSllSocketFactory(server);
+        SwrveTestUtils.mockCommonSocketFactory(socketFactory);
+
         server.start();
         String cdnPath = server.url("/").toString();
 

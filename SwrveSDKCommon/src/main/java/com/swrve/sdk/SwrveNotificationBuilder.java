@@ -41,6 +41,9 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+
 public class SwrveNotificationBuilder {
 
     private final Context context;
@@ -611,16 +614,22 @@ public class SwrveNotificationBuilder {
             }
 
             if (url != null) {
-                HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
-                httpConnection.setDoInput(true);
-                httpConnection.setConnectTimeout(SwrveCommon.getInstance().getHttpTimeout());
-                httpConnection.setRequestProperty("Accept-Encoding", "gzip");
-                httpConnection.connect();
+                HttpsURLConnection httpsConnection = (HttpsURLConnection) url.openConnection();
+                if (SwrveCommon.getInstance().getSSLSocketFactoryConfig() != null) {
+                    SSLSocketFactory socketFactory = SwrveCommon.getInstance().getSSLSocketFactoryConfig().getFactory(url.getHost());
+                    if (socketFactory != null) {
+                        httpsConnection.setSSLSocketFactory(socketFactory);
+                    }
+                }
+                httpsConnection.setDoInput(true);
+                httpsConnection.setConnectTimeout(SwrveCommon.getInstance().getHttpTimeout());
+                httpsConnection.setRequestProperty("Accept-Encoding", "gzip");
+                httpsConnection.connect();
 
-                inputStream = new SwrveFilterInputStream(httpConnection.getInputStream());
+                inputStream = new SwrveFilterInputStream(httpsConnection.getInputStream());
 
                 // Support gzip if possible
-                String encoding = httpConnection.getContentEncoding();
+                String encoding = httpsConnection.getContentEncoding();
                 if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
                     inputStream = new GZIPInputStream(inputStream);
                 }

@@ -75,6 +75,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLSocketFactory;
+
 /**
  * Main base class implementation of the Swrve SDK.
  */
@@ -416,19 +418,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             cachedResources = multiLayerLocalStorage.getSecureCacheEntryForUser(profileManager.getUserId(), CACHE_RESOURCES, getUniqueKey(getUserId()));
         } catch (SecurityException e) {
-
-            SwrveLogger.i("Signature for %s invalid; could not retrieve data from cache", CACHE_RESOURCES);
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", "Swrve.signature_invalid");
-            queueEvent(profileManager.getUserId(), "event", parameters, null, false);
+            invalidSignatureError(profileManager.getUserId(), CACHE_RESOURCES);
             listener.onUserResourcesError(e);
         }
 
         if (!SwrveHelper.isNullOrEmpty(cachedResources)) {
             try {
-                // Parse raw response
                 JSONArray jsonResources = new JSONArray(cachedResources);
-                // Convert to map
                 Map<String, Map<String, String>> mapResources = new HashMap<>();
                 for (int i = 0, j = jsonResources.length(); i < j; i++) {
                     JSONObject resourceJSON = jsonResources.getJSONObject(i);
@@ -437,10 +433,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     mapResources.put(uid, resourceMap);
                 }
 
-                // Execute callback (NOTE: Executed in same thread!)
-                listener.onUserResourcesSuccess(mapResources, cachedResources);
+                listener.onUserResourcesSuccess(mapResources, cachedResources); // Execute callback (NOTE: Executed in same thread!)
             } catch (Exception exp) {
-                // Launch exception
                 listener.onUserResourcesError(exp);
             }
         }
@@ -496,6 +490,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             cachedRealTimeUserProps = multiLayerLocalStorage.getSecureCacheEntryForUser(profileManager.getUserId(), CACHE_REALTIME_USER_PROPERTIES, getUniqueKey(getUserId()));
         } catch (SecurityException e) {
+            invalidSignatureError(profileManager.getUserId(), CACHE_REALTIME_USER_PROPERTIES);
             listener.onRealTimeUserPropertiesError(e);
         }
 
@@ -516,10 +511,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     }
                 }
 
-                // Execute callback (NOTE: Executed in same thread!)
-                listener.onRealTimeUserPropertiesSuccess(mapProperties, cachedRealTimeUserProps);
+                listener.onRealTimeUserPropertiesSuccess(mapProperties, cachedRealTimeUserProps); // Execute callback (NOTE: Executed in same thread!)
             } catch (Exception exp) {
-                // Launch exception
                 listener.onRealTimeUserPropertiesError(exp);
             }
         }
@@ -836,6 +829,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_DELAY, campaignsAndResourcesFlushRefreshDelay);
                                     }
 
+                                    if (responseJson.has("real_time_user_properties")) {
+                                        JSONObject realTimeUserPropertiesJson = responseJson.getJSONObject("real_time_user_properties");
+                                        realTimeUserProperties = SwrveHelper.JSONToMap(realTimeUserPropertiesJson);
+                                        saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
+                                    }
+
                                     if (responseJson.has("campaigns")) {
                                         JSONObject campaignJson = responseJson.getJSONObject("campaigns");
                                         saveCampaignsInCache(campaignJson);
@@ -848,6 +847,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                                 resourceManager.setABTestDetailsFromJSON(abTestDetailsJson);
                                             }
                                         }
+                                    } else if (responseJson.has("real_time_user_properties")) {
+                                        // if campaigns are the same but properties have updated.
+                                        loadCampaignsFromCache(userId);
                                     }
 
                                     if (responseJson.has("user_resources")) {
@@ -855,12 +857,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         JSONArray resourceJson = responseJson.getJSONArray("user_resources");
                                         resourceManager.setResourcesFromJSON(resourceJson);
                                         saveResourcesInCache(resourceJson);
-                                    }
-
-                                    if (responseJson.has("real_time_user_properties")) {
-                                        JSONObject realTimeUserPropertiesJson = responseJson.getJSONObject("real_time_user_properties");
-                                        realTimeUserProperties = SwrveHelper.JSONToMap(realTimeUserPropertiesJson);
-                                        saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
                                     }
 
                                     if (responseJson.has("user_resources") || responseJson.has("real_time_user_properties")) {
@@ -1997,6 +1993,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     /***
      * Implementation of ISwrveCommon methods
      */
+
+    @Override
+    public SwrveSSLSocketFactoryConfig getSSLSocketFactoryConfig() {
+        return config.getSSlSocketFactoryConfig();
+    }
 
     @Override
     public int getAppId() {

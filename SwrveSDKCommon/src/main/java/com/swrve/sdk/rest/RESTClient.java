@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveSSLSocketFactoryConfig;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -21,6 +22,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+
 /**
  * Used internally to implement an object capable to perform REST requests.
  */
@@ -30,7 +34,7 @@ public class RESTClient implements IRESTClient {
     private static final String COMMA_SEPARATOR = ", ", SEMICOLON_SEPARATOR = "; ";
 
     private final int httpTimeout;
-
+    private final SwrveSSLSocketFactoryConfig socketFactories;
     /**
      * Safeguarded against multiple writers
      * and on copy-and-clean when writing the headers.
@@ -39,10 +43,16 @@ public class RESTClient implements IRESTClient {
 
     public RESTClient(int httpTimeout) {
         this.httpTimeout = httpTimeout;
+        this.socketFactories = null;
+    }
+
+    public RESTClient(int httpTimeout, SwrveSSLSocketFactoryConfig socketFactories) {
+        this.httpTimeout = httpTimeout;
+        this.socketFactories = socketFactories;
     }
 
     public void get(String endpoint, IRESTResponseListener callback) {
-        HttpURLConnection urlConnection = null;
+        HttpsURLConnection urlConnection = null;
         String responseBody = null;
         int responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
         long connectTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
@@ -51,7 +61,15 @@ public class RESTClient implements IRESTClient {
         InputStream wrapperIn = null;
         try {
             URL url = new URL(endpoint);
-            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection = (HttpsURLConnection) url.openConnection();
+
+            if (socketFactories != null) {
+                SSLSocketFactory socketFactory = socketFactories.getFactory(url.getHost());
+                if (socketFactory != null) {
+                    urlConnection.setSSLSocketFactory(socketFactory);
+                }
+            }
+
             urlConnection.setReadTimeout(httpTimeout);
             urlConnection.setConnectTimeout(httpTimeout);
             urlConnection.setRequestMethod("GET");
@@ -130,7 +148,7 @@ public class RESTClient implements IRESTClient {
     }
 
     public void post(String endpoint, String encodedBody, IRESTResponseListener callback, String contentType) {
-        HttpURLConnection urlConnection = null;
+        HttpsURLConnection urlConnection = null;
         String responseBody = null;
         int responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
         long connectTime = 0, requestBodyTime = 0, responseHeaderTime = 0, responseBodyTime = 0;
@@ -140,7 +158,14 @@ public class RESTClient implements IRESTClient {
         try {
             byte[] bytes = encodedBody.getBytes("UTF-8");
             URL url = new URL(endpoint);
-            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection = (HttpsURLConnection) url.openConnection();
+
+            if (socketFactories != null) {
+                SSLSocketFactory socketFactory = socketFactories.getFactory(url.getHost());
+                if (socketFactory != null) {
+                    urlConnection.setSSLSocketFactory(socketFactory);
+                }
+            }
             urlConnection.setReadTimeout(httpTimeout);
             urlConnection.setConnectTimeout(httpTimeout);
             urlConnection.setRequestMethod("POST");
@@ -310,7 +335,7 @@ public class RESTClient implements IRESTClient {
         recordMetrics(true, url, c, sb, rh, rb, timeout);
     }
 
-    private HttpURLConnection addMetricsHeader(HttpURLConnection urlConnection) {
+    private HttpsURLConnection addMetricsHeader(HttpsURLConnection urlConnection) {
         List<String> metricList = new ArrayList<>();
         synchronized (metrics) {
             metricList.addAll(metrics);

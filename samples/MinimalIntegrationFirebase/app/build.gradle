@@ -25,7 +25,7 @@ android {
 
 dependencies {
     api 'com.google.android.material:material:1.0.0'
-    api 'com.swrve.sdk.android:swrve-firebase:9.0.0'
+    api 'com.swrve.sdk.android:swrve-firebase:9.1.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

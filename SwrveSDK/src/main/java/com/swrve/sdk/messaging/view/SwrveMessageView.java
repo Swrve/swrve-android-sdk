@@ -101,7 +101,7 @@ public class SwrveMessageView extends RelativeLayout {
                     }
                 }
 
-                if (!SwrveHelper.hasFileAccess(filePath)) {
+                if (!SwrveHelper.hasFileAccess(filePath) && !image.isMultiLine()) {
                     SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                     loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
                     continue;
@@ -109,7 +109,7 @@ public class SwrveMessageView extends RelativeLayout {
 
                 // Load background image
                 final SwrveImageScaler.BitmapResult backgroundImage = SwrveImageScaler.decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, minSampleSize);
-                if (backgroundImage != null && backgroundImage.getBitmap() != null) {
+                if (backgroundImage != null && backgroundImage.getBitmap() != null && !image.isMultiLine()) {
 
                     ImageView imageView;
                     String imageText = image.getText();
@@ -120,7 +120,7 @@ public class SwrveMessageView extends RelativeLayout {
                         // Need to render dynamic text
                         String personalizedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalization);
                         // Add a default dismiss action although it won't be clickable as we set no setOnClickListener
-                        imageView = new SwrvePersonalizedTextView(context, SwrveActionType.Dismiss, inAppConfig, personalizedText,
+                        imageView = new SwrveTextImageView(context, SwrveActionType.Dismiss, inAppConfig, personalizedText,
                                 backgroundImage.getWidth(), backgroundImage.getHeight(), null);
                     }
                     // Position
@@ -143,6 +143,36 @@ public class SwrveMessageView extends RelativeLayout {
 
                     // Add to parent
                     addView(imageView);
+                } else if (image.isMultiLine()) {
+
+                    String imageText = image.getText();
+                    if (SwrveHelper.isNullOrEmpty(imageText)) {
+                        loadErrorReasons.add("Multi line text did not have any text present.");
+                        break;
+                    }
+
+                    // Still need to personalize text
+                    String text = SwrveTextTemplating.apply(imageText, this.inAppPersonalization);
+                    text = text.replaceAll("\\n", "\n");
+                    SwrveTextViewStyle textViewStyle = new SwrveTextViewStyle.Builder()
+                            .fontSize(image.getFontSize())
+                            .isScrollable(image.isScrollable())
+                            .horizontalAlignment(image.getHorizontalAlignment())
+                            /** using inappconfig for the rest until image includes it in V2 */
+                            .textBackgroundColor(inAppConfig.getPersonalizedTextBackgroundColor())
+                            .textForegroundColor(inAppConfig.getPersonalizedTextForegroundColor())
+                            .textTypeFace(inAppConfig.getPersonalizedTextTypeface())
+                            .build();
+
+                    SwrveTextView textView = new SwrveTextView(context, text, textViewStyle, format.getCalibration());
+
+                    // Position
+                    RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(image.getSize().x, image.getSize().y);
+                    lparams.leftMargin = image.getPosition().x;
+                    lparams.topMargin = image.getPosition().y;
+                    textView.setLayoutParams(lparams);
+
+                    addView(textView);
                 } else {
                     loadErrorReasons.add("Could not decode bitmap from file:" + filePath);
                     break;
@@ -186,7 +216,7 @@ public class SwrveMessageView extends RelativeLayout {
                     } else {
                         // Need to render dynamic text
                         String personalizedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalization);
-                        _buttonView = new SwrvePersonalizedTextView(context, button.getActionType(), inAppConfig, personalizedText,
+                        _buttonView = new SwrveTextImageView(context, button.getActionType(), inAppConfig, personalizedText,
                                 backgroundImage.getWidth(), backgroundImage.getHeight(), personalizedButtonAction);
                         _buttonView.setFocusable(true);
                     }

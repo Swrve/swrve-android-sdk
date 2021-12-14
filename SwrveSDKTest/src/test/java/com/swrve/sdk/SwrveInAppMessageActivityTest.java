@@ -32,7 +32,8 @@ import com.swrve.sdk.messaging.view.SwrveBaseInteractableView;
 import com.swrve.sdk.messaging.view.SwrveButtonView;
 import com.swrve.sdk.messaging.view.SwrveImageView;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
-import com.swrve.sdk.messaging.view.SwrvePersonalizedTextView;
+import com.swrve.sdk.messaging.view.SwrveTextImageView;
+import com.swrve.sdk.messaging.view.SwrveTextView;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -206,13 +207,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(view);
 
         // Assert image has personalized text
-        assertTrue(view.getChildAt(1) instanceof SwrvePersonalizedTextView);
-        SwrvePersonalizedTextView imageView = (SwrvePersonalizedTextView) view.getChildAt(1);
+        assertTrue(view.getChildAt(1) instanceof SwrveTextImageView);
+        SwrveTextImageView imageView = (SwrveTextImageView) view.getChildAt(1);
         assertEquals("Image test_coupon", imageView.getText());
 
         // Assert button has personalized text
-        assertTrue(view.getChildAt(2) instanceof SwrvePersonalizedTextView);
-        SwrvePersonalizedTextView swrveButtonView = (SwrvePersonalizedTextView) view.getChildAt(2);
+        assertTrue(view.getChildAt(2) instanceof SwrveTextImageView);
+        SwrveTextImageView swrveButtonView = (SwrveTextImageView) view.getChildAt(2);
         assertEquals("Button test_coupon", swrveButtonView.getText());
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
         assertEquals(Color.BLUE, swrveButtonView.focusColor);
@@ -720,8 +721,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNotNull(view);
 
-        assertTrue(view.getChildAt(2) instanceof SwrvePersonalizedTextView);
-        SwrvePersonalizedTextView imageView = (SwrvePersonalizedTextView) view.getChildAt(2);
+        assertTrue(view.getChildAt(2) instanceof SwrveTextImageView);
+        SwrveTextImageView imageView = (SwrveTextImageView) view.getChildAt(2);
         assertEquals("Replaced payloadValue value", imageView.getText());
     }
 
@@ -746,6 +747,71 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(other).size());
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, other).size());
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait, other).size());
+    }
+
+    @Test
+    public void testPersonalizationProviderWithMultiLineView() throws Exception {
+        Typeface tf = Typeface.create("sans-serif-thin", Typeface.NORMAL);
+        SwrveInAppMessageConfig inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
+                .personalizationProvider(eventPayload -> {
+                    HashMap<String, String> values = Maps.newHashMap();
+                    values.put("test_line", "newline");
+                    return values;
+                })
+                .personalizedTextBackgroundColor(Color.RED)
+                .personalizedTextForegroundColor(Color.BLUE)
+                .defaultBackgroundColor(Color.BLUE)
+                .personalizedTextTypeface(tf)
+                .build();
+        config.setInAppMessageConfig(inAppConfigBuilder);
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_multiline_trigger.json", "1111111111111111111111111");
+
+        // Trigger IAM
+        swrveSpy.event("trigger_iam");
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+
+        assertTrue(view.getChildAt(0) instanceof SwrveTextView);
+        SwrveTextView textView = (SwrveTextView) view.getChildAt(0);
+        assertEquals("triggered multiline Text \\n with a newline.", textView.getText().toString());
+
+        assertEquals(textView.getCurrentTextColor(), Color.BLUE);
+        ColorDrawable cd = (ColorDrawable) textView.getBackground();
+        int colorCode = cd.getColor();
+        assertEquals(colorCode, Color.RED);
+        assertEquals(textView.getTypeface(), tf);
+    }
+
+    @Test
+    public void testMessageCenterListWithMultiLineTextView() throws Exception {
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_multiline_mc.json", "1111111111111111111111111");
+
+        assertEquals(0, swrveSpy.getMessageCenterCampaigns().size());
+
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_line", "newline");
+
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalization);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), personalization);
+
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNotNull(view);
+
+        assertTrue(view.getChildAt(0) instanceof SwrveTextView);
+        SwrveTextView textView = (SwrveTextView) view.getChildAt(0);
+        assertEquals("Multiline Text \\n with a newline.", textView.getText().toString());
     }
 
     @Test
@@ -923,6 +989,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         buttonView = (SwrveButtonView) view.getChildAt(3);
         assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
         assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
+
     }
 
     @Test
@@ -1076,9 +1143,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         for (int i = 0; i < view.getChildCount(); i++) {
             View childView = view.getChildAt(i);
             if (childView instanceof SwrveBaseInteractableView) {
-                SwrveBaseInteractableView swrvePersonalizedTextView = (SwrveBaseInteractableView) childView;
-                if (swrvePersonalizedTextView.getType() == actionType) {
-                    return swrvePersonalizedTextView;
+                SwrveBaseInteractableView swrveBaseInteractableView = (SwrveBaseInteractableView) childView;
+                if (swrveBaseInteractableView.getType() == actionType) {
+                    return swrveBaseInteractableView;
                 }
             }
         }
@@ -1101,7 +1168,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         int buttons = 0;
         for (int i = 0; i < view.getChildCount(); i++) {
             Class<?> viewClass = view.getChildAt(i).getClass();
-            if (viewClass == SwrvePersonalizedTextView.class) {
+            if (viewClass == SwrveTextImageView.class) {
                 buttons++;
             }
         }

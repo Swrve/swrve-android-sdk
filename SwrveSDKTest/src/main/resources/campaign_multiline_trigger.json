@@ -1,0 +1,212 @@
+{
+  "cdn_root": "http://www.sonecdn.com/",
+  "campaigns": [
+    {
+      "id": 102,
+      "end_date": 2364568900000,
+      "triggers": [
+        {
+          "event_name": "trigger_iam",
+          "conditions": {}
+        },
+        {
+          "event_name": "Swrve.buy_in",
+          "conditions": {}
+        }
+      ],
+      "start_date": 1362671700000,
+      "message": {
+        "template": {
+          "template_id": "20",
+          "formats": [
+            {
+              "calibration": {
+                "width": 5000,
+                "height": 500,
+                "base_font_size": 20,
+                "text": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+              },
+              "orientation": "landscape",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 320
+                },
+                "h": {
+                  "type": "number",
+                  "value": 240
+                }
+              },
+              "images": [
+                {
+                  "name": "Background",
+                  "color": {
+                    "type": "color",
+                    "value": "FFFFFF"
+                  },
+                  "multiline_text": {
+                    "type": "text",
+                    "value": "triggered multiline Text \\n with a ${test_line}.",
+                    "h_align": "right",
+                    "font_size": 40,
+                    "scrollable": false
+                  },
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 1000
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 700
+                  }
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "accept",
+                  "x": {
+                    "type": "number",
+                    "value": -200
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 80
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 229
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 114
+                  },
+                  "image_up": {
+                    "type": "asset",
+                    "value": "1111111111111111111111111"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": "150"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "INSTALL"
+                  }
+                },
+                {
+                  "name": "custom",
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 80
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 229
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 114
+                  },
+                  "image_up": {
+                    "type": "asset",
+                    "value": "1111111111111111111111111"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": "custom_action"
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "CUSTOM"
+                  },
+                  "text": {
+                    "type": "text",
+                    "value": "value"
+                  }
+                },
+                {
+                  "name": "close",
+                  "x": {
+                    "type": "number",
+                    "value": 932
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 32
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 50
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 50
+                  },
+                  "image_up": {
+                    "type": "asset",
+                    "value": "1111111111111111111111111"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "DISMISS"
+                  }
+                }
+              ],
+              "name": "Kindle (English (US))",
+              "language": "en-US"
+            }
+          ]
+        },
+        "id": 165,
+        "name": "Kindle",
+        "rules": {
+        }
+      },
+      "rules": {
+        "display_order": "random",
+        "dismiss_after_views": 9999,
+        "delay_first_message": 0,
+        "min_delay_between_messages": 0
+      }
+    }
+  ],
+  "game_data": {
+    "150": {
+      "app_store_url": "https://www.someurl.com"
+    }
+  },
+  "rules": {
+    "min_delay_between_messages": 0,
+    "max_messages_per_session": 9999,
+    "delay_first_message": 0
+  },
+  "version": 2
+}

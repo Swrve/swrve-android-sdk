@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
-    buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
 
     defaultConfig {
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_TESTS)
@@ -23,8 +22,8 @@ android {
         unitTests {
             includeAndroidResources = true
         }
-        def isCIRCLECI = System.getenv('CIRCLECI')
-        if(isCIRCLECI != null) {
+        String isCIRCLECI = System.getenv('CIRCLECI')
+        if (isCIRCLECI != null && isCIRCLECI.toBoolean()) {
             project.logger.lifecycle('Swrve: Running in CIRCLECI. Setting maxHeapSize 1024m from SwrveSDKTest/build.gradle')
             unitTests.all {
                 maxHeapSize = "1024m"
@@ -72,7 +71,8 @@ dependencies {
     // Unit tests
     testImplementation 'org.mockito:mockito-core:3.6.28'
 
-    testImplementation 'com.squareup.okhttp3:mockwebserver:4.8.1'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.9.3'
+    testImplementation 'com.squareup.okhttp3:okhttp-tls:4.9.3'
 
     // Robolectric tests
     testImplementation 'junit:junit:4.13'
