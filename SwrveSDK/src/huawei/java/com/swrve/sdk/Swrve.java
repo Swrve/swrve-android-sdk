@@ -23,9 +23,9 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
         super(application, appId, apiKey, config);
         if (isGooglePlayServicesEnabled(application)) {
-            platformUtil = new SwrveGoogleUtil(application);
+            platformUtil = new SwrveGoogleUtil(application, profileManager.getTrackingState());
         } else {
-            platformUtil = new SwrveHuaweiUtil(application);
+            platformUtil = new SwrveHuaweiUtil(application, profileManager.getTrackingState());
         }
     }
 

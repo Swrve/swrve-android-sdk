@@ -24,12 +24,14 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
     protected static final String CACHE_REGISTRATION_ID = "RegistrationId";
 
     protected final Context context;
+    protected final SwrveTrackingState trackingState;
     protected String registrationId;
     protected String advertisingId;
     protected boolean logAdvertisingId;
 
-    public SwrveGoogleUtil(Context context) {
+    public SwrveGoogleUtil(Context context, SwrveTrackingState trackingState) {
         this.context = context;
+        this.trackingState = trackingState;
     }
 
     @Override
@@ -103,6 +105,10 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
         if (registrationId == null || !registrationId.equals(regId)) {
             registrationId = regId;
             multiLayerLocalStorage.setCacheEntry(userId, CACHE_REGISTRATION_ID, registrationId);
+        }
+
+        if (trackingState == SwrveTrackingState.UNKNOWN && !SwrveSDK.getConfig().isAutoStartLastUser()) {
+            return;
         }
 
         try {

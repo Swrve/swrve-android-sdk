@@ -25,7 +25,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@RunWith(RobolectricTestRunner.class)
 public class SQLiteLocalStorageTest extends BaseLocalStorage {
 
     int maxSize = 2024 * 1024 * 1024;

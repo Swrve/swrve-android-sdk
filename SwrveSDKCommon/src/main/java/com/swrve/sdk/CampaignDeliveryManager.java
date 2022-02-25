@@ -28,7 +28,8 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_RUN_NUMBER;
 
 class CampaignDeliveryManager {
 
-    protected static final int REST_CLIENT_TIMEOUT_MILLIS = 30000;
+    protected static final int REST_CLIENT_TIMEOUT_MILLIS = 60000;
+    protected static final int WORK_REQUEST_BACKOFF_MILLIS = 60000*60;
     protected static final int MAX_ATTEMPTS = 3;
     protected static final String KEY_END_POINT = "END_POINT";
     protected static final String KEY_BODY = "BODY";
@@ -60,7 +61,7 @@ class CampaignDeliveryManager {
         OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(SwrveCampaignDeliveryWorker.class)
                 .setConstraints(constraints)
                 .setInputData(inputData)
-                .setBackoffCriteria(BackoffPolicy.LINEAR, OneTimeWorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
+                .setBackoffCriteria(BackoffPolicy.LINEAR, WORK_REQUEST_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
                 .build();
         return workRequest;
     }

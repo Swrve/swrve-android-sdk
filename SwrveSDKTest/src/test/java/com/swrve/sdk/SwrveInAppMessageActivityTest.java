@@ -34,6 +34,7 @@ import com.swrve.sdk.messaging.view.SwrveImageView;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 import com.swrve.sdk.messaging.view.SwrveTextImageView;
 import com.swrve.sdk.messaging.view.SwrveTextView;
+import com.swrve.sdk.messaging.view.SwrveTextViewStyle;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -812,6 +813,18 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertTrue(view.getChildAt(0) instanceof SwrveTextView);
         SwrveTextView textView = (SwrveTextView) view.getChildAt(0);
         assertEquals("Multiline Text \\n with a newline.", textView.getText().toString());
+
+        assertEquals(15, textView.getPaddingBottom());
+        assertEquals(15, textView.getPaddingTop());
+        assertEquals(15, textView.getPaddingStart());
+        assertEquals(15, textView.getPaddingEnd());
+        assertEquals(1, textView.getTextAlignment());
+
+        // the mutliper in the json is 1.5 but we convert this to line spacing.
+        assertEquals(1, textView.getLineSpacingMultiplier(),0.1);
+
+        assertEquals(Color.parseColor( "#00FF00"), ((ColorDrawable) textView.getBackground()).getColor());
+        assertEquals(Color.parseColor("#0000FF"), textView.getCurrentTextColor());
     }
 
     @Test

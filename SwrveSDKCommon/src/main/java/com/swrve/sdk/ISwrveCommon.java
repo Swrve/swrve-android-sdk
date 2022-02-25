@@ -181,5 +181,4 @@ interface ISwrveCommon {
     void saveEvent(String event);
 
     SwrveSSLSocketFactoryConfig getSSLSocketFactoryConfig();
-
 }

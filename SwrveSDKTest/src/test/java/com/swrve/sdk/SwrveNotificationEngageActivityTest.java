@@ -20,7 +20,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.util.List;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveNotificationEngageActivityTest extends SwrveBaseTest {
 
     Context context = ApplicationProvider.getApplicationContext();

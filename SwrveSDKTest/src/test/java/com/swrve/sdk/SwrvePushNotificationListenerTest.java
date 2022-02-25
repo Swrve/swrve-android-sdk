@@ -15,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrvePushNotificationListenerTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;

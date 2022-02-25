@@ -27,7 +27,9 @@ import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.messaging.view.SwrveButtonView;
 import com.swrve.sdk.messaging.view.SwrveMessageView;
 
+import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -933,5 +935,26 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_capabilities.json");
         // there is 2 campaigns in test file, 1 has button request capability which should be filtered out.
         assertEquals(1, swrveSpy.campaigns.size());
+    }
+
+    @Test
+    public void testMultiLineAssetSystemFontDownload() throws Exception {
+            String messageJson = SwrveTestUtils.getAssetAsText(mActivity, "campaign_multiline_font_assets.json");
+            SwrveMessage message = new SwrveMessage(null, new JSONObject(messageJson), null);
+            HashSet assets = new HashSet();
+            assertFalse(message.areAssetsReady(assets, null));  // missing SomeNativeFont
+
+            assets = new HashSet();
+            assets.add("_system_font_");
+            assertFalse(message.areAssetsReady(assets, null));  // missing SomeNativeFont
+
+            assets = new HashSet();
+            assets.add("SomeNativeFont");
+            assertTrue(message.areAssetsReady(assets, null));  // _system_font_ not needed
+
+            assets = new HashSet();
+            assets.add("SomeNativeFont");
+            assets.add("_system_font_");
+            assertTrue(message.areAssetsReady(assets, null));
     }
 }

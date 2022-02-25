@@ -21,7 +21,8 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
 
     protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
         super(application, appId, apiKey, config);
-        googleUtil = new SwrveGoogleUtil(application);
+        googleUtil = new SwrveGoogleUtil(application, profileManager.getTrackingState());
+
     }
 
     @Override

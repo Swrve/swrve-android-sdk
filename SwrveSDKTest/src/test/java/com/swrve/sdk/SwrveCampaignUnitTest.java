@@ -9,6 +9,7 @@ import com.swrve.sdk.messaging.SwrveMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Date;

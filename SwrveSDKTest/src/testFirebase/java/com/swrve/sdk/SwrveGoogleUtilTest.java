@@ -36,7 +36,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveGoogleUtilTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
@@ -55,7 +54,7 @@ public class SwrveGoogleUtilTest extends SwrveBaseTest {
     @Test
     public void testObtainRegistrationId() {
 
-        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext()));
+        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
 
         SwrveMultiLayerLocalStorage multiLayerLocalStorage = swrveSpy.multiLayerLocalStorage;
         String userId = swrveSpy.getUserId();
@@ -74,7 +73,7 @@ public class SwrveGoogleUtilTest extends SwrveBaseTest {
     @Test
     public void testObtainGAID() throws Exception {
 
-        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext()));
+        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
 
         SwrveMultiLayerLocalStorage multiLayerLocalStorage = swrveSpy.multiLayerLocalStorage;
         String userId = swrveSpy.getUserId();
@@ -97,7 +96,7 @@ public class SwrveGoogleUtilTest extends SwrveBaseTest {
     @Test
     public void testSetRegistrationId() {
 
-        SwrveGoogleUtil googleUtil = new SwrveGoogleUtil(ApplicationProvider.getApplicationContext());
+        SwrveGoogleUtil googleUtil = new SwrveGoogleUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN);
 
         SwrveMultiLayerLocalStorage multiLayerLocalStorage = swrveSpy.multiLayerLocalStorage;
         String userId = swrveSpy.getUserId();
@@ -112,7 +111,7 @@ public class SwrveGoogleUtilTest extends SwrveBaseTest {
     @Test
     public void testAppendGoogleDeviceUpdate() throws Exception {
 
-        SwrveGoogleUtil googleUtil = new SwrveGoogleUtil(ApplicationProvider.getApplicationContext());
+        SwrveGoogleUtil googleUtil = new SwrveGoogleUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN);
         googleUtil.advertisingId = "test1";
         googleUtil.registrationId = "test2";
 

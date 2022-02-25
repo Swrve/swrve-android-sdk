@@ -38,10 +38,8 @@ import com.swrve.sdk.test.MainActivity;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowNotification;
@@ -54,10 +52,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
-    private SwrvePushManagerImp pushServiceManager;
+    private SwrvePushManagerImp pushServiceManagerSpy;
     private SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
             .activityClass(MainActivity.class)
             .build();
@@ -69,8 +66,9 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         SwrveCommon.setSwrveCommon(swrveCommonSpy);
         doReturn(notificationConfig).when(swrveCommonSpy).getNotificationConfig();
         doReturn(ApplicationProvider.getApplicationContext().getCacheDir()).when(swrveCommonSpy).getCacheDir(ApplicationProvider.getApplicationContext());
-        pushServiceManager = new SwrvePushManagerImp(ApplicationProvider.getApplicationContext());
+        pushServiceManagerSpy = spy(new SwrvePushManagerImp(ApplicationProvider.getApplicationContext()));
         doNothing().when(swrveCommonSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
+        doReturn(Mockito.mock(CampaignDeliveryManager.class)).when(pushServiceManagerSpy).getCampaignDeliveryManager();
     }
 
     @Test
@@ -81,7 +79,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         validBundleCustomSound.putString("customData", "some custom values");
         validBundleCustomSound.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
         validBundleCustomSound.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
-        pushServiceManager.processMessage(validBundleCustomSound);
+        pushServiceManagerSpy.processMessage(validBundleCustomSound);
         assertNotification("validBundleCustomSound", "android.resource://com.swrve.sdk.test/raw/customSound", validBundleCustomSound);
     }
 
@@ -92,7 +90,19 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         deeplinkBundle.putString(SwrveNotificationConstants.DEEPLINK_KEY, "swrve://deeplink/config");
         deeplinkBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
         deeplinkBundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
-        pushServiceManager.processMessage(deeplinkBundle);
+        pushServiceManagerSpy.processMessage(deeplinkBundle);
+        assertNotification("deeplinkBundle", null, deeplinkBundle);
+    }
+
+    @Config(sdk = Build.VERSION_CODES.R)
+    @Test
+    public void testWithDeeplink_api30() {
+        Bundle deeplinkBundle = new Bundle();
+        deeplinkBundle.putString(SwrveNotificationConstants.TEXT_KEY, "deeplinkBundle");
+        deeplinkBundle.putString(SwrveNotificationConstants.DEEPLINK_KEY, "swrve://deeplink/config");
+        deeplinkBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        deeplinkBundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(generateTimestampId()));
+        pushServiceManagerSpy.processMessage(deeplinkBundle);
         assertNotification("deeplinkBundle", null, deeplinkBundle);
     }
 
@@ -114,7 +124,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         bundle.putString("sound", "default");
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
-        pushServiceManager.processMessage(bundle);
+        pushServiceManagerSpy.processMessage(bundle);
 
         assertNotification("text", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
@@ -149,7 +159,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        pushServiceManager.processMessage(bundle);
+        pushServiceManagerSpy.processMessage(bundle);
 
         assertNotification("text", "content://settings/system/notification_sound", bundle);
         assertNumberOfNotifications(1);
@@ -181,7 +191,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int firstTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
 
-        pushServiceManager.processMessage(bundle);
+        pushServiceManagerSpy.processMessage(bundle);
 
         String updateJson = "{\n" +
                 " \"title\": \"update title\",\n" +
@@ -197,7 +207,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         int secondTimestamp = generateTimestampId();
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(secondTimestamp));
 
-        pushServiceManager.processMessage(bundle);
+        pushServiceManagerSpy.processMessage(bundle);
 
         NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();

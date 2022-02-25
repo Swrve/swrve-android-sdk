@@ -22,10 +22,12 @@ class SwrveHuaweiUtil implements SwrvePlatformUtil {
     protected static final String HMS_CACHE_REGISTRATION_ID = "RegistrationIdHMS";
 
     protected final Context context;
+    protected final SwrveTrackingState trackingState;
     protected String registrationId;
 
-    public SwrveHuaweiUtil(Context context) {
+    public SwrveHuaweiUtil(Context context, SwrveTrackingState trackingState) {
         this.context = context;
+        this.trackingState = trackingState;
     }
 
     @Override
@@ -53,6 +55,10 @@ class SwrveHuaweiUtil implements SwrvePlatformUtil {
         if (registrationId == null || !registrationId.equals(regId)) {
             registrationId = regId;
             multiLayerLocalStorage.setCacheEntry(CACHE_DEVICE_PROP_KEY, HMS_CACHE_REGISTRATION_ID, registrationId); // regId saved with blank userId in huwaei sdk.
+        }
+
+        if (trackingState == SwrveTrackingState.UNKNOWN && !SwrveSDK.getConfig().isAutoStartLastUser()) {
+            return;
         }
 
         try {

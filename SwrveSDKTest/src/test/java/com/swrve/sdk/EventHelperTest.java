@@ -24,7 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-@RunWith(RobolectricTestRunner.class)
 public class EventHelperTest extends SwrveBaseTest {
 
     private ISwrveCommon swrveCommonMock;

@@ -24,6 +24,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -34,14 +35,21 @@ import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.test.MainActivity;
 
+import org.awaitility.Duration;
+import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
+import org.robolectric.Robolectric;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -315,29 +323,30 @@ public class SwrveInitModeTest extends SwrveBaseTest {
 
         notification.contentIntent.send();
 
+        Intent engageEventIntent = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            engageEventIntent = mShadowActivity.getNextStartedActivity();
+        } else {
+            List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
+            assertEquals(1, broadcastIntents.size());
+        }
+        assertNotNull(engageEventIntent);
+
         // Launch SwrveNotificationEngageReceiver (imitate single engagement with notification)
-        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
-        assertEquals(1, broadcastIntents.size());
-        Intent engageEventIntent = broadcastIntents.get(0);
         SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
         // Clear pending intents
         mShadowActivity.getBroadcastIntents().clear();
         notificationEngage.processIntent(engageEventIntent);
 
-        List<Intent> broadcastIntentsAfterOnReceive = mShadowActivity.getBroadcastIntents();
-        assertEquals(1, broadcastIntentsAfterOnReceive.size());
-        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntentsAfterOnReceive.get(0).getAction());
-
         // Should send an engagement event
-        String expectedEvent = "{" +
-                "\"type\":\"event\"," +
-                "\"time\":987654321," +
-                "\"seqnum\":1," +
-                "\"name\":\"Swrve.Messages.Push-1.engaged\"" +
-                "}";
-        ArrayList<String> expectedEventArrayList = new ArrayList<>();
-        expectedEventArrayList.add(expectedEvent);
-        verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(mActivity, SwrveSDK.getUserId(), expectedEventArrayList);
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        assertTrue(jsonString.contains("Swrve.Messages.Push-1.engaged"));
     }
 
     @Test

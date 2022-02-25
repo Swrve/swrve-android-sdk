@@ -100,7 +100,7 @@ public class SwrveTextViewTest extends SwrveBaseTest {
         assertFalse(textView.isScrollContainer());
         assertTrue(textView.isTextSelectable());
         assertTrue(textView.isFocusable());
-        assertFalse(textView.getIncludeFontPadding());
+        assertTrue(textView.getIncludeFontPadding());
 
         assertEquals(textView.getCurrentTextColor(), Color.BLUE);
         ColorDrawable cd = (ColorDrawable) textView.getBackground();
@@ -192,7 +192,7 @@ public class SwrveTextViewTest extends SwrveBaseTest {
         SwrveTextView textView = Mockito.spy(new SwrveTextView(mActivity));
         doReturn(false).when(textView).isMobile();
         textView.init("my_test_string", textViewStyle, null);
-        Mockito.verify(textView).addListenerForResizing(0);
+        Mockito.verify(textView).addListenerForResizing(0, textViewStyle.getLineHeight());
         Mockito.verify(textView, Mockito.times(0)).setTextSize(TypedValue.COMPLEX_UNIT_SP, 0);
     }
 
@@ -205,7 +205,7 @@ public class SwrveTextViewTest extends SwrveBaseTest {
         doReturn(true).when(textView).isMobile();
         textView.init("my_test_string", textViewStyle, null);
         Mockito.verify(textView).setTextSize(TypedValue.COMPLEX_UNIT_SP, 0);
-        Mockito.verify(textView, Mockito.times(0)).addListenerForResizing(0);
+        Mockito.verify(textView, Mockito.times(0)).addListenerForResizing(0, 1);
     }
 
     private SwrveCalibration getDummySwrveCalibration() throws JSONException {

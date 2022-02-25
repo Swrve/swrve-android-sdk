@@ -206,7 +206,7 @@ public class CampaignDeliveryManagerTest extends SwrveBaseTest {
         assertEquals(testEndpoint, workSpec.input.getString(KEY_END_POINT));
         assertEquals(testBatchEvent, workSpec.input.getString(KEY_BODY));
         assertEquals(BackoffPolicy.LINEAR, workSpec.backoffPolicy);
-        assertEquals(10000, workSpec.backoffDelayDuration);
+        assertEquals(1000*60*60, workSpec.backoffDelayDuration);
     }
 
     @Test

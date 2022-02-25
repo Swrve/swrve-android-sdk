@@ -45,9 +45,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -124,6 +126,8 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         swrveSpy.swrveDeeplinkManager.setRestClient(spyRestClient);
 
         SwrveCommon.setSwrveCommon(swrveSpy);
+        doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
+
         swrveSpy.init(mActivity);
     }
 

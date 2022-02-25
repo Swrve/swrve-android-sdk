@@ -257,7 +257,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     public void testButtonDismissWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-        SwrveButton buttonDismiss = createButton(SwrveActionType.Dismiss, "campaign.json", null, null);
+        SwrveButton buttonDismiss = createButton(SwrveActionType.Dismiss, "campaign.json", null, 150);
         int originalEvents = getAllEvents().size();
         swrveSpy.buttonWasPressedByUser(buttonDismiss);
         int lastEvents = getAllEvents().size();
@@ -270,7 +270,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     public void testButtonInstallWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-        SwrveButton buttonInstall = createButton(SwrveActionType.Install, "campaign.json", null, null);
+        SwrveButton buttonInstall = createButton(SwrveActionType.Install, "campaign.json", null, 150);
         swrveSpy.buttonWasPressedByUser(buttonInstall);
 
         boolean clickFound = false;
@@ -286,7 +286,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     public void testButtonCustomWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-        SwrveButton buttonCustom = createButton(SwrveActionType.Custom, "campaign.json", null, null);
+        SwrveButton buttonCustom = createButton(SwrveActionType.Custom, "campaign.json", null, 150);
         int originalEvents = getAllEvents().size();
         swrveSpy.buttonWasPressedByUser(buttonCustom);
         int lastEvents = getAllEvents().size();
@@ -303,78 +303,52 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         assertTrue(clickFound);
     }
 
-    private SwrveButton createButton(SwrveActionType type, String dummyJson, String action, Integer appId) {
-        CustomSwrveCampaign campaign = null;
-        try {
-            String json = SwrveTestUtils.getAssetAsText(mActivity, dummyJson);
-            JSONObject jsonObj = new JSONObject(json);
-            JSONObject campaigns = jsonObj.getJSONArray("campaigns").getJSONObject(0);
-            campaign = new CustomSwrveCampaign(swrveSpy, new SwrveCampaignDisplayer(), campaigns, new HashSet<SwrveAssetsQueueItem>());
-        } catch (Exception exp) {
-            SwrveLogger.e("Error createButton.", exp);
-        }
+    private SwrveButton createButton(SwrveActionType type, String dummyJson, String action, Integer appId) throws Exception {
+        SwrveInAppCampaign campaign = null;
+        String json = SwrveTestUtils.getAssetAsText(mActivity, dummyJson);
+        JSONObject jsonObj = new JSONObject(json);
+        JSONObject campaignData = jsonObj.getJSONArray("campaigns").getJSONObject(0);
+        campaign = new SwrveInAppCampaign(swrveSpy, new SwrveCampaignDisplayer(), campaignData, new HashSet<>(), null);
+        SwrveMessage message = campaign.getMessage();
 
-        CustomSwrveMessage message = new CustomSwrveMessage(campaign, swrveSpy.getCacheDir());
-        message.setId(303);
-        message.setName("myMessage");
-        campaign.setMessage(message);
+        String buttonJson = "                  {\n" +
+                "                    \"name\": \"accept\",\n" +
+                "                    \"x\": {\n" +
+                "                      \"type\": \"number\",\n" +
+                "                      \"value\": -200\n" +
+                "                    },\n" +
+                "                    \"y\": {\n" +
+                "                      \"type\": \"number\",\n" +
+                "                      \"value\": 80\n" +
+                "                    },\n" +
+                "                    \"w\": {\n" +
+                "                      \"type\": \"number\",\n" +
+                "                      \"value\": 229\n" +
+                "                    },\n" +
+                "                    \"h\": {\n" +
+                "                      \"type\": \"number\",\n" +
+                "                      \"value\": 114\n" +
+                "                    },\n" +
+                "                    \"image_up\": {\n" +
+                "                      \"type\": \"asset\",\n" +
+                "                      \"value\": \"8721fd4e657980a5e12d498e73aed6e6a565dfca\"\n" +
+                "                    },\n" +
+                "                    \"action\": {\n" +
+                "                      \"type\": \"text\",\n" +
+                "                      \"value\": \"" + action + "\"\n" +
+                "                    },\n" +
+                "                    \"game_id\": {\n" +
+                "                      \"type\": \"number\",\n" +
+                "                      \"value\": \"" + appId + "\"\n" +
+                "                    },\n" +
+                "                    \"type\": {\n" +
+                "                      \"type\": \"text\",\n" +
+                "                      \"value\": \"" + type + "\"\n" +
+                "                    }\n" +
+                "                  }";
 
-        CustomSwrveButton btn = new CustomSwrveButton();
-        btn.setAction(action);
-        btn.setActionType(type);
-        btn.setMessage(message);
-        if (appId != null) {
-            btn.setAppId(appId);
-        }
+        SwrveButton btn = new SwrveButton(message, new JSONObject(buttonJson));
         return btn;
-    }
-
-    class CustomSwrveCampaign extends SwrveInAppCampaign {
-
-        public CustomSwrveCampaign(SwrveBase<?, ?> controller, SwrveCampaignDisplayer campaignManager, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
-            super(controller, campaignManager, campaignData, assetsQueue, null);
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public void setMessage(SwrveMessage message) {
-            this.message = message;
-        }
-    }
-
-    class CustomSwrveMessage extends SwrveMessage {
-
-        public CustomSwrveMessage(SwrveInAppCampaign campaign, File cacheDir) {
-            super(campaign, cacheDir);
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-    }
-
-    class CustomSwrveButton extends SwrveButton {
-        public void setAction(String action) {
-            super.setAction(action);
-        }
-
-        public void setActionType(SwrveActionType type) {
-            super.setActionType(type);
-        }
-
-        public void setMessage(SwrveMessage message) {
-            super.setMessage(message);
-        }
-
-        public void setAppId(int appId) {
-            super.setAppId(appId);
-        }
     }
 
     private LinkedHashMap<Long, String> getAllEvents() {

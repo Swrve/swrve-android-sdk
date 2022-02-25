@@ -57,7 +57,20 @@
                     "value": "Multiline Text \\n with a ${test_line}.",
                     "h_align": "left",
                     "font_size": 30.5,
-                    "scrollable": true
+                    "scrollable": true,
+                    "font_postscript_name": "FirstChristmas",
+                    "font_native_style": "",
+                    "font_file": "_system_font_",
+                    "font_digest": "",
+                    "line_height": 1.5,
+                    "padding": {
+                      "top": 15,
+                      "right": 15,
+                      "bottom": 15,
+                      "left": 15
+                    },
+                    "font_color": "#0000FF",
+                    "bg_color": "#00FF00"
                   }
                 }
               ],

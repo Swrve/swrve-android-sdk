@@ -6,7 +6,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveAmazonMessageReceiverTest extends SwrveBaseTest {
     @Test
     public void testRuns() {

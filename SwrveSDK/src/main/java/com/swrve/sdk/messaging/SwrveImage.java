@@ -7,8 +7,8 @@ import org.json.JSONObject;
  * In-app message background image.
  */
 public class SwrveImage extends SwrveWidget {
-    // Cached path of the image file on disk
-    protected String file;
+
+    private String file; // Cached path of the image file on disk
 
     public SwrveImage(JSONObject imageData) throws JSONException {
         super(imageData);
@@ -17,18 +17,11 @@ public class SwrveImage extends SwrveWidget {
         setSize(getSizeFrom(imageData));
 
         if (imageData.has("image")) {
-            setFile(imageData.getJSONObject("image").getString("value"));
+            this.file = imageData.getJSONObject("image").getString("value");
         }
     }
 
-    /**
-     * @return the cached path of the image file.
-     */
     public String getFile() {
         return file;
-    }
-
-    protected void setFile(String file) {
-        this.file = file;
     }
 }

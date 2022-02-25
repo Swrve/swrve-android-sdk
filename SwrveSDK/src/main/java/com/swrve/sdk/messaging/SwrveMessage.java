@@ -18,40 +18,23 @@ import java.util.Set;
  * In-app message inside a campaign, with different formats.
  */
 public class SwrveMessage implements SwrveBaseMessage {
-    // Identifies the message in a campaign
-    protected int id;
-    // Name of the message
-    protected String name;
-    // Priority of the message
-    protected int priority = 9999;
-    // Parent in-app campaign
-    protected SwrveInAppCampaign campaign;
-    // List of available formats
-    protected List<SwrveMessageFormat> formats;
-    // Location of the images and button resources
-    protected File cacheDir;
 
-    public SwrveMessage(SwrveInAppCampaign campaign, File cacheDir) {
+    private final int id;
+    private final String name;
+    private int priority = 9999;
+    private final SwrveInAppCampaign campaign;
+    private final List<SwrveMessageFormat> formats;
+    private final File cacheDir;
+
+    public SwrveMessage(SwrveInAppCampaign campaign, JSONObject messageData, File cacheDir) throws JSONException {
         this.campaign = campaign;
         this.formats = new ArrayList<>();
-        setCacheDir(cacheDir);
-    }
-
-    /*
-     * Load message from JSON data.
-     *
-     * @param campaign    Related campaign.
-     * @param messageData JSON data containing the message details.
-     * @param cacheDir    Folder where to find the downloaded assets
-     * @throws JSONException
-     */
-    public SwrveMessage(SwrveInAppCampaign campaign, JSONObject messageData, File cacheDir) throws JSONException {
-        this(campaign, cacheDir);
-        setId(messageData.getInt("id"));
-        setName(messageData.getString("name"));
+        this.cacheDir = cacheDir;
+        this.id = messageData.getInt("id");
+        this.name = messageData.getString("name");
 
         if (messageData.has("priority")) {
-            setPriority(messageData.getInt("priority"));
+            this.priority = messageData.getInt("priority");
         }
 
         JSONObject template = messageData.getJSONObject("template");
@@ -64,78 +47,35 @@ public class SwrveMessage implements SwrveBaseMessage {
         }
     }
 
-    /**
-     * @return the message id.
-     */
     public int getId() {
         return id;
     }
 
-    protected void setId(int id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the message name.
-     */
     public String getName() {
         return name;
     }
 
-    protected void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the message priority.
-     */
     public int getPriority() {
         return priority;
     }
 
-    public void setPriority(int priority) {
-        this.priority = priority;
-    }
-
-    /**
-     * @return list of message formats for this device.
-     */
     public List<SwrveMessageFormat> getFormats() {
         return formats;
     }
 
-    protected void setFormats(List<SwrveMessageFormat> formats) {
-        this.formats = formats;
-    }
-
-    /**
-     * @return the directory where resources will be saved.
-     */
     public File getCacheDir() {
         return cacheDir;
     }
 
-    protected void setCacheDir(File cacheDir) {
-        this.cacheDir = cacheDir;
-    }
-
-    /**
-     * @return the related campaign.
-     */
     public SwrveInAppCampaign getCampaign() {
         return campaign;
-    }
-
-    protected void setCampaign(SwrveInAppCampaign campaign) {
-        this.campaign = campaign;
     }
 
     /**
      * Search for a format with the given orientation.
      *
      * @param orientation Portrait, Landscape or Both.
-     * @return SwrveMessageFormat
-     * Message format for the specified orientation.
+     * @return SwrveMessageFormat Message format for the specified orientation.
      */
     public SwrveMessageFormat getFormat(SwrveOrientation orientation) {
         if (formats != null) {
@@ -167,8 +107,10 @@ public class SwrveMessage implements SwrveBaseMessage {
     }
 
     /**
+     * Checks if assets have been downloaded.
+     *
      * @param assetsOnDisk Already downloaded assets on disk
-     * @param properties properties, when applied are used to resolve the dynamic image urls that may occur
+     * @param properties   properties are used to resolve the dynamic image urls that may occur
      * @return true if all assets for this message have been downloaded.
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
@@ -219,6 +161,16 @@ public class SwrveMessage implements SwrveBaseMessage {
                     if (!hasImage && !image.isMultiLine()) {
                         SwrveLogger.i("Image asset not yet downloaded: %s", imageAsset);
                         return false;
+                    }
+
+                    if (image.isMultiLine()) {
+                        String font_file = image.getFontFile();
+                        if (SwrveHelper.isNotNullOrEmpty(font_file) && !font_file.equals("_system_font_")) {
+                            if (!this.assetInCache(assetsOnDisk, font_file)) {
+                                SwrveLogger.i("Font asset not yet downloaded: %s", font_file);
+                                return false;
+                            }
+                        }
                     }
                 }
             }

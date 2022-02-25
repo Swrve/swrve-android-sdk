@@ -31,7 +31,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;

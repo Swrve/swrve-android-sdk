@@ -7,7 +7,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(RobolectricTestRunner.class)
 public class InMemoryLocalStorageTest extends BaseLocalStorage {
 
     @Before

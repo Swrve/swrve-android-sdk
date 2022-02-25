@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -27,12 +28,12 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveNotificationEngageTest extends SwrveBaseTest {
 
     private SwrveNotificationConfig notificationConfig;
@@ -57,6 +58,22 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
 
     @Test
     public void testOpenActivity() {
+        openActivityTest();
+    }
+
+    @Config(sdk = Build.VERSION_CODES.R)
+    @Test
+    public void testOpenActivity_api30() {
+        openActivityTest();
+
+        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
+        assertNotNull(broadcastIntents);
+        assertEquals(1, broadcastIntents.size());
+        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(0).getAction());
+    }
+
+    // common code for all api levels
+    private void openActivityTest() {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString(SwrveNotificationConstants.TEXT_KEY, "validBundle");
@@ -70,11 +87,6 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         Intent nextIntent = shadowApplication.peekNextStartedActivity();
         assertNotNull(nextIntent);
         assertEquals("com.swrve.sdk.test.MainActivity", nextIntent.getComponent().getClassName());
-
-        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
-        assertNotNull(broadcastIntents);
-        assertEquals(1, broadcastIntents.size());
-        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(0).getAction());
     }
 
     @Test

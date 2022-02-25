@@ -14,7 +14,6 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
     private LocalStorage primaryLocalStorage;
     private LocalStorage secondaryLocalStorage;

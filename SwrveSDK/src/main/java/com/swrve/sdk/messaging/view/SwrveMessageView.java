@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Typeface;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -154,14 +155,23 @@ public class SwrveMessageView extends RelativeLayout {
                     // Still need to personalize text
                     String text = SwrveTextTemplating.apply(imageText, this.inAppPersonalization);
                     text = text.replaceAll("\\n", "\n");
+
+                    Typeface typeface = image.getTypeface(inAppConfig.getPersonalizedTextTypeface());
+                    int bgColor = image.getBackgroundColor(inAppConfig.getPersonalizedTextBackgroundColor());
+                    int fgColor = image.getForegroundColor(inAppConfig.getPersonalizedTextForegroundColor());
+
                     SwrveTextViewStyle textViewStyle = new SwrveTextViewStyle.Builder()
                             .fontSize(image.getFontSize())
                             .isScrollable(image.isScrollable())
                             .horizontalAlignment(image.getHorizontalAlignment())
-                            /** using inappconfig for the rest until image includes it in V2 */
-                            .textBackgroundColor(inAppConfig.getPersonalizedTextBackgroundColor())
-                            .textForegroundColor(inAppConfig.getPersonalizedTextForegroundColor())
-                            .textTypeFace(inAppConfig.getPersonalizedTextTypeface())
+                            .textBackgroundColor(bgColor)
+                            .textForegroundColor(fgColor)
+                            .textTypeFace(typeface)
+                            .bottomPadding(image.getBottomPadding())
+                            .topPadding(image.getTopPadding())
+                            .leftPadding(image.getLeftPadding())
+                            .rightPadding(image.getRightPadding())
+                            .lineHeight(image.getLineHeight())
                             .build();
 
                     SwrveTextView textView = new SwrveTextView(context, text, textViewStyle, format.getCalibration());
@@ -322,10 +332,10 @@ public class SwrveMessageView extends RelativeLayout {
                 }
             }
         } catch (SwrveSDKTextTemplatingException e) {
-            SwrveLogger.e("Cannot resolve personalized asset: ", e);
+            SwrveLogger.w("Cannot resolve personalized asset: %s", e.getMessage());
             QaUser.assetFailedToDisplay(message.getCampaign().getId(), message.getId(), null, url, null, hasFallback, "Could not resolve url personalization");
         } catch (Exception e) {
-            SwrveLogger.e("Cannot resolve personalized asset: ", e);
+            SwrveLogger.w("Cannot resolve personalized asset: %s", e.getMessage());
         }
 
         return null;

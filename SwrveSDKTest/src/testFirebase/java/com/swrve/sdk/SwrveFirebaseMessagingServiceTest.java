@@ -14,7 +14,6 @@ import org.robolectric.RobolectricTestRunner;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.never;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveFirebaseMessagingServiceTest extends SwrveBaseTest {
 
     @Test

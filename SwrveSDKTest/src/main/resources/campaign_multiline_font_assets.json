@@ -1,0 +1,114 @@
+{
+  "template": {
+    "template_id": "20",
+    "formats": [{
+      "calibration": {
+        "width": 5000,
+        "height": 500,
+        "base_font_size": 20,
+        "text": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+      },
+      "orientation": "landscape",
+      "size": {
+        "w": {
+          "type": "number",
+          "value": 320
+        },
+        "h": {
+          "type": "number",
+          "value": 240
+        }
+      },
+      "images": [{
+        "name": "Multi Line text",
+        "color": {
+          "type": "color",
+          "value": "FFFFFF"
+        },
+        "x": {
+          "type": "number",
+          "value": 0
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "w": {
+          "type": "number",
+          "value": 900
+        },
+        "h": {
+          "type": "number",
+          "value": 600
+        },
+        "multiline_text": {
+          "type": "text",
+          "value": "Multiline Text \\n with a ${test_line}.",
+          "h_align": "left",
+          "font_size": 30.5,
+          "scrollable": true,
+          "font_postscript_name": "FirstChristmas",
+          "font_native_style": "",
+          "font_file": "_system_font_",
+          "font_digest": "",
+          "line_height": 1.5,
+          "padding": {
+            "top": 15,
+            "right": 15,
+            "bottom": 15,
+            "left": 15
+          },
+          "font_color": "#0000FF",
+          "bg_color": "#00FF00"
+        }
+      }, {
+        "name": "Multi Line text",
+        "color": {
+          "type": "color",
+          "value": "FFFFFF"
+        },
+        "x": {
+          "type": "number",
+          "value": 0
+        },
+        "y": {
+          "type": "number",
+          "value": 0
+        },
+        "w": {
+          "type": "number",
+          "value": 900
+        },
+        "h": {
+          "type": "number",
+          "value": 600
+        },
+        "multiline_text": {
+          "type": "text",
+          "value": "Multiline Text \\n with a ${test_line}.",
+          "h_align": "left",
+          "font_size": 30.5,
+          "scrollable": true,
+          "font_postscript_name": "FirstChristmas",
+          "font_native_style": "",
+          "font_file": "SomeNativeFont",
+          "font_digest": "digest",
+          "line_height": 1.5,
+          "padding": {
+            "top": 15,
+            "right": 15,
+            "bottom": 15,
+            "left": 15
+          },
+          "font_color": "#0000FF",
+          "bg_color": "#00FF00"
+        }
+      }],
+      "buttons": [],
+      "name": "Kindle (English (US))",
+      "language": "en-US"
+    }]
+  },
+  "id": 165,
+  "name": "Kindle"
+}

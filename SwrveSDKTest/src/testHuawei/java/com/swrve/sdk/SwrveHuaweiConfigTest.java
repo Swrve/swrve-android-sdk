@@ -9,7 +9,6 @@ import org.robolectric.RobolectricTestRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveHuaweiConfigTest extends SwrveBaseTest {
 
     @Test

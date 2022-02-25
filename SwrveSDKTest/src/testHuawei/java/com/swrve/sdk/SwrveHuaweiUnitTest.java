@@ -49,7 +49,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.robolectric.shadows.gms.Shadows.shadowOf;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveHuaweiUnitTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
@@ -111,7 +110,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
 
         SwrveMultiLayerLocalStorage multiLayerLocalStorage = swrveSpy.multiLayerLocalStorage;
         String userId = swrveSpy.getUserId();
-        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext()));
+        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = huaweiUtilSpy;
 
         SwrveSDK.setRegistrationId("reg2");
@@ -149,7 +148,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
 
         SwrveMultiLayerLocalStorage multiLayerLocalStorage = swrveSpy.multiLayerLocalStorage;
         String userId = swrveSpy.getUserId();
-        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext()));
+        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = googleUtilSpy;
         googleUtilSpy.advertisingId = "testadvertisingId";
 
@@ -188,7 +187,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
             return null;
         }).when(swrveSpy).storageExecutorExecute(any(Runnable.class));
 
-        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext()));
+        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = huaweiUtilSpy;
 
         swrveSpy.beforeSendDeviceInfo(mActivity);
@@ -213,7 +212,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
             return null;
         }).when(swrveSpy).storageExecutorExecute(any(Runnable.class));
 
-        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext()));
+        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         doNothing().when(googleUtilSpy).init(any(SwrveMultiLayerLocalStorage.class), anyString(), anyBoolean(), anyBoolean());
         swrveSpy.platformUtil = googleUtilSpy;
 
@@ -225,7 +224,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
     @Test
     public void testExtraDeviceInfoHuawei() throws Exception {
 
-        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext()));
+        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = huaweiUtilSpy;
 
         JSONObject deviceUpdate = new JSONObject();
@@ -242,7 +241,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
     @Test
     public void testExtraDeviceInfoFirebase() throws Exception {
 
-        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext()));
+        SwrveGoogleUtil googleUtilSpy = spy(new SwrveGoogleUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = googleUtilSpy;
 
         JSONObject deviceUpdate = new JSONObject();
@@ -268,7 +267,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
             return null;
         }).when(swrveSpy).storageExecutorExecute(any(Runnable.class));
 
-        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext()));
+        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = huaweiUtilSpy;
 
         swrveSpy.setRegistrationId("some_reg_token_id");
@@ -287,7 +286,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
             return null;
         }).when(swrveSpy).storageExecutorExecute(any(Runnable.class));
 
-        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext()));
+        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = huaweiUtilSpy;
         doReturn(null).when(huaweiUtilSpy).getHMSInstance();
         doReturn("SomeRegId").when(huaweiUtilSpy).getRegistrationId(swrveSpy.multiLayerLocalStorage);
@@ -318,7 +317,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
 
     @Test
     public void testRegisterInBackground() throws ApiException {
-        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext()));
+        SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = huaweiUtilSpy;
         doReturn(mock(HmsInstanceId.class)).when(huaweiUtilSpy).getHMSInstance();
 

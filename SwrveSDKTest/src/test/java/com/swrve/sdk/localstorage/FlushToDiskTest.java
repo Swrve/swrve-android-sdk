@@ -1,26 +1,21 @@
 package com.swrve.sdk.localstorage;
 
-import android.os.Build;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.SwrveLogger;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import java.util.LinkedHashMap;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(RobolectricTestRunner.class)
-@Config(sdk = Build.VERSION_CODES.N_MR1)
-public class FlushToDiskTest  {
+public class FlushToDiskTest  extends SwrveBaseTest {
     private LocalStorage primaryLocalStorage;
     private LocalStorage secondaryLocalStorage;
     private SwrveMultiLayerLocalStorage multiLayerLocalStorage;

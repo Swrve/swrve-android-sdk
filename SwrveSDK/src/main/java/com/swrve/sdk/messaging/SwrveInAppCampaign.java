@@ -33,46 +33,54 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         if (campaignData.has("message")) {
             JSONObject messageData = campaignData.getJSONObject("message");
             message = createMessage(this, messageData, campaignManager.getCacheDir());
+            queueAssets(assetsQueue, properties, message.getFormats());
+        }
+    }
 
-                // If the message has some format
-                List<SwrveMessageFormat> formats = message.getFormats();
-                if (formats != null && formats.size() > 0) {
-                    // Add assets to queue
-                    if (assetsQueue != null) {
-                        for (SwrveMessageFormat format : message.getFormats()) {
-                            // Add all images to the download queue
-                            for (SwrveButton button : format.getButtons()) {
-                                if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
-                                    assetsQueue.add(new SwrveAssetsQueueItem(getId(), button.getImage(), button.getImage(), true, false));
-                                }
+    private void queueAssets(Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties, List<SwrveMessageFormat> formats) {
+        // If the message has some format
+        if (formats != null && formats.size() > 0) {
+            // Add assets to queue
+            if (assetsQueue != null) {
+                for (SwrveMessageFormat format : formats) {
+                    // Add all images to the download queue
+                    for (SwrveButton button : format.getButtons()) {
+                        if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
+                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), button.getImage(), button.getImage(), true, false));
+                        }
 
-                                if (!SwrveHelper.isNullOrEmpty(button.getDynamicImageUrl())) {
-                                    try {
-                                        String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
-                                        assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
-                                    } catch (SwrveSDKTextTemplatingException exception) {
-                                        SwrveLogger.e("Campaign id:%s text templating could not be resolved", exception, getId());
-                                    }
-                                }
+                        if (!SwrveHelper.isNullOrEmpty(button.getDynamicImageUrl())) {
+                            try {
+                                String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
+                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                            } catch (SwrveSDKTextTemplatingException exception) {
+                                SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
                             }
+                        }
+                    }
 
-                            for (SwrveImage image : format.getImages()) {
-                                if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
-                                    assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFile(), image.getFile(), true, false));
-                                }
+                    for (SwrveImage image : format.getImages()) {
+                        if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
+                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFile(), image.getFile(), true, false));
+                        }
 
-                                if (!SwrveHelper.isNullOrEmpty(image.getDynamicImageUrl())) {
-                                    try {
-                                        String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
-                                        assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
-                                    } catch (SwrveSDKTextTemplatingException exception) {
-                                        SwrveLogger.e("Campaign id:%s text templating could not be resolved", exception, getId());
-                                    }
-                                }
+                        if (!SwrveHelper.isNullOrEmpty(image.getDynamicImageUrl())) {
+                            try {
+                                String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
+                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                            } catch (SwrveSDKTextTemplatingException exception) {
+                                SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
+                            }
+                        }
+
+                        if (image.isMultiLine && SwrveHelper.isNotNullOrEmpty(image.getFontFile()) && SwrveHelper.isNotNullOrEmpty(image.getFontDigest())) {
+                            if (!image.getFontFile().equals("_system_font_")) {
+                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFontFile(), image.getFontDigest(), false, false));
                             }
                         }
                     }
                 }
+            }
         }
     }
 
@@ -157,8 +165,8 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
     }
 
     protected SwrveMessage getNextMessage(Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> properties) {
-        if (this.message != null && this.message .areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
-            return this.message ;
+        if (this.message != null && this.message.areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
+            return this.message;
         }
 
         String resultText = "Campaign " + this.getId() + " hasn't finished downloading.";

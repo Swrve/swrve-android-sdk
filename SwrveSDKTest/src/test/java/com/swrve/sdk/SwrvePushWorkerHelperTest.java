@@ -20,7 +20,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrvePushWorkerHelperTest extends SwrveBaseTest {
 
     @Test

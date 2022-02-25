@@ -1,11 +1,18 @@
 package com.swrve.sdk.messaging;
 
+import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.Typeface;
 
+import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveSDK;
+import com.swrve.sdk.messaging.view.SwrveTextViewStyle;
 import com.swrve.sdk.messaging.view.SwrveTextViewStyle.TextAlignment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
 
 /**
  * Base in-app message element widget class.
@@ -30,26 +37,72 @@ abstract class SwrveWidget {
     // What is the alignment of the text?
     protected TextAlignment horizontalAlignment;
 
+    protected String fontFile;
+    protected String fontDigest;
+    protected SwrveTextViewStyle.FONT_NATIVE_STYLE fontNativeStyle;
+    protected double lineHeight;
+    protected int topPadding;
+    protected int rightPadding;
+    protected int bottomPadding;
+    protected int leftPadding;
+    protected String foregroundColor;
+    protected String backgroundColor;
+
     public SwrveWidget() {
     }
 
     public SwrveWidget(JSONObject data) throws JSONException {
         if (data.has("dynamic_image_url")) {
-            setDynamicImageUrl(data.getString("dynamic_image_url"));
+            this.dynamicImageUrl = data.getString("dynamic_image_url");
         }
 
         if (data.has("text")) {
-            setText(data.getJSONObject("text").getString("value"));
+            this.text = data.getJSONObject("text").getString("value");
         }
 
+        //added in app version 5
         if (data.has("multiline_text")) {
-            setMultiLine(true);
+            this.isMultiLine = true;
             JSONObject multiLineData = data.getJSONObject("multiline_text");
-            setText(multiLineData.getString("value"));
+            this.text = multiLineData.getString("value");
             Double font_size = multiLineData.getDouble("font_size");
-            setFontSize(font_size.floatValue());
-            setScrollable(multiLineData.getBoolean("scrollable"));
-            setHorizontalAlignment(TextAlignment.parse(multiLineData.getString("h_align")));
+            this.fontSize = font_size.floatValue();
+            this.isScrollable = multiLineData.getBoolean("scrollable");
+            this.horizontalAlignment = TextAlignment.parse(multiLineData.getString("h_align"));
+
+            //custom fonts, color, padding and line height added in app version 6
+            if (multiLineData.has("font_file")) {
+                String fontFile = multiLineData.getString("font_file");
+                this.fontFile = fontFile;
+
+                if (fontFile.equals("_system_font_")) {
+                    this.fontNativeStyle = SwrveTextViewStyle.FONT_NATIVE_STYLE.parse(multiLineData.getString("font_native_style"));
+                }
+
+                if (multiLineData.has("line_height")) {
+                    this.lineHeight = multiLineData.getDouble("line_height");
+                }
+
+                if (multiLineData.has("font_digest")) {
+                    this.fontDigest = multiLineData.getString("font_digest");
+                }
+
+                if (multiLineData.has("padding")) {
+                    JSONObject padding = multiLineData.getJSONObject("padding");
+                    this.topPadding = padding.getInt("top");
+                    this.bottomPadding = padding.getInt("bottom");
+                    this.rightPadding = padding.getInt("right");
+                    this.leftPadding = padding.getInt("left");
+                }
+
+                if (multiLineData.has("font_color")) {
+                    this.foregroundColor = multiLineData.getString("font_color");
+                }
+
+                if (multiLineData.has("bg_color")) {
+                    this.backgroundColor = multiLineData.getString("bg_color");
+                }
+            }
         }
     }
 
@@ -119,24 +172,86 @@ abstract class SwrveWidget {
         return fontSize;
     }
 
-    public void setFontSize(float fontSize) {
-        this.fontSize = fontSize;
-    }
-
     public boolean isScrollable() {
         return isScrollable;
-    }
-
-    public void setScrollable(boolean scrollable) {
-        isScrollable = scrollable;
     }
 
     public TextAlignment getHorizontalAlignment() {
         return horizontalAlignment;
     }
 
-    public void setHorizontalAlignment(TextAlignment horizontalAlignment) {
-        this.horizontalAlignment = horizontalAlignment;
+    public String getFontFile() {
+        return fontFile;
     }
 
+    public String getFontDigest() {
+        return fontDigest;
+    }
+
+    public SwrveTextViewStyle.FONT_NATIVE_STYLE getFontNativeStyle() {
+        return this.fontNativeStyle;
+    }
+
+    public double getLineHeight() {
+        return lineHeight;
+    }
+
+    public int getTopPadding() {
+        return topPadding;
+    }
+
+    public int getRightPadding() {
+        return rightPadding;
+    }
+
+    public int getBottomPadding() {
+        return bottomPadding;
+    }
+
+    public int getLeftPadding() {
+        return leftPadding;
+    }
+
+    public Typeface getTypeface(Typeface defaultTypeface) {
+        Typeface typeface = defaultTypeface;
+        boolean isSystemFont = SwrveHelper.isNotNullOrEmpty(getFontFile()) && getFontFile().equals("_system_font_");
+        if (isSystemFont) {
+            switch (getFontNativeStyle()) {
+                case NORMAL:
+                    typeface = Typeface.defaultFromStyle(Typeface.NORMAL);
+                    break;
+                case BOLD:
+                    typeface = Typeface.defaultFromStyle(Typeface.BOLD);
+                    break;
+                case ITALIC:
+                    typeface = Typeface.defaultFromStyle(Typeface.ITALIC);
+                    break;
+                case BOLDITALIC:
+                    typeface = Typeface.defaultFromStyle(Typeface.BOLD_ITALIC);
+                    break;
+            }
+        } else if (SwrveHelper.isNotNullOrEmpty(getFontFile())) {
+            File fontFile = new File(SwrveSDK.getInstance().getCacheDir(), getFontFile());
+            if (fontFile.exists()) {
+                typeface = Typeface.createFromFile(fontFile);
+            }
+        }
+        return typeface;
+    }
+
+    public int getForegroundColor(int defaultForegroundColor) {
+        if (SwrveHelper.isNotNullOrEmpty(foregroundColor)) {
+            return Color.parseColor(foregroundColor);
+        } else {
+            return defaultForegroundColor;
+        }
+    }
+
+    public int getBackgroundColor(int defaultBackgroundColor) {
+        if (SwrveHelper.isNotNullOrEmpty(backgroundColor)) {
+            return Color.parseColor(backgroundColor);
+        } else {
+            return defaultBackgroundColor;
+        }
+    }
 }

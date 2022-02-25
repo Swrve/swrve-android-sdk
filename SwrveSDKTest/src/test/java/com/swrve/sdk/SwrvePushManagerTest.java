@@ -51,7 +51,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrvePushManagerTest extends SwrveBaseTest {
 
     private int dummyIconResource = 12345;

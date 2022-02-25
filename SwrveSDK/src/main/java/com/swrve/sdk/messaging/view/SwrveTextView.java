@@ -32,12 +32,13 @@ public class SwrveTextView extends AppCompatTextView {
         setTextIsSelectable(true);
         setScrollContainer(false);
         setFocusable(true);
-        setIncludeFontPadding(false);
+        setIncludeFontPadding(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE);
             setBreakStrategy(LineBreaker.BREAK_STRATEGY_SIMPLE);
         }
 
+        setPadding(textViewStyle.getLeftPadding(), textViewStyle.getTopPadding(), textViewStyle.getRightPadding(), textViewStyle.getBottomPadding());
         setText(text);
         setTypeface(textViewStyle.getTextTypeFace());
 
@@ -61,27 +62,46 @@ public class SwrveTextView extends AppCompatTextView {
         if (textViewStyle.isScrollable && isMobile()) {
             //use default SP unit, which will allow resizing based on user preferences
             setTextSize(TypedValue.COMPLEX_UNIT_SP, calibratedTextSizeDP);
+            if (textViewStyle.getLineHeight() > 0) {
+                setCalibratedLineSpacing((float) (getTextSize() * textViewStyle.getLineHeight()));
+            }
         } else {
+            if (textViewStyle.getLineHeight() > 0) {
+                //use line height multiple when downscaling, as we can't calculate the line spacing.
+                setLineSpacing(0, (float) (textViewStyle.getLineHeight()));
+            }
             //auto size text to fit, we may switch back to calibratedTextSizePX if text actually fits inside container, without need for scaling
             //see global layout observer below
             TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 1, 200, 1, TextViewCompat.AUTO_SIZE_TEXT_TYPE_UNIFORM);
-            addListenerForResizing(calibratedTextSizePX);
+            addListenerForResizing(calibratedTextSizePX, textViewStyle.getLineHeight());
         }
     }
-    protected void addListenerForResizing(float calibratedTextSizePX) {
+
+    protected void addListenerForResizing(float calibratedTextSizePX, double lineHeightMultipler) {
         getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 if (calibratedTextSizePX < getTextSize()) {
                     TextViewCompat.setAutoSizeTextTypeWithDefaults(SwrveTextView.this, TextViewCompat.AUTO_SIZE_TEXT_TYPE_NONE);
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, calibratedTextSizePX);
+                    if (lineHeightMultipler > 0) {
+                        setCalibratedLineSpacing((float) (calibratedTextSizePX * lineHeightMultipler));
+                    }
                 }
                 getViewTreeObserver().removeOnGlobalLayoutListener(this);
             }
         });
     }
+
     protected boolean isMobile() {
         return SwrveHelper.isMobile(getContext());
+    }
+
+    protected void setCalibratedLineSpacing(float lineHeight) {
+        if (lineHeight <= 0) return;
+        int fontHeight = getPaint().getFontMetricsInt(null);
+        float linespacing = lineHeight - fontHeight;
+        setLineSpacing(linespacing, 1);
     }
 
     protected float getCalibratedTextSize(float fontSize, SwrveCalibration calibration) {

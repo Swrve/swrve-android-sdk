@@ -13,7 +13,6 @@ import java.util.LinkedList;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(RobolectricTestRunner.class)
 public class SwrveAmazonPushDeDuperTest extends SwrveBaseTest {
 
     @Before
