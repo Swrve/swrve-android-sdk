@@ -7,7 +7,7 @@
 
     <application>
         <activity
-            android:name=".messaging.ui.SwrveInAppMessageActivity"
+            android:name=".SwrveInAppMessageActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.InAppMessage"
             android:exported="false">

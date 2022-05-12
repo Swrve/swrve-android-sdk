@@ -1,18 +1,5 @@
 package com.swrve.sdk;
 
-import android.content.Context;
-import android.os.Bundle;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_APP_VERSION;
 import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_DATA;
 import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_SESSION_TOKEN;
@@ -36,6 +23,19 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_DISPLAYED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_REASON;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SILENT;
 
+import android.content.Context;
+import android.os.Bundle;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Used internally to generate JSON batch strings from event data.
  */
@@ -50,7 +50,7 @@ final class EventHelper {
         return createGenericEvent(System.currentTimeMillis(), id, campaignType, actionType, contextId, campaignId, payload, seqnum);
     }
 
-    public static ArrayList<String> createGenericEvent(long time, String id, String campaignType, String actionType, String contextId, String campaignId, Map<String, String> payload, int seqnum) throws JSONException {
+    public static ArrayList<String> createGenericEvent(long time, String id, String campaignType, String actionType, String contextId, String campaignId, Map<String, ?> payload, int seqnum) throws JSONException {
         ArrayList<String> events = new ArrayList<>();
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(EVENT_ID_KEY, id);
@@ -82,7 +82,7 @@ final class EventHelper {
      * Generate JSON to be stored in EventLocalStorage and eventually sent to
      * the batch API to inform Swrve of these events.
      */
-    public static String eventAsJSON(String type, Map<String, Object> parameters, Map<String, String> payload, int seqnum, long time) throws JSONException {
+    public static String eventAsJSON(String type, Map<String, Object> parameters, Map<String, ?> payload, int seqnum, long time) throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put(EVENT_TYPE_KEY, type);
         obj.put("time", time);

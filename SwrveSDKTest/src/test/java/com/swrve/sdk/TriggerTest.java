@@ -194,7 +194,7 @@ public class TriggerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testCampaignTriggerCondition() throws Exception {
+    public void testCampaignTriggerConditionAND() throws Exception {
         QaUser qaUserMock = Mockito.mock(QaUser.class);
         qaUserMock.loggingEnabled = true;
         QaUser.instance = qaUserMock;
@@ -207,7 +207,91 @@ public class TriggerTest extends SwrveBaseTest {
 
         Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
         Map<String, String> payload = new HashMap<>();
+        payload.put("artist", "prince");  // just 1
+        assertNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        payload = new HashMap<>();
         payload.put("artist", "prince");
+        payload.put("song", "PuRpLe RaIn"); // mixed case on purpose
+        payload.put("extra", "unused");
+        assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "this should not match");
+        assertNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "queen");
+        assertNotNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "this should not match");
+        assertNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("extra", "unused");
+        assertNotNull(campaign.getMessageForEvent("music.condition3", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent("random.event", null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        // match the event name but null payload
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent("music.condition1", null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        // match the event name but null payload
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent("music.condition2", null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        // null event name
+        qaCampaignInfoMap = new HashMap<>();
+        assertNull(campaign.getMessageForEvent(null, null, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+    }
+
+    @Test
+    public void testCampaignTriggerConditionOR() throws Exception {
+        QaUser qaUserMock = Mockito.mock(QaUser.class);
+        qaUserMock.loggingEnabled = true;
+        QaUser.instance = qaUserMock;
+
+        String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_conditionOR.json");
+        assertNotNull(text);
+        JSONObject jsonObject = new JSONObject(text);
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>(), null);
+        assertNotNull(campaign);
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        Map<String, String> payload = new HashMap<>();
+        payload.put("artist", "prince");  // match just 1
+        assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        payload = new HashMap<>();
         payload.put("song", "PuRpLe RaIn"); // mixed case on purpose
         payload.put("extra", "unused");
         assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));

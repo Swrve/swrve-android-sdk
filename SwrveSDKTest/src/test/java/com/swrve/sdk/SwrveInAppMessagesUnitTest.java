@@ -1,5 +1,18 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.SwrveTrackingState.STARTED;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +22,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+
+import androidx.core.util.Pair;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
@@ -18,18 +37,15 @@ import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveButtonView;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
-import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
-import com.swrve.sdk.messaging.view.SwrveButtonView;
-import com.swrve.sdk.messaging.view.SwrveMessageView;
 
-import org.json.JSONObject;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -46,21 +62,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.swrve.sdk.SwrveTrackingState.STARTED;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
-import androidx.core.util.Pair;
 
 public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
@@ -86,7 +87,8 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
         SwrveMessage message = swrveSpy.getMessageForId(165);
         assertNotNull(message);
-        Iterator<SwrveButton> buttonsIt = message.getFormats().get(0).getButtons().iterator();
+
+        Iterator<SwrveButton> buttonsIt = message.getFormats().get(0).getPages().get(0l).getButtons().iterator();
         boolean correct = false;
         while (buttonsIt.hasNext()) {
             SwrveButton button = buttonsIt.next();
@@ -806,7 +808,18 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
     private void dismissInAppMessage(SwrveInAppMessageActivity activity) {
         ViewGroup parentView = activity.findViewById(android.R.id.content);
-        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        LinearLayout linearLayout = (LinearLayout)parentView.getChildAt(0);
+        FrameLayout frameLayout;
+        if (activity.isSwipeable) {
+            assertEquals(View.GONE, linearLayout.getChildAt(1).getVisibility()); // index 1 is the second child which should be gone.
+            ViewPager2 viewPager2 = (ViewPager2) linearLayout.getChildAt(0);
+            RecyclerView recyclerView = (RecyclerView) viewPager2.getChildAt(0);
+            frameLayout = (FrameLayout) recyclerView.getChildAt(0);
+        } else {
+            assertEquals(View.GONE, linearLayout.getChildAt(0).getVisibility());
+            frameLayout = (FrameLayout) linearLayout.getChildAt(1); // index 1 because its the second child. Viewpager is first, but gone.
+        }
+        SwrveMessageView view = (SwrveMessageView) frameLayout.getChildAt(0);
         // Press install button
         if (view != null) {
             for (int i = 0; i < view.getChildCount(); i++) {
@@ -939,22 +952,24 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
     @Test
     public void testMultiLineAssetSystemFontDownload() throws Exception {
-            String messageJson = SwrveTestUtils.getAssetAsText(mActivity, "campaign_multiline_font_assets.json");
-            SwrveMessage message = new SwrveMessage(null, new JSONObject(messageJson), null);
-            HashSet assets = new HashSet();
-            assertFalse(message.areAssetsReady(assets, null));  // missing SomeNativeFont
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_multiline_font_assets.json");
+        SwrveMessage message = swrveSpy.getMessageForId(165);
+        assertNotNull(message);
 
-            assets = new HashSet();
-            assets.add("_system_font_");
-            assertFalse(message.areAssetsReady(assets, null));  // missing SomeNativeFont
+        HashSet assets = new HashSet();
+        assertFalse(message.areAssetsReady(assets, null));  // missing SomeNativeFont
 
-            assets = new HashSet();
-            assets.add("SomeNativeFont");
-            assertTrue(message.areAssetsReady(assets, null));  // _system_font_ not needed
+        assets = new HashSet();
+        assets.add("_system_font_");
+        assertFalse(message.areAssetsReady(assets, null));  // missing SomeNativeFont
 
-            assets = new HashSet();
-            assets.add("SomeNativeFont");
-            assets.add("_system_font_");
-            assertTrue(message.areAssetsReady(assets, null));
+        assets = new HashSet();
+        assets.add("SomeNativeFont");
+        assertTrue(message.areAssetsReady(assets, null));  // _system_font_ not needed
+
+        assets = new HashSet();
+        assets.add("SomeNativeFont");
+        assets.add("_system_font_");
+        assertTrue(message.areAssetsReady(assets, null));
     }
 }

@@ -402,7 +402,9 @@ public abstract class SwrveSDKBase {
      * implementation of the message renderer to inform Swrve of a button event.
      *
      * @param button button that was pressed.
+     * @deprecated Use embedded campaigns instead.
      */
+    @Deprecated
     public static void buttonWasPressedByUser(SwrveButton button) {
         checkInstanceCreated();
         instance.buttonWasPressedByUser(button);
@@ -414,7 +416,9 @@ public abstract class SwrveSDKBase {
      * Swrve.
      *
      * @param messageFormat message that was shown to the user for the first time in this session.
+     * @deprecated Use embedded campaigns instead.
      */
+    @Deprecated
     public static void messageWasShownToUser(SwrveMessageFormat messageFormat) {
         checkInstanceCreated();
         instance.messageWasShownToUser(messageFormat);

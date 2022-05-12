@@ -6,8 +6,7 @@ import android.graphics.Typeface;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveSDK;
-import com.swrve.sdk.messaging.view.SwrveTextViewStyle;
-import com.swrve.sdk.messaging.view.SwrveTextViewStyle.TextAlignment;
+import com.swrve.sdk.messaging.SwrveTextViewStyle.TextAlignment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,6 +27,8 @@ abstract class SwrveWidget {
     protected String text;
     // Dynamic Image Url
     protected String dynamicImageUrl;
+    //Alternative text for use with accessibility voice over
+    protected String accessibilityText;
     // if true, text value will have the below items applied to it
     protected boolean isMultiLine;
     // Font Size (used primarily for multi-line)
@@ -58,6 +59,10 @@ abstract class SwrveWidget {
 
         if (data.has("text")) {
             this.text = data.getJSONObject("text").getString("value");
+        }
+
+        if (data.has("accessibility_text")) {
+            this.accessibilityText = data.getString("accessibility_text");
         }
 
         //added in app version 5
@@ -155,6 +160,8 @@ abstract class SwrveWidget {
     public String getText() {
         return text;
     }
+
+    public String getAccessibilityText() {return accessibilityText; }
 
     protected void setText(String text) {
         this.text = text;

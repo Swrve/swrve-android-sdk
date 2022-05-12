@@ -29,7 +29,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
-
+        
         if (campaignData.has("message")) {
             JSONObject messageData = campaignData.getJSONObject("message");
             message = createMessage(this, messageData, campaignManager.getCacheDir());
@@ -38,45 +38,48 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
     }
 
     private void queueAssets(Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties, List<SwrveMessageFormat> formats) {
-        // If the message has some format
-        if (formats != null && formats.size() > 0) {
-            // Add assets to queue
-            if (assetsQueue != null) {
-                for (SwrveMessageFormat format : formats) {
-                    // Add all images to the download queue
-                    for (SwrveButton button : format.getButtons()) {
-                        if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
-                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), button.getImage(), button.getImage(), true, false));
-                        }
 
-                        if (!SwrveHelper.isNullOrEmpty(button.getDynamicImageUrl())) {
-                            try {
-                                String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
-                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
-                            } catch (SwrveSDKTextTemplatingException exception) {
-                                SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
-                            }
+        if (formats == null || formats.size() == 0 || assetsQueue == null) {
+            return; // exit quickly
+        }
+
+        for (SwrveMessageFormat format : formats) {
+
+            for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
+                SwrveMessagePage page = entry.getValue();
+
+                for (SwrveButton button : page.getButtons()) {
+                    if (!SwrveHelper.isNullOrEmpty(button.getImage())) {
+                        assetsQueue.add(new SwrveAssetsQueueItem(getId(), button.getImage(), button.getImage(), true, false));
+                    }
+
+                    if (!SwrveHelper.isNullOrEmpty(button.getDynamicImageUrl())) {
+                        try {
+                            String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
+                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                        } catch (SwrveSDKTextTemplatingException exception) {
+                            SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
+                        }
+                    }
+                }
+
+                for (SwrveImage image : page.getImages()) {
+                    if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
+                        assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFile(), image.getFile(), true, false));
+                    }
+
+                    if (!SwrveHelper.isNullOrEmpty(image.getDynamicImageUrl())) {
+                        try {
+                            String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
+                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+                        } catch (SwrveSDKTextTemplatingException exception) {
+                            SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
                         }
                     }
 
-                    for (SwrveImage image : format.getImages()) {
-                        if (!SwrveHelper.isNullOrEmpty(image.getFile())) {
-                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFile(), image.getFile(), true, false));
-                        }
-
-                        if (!SwrveHelper.isNullOrEmpty(image.getDynamicImageUrl())) {
-                            try {
-                                String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
-                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
-                            } catch (SwrveSDKTextTemplatingException exception) {
-                                SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
-                            }
-                        }
-
-                        if (image.isMultiLine && SwrveHelper.isNotNullOrEmpty(image.getFontFile()) && SwrveHelper.isNotNullOrEmpty(image.getFontDigest())) {
-                            if (!image.getFontFile().equals("_system_font_")) {
-                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFontFile(), image.getFontDigest(), false, false));
-                            }
+                    if (image.isMultiLine && SwrveHelper.isNotNullOrEmpty(image.getFontFile()) && SwrveHelper.isNotNullOrEmpty(image.getFontDigest())) {
+                        if (!image.getFontFile().equals("_system_font_")) {
+                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFontFile(), image.getFontDigest(), false, false));
                         }
                     }
                 }

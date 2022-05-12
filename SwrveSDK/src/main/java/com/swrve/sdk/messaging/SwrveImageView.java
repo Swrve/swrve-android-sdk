@@ -1,4 +1,4 @@
-package com.swrve.sdk.messaging.view;
+package com.swrve.sdk.messaging;
 
 import android.content.Context;
 import android.view.MotionEvent;

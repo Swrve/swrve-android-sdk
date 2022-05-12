@@ -1,0 +1,440 @@
+{
+  "game_data": {
+    "31970": {
+    }
+  },
+  "campaigns": [
+    {
+      "id": 513598,
+      "start_date": 1646907797000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 1,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 1
+      },
+      "triggers": [
+      ],
+      "message_center": true,
+      "message": {
+        "id": 510465,
+        "template": {
+          "formats": [
+            {
+              "name": "PortraitFormat",
+              "orientation": "portrait",
+              "calibration": {
+                "width": 2115,
+                "height": 212,
+                "text": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+                "base_font_size": 20
+              },
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1080
+                },
+                "h": {
+                  "type": "number",
+                  "value": 1920
+                }
+              },
+              "pages": [
+                {
+                  "page_id": 123,
+                  "page_name": "page1",
+                  "swipe_backward": -1,
+                  "swipe_forward": -1,
+                  "template_id": 49713,
+                  "images": [
+                    {
+                      "name": "Button 1",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 100
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 100
+                      },
+                      "multiline_text": {
+                        "value": "1",
+                        "h_align": "CENTER",
+                        "font_size": 100,
+                        "scrollable": false,
+                        "font_native_style": "Normal",
+                        "font_file": "_system_font_",
+                        "line_height": 1.2,
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "font_color": "#ff55ab61"
+                      }
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "button_id": 111222,
+                      "name": "Button",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 30
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 15
+                      },
+                      "image_width": 13,
+                      "image_height": 25,
+                      "image_filename": "100x200-d40f40-1.png",
+                      "image_up": {
+                        "type": "asset",
+                        "value": "asset1"
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "PAGE_LINK"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "456"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      }
+                    }
+                  ]
+                },
+                {
+                  "page_id": 456,
+                  "page_name": "page2",
+                  "swipe_backward": -1,
+                  "swipe_forward": -1,
+                  "template_id": 49715,
+                  "images": [
+                    {
+                      "name": "Button 1",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 100
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 100
+                      },
+                      "multiline_text": {
+                        "value": "2",
+                        "h_align": "CENTER",
+                        "font_size": 100,
+                        "scrollable": false,
+                        "font_native_style": "Normal",
+                        "font_file": "_system_font_",
+                        "line_height": 1.2,
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "font_color": "#ff55ab61"
+                      }
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "button_id": 222111,
+                      "name": "Button",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 30
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 15
+                      },
+                      "image_width": 13,
+                      "image_height": 25,
+                      "image_filename": "100x200-d40f40-1.png",
+                      "image_up": {
+                        "type": "asset",
+                        "value": "asset1"
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "PAGE_LINK"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "123"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      }
+                    },
+                    {
+                      "button_id": 872248,
+                      "name": "Background",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 356
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 240
+                      },
+                      "image_width": 356,
+                      "image_height": 240,
+                      "image_filename": "2844x1920-d40f40.png",
+                      "image_up": {
+                        "type": "asset",
+                        "value": "asset1"
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "DISMISS"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": ""
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      }
+                    }
+                  ]
+                }
+              ],
+              "scaled_by": 0.1875,
+              "scaled_from": "Multi-Platform - Portrait",
+              "scale": 2
+            },
+            {
+              "name": "LandscapeFormat",
+              "orientation": "landscape",
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1920
+                },
+                "h": {
+                  "type": "number",
+                  "value": 1080
+                }
+              },
+              "pages": [
+                {
+                  "page_id": 123,
+                  "page_name": "page1",
+                  "swipe_backward": -1,
+                  "swipe_forward": -1,
+                  "template_id": 49713,
+                  "images": [
+                  ],
+                  "buttons": [
+                    {
+                      "button_id": 111222,
+                      "name": "Button",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 30
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 15
+                      },
+                      "image_width": 13,
+                      "image_height": 25,
+                      "image_filename": "100x200-d40f40-1.png",
+                      "image_up": {
+                        "type": "asset",
+                        "value": "asset1"
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "PAGE_LINK"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "456"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      }
+                    }
+                  ]
+                },
+                {
+                  "page_id": 456,
+                  "page_name": "page2",
+                  "swipe_backward": -1,
+                  "swipe_forward": -1,
+                  "template_id": 49715,
+                  "images": [
+                  ],
+                  "buttons": [
+                    {
+                      "button_id": 222111,
+                      "name": "Button",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 30
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 15
+                      },
+                      "image_width": 13,
+                      "image_height": 25,
+                      "image_filename": "100x200-d40f40-1.png",
+                      "image_up": {
+                        "type": "asset",
+                        "value": "asset1"
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "PAGE_LINK"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "123"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      }
+                    },
+                    {
+                      "button_id": 872248,
+                      "name": "Background",
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 356
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 240
+                      },
+                      "image_width": 356,
+                      "image_height": 240,
+                      "image_filename": "2844x1920-d40f40.png",
+                      "image_up": {
+                        "type": "asset",
+                        "value": "asset1"
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "DISMISS"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": ""
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      }
+                    }
+                  ]
+                }
+              ],
+              "scaled_by": 0.125,
+              "scaled_from": "Multi-Platform - Landscape",
+              "scale": 2
+            }
+          ]
+        },
+        "name": "multipage both orientiations",
+        "rules": {
+          "orientations": "both"
+        },
+        "priority": 9999
+      },
+      "subject": "",
+      "in_app_version": 7
+    }
+  ],
+  "rules": {
+    "delay_first_message": 0,
+    "max_messages_per_session": 99999,
+    "min_delay_between_messages": 0
+  },
+  "cdn_paths": {
+    "message_images": "http://www.someurl.com/",
+    "message_fonts": "http://www.someurl.com/"
+  },
+  "version": 2
+}

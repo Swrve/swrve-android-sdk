@@ -9,11 +9,13 @@ import org.json.JSONObject;
 public class SwrveButton extends SwrveWidget {
 
     private String name;
+    private long buttonId;
     private String image; // Cached path of the button image on disk
     private String action; // Custom action string for the button
     private SwrveMessage message;
     private int appId;
     private SwrveActionType actionType;
+    private String accessibilityText; //Alternative text for use with accessibility voice over
 
     public SwrveButton(SwrveMessage message, JSONObject buttonData) throws JSONException {
         super(buttonData);
@@ -21,6 +23,11 @@ public class SwrveButton extends SwrveWidget {
         if (buttonData.has("name")) {
             this.name = buttonData.getString("name");
         }
+
+        if (buttonData.has("button_id")) {
+            this.buttonId = buttonData.getLong("button_id");
+        }
+
         setPosition(getCenterFrom(buttonData));
         setSize(getSizeFrom(buttonData));
 
@@ -38,6 +45,10 @@ public class SwrveButton extends SwrveWidget {
             }
         }
 
+        if(buttonData.has("accessibility_text")) {
+            this.accessibilityText = buttonData.getString("accessibility_text");
+        }
+
         this.action = buttonData.getJSONObject("action").getString("value");
         this.actionType = SwrveActionType.parse(buttonData.getJSONObject("type").getString("value"));
     }
@@ -48,6 +59,10 @@ public class SwrveButton extends SwrveWidget {
 
     public String getImage() {
         return image;
+    }
+
+    public String getAccessibilityText() {
+        return accessibilityText;
     }
 
     public String getAction() {
@@ -66,4 +81,7 @@ public class SwrveButton extends SwrveWidget {
         return actionType;
     }
 
+    public long getButtonId() {
+        return buttonId;
+    }
 }

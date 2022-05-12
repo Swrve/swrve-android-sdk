@@ -114,9 +114,17 @@ public class SwrveMessage implements SwrveBaseMessage {
      * @return true if all assets for this message have been downloaded.
      */
     public boolean areAssetsReady(Set<String> assetsOnDisk, Map<String, String> properties) {
-        if (this.formats != null) {
-            for (SwrveMessageFormat format : formats) {
-                for (SwrveButton button : format.buttons) {
+        if (this.formats == null) {
+            return true;
+        }
+
+        for (SwrveMessageFormat format : formats) {
+
+            for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
+                SwrveMessagePage page = entry.getValue();
+
+                // check buttons
+                for (SwrveButton button : page.getButtons()) {
                     String buttonAsset = button.getImage();
                     boolean hasButtonImage = this.assetInCache(assetsOnDisk, buttonAsset);
 
@@ -140,7 +148,8 @@ public class SwrveMessage implements SwrveBaseMessage {
                     }
                 }
 
-                for (SwrveImage image : format.images) {
+                // check images
+                for (SwrveImage image : page.getImages()) {
                     String imageAsset = image.getFile();
                     boolean hasImage = this.assetInCache(assetsOnDisk, imageAsset);
 

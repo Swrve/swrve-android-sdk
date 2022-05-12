@@ -47,6 +47,7 @@ import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
+import com.swrve.sdk.messaging.SwrveMessagePage;
 import com.swrve.sdk.messaging.SwrveMessagePersonalizationProvider;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.rest.IRESTClient;
@@ -81,10 +82,10 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "9.3.1";
+    protected static String version = "9.4.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
-    protected static final int IN_APP_CAMPAIGN_VERSION = 6;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 7;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -1130,9 +1131,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         SwrveMessage message = campaign.getMessage();
         if (message != null) {
             for (final SwrveMessageFormat format : message.getFormats()) {
-                for (final SwrveButton button : format.getButtons()) {
-                    if (SwrveActionType.RequestCapabilty.equals(button.getActionType())) {
-                        return true;
+                for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
+                    SwrveMessagePage page = entry.getValue();
+                    for (final SwrveButton button : page.getButtons()) {
+                        if (SwrveActionType.RequestCapabilty.equals(button.getActionType())) {
+                            return true;
+                        }
                     }
                 }
             }

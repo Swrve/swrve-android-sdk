@@ -38,7 +38,7 @@ public class Trigger {
                 return null;
             } else if (conditions.getOp() == null && conditions.getValue() == null && conditions.getKey() == null && conditions.getArgs() == null) {
                 continue; // no conditions is valid, check next trigger
-            } else if (Conditions.Op.AND.equals(conditions.getOp())) {
+            } else if (Conditions.Op.AND.equals(conditions.getOp()) || Conditions.Op.OR.equals(conditions.getOp())) {
                 if (conditions.getArgs() == null || conditions.getArgs().size() == 0) {
                     SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                     return null;
@@ -50,7 +50,7 @@ public class Trigger {
                         }
                     }
                 }
-            } else if (Conditions.Op.EQ.equals(conditions.getOp())) {
+            }else if (Conditions.Op.EQ.equals(conditions.getOp())) {
                 if (conditions.getKey() == null || conditions.getValue() == null) {
                     SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                     return null;

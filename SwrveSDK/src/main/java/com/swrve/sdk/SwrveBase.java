@@ -30,7 +30,6 @@ import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
-import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
@@ -47,7 +46,6 @@ import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
-import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
 
@@ -74,8 +72,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Main base class implementation of the Swrve SDK.
@@ -1112,58 +1108,69 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return result;
     }
 
-    protected void _buttonWasPressedByUser(SwrveButton button) {
-        if (button.getActionType() != SwrveActionType.Dismiss) {
-            String clickEvent = "Swrve.Messages.Message-" + button.getMessage().getId() + ".click";
-            SwrveLogger.i("Sending click event: %s(%s)", clickEvent, button.getName());
-            Map<String, String> payload = new HashMap<>();
-            payload.put("name", button.getName());
-            payload.put("embedded", "false");
-
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", clickEvent);
-            queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
-        }
+    private void _buttonWasPressedByUser(SwrveButton button) {
+        queueMessageClickEvent(button, 0, "");
     }
 
-    protected void _messageWasShownToUser(SwrveMessageFormat messageFormat) {
-        if (messageFormat != null) {
-            campaignDisplayer.setMessageMinDelayThrottle(getNow());
-            campaignDisplayer.decrementMessagesLeftToShow();
+    protected void queueMessageClickEvent(SwrveButton button, long pageId, String pageName) {
+        String clickEvent = "Swrve.Messages.Message-" + button.getMessage().getId() + ".click";
+        SwrveLogger.i("Sending click event: %s(%s)", clickEvent, button.getName());
 
-            // Update next for round robin
-            SwrveMessage message = messageFormat.getMessage();
-            SwrveInAppCampaign campaign = message.getCampaign();
-            if (campaign != null) {
-                campaign.messageWasShownToUser();
-            }
-
-            Map<String, String> payload = new HashMap<>();
-            payload.put("embedded", "false");
-            queueMessageImpressionEvent(message, payload);
+        Map<String, String> payload = new HashMap<>();
+        payload.put("name", button.getName());
+        payload.put("embedded", "false");
+        if (button.getButtonId() > 0) {
+            payload.put("buttonId", String.valueOf(button.getButtonId()));
         }
+        if (pageId > 0) {
+            payload.put("contextId", String.valueOf(pageId));
+        }
+        if (SwrveHelper.isNotNullOrEmpty(pageName)) {
+            payload.put("pageName", pageName);
+        }
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", clickEvent);
+        queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
     }
 
-    protected void _embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
-        if (message != null) {
-            campaignDisplayer.setMessageMinDelayThrottle(getNow());
-            campaignDisplayer.decrementMessagesLeftToShow();
-
-            // Update next for round robin
-            SwrveEmbeddedCampaign campaign = message.getCampaign();
-            if (campaign != null) {
-                campaign.messageWasShownToUser();
-            }
-
-            Map<String, String> payload = new HashMap<>();
-            payload.put("embedded", "true");
-            queueMessageImpressionEvent(message, payload);
+    private void _messageWasShownToUser(SwrveMessageFormat messageFormat) {
+        if (messageFormat == null) {
+            return; // exit fast
         }
+        campaignDisplayer.setMessageMinDelayThrottle(getNow());
+        campaignDisplayer.decrementMessagesLeftToShow();
+
+        SwrveMessage message = messageFormat.getMessage();
+        SwrveInAppCampaign campaign = message.getCampaign();
+        if (campaign != null) {
+            campaign.messageWasShownToUser();
+        }
+
+        queueMessageImpressionEvent(message.getId(), "false");
     }
 
-    protected void queueMessageImpressionEvent(SwrveBaseMessage message, Map<String, String> payload) {
-        String viewEvent = "Swrve.Messages.Message-" + message.getId() + ".impression";
+    private void _embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
+        if (message == null) {
+            return; // exit fast
+        }
+        campaignDisplayer.setMessageMinDelayThrottle(getNow());
+        campaignDisplayer.decrementMessagesLeftToShow();
+
+        SwrveEmbeddedCampaign campaign = message.getCampaign();
+        if (campaign != null) {
+            campaign.messageWasShownToUser();
+        }
+
+        queueMessageImpressionEvent(message.getId(), "true");
+    }
+
+    private void queueMessageImpressionEvent(int messageId, String embedded) {
+        String viewEvent = "Swrve.Messages.Message-" + messageId + ".impression";
         SwrveLogger.i("Sending view event: %s" + viewEvent);
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("embedded", embedded);
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", viewEvent);
@@ -1171,20 +1178,21 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         saveCampaignsState(profileManager.getUserId());
     }
 
-    protected void _embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName) {
-        if (message != null) {
-            String clickEvent = "Swrve.Messages.Message-" + message.getId() + ".click";
-            SwrveLogger.i("Sending click event: %s(%s)", clickEvent, buttonName);
-            Map<String, String> payload = new HashMap<>();
-            payload.put("name", buttonName);
-            payload.put("embedded", "true");
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("name", clickEvent);
-            queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
+    private void _embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName) {
+        if (message == null) {
+            return; // exit fast
         }
+        String clickEvent = "Swrve.Messages.Message-" + message.getId() + ".click";
+        SwrveLogger.i("Sending click event: %s(%s)", clickEvent, buttonName);
+        Map<String, String> payload = new HashMap<>();
+        payload.put("name", buttonName);
+        payload.put("embedded", "true");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", clickEvent);
+        queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
     }
 
-    protected String _getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
+    private String _getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
         if (message != null) {
             try {
                 if(message.getType() == SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON) {
@@ -1238,7 +1246,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             eventListener = null;
         }
     }
-
 
     protected void _setResourcesListener(SwrveResourcesListener resourcesListener) {
         this.resourcesListener = resourcesListener;
@@ -1649,6 +1656,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    @Deprecated
     public void buttonWasPressedByUser(SwrveButton button) {
         if (!isSdkReady()) return;
 

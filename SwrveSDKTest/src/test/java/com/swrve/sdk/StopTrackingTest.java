@@ -8,7 +8,6 @@ import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
-import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;

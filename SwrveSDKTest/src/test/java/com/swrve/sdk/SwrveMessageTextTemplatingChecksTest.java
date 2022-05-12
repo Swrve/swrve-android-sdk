@@ -1,24 +1,27 @@
 package com.swrve.sdk;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 
 import org.json.JSONObject;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 public class SwrveMessageTextTemplatingChecksTest extends SwrveBaseTest {
 
     @Test
     public void testChecks() throws Exception {
+        SwrveInAppCampaign mockCampaign = Mockito.mock(SwrveInAppCampaign.class);
         String messageJson = SwrveTestUtils.getAssetAsText(mActivity, "personalized_message.json");
-        SwrveMessage message = new SwrveMessage(null, new JSONObject(messageJson), null);
+        SwrveMessage message = new SwrveMessage(mockCampaign, new JSONObject(messageJson), null);
 
         assertFalse(SwrveMessageTextTemplatingChecks.checkTextTemplating(message, null));
 
@@ -40,8 +43,9 @@ public class SwrveMessageTextTemplatingChecksTest extends SwrveBaseTest {
 
     @Test
     public void testUrlChecks() throws Exception {
+        SwrveInAppCampaign mockCampaign = Mockito.mock(SwrveInAppCampaign.class);
         String messageJson = SwrveTestUtils.getAssetAsText(mActivity, "personalized_url_message.json");
-        SwrveMessage message = new SwrveMessage(null, new JSONObject(messageJson), null);
+        SwrveMessage message = new SwrveMessage(mockCampaign, new JSONObject(messageJson), null);
 
         assertFalse(SwrveMessageTextTemplatingChecks.checkImageUrlTemplating(message, null));
 

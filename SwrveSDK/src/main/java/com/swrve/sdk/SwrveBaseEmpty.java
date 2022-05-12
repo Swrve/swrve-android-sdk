@@ -26,8 +26,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import javax.net.ssl.SSLSocketFactory;
-
 /**
  * Empty implementation of the Swrve SDK. Will be returned when the SDK is used from an unsupported runtime version.
  */
@@ -240,6 +238,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    @Deprecated
     public void buttonWasPressedByUser(SwrveButton button) {
     }
 

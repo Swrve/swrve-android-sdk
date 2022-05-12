@@ -1,5 +1,10 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS_DEBUG;
+import static com.swrve.sdk.ISwrveCommon.CACHE_NOTIFICATION_CAMPAIGNS_DEBUG;
+import static com.swrve.sdk.SwrveImp.CAMPAIGN_RESPONSE_VERSION;
+import static com.swrve.sdk.SwrveImp.SUPPORTED_REQUIREMENTS;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -17,7 +22,6 @@ import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageListener;
-import com.swrve.sdk.messaging.ui.SwrveInAppMessageActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -35,11 +39,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS_DEBUG;
-import static com.swrve.sdk.ISwrveCommon.CACHE_NOTIFICATION_CAMPAIGNS_DEBUG;
-import static com.swrve.sdk.SwrveImp.CAMPAIGN_RESPONSE_VERSION;
-import static com.swrve.sdk.SwrveImp.SUPPORTED_REQUIREMENTS;
 
 class SwrveDeeplinkManager {
 
@@ -335,7 +334,8 @@ class SwrveDeeplinkManager {
             Map<String, String> payload = new HashMap<>();
             String id = "-1"; // variant id is not applicable to single ad campaigns
             String campaignType = "external_source_" + adSource.toLowerCase(Locale.ENGLISH);
-            ArrayList<String> events = EventHelper.createGenericEvent(id, campaignType, actionType, contextId, campaignId, payload, swrve.getNextSequenceNumber());
+            long time = System.currentTimeMillis();
+            ArrayList<String> events = EventHelper.createGenericEvent(time, id, campaignType, actionType, contextId, campaignId, payload, swrve.getNextSequenceNumber());
             swrve.sendEventsInBackground(context, swrve.getUserId(), events);
         } else {
             SwrveLogger.e("Cannot queueDeeplinkGenericEvent: no SwrveSDK instance present or parameters were null");

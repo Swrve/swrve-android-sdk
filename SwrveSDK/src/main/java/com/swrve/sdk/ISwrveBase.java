@@ -72,6 +72,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void refreshCampaignsAndResources();
 
+    @Deprecated
     void buttonWasPressedByUser(SwrveButton button);
 
     void messageWasShownToUser(SwrveMessageFormat messageFormat);

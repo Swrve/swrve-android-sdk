@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-import javax.net.ssl.SSLSocketFactory;
-
 interface ISwrveCommon {
 
     String SDK_PREFS_NAME               = "swrve_prefs";
@@ -89,12 +87,16 @@ interface ISwrveCommon {
     String GENERIC_EVENT_CAMPAIGN_TYPE_KEY          = "campaignType";
     String GENERIC_EVENT_CAMPAIGN_TYPE_GEO          = "geo";
     String GENERIC_EVENT_CAMPAIGN_TYPE_PUSH         = "push";
+    String GENERIC_EVENT_CAMPAIGN_TYPE_IAM          = "iam";
     String GENERIC_EVENT_ACTION_TYPE_KEY            = "actionType";
     String GENERIC_EVENT_ACTION_TYPE_IMPRESSION     = "impression";
     String GENERIC_EVENT_ACTION_TYPE_DELIVERED      = "delivered";
     String GENERIC_EVENT_ACTION_TYPE_ENGAGED        = "engaged";
     String GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK   = "button_click";
     String GENERIC_EVENT_ACTION_TYPE_INFLUENCED     = "influenced";
+    String GENERIC_EVENT_ACTION_TYPE_DISMISS        = "dismiss";
+    String GENERIC_EVENT_ACTION_TYPE_NAVIGATION     = "navigation";
+    String GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW      = "page_view";
     String GENERIC_EVENT_CONTEXT_ID_KEY             = "contextId";
     String GENERIC_EVENT_CAMPAIGN_ID_KEY            = "campaignId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_TEXT        = "buttonText";
@@ -102,6 +104,10 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_SILENT             = "silent";
     String GENERIC_EVENT_PAYLOAD_DISPLAYED          = "displayed";
     String GENERIC_EVENT_PAYLOAD_REASON             = "reason";
+    String GENERIC_EVENT_PAYLOAD_PAGE_NAME          = "pageName";
+    String GENERIC_EVENT_PAYLOAD_TO                 = "to";
+    String GENERIC_EVENT_PAYLOAD_BUTTON_ID          = "buttonId";
+    String GENERIC_EVENT_PAYLOAD_BUTTON_NAME        = "buttonName";
     String EVENT_FIRST_SESSION                      = "Swrve.first_session";
 
     // platform information

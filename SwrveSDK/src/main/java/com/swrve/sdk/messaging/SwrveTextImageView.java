@@ -1,4 +1,4 @@
-package com.swrve.sdk.messaging.view;
+package com.swrve.sdk.messaging;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -8,7 +8,6 @@ import android.graphics.Rect;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
-import com.swrve.sdk.messaging.SwrveActionType;
 
 // Single line text view which generates a canvas image
 public class SwrveTextImageView extends SwrveBaseInteractableView {

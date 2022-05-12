@@ -1,4 +1,4 @@
-package com.swrve.sdk.messaging.view;
+package com.swrve.sdk.messaging;
 
 /**
  * Exception raised when constructing an in-app message and there is no memory or other exception happened.

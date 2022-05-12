@@ -1,30 +1,5 @@
 package com.swrve.sdk;
 
-import com.swrve.sdk.localstorage.LocalStorage;
-import com.swrve.sdk.messaging.SwrveActionType;
-import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveInAppCampaign;
-import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageListener;
-import com.swrve.sdk.rest.IRESTClient;
-import com.swrve.sdk.rest.IRESTResponseListener;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -40,6 +15,31 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import android.content.Intent;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import com.swrve.sdk.localstorage.LocalStorage;
+import com.swrve.sdk.messaging.SwrveActionType;
+import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageListener;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
     private Swrve swrveSpy;
@@ -54,11 +54,6 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         swrveSpy.restClient = restClientMock;
 
         SwrveTestUtils.runSingleThreaded(swrveSpy);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
     }
 
     @Test
@@ -257,9 +252,14 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     public void testButtonDismissWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-        SwrveButton buttonDismiss = createButton(SwrveActionType.Dismiss, "campaign.json", null, 150);
         int originalEvents = getAllEvents().size();
-        swrveSpy.buttonWasPressedByUser(buttonDismiss);
+
+        SwrveButton buttonDismiss = createButton(SwrveActionType.Dismiss, "campaign.json", null, 150);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
+        InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
+
+        inAppMessageHandler.buttonClicked(buttonDismiss, "someAction", 0, "");
         int lastEvents = getAllEvents().size();
 
         // One dismissal less
@@ -270,8 +270,13 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     public void testButtonInstallWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
+
         SwrveButton buttonInstall = createButton(SwrveActionType.Install, "campaign.json", null, 150);
-        swrveSpy.buttonWasPressedByUser(buttonInstall);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
+        InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
+
+        inAppMessageHandler.buttonClicked(buttonInstall, "someAction", 0, "");
 
         boolean clickFound = false;
         Object[] events = getAllEvents().values().toArray();
@@ -286,9 +291,16 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     public void testButtonCustomWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-        SwrveButton buttonCustom = createButton(SwrveActionType.Custom, "campaign.json", null, 150);
+
         int originalEvents = getAllEvents().size();
-        swrveSpy.buttonWasPressedByUser(buttonCustom);
+
+        SwrveButton buttonCustom = createButton(SwrveActionType.Custom, "campaign.json", null, 150);
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
+        InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
+
+        inAppMessageHandler.buttonClicked(buttonCustom, "someAction", 0, "");
+
         int lastEvents = getAllEvents().size();
 
         // One click event

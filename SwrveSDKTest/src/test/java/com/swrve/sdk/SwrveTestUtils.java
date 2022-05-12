@@ -1,5 +1,25 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static okhttp3.tls.internal.TlsUtil.localhost;
+
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
@@ -13,13 +33,15 @@ import android.view.View;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberPolicy;
 import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.localstorage.LocalStorageTestUtils;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
-import com.swrve.sdk.messaging.view.SwrveMessageView;
+import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -53,26 +75,6 @@ import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.tls.HandshakeCertificates;
-
-import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
-import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
-import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
-import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
-import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 public class SwrveTestUtils {
 
@@ -414,8 +416,11 @@ public class SwrveTestUtils {
         ((Swrve)swrve).onCreate(activity);
     }
 
-    public static void assertGenericEvent(String eventJson, String expectedContextId, String expectedCampaignType, String expectedActionType, Map<String, String> expectedPayload) {
-        Gson gson = new Gson(); // eg: {"type":"generic_campaign_event","time":1499179867473,"seqnum":1,"actionType":"button_click","campaignType":"push","contextId":"0","id":"4567","payload":{"buttonText":"btn1"}}
+    public static void assertGenericEvent(String eventJson, String expectedContextId, String expectedCampaignType, String expectedActionType, Map<String, ?> expectedPayload) {
+        // eg: {"type":"generic_campaign_event","time":1499179867473,"seqnum":1,"actionType":"button_click","campaignType":"push","contextId":"0","id":"4567","payload":{"buttonText":"btn1"}}
+        Gson gson = new GsonBuilder()
+                .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+                .create();
         Type type = new TypeToken<Map<String, Object>>() {
         }.getType();
         Map<String, Object> event = gson.fromJson(eventJson, type);
@@ -451,6 +456,10 @@ public class SwrveTestUtils {
         doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
         doNothing().when(swrveSpy).checkForCampaignAndResourcesUpdates();
         return swrveSpy;
+    }
+
+    public static void initSwrve(Swrve swrve, Activity activity) {
+        swrve.init(activity);
     }
 
     public static void disableSwrveBackgroundEventSender(Swrve swrveSpy) {

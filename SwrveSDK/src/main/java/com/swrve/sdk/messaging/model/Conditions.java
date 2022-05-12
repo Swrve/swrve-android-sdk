@@ -7,6 +7,8 @@ import java.util.List;
 public class Conditions {
 
     public enum Op {
+        @SerializedName("or")
+        OR,
         @SerializedName("and")
         AND,
         @SerializedName("eq")

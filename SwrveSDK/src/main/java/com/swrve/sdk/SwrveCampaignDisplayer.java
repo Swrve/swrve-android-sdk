@@ -140,6 +140,22 @@ public class SwrveCampaignDisplayer {
                         logAndAddReason(swrveCampaign, resultText, true, qaCampaignInfoMap);
                         return true;
                     }
+                } else if (Conditions.Op.OR.equals(conditions.getOp())) {
+                    boolean conditionsMatchPayload = false;
+                    for (Arg arg : conditions.getArgs()) {
+                        if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
+                            String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
+                            logAndAddReason(swrveCampaign, resultText, true, qaCampaignInfoMap);
+                            conditionsMatchPayload = true;
+                            break;
+                        }
+                    }
+                    if (conditionsMatchPayload) {
+                        return true;
+                    } else {
+                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
+                        logAndAddReason(swrveCampaign, resultText, false, qaCampaignInfoMap);
+                    }
                 } else if (Conditions.Op.EQ.equals(conditions.getOp())) {
                     if (payload != null && payload.containsKey(conditions.getKey()) && payload.get(conditions.getKey()).equalsIgnoreCase(conditions.getValue())) {
                         String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";

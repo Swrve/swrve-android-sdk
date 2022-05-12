@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import static org.awaitility.Awaitility.await;
+
 import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.rest.IRESTClient;
@@ -10,8 +12,6 @@ import org.junit.Test;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.awaitility.Awaitility.await;
 
 public class UserContentTest extends SwrveBaseTest {
 
@@ -41,7 +41,7 @@ public class UserContentTest extends SwrveBaseTest {
                     Assert.assertEquals(swrve.getUserId(), params.get("user"));
                     Assert.assertEquals("1", params.get("embedded_campaign_version"));
                     Assert.assertEquals("9", params.get("version"));
-                    Assert.assertEquals("6", params.get("in_app_version"));
+                    Assert.assertEquals("7", params.get("in_app_version"));
                     Assert.assertNotNull(params.get("device_name"));
                     Assert.assertNotNull(params.get("os_version"));
                     Assert.assertNotNull(params.get("app_store"));

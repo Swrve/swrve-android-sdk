@@ -1,11 +1,4 @@
-package com.swrve.sdk.messaging.view;
-
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.util.TypedValue;
-import android.view.Gravity;
-
-import android.view.ViewTreeObserver;
+package com.swrve.sdk.messaging;
 
 import static androidx.core.widget.TextViewCompat.AUTO_SIZE_TEXT_TYPE_NONE;
 import static androidx.core.widget.TextViewCompat.AUTO_SIZE_TEXT_TYPE_UNIFORM;
@@ -14,6 +7,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
+
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.ViewTreeObserver;
 
 import com.swrve.sdk.SwrveBaseTest;
 

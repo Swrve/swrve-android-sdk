@@ -5,29 +5,28 @@ import android.graphics.Point;
 
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
-import com.swrve.sdk.messaging.view.SwrveCalibration;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * In-app message format with a given language, size and orientation.
  */
 public class SwrveMessageFormat {
 
-    protected String name;
-    protected float scale;
-    protected Point size;
-    protected SwrveOrientation orientation;
-    protected Integer backgroundColor;
-    protected List<SwrveButton> buttons;
-    protected List<SwrveImage> images;
-    protected SwrveMessage message;
-    protected SwrveCalibration calibration;
+    private String name;
+    private float scale;
+    private Point size;
+    private SwrveOrientation orientation;
+    private Integer backgroundColor;
+    private Map<Long, SwrveMessagePage> pages;
+    private SwrveMessage message;
+    private SwrveCalibration calibration;
+    private long firstPageId;
 
     public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData) throws JSONException {
         this.message = message;
@@ -52,18 +51,23 @@ public class SwrveMessageFormat {
             }
         }
 
-        this.buttons = new ArrayList<>();
-        JSONArray jsonButtons = messageFormatData.getJSONArray("buttons");
-        for (int i = 0, j = jsonButtons.length(); i < j; i++) {
-            SwrveButton button = new SwrveButton(message, jsonButtons.getJSONObject(i));
-            buttons.add(button);
-        }
+        this.pages = new HashMap<>();
+        if (messageFormatData.has("pages")) {
 
-        this.images = new ArrayList<>();
-        JSONArray jsonImages = messageFormatData.getJSONArray("images");
-        for (int ii = 0, ji = jsonImages.length(); ii < ji; ii++) {
-            SwrveImage image = new SwrveImage(jsonImages.getJSONObject(ii));
-            images.add(image);
+            JSONArray jsonPages = messageFormatData.getJSONArray("pages");
+            for (int i = 0; i < jsonPages.length(); i++) {
+                JSONObject pageData = jsonPages.getJSONObject(i);
+                SwrveMessagePage page = new SwrveMessagePage(message, pageData);
+                pages.put(page.getPageId(), page);
+                if (i == 0) {
+                    firstPageId = page.getPageId(); // the first page is the first element in the array
+                }
+            }
+        } else if (messageFormatData.has("buttons") && messageFormatData.has("images")) {
+            // for backward compatibility, convert old IAM's into a single page Map
+            SwrveMessagePage page = new SwrveMessagePage(message, messageFormatData);
+            pages.put(0l, page);
+            firstPageId = 0;
         }
 
         if (messageFormatData.has("calibration")) {
@@ -75,12 +79,8 @@ public class SwrveMessageFormat {
         return message;
     }
 
-    public List<SwrveButton> getButtons() {
-        return buttons;
-    }
-
-    public List<SwrveImage> getImages() {
-        return images;
+    public Map<Long, SwrveMessagePage> getPages() {
+        return pages;
     }
 
     public Point getSize() {
@@ -101,5 +101,13 @@ public class SwrveMessageFormat {
 
     public SwrveCalibration getCalibration() {
         return calibration;
+    }
+
+    public long getFirstPageId() {
+        return firstPageId;
+    }
+
+    public String getName() {
+        return name;
     }
 }
