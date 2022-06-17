@@ -213,16 +213,6 @@ public class SwrveTestUtils {
             public String getAppStoreURLForApp(int appId) {
                 return "";
             }
-
-            @Override
-            public void buttonWasPressedByUser(SwrveButton button) {
-                // empty
-            }
-
-            @Override
-            public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
-                // empty
-            }
         };
     }
 

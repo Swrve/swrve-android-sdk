@@ -24,9 +24,4 @@ public interface ISwrveCampaignManager {
 
     String getAppStoreURLForApp(int appId);
 
-    @Deprecated
-    void buttonWasPressedByUser(SwrveButton button);
-
-    void messageWasShownToUser(SwrveMessageFormat messageFormat);
-
 }

@@ -256,7 +256,7 @@ public class SwrveMessageView extends RelativeLayout {
                 String buttonText = button.getText();
                 SwrveBaseInteractableView _buttonView;
                 if (SwrveHelper.isNullOrEmpty(buttonText)) {
-                    _buttonView = new SwrveButtonView(getContext(), button.getActionType(), inAppConfig.getFocusColor(), inAppConfig.getClickColor(), personalizedButtonAction);
+                    _buttonView = new SwrveButtonView(getContext(), button.getActionType(), inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor(), personalizedButtonAction);
                     _buttonView.setImageBitmap(backgroundImage.getBitmap());
                 } else {
                     // Need to render dynamic text

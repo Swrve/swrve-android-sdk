@@ -8,12 +8,12 @@ import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
+import com.swrve.sdk.messaging.SwrveMessageFocusListener;
 import com.swrve.sdk.messaging.SwrveMessagePersonalizationProvider;
 
 public class SwrveInAppMessageConfig {
 
     private int defaultBackgroundColor;
-    private int focusColor;
     private int clickColor;
     private boolean hideToolbar;
     private int personalizedTextBackgroundColor;
@@ -21,16 +21,16 @@ public class SwrveInAppMessageConfig {
     private Typeface personalizedTextTypeface;
     private long autoShowMessagesMaxDelay;
 
-    protected SwrveInstallButtonListener installButtonListener;
-    protected SwrveCustomButtonListener customButtonListener;
-    protected SwrveDismissButtonListener dismissButtonListener;
-    protected SwrveClipboardButtonListener clipboardButtonListener;
-    protected SwrveMessagePersonalizationProvider personalizationProvider;
+    private SwrveInstallButtonListener installButtonListener;
+    private SwrveCustomButtonListener customButtonListener;
+    private SwrveDismissButtonListener dismissButtonListener;
+    private SwrveClipboardButtonListener clipboardButtonListener;
+    private SwrveMessagePersonalizationProvider personalizationProvider;
     private SwrveInAppWindowListener windowListener;
+    private SwrveMessageFocusListener messageFocusListener;
 
     private SwrveInAppMessageConfig(Builder builder) {
         this.defaultBackgroundColor = builder.defaultBackgroundColor;
-        this.focusColor = builder.focusColor;
         this.clickColor = builder.clickColor;
         this.hideToolbar = builder.hideToolbar;
         this.personalizedTextBackgroundColor = builder.personalizedTextBackgroundColor;
@@ -43,6 +43,7 @@ public class SwrveInAppMessageConfig {
         this.clipboardButtonListener = builder.clipboardButtonListener;
         this.personalizationProvider = builder.personalizationProvider;
         this.windowListener = builder.windowListener;
+        this.messageFocusListener = builder.messageFocusListener;
     }
 
     /**
@@ -52,15 +53,6 @@ public class SwrveInAppMessageConfig {
      */
     public int getDefaultBackgroundColor() {
         return defaultBackgroundColor;
-    }
-
-    /**
-     * The in-app message focus color
-     *
-     * @return The in-app message focus color
-     */
-    public int getFocusColor() {
-        return focusColor;
     }
 
     /**
@@ -82,7 +74,7 @@ public class SwrveInAppMessageConfig {
     /**
      * The in-app message text background color.
      *
-     * @return The in-app message focus color
+     * @return The in-app message text background color
      */
     public int getPersonalizedTextBackgroundColor() {
         return personalizedTextBackgroundColor;
@@ -170,9 +162,17 @@ public class SwrveInAppMessageConfig {
         return windowListener;
     }
 
+    /**
+     * IAM focus listener
+     *
+     * @return the focus listener
+     */
+    public SwrveMessageFocusListener getMessageFocusListener() {
+        return messageFocusListener;
+    }
+
     public static class Builder {
         private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
-        private int focusColor = Color.argb(100, 0, 190, 152); // Default button focus color for IAM
         private int clickColor = Color.argb(100, 0, 0, 0); // Default button click color for IAM
         private boolean hideToolbar = true; // Hide the toolbar when displaying in-app messages.
         private int personalizedTextBackgroundColor = Color.TRANSPARENT; // Default Background color for Personalized Text in IAMs
@@ -186,6 +186,7 @@ public class SwrveInAppMessageConfig {
         protected SwrveClipboardButtonListener clipboardButtonListener;
         protected SwrveMessagePersonalizationProvider personalizationProvider;
         protected SwrveInAppWindowListener windowListener;
+        protected SwrveMessageFocusListener messageFocusListener;
 
         /**
          * Builder constructor
@@ -200,17 +201,6 @@ public class SwrveInAppMessageConfig {
          */
         public Builder defaultBackgroundColor(int defaultBackgroundColor) {
             this.defaultBackgroundColor = defaultBackgroundColor;
-            return this;
-        }
-
-        /**
-         * Set the in-app message focus color. Used for in app message buttons on TV
-         *
-         * @param focusColor A color-int, eg: Color.argb(100, 0, 190, 152)
-         * @return this builder
-         */
-        public Builder focusColor(int focusColor) {
-            this.focusColor = focusColor;
             return this;
         }
 
@@ -345,6 +335,17 @@ public class SwrveInAppMessageConfig {
          */
         public Builder windowListener(SwrveInAppWindowListener windowListener) {
             this.windowListener = windowListener;
+            return this;
+        }
+
+        /**
+         * IAM focus listener.
+         *
+         * @param messageFocusListener The focus listener
+         * @return this builder
+         */
+        public Builder messageFocusListener(SwrveMessageFocusListener messageFocusListener) {
+            this.messageFocusListener = messageFocusListener;
             return this;
         }
 

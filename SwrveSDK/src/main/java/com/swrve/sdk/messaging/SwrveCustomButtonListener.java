@@ -11,6 +11,7 @@ public interface SwrveCustomButtonListener {
      * This method is invoked when a custom button has been pressed on an in-app message.
      *
      * @param customAction custom action of button that was pressed.
+     * @param campaignName The name of the campaign which was pressed
      */
-    void onAction(String customAction);
+    void onAction(String customAction, String campaignName);
 }

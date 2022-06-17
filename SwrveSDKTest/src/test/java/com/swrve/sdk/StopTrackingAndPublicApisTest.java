@@ -3,8 +3,6 @@ package com.swrve.sdk;
 import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 
 import org.json.JSONObject;
 import org.junit.Before;
@@ -79,9 +77,6 @@ public class StopTrackingAndPublicApisTest extends SwrveBaseTest {
 
         SwrveSDK.sessionStart();
         verify(swrveSpy, never())._sessionStart();
-
-        SwrveSDK.sessionEnd();
-        verify(swrveSpy, never())._sessionEnd();
 
         SwrveSDK.event("new_event");
         verify(swrveSpy, never())._event("new_event");
@@ -160,16 +155,6 @@ public class StopTrackingAndPublicApisTest extends SwrveBaseTest {
 
         File cacheDir = SwrveSDK.getCacheDir();
         assertNotNull(cacheDir);
-
-        SwrveSDK.setMessageListener(new SwrveMessageListener() {
-            @Override
-            public void onMessage(SwrveMessage message) {
-            }
-
-            @Override
-            public void onMessage(SwrveMessage message, Map<String, String> properties) {
-            }
-        });
 
         Date initialisedTime = SwrveSDK.getInitialisedTime();
         assertNotNull(initialisedTime);

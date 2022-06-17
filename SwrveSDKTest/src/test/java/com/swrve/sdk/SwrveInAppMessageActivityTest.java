@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -39,6 +40,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ApplicationProvider;
@@ -52,13 +54,16 @@ import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseInteractableView;
 import com.swrve.sdk.messaging.SwrveButtonView;
+import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveImageView;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageFocusListener;
 import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveTextImageView;
 import com.swrve.sdk.messaging.SwrveTextView;
+import com.swrve.sdk.test.R;
 
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -83,7 +88,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     private Swrve swrveSpy;
     private String testInstallButtonSuccess;
     private String testCustomButtonSuccess;
+    private String testCustomButtonCampaignName;
     private String testDismissButtonName;
+    private String testDismissCampaignName;
     private boolean testDismissButtonBackButton;
 
     private SwrveConfig config;
@@ -142,8 +149,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testConfigurationOfButtonFocusClickColors() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().focusColor(Color.BLUE).clickColor(Color.GREEN);
+    public void testConfigurationOfButtonClickColors() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().clickColor(Color.GREEN);
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_color.json", "1111111111111111111111111");
@@ -160,13 +167,11 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(1);
 
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
-        assertEquals(Color.BLUE, swrveButtonView.focusColor);
     }
 
     @Test
-    public void testConfigurationOfButtonFocusClickAndPersonalizationOptions() throws Exception {
+    public void testConfigurationOfButtonClickAndPersonalizationOptions() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
-                .focusColor(Color.BLUE)
                 .clickColor(Color.GREEN)
                 .personalizedTextBackgroundColor(Color.RED)
                 .personalizedTextForegroundColor(Color.YELLOW)
@@ -199,7 +204,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveTextImageView swrveButtonView = (SwrveTextImageView) view.getChildAt(2);
         assertEquals("Button test_coupon", swrveButtonView.getText());
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
-        assertEquals(Color.BLUE, swrveButtonView.focusColor);
         assertEquals(Color.RED, swrveButtonView.inAppConfig.getPersonalizedTextBackgroundColor());
         assertEquals(Color.YELLOW, swrveButtonView.inAppConfig.getPersonalizedTextForegroundColor());
         assertNotNull("Typeface should be set", swrveButtonView.inAppConfig.getPersonalizedTextTypeface());
@@ -220,7 +224,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testCustomButtonActionPersonalization() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
-                .focusColor(Color.BLUE)
                 .clickColor(Color.GREEN)
                 .personalizedTextBackgroundColor(Color.RED)
                 .personalizedTextForegroundColor(Color.YELLOW)
@@ -251,7 +254,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testPersonalizationFromRealTimeUserProperties() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
-                .focusColor(Color.BLUE)
                 .clickColor(Color.GREEN)
                 .personalizedTextBackgroundColor(Color.RED)
                 .personalizedTextForegroundColor(Color.YELLOW)
@@ -871,8 +873,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testCustomButtonListenerIntercept() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().customButtonListener(customAction -> {
-            testCustomButtonSuccess = customAction;
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().customButtonListener(new SwrveCustomButtonListener() {
+            @Override
+            public void onAction(String customAction, String campaignName) {
+                testCustomButtonSuccess = customAction;
+                testCustomButtonCampaignName = campaignName;
+            }
         });
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
@@ -890,6 +896,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         swrveButtonView.performClick();
 
         assertEquals("custom_action", testCustomButtonSuccess);
+        assertEquals("Kindle", testCustomButtonCampaignName);
 
         // Swrve.Messages.Message-165.impression
         Map<String, Object> parameters = new HashMap<>();
@@ -910,7 +917,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testDismissButtonListener() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName) -> testDismissButtonName = buttonName);
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName, campaignName) -> {
+            testDismissButtonName = buttonName;
+            testDismissCampaignName = campaignName;
+        });
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
@@ -927,6 +937,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         swrveButtonView.performClick();
 
         assertEquals("close", testDismissButtonName);
+        assertEquals("Kindle", testDismissCampaignName);
 
         ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
         ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -953,10 +964,11 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testDismissButtonListenerBackButton() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName) -> {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName, campaignName) -> {
             if (buttonName == null) {
                 testDismissButtonBackButton = true;
             }
+            testDismissCampaignName = campaignName;
         });
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
@@ -971,6 +983,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         activity.onBackPressed();
 
         assertTrue(testDismissButtonBackButton);
+        assertEquals("Kindle", testDismissCampaignName);
 
         ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
         ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -1052,6 +1065,24 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
                 Log.d("testButtonFocusability()", "Button " + i + " is focusable");
             }
         }
+    }
+
+    @Test
+    public void testFocusListener() throws Exception {
+
+        final AtomicBoolean focusListenerExecuted = new AtomicBoolean(false);
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
+                .messageFocusListener((view, gainFocus, direction, previouslyFocusedRect) -> focusListenerExecuted.set(true));
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
+        // Trigger IAM
+        swrveSpy.currencyGiven("gold", 20);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        await().untilTrue(focusListenerExecuted);
     }
 
     @Test

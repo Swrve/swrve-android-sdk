@@ -13,6 +13,7 @@ public interface SwrveDismissButtonListener {
      *
      * @param campaignSubject Campaign subject
      * @param buttonName Dismiss button name or null when the back button was pressed
+     * @param campaignName The name of the campaign which is being dismissed
      */
-    void onAction(String campaignSubject, String buttonName);
+    void onAction(String campaignSubject, String buttonName, String campaignName);
 }

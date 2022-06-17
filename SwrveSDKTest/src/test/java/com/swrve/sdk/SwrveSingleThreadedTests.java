@@ -24,7 +24,6 @@ import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 
@@ -128,13 +127,12 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         SwrveSDK.iap(1, "com.swrve.productid2", 1.99, "EUR", rewards); // IAP with rewards
         SwrveSDK.event("generic_event", null);
         SwrveSDK.userUpdate(new HashMap<>());
-        SwrveSDK.sessionEnd();
 
         String seqnum = swrveSpy.multiLayerLocalStorage.getCacheEntry(swrveSpy.getUserId(), "seqnum");
-        assertEquals(11, Integer.parseInt(seqnum));
+        assertEquals(10, Integer.parseInt(seqnum));
 
         // 9 events queued via queueEvent method
-        verify(swrveSpy, times(9)).queueEvent(anyString(), anyString(), nullable(Map.class), nullable(Map.class), anyBoolean());
+        verify(swrveSpy, times(8)).queueEvent(anyString(), anyString(), nullable(Map.class), nullable(Map.class), anyBoolean());
 
         // 2 events queued via sendSessionStart (via init and SwrveSDK.sessionStart())
         verify(swrveSpy, times(2)).sendSessionStart(123);
@@ -145,7 +143,6 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         swrveSpy.onCreate(mActivity);
 
-        SwrveSDK.sessionEnd();
         SwrveSDK.event("generic_event_0", null);
         SwrveSDK.event("generic_event_1", null);
         SwrveSDK.event("generic_event_2", null);
@@ -175,10 +172,9 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         assertEquals("session_start", data2.getJSONObject(0).getString("type"));
         assertEquals("Swrve.first_session", data2.getJSONObject(1).getString("name"));
         assertEquals("device_update", data2.getJSONObject(2).getString("type"));
-        assertEquals("session_end", data2.getJSONObject(3).getString("type"));
-        assertEquals("generic_event_0", data2.getJSONObject(4).getString("name"));
-        assertEquals("generic_event_1", data2.getJSONObject(5).getString("name"));
-        assertEquals("generic_event_2", data2.getJSONObject(6).getString("name"));
+        assertEquals("generic_event_0", data2.getJSONObject(3).getString("name"));
+        assertEquals("generic_event_1", data2.getJSONObject(4).getString("name"));
+        assertEquals("generic_event_2", data2.getJSONObject(5).getString("name"));
     }
 
     @Test
@@ -203,18 +199,17 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         String userId = swrveSpy.getUserId();
         swrveSpy.onCreate(mActivity);
         for (int i = 0; i < 50; i++) {
-            swrveSpy.sessionEnd();
             swrveSpy.multiLayerLocalStorage.getPrimaryStorage().setCacheEntry(userId, "category" + i, "rawData" + i);
         }
 
         // 50 events plus firstsession event, and user device prop event
-        assertEquals(50 + eventsAddedOnInit, getAllEventsInPrimaryStorage(userId).size());
+        assertEquals(eventsAddedOnInit, getAllEventsInPrimaryStorage(userId).size());
         swrveSpy.flushToDisk();
         // Data has been moved to the other storage
         assertEquals(0, getAllEventsInPrimaryStorage(userId).size());
 
         int storageCount = swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getFirstNEvents(150, userId).size();
-        assertEquals(50 + eventsAddedOnInit, storageCount);
+        assertEquals(eventsAddedOnInit, storageCount);
         for (int i = 0; i < 50; i++) {
             assertNotNull(swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getCacheItem(userId, "category" + i));
         }
@@ -230,21 +225,13 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_session_start.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e");
 
-        swrveSpy.setMessageListener(new SwrveMessageListener() {
-            @Override
-            public void onMessage(SwrveMessage message) {
-                onMessage(message, null);
-            }
-
-            @Override
-            public void onMessage(SwrveMessage message, Map<String, String> properties) {
-                assertNotNull(message);
-                swrveSpy.messageWasShownToUser(message.getFormats().get(0));
-                messageShownId = message.getId();
-            }
-        });
-
         swrveSpy.sessionStart();
+
+        ArgumentCaptor<SwrveMessage> swrveMessageCaptor = ArgumentCaptor.forClass(SwrveMessage.class);
+        ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(swrveSpy, Mockito.atLeast(1)).displaySwrveMessage(swrveMessageCaptor.capture(), mapCaptor.capture());
+        messageShownId = swrveMessageCaptor.getAllValues().get(0).getId();
+
         assertEquals(165, messageShownId);
     }
 

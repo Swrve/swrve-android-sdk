@@ -5,10 +5,8 @@ import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -23,8 +21,6 @@ import java.util.Map;
 public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void sessionStart();
-
-    void sessionEnd();
 
     void event(String name);
 
@@ -72,11 +68,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void refreshCampaignsAndResources();
 
-    @Deprecated
-    void buttonWasPressedByUser(SwrveButton button);
-
-    void messageWasShownToUser(SwrveMessageFormat messageFormat);
-
     void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName);
 
     void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message);
@@ -88,8 +79,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     String getAppStoreURLForApp(int appId);
 
     File getCacheDir();
-
-    void setMessageListener(SwrveMessageListener messageListener);
 
     Date getInitialisedTime();
 

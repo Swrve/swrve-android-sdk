@@ -12,7 +12,6 @@ import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
@@ -21,7 +20,6 @@ import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -58,8 +56,6 @@ class SwrveDeeplinkManager {
     private SwrveConfig config;
     private SwrveAssetsManager swrveAssetsManager;
     private SwrveBaseCampaign campaign;
-    public SwrveMessageListener swrveMessageListener;
-    public SwrveConversationListener swrveConversationListener;
     private SwrveMessage swrveMessage;
     private SwrveCampaignDisplayer swrveCampaignDisplayer;
     private String alreadySeenCampaignId;
@@ -289,12 +285,8 @@ class SwrveDeeplinkManager {
         if (campaign != null) {
             if (campaign instanceof SwrveConversationCampaign) {
                 SwrveConversation conversation = ((SwrveConversationCampaign) campaign).getConversation();
-                if (this.swrveConversationListener == null) {
-                    ConversationActivity.showConversation(context, conversation, config.getOrientation());
-                } else {
-                    this.swrveConversationListener.onMessage(conversation);
-                }
-
+                ConversationActivity.showConversation(context, conversation, config.getOrientation());
+                conversation.getCampaign().messageWasShownToUser();
             } else if (campaign instanceof SwrveInAppCampaign) {
                 SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessage();
 
@@ -303,14 +295,10 @@ class SwrveDeeplinkManager {
 
                 if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, properties)) {
                     setSwrveMessage(message);
-                    if (this.swrveMessageListener == null) {
-                        Intent intent = new Intent(context, SwrveInAppMessageActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        intent.putExtra(SWRVE_AD_MESSAGE, true);
-                        context.startActivity(intent);
-                    } else {
-                        this.swrveMessageListener.onMessage(message);
-                    }
+                    Intent intent = new Intent(context, SwrveInAppMessageActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.putExtra(SWRVE_AD_MESSAGE, true);
+                    context.startActivity(intent);
                 }
             } else if (campaign instanceof SwrveEmbeddedCampaign) {
                 SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();

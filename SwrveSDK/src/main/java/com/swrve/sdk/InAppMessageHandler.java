@@ -148,7 +148,7 @@ class InAppMessageHandler {
         message.getCampaign().messageDismissed();
 
         if (sdk.getCustomButtonListener() != null) {
-            sdk.getCustomButtonListener().onAction(resolvedButtonAction);
+            sdk.getCustomButtonListener().onAction(resolvedButtonAction, message.getName());
         } else {
             // Parse action as an Uri
             try {
@@ -195,7 +195,7 @@ class InAppMessageHandler {
     private void dismissButtonClicked(String action, SwrveActionType swrveActionType, long pageId, String pageName, long buttonId, String buttonName) {
         sendDismissEvent(message.getId(), pageId, pageName, buttonId, buttonName);
         if (sdk.getDismissButtonListener() != null) {
-            sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), buttonName);
+            sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), buttonName, message.getName());
         }
         qaUserCampaignButtonClicked(action, swrveActionType, buttonName);
     }

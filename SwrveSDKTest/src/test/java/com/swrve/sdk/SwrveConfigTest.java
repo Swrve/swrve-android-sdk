@@ -2,7 +2,9 @@ package com.swrve.sdk;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.view.View;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
@@ -15,6 +17,7 @@ import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
+import com.swrve.sdk.messaging.SwrveMessageFocusListener;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -86,42 +89,43 @@ public class SwrveConfigTest extends SwrveBaseTest {
 
         assertEquals(Color.TRANSPARENT, inAppConfig.getDefaultBackgroundColor());
         assertEquals(Color.argb(100, 0, 0, 0), inAppConfig.getClickColor());
-        assertEquals(Color.argb(100, 0, 190, 152), inAppConfig.getFocusColor());
         assertEquals(Color.BLACK, inAppConfig.getPersonalizedTextForegroundColor());
         assertEquals(Color.TRANSPARENT, inAppConfig.getPersonalizedTextBackgroundColor());
         assertNull(inAppConfig.getPersonalizedTextTypeface());
         assertTrue(inAppConfig.isHideToolbar());
         assertEquals(inAppConfig.getAutoShowMessagesMaxDelay(), 5000);
         assertNull(inAppConfig.getWindowListener());
+        assertNull(inAppConfig.getMessageFocusListener());
     }
 
     @Test
     public void testSwrveInAppMessageConfig() {
         SwrveConfig config = new SwrveConfig();
         SwrveInAppWindowListener inAppWindowListener = window -> { };
+        SwrveMessageFocusListener messageFocusListener = (view, gainFocus, direction, previouslyFocusedRect) -> { };
         SwrveInAppMessageConfig.Builder builder = new SwrveInAppMessageConfig.Builder()
                 .defaultBackgroundColor(Color.BLACK)
                 .clickColor(Color.RED)
-                .focusColor(Color.BLUE)
                 .personalizedTextForegroundColor(Color.YELLOW)
                 .personalizedTextBackgroundColor(Color.GREEN)
                 .personalizedTextTypeface(Typeface.MONOSPACE)
                 .hideToolbar(false)
                 .autoShowMessagesMaxDelay(55)
-                .windowListener(inAppWindowListener);
+                .windowListener(inAppWindowListener)
+                .messageFocusListener(messageFocusListener);
 
         config.setInAppMessageConfig(builder.build());
         SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
 
         assertEquals(Color.BLACK, inAppConfig.getDefaultBackgroundColor());
         assertEquals(Color.RED, inAppConfig.getClickColor());
-        assertEquals(Color.BLUE, inAppConfig.getFocusColor());
         assertEquals(Color.YELLOW, inAppConfig.getPersonalizedTextForegroundColor());
         assertEquals(Color.GREEN, inAppConfig.getPersonalizedTextBackgroundColor());
         assertEquals(Typeface.MONOSPACE, inAppConfig.getPersonalizedTextTypeface());
         assertFalse("hideToolbar should be set to 'false'" ,inAppConfig.isHideToolbar());
         assertEquals(inAppConfig.getAutoShowMessagesMaxDelay(), 55);
         assertEquals(inAppConfig.getWindowListener(), inAppWindowListener);
+        assertEquals(inAppConfig.getMessageFocusListener(), messageFocusListener);
     }
 
     @Test
@@ -161,7 +165,7 @@ public class SwrveConfigTest extends SwrveBaseTest {
 
     private class CustomButtonListener implements SwrveCustomButtonListener {
         @Override
-        public void onAction(String customAction) {
+        public void onAction(String customAction, String campaignName) {
         }
     }
 
@@ -174,7 +178,7 @@ public class SwrveConfigTest extends SwrveBaseTest {
 
     private class DismissButtonListener implements SwrveDismissButtonListener {
         @Override
-        public void onAction(String campaignSubject, String buttonName) {
+        public void onAction(String campaignSubject, String buttonName, String campaignName) {
         }
     }
 

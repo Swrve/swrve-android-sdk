@@ -12,7 +12,6 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +23,6 @@ import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.SwrveConversationListener;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.exceptions.NoUserIdSwrveException;
 import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
@@ -44,7 +42,6 @@ import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -179,27 +176,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             initCampaigns(userId); // Initialize campaigns from cache
 
-            // Add default message listener
-            if (messageListener == null) {
-                setDefaultMessageListener();
-            }
-
             if (config.getEmbeddedMessageConfig() != null) {
                 if (config.getEmbeddedMessageConfig().getEmbeddedMessageListener() != null) {
                     embeddedMessageListener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
                 }
             }
 
-            // Add custom conversation listener
-            if (conversationListener == null) {
-                setConversationListener(conversation -> {
-                    // Start a Conversation activity to display the campaign
-                    if (SwrveBase.this.context != null) {
-                        ConversationActivity.showConversation(SwrveBase.this.context.get(), conversation, config.getOrientation());
-                        conversation.getCampaign().messageWasShownToUser(); // Report that the conversation was shown to the user
-                    }
-                });
-            }
+            eventListener = new SwrveEventListener(this, embeddedMessageListener);
 
             initABTestDetails(userId);
 
@@ -256,46 +239,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    private void setDefaultMessageListener() {
-        setMessageListener(new SwrveMessageListener() {
-
-            public void onMessage(final SwrveMessage message) {
-                onMessage(message, null);
-            }
-
-            public void onMessage(final SwrveMessage message, Map<String, String> properties) {
-                // Start a Conversation activity to display the campaign
-                if (SwrveBase.this.context != null) {
-                    final Context ctx = SwrveBase.this.context.get();
-                    if (ctx == null) {
-                        SwrveLogger.e("Can't display a in-app message without a context");
-                        return;
-                    }
-
-                    Map<String, String> personalizationProperties = retrievePersonalizationProperties(lastEventPayloadUsed, properties);
-
-                    if (message.supportsOrientation(getDeviceOrientation())) {
-                        if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizationProperties)) {
-                            Intent intent = new Intent(ctx, SwrveInAppMessageActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
-                            
-                            if (personalizationProperties != null) {
-                                // Cannot pass a Map to intent, converting to HashMap
-                                HashMap<String, String> personalization = new HashMap<>(personalizationProperties);
-                                intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
-                            }
-
-                            ctx.startActivity(intent);
-                        }
-                    } else {
-                        SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
-                    }
-                }
-            }
-        });
-    }
-
     protected void openLocalStorageConnection() {
         try {
             if (multiLayerLocalStorage != null && multiLayerLocalStorage.getSecondaryStorage() != null && multiLayerLocalStorage.getSecondaryStorage() instanceof SQLiteLocalStorage) {
@@ -322,10 +265,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (sessionListener != null) {
             sessionListener.sessionStarted();
         }
-    }
-
-    protected void _sessionEnd() {
-        queueEvent("session_end", null, null);
     }
 
     protected void _event(String name) {
@@ -1108,10 +1047,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return result;
     }
 
-    private void _buttonWasPressedByUser(SwrveButton button) {
-        queueMessageClickEvent(button, 0, "");
-    }
-
     protected void queueMessageClickEvent(SwrveButton button, long pageId, String pageName) {
         String clickEvent = "Swrve.Messages.Message-" + button.getMessage().getId() + ".click";
         SwrveLogger.i("Sending click event: %s(%s)", clickEvent, button.getName());
@@ -1134,7 +1069,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
     }
 
-    private void _messageWasShownToUser(SwrveMessageFormat messageFormat) {
+    protected void messageWasShownToUser(SwrveMessageFormat messageFormat) {
         if (messageFormat == null) {
             return; // exit fast
         }
@@ -1229,24 +1164,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return swrveAssetsManager.getStorageDir();
     }
 
-    protected void _setMessageListener(SwrveMessageListener messageListener) {
-        this.messageListener = messageListener;
-        if (messageListener != null) {
-            eventListener = new SwrveEventListener(this, messageListener, conversationListener, embeddedMessageListener);
-        } else {
-            eventListener = null;
-        }
-    }
-
-    protected void _setConversationListener(SwrveConversationListener listener) {
-        this.conversationListener = listener;
-        if (conversationListener != null) {
-            eventListener = new SwrveEventListener(this, messageListener, conversationListener, embeddedMessageListener);
-        } else {
-            eventListener = null;
-        }
-    }
-
     protected void _setResourcesListener(SwrveResourcesListener resourcesListener) {
         this.resourcesListener = resourcesListener;
     }
@@ -1268,17 +1185,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         try {
             _sessionStart();
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void sessionEnd() {
-        if (!isSdkReady()) return;
-
-        try {
-            _sessionEnd();
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1656,29 +1562,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    @Deprecated
-    public void buttonWasPressedByUser(SwrveButton button) {
-        if (!isSdkReady()) return;
-
-        try {
-            _buttonWasPressedByUser(button);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
-    public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
-        if (!isSdkReady()) return;
-
-        try {
-            _messageWasShownToUser(messageFormat);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    @Override
     public void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
         if (!isSdkReady()) return;
 
@@ -1744,23 +1627,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return null;
-    }
-
-    @Override
-    public void setMessageListener(SwrveMessageListener messageListener) {
-        try {
-            _setMessageListener(messageListener);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-    }
-
-    public void setConversationListener(SwrveConversationListener listener) {
-        try {
-            _setConversationListener(listener);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
     }
 
     @Override
@@ -1890,17 +1756,18 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (campaign instanceof SwrveInAppCampaign) {
             Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
             SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign) campaign;
-            if (iamCampaign != null && iamCampaign.getMessage() != null && messageListener != null) {
+            if (iamCampaign != null && iamCampaign.getMessage() != null) {
                 // Display message in the in-app campaign
-                messageListener.onMessage(iamCampaign.getMessage(), personalizedProperties);
+                displaySwrveMessage(iamCampaign.getMessage(), personalizedProperties);
                 return true;
             } else {
                 SwrveLogger.e("No in-app message or message listener.");
             }
         } else if (campaign instanceof SwrveConversationCampaign) {
             SwrveConversationCampaign conversationCampaign = (SwrveConversationCampaign) campaign;
-            if (conversationCampaign != null && conversationCampaign.getConversation() != null && conversationListener != null) {
-                conversationListener.onMessage(conversationCampaign.getConversation());
+            if (conversationCampaign != null && conversationCampaign.getConversation() != null) {
+                ConversationActivity.showConversation(getContext(), conversationCampaign.getConversation(), config.getOrientation());
+                conversationCampaign.messageWasShownToUser();
                 return true;
             } else {
                 SwrveLogger.e("No conversation campaign or conversation listener.");
@@ -2494,9 +2361,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e("Exception sending session start event", e);
         }
 
-        if (eventListener != null) {
-            eventListener.onEvent(EventHelper.getEventName("session_start", null), null);
-        }
+        eventListener.onEvent(EventHelper.getEventName("session_start", null), null);
         QaUser.wrappedEvents(sessionStartEvent);
     }
 

@@ -166,12 +166,6 @@ public class SwrveUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSessionEnd() {
-        SwrveSDK.sessionEnd();
-        SwrveTestUtils.assertQueueEvent(swrveSpy, "session_end", null, null);
-    }
-
-    @Test
     public void testQueueEvent() {
         SwrveSDK.event("this_name");
         Map<String, Object> parameters = new HashMap<>();

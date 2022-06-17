@@ -1,87 +1,53 @@
 package com.swrve.sdk;
 
-import android.content.Context;
-
 import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.SwrveConversationListener;
+import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
-import java.lang.ref.WeakReference;
 import java.util.Map;
 
 /**
- * Default event listener. Will display an in-app message if available.
+ * This class will trigger a swrve campaign if available.
  */
-public class SwrveEventListener implements ISwrveEventListener {
+class SwrveEventListener implements ISwrveEventListener {
 
-    private final WeakReference<SwrveBase<?, ?>> sdk;
-    private final SwrveMessageListener messageListener;
-    private final SwrveConversationListener conversationListener;
+    private final SwrveBase<?, ?> sdk;
     private final SwrveEmbeddedMessageListener embeddedMessageListener;
 
-    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveMessageListener messageListener, SwrveConversationListener conversationListener, SwrveEmbeddedMessageListener embeddedMessageListener) {
-        this.sdk = new WeakReference<>(sdk);
-        this.messageListener = messageListener;
-        this.conversationListener = conversationListener;
+    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveEmbeddedMessageListener embeddedMessageListener) {
+        this.sdk = sdk;
         this.embeddedMessageListener = embeddedMessageListener;
     }
 
     @Override
     public void onEvent(String eventName, Map<String, String> payload) {
-        boolean conversationDisplayed = false;
-        if (conversationListener != null && !SwrveHelper.isNullOrEmpty(eventName)) {
-            SwrveBase<?, ?> sdkRef = sdk.get();
-            if (sdkRef != null) {
-                SwrveConversation conversation = sdkRef.getConversationForEvent(eventName, payload);
-                if (conversation != null) {
-                    conversationListener.onMessage(conversation);
-                    conversationDisplayed = true;
-                }
-            }
+        if (SwrveHelper.isNullOrEmpty(eventName)) {
+            return;
         }
-        if (conversationDisplayed) {
+
+        SwrveConversation conversation = sdk.getConversationForEvent(eventName, payload);
+        if (conversation != null) {
+            ConversationActivity.showConversation(sdk.getContext(), conversation, sdk.config.getOrientation());
+            conversation.getCampaign().messageWasShownToUser();
             QaUser.campaignTriggeredMessageNoDisplay(eventName, payload);
             return;
         }
 
-        if ((messageListener != null || embeddedMessageListener != null) && !SwrveHelper.isNullOrEmpty(eventName)) {
-            SwrveBase<?, ?> sdkRef = sdk.get();
-            if (sdkRef != null) {
-                SwrveOrientation deviceOrientation = SwrveOrientation.Both;
-                Context ctx = sdkRef.getContext();
-                if (ctx != null) {
-                    deviceOrientation = SwrveOrientation.parse(ctx.getResources().getConfiguration().orientation);
-                }
-
-                // check message pool
-                SwrveBaseMessage message = sdkRef.getBaseMessageForEvent(eventName, payload, deviceOrientation);
-                if (message != null) {
-                    // Save the last used payload to use inside the default message listener
-                    sdkRef.lastEventPayloadUsed = payload;
-
-                    if (message instanceof SwrveMessage) {
-
-                        if (messageListener != null) {
-                            messageListener.onMessage((SwrveMessage) message);
-                        }
-                    } else if (message instanceof SwrveEmbeddedMessage) {
-
-                        if (embeddedMessageListener != null) {
-                            Map<String, String> personalizationProperties = sdkRef.retrievePersonalizationProperties(payload, null);
-                            embeddedMessageListener.onMessage(ctx, (SwrveEmbeddedMessage) message, personalizationProperties);
-                        }
-                    }
-
-                    // Remove ref
-                    sdkRef.lastEventPayloadUsed = null;
-
-                }
+        SwrveOrientation deviceOrientation = SwrveOrientation.parse(sdk.getContext().getResources().getConfiguration().orientation);
+        SwrveBaseMessage message = sdk.getBaseMessageForEvent(eventName, payload, deviceOrientation);
+        if (message != null) {
+            sdk.lastEventPayloadUsed = payload; // Save the last used payload for personalization
+            if (message instanceof SwrveMessage) {
+                sdk.displaySwrveMessage((SwrveMessage) message, null);
+            } else if (message instanceof SwrveEmbeddedMessage && embeddedMessageListener != null) {
+                Map<String, String> personalizationProperties = sdk.retrievePersonalizationProperties(payload, null);
+                embeddedMessageListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
             }
+            sdk.lastEventPayloadUsed = null; // Remove ref
         }
     }
 }

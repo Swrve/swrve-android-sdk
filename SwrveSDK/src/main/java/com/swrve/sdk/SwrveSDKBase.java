@@ -4,10 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -99,15 +97,6 @@ public abstract class SwrveSDKBase {
     public static void sessionStart() {
         checkInstanceCreated();
         instance.sessionStart();
-    }
-
-    /**
-     * Add a Swrve.session.end event to the event queue. This event should typically be added in
-     * your main activity's onStop method.
-     */
-    public static void sessionEnd() {
-        checkInstanceCreated();
-        instance.sessionEnd();
     }
 
     /**
@@ -398,34 +387,6 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Process a message button event. This function should be called by your
-     * implementation of the message renderer to inform Swrve of a button event.
-     *
-     * @param button button that was pressed.
-     * @deprecated Use embedded campaigns instead.
-     */
-    @Deprecated
-    public static void buttonWasPressedByUser(SwrveButton button) {
-        checkInstanceCreated();
-        instance.buttonWasPressedByUser(button);
-    }
-
-    /**
-     * Inform that a message has been shown. This function should be called by your implementation
-     * of the message renderer to update the campaign information and send the appropriate data to
-     * Swrve.
-     *
-     * @param messageFormat message that was shown to the user for the first time in this session.
-     * @deprecated Use embedded campaigns instead.
-     */
-    @Deprecated
-    public static void messageWasShownToUser(SwrveMessageFormat messageFormat) {
-        checkInstanceCreated();
-        instance.messageWasShownToUser(messageFormat);
-    }
-
-
-    /**
      * Process an embedded message engagement event. This function should be called by your
      * implementation to inform Swrve of a button event.
      *
@@ -494,16 +455,6 @@ public abstract class SwrveSDKBase {
     public static File getCacheDir() {
         checkInstanceCreated();
         return instance.getCacheDir();
-    }
-
-    /**
-     * Set a message listener to process in-app messages.
-     *
-     * @param messageListener logic to listen for messages
-     */
-    public static void setMessageListener(SwrveMessageListener messageListener) {
-        checkInstanceCreated();
-        instance.setMessageListener(messageListener);
     }
 
     /**

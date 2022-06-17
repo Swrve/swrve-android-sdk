@@ -7,10 +7,8 @@ import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -53,10 +51,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void sessionStart() {
-    }
-
-    @Override
-    public void sessionEnd() {
     }
 
     @Override
@@ -238,15 +232,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    @Deprecated
-    public void buttonWasPressedByUser(SwrveButton button) {
-    }
-
-    @Override
-    public void messageWasShownToUser(SwrveMessageFormat messageFormat) {
-    }
-
-    @Override
     public void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName) {
     }
 
@@ -272,10 +257,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public File getCacheDir() {
         return cacheDir;
-    }
-
-    @Override
-    public void setMessageListener(SwrveMessageListener messageListener) {
     }
 
     @Override

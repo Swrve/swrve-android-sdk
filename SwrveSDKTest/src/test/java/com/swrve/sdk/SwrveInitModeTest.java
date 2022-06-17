@@ -32,24 +32,16 @@ import androidx.test.core.app.ApplicationProvider;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
-import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveOrientation;
-import com.swrve.sdk.rest.IRESTClient;
-import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.test.MainActivity;
 
-import org.awaitility.Duration;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.robolectric.Robolectric;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -185,7 +177,6 @@ public class SwrveInitModeTest extends SwrveBaseTest {
 
         // Cannot call these methods when it is not inited
         swrveSpy.sessionStart();
-        swrveSpy.sessionEnd();
         swrveSpy.event("test");
         swrveSpy.event("test", testMap);
         swrveSpy.purchase("item_purchase", "€", 99, 5);
@@ -242,9 +233,6 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         swrveSpy.refreshCampaignsAndResources();
         verify(swrveSpy, Mockito.atMost(0)).restClientExecutorExecute(Mockito.any(Runnable.class));
 
-        swrveSpy.buttonWasPressedByUser(null);
-        assertNoEventsWereQueued();
-
         swrveSpy.messageWasShownToUser(null);
         assertNoEventsWereQueued();
 
@@ -261,24 +249,11 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         assertEquals(0, swrveSpy.getMessageCenterCampaigns((Map<String, String>) null).size());
         assertEquals(0, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape, null).size());
 
-        final boolean[] messageListenerCalled = {false};
-        swrveSpy.setMessageListener(new SwrveMessageListener() {
-            @Override
-            public void onMessage(SwrveMessage message) {
-                onMessage(message, null);
-            }
-
-            @Override
-            public void onMessage(SwrveMessage message, Map<String, String> properties) {
-                messageListenerCalled[0] = true;
-            }
-        });
         String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_condition.json");
         assertNotNull(text);
         JSONObject jsonObject = new JSONObject(text);
         SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>(), null);
         swrveSpy.showMessageCenterCampaign(campaign);
-        assertFalse(messageListenerCalled[0]);
 
         swrveSpy.removeMessageCenterCampaign(campaign);
         swrveSpy.markMessageCenterCampaignAsSeen(campaign);

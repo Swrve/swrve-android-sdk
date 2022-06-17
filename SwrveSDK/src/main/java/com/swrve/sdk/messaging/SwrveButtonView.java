@@ -9,8 +9,8 @@ public class SwrveButtonView extends SwrveBaseInteractableView {
 
     private String action;
 
-    public SwrveButtonView(Context context, SwrveActionType type, int inAppMessageFocusColor, int inAppMessageClickColor, String action) {
-        super(context, type, inAppMessageFocusColor, inAppMessageClickColor);
+    public SwrveButtonView(Context context, SwrveActionType type, SwrveMessageFocusListener messageFocusListener, int inAppMessageClickColor, String action) {
+        super(context, type, messageFocusListener, inAppMessageClickColor);
         setFocusable((true));
         this.action = action;
     }

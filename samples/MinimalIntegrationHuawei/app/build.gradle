@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.swrve.sdk.sample.minimalintegration.huawei"
-        minSdkVersion 17
+        minSdkVersion 19
         targetSdkVersion 31
         consumerProguardFiles 'proguard-rules.pro'
     }
@@ -38,7 +38,7 @@ android {
 
 dependencies {
     api 'com.google.android.material:material:1.0.0'
-    api 'com.swrve.sdk.android:swrve-huawei:9.4.0'
+    api 'com.swrve.sdk.android:swrve-huawei:10.0.0'
 }
 
 apply plugin: 'com.huawei.agconnect'

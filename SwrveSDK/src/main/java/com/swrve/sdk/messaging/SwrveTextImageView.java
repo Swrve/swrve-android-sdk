@@ -22,7 +22,7 @@ public class SwrveTextImageView extends SwrveBaseInteractableView {
     public String action;
 
     public SwrveTextImageView(Context context, SwrveActionType type, SwrveInAppMessageConfig inAppConfig, String text, int canvasWidth, int canvasHeight, String action) {
-        super(context, type, inAppConfig.getFocusColor(), inAppConfig.getClickColor());
+        super(context, type, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor());
         this.inAppConfig = inAppConfig;
         this.text = text;
         this.width = canvasWidth;

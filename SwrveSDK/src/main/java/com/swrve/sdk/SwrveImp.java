@@ -15,6 +15,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -29,7 +30,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.SwrveConversationListener;
+import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.InMemoryLocalStorage;
@@ -46,7 +47,6 @@ import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 import com.swrve.sdk.messaging.SwrveMessagePage;
 import com.swrve.sdk.messaging.SwrveMessagePersonalizationProvider;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -82,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "9.4.0";
+    protected static String version = "10.0.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
     protected static final int IN_APP_CAMPAIGN_VERSION = 7;
@@ -111,10 +111,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected String language;
     protected C config;
     protected ISwrveEventListener eventListener;
-    protected SwrveMessageListener messageListener;
     protected SwrveEmbeddedMessageListener embeddedMessageListener;
     protected SwrveMessagePersonalizationProvider personalizationProvider;
-    protected SwrveConversationListener conversationListener;
     protected SwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
     protected long newSessionInterval;
@@ -560,11 +558,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected void autoShowMessage(SwrveBase<T, C> swrve) {
         try {
-            if (autoShowMessagesEnabled && messageListener != null) {
+            if (autoShowMessagesEnabled) {
                 SwrveBaseMessage message = swrve.getBaseMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
                 if (message != null && message.supportsOrientation(getDeviceOrientation())) {
                     if (message instanceof SwrveMessage) {
-                        messageListener.onMessage((SwrveMessage) message);
+                        displaySwrveMessage((SwrveMessage) message, null);
                     } else if (embeddedMessageListener != null && message instanceof SwrveEmbeddedMessage) {
                         Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
                         embeddedMessageListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
@@ -577,12 +575,38 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
+    protected void displaySwrveMessage(final SwrveMessage message, Map<String, String> properties) {
+        if (context == null || getContext() == null) {
+            return;
+        }
+
+        Map<String, String> personalizationProperties = retrievePersonalizationProperties(lastEventPayloadUsed, properties);
+        if (message.supportsOrientation(getDeviceOrientation())) {
+            if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizationProperties)) {
+                Intent intent = new Intent(getContext(), SwrveInAppMessageActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
+
+                if (personalizationProperties != null) {
+                    // Cannot pass a Map to intent, converting to HashMap
+                    HashMap<String, String> personalization = new HashMap<>(personalizationProperties);
+                    intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
+                }
+
+                getContext().startActivity(intent);
+            }
+        } else {
+            SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
+        }
+    }
+
     protected void autoShowConversation(SwrveBase<T, C> swrve) {
         try {
-            if (conversationListener != null && autoShowMessagesEnabled) {
+            if (autoShowMessagesEnabled) {
                 SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, new HashMap<String, String>());
                 if (conversation != null) {
-                    conversationListener.onMessage(conversation);
+                    ConversationActivity.showConversation(getContext(), conversation, config.getOrientation());
+                    conversation.getCampaign().messageWasShownToUser();
                     autoShowMessagesEnabled = false;
                     QaUser.campaignTriggeredMessageNoDisplay(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, null);
                 }

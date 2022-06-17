@@ -12,8 +12,6 @@ import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.SwrveUserResourcesDiffListener;
 import com.swrve.sdk.SwrveUserResourcesListener;
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.messaging.SwrveMessage;
-import com.swrve.sdk.messaging.SwrveMessageListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,7 +76,6 @@ public class UnsupportedTest extends SwrveBaseTest {
         assertNotNull(rewardsJson);
 
         sdk.sessionStart();
-        sdk.sessionEnd();
         sdk.event("new_event");
         sdk.event("event", payload);
         sdk.purchase("item", "USB", 10, 1);
@@ -127,26 +124,12 @@ public class UnsupportedTest extends SwrveBaseTest {
 
         sdk.refreshCampaignsAndResources();
 
-        //sdk.buttonWasPressedByUser(button); - No message will be available thus this function won't be called
-        //sdk.messageWasShownToUser(SwrveMessageFormat messageFormat); - No message will be available thus this function won't be called
-
         String appStoreUrl = sdk.getAppStoreURLForApp(572);
         assertNull(appStoreUrl);
 
         File cacheDir = sdk.getCacheDir();
         assertNotNull(cacheDir);
 
-        sdk.setMessageListener(new SwrveMessageListener() {
-            @Override
-            public void onMessage(SwrveMessage message) {
-
-            }
-
-            @Override
-            public void onMessage(SwrveMessage message, Map<String, String> properties) {
-
-            }
-        });
         Date initialisedTime = sdk.getInitialisedTime();
         assertNotNull(initialisedTime);
 
