@@ -33,6 +33,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         if (campaignData.has("message")) {
             JSONObject messageData = campaignData.getJSONObject("message");
             message = createMessage(this, messageData, campaignManager.getCacheDir());
+            name = message.getName();
             queueAssets(assetsQueue, properties, message.getFormats());
         }
     }

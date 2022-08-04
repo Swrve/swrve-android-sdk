@@ -54,6 +54,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -153,6 +154,40 @@ public class SwrveTestUtils {
                 SwrveTestUtils.writeFileToCache(ApplicationProvider.getApplicationContext().getCacheDir(), asset);
             }
             ((SwrveAssetsManagerImp)swrve.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
+        }
+    }
+
+    public static void writeResourceFileToCache(String resourceName, String cacheName) {
+        InputStream inputStream = null;
+        try {
+            URL resource = ApplicationProvider.getApplicationContext().getClassLoader().getResource(resourceName);
+            Assert.assertNotNull(resource);
+            inputStream = resource.openStream();
+            Assert.assertNotNull(inputStream);
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[2048];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                stream.write(buffer, 0, bytesRead);
+            }
+            byte[] fileContents = stream.toByteArray();
+
+            File dst = new File(ApplicationProvider.getApplicationContext().getCacheDir(), cacheName);
+            FileOutputStream fileStream = new FileOutputStream(dst);
+            fileStream.write(fileContents); // Save to file
+            fileStream.close();
+        } catch (Exception ex) {
+            SwrveLogger.e("Error writing resource to cache:%s", ex, resourceName);
+            fail("Error getting resource:" + resourceName + " ex:" + ex.getMessage());
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

@@ -21,6 +21,7 @@ public class SwrveEmbeddedCampaign extends SwrveBaseCampaign {
 
         if (campaignData.has("embedded_message")) {
             this.message = createMessage(this, campaignData.getJSONObject("embedded_message"));
+            name = message.getName();
         }
     }
 

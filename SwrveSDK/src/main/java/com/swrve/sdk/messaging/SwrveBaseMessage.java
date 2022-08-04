@@ -6,6 +6,8 @@ public interface SwrveBaseMessage {
 
     int getPriority();
 
+    String getName();
+
     SwrveBaseCampaign getCampaign();
 
     boolean supportsOrientation(SwrveOrientation orientation);

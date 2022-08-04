@@ -11,11 +11,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
@@ -102,8 +102,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         Iterator<SwrveAssetsQueueItem> itDownloadQueue = assetsQueue.iterator();
         while (itDownloadQueue.hasNext()) {
             SwrveAssetsQueueItem item = itDownloadQueue.next();
-            File file = new File(storageDir, item.getName());
-            if (file.exists()) {
+            if (isDownloaded(item.getName())) {
                 itDownloadQueue.remove();
                 synchronized (assetsOnDisk) {
                     assetsOnDisk.add(item.getName()); // store the font name
@@ -111,6 +110,25 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             }
         }
         return assetsQueue;
+    }
+
+    // Check if asset is already downloaded. Some assets will have additional file extension type appended to the asset name
+    private boolean isDownloaded(String assetName) {
+        boolean isDownloaded = false;
+        File file = new File(storageDir, assetName);
+        if (file.exists()) { // check file exists without any extension
+            isDownloaded = true;
+        } else {
+            for (Map.Entry<String, String> entry : SwrveAssetsTypes.MIMETYPES.entrySet()) { // check file exists with additional supported extensions
+                String assetNameWithExtension = assetName + entry.getValue();
+                file = new File(storageDir, assetNameWithExtension);
+                if (file.exists()) {
+                    isDownloaded = true;
+                    break;
+                }
+            }
+        }
+        return isDownloaded;
     }
 
     protected boolean downloadAsset(final SwrveAssetsQueueItem assetItem) {
@@ -151,7 +169,8 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             byte[] fileContents = stream.toByteArray();
             String sha1File = SwrveHelper.sha1(fileContents);
             if (assetItem.getDigest().equals(sha1File)) {
-                FileOutputStream fileStream = new FileOutputStream(new File(storageDir, assetItem.getName()));
+                String fileAssetName = getFileAssetName(assetItem.getName(), httpsConnection.getContentType());
+                FileOutputStream fileStream = new FileOutputStream(new File(storageDir, fileAssetName));
                 fileStream.write(fileContents); // Save to file
                 fileStream.close();
                 success = true;
@@ -209,7 +228,8 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             }
             byte[] fileContents = stream.toByteArray();
             // asset name is a sha1 of the url done in constructor
-            FileOutputStream fileStream = new FileOutputStream(new File(storageDir, assetItem.getName()));
+            String fileAssetName = getFileAssetName(assetItem.getName(), httpsConnection.getContentType());
+            FileOutputStream fileStream = new FileOutputStream(new File(storageDir, fileAssetName));
             fileStream.write(fileContents); // Save to file
             fileStream.close();
             success = true;
@@ -235,5 +255,14 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             }
         }
         return success;
+    }
+
+    // Some mimeTypes are saved with file extension, but default is to just use the assetName
+    private String getFileAssetName(String assetName, String mimeType) {
+        String downloadedAssetName = assetName;
+        if (mimeType != null && SwrveAssetsTypes.MIMETYPES.containsKey(mimeType)) {
+            downloadedAssetName = downloadedAssetName + SwrveAssetsTypes.MIMETYPES.get(mimeType);
+        }
+        return downloadedAssetName;
     }
 }

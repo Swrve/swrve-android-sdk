@@ -95,6 +95,7 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         final String digest1 = SwrveHelper.sha1("digest1".getBytes()); // this should already exist (as part of this setup)
         final String digest2 = SwrveHelper.sha1("digest2".getBytes()); // this does not exist in cache at start and should be downloaded
         final String digest3 = SwrveHelper.sha1("digest3".getBytes()); // this does not exist in cache at start and should be downloaded
+        final String digest4 = SwrveHelper.sha1("digest4".getBytes()); // this does not exist in cache at start and should be downloaded
 
         server = new MockWebServer();
         final Dispatcher dispatcher = new Dispatcher() {
@@ -104,8 +105,12 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
                     return new MockResponse().setResponseCode(200).setBody("digest2");
                 } else if (request.getPath().contains("asset3")) {
                     return new MockResponse().setResponseCode(200).setBody("digest3");
+                } else if (request.getPath().contains("asset4")) {
+                    return new MockResponse().setResponseCode(200).setBody("digest4").setHeader("Content-Type", "image/gif");
                 } else if (request.getPath().contains("externalAsset1")) {
                     return new MockResponse().setResponseCode(200).setBody("externalAsset1");
+                } else if (request.getPath().contains("externalAsset2")) {
+                    return new MockResponse().setResponseCode(200).setBody("externalAsset2").setHeader("Content-Type", "image/gif");
                 }
                 return new MockResponse().setResponseCode(404);
             }
@@ -117,7 +122,8 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
 
         server.start();
         String cdnPath = server.url("/").toString();
-        final String assetUrlSha1 = SwrveHelper.sha1((cdnPath + "externalAsset1").getBytes()); // made the url the same as the one expected by the mockwebserver for testing.
+        final String externalAsset1Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset1").getBytes());
+        final String externalAsset2Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset2").getBytes());
 
         SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity);
         assetsManager.setCdnImages(cdnPath);
@@ -125,39 +131,48 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assetsManager.setStorageDir(mActivity.getCacheDir());
         SwrveAssetsManagerImp assetsManagerSpy = Mockito.spy(assetsManager);
 
-        writeFileToCache("asset1", digest1);
+        writeFileToCache("asset1", digest1); // simulate that asset1 exists already
 
         Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
         SwrveAssetsQueueItem item1 = new SwrveAssetsQueueItem(1, "asset1", digest1, true, false);
         SwrveAssetsQueueItem item2 = new SwrveAssetsQueueItem(1, "asset2", digest2, true, false);
         SwrveAssetsQueueItem item3 = new SwrveAssetsQueueItem(1, "asset3", digest3, true, false);
-        SwrveAssetsQueueItem item4 = new SwrveAssetsQueueItem(1, assetUrlSha1, (cdnPath + "externalAsset1"), true, true);
+        SwrveAssetsQueueItem item4 = new SwrveAssetsQueueItem(1, "asset4_which_is_a_gif", digest4, true, false);
+        SwrveAssetsQueueItem item5 = new SwrveAssetsQueueItem(1, externalAsset1Sha1, (cdnPath + "externalAsset1"), true, true);
+        SwrveAssetsQueueItem item6 = new SwrveAssetsQueueItem(1, externalAsset2Sha1, (cdnPath + "externalAsset2"), true, true);
 
         assetsQueue.add(item1);
         assetsQueue.add(item2);
         assetsQueue.add(item3);
         assetsQueue.add(item4);
+        assetsQueue.add(item5);
+        assetsQueue.add(item6);
 
         assertCacheFileExists("asset1");
         assertCacheFileDoesNotExist(digest2);
         assertCacheFileDoesNotExist(digest3);
-        assertCacheFileDoesNotExist(assetUrlSha1);
+        assertCacheFileDoesNotExist(digest4 + ".gif");
+        assertCacheFileDoesNotExist(externalAsset1Sha1);
+        assertCacheFileDoesNotExist(externalAsset2Sha1 + ".gif");
 
         assetsManagerSpy.downloadAssets(assetsQueue, null); // null callback on purpose
 
         ArgumentCaptor<SwrveAssetsQueueItem> assetPathCaptor = ArgumentCaptor.forClass(SwrveAssetsQueueItem.class);
         Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAsset(assetPathCaptor.capture());
         Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAssetFromExternalSource(assetPathCaptor.capture());
-        assertEquals(3, assetPathCaptor.getAllValues().size());
+        assertEquals(5, assetPathCaptor.getAllValues().size());
         assertTrue("An attempt to download asset2 did not occur", assetPathCaptor.getAllValues().contains(item2));
         assertTrue("An attempt to download asset3 did not occur", assetPathCaptor.getAllValues().contains(item3));
         assertTrue("An attempt to download asset4 did not occur", assetPathCaptor.getAllValues().contains(item4));
-
+        assertTrue("An attempt to download externalAsset1 did not occur", assetPathCaptor.getAllValues().contains(item5));
+        assertTrue("An attempt to download externalAsset2 did not occur", assetPathCaptor.getAllValues().contains(item6));
 
         assertCacheFileExists("asset1");
         assertCacheFileExists("asset2");
         assertCacheFileExists("asset3");
-        assertCacheFileExists(assetUrlSha1);
+        assertCacheFileExists("asset4_which_is_a_gif" + ".gif"); // Note the gif extension is used in the filename
+        assertCacheFileExists(externalAsset1Sha1);
+        assertCacheFileExists(externalAsset2Sha1 + ".gif"); // Note the gif extension is used in the filename
     }
 
     @Test

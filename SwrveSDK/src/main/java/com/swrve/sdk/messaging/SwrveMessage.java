@@ -1,5 +1,7 @@
 package com.swrve.sdk.messaging;
 
+import static com.swrve.sdk.SwrveAssetsTypes.MIMETYPES;
+
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveTextTemplating;
@@ -103,7 +105,19 @@ public class SwrveMessage implements SwrveBaseMessage {
     }
 
     protected boolean assetInCache(Set<String> assetsOnDisk, String asset) {
-        return SwrveHelper.isNotNullOrEmpty(asset) && assetsOnDisk.contains(asset);
+        boolean assetInCache = false;
+        if (SwrveHelper.isNotNullOrEmpty(asset) && assetsOnDisk.contains(asset)) {
+            assetInCache = true;
+        } else if (SwrveHelper.isNotNullOrEmpty(asset)) {
+            for (Map.Entry<String, String> entry : MIMETYPES.entrySet()) {
+                String assetWithExtension = asset + entry.getValue();
+                if (assetsOnDisk.contains(assetWithExtension)) {
+                    assetInCache = true;
+                    break;
+                }
+            }
+        }
+        return assetInCache;
     }
 
     /**

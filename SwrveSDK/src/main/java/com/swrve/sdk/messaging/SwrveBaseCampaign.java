@@ -39,6 +39,7 @@ public abstract class SwrveBaseCampaign {
     protected int maxImpressions;
     protected int minDelayBetweenMessage;
     protected Date showMessagesAfterLaunch; // Time we can show the first message after launch
+    protected String name;
 
     /*
      * Parse a campaign from JSON data.
@@ -244,5 +245,12 @@ public abstract class SwrveBaseCampaign {
 
     public Date getShowMessagesAfterLaunch() {
         return showMessagesAfterLaunch;
+    }
+
+    /**
+     * @return the campaign name
+     */
+    public String getName() {
+        return name;
     }
 }

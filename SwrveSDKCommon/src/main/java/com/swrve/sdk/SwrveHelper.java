@@ -284,8 +284,21 @@ public final class SwrveHelper {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
             return true;
         }
+        boolean hasFileAccess = false;
         File file = new File(filePath);
-        return file.canRead();
+        if (file.canRead()) {
+            hasFileAccess = true;
+        } else {
+            for (Map.Entry<String, String> entry : SwrveAssetsTypes.MIMETYPES.entrySet()) {
+                String filePathWithExtension = filePath + entry.getValue();
+                file = new File(filePathWithExtension);
+                if (file.canRead()) {
+                    hasFileAccess = true;
+                    break;
+                }
+            }
+        }
+        return hasFileAccess;
     }
 
     public static int getTargetSdkVersion(Context context) {

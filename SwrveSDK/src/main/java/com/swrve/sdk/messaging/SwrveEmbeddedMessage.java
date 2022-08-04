@@ -34,6 +34,8 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
     protected String data;
     // The type of data
     protected EMBEDDED_CAMPAIGN_TYPE type;
+    // Name of message
+    protected String name;
 
     /*
      * Load embedded message from JSON data.
@@ -65,6 +67,10 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
 
         if (messageData.has("type")) {
             setType(messageData.getString("type"));
+        }
+
+        if (messageData.has("name")) {
+            this.name = messageData.getString("name");
         }
     }
 
@@ -146,4 +152,10 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
 
     }
 
+    /**
+     * @return the embedded campaign name
+     */
+    public String getName() {
+        return name;
+    }
 }

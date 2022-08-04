@@ -446,6 +446,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaigns().get(0);
         assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
         assertEquals("IAM subject", campaign.getSubject());
+        assertEquals("Kindle", campaign.getName());
         swrveSpy.showMessageCenterCampaign(campaign);
         Robolectric.flushForegroundThreadScheduler();
 

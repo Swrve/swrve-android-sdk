@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.view.MotionEvent;
 import android.view.View;
@@ -11,8 +12,15 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.RelativeLayout;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.swrve.sdk.QaUser;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveImageScaler;
@@ -23,6 +31,7 @@ import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -120,6 +129,11 @@ public class SwrveMessageView extends RelativeLayout {
                 }
             }
 
+            boolean isGif = !image.isMultiLine() && isGif(filePath);
+            if(isGif) {
+                filePath = filePath + ".gif";
+            }
+
             if (!SwrveHelper.hasFileAccess(filePath) && !image.isMultiLine()) {
                 SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                 loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
@@ -135,7 +149,7 @@ public class SwrveMessageView extends RelativeLayout {
                 String personalizedText = null;
                 if (SwrveHelper.isNullOrEmpty(imageText)) {
                     imageView = new SwrveImageView(getContext());
-                    imageView.setImageBitmap(backgroundImage.getBitmap());
+                    loadImage(imageView, filePath, backgroundImage.getBitmap(), isGif);
                 } else {
                     // Need to render dynamic text
                     personalizedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalization);
@@ -236,6 +250,11 @@ public class SwrveMessageView extends RelativeLayout {
                 }
             }
 
+            boolean isGif = isGif(filePath);
+            if(isGif) {
+                filePath = filePath + ".gif";
+            }
+
             if (!SwrveHelper.hasFileAccess(filePath)) {
                 SwrveLogger.e("Do not have read access to message asset for:%s", filePath);
                 loadErrorReasons.add("Do not have read access to message asset for:" + filePath);
@@ -257,10 +276,10 @@ public class SwrveMessageView extends RelativeLayout {
                 SwrveBaseInteractableView _buttonView;
                 if (SwrveHelper.isNullOrEmpty(buttonText)) {
                     _buttonView = new SwrveButtonView(getContext(), button.getActionType(), inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor(), personalizedButtonAction);
-                    _buttonView.setImageBitmap(backgroundImage.getBitmap());
+                    loadImage(_buttonView, filePath, backgroundImage.getBitmap(), isGif);
                 } else {
                     // Need to render dynamic text
-                     personalizedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalization);
+                    personalizedText = SwrveTextTemplating.apply(buttonText, this.inAppPersonalization);
                     _buttonView = new SwrveTextImageView(getContext(), button.getActionType(), inAppConfig, personalizedText,
                             backgroundImage.getWidth(), backgroundImage.getHeight(), personalizedButtonAction);
                     _buttonView.setFocusable(true);
@@ -375,6 +394,40 @@ public class SwrveMessageView extends RelativeLayout {
         } catch (Exception e) {
             SwrveLogger.e("Error while onLayout in SwrveMessageView", e);
         }
+    }
+
+    private boolean isGif(String filePath) {
+        File file = new File(filePath + ".gif");
+        return file.canRead();
+    }
+
+    private void loadImage(ImageView imageView, String filePath, Bitmap bitmap, boolean isGif) {
+        if (isGif) {
+            loadGlideImage(imageView, filePath);
+        } else {
+            imageView.setImageBitmap(bitmap);
+        }
+    }
+
+    private void loadGlideImage(ImageView imageView, String filePath) {
+        Glide.with(getContext())
+                .asGif()
+                .load(new File(filePath))
+                .fitCenter()
+                .listener(new RequestListener<GifDrawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<GifDrawable> target, boolean isFirstResource) {
+                        SwrveLogger.e("SwrveSDK: Glide failed to load image.", e);
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(GifDrawable resource, Object model, Target<GifDrawable> target, DataSource dataSource, boolean isFirstResource) {
+                        SwrveLogger.v("SwrveSDK: Glide successfully loaded image");
+                        return false;
+                    }
+                })
+                .into(imageView);
     }
 
     @Override

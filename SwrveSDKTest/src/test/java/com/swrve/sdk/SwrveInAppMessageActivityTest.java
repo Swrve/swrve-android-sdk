@@ -12,6 +12,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -31,6 +32,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -46,6 +48,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.google.common.collect.Maps;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
@@ -65,6 +69,7 @@ import com.swrve.sdk.messaging.SwrveTextImageView;
 import com.swrve.sdk.messaging.SwrveTextView;
 import com.swrve.sdk.test.R;
 
+import org.awaitility.Duration;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -74,13 +79,27 @@ import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
+import org.robolectric.shadows.ShadowApplication;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
@@ -1241,6 +1260,80 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testGifImage() throws Exception {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalizationProvider(eventPayload -> {
+            Map values = Maps.newHashMap();
+            values.put("gif_key_with_fallback", "gif1");
+            // other value has fallback in the url text
+            return values;
+        });
+        config.setInAppMessageConfig(inAppConfigBuilder.build());
+        initSDK();
+
+        String gifAsset1 = SwrveHelper.sha1(("https://fakeitem/gif1.gif").getBytes()); // b1a4263e17000e6584f484c8872e8848debd9ec7
+        String gifAsset2 = SwrveHelper.sha1(("https://fakeitem/gif2.gif").getBytes()); // 01a1f8097c1840f2607a7b3b96d240ffad112ff8
+        String gifAsset3 = "1111111111111111111111";
+        String gifAsset4 = "2222222222222222";
+
+        Set<String> assetsOnDisk = new HashSet<>();
+        assetsOnDisk.add(gifAsset1);
+        assetsOnDisk.add(gifAsset2);
+        assetsOnDisk.add(gifAsset3);
+        assetsOnDisk.add(gifAsset4);
+        ((SwrveAssetsManagerImp)swrveSpy.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
+
+        // for the sake of the unit test it doesn't matter what gif image is used, so copy the next_arrow.gif file to cache for each of the assets.
+        SwrveTestUtils.writeResourceFileToCache("next_arrow.gif", gifAsset1 + ".gif"); // add .gif extension to the file name!
+        SwrveTestUtils.writeResourceFileToCache("next_arrow.gif", gifAsset2 + ".gif"); // add .gif extension to the file name!
+        SwrveTestUtils.writeResourceFileToCache("next_arrow.gif", gifAsset3 + ".gif"); // add .gif extension to the file name!
+        SwrveTestUtils.writeResourceFileToCache("next_arrow.gif", gifAsset4 + ".gif"); // add .gif extension to the file name!
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_iam_gif.json");
+
+        // Trigger IAM
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
+        assertEquals(1, campaigns.size());
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0));
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        SwrveMessageView view = getSwrveMessageView(activity);
+        assertNotNull(view);
+
+        // Glide will load the images into the View asynchronously
+        Thread.sleep(1000l); // yuck!
+        Robolectric.flushForegroundThreadScheduler();
+
+        // assert the drawable loaded by glide is a gif
+        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView child0 = (SwrveImageView) view.getChildAt(0);
+        Drawable gifDrawable0 = child0.getDrawable();
+        assertNotNull(gifDrawable0);
+        assertTrue(gifDrawable0 instanceof GifDrawable);
+
+        // assert the drawable loaded by glide is a gif
+        assertTrue(view.getChildAt(1) instanceof SwrveImageView);
+        SwrveImageView child1 = (SwrveImageView) view.getChildAt(1);
+        Drawable gifDrawable1 = child1.getDrawable();
+        assertNotNull(gifDrawable1);
+        assertTrue(gifDrawable1 instanceof GifDrawable);
+
+        // assert the drawable loaded by glide is a gif
+        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
+        SwrveButtonView child2 = (SwrveButtonView) view.getChildAt(2);
+        Drawable gifDrawable2 = child2.getDrawable();
+        assertNotNull(gifDrawable2);
+        assertTrue(gifDrawable2 instanceof GifDrawable);
+
+        // assert the drawable loaded by glide is a gif
+        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
+        SwrveButtonView child3 = (SwrveButtonView) view.getChildAt(3);
+        Drawable gifDrawable3 = child3.getDrawable();
+        assertNotNull(gifDrawable3);
+        assertTrue(gifDrawable3 instanceof GifDrawable);
+    }
+
+    @Test
     public void testDynamicImageWithPersonalizationProvider() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalizationProvider(eventPayload -> {
             Map values = Maps.newHashMap();
@@ -1288,7 +1381,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         buttonView = (SwrveButtonView) view.getChildAt(3);
         assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
         assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
-
     }
 
     @Test
