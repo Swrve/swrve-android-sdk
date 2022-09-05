@@ -17,12 +17,18 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
 class SwrveAssetsManagerImp implements SwrveAssetsManager {
+
+    private static int WORKER_THREAD_POOL_SIZE = 10;
+    private static int TIMEOUT = 60000;
 
     protected Set<String> assetsOnDisk = new HashSet<>();
 
@@ -81,20 +87,29 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         }
 
         Set<SwrveAssetsQueueItem> assetsToDownload = filterExistingFiles(assetsQueue);
-        for (SwrveAssetsQueueItem assetItem : assetsToDownload) {
-            boolean success;
+        try {
+            CountDownLatch latch = new CountDownLatch(assetsToDownload.size());
+            ExecutorService pool = Executors.newFixedThreadPool(WORKER_THREAD_POOL_SIZE);
+            for (SwrveAssetsQueueItem assetItem : assetsToDownload) {
+                pool.submit(() -> {
+                    boolean success;
+                    if (assetItem.isExternalSource()) {
+                        success = downloadAssetFromExternalSource(assetItem);
+                    } else {
+                        success = downloadAsset(assetItem);
+                    }
 
-            if (assetItem.isExternalSource()) {
-                success = downloadAssetFromExternalSource(assetItem);
-            } else {
-                success = downloadAsset(assetItem);
+                    if (success) {
+                        synchronized (assetsOnDisk) {
+                            assetsOnDisk.add(assetItem.getName()); // store the font name
+                        }
+                    }
+                    latch.countDown();
+                });
             }
-
-            if (success) {
-                synchronized (assetsOnDisk) {
-                    assetsOnDisk.add(assetItem.getName()); // store the font name
-                }
-            }
+            latch.await();
+        } catch (Exception e) {
+            SwrveLogger.e("Error downloading assets.", e);
         }
     }
 
@@ -212,6 +227,8 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
                 }
             }
             httpsConnection.setRequestProperty("Accept-Encoding", "gzip");
+            httpsConnection.setReadTimeout(TIMEOUT);
+            httpsConnection.setConnectTimeout(TIMEOUT);
             inputStream = new SwrveFilterInputStream(httpsConnection.getInputStream());
 
             // Support gzip if possible

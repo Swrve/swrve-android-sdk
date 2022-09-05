@@ -26,15 +26,35 @@ import java.util.Set;
 public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
     protected SwrveMessage message;
-
+                          
     public SwrveInAppCampaign(ISwrveCampaignManager campaignManager, SwrveCampaignDisplayer campaignDisplayer, JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties) throws JSONException {
         super(campaignManager, campaignDisplayer, campaignData);
-        
+
         if (campaignData.has("message")) {
             JSONObject messageData = campaignData.getJSONObject("message");
             message = createMessage(this, messageData, campaignManager.getCacheDir());
             name = message.getName();
+            priority = message.getPriority();
             queueAssets(assetsQueue, properties, message.getFormats());
+            queueMessageCenterAssets(message.getMessageCenterDetails(), assetsQueue, properties);
+        }
+    }
+
+    private void queueMessageCenterAssets(SwrveMessageCenterDetails swrveMessageCenterDetails, Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties) {
+        if (swrveMessageCenterDetails == null) {
+            return;
+        }
+        if (SwrveHelper.isNotNullOrEmpty(swrveMessageCenterDetails.getImageURL())) {
+            try {
+                String resolvedUrl = SwrveTextTemplating.apply(swrveMessageCenterDetails.getImageURL(), properties);
+                assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
+            } catch (SwrveSDKTextTemplatingException exception) {
+                SwrveLogger.w("Campaign id:%s text templating could not be resolved for message center image url. %s", getId(), exception.getMessage());
+            }
+        }
+
+        if (SwrveHelper.isNotNullOrEmpty(swrveMessageCenterDetails.getImageSha())) {
+            assetsQueue.add(new SwrveAssetsQueueItem(getId(), swrveMessageCenterDetails.getImageSha(), swrveMessageCenterDetails.getImageSha(), true, false));
         }
     }
 
@@ -59,7 +79,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                             String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
                             assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
                         } catch (SwrveSDKTextTemplatingException exception) {
-                            SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
+                            SwrveLogger.w("Campaign id:%s text templating could not be resolved for button dynamic image url. %s", getId(), exception.getMessage());
                         }
                     }
                 }
@@ -74,7 +94,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                             String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
                             assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
                         } catch (SwrveSDKTextTemplatingException exception) {
-                            SwrveLogger.w("Campaign id:%s text templating could not be resolved. %s", getId(), exception.getMessage());
+                            SwrveLogger.w("Campaign id:%s text templating could not be resolved for image dynamic image url. %s", getId(), exception.getMessage());
                         }
                     }
 

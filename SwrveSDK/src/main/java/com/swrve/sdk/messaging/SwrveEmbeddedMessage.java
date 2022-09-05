@@ -28,6 +28,8 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
     protected int priority = 9999;
     // Parent in-app campaign
     protected SwrveEmbeddedCampaign campaign;
+
+    protected SwrveMessageCenterDetails messageCenterDetails;
     // List of buttonNames provided
     protected List<String> buttons;
     // The data provided for the embeddedCampaign
@@ -72,8 +74,11 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
         if (messageData.has("name")) {
             this.name = messageData.getString("name");
         }
-    }
 
+        if(messageData.has("message_center_details")) {
+            this.messageCenterDetails = new SwrveMessageCenterDetails(messageData.getJSONObject("message_center_details"));
+        }
+    }
     /**
      * @return the embedded message id.
      */
@@ -110,6 +115,10 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
 
     protected void setCampaign(SwrveEmbeddedCampaign campaign) {
         this.campaign = campaign;
+    }
+
+    protected void setMessageCenterDetails(SwrveMessageCenterDetails messageCenterDetails) {
+        this.messageCenterDetails = messageCenterDetails;
     }
 
     /**

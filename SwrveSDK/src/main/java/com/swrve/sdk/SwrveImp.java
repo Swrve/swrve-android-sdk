@@ -82,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.1.0";
+    protected static String version = "10.2.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
     protected static final int IN_APP_CAMPAIGN_VERSION = 8;
@@ -719,6 +719,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             List<QaCampaignInfo> qaCampaignInfoList = new ArrayList<>();
             List<SwrveBaseCampaign> newCampaigns = new ArrayList<>();
             Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
+            boolean saveNewCampaignState = false;
             for (int i = 0, j = jsonCampaigns.length(); i < j; i++) {
                 JSONObject campaignData = jsonCampaigns.getJSONObject(i);
                 // Load campaign and get assets to be loaded
@@ -759,12 +760,14 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     if (campaign != null) {
                         assetsQueue.addAll(campaignAssetQueue);
 
+                        SwrveCampaignState state = states.get(campaign.getId());
+                        if (state == null) {
+                            // A campaign with no state means it hasn't ever been triggered and is potentially new. Save the campaign state to record the download time.
+                            saveNewCampaignState = true;
+                        }
                         // Check if we need to reset the device for QA, otherwise load campaign state
-                        if (loadPreviousCampaignState) {
-                            SwrveCampaignState state = states.get(campaign.getId());
-                            if (state != null) {
-                                campaign.setSaveableState(state);
-                            }
+                        if (loadPreviousCampaignState && state != null) {
+                            campaign.setSaveableState(state);
                         }
 
                         newCampaigns.add(campaign);
@@ -787,6 +790,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 } else {
                     SwrveLogger.i("Not all requirements were satisfied for this campaign: %s", lastCheckedFilter);
                 }
+            }
+
+            if (saveNewCampaignState) {
+                saveCampaignsState(userId);
             }
 
             QaUser.campaignsDownloaded(qaCampaignInfoList);
@@ -1042,7 +1049,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     String campaignIdStr = campaignIdIterator.next();
                     try {
                         int campaignId = Integer.parseInt(campaignIdStr);
-                        SwrveCampaignState campaignState = new SwrveCampaignState(campaignsStateJson.getJSONObject(campaignIdStr));
+                        SwrveCampaignState campaignState = new SwrveCampaignState(campaignsStateJson.getJSONObject(campaignIdStr), getNow());
                         campaignsState.put(campaignId, campaignState);
                     } catch (Exception exp) {
                         SwrveLogger.e("Could not load state for campaign " + campaignIdStr, exp);

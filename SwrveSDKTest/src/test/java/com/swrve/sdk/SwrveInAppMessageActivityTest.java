@@ -60,8 +60,10 @@ import com.swrve.sdk.messaging.SwrveBaseInteractableView;
 import com.swrve.sdk.messaging.SwrveButtonView;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveImageView;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageCenterDetails;
 import com.swrve.sdk.messaging.SwrveMessageFocusListener;
 import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -70,6 +72,7 @@ import com.swrve.sdk.messaging.SwrveTextView;
 import com.swrve.sdk.test.R;
 
 import org.awaitility.Duration;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -322,6 +325,27 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         SwrveMessageView view = getSwrveMessageView(activity);
         assertNotNull(view);
+    }
+
+    @Test
+    public void testMessageCenterDetails() throws Exception {
+        initSDK();
+        String personalAssetSha1 = SwrveHelper.sha1("https://fakeitem/asset1.png".getBytes());
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_image_mc.json", "1111111111111111111111111", personalAssetSha1);
+
+        // retrieve the list with the correct personalization
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_cp", "shows up");
+        personalization.put("test_image_key", "asset1");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns(personalization);
+        SwrveInAppCampaign campaign = (SwrveInAppCampaign) campaigns.get(0);
+
+        SwrveMessageCenterDetails details = campaign.getMessageCenterDetails();
+        assertEquals("some url personalized shows up", details.getImageURL());
+        assertEquals("some description personalized shows up", details.getDescription());
+        assertEquals("some subject personalized shows up", details.getSubject());
+        assertEquals("some alt text personalized shows up", details.getImageAccessibilityText());
+        assertEquals("fc972adec8076d203cbdfd8ca0e4b1bfa483abfb", details.getImageSha());
     }
 
     @Test
@@ -655,7 +679,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        SwrveInAppMessageActivity.ScreenSlidePagerAdapter adapter = (SwrveInAppMessageActivity.ScreenSlidePagerAdapter)activity.adapter;
+        SwrveInAppMessageActivity.ScreenSlidePagerAdapter adapter = (SwrveInAppMessageActivity.ScreenSlidePagerAdapter) activity.adapter;
         assertEquals(2, adapter.trunk.size());
 
         SwrveMessageView view = getSwrveMessageView(activity);
@@ -1610,7 +1634,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         await().untilTrue(callback);
     }
-    
+
     @Test
     public void testAccessibility() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().personalizationProvider(eventPayload -> {
@@ -1631,36 +1655,36 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         SwrveMessageView view = getSwrveMessageView(activity);
         assertNotNull(view);
-        
+
         SwrveImageView background = (SwrveImageView) view.getChildAt(0);
         //tests fallback
         assertEquals("Decorative Purple Background personalized", background.getContentDescription());
         assertTrue(background.isImportantForAccessibility());
-        
+
         SwrveTextView swrveTextView1 = (SwrveTextView) view.getChildAt(1);
         assertEquals("This is a longer piece of text over several lines that will scroll up and down.", swrveTextView1.getContentDescription());
         assertTrue(swrveTextView1.isImportantForAccessibility());
-        
+
         SwrveTextView swrveTextView2 = (SwrveTextView) view.getChildAt(2);
         assertEquals("Text that auto fits", swrveTextView2.getContentDescription());
         assertTrue(swrveTextView2.isImportantForAccessibility());
-        
+
         SwrveTextImageView swrveTextImageView = (SwrveTextImageView) view.getChildAt(3);
         assertEquals("Copy code to clipboard 01234566789", swrveTextImageView.getContentDescription());
         assertTrue(swrveTextImageView.isImportantForAccessibility());
-        
+
         SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(4);
         assertEquals(swrveButtonView.getContentDescription(), "Dismiss Message Jose");
         assertTrue(swrveButtonView.isImportantForAccessibility());
-        
+
         SwrveTextImageView swrveTextImageView2 = (SwrveTextImageView) view.getChildAt(5);
         assertEquals(swrveTextImageView2.getContentDescription(), "Launch google");
         assertTrue(swrveTextImageView2.isImportantForAccessibility());
-        
+
         SwrveTextImageView swrveTextImageView3 = (SwrveTextImageView) view.getChildAt(6);
         assertEquals(swrveTextImageView3.getContentDescription(), "Text TEST123");
         assertTrue(swrveTextImageView3.isImportantForAccessibility());
-        
+
     }
 
     // Helpers

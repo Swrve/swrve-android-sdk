@@ -13,6 +13,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.SparseArray;
@@ -41,6 +42,7 @@ import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageCenterDetails;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -1130,13 +1132,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     private String _getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
         if (message != null) {
             try {
-                if(message.getType() == SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON) {
+                if (message.getType() == SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON) {
                     return SwrveTextTemplating.applytoJSON(message.getData(), personalizationProperties);
                 } else {
                     return SwrveTextTemplating.apply(message.getData(), personalizationProperties);
                 }
 
-            } catch(SwrveSDKTextTemplatingException exception) {
+            } catch (SwrveSDKTextTemplatingException exception) {
                 SwrveEmbeddedCampaign campaign = message.getCampaign();
                 QaUser.embeddedPersonalizationFailed(campaign.getId(), message.getId(), message.getData(), "Failed to resolve personalization");
                 SwrveLogger.e("Campaign id:%s Could not resolve, error with personalization", exception, campaign.getId());
@@ -1149,7 +1151,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (text != null) {
             try {
                 return SwrveTextTemplating.apply(text, personalizationProperties);
-            } catch(SwrveSDKTextTemplatingException exception) {
+            } catch (SwrveSDKTextTemplatingException exception) {
                 SwrveLogger.e("Could not resolve, error with personalization", exception);
             }
         }
@@ -1692,8 +1694,75 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    @Override
-    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
+    private SwrveMessageCenterDetails personalizeMessageCenterDetails(SwrveMessageCenterDetails rawMessageCenterDetails, Map<String, String> personalization) {
+        if (rawMessageCenterDetails == null) {
+            return null;
+        }
+
+        SwrveMessageCenterDetails personalizedMessageCenterDetails = null;
+        try {
+            String subject = rawMessageCenterDetails.getSubject();
+            if (subject != null) {
+                subject = SwrveTextTemplating.apply(subject, personalization);
+            }
+
+            String description = rawMessageCenterDetails.getDescription();
+            if (description != null) {
+                description = SwrveTextTemplating.apply(description, personalization);
+            }
+
+            String imageURL = rawMessageCenterDetails.getImageURL();
+            if (imageURL != null) {
+                imageURL = SwrveTextTemplating.apply(imageURL, personalization);
+            }
+
+            String imageAccessibilityText = rawMessageCenterDetails.getImageAccessibilityText();
+            if (imageAccessibilityText != null) {
+                imageAccessibilityText = SwrveTextTemplating.apply(imageAccessibilityText, personalization);
+            }
+
+            String imageSha = rawMessageCenterDetails.getImageSha(); // imageSha is not personalized
+            Bitmap bitmap = loadMessageCenterAssetsFromCache(imageURL, imageSha);
+
+            personalizedMessageCenterDetails = new SwrveMessageCenterDetails(subject, description, imageURL, imageAccessibilityText, imageSha, bitmap);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK: exception personalizing the SwrveMessageCenterDetails", e);
+        }
+        return personalizedMessageCenterDetails;
+    }
+
+    private Bitmap loadMessageCenterAssetsFromCache(String imageUrl, String imageSha) {
+        // If an imageUrl exists then try loading  bitmap from imageurl, otherwise use the imageSha fallback
+        Bitmap bitmap = null;
+        if (imageUrl != null) {
+            String candidateAsset = SwrveHelper.sha1(imageUrl.getBytes());
+            String candidateFilePath = getCacheDir().getAbsolutePath() + "/" + candidateAsset;
+            bitmap = getBitmapFromPath(candidateFilePath);
+        }
+        if (bitmap == null && imageSha != null) {
+            String candidateFilePath = getCacheDir().getAbsolutePath() + "/" + imageSha;
+            bitmap = getBitmapFromPath(candidateFilePath);
+        }
+        return bitmap;
+    }
+
+    private Bitmap getBitmapFromPath(String filePath) {
+        Bitmap bitmap = null;
+        if (!SwrveHelper.hasFileAccess(filePath)) {
+            return bitmap;
+        }
+        int screenWidth = SwrveHelper.getDisplayWidth(getContext());
+        int screenHeight = SwrveHelper.getDisplayHeight(getContext());
+        final SwrveImageScaler.BitmapResult image = SwrveImageScaler.decodeSampledBitmapFromFile(filePath, screenWidth, screenHeight, 1);
+        if (image != null && image.getBitmap() != null) {
+            bitmap = image.getBitmap();
+        } else {
+            SwrveLogger.w("Could not load bitmap from filePath:%s", filePath);
+        }
+        return bitmap;
+    }
+
+    private List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties, int campaignId) {
         List<SwrveBaseCampaign> result = new ArrayList<>();
         if (!isSdkReady()) return result;
 
@@ -1703,6 +1772,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             synchronized (campaigns) {
                 for (int i = 0; i < campaigns.size(); i++) {
                     SwrveBaseCampaign campaign = campaigns.get(i);
+                    if (campaignId > 0 && campaign.getId() != campaignId) {
+                        continue;
+                    }
+
                     if (campaign.isMessageCenter()
                             && campaign.getStatus() != SwrveCampaignState.Status.Deleted
                             && campaign.isActive(getNow())
@@ -1716,6 +1789,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 messagesCanResolve = SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizedProperties);
                             }
                             if (messagesCanResolve) {
+                                SwrveMessageCenterDetails personalizedMessageCenterDetails = personalizeMessageCenterDetails(message.getMessageCenterDetails(), personalizedProperties);
+                                campaign.setMessageCenterDetails(personalizedMessageCenterDetails);
                                 result.add(campaign);
                             }
                         } else {
@@ -1729,19 +1804,34 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
+        return getMessageCenterCampaigns(orientation, properties, -1);
+    }
+
+    @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
-        return getMessageCenterCampaigns(getDeviceOrientation(), null);
+        return getMessageCenterCampaigns(getDeviceOrientation(), null, -1);
     }
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
-        return getMessageCenterCampaigns(orientation, null);
+        return getMessageCenterCampaigns(orientation, null, -1);
 
     }
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
-        return getMessageCenterCampaigns(getDeviceOrientation(), properties);
+        return getMessageCenterCampaigns(getDeviceOrientation(), properties, -1);
+    }
+
+    @Override
+    public SwrveBaseCampaign getMessageCenterCampaign(int campaignId, Map<String, String> properties) {
+        List<SwrveBaseCampaign> messageCenterCampaigns = getMessageCenterCampaigns(getDeviceOrientation(), properties, campaignId);
+        SwrveBaseCampaign campaign = null;
+        if (messageCenterCampaigns != null && messageCenterCampaigns.size() == 1) {
+            campaign = messageCenterCampaigns.get(0);
+        }
+        return campaign;
     }
 
     @Override

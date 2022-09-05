@@ -1,4 +1,4 @@
-{"campaigns": {
+{
     "cdn_root": "http://localhost:8083/cdn/",
     "campaigns": [],
     "game_data": {
@@ -12,5 +12,4 @@
         "delay_first_message": 60
     },
     "version": 2
-}
 }

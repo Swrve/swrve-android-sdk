@@ -1,5 +1,9 @@
 package com.swrve.sdk;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 
@@ -7,9 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 
 public class SwrveEmbeddedMessageUnitTest extends SwrveBaseTest {
@@ -31,6 +32,7 @@ public class SwrveEmbeddedMessageUnitTest extends SwrveBaseTest {
         assertNotNull(message);
         assertEquals("test string", message.getData());
         assertEquals(500, message.getPriority());
+        assertEquals(500, message.getCampaign().getPriority());
         assertEquals(20, message.getId());
         assertNotNull(message.getButtons());
         assertEquals("Button 1", message.getButtons().get(0));

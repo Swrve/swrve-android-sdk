@@ -6,9 +6,7 @@ import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
-import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
-import com.swrve.sdk.messaging.SwrveInAppCampaign;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
 
@@ -63,6 +62,7 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
         SwrveEmbeddedCampaign campaign = (SwrveEmbeddedCampaign) campaigns.get(0);
         assertEquals("Embedded subject", campaign.getSubject());
         assertEquals("Kindle", campaign.getName());
+        assertNotNull(campaign.getDownloadDate());
 
         swrveSpy.showMessageCenterCampaign(campaigns.get(0));
         await().untilTrue(embeddedCallbackBool);

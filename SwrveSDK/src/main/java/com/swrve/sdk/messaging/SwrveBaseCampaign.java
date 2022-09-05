@@ -35,11 +35,13 @@ public abstract class SwrveBaseCampaign {
     protected Date endDate;
     protected List<Trigger> triggers;
     protected boolean messageCenter;
-    protected String subject; // MessageCenter subject of the campaign
+    protected String subject; // subject of the campaign
+    protected int priority;
     protected int maxImpressions;
     protected int minDelayBetweenMessage;
     protected Date showMessagesAfterLaunch; // Time we can show the first message after launch
     protected String name;
+    protected SwrveMessageCenterDetails messageCenterDetails;
 
     /*
      * Parse a campaign from JSON data.
@@ -53,7 +55,7 @@ public abstract class SwrveBaseCampaign {
 
         this.messageCenter = campaignData.optBoolean("message_center", false);
         this.subject = campaignData.isNull("subject") ? "" : campaignData.getString("subject");
-        this.saveableState = new SwrveCampaignState(); // Start with an empty state
+        this.saveableState = new SwrveCampaignState(null, campaignManager.getNow()); // Start with an empty state
 
         // Campaign rule defaults
         this.maxImpressions = DEFAULT_MAX_IMPRESSIONS;
@@ -112,8 +114,12 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
+     * This is populated by the Campaign description field from your Dashboard. Migrate to using the SwrveMessageCenterDetails subject;
+     *
      * @return the name of the campaign.
+     * @deprecated Use SwrveMessageCenterDetails subject instead.
      */
+    @Deprecated
     public String getSubject() {
         return subject;
     }
@@ -199,6 +205,15 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
+     * Get the download date of the campaign.
+     *
+     * @return the download date of the campaign
+     */
+    public Date getDownloadDate() {
+        return saveableState.getDownloadDate();
+    }
+
+    /**
      * Used by sublcasses to inform that the campaign was displayed.
      */
     public void messageWasShownToUser() {
@@ -252,5 +267,20 @@ public abstract class SwrveBaseCampaign {
      */
     public String getName() {
         return name;
+    }
+
+    public SwrveMessageCenterDetails getMessageCenterDetails() {
+        return messageCenterDetails;
+    }
+
+    public void setMessageCenterDetails(SwrveMessageCenterDetails messageCenterDetails) {
+        this.messageCenterDetails = messageCenterDetails;
+    }
+
+    /**
+     * @return the priority of the campaign.
+     */
+    public int getPriority() {
+        return priority;
     }
 }

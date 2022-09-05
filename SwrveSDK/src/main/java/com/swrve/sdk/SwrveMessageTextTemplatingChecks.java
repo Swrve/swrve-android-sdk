@@ -8,6 +8,7 @@ import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessagePage;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 // Check the validity of all message formats with the given personalization before displaying the message.
@@ -15,6 +16,28 @@ class SwrveMessageTextTemplatingChecks {
 
     public static boolean checkTextTemplating(SwrveMessage message, Map<String, String> properties) {
         try {
+
+            if (message.getMessageCenterDetails() != null) {
+                ArrayList<String> messageCenterDetails = new ArrayList<>();
+                messageCenterDetails.add(message.getMessageCenterDetails().getSubject());
+                messageCenterDetails.add(message.getMessageCenterDetails().getDescription());
+                messageCenterDetails.add(message.getMessageCenterDetails().getImageAccessibilityText());
+                messageCenterDetails.add(message.getMessageCenterDetails().getImageURL());
+                for (String textToPersonlise : messageCenterDetails) {
+                    if (!SwrveHelper.isNullOrEmpty(textToPersonlise)) {
+                        // Need to render dynamic text
+                        String personalizedText = SwrveTextTemplating.apply(textToPersonlise, properties);
+                        if (SwrveHelper.isNullOrEmpty(personalizedText)) {
+                            SwrveLogger.i("Text template could not be resolved: " + textToPersonlise + " in given properties.");
+                            return false;
+                        } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
+                            SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
+                            return false;
+                        }
+                    }
+                }
+            }
+
             for (final SwrveMessageFormat format : message.getFormats()) {
 
                 for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {

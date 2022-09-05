@@ -5,7 +5,6 @@ import android.os.Bundle;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -523,6 +522,18 @@ public abstract class SwrveSDKBase {
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
         checkInstanceCreated();
         return instance.getMessageCenterCampaigns(orientation, properties);
+    }
+
+    /**
+     * Get the active MessageCenter campaign targeted for this user. It will exclude campaigns that have been deleted with the
+     * removeMessageCenterCampaign method and those that do not support the current orientation.
+     * @param campaignId the id of the campaign to get
+     * @param properties additional properties which can be used for IAM personalization.
+     * @return The active MessageCenter campaign is returned if campaign id is valid. Returns null if the campaign id is invalid or campaign is not active.
+     */
+    public static SwrveBaseCampaign getMessageCenterCampaign(int campaignId, Map<String, String> properties) {
+        checkInstanceCreated();
+        return instance.getMessageCenterCampaign(campaignId, properties);
     }
 
     /**

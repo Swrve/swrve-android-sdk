@@ -6,7 +6,6 @@ import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -91,6 +90,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties);
 
     List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties);
+
+    SwrveBaseCampaign getMessageCenterCampaign(int campaignId, Map<String, String> properties);
 
     boolean showMessageCenterCampaign(SwrveBaseCampaign campaign);
 

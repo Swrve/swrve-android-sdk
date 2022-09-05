@@ -133,6 +133,7 @@
           },
           "id": 165,
           "name": "Kindle",
+          "priority" : 5,
           "rules": {
           }
         },
@@ -144,7 +145,7 @@
       }
     },
     {
-      "id": 15679,
+      "id": 103,
       "start_date": 1362671700000,
       "end_date": 1927994560000,
       "rules": {
@@ -159,6 +160,7 @@
       "conversation": {
         "id": 82,
         "name": "Choose one",
+        "priority" : 6,
         "pages": [
           {
             "tag": "1427124319447-2Button",

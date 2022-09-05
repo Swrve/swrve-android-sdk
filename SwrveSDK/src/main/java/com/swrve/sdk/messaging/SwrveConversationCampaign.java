@@ -37,6 +37,7 @@ public class SwrveConversationCampaign extends SwrveBaseCampaign implements Seri
         if (campaignData.has("conversation")) {
             JSONObject conversationData = campaignData.getJSONObject("conversation");
             this.conversation = createConversation(this, conversationData, campaignManager);
+            this.priority = conversation.getPriority();
 
             for (ConversationPage conversationPage : conversation.getPages()) {
 

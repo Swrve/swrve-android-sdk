@@ -30,6 +30,8 @@ public class SwrveMessageTextTemplatingChecksTest extends SwrveBaseTest {
         requiredProps.add("test_image_text");
         requiredProps.add("test_button_action");
         requiredProps.add("test_copy_to_clipboard");
+        requiredProps.add("test_message_center_subject");
+
 
         Map<String, String> properties = new HashMap<>();
         for (String prop : requiredProps) {

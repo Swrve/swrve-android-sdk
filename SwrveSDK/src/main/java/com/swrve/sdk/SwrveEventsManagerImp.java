@@ -1,5 +1,7 @@
   package com.swrve.sdk;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -20,8 +22,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static android.content.Context.MODE_PRIVATE;
 
 public class SwrveEventsManagerImp implements SwrveEventsManager {
 

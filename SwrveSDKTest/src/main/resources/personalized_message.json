@@ -1,4 +1,10 @@
 {
+  "message_center_details": {
+    "subject": "kev test message some subject ${test_message_center_subject}",
+    "image_asset": "f6eb9596d473afcd13eb3d47d1347ea31a2f8ecb",
+    "dynamic_image_url": "https://source.unsplash.com/bh4LQHcOcxE",
+    "accessibility_text": "This is sample alt text"
+  },
   "template": {
     "template_id": "20",
     "formats": [

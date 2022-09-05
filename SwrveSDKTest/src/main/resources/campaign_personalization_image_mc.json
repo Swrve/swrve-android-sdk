@@ -9,6 +9,13 @@
       "start_date": 1362671700000,
       "message":
         {
+          "message_center_details": {
+            "subject": "some subject personalized ${test_cp}",
+            "description": "some description personalized ${test_cp}",
+            "image_asset": "fc972adec8076d203cbdfd8ca0e4b1bfa483abfb",
+            "dynamic_image_url": "some url personalized ${test_cp}",
+            "accessibility_text": "some alt text personalized ${test_cp}"
+          },
           "template": {
             "template_id": "20",
             "formats": [

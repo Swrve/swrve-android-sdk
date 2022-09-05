@@ -443,10 +443,16 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
         Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
 
-        SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaigns().get(0);
+        SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
         assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
+        assertNotNull(campaign.getDownloadDate());
         assertEquals("IAM subject", campaign.getSubject());
+        assertEquals(5, campaign.getPriority());
         assertEquals("Kindle", campaign.getName());
+
+        assertEquals(5, campaign.getPriority());
+        assertEquals(1362671700000L, campaign.getStartDate().getTime());
+        assertEquals(1927994560000L, campaign.getEndDate().getTime());
         swrveSpy.showMessageCenterCampaign(campaign);
         Robolectric.flushForegroundThreadScheduler();
 
@@ -503,9 +509,10 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
         Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
 
-        SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaigns().get(0);
+        SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
         assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
         assertEquals("IAM subject", campaign.getSubject());
+        assertEquals(5, campaign.getPriority());
 
         HashMap<String, String> testProperties = new HashMap<>();
         testProperties.put("test", "working");
@@ -550,7 +557,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_message_center.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
-        SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaigns().get(0);
+        SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
         assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
 
         // Mark the campaign as seen programmatically (for custom IAM renderers)
@@ -566,7 +573,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         assertEquals(2, swrveSpy.getMessageCenterCampaigns().size());
 
         swrveSpy.config.setOrientation(SwrveOrientation.Portrait);
-        SwrveConversationCampaign campaign = (SwrveConversationCampaign) swrveSpy.getMessageCenterCampaigns().get(1);
+        SwrveConversationCampaign campaign = (SwrveConversationCampaign) swrveSpy.getMessageCenterCampaign(103, null);
         swrveSpy.showMessageCenterCampaign(campaign);
         // Next activity started should be the ConversationActivity
         Intent nextIntent = mShadowActivity.peekNextStartedActivity();
@@ -598,9 +605,10 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
         Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
 
-        SwrveConversationCampaign campaign = (SwrveConversationCampaign) swrveSpy.getMessageCenterCampaigns().get(1);
+        SwrveConversationCampaign campaign = (SwrveConversationCampaign) swrveSpy.getMessageCenterCampaign(103, null);
         assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
         assertEquals("Conversation subject", campaign.getSubject());
+        assertEquals(6, campaign.getPriority());
         swrveSpy.showMessageCenterCampaign(campaign);
         // Next activity started should be the ConversationActivity
         Intent nextIntent = mShadowActivity.peekNextStartedActivity();
@@ -972,5 +980,49 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         assets.add("SomeNativeFont");
         assets.add("_system_font_");
         assertTrue(message.areAssetsReady(assets, null));
+    }
+
+    @Test
+    public void testDownloadDate() throws Exception {
+
+        // Mock the sdk so that the current date is yesterday.
+        long nowMillis = System.currentTimeMillis();
+        long oneDayMillis = 24 * 60 * 60 * 1000;
+        Date yesterday = new Date(nowMillis - oneDayMillis);
+        doReturn(yesterday).when(swrveSpy).getNow();
+
+        // load up campaign json which contains only one campaign
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_download_date1.json", true, true, "fc972adec8076d203cbdfd8ca0e4b1bfa483abfb");
+
+        // verify there's only 1 campaign and the download date is yesterday
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns().size());
+        SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
+        Date downloadDate = campaign.getDownloadDate();
+        assertNotNull(downloadDate);
+        assertEquals(yesterday.getTime(), downloadDate.getTime());
+
+        // Shutdown sdk and create a new instance with today's date.
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        setUp();
+        Date today = new Date();
+        doReturn(today).when(swrveSpy).getNow();
+
+        // load up new campaign json which contains same campaign previously plus one new one
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_download_date2.json", true, true, "fc972adec8076d203cbdfd8ca0e4b1bfa483abfb");
+
+        // verify there's 2 campaigns now
+        assertEquals(2, swrveSpy.getMessageCenterCampaigns().size());
+
+        // verify the download date for first one is yesterday
+        campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
+        downloadDate = campaign.getDownloadDate();
+        assertNotNull(downloadDate);
+        assertEquals(yesterday.getTime(), downloadDate.getTime());
+
+        // verify the download date for second one is today
+        campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(103, null);
+        downloadDate = campaign.getDownloadDate();
+        assertNotNull(downloadDate);
+        assertEquals(today.getTime(), downloadDate.getTime());
     }
 }

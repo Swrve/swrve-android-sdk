@@ -24,6 +24,7 @@ public class SwrveMessage implements SwrveBaseMessage {
     private final int id;
     private final String name;
     private int priority = 9999;
+    private SwrveMessageCenterDetails messageCenterDetails;
     private final SwrveInAppCampaign campaign;
     private final List<SwrveMessageFormat> formats;
     private final File cacheDir;
@@ -37,6 +38,10 @@ public class SwrveMessage implements SwrveBaseMessage {
 
         if (messageData.has("priority")) {
             this.priority = messageData.getInt("priority");
+        }
+
+        if (messageData.has("message_center_details")) {
+            this.messageCenterDetails = new SwrveMessageCenterDetails(messageData.getJSONObject("message_center_details"));
         }
 
         JSONObject template = messageData.getJSONObject("template");
@@ -71,6 +76,10 @@ public class SwrveMessage implements SwrveBaseMessage {
 
     public SwrveInAppCampaign getCampaign() {
         return campaign;
+    }
+
+    public SwrveMessageCenterDetails getMessageCenterDetails() {
+        return messageCenterDetails;
     }
 
     /**

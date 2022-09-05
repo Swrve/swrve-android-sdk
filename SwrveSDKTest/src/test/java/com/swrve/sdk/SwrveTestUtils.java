@@ -39,8 +39,6 @@ import com.google.gson.reflect.TypeToken;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.localstorage.LocalStorageTestUtils;
-import com.swrve.sdk.messaging.SwrveButton;
-import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -144,9 +142,13 @@ public class SwrveTestUtils {
      * @throws Exception If there's an error
      */
     public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, String... assets) throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(context, swrve, campaignFileName, false, false, assets);
+    }
+
+    public static void loadCampaignsFromFile(Context context, Swrve swrve, String campaignFileName, boolean loadPreviousCampaignState, boolean saveToCache, String... assets) throws Exception {
         String json = SwrveTestUtils.getAssetAsText(context, campaignFileName);
         JSONObject jsonObject = new JSONObject(json);
-        swrve.loadCampaignsFromJSON(swrve.getUserId(), jsonObject, swrve.campaignsState, false);
+        swrve.loadCampaignsFromJSON(swrve.getUserId(), jsonObject, swrve.campaignsState, loadPreviousCampaignState);
         if (assets.length > 0) {
             Set<String> assetsOnDisk = new HashSet<>();
             for(String asset : assets) {
@@ -154,6 +156,9 @@ public class SwrveTestUtils {
                 SwrveTestUtils.writeFileToCache(ApplicationProvider.getApplicationContext().getCacheDir(), asset);
             }
             ((SwrveAssetsManagerImp)swrve.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
+        }
+        if (saveToCache) {
+            swrve.saveCampaignsInCache(jsonObject);
         }
     }
 
