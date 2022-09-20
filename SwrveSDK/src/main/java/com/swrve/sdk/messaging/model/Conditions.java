@@ -11,6 +11,8 @@ public class Conditions {
         OR,
         @SerializedName("and")
         AND,
+        @SerializedName("contains")
+        CONTAINS,
         @SerializedName("eq")
         EQ
     }

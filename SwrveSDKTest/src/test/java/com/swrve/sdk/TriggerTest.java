@@ -349,4 +349,105 @@ public class TriggerTest extends SwrveBaseTest {
         assertEquals(1, qaCampaignInfoMap.size());
         assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
     }
+
+    @Test
+    public void testCampaignTriggerConditionCONTAINS() throws Exception {
+        QaUser qaUserMock = Mockito.mock(QaUser.class);
+        qaUserMock.loggingEnabled = true;
+        QaUser.instance = qaUserMock;
+
+        String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_conditionCONTAINS.json");
+        assertNotNull(text);
+        JSONObject jsonObject = new JSONObject(text);
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>(), null);
+        assertNotNull(campaign);
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        Map<String, String> payload = new HashMap<>();
+        payload.put("artist", "david bowie");
+        assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "Gray David");
+        assertNotNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "Dave Ghrol");
+        assertNull(campaign.getMessageForEvent("music.condition1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "David.Bowie");
+        assertNotNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "Bobby.Brown");
+        assertNotNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "Paul.mcCartney");
+        assertNotNull(campaign.getMessageForEvent("music.condition2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "Axl.Rose");
+        payload.put("genre", "RocknRoll");
+        assertNotNull(campaign.getMessageForEvent("music.condition3", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "AC/DC");
+        assertNotNull(campaign.getMessageForEvent("music.condition3", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "AC/DC");
+        payload.put("genre", "Rock");
+        assertNotNull(campaign.getMessageForEvent("music.condition4", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "AC/DC");
+        assertNull(campaign.getMessageForEvent("music.condition4", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "Taylor Swift");
+        payload.put("genre", "pop");
+        assertNull(campaign.getMessageForEvent("music.condition5", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("artist", "Beatles");
+        payload.put("genre", "pop");
+        assertNotNull(campaign.getMessageForEvent("music.condition5", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+    }
 }

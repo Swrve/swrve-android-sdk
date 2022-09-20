@@ -126,13 +126,24 @@ public class SwrveCampaignDisplayer {
                 } else if (Conditions.Op.AND.equals(conditions.getOp())) {
                     boolean conditionsMatchPayload = false;
                     for (Arg arg : conditions.getArgs()) {
-                        if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
-                            conditionsMatchPayload = true;
-                        } else {
-                            String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
-                            logAndAddReason(swrveCampaign, resultText, false, qaCampaignInfoMap);
-                            conditionsMatchPayload = false;
-                            break;
+                        if (arg.getOp().equals(Arg.Op.EQ)) {
+                            if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
+                                conditionsMatchPayload = true;
+                            } else {
+                                String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
+                                logAndAddReason(swrveCampaign, resultText, false, qaCampaignInfoMap);
+                                conditionsMatchPayload = false;
+                                break;
+                            }
+                        } else if (arg.getOp().equals(Arg.Op.CONTAINS)) {
+                            if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).toLowerCase(Locale.ENGLISH).contains(arg.getValue().toLowerCase(Locale.ENGLISH))) {
+                                conditionsMatchPayload = true;
+                            } else {
+                                String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
+                                logAndAddReason(swrveCampaign, resultText, false, qaCampaignInfoMap);
+                                conditionsMatchPayload = false;
+                                break;
+                            }
                         }
                     }
                     if (conditionsMatchPayload) {
@@ -143,11 +154,20 @@ public class SwrveCampaignDisplayer {
                 } else if (Conditions.Op.OR.equals(conditions.getOp())) {
                     boolean conditionsMatchPayload = false;
                     for (Arg arg : conditions.getArgs()) {
-                        if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
-                            String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
-                            logAndAddReason(swrveCampaign, resultText, true, qaCampaignInfoMap);
-                            conditionsMatchPayload = true;
-                            break;
+                        if (arg.getOp().equals(Arg.Op.EQ)) {
+                            if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).equalsIgnoreCase(arg.getValue())) {
+                                String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
+                                logAndAddReason(swrveCampaign, resultText, true, qaCampaignInfoMap);
+                                conditionsMatchPayload = true;
+                                break;
+                            }
+                        } else if (arg.getOp().equals(Arg.Op.CONTAINS)) {
+                            if (payload != null && payload.containsKey(arg.getKey()) && payload.get(arg.getKey()).toLowerCase(Locale.ENGLISH).contains(arg.getValue().toLowerCase(Locale.ENGLISH))) {
+                                String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
+                                logAndAddReason(swrveCampaign, resultText, true, qaCampaignInfoMap);
+                                conditionsMatchPayload = true;
+                                break;
+                            }
                         }
                     }
                     if (conditionsMatchPayload) {
@@ -155,6 +175,16 @@ public class SwrveCampaignDisplayer {
                     } else {
                         String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
                         logAndAddReason(swrveCampaign, resultText, false, qaCampaignInfoMap);
+                    }
+                } else if (Conditions.Op.CONTAINS.equals(conditions.getOp())) {
+                    if (payload != null && payload.containsKey(conditions.getKey()) && payload.get(conditions.getKey()).toLowerCase(Locale.ENGLISH).contains(conditions.getValue().toLowerCase(Locale.ENGLISH))) {
+                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], matches eventName[" + eventName + "] & payload[" + payload + "].";
+                        logAndAddReason(swrveCampaign, resultText, true, qaCampaignInfoMap);
+                        return true;
+                    } else {
+                        String resultText = "Campaign [" + swrveCampaign.getId() + "], Trigger [" + trigger + "], does not match eventName[" + eventName + "] & payload[" + payload + "]. Skipping this trigger.";
+                        logAndAddReason(swrveCampaign, resultText, false, qaCampaignInfoMap);
+                        continue;
                     }
                 } else if (Conditions.Op.EQ.equals(conditions.getOp())) {
                     if (payload != null && payload.containsKey(conditions.getKey()) && payload.get(conditions.getKey()).equalsIgnoreCase(conditions.getValue())) {

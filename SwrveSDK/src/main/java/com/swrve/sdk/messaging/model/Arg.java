@@ -6,7 +6,9 @@ public class Arg {
 
     public enum Op {
         @SerializedName("eq")
-        EQ
+        EQ,
+        @SerializedName("contains")
+        CONTAINS
     }
 
     private String key;

@@ -44,13 +44,13 @@ public class Trigger {
                     return null;
                 } else {
                     for (Arg arg : conditions.getArgs()) {
-                        if (arg.getKey() == null || arg.getOp() == null || !Arg.Op.EQ.equals(arg.getOp()) || arg.getValue() == null) {
+                        if (arg.getKey() == null || arg.getOp() == null || arg.getValue() == null || (!Arg.Op.CONTAINS.equals(arg.getOp()) && !Arg.Op.EQ.equals(arg.getOp()))) {
                             SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                             return null;
                         }
                     }
                 }
-            }else if (Conditions.Op.EQ.equals(conditions.getOp())) {
+            }else if (Conditions.Op.EQ.equals(conditions.getOp()) || Conditions.Op.CONTAINS.equals(conditions.getOp())) {
                 if (conditions.getKey() == null || conditions.getValue() == null) {
                     SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                     return null;

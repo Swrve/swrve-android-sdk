@@ -82,10 +82,10 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.2.0";
+    protected static String version = "10.3.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
-    protected static final int EMBEDDED_CAMPAIGN_VERSION = 1;
-    protected static final int IN_APP_CAMPAIGN_VERSION = 8;
+    protected static final int EMBEDDED_CAMPAIGN_VERSION = 2;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 9;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
