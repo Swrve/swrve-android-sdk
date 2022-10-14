@@ -9,6 +9,9 @@ import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SampleApplication extends Application {
 
     private static final int YOUR_APP_ID = 0;
@@ -27,9 +30,12 @@ public class SampleApplication extends Application {
                 notificationManager.createNotificationChannel(channel);
             }
         }
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo,
-                R.drawable.swrve_s_transparent, channel).activityClass(MainActivity.class)
-                        .largeIconDrawableId(R.drawable.swrve_s_solid).accentColorHex("#3949AB"); // Darkblue
+        List<String> notificationEvents = new ArrayList<>();
+        notificationEvents.add("notification_permission_request");
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo, R.drawable.swrve_s_transparent, channel)
+                .activityClass(MainActivity.class)
+                .largeIconDrawableId(R.drawable.swrve_s_solid).accentColorHex("#3949AB")
+                .pushNotificationPermissionEvents(notificationEvents);
         config.setNotificationConfig(notificationConfig.build());
 
         SwrveSDK.createInstance(this, YOUR_APP_ID, YOUR_API_KEY, config);

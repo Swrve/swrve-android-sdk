@@ -1,13 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.swrve.sdk.sample.minimalintegration.huawei"
         minSdkVersion 19
-        targetSdkVersion 31
+        targetSdkVersion 33
         consumerProguardFiles 'proguard-rules.pro'
     }
 //    signingConfigs {
@@ -38,7 +37,7 @@ android {
 
 dependencies {
     api 'com.google.android.material:material:1.0.0'
-    api 'com.swrve.sdk.android:swrve-huawei:10.3.0'
+    api 'com.swrve.sdk.android:swrve-huawei:10.4.0'
 }
 
 apply plugin: 'com.huawei.agconnect'

@@ -1,6 +1,9 @@
 package com.swrve.sdk;
 
 import static android.content.Context.UI_MODE_SERVICE;
+import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static com.swrve.sdk.ISwrveCommon.CACHE_PERMISSION_ANSWERED_TIMES_PREFIX;
 import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_MOBILE;
 import static com.swrve.sdk.ISwrveCommon.DEVICE_TYPE_TV;
 import static com.swrve.sdk.ISwrveCommon.OS_AMAZON;
@@ -511,5 +514,19 @@ public final class SwrveHelper {
 
     public static float convertPixelsToDp(float px, Context context) {
         return px / ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
+
+    public static String getPermissionString(int permission) {
+        String permissionString = "unknown";
+        if (permission == PERMISSION_GRANTED) {
+            permissionString = "granted";
+        } else if (permission == PERMISSION_DENIED) {
+            permissionString = "denied";
+        }
+        return permissionString;
+    }
+
+    public static String getPermissionAnsweredCacheKey(String permission) {
+        return CACHE_PERMISSION_ANSWERED_TIMES_PREFIX + permission;
     }
 }

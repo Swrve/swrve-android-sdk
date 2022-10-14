@@ -1,32 +1,5 @@
 package com.swrve.sdk;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.os.Bundle;
-
-import androidx.core.app.NotificationCompat;
-import androidx.test.core.app.ApplicationProvider;
-
-import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.test.MainActivity;
-
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_INFLUENCED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
@@ -51,6 +24,33 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
+import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+
+import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ApplicationProvider;
+
+import com.swrve.sdk.config.SwrveConfig;
+import com.swrve.sdk.test.MainActivity;
+
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
 public class SwrvePushManagerTest extends SwrveBaseTest {
 
     private int dummyIconResource = 12345;
@@ -62,6 +62,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS);
         swrveCommonSpy = mock(ISwrveCommon.class);
         Mockito.doReturn("some_app_version").when(swrveCommonSpy).getAppVersion();
         Mockito.doReturn("some_device_id").when(swrveCommonSpy).getDeviceId();
@@ -240,7 +241,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         assertNumberOfNotification(0);
 
         // send authenticated message which should display notification and save it
-        sendMessage(true);
+        sendMessage(true, true);
 
         assertSendPushDeliveredEvent(true, "");
         verify(pushManagerSpy, times(1)).processNotification(any(Bundle.class), anyString());
@@ -256,7 +257,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveSDK.stopTracking();
 
         // send authenticated message in stopped state which should not display notification
-        sendMessage(true);
+        sendMessage(true, true);
 
         assertSendPushDeliveredEvent(false, "stopped");
         verify(pushManagerSpy, never()).processNotification(any(Bundle.class), anyString());
@@ -272,12 +273,45 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveSDK.stopTracking();
 
         // send non authenticated message in stopped state which should display notification
-        sendMessage(false);
+        sendMessage(false, true);
 
         assertSendPushDeliveredEvent(true, "");
         verify(pushManagerSpy, times(1)).processNotification(any(Bundle.class), anyString());
         assertNumberOfNotification(1);
         verify(swrveSpy, never()).saveNotificationAuthenticated(anyInt());
+    }
+
+    @Test
+    public void testNotificationPermissionDenied() throws Exception {
+
+        createSwrveSpy();
+        assertNumberOfNotification(0);
+
+        // send message in with no notification permission which should not display notification
+        sendMessage(false, false);
+
+        assertSendPushDeliveredEvent(false, "permission_denied");
+        verify(pushManagerSpy, never()).processNotification(any(Bundle.class), anyString());
+        assertNumberOfNotification(0);
+        verify(swrveSpy, never()).saveNotificationAuthenticated(anyInt());
+        
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jsonObject = new JSONObject(jsonString);
+        assertTrue(jsonObject.has("time"));
+        assertTrue(jsonObject.has("seqnum"));
+        assertEquals("device_update", jsonObject.get("type"));
+        assertEquals("false", jsonObject.get("user_initiated"));
+        assertTrue(jsonObject.has("attributes"));
+        JSONObject attributes = (JSONObject) jsonObject.get("attributes");
+        assertTrue(attributes.length() == 2);
+        assertEquals("denied", attributes.get("swrve.permission.android.notification"));
+        assertTrue(attributes.has("swrve.permission.notifications_enabled"));
     }
 
     @Test
@@ -287,7 +321,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         assertNumberOfNotification(0);
 
         // send non authenticated message which should display notification
-        sendMessage(false);
+        sendMessage(false, true);
 
         assertNumberOfNotification(1);
         verify(swrveSpy, never()).saveNotificationAuthenticated(anyInt());
@@ -687,7 +721,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         SwrveCommon.setSwrveCommon(swrveSpy);
     }
 
-    private void sendMessage(boolean authenticated) {
+    private void sendMessage(boolean authenticated, boolean grantNotificationPermission) {
 
         Bundle bundle = new Bundle();
         if (authenticated) {
@@ -710,6 +744,10 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
 
         pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
         doReturn(Mockito.mock(CampaignDeliveryManager.class)).when(pushManagerSpy).getCampaignDeliveryManager();
+        if (grantNotificationPermission == false) {
+            doReturn(Build.VERSION_CODES.TIRAMISU).when(pushManagerSpy).getOSBuildVersion();
+            shadowApplication.denyPermissions(Manifest.permission.POST_NOTIFICATIONS);
+        }
         pushManagerSpy.processMessage(bundle);
     }
 

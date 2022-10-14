@@ -1,10 +1,21 @@
 package com.swrve.sdk;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+import static com.swrve.sdk.ISwrveCommon.SWRVE_NOTIFICATIONS_ENABLED;
+import static com.swrve.sdk.ISwrveCommon.SWRVE_PERMISSION_NOTIFICATION;
+
 import android.app.Notification;
 import android.content.Context;
 import android.os.Bundle;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,6 +54,10 @@ public abstract class SwrvePushManagerImpBase {
             } else if (isAuthenticatedPush && isTrackingStateStopped()) {
                 displayed = false;
                 reason = "stopped";
+            } else if (!hasNotificationPermission()) {
+                displayed = false;
+                reason = "permission_denied";
+                sendDeviceUpdateWithDeniedNotificationPermission();
             }
             sendPushDeliveredEvent(msg, displayed, reason);
 
@@ -77,6 +92,21 @@ public abstract class SwrvePushManagerImpBase {
         return isTrackingStateStopped;
     }
 
+    protected boolean hasNotificationPermission() {
+        boolean hasNotificationPermission;
+        if (getOSBuildVersion() >= 33) {
+            hasNotificationPermission = ContextCompat.checkSelfPermission(context, POST_NOTIFICATIONS) == PERMISSION_GRANTED;
+        } else {
+            hasNotificationPermission = NotificationManagerCompat.from(context).areNotificationsEnabled();
+        }
+        return hasNotificationPermission;
+    }
+
+    // exposed for testing
+    protected int getOSBuildVersion() {
+        return android.os.Build.VERSION.SDK_INT;
+    }
+
     public void sendPushDeliveredEvent(Bundle extras, boolean displayed, String reason) {
         try {
             ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(extras, getTime(), displayed, reason);
@@ -87,6 +117,19 @@ public abstract class SwrvePushManagerImpBase {
             }
         } catch (Exception e) {
             SwrveLogger.e("Exception in sendPushDeliveredEvent.", e);
+        }
+    }
+
+    public void sendDeviceUpdateWithDeniedNotificationPermission() {
+        try {
+            JSONObject deviceUpdate = new JSONObject();
+            if (getOSBuildVersion() >= 33) {
+                deviceUpdate.put(SWRVE_PERMISSION_NOTIFICATION, SwrveHelper.getPermissionString(PERMISSION_DENIED));
+            }
+            deviceUpdate.put(SWRVE_NOTIFICATIONS_ENABLED, NotificationManagerCompat.from(context).areNotificationsEnabled());
+            EventHelper.sendUninitiatedDeviceUpdateEvent(context, swrveCommon.getUserId(), deviceUpdate);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK exception in sendDeviceUpdateWithDeniedNotificationPermission", e);
         }
     }
 

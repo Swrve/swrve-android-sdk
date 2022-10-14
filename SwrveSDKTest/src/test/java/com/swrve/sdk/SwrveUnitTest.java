@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static com.ibm.icu.impl.Assert.fail;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
 import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
@@ -21,9 +22,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -57,6 +61,7 @@ import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.android.controller.ActivityController;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -84,6 +89,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         doReturn(backgroundEventSenderMock).when(swrveSpy).getSwrveBackgroundEventSender(any(Context.class));
 
         swrveSpy.init(mActivity);
+        swrveSpy.activityContext = new WeakReference<>(mActivity);
     }
 
     @After
@@ -342,7 +348,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         // recreate the sdk but make sure its not initialised.
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
-        swrveSpy = Mockito.spy(swrveReal);
+        swrveSpy = spy(swrveReal);
 
         assertFalse("Test getting the joined value when sdk has NOT been initialised.", swrveSpy.initialised);
         String joined2 = swrveSpy.getJoined();
@@ -529,12 +535,15 @@ public class SwrveUnitTest extends SwrveBaseTest {
         Swrve swrveSpy = SwrveTestUtils.createSpyInstance(config);
         SwrveTestUtils.runSingleThreaded(swrveSpy);
 
+        shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS);
+
         ITelephonyManager telephonyManagerMock = mock(ITelephonyManager.class);
         doReturn("vodafone IE").when(telephonyManagerMock).getSimOperatorName();
         doReturn("ie").when(telephonyManagerMock).getSimCountryIso();
         doReturn("27201").when(telephonyManagerMock).getSimOperator();
         doReturn(telephonyManagerMock).when(swrveSpy).getTelephonyManager(any(Context.class));
 
+        swrveSpy.activityContext = new WeakReference<>(mActivity);
         swrveSpy.onCreate(mActivity);
 
         ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -547,6 +556,8 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertTrue(attributeDevices.has("swrve.device_name"));
         assertTrue(attributeDevices.has("swrve.os"));
         assertTrue(attributeDevices.has("swrve.os_version"));
+        assertTrue(attributeDevices.has("swrve.swrve.os_int_version"));
+        assertTrue(attributeDevices.has("swrve.app_target_version"));
         assertTrue(attributeDevices.has("swrve.device_width"));
         assertTrue(attributeDevices.has("swrve.device_height"));
         assertTrue(attributeDevices.has("swrve.device_dpi"));
@@ -576,6 +587,10 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         assertEquals(true, attributeDevices.get("swrve.permission.notifications_enabled"));
         assertEquals(NotificationManagerCompat.IMPORTANCE_NONE, attributeDevices.get("swrve.permission.notifications_importance"));
+
+        assertEquals("granted", attributeDevices.get("swrve.permission.android.notification"));
+        assertEquals(false, attributeDevices.get("swrve.permission.android.notification_show_rationale"));
+        assertEquals(0, attributeDevices.get("swrve.permission.android.notification_answered_times"));
     }
 
     @Test
@@ -991,4 +1006,82 @@ public class SwrveUnitTest extends SwrveBaseTest {
         resultProperties = swrveSpy.retrievePersonalizationProperties(null, messageCenterResponse);
         assertEquals(resultProperties, expectedProperties);
     }
+
+    @Test
+    public void testResolveNotificationPermissionAnsweredTime() {
+        swrveSpy.activityContext = new WeakReference<>(mActivity);
+
+        // default
+        assertEquals(0, swrveSpy.resolveNotificationPermissionAnsweredTime());
+        assertNull(swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_rationale_was_true_android.permission.POST_NOTIFICATIONS")); // this should always stay true if it is ever set.
+        assertNull(swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_answered_times_android.permission.POST_NOTIFICATIONS"));
+
+        // simulate a permission request where shouldShowRequestPermissionRationale returns true, thus resolveNotificationPermissionAnsweredTime will always be 1
+        doReturn(true).when(swrveSpy).shouldShowRequestPermissionRationale(any(Activity.class), anyString());
+        assertEquals(1, swrveSpy.resolveNotificationPermissionAnsweredTime());
+        assertEquals("True", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_rationale_was_true_android.permission.POST_NOTIFICATIONS"));
+        assertEquals("1", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_answered_times_android.permission.POST_NOTIFICATIONS"));
+
+        // simulate a subsequent request by forcing shouldShowRequestPermissionRationale to be false
+        doReturn(false).when(swrveSpy).shouldShowRequestPermissionRationale(any(Activity.class), anyString());
+        assertEquals(2, swrveSpy.resolveNotificationPermissionAnsweredTime());
+        assertEquals("True", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_rationale_was_true_android.permission.POST_NOTIFICATIONS")); // this should always stay true if it is ever set.
+        assertEquals("2", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_answered_times_android.permission.POST_NOTIFICATIONS"));
+    }
+
+    @Test
+    public void testResolveNotificationPermissionAnsweredTimeWithRequestsOutsideOfSwrveSDK() {
+        swrveSpy.activityContext = new WeakReference<>(mActivity);
+
+        // simulate a permission request happened already outside of swrvesdk. This might have happened through another sdk or customer own code.
+        // shouldShowRequestPermissionRationale returns false, and permission_notification_rationale_was_true is true
+        doReturn(false).when(swrveSpy).shouldShowRequestPermissionRationale(any(Activity.class), anyString());
+        swrveSpy.multiLayerLocalStorage.setCacheEntry("", "permission_rationale_was_true_" + POST_NOTIFICATIONS, "True"); // note this without userId
+        assertEquals(2, swrveSpy.resolveNotificationPermissionAnsweredTime());
+        assertEquals("True", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_rationale_was_true_android.permission.POST_NOTIFICATIONS"));
+        assertEquals("2", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_answered_times_android.permission.POST_NOTIFICATIONS"));
+    }
+
+    @Test
+    public void testCheckPermissionChanges() {
+
+        // checkPermissionChanges should be called once upon init in setup
+        verify(swrveSpy, times(1)).checkNotificationPermissionChange();
+        assertNull(swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_notification_current"));
+
+        shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS);
+        swrveSpy.checkNotificationPermissionChange();
+        assertEquals("granted", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_current_android.permission.POST_NOTIFICATIONS"));
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", "Swrve.permission.android.notification.granted");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, null);
+
+        shadowApplication.denyPermissions(Manifest.permission.POST_NOTIFICATIONS);
+        swrveSpy.checkNotificationPermissionChange();
+        assertEquals("denied", swrveSpy.multiLayerLocalStorage.getCacheEntry("", "permission_current_android.permission.POST_NOTIFICATIONS"));
+        parameters.clear();
+        parameters.put("name", "Swrve.permission.android.notification.denied");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, null);
+    }
+
+    @Test
+    public void testNotificationPermissionTriggered() {
+
+        SwrveEventListener eventListenerSpy = spy((SwrveEventListener)swrveSpy.eventListener);
+        doNothing().when(eventListenerSpy).requestNotificationPermission(mActivity);
+        swrveSpy.eventListener = eventListenerSpy;
+        SwrveConfig config = swrveSpy.getConfig();
+        List<String> notificationEvents = new ArrayList<>();
+        notificationEvents.add("test_request_notification_permission");
+        SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+                .pushNotificationPermissionEvents(notificationEvents)
+                .build();
+        config.setNotificationConfig(notificationConfig);
+        SwrveSDK.event("regular_event");
+        verify(eventListenerSpy, never()).requestNotificationPermission(mActivity);
+
+        SwrveSDK.event("test_request_notification_permission");
+        verify(eventListenerSpy, times(1)).requestNotificationPermission(mActivity);
+    }
+
 }

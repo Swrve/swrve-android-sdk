@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import org.json.JSONObject;
@@ -132,4 +133,12 @@ public class SwrveHelperTest extends SwrveBaseTest {
         assertTrue(payload.has("g2"));
         assertEquals("{\"key3\":\"value3\"}", payload.getString("g2"));
     }
+
+    @Test
+    public void testGetPermissionString() {
+        assertEquals("granted", SwrveHelper.getPermissionString(PackageManager.PERMISSION_GRANTED));
+        assertEquals("denied", SwrveHelper.getPermissionString(PackageManager.PERMISSION_DENIED));
+        assertEquals("unknown", SwrveHelper.getPermissionString(32423542));
+    }
+
 }

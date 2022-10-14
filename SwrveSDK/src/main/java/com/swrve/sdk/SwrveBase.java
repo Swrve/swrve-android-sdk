@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
@@ -18,7 +20,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.SparseArray;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -194,6 +198,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             campaignsAndResourcesLastETag = multiLayerLocalStorage.getCacheEntry(userId, CACHE_ETAG);
 
             startCampaignsAndResourcesTimer(true);
+
+            checkNotificationPermissionChange();
 
             SwrveLogger.i("Init finished");
         } catch (Exception exp) {
@@ -617,11 +623,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         deviceInfo.put(SWRVE_DEVICE_NAME, getDeviceName());
         deviceInfo.put(SWRVE_OS_VERSION, Build.VERSION.RELEASE);
+        deviceInfo.put(SWRVE_OS_INT_VERSION, Build.VERSION.SDK_INT);
 
         Context contextRef = context.get();
-
         if (contextRef != null) {
             try {
+                deviceInfo.put(SWRVE_APP_TARGET_VERSION, SwrveHelper.getTargetSdkVersion(contextRef));
                 deviceInfo.put(SWRVE_DEVICE_WIDTH, deviceWidth);
                 deviceInfo.put(SWRVE_DEVICE_HEIGHT, deviceHeight);
                 deviceInfo.put(SWRVE_DEVICE_DPI, deviceDpi);
@@ -681,10 +688,72 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 // Authenticated Push
                 deviceInfo.put(SWRVE_CAN_RECEIVE_AUTH_PUSH, true);
             }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                String notificationPermission = SwrveHelper.getPermissionString(ContextCompat.checkSelfPermission(contextRef, POST_NOTIFICATIONS));
+                deviceInfo.put(SWRVE_PERMISSION_NOTIFICATION, notificationPermission);
+
+                int notificationPermissionAnsweredTimes = resolveNotificationPermissionAnsweredTime();
+                deviceInfo.put(SWRVE_PERMISSION_NOTIFICATION_ANSWERED_TIMES, notificationPermissionAnsweredTimes);
+
+                if (getActivityContext() != null) {
+                    boolean shouldShowRequestPermissionRationale = ActivityCompat.shouldShowRequestPermissionRationale(getActivityContext(), Manifest.permission.POST_NOTIFICATIONS);
+                    deviceInfo.put(SWRVE_PERMISSION_NOTIFICATION_SHOW_RATIONALE, shouldShowRequestPermissionRationale);
+                }
+            }
         }
 
         extraDeviceInfo(deviceInfo);
         return deviceInfo;
+    }
+
+    // Get the number of times a user answered notification permission request. (Either granted or denied, but not dismissed) But also update some flags if necessary
+    // Note, the logic of method resolveNotificationPermissionAnsweredTime should mirror native SwrveUnityCommon.resolveNotificationPermissionAnsweredTime
+    protected int resolveNotificationPermissionAnsweredTime() {
+        int notificationPermissionAnsweredTimes = getPermissionAnsweredTime(POST_NOTIFICATIONS);
+        Activity activity = getActivityContext();
+        if (activity == null || notificationPermissionAnsweredTimes >= 2) {
+            return notificationPermissionAnsweredTimes; // return cached
+        }
+
+        String rationaleWasTrueCacheKey = CACHE_PERMISSION_RATIONALE_WAS_TRUE_PREFIX + POST_NOTIFICATIONS;
+        String notificationRationaleWasTrue = multiLayerLocalStorage.getCacheEntry("", rationaleWasTrueCacheKey); // note this without userId
+        boolean shouldShowRequestPermissionRationale = shouldShowRequestPermissionRationale(activity, POST_NOTIFICATIONS);
+        if (shouldShowRequestPermissionRationale) {
+            if (notificationPermissionAnsweredTimes != 1) {
+                String cacheKey = SwrveHelper.getPermissionAnsweredCacheKey(POST_NOTIFICATIONS);
+                multiLayerLocalStorage.setCacheEntry("", cacheKey, "1"); // note this without userId
+            }
+            // if shouldShowRequestPermissionRationale is true, then notificationPermissionAnsweredTimes is always 1, regardless of whats in cache.
+            notificationPermissionAnsweredTimes = 1;
+        } else if (SwrveHelper.isNotNullOrEmpty(notificationRationaleWasTrue)) {
+            // if an entry for notificationRationaleWasTrue was ever recorded and shouldShowRequestPermissionRationale is currently false, then its likely notificationPermissionAnsweredTimes is 2
+            notificationPermissionAnsweredTimes = 2;
+            String cacheKey = SwrveHelper.getPermissionAnsweredCacheKey(POST_NOTIFICATIONS);
+            multiLayerLocalStorage.setCacheEntry("", cacheKey, "2"); // note this without userId
+        }
+
+        if (shouldShowRequestPermissionRationale && SwrveHelper.isNullOrEmpty(notificationRationaleWasTrue)) {
+            // record that shouldShowRequestPermissionRationale was true once
+            multiLayerLocalStorage.setCacheEntry("", rationaleWasTrueCacheKey, "True"); // note this without userId
+        }
+
+        return notificationPermissionAnsweredTimes;
+    }
+
+    protected int getPermissionAnsweredTime(String permission) {
+        int permissionAnsweredTimes = 0;
+        String cacheKey = SwrveHelper.getPermissionAnsweredCacheKey(permission);
+        String permissionAnsweredTimesString = multiLayerLocalStorage.getCacheEntry("", cacheKey); // note this without userId
+        if (SwrveHelper.isNotNullOrEmpty(permissionAnsweredTimesString)) {
+            permissionAnsweredTimes = Integer.parseInt(permissionAnsweredTimesString);
+        }
+        return permissionAnsweredTimes;
+    }
+
+    // exposed for testing
+    protected boolean shouldShowRequestPermissionRationale(Activity activity, String permission) {
+        return ActivityCompat.shouldShowRequestPermissionRationale(activity, permission);
     }
 
     protected void _refreshCampaignsAndResources() {
@@ -2469,4 +2538,26 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e("SwrveSDK: Exception saving event to storage.", e);
         }
     }
+
+    // Permission changes are tracked with an event when it *changes*
+    protected void checkNotificationPermissionChange() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            String currentNotificationPermission = SwrveHelper.getPermissionString(ContextCompat.checkSelfPermission(getContext(), POST_NOTIFICATIONS));
+            String currentNotificationCacheKey = CACHE_PERMISSION_CURRENT_PREFIX + POST_NOTIFICATIONS; // current stored permission value that sdk knows about
+            String cachedNotificationPermission = multiLayerLocalStorage.getCacheEntry("", currentNotificationCacheKey); // no userId needed
+            if (SwrveHelper.isNullOrEmpty(cachedNotificationPermission)) {
+                multiLayerLocalStorage.setCacheEntry("", currentNotificationCacheKey, currentNotificationPermission);
+            } else if (!currentNotificationPermission.equals(cachedNotificationPermission)) {
+                Map<String, Object> parameters = new HashMap<>();
+                if (currentNotificationPermission.equals(SwrveHelper.getPermissionString(PERMISSION_GRANTED))) {
+                    parameters.put("name", EVENT_NOTIFICATION_CHANGE_GRANTED);
+                } else {
+                    parameters.put("name", EVENT_NOTIFICATION_CHANGE_DENIED);
+                }
+                queueEvent(profileManager.getUserId(), "event", parameters, new HashMap<>(), false);
+                multiLayerLocalStorage.setCacheEntry("", currentNotificationCacheKey, currentNotificationPermission);
+            }
+        }
+    }
+
 }

@@ -12,4 +12,12 @@
         android:text="Sample Project.\n\n Have a look at the code!"
         android:textSize="30dp" />
 
+    <Button
+        android:id="@+id/btnRequestNotificationPermission"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:onClick="requestNotificationPermission"
+        android:text="Request notification permission" />
+
 </LinearLayout>

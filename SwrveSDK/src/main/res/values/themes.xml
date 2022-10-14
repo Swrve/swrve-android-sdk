@@ -13,4 +13,7 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
+
+    <style name="Swrve.LightTheme" parent="android:Theme.Light" />
+
 </resources>

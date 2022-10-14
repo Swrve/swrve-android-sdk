@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.swrve.sdk.geo.sample"
         minSdkVersion 19
-        targetSdkVersion 31
+        targetSdkVersion 33
     }
 
     buildTypes {
@@ -26,6 +26,6 @@ android {
 
 dependencies {
     api 'com.google.android.material:material:1.0.0'
-    api 'com.swrve.sdk.android:swrve-firebase:10.3.0'
+    api 'com.swrve.sdk.android:swrve-firebase:10.4.0'
     api 'com.swrve.sdk.android:swrve-geo:7.0.0'
 }

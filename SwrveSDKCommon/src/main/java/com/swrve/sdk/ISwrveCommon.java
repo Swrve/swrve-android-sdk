@@ -33,6 +33,9 @@ interface ISwrveCommon {
     String CACHE_SEQNUM = "seqnum";
     String CACHE_QA = "swrve.q1";
     String CACHE_ETAG = "swrve.etag";
+    String CACHE_PERMISSION_ANSWERED_TIMES_PREFIX = "permission_answered_times_";
+    String CACHE_PERMISSION_RATIONALE_WAS_TRUE_PREFIX = "permission_rationale_was_true_";
+    String CACHE_PERMISSION_CURRENT_PREFIX = "permission_current_";
 
     // Blank key for saving device properties that are userId agnostic.
     String CACHE_DEVICE_PROP_KEY = "";
@@ -41,6 +44,8 @@ interface ISwrveCommon {
     String SWRVE_DEVICE_NAME                = "swrve.device_name";
     String SWRVE_OS                         = "swrve.os";
     String SWRVE_OS_VERSION                 = "swrve.os_version";
+    String SWRVE_OS_INT_VERSION             = "swrve.swrve.os_int_version";
+    String SWRVE_APP_TARGET_VERSION         = "swrve.app_target_version";
     String SWRVE_DEVICE_WIDTH               = "swrve.device_width";
     String SWRVE_DEVICE_HEIGHT              = "swrve.device_height";
     String SWRVE_DEVICE_DPI                 = "swrve.device_dpi";
@@ -67,6 +72,9 @@ interface ISwrveCommon {
     String SWRVE_INIT_MODE                  = "swrve.sdk_init_mode";
     String SWRVE_DEVICE_TYPE                = "swrve.device_type";
     String SWRVE_TRACKING_STATE             = "swrve.tracking_state";
+    String SWRVE_PERMISSION_NOTIFICATION                    = "swrve.permission.android.notification";
+    String SWRVE_PERMISSION_NOTIFICATION_SHOW_RATIONALE     = "swrve.permission.android.notification_show_rationale";
+    String SWRVE_PERMISSION_NOTIFICATION_ANSWERED_TIMES     = "swrve.permission.android.notification_answered_times";
 
     // user Update
     String SWRVE_REFERRER_ID                = "swrve.referrer_id";
@@ -109,6 +117,8 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_BUTTON_ID          = "buttonId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_NAME        = "buttonName";
     String EVENT_FIRST_SESSION                      = "Swrve.first_session";
+    String EVENT_NOTIFICATION_CHANGE_GRANTED        = "Swrve.permission.android.notification.granted";
+    String EVENT_NOTIFICATION_CHANGE_DENIED         = "Swrve.permission.android.notification.denied";
 
     // platform information
     String OS_ANDROID                         = "android";

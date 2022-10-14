@@ -2,6 +2,8 @@ package com.swrve.sdk;
 
 import android.app.NotificationChannel;
 
+import java.util.List;
+
 public class SwrveNotificationConfig {
 
     private Class<?> activityClass;
@@ -11,6 +13,7 @@ public class SwrveNotificationConfig {
     private int largeIconDrawableId;
     private String accentColorHex;
     private SwrveNotificationFilter notificationFilter;
+    private List<String> pushNotificationPermissionEvents;
 
     private SwrveNotificationConfig(Builder builder) {
         this.activityClass = builder.activityClass;
@@ -20,6 +23,7 @@ public class SwrveNotificationConfig {
         this.largeIconDrawableId = builder.largeIconDrawableId;
         this.accentColorHex = builder.accentColorHex;
         this.notificationFilter = builder.notificationFilter;
+        this.pushNotificationPermissionEvents = builder.pushNotificationPermissionEvents;
     }
 
     /**
@@ -85,6 +89,15 @@ public class SwrveNotificationConfig {
         return notificationFilter;
     }
 
+    /**
+     * The list of Swrve events that will attempt to trigger a notification permission request
+     *
+     * @return List of events
+     */
+    public List<String> getPushNotificationPermissionEvents() {
+        return pushNotificationPermissionEvents;
+    }
+
     public static class Builder {
 
         private Class<?> activityClass;
@@ -94,11 +107,13 @@ public class SwrveNotificationConfig {
         private int largeIconDrawableId;
         private String accentColorHex;
         private SwrveNotificationFilter notificationFilter;
+        private List<String> pushNotificationPermissionEvents;
 
         /**
          * Builder constructor
-         * @param iconDrawableId the notification icon drawable to be shown in the status bar for below api level 21
-         * @param iconMaterialDrawableId the notification icon drawable to be shown in the status bar for above api level 20
+         *
+         * @param iconDrawableId             the notification icon drawable to be shown in the status bar for below api level 21
+         * @param iconMaterialDrawableId     the notification icon drawable to be shown in the status bar for above api level 20
          * @param defaultNotificationChannel Set the default notification channel used to display notifications. This is required if you target Android O (API 26) or higher.
          *                                   We recommend that the channel is created before setting it in our config. Our SDK will attempt to create it if it doesn't exist.
          */
@@ -150,6 +165,17 @@ public class SwrveNotificationConfig {
          */
         public Builder notificationFilter(SwrveNotificationFilter notificationFilter) {
             this.notificationFilter = notificationFilter;
+            return this;
+        }
+
+        /**
+         * Set list of Swrve events that will attempt to trigger a notification permission request
+         *
+         * @param pushNotificationPermissionEvents List of events
+         * @return this builder
+         */
+        public Builder pushNotificationPermissionEvents(List<String> pushNotificationPermissionEvents) {
+            this.pushNotificationPermissionEvents = pushNotificationPermissionEvents;
             return this;
         }
 

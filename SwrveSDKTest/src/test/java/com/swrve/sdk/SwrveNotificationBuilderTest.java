@@ -18,6 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -62,6 +63,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS);
         ISwrveCommon swrveCommonSpy = mock(ISwrveCommon.class);
         SwrveCommon.setSwrveCommon(swrveCommonSpy);
         doReturn(notificationConfig).when(swrveCommonSpy).getNotificationConfig();
@@ -429,7 +431,6 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals("[rich body]", notification.tickerText);
         assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
         assertNotNull(shadowNotification.getBigPicture());
-        assertEquals(bmp, shadowNotification.getBigPicture());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

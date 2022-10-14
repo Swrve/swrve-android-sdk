@@ -15,9 +15,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Configuration for the Swrve SDK.
