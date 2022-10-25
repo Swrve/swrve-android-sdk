@@ -72,6 +72,7 @@ interface ISwrveCommon {
     String SWRVE_INIT_MODE                  = "swrve.sdk_init_mode";
     String SWRVE_DEVICE_TYPE                = "swrve.device_type";
     String SWRVE_TRACKING_STATE             = "swrve.tracking_state";
+    String SWRVE_USABLE_SPACE               = "swrve.usable_space";
     String SWRVE_PERMISSION_NOTIFICATION                    = "swrve.permission.android.notification";
     String SWRVE_PERMISSION_NOTIFICATION_SHOW_RATIONALE     = "swrve.permission.android.notification_show_rationale";
     String SWRVE_PERMISSION_NOTIFICATION_ANSWERED_TIMES     = "swrve.permission.android.notification_answered_times";
@@ -112,6 +113,10 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_SILENT             = "silent";
     String GENERIC_EVENT_PAYLOAD_DISPLAYED          = "displayed";
     String GENERIC_EVENT_PAYLOAD_REASON             = "reason";
+    String GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO    = "additional_info";
+    String GENERIC_EVENT_PAYLOAD_MSG_ID             = "provider.message_id";
+    String GENERIC_EVENT_PAYLOAD_SENT_TIME          = "provider.sent_time";
+    String GENERIC_EVENT_PAYLOAD_SID                = "_sid";
     String GENERIC_EVENT_PAYLOAD_PAGE_NAME          = "pageName";
     String GENERIC_EVENT_PAYLOAD_TO                 = "to";
     String GENERIC_EVENT_PAYLOAD_BUTTON_ID          = "buttonId";

@@ -1,13 +1,5 @@
 package com.swrve.sdk;
 
-import android.os.Bundle;
-
-import com.huawei.hms.push.RemoteMessage;
-
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.robolectric.Robolectric;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -16,6 +8,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+
+import android.os.Bundle;
+
+import com.huawei.hms.push.RemoteMessage;
+
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.robolectric.Robolectric;
 
 public class SwrveHuaweiMessageServiceTest extends SwrveBaseTest {
 
@@ -27,26 +27,48 @@ public class SwrveHuaweiMessageServiceTest extends SwrveBaseTest {
 
         doNothing().when(serviceSpy).handle(any(Bundle.class));
 
+        // Invalid bundle
         RemoteMessage.Builder invalidPushBundle = new RemoteMessage.Builder("dest");
         invalidPushBundle.addData("text", "hello");
         invalidPushBundle.addData("key1", "value1");
         serviceSpy.onMessageReceived(invalidPushBundle.build());
-
         ArgumentCaptor<Bundle> bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
         verify(serviceSpy, never()).handle(bundleCaptor.capture());
 
-        RemoteMessage.Builder validPushBundle = new RemoteMessage.Builder("dest");
-        validPushBundle.addData(SwrveNotificationConstants.TEXT_KEY, "validBundle");
-        validPushBundle.addData(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
-        serviceSpy.onMessageReceived(validPushBundle.build());
-
+        // valid bundle but without a sid
+        RemoteMessage.Builder validPushBundleWithoutSid = new RemoteMessage.Builder("dest");
+        validPushBundleWithoutSid.addData(SwrveNotificationConstants.TEXT_KEY, "validBundle");
+        validPushBundleWithoutSid.addData(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        serviceSpy.onMessageReceived(validPushBundleWithoutSid.build());
         bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
         verify(serviceSpy, atLeastOnce()).handle(bundleCaptor.capture());
-
         Bundle actualBundle = bundleCaptor.getAllValues().get(0);
-        assertEquals(2, actualBundle.size());
+        assertEquals(4, actualBundle.size());
         assertEquals("validBundle", actualBundle.getString("text"));
         assertEquals("1", actualBundle.getString("_p"));
+
+        // valid bundle but with a sid
+        RemoteMessage.Builder pushBundleWithSid = new RemoteMessage.Builder("dest");
+        pushBundleWithSid.addData(SwrveNotificationConstants.TEXT_KEY, "validBundle");
+        pushBundleWithSid.addData(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "2");
+        pushBundleWithSid.addData(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, "2");
+        pushBundleWithSid.setMessageId("123");
+        serviceSpy.onMessageReceived(pushBundleWithSid.build());
+        bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
+        verify(serviceSpy, atLeastOnce()).handle(bundleCaptor.capture());
+        assertEquals(2, bundleCaptor.getAllValues().size()); // the size increases to 2
+        actualBundle = bundleCaptor.getAllValues().get(1); // second index
+        assertEquals(5, actualBundle.size());
+        assertEquals("validBundle", actualBundle.getString("text"));
+        assertEquals("2", actualBundle.getString("_p"));
+        assertEquals("123", actualBundle.getString("provider.message_id"));
+        assertEquals("0", actualBundle.getString("provider.sent_time"));
+
+        // use same bundle as last with the same sid
+        serviceSpy.onMessageReceived(pushBundleWithSid.build());
+        bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
+        verify(serviceSpy, atLeastOnce()).handle(bundleCaptor.capture());
+        assertEquals(2, bundleCaptor.getAllValues().size()); // the size stays at 2 meaning the duplicate was caught
     }
 
     @Test

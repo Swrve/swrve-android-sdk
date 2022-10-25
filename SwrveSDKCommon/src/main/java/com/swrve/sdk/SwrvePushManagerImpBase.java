@@ -3,9 +3,11 @@ package com.swrve.sdk;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
 import static com.swrve.sdk.ISwrveCommon.SWRVE_NOTIFICATIONS_ENABLED;
 import static com.swrve.sdk.ISwrveCommon.SWRVE_PERMISSION_NOTIFICATION;
+import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_TRACKING_KEY;
+import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY;
 
 import android.app.Notification;
 import android.content.Context;
@@ -111,13 +113,26 @@ public abstract class SwrvePushManagerImpBase {
         try {
             ArrayList<String> eventsList = EventHelper.getPushDeliveredEvent(extras, getTime(), displayed, reason);
             if (eventsList != null && eventsList.size() > 0) {
+                String uniqueWorkName = getUniqueWorkName(extras);
                 String eventBody = EventHelper.getPushDeliveredBatchEvent(eventsList);
                 String endPoint = swrveCommon.getEventsServer() + "/1/batch";
-                getCampaignDeliveryManager().sendCampaignDelivery(endPoint, eventBody);
+                getCampaignDeliveryManager().sendCampaignDelivery(uniqueWorkName, endPoint, eventBody);
             }
         } catch (Exception e) {
             SwrveLogger.e("Exception in sendPushDeliveredEvent.", e);
         }
+    }
+
+    private String getUniqueWorkName(Bundle extras) {
+        String uniqueWorkName = extras.getString(SWRVE_UNIQUE_MESSAGE_ID_KEY);
+        if (SwrveHelper.isNullOrEmpty(uniqueWorkName) && extras.containsKey(GENERIC_EVENT_PAYLOAD_MSG_ID)) {
+            uniqueWorkName = extras.getString(GENERIC_EVENT_PAYLOAD_MSG_ID);
+        }
+        if (SwrveHelper.isNullOrEmpty(uniqueWorkName)) {
+            uniqueWorkName = extras.getString(SWRVE_TRACKING_KEY);
+        }
+        uniqueWorkName = "CampaignDeliveryWork_" + uniqueWorkName; // add prefix
+        return uniqueWorkName;
     }
 
     public void sendDeviceUpdateWithDeniedNotificationPermission() {

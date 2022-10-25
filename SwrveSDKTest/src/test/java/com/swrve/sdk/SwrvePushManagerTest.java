@@ -5,6 +5,8 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_INFLUENCED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -534,6 +536,9 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
     public void testSendPushDeliveryDisplayedTrue() {
         Bundle pushBundle = new Bundle();
         pushBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
+        pushBundle.putString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, "888");
+        pushBundle.putString(GENERIC_EVENT_PAYLOAD_MSG_ID, "777");
+        pushBundle.putString(GENERIC_EVENT_PAYLOAD_SENT_TIME, "999");
         SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
         doReturn(9876l).when(pushManagerSpy).getTime();
         CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.mock(CampaignDeliveryManager.class);
@@ -558,14 +563,20 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                             "\"id\":\"123\"," +
                             "\"payload\":{" +
                                 "\"displayed\":\"true\"," +
-                                "\"silent\":\"false\"" +
+                                "\"silent\":\"false\"," +
+                                "\"additional_info\":" +
+                                "{" +
+                                    "\"provider.message_id\":\"777\"," +
+                                    "\"provider.sent_time\":\"999\"," +
+                                    "\"_sid\":\"888\"" +
+                                "}" +
                             "}" +
                         "}" +
                     "]" +
                 "}";
         // @formatter:on
 
-        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("some_endpoint/1/batch", expectedJson);
+        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("CampaignDeliveryWork_888", "some_endpoint/1/batch", expectedJson);
     }
 
     @Test
@@ -604,13 +615,14 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                 "}";
         // @formatter:on
 
-        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("some_endpoint/1/batch", expectedJson);
+        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("CampaignDeliveryWork_123","some_endpoint/1/batch", expectedJson);
     }
 
     @Test
     public void testSendPushDeliverySilent()  {
         Bundle pushBundle = new Bundle();
         pushBundle.putString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, "456");
+        pushBundle.putString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, "789");
         SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
         doReturn(9876l).when(pushManagerSpy).getTime();
         CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.mock(CampaignDeliveryManager.class);
@@ -635,14 +647,18 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                             "\"id\":\"456\"," +
                             "\"payload\":{" +
                                 "\"displayed\":\"false\"," +
-                                "\"silent\":\"true\"" +
+                                "\"silent\":\"true\"," +
+                                "\"additional_info\":" +
+                                    "{" +
+                                        "\"_sid\":\"789\"" +
+                                    "}" +
                             "}" +
                         "}" +
                     "]" +
                 "}";
         // @formatter:on
 
-        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("some_endpoint/1/batch", expectedJson);
+        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("CampaignDeliveryWork_789","some_endpoint/1/batch", expectedJson);
     }
 
     @Test
@@ -656,7 +672,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
 
         pushManagerSpy.sendPushDeliveredEvent(pushBundle, false, "some_reason");
 
-        verify(campaignDeliveryManagerSpy, never()).sendCampaignDelivery(anyString(), anyString());
+        verify(campaignDeliveryManagerSpy, never()).sendCampaignDelivery(anyString(), anyString(), anyString());
     }
 
     @Test

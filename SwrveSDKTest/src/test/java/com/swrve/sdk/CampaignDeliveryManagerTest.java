@@ -1,5 +1,22 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.CampaignDeliveryManager.KEY_BODY;
+import static com.swrve.sdk.CampaignDeliveryManager.KEY_END_POINT;
+import static com.swrve.sdk.CampaignDeliveryManager.MAX_ATTEMPTS;
+import static com.swrve.sdk.CampaignDeliveryManager.REST_CLIENT_TIMEOUT_MILLIS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import android.content.Context;
 
 import androidx.work.BackoffPolicy;
@@ -18,23 +35,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-
-import static com.swrve.sdk.CampaignDeliveryManager.KEY_BODY;
-import static com.swrve.sdk.CampaignDeliveryManager.KEY_END_POINT;
-import static com.swrve.sdk.CampaignDeliveryManager.MAX_ATTEMPTS;
-import static com.swrve.sdk.CampaignDeliveryManager.REST_CLIENT_TIMEOUT_MILLIS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 public class CampaignDeliveryManagerTest extends SwrveBaseTest {
 
@@ -213,12 +213,12 @@ public class CampaignDeliveryManagerTest extends SwrveBaseTest {
     public void testSendCampaignDelivery() {
 
         CampaignDeliveryManager deliveryManagerSpy = spy(new CampaignDeliveryManager(mActivity));
-        doNothing().when(deliveryManagerSpy).enqueueWorkRequest(any(Context.class), any(OneTimeWorkRequest.class));
+        doNothing().when(deliveryManagerSpy).enqueueUniqueWork(any(Context.class), anyString(), any(OneTimeWorkRequest.class));
 
-        deliveryManagerSpy.sendCampaignDelivery(testEndpoint, testBatchEvent);
+        deliveryManagerSpy.sendCampaignDelivery("uniqueWorkName", testEndpoint, testBatchEvent);
 
         verify(deliveryManagerSpy, atLeastOnce()).getRestWorkRequest(testEndpoint, testBatchEvent);
-        verify(deliveryManagerSpy, atLeastOnce()).enqueueWorkRequest(any(Context.class), any(OneTimeWorkRequest.class));
+        verify(deliveryManagerSpy, atLeastOnce()).enqueueUniqueWork(any(Context.class), anyString(), any(OneTimeWorkRequest.class));
     }
 
     @Test

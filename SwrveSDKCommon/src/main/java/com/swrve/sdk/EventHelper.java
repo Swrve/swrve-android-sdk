@@ -19,9 +19,14 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_DISPLAYED;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_REASON;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SILENT;
+import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -222,7 +227,7 @@ final class EventHelper {
 
         String id = extras.getString(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
 
-        Map<String, String> payload = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
         if (SwrveHelper.isNullOrEmpty(id)) {
             id = extras.getString(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
             payload.put(GENERIC_EVENT_PAYLOAD_SILENT, String.valueOf(true));
@@ -232,6 +237,20 @@ final class EventHelper {
         payload.put(GENERIC_EVENT_PAYLOAD_DISPLAYED, String.valueOf(displayed));
         if (SwrveHelper.isNotNullOrEmpty(reason)) {
             payload.put(GENERIC_EVENT_PAYLOAD_REASON, reason);
+        }
+
+        JSONObject additionalInfo = new JSONObject();
+        if (extras.containsKey(GENERIC_EVENT_PAYLOAD_MSG_ID)) {
+            additionalInfo.put(GENERIC_EVENT_PAYLOAD_MSG_ID, extras.getString(GENERIC_EVENT_PAYLOAD_MSG_ID));
+        }
+        if (extras.containsKey(GENERIC_EVENT_PAYLOAD_SENT_TIME)) {
+            additionalInfo.put(GENERIC_EVENT_PAYLOAD_SENT_TIME, extras.getString(GENERIC_EVENT_PAYLOAD_SENT_TIME));
+        }
+        if (extras.containsKey(SWRVE_UNIQUE_MESSAGE_ID_KEY)) {
+            additionalInfo.put(GENERIC_EVENT_PAYLOAD_SID, extras.getString(SWRVE_UNIQUE_MESSAGE_ID_KEY));
+        }
+        if(additionalInfo.length() > 0) {
+            payload.put(GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO, additionalInfo);
         }
 
         int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();

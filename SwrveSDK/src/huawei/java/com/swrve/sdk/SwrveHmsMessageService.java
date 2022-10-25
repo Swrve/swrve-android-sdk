@@ -1,5 +1,8 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
+
 import android.os.Bundle;
 
 import com.huawei.hms.push.HmsMessageService;
@@ -31,15 +34,20 @@ public class SwrveHmsMessageService extends HmsMessageService {
 
         try {
             if (remoteMessage.getData() != null) {
-                SwrveLogger.i("Received Huawei data: %s", remoteMessage.getData());
+                SwrveLogger.i("SwrveHmsMessageService Received Huawei data: %s", remoteMessage.getData());
 
                 Bundle extras = new Bundle();
                 for (String key : remoteMessage.getDataOfMap().keySet()) { // Convert from string to Bundle
                     extras.putString(key, remoteMessage.getDataOfMap().get(key));
                 }
+                extras.putString(GENERIC_EVENT_PAYLOAD_MSG_ID, remoteMessage.getMessageId());
+                extras.putString(GENERIC_EVENT_PAYLOAD_SENT_TIME, String.valueOf(remoteMessage.getSentTime()));
 
                 if (!SwrveHelper.isSwrvePush(extras)) {
                     SwrveLogger.i("SwrveHmsMessageService: Received Push: but not processing as it doesn't contain: %s or %s", SwrveNotificationConstants.SWRVE_TRACKING_KEY, SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
+                    return;
+                } else if (SwrvePushSidDeDuper.isDupe(this, remoteMessage.getDataOfMap())) {
+                    SwrveLogger.i("SwrveHmsMessageService Received Push: but not processing as _sid has been processed before.");
                     return;
                 }
 

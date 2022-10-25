@@ -1,10 +1,15 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_DATA;
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_RUN_NUMBER;
+
 import android.content.Context;
 
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
@@ -22,10 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_DATA;
-import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_RUN_NUMBER;
-
 class CampaignDeliveryManager {
 
     protected static final int REST_CLIENT_TIMEOUT_MILLIS = 60000;
@@ -41,10 +42,10 @@ class CampaignDeliveryManager {
         this.context = context;
     }
 
-    protected void sendCampaignDelivery(String endpoint, String body) {
+    protected void sendCampaignDelivery(String uniqueWorkName, String endpoint, String body) {
         try {
             workRequest = getRestWorkRequest(endpoint, body);
-            enqueueWorkRequest(context, workRequest);
+            enqueueUniqueWork(context, uniqueWorkName, workRequest);
         } catch (Exception ex) {
             SwrveLogger.e("SwrveSDK: Error trying to queue campaign delivery event.", ex);
         }
@@ -67,8 +68,8 @@ class CampaignDeliveryManager {
     }
 
     // separate method for testing
-    protected synchronized void enqueueWorkRequest(Context context, OneTimeWorkRequest workRequest) {
-        WorkManager.getInstance(context).enqueue(workRequest);
+    protected void enqueueUniqueWork(Context context, String uniqueWorkName, OneTimeWorkRequest workRequest) {
+        WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.KEEP, workRequest);
     }
 
     protected ListenableWorker.Result post(Data data, int runAttempt) {

@@ -210,7 +210,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     private void initCacheDir(Activity activity) {
         File cacheDir = getCacheDir(activity);
         swrveAssetsManager.setStorageDir(cacheDir);
-        SwrveLogger.d("Using cache directory at %s", cacheDir.getPath());
+        SwrveLogger.d("SwrveSDK using cache directory at %s", cacheDir.getPath());
     }
 
     @Override
@@ -220,12 +220,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (cacheDir == null) {
             cacheDir = context.getCacheDir();
         } else {
+            SwrveLogger.v("SwrveSDK using custom cache directory from config %s", cacheDir.getPath());
             if (!checkPermissionGranted(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                SwrveLogger.v("SwrveSDK external storage permission is denied. Attempt to request it.");
                 final String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
                 if (context instanceof Activity) {
                     requestPermissions((Activity) context, permissions);
                 }
                 cacheDir = context.getCacheDir(); // fall back to internal cache until permission granted.
+                SwrveLogger.v("SwrveSDK fallback to internal cache until permission granted.");
             }
 
             if (!cacheDir.exists()) {
@@ -700,6 +703,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     boolean shouldShowRequestPermissionRationale = ActivityCompat.shouldShowRequestPermissionRationale(getActivityContext(), Manifest.permission.POST_NOTIFICATIONS);
                     deviceInfo.put(SWRVE_PERMISSION_NOTIFICATION_SHOW_RATIONALE, shouldShowRequestPermissionRationale);
                 }
+            }
+
+            if (getCacheDir() != null) {
+                long usableSpaceBytes = new File(getCacheDir().getAbsoluteFile().toString()).getUsableSpace();
+                deviceInfo.put(SWRVE_USABLE_SPACE, usableSpaceBytes);
             }
         }
 

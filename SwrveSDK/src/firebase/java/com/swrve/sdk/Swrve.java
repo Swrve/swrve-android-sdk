@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.SwrveFlavour.FIREBASE;
+
 import android.app.Application;
 import android.content.Context;
 
@@ -7,8 +9,6 @@ import com.swrve.sdk.config.SwrveConfig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import static com.swrve.sdk.SwrveFlavour.FIREBASE;
 
 /**
  * Main implementation of the Firebase Swrve SDK.
@@ -22,7 +22,6 @@ public class Swrve extends SwrveBase<ISwrve, SwrveConfig> implements ISwrve {
     protected Swrve(Application application, int appId, String apiKey, SwrveConfig config) {
         super(application, appId, apiKey, config);
         googleUtil = new SwrveGoogleUtil(application, profileManager.getTrackingState());
-
     }
 
     @Override
