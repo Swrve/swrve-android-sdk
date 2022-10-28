@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
@@ -146,7 +147,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         return isDownloaded;
     }
 
-    protected boolean downloadAsset(final SwrveAssetsQueueItem assetItem) {
+    protected boolean downloadAsset(final SwrveAssetsQueueItem assetItem)  {
         boolean success = false;
         String cdnRoot = assetItem.isImage() ? cdnImages : cdnFonts;
         if (SwrveHelper.isNullOrEmpty(cdnRoot)) {
@@ -154,7 +155,13 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             return success;
         }
 
-        String url = cdnRoot + assetItem.getName();
+        String url;
+        String debugGetParams = debugParams(assetItem);
+        if (debugGetParams == null) {
+            url = cdnRoot + assetItem.getName();
+        } else {
+            url = cdnRoot + assetItem.getName() + "?" + debugGetParams;
+        }
         InputStream inputStream = null;
         try {
             URL assetUrl = new URL(url);
@@ -204,6 +211,37 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             }
         }
         return success;
+    }
+
+    private String debugParams(SwrveAssetsQueueItem assetItem) {
+        String debugParams = null;
+        try {
+            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
+            int appId = swrveCommon.getAppId();
+            if (appId != 6915) {
+                return debugParams; // Only apply debug params to cdn asset downloads for 1 app 6915
+            }
+            Map<String, String> params = new HashMap<>();
+
+            params.put("app_id", String.valueOf(appId));
+            params.put("campaign_id", String.valueOf(assetItem.getCampaignId()));
+            params.put("client_time", String.valueOf(System.currentTimeMillis()));
+            String userId = swrveCommon.getUserId();
+            if (SwrveHelper.isNotNullOrEmpty(userId)) {
+                params.put("user_id", userId);
+            }
+            String deviceId = swrveCommon.getDeviceId();
+            if (SwrveHelper.isNotNullOrEmpty(deviceId)) {
+                params.put("device_id", deviceId);
+            }
+            long usableSpaceBytes = new File(storageDir.getAbsoluteFile().toString()).getUsableSpace();
+            params.put("usable_space", String.valueOf(usableSpaceBytes));
+
+            debugParams = SwrveHelper.encodeParameters(params);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK: Error adding debug params to SwrveAssetsManager request.", e);
+        }
+        return debugParams;
     }
 
     protected boolean downloadAssetFromExternalSource(final SwrveAssetsQueueItem assetItem) {

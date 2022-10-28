@@ -37,7 +37,7 @@ android {
 
 dependencies {
     api 'com.google.android.material:material:1.0.0'
-    api 'com.swrve.sdk.android:swrve-huawei:10.5.0'
+    api 'com.swrve.sdk.android:swrve-huawei:10.6.0'
 }
 
 apply plugin: 'com.huawei.agconnect'

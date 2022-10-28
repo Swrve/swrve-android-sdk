@@ -188,6 +188,14 @@ class SwrveDeeplinkManager {
         if (response.responseCode == HttpURLConnection.HTTP_OK) {
             JSONObject responseJson = new JSONObject(response.responseBody);
             updateCdnPaths(responseJson);
+
+            if (responseJson.has("real_time_user_properties")) {
+                JSONObject realTimeUserPropertiesJson = responseJson.getJSONObject("real_time_user_properties");
+                Swrve swrve = (Swrve) SwrveSDK.getInstance();
+                swrve.realTimeUserProperties = SwrveHelper.JSONToMap(realTimeUserPropertiesJson);
+                swrve.saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
+            }
+
             final SwrveAssetsCompleteCallback callback = () -> showCampaign(campaign, context, config);
             getCampaignAssets(responseJson, callback);
             writeCampaignDataToCache(responseJson, actionType);

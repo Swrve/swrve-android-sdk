@@ -431,7 +431,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
 
         SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
             if(!personalizationProperties.isEmpty()) {
-                if(personalizationProperties.containsKey("key")){
+                if(personalizationProperties.containsKey("key") && personalizationProperties.containsKey("user.updated_test_key")){
                     embeddedCallbackBool.set(true);
                 }
             }

@@ -82,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.5.0";
+    protected static String version = "10.6.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 2;
     protected static final int IN_APP_CAMPAIGN_VERSION = 9;
@@ -122,6 +122,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected ExecutorService lifecycleExecutor;
     protected ExecutorService storageExecutor;
     protected ExecutorService restClientExecutor;
+    protected ExecutorService downloadAssetsExecutor;
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
     protected List<SwrveBaseCampaign> campaigns;
@@ -179,6 +180,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.storageExecutor = Executors.newSingleThreadExecutor();
         this.restClientExecutor = Executors.newSingleThreadExecutor();
         this.lifecycleExecutor = Executors.newSingleThreadExecutor();
+        this.downloadAssetsExecutor = Executors.newSingleThreadExecutor();
 
         initProfileManager(applicationContext);
         initAppVersion(applicationContext, config);
@@ -431,6 +433,15 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             SwrveLogger.e("Error while scheduling a lifecycle execution", e);
         }
         return false;
+    }
+
+    private void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
+        if (downloadAssetsExecutor.isShutdown()) {
+            SwrveLogger.i("Trying to handle a downloadAssets execution while shutdown");
+        } else {
+            final SwrveAssetsCompleteCallback callback = () -> autoShowMessages();
+            downloadAssetsExecutor.execute(SwrveRunnables.withoutExceptions(() -> swrveAssetsManager.downloadAssets(assetsQueue, callback)));
+        }
     }
 
     protected long getSessionTime() {
@@ -826,16 +837,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     private boolean supportsDeviceFilter(String requirement) {
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
-    }
-
-    protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
-        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-        try {
-            final SwrveAssetsCompleteCallback callback = () -> autoShowMessages();
-            executorService.execute(SwrveRunnables.withoutExceptions(() -> swrveAssetsManager.downloadAssets(assetsQueue, callback)));
-        } finally {
-            executorService.shutdown();
-        }
     }
 
     protected SwrveInAppCampaign loadCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue, Map<String, String> properties) throws JSONException {

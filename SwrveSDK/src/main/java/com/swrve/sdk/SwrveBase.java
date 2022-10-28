@@ -585,6 +585,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 SwrveLogger.e("Exception occurred shutting down lifecycleExecutorQueue", e);
             }
         }
+
+        if (downloadAssetsExecutor != null) {
+            try {
+                downloadAssetsExecutor.shutdown();
+                downloadAssetsExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred shutting down downloadAssetsExecutor", e);
+            }
+        }
         unregisterActivityLifecycleCallbacks();
     }
 
