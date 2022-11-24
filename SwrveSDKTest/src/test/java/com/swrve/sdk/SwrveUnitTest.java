@@ -556,7 +556,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertTrue(attributeDevices.has("swrve.device_name"));
         assertTrue(attributeDevices.has("swrve.os"));
         assertTrue(attributeDevices.has("swrve.os_version"));
-        assertTrue(attributeDevices.has("swrve.swrve.os_int_version"));
+        assertTrue(attributeDevices.has("swrve.os_int_version"));
         assertTrue(attributeDevices.has("swrve.app_target_version"));
         assertTrue(attributeDevices.has("swrve.device_width"));
         assertTrue(attributeDevices.has("swrve.device_height"));

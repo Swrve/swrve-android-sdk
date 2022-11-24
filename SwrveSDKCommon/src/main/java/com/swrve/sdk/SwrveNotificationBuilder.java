@@ -32,7 +32,6 @@ import com.swrve.sdk.rest.SwrveFilterInputStream;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -532,7 +531,8 @@ public class SwrveNotificationBuilder {
         return intent;
     }
 
-    protected PendingIntent createPendingIntent(Bundle msg, String campaignType, Bundle eventPayload) {
+    // Called by Unity
+    public PendingIntent createPendingIntent(Bundle msg, String campaignType, Bundle eventPayload) {
         Intent intent = createIntent(msg, campaignType, eventPayload);
         int flags = PendingIntent.FLAG_CANCEL_CURRENT;
         if (getSDKVersion() >= Build.VERSION_CODES.M) {
@@ -556,7 +556,7 @@ public class SwrveNotificationBuilder {
     public Class getIntentClass(int sdkVersion, boolean isDismissAction) {
         Class clazz;
         // A dismiss action should dismiss the notification without opening the app
-        if (sdkVersion >= 31 && !isDismissAction) { // Unity compile level is 30 has does not contain Build.VERSION_CODES.S constant
+        if (sdkVersion >= Build.VERSION_CODES.S && !isDismissAction) {
             clazz = SwrveNotificationEngageActivity.class;
         } else {
             clazz = SwrveNotificationEngageReceiver.class;
@@ -566,7 +566,7 @@ public class SwrveNotificationBuilder {
 
     protected PendingIntent getPendingIntent(int sdkVersion, Intent intent, int flags, boolean isDismissAction) {
         PendingIntent pendingIntent;
-        if (sdkVersion >= 31 && !isDismissAction) { // Unity compile level is 30 has does not contain Build.VERSION_CODES.S constant
+        if (sdkVersion >= Build.VERSION_CODES.S && !isDismissAction) {
             pendingIntent = PendingIntent.getActivity(context, requestCode++, intent, flags);
         } else {
             pendingIntent = PendingIntent.getBroadcast(context, requestCode++, intent, flags);

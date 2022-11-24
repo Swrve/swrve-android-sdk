@@ -1,5 +1,6 @@
 package com.swrve.sdk.messaging;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,6 +17,8 @@ public class SwrveButton extends SwrveWidget {
     private int appId;
     private SwrveActionType actionType;
     private String accessibilityText; //Alternative text for use with accessibility voice over
+    private JSONArray events;
+    private JSONArray userUpdates;
 
     public SwrveButton(SwrveMessage message, JSONObject buttonData) throws JSONException {
         super(buttonData);
@@ -51,6 +54,14 @@ public class SwrveButton extends SwrveWidget {
 
         this.action = buttonData.getJSONObject("action").getString("value");
         this.actionType = SwrveActionType.parse(buttonData.getJSONObject("type").getString("value"));
+
+        if (buttonData.has("events")) {
+            this.events = buttonData.getJSONArray("events");
+        }
+
+        if (buttonData.has("user_updates")) {
+            this.userUpdates = buttonData.getJSONArray("user_updates");
+        }
     }
 
     public String getName() {
@@ -83,5 +94,13 @@ public class SwrveButton extends SwrveWidget {
 
     public long getButtonId() {
         return buttonId;
+    }
+
+    public JSONArray getEvents() {
+        return events;
+    }
+
+    public JSONArray getUserUpdates() {
+        return userUpdates;
     }
 }

@@ -179,7 +179,7 @@ class SwrveNotificationEngage {
 
     @SuppressLint("MissingPermission")
     private void closeNotificationBar() {
-        if(Build.VERSION.SDK_INT < 31) { // Unity compile level is 30 has does not contain Build.VERSION_CODES.S constant
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             // When performing a button action on notifications, you need to close the notification drawer explicitly
             // note, this requires permission android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS if on 31+
             Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);

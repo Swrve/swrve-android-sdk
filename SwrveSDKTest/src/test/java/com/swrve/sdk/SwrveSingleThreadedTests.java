@@ -185,9 +185,9 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         // shutdown current instance and call setup again to recreate it
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
-        String swrve1Instance = ((Object)swrveSpy).toString();
+        String swrve1Instance = ((Object) swrveSpy).toString();
         setUp();
-        String swrve2Instance = ((Object)swrveSpy).toString();
+        String swrve2Instance = ((Object) swrveSpy).toString();
         assertNotEquals(swrve1Instance, swrve2Instance); // verify its a new instance
 
         assertEquals(deviceID, swrveSpy.getDeviceId());
@@ -239,18 +239,28 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     public void testButtonDismissWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-        int originalEvents = getAllEvents().size();
+
+        assertEquals(3, getAllEvents().size());
 
         SwrveButton buttonDismiss = createButton(SwrveActionType.Dismiss, "campaign.json", null, 150);
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
         intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
+
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_1", "some personalized value1");
+        personalization.put("test_2", "some personalized value2");
+        intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
+        inAppMessageHandler.customEventDelayQueueSeconds = 0;
 
         inAppMessageHandler.buttonClicked(buttonDismiss, "someAction", 0, "");
-        int lastEvents = getAllEvents().size();
 
-        // One dismissal less
-        assertEquals(originalEvents, lastEvents);
+        Thread.sleep(100l); // Custom events are sent a short period of time later so sleep
+
+        // 4 new buttons events should be queued, Test Json has Swrve. event which should not be sent
+        assertEquals(7, getAllEvents().size());
+
+        verifyDataCapturedFromButtonClick();
     }
 
     @Test
@@ -261,7 +271,12 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         SwrveButton buttonInstall = createButton(SwrveActionType.Install, "campaign.json", null, 150);
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
         intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_1", "some personalized value1");
+        personalization.put("test_2", "some personalized value2");
+        intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
+        inAppMessageHandler.customEventDelayQueueSeconds = 0;
 
         inAppMessageHandler.buttonClicked(buttonInstall, "someAction", 0, "");
 
@@ -272,6 +287,13 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
             clickFound = eventData.contains("Swrve.Messages.Message-" + buttonInstall.getMessage().getId());
         }
         assertTrue(clickFound);
+
+        Thread.sleep(100l); // Custom events are sent a short period of time later so sleep
+
+        // 4 new buttons events should be queued, Test Json has Swrve. event which should not be sent
+        assertEquals(8, getAllEvents().size());
+
+        verifyDataCapturedFromButtonClick();
     }
 
     @Test
@@ -279,19 +301,19 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
 
-        int originalEvents = getAllEvents().size();
+        assertEquals(3, getAllEvents().size());
 
         SwrveButton buttonCustom = createButton(SwrveActionType.Custom, "campaign.json", null, 150);
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
         intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("test_1", "some personalized value1");
+        personalization.put("test_2", "some personalized value2");
+        intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
+        inAppMessageHandler.customEventDelayQueueSeconds = 0;
 
         inAppMessageHandler.buttonClicked(buttonCustom, "someAction", 0, "");
-
-        int lastEvents = getAllEvents().size();
-
-        // One click event
-        assertEquals(1, lastEvents - originalEvents);
 
         boolean clickFound = false;
         Object[] events = getAllEvents().values().toArray();
@@ -300,6 +322,13 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
             clickFound = eventData.contains("Swrve.Messages.Message-" + buttonCustom.getMessage().getId());
         }
         assertTrue(clickFound);
+
+        Thread.sleep(100l); // Custom events are sent a short period of time later so sleep
+
+        // 4 new buttons events should be queued, Test Json has Swrve. event which should not be sent
+        assertEquals(8, getAllEvents().size());
+
+        verifyDataCapturedFromButtonClick();
     }
 
     private SwrveButton createButton(SwrveActionType type, String dummyJson, String action, Integer appId) throws Exception {
@@ -343,7 +372,39 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
                 "                    \"type\": {\n" +
                 "                      \"type\": \"text\",\n" +
                 "                      \"value\": \"" + type + "\"\n" +
-                "                    }\n" +
+                "                    },\n" +
+                "                    \"events\": [" +
+                "                           {\n" +
+                "                             \"name\": \"Swrve.Not Allowed\" \n" +
+                "                           },\n" +
+                "                           {\n" +
+                "                             \"name\": \"Test Event No Payload\" \n" +
+                "                           },\n" +
+                "                           {\n" +
+                "                           \"name\": \"Test Event 1\",\n" +
+                "                           \"payload\": [{\n" +
+                "                               \"key\": \"key1\",\n" +
+                "                                \"value\":\"some value personalized:${test_1}\"\n" +
+                "                                },\n" +
+                "                               { \n" +
+                "                               \"key\": \"key2\", \n" +
+                "                                \"value\": \"some value personalized:${test_2}\"\n" +
+                "                               }\n" +
+                "                            ]\n" +
+                "                          },\n" +
+                "                          {\n" +
+                "                          \"name\": \"Test Event 2\",\n" +
+                "                          \"payload\": [{\n" +
+                "                             \"key\": \"key1\",\n" +
+                "                             \"value\": \"some value personalized:${test_1}\"\n" +
+                "                           }]\n" +
+                "                         }\n" +
+                "                       ],\n" +
+                "                       \"user_updates\": [{\n" +
+                "                            \"key\": \"key1\",\n" +
+                "                            \"value\": \"some value personalized:${test_1}\"\n" +
+                "                         }]\n" +
+                "                       }\n" +
                 "                  }";
 
         SwrveButton btn = new SwrveButton(message, new JSONObject(buttonJson));
@@ -353,4 +414,24 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     private LinkedHashMap<Long, String> getAllEvents() {
         return swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getFirstNEvents(Integer.MAX_VALUE, swrveSpy.getUserId());
     }
+
+    private void verifyDataCapturedFromButtonClick() {
+        ArgumentCaptor<String> name = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Map<String, String>> payload = ArgumentCaptor.forClass(Map.class);
+        verify(swrveSpy, times(4)).event(name.capture(), payload.capture());
+        assertEquals("Swrve.Not Allowed", name.getAllValues().get(0));
+        assertEquals(0, payload.getAllValues().get(0).size());
+        assertEquals("Test Event No Payload", name.getAllValues().get(1));
+        assertEquals(0, payload.getAllValues().get(1).size());
+        assertEquals("Test Event 1", name.getAllValues().get(2));
+        assertEquals("some value personalized:some personalized value1", payload.getAllValues().get(2).get("key1"));
+        assertEquals("some value personalized:some personalized value2", payload.getAllValues().get(2).get("key2"));
+        assertEquals("Test Event 2", name.getAllValues().get(3));
+        assertEquals("some value personalized:some personalized value1", payload.getAllValues().get(3).get("key1"));
+
+        ArgumentCaptor<Map<String, String>> attributes = ArgumentCaptor.forClass(Map.class);
+        verify(swrveSpy, times(1)).userUpdate(attributes.capture());
+        assertEquals("some value personalized:some personalized value1", attributes.getValue().get("key1"));
+    }
 }
+

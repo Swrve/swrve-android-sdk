@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -27,10 +28,16 @@ import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessagePage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 class InAppMessageHandler {
 
@@ -46,6 +53,7 @@ class InAppMessageHandler {
     protected SwrveMessageFormat format;
     private final List<Long> sentNavigationEvents; // buttonIds
     private final List<Long> sentPageViewEvents; // pageIds
+    protected int customEventDelayQueueSeconds = 2;
 
     InAppMessageHandler(Context context, Intent intent, Bundle savedInstanceState) {
         this.sdk = (SwrveBase) SwrveSDK.getInstance();
@@ -110,6 +118,9 @@ class InAppMessageHandler {
             default:
                 break;
         }
+
+        queueButtonEvents(button.getEvents());
+        queueButtonUserUpdates(button.getUserUpdates());
     }
 
     private void installButtonClicked(SwrveButton button, long pageId, String pageName) {
@@ -229,7 +240,7 @@ class InAppMessageHandler {
     }
 
     private void sendNavigationEvent(long pageId, String pageName, long pageToId, long buttonId) {
-        if(sentNavigationEvents.contains(buttonId)) {
+        if (sentNavigationEvents.contains(buttonId)) {
             SwrveLogger.v("SwrveSDK: Navigation event for button_id %s already sent.", buttonId);
             return;
         }
@@ -263,7 +274,7 @@ class InAppMessageHandler {
     }
 
     protected void sendPageViewEvent(long pageId) {
-        if(sentPageViewEvents.contains(pageId)) {
+        if (sentPageViewEvents.contains(pageId)) {
             SwrveLogger.v("SwrveSDK: Page view event for page_id %s already sent.", pageId);
             return;
         }
@@ -360,6 +371,71 @@ class InAppMessageHandler {
             return savedInstanceState.getLong(SAVE_INSTANCE_STATE_CURRENT_PAGE_ID);
         } else {
             return format.getFirstPageId();
+        }
+    }
+
+    private void queueButtonEvents(JSONArray events) {
+        if (events == null || events.length() == 0) {
+            return;
+        }
+
+        // Schedule the button events a short period of time later so it can trigger other campaigns
+        final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutorService.schedule(() -> {
+            try {
+                for (int i = 0; i < events.length(); i++) {
+                    JSONObject eventjson = events.getJSONObject(i);
+                    String name = eventjson.getString("name");
+                    JSONArray payloadArray = new JSONArray();
+                    if (eventjson.has("payload")) {
+                        payloadArray = eventjson.getJSONArray("payload");
+                    }
+                    Map<String, String> eventPayload = new HashMap<>();
+                    for (int y = 0; y < payloadArray.length(); y++) {
+                        JSONObject keyValueJson = payloadArray.getJSONObject(y);
+                        Map<String, String> keyValueMap = SwrveHelper.JSONToMap(keyValueJson);
+                        addPersonalizedPayload(eventPayload, keyValueMap);
+                    }
+                    sdk.event(name, eventPayload);
+                }
+            } catch (Exception e) {
+                SwrveLogger.e("Could not queue custom events associated with this button", e);
+            } finally {
+                scheduledExecutorService.shutdownNow();
+            }
+        }, customEventDelayQueueSeconds, TimeUnit.SECONDS);
+    }
+
+    private void queueButtonUserUpdates(JSONArray userUpdates) {
+        if (userUpdates == null || userUpdates.length() == 0) {
+            return;
+        }
+        try {
+            Map<String, String> userPayload = new HashMap<>();
+            for (int i = 0; i < userUpdates.length(); i++) {
+                JSONObject keyValueJson = userUpdates.getJSONObject(i);
+                Map<String, String> keyValueMap = SwrveHelper.JSONToMap(keyValueJson);
+                addPersonalizedPayload(userPayload, keyValueMap);
+            }
+            if (userPayload.size() > 0) {
+                sdk.userUpdate(userPayload);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Could not queue custom user updates associated with this button", e);
+        }
+    }
+
+    private void addPersonalizedPayload(Map<String, String> newPayload, Map<String, String> payload) {
+        String key = payload.get("key");
+        String value = payload.get("value");
+        String personalizedText;
+        try {
+            personalizedText = SwrveTextTemplating.apply(value, inAppPersonalization);
+            if (!SwrveHelper.isNullOrEmpty(key) && !SwrveHelper.isNullOrEmpty(personalizedText)) {
+                newPayload.put(key, personalizedText);
+            }
+        } catch (SwrveSDKTextTemplatingException e) {
+            SwrveLogger.w("Failed to resolve personalization in InAppMessageHandler for key:%s value:%s", key, value);
         }
     }
 }

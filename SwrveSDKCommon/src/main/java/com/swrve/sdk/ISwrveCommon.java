@@ -44,7 +44,7 @@ interface ISwrveCommon {
     String SWRVE_DEVICE_NAME                = "swrve.device_name";
     String SWRVE_OS                         = "swrve.os";
     String SWRVE_OS_VERSION                 = "swrve.os_version";
-    String SWRVE_OS_INT_VERSION             = "swrve.swrve.os_int_version";
+    String SWRVE_OS_INT_VERSION             = "swrve.os_int_version";
     String SWRVE_APP_TARGET_VERSION         = "swrve.app_target_version";
     String SWRVE_DEVICE_WIDTH               = "swrve.device_width";
     String SWRVE_DEVICE_HEIGHT              = "swrve.device_height";
