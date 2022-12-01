@@ -5,8 +5,6 @@ import androidx.test.core.app.ApplicationProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -102,7 +100,7 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
     }
 
     @Test
-    public void testSaveNotificationAuthenicated() {
+    public void testSaveNotificationAuthenticated() {
         secondaryLocalStorage.saveNotificationAuthenticated(1, 100); // oldest
         secondaryLocalStorage.saveNotificationAuthenticated(2, 200);
         secondaryLocalStorage.saveNotificationAuthenticated(3, 300);
@@ -113,7 +111,7 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
         List<Integer> notifications = secondaryLocalStorage.getNotificationsAuthenticated();
         assertEquals(6, notifications.size());
 
-        multiLayerLocalStorage.NOTIFICATIONS_AUTHENICATED_MAX_ROWS = 6;
+        multiLayerLocalStorage.NOTIFICATIONS_AUTHENTICATED_MAX_ROWS = 6;
 
         multiLayerLocalStorage.saveNotificationAuthenticated(7);
 
@@ -122,7 +120,7 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
         boolean foundId2 = false, foundId3 = false, foundId4 = false, foundId5 = false, foundId6 = false, foundId7 = false;;
         for (Integer notificationId : notifications) {
             if (notificationId == 1) {
-                Assert.fail("testSaveNotificationAuthenicated failed oldest notification did not get truncated.");
+                Assert.fail("testSaveNotificationAuthenticated failed oldest notification did not get truncated.");
             } else if (notificationId == 2) {
                 foundId2 = true;
             } else if (notificationId == 3) {
@@ -139,7 +137,7 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
         }
 
         if (!foundId2 || !foundId3 || !foundId4 || !foundId5 || !foundId6 || !foundId7) {
-            Assert.fail("testSaveNotificationAuthenicated failed because id's returned didn't match what was saved.");
+            Assert.fail("testSaveNotificationAuthenticated failed because id's returned didn't match what was saved.");
         }
 
     }

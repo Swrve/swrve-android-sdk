@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static org.junit.Assert.assertEquals;
@@ -112,7 +114,7 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
     }
 
     @Test
-    public void testSaveNotificationAuthenicated() {
+    public void testSaveNotificationAuthenticated() {
         SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
         sqLiteLocalStorage.saveNotificationAuthenticated(1, 123);
         sqLiteLocalStorage.saveNotificationAuthenticated(2, 124);
@@ -135,7 +137,7 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
     }
 
     @Test
-    public void testGetNotificationsAuthenicated() {
+    public void testGetNotificationsAuthenticated() {
         SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
         sqLiteLocalStorage.saveNotificationAuthenticated(1, 123);
         sqLiteLocalStorage.saveNotificationAuthenticated(2, 124);
@@ -161,7 +163,7 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
     }
 
     @Test
-    public void testDeleteNotificationsAuthenicated() {
+    public void testDeleteNotificationsAuthenticated() {
         SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
         sqLiteLocalStorage.saveNotificationAuthenticated(1, 123);
         sqLiteLocalStorage.saveNotificationAuthenticated(2, 124);
@@ -176,7 +178,7 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
     }
 
     @Test
-    public void testTruncateNotificationsAuthenicated() {
+    public void testTruncateNotificationsAuthenticated() {
         SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
         sqLiteLocalStorage.saveNotificationAuthenticated(1, 100); // oldest
         sqLiteLocalStorage.saveNotificationAuthenticated(2, 200);
@@ -195,9 +197,9 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
         boolean foundId3 = false, foundId4 = false, foundId5 = false, foundId6 = false;
         for (Integer notificationId : notifications) {
             if (notificationId == 1) {
-                Assert.fail("testTruncateNotificationsAuthenicated failed oldest notification did not get truncated.");
+                Assert.fail("testTruncateNotificationsAuthenticated failed oldest notification did not get truncated.");
             } else if (notificationId == 2) {
-                Assert.fail("testTruncateNotificationsAuthenicated failed oldest notification did not get truncated.");
+                Assert.fail("testTruncateNotificationsAuthenticated failed oldest notification did not get truncated.");
             } else if (notificationId == 3) {
                 foundId3 = true;
             } else if (notificationId == 4) {
@@ -209,12 +211,12 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
             }
         }
         if (!foundId3 || !foundId4 || !foundId5 || !foundId6) {
-            Assert.fail("testSaveNotificationAuthenicated failed because id's returned didn't match what was saved.");
+            Assert.fail("testSaveNotificationAuthenticated failed because id's returned didn't match what was saved.");
         }
     }
 
     @Test
-    public void testTruncateNotificationsAuthenicatedEmpty() {
+    public void testTruncateNotificationsAuthenticatedEmpty() {
         SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
         List<Integer> notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
         assertEquals(0, notifications.size());
@@ -223,4 +225,68 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
         assertEquals(0, notifications.size());
     }
 
+    @Test
+    public void testAssetDownloadCount() {
+        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset1", 123);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset2", 124);
+        // add following entry twice on purpose with different times
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset3", 125);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset3", 126);
+
+        assertEquals(0, sqLiteLocalStorage.getAssetDownloadCount("asset0"));
+        assertEquals(1, sqLiteLocalStorage.getAssetDownloadCount("asset1"));
+        assertEquals(1, sqLiteLocalStorage.getAssetDownloadCount("asset2"));
+        assertEquals(2, sqLiteLocalStorage.getAssetDownloadCount("asset3"));
+    }
+
+    @Test
+    public void testTruncateAssetLogs() {
+        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset1", 100); // oldest
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset2", 200);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset3", 300);
+        // increment asset4 4 times
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset4", 401);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset4", 402);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset4", 403);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset4", 404);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset5", 500);
+        sqLiteLocalStorage.incrementAssetDownloadCount("asset6", 600); // most recent
+
+        SQLiteDatabase database = sqLiteLocalStorage.database;
+        Cursor cursor1 = database.rawQuery("SELECT * FROM " + ASSET_LOGS_TABLE_NAME, null);
+        if (cursor1.moveToFirst()) {
+            assertEquals(6, cursor1.getCount());
+            int row = 1;
+            while (cursor1.isAfterLast() == false) {
+                String assetName = cursor1.getString(cursor1.getColumnIndex(ASSET_LOGS_COLUMN_NAME));
+                assertEquals("asset" + row, assetName);
+                row++;
+                cursor1.moveToNext();
+            }
+            cursor1.close();
+        } else {
+            fail("testTruncateAssetLogs failed because cursor1 is empty and should contain entries.");
+        }
+
+        // truncate
+        sqLiteLocalStorage.truncateAssetLogs(4);
+
+        // check table size is 4 and the older assets were removed
+        Cursor cursor2 = database.rawQuery("SELECT * FROM " + ASSET_LOGS_TABLE_NAME, null);
+        if (cursor2.moveToFirst()) {
+            assertEquals(4, cursor2.getCount());
+            int row = 3;
+            while (cursor2.isAfterLast() == false) {
+                String assetName = cursor2.getString(cursor2.getColumnIndex(ASSET_LOGS_COLUMN_NAME));
+                assertEquals("asset" + row, assetName);
+                row++;
+                cursor2.moveToNext();
+            }
+            assertEquals(7, row);
+        } else {
+            fail("testTruncateAssetLogs failed because cursor2 is empty and should contain entries.");
+        }
+    }
 }

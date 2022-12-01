@@ -202,4 +202,20 @@ public class InMemoryLocalStorage implements LocalStorage {
         // not implemented. Go directly to SQLiteLocalStorage
         return null;
     }
+
+    @Override
+    public int getAssetDownloadCount(String assetName) {
+        // not implemented. Go directly to SQLiteLocalStorage
+        return 0;
+    }
+
+    @Override
+    public void incrementAssetDownloadCount(String assetName, long time) {
+        // not implemented. Go directly to SQLiteLocalStorage
+    }
+
+    @Override
+    public void truncateAssetLogs(int rows) {
+        // not implemented. Go directly to SQLiteLocalStorage
+    }
 }

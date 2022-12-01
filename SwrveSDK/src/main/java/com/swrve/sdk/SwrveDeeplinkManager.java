@@ -196,7 +196,7 @@ class SwrveDeeplinkManager {
                 swrve.saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
             }
 
-            final SwrveAssetsCompleteCallback callback = () -> showCampaign(campaign, context, config);
+            final SwrveAssetsCompleteCallback callback = (Set<String> assetsDownloaded, boolean sha1Verified) -> showCampaign(campaign, context, config);
             getCampaignAssets(responseJson, callback);
             writeCampaignDataToCache(responseJson, actionType);
         } else {
@@ -363,7 +363,7 @@ class SwrveDeeplinkManager {
             if (SwrveHelper.isNotNullOrEmpty(cachedCampaign)) {
                 final SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
                     @Override
-                    public void complete() {
+                    public void complete(Set<String> assetsDownloaded, boolean sha1Verified) {
                         showCampaign(campaign, context, config);
                     }
                 };

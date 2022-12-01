@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.swrve.sdk.rest.SwrveFilterInputStream;
 
@@ -12,6 +13,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -28,6 +30,9 @@ import javax.net.ssl.SSLSocketFactory;
 
 class SwrveAssetsManagerImp implements SwrveAssetsManager {
 
+    private static final String SHA1_TEST_STRING = "Lorem ipsum dolor sit amet";
+    private static final String SHA1_TEST_STRING_RESULT = "38f00f8738e241daea6f37f6f55ae8414d7b0219";
+
     private static int WORKER_THREAD_POOL_SIZE = 10;
     private static int TIMEOUT = 60000;
 
@@ -37,6 +42,9 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     protected String cdnImages;
     protected String cdnFonts;
     protected File storageDir;
+    protected String currentActivityName;
+    private AssetDownloadMetric previousDownloadMetric;
+    private AssetDownloadMetric currentDownloadMetric;
 
     protected SwrveAssetsManagerImp(Context context) {
         this.context = context;
@@ -72,22 +80,39 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     @Override
     public void downloadAssets(Set<SwrveAssetsQueueItem> assetsQueue, SwrveAssetsCompleteCallback callback) {
 
+        boolean sha1Verified = true;
+        Set<String> assetsDownloaded = null;
         if (!storageDir.canWrite()) {
             SwrveLogger.e("Could not download assets because do not have write access to storageDir:%s", storageDir);
+        } else if (!verifySha1()) {
+            SwrveLogger.e("The SwrveAssetsManager failed sha1 verification so assets will not be downloaded.");
+            sha1Verified = false;
         } else {
-            downloadAssets(assetsQueue);
+            assetsDownloaded = downloadAssets(assetsQueue);
         }
         if (callback != null) {
-            callback.complete();
+            callback.complete(assetsDownloaded, sha1Verified);
         }
     }
 
-    protected void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
+    private boolean verifySha1() {
+        if (SwrveCommon.getInstance() == null || SwrveCommon.getInstance().getAppId() != ASSET_DOWNLOAD_LIMITS_APP_ID) {
+            return true;
+        } else {
+            String testSha1 = SwrveHelper.sha1(SHA1_TEST_STRING.getBytes(StandardCharsets.UTF_8));
+            return SHA1_TEST_STRING_RESULT.equals(testSha1);
+        }
+    }
+
+    protected Set<String> downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
+        Set<String> assetsDownloaded = new HashSet<>();
         if (assetsQueue == null) {
-            return;
+            return assetsDownloaded;
         }
 
+        currentDownloadMetric = new AssetDownloadMetric();
         Set<SwrveAssetsQueueItem> assetsToDownload = filterExistingFiles(assetsQueue);
+        currentDownloadMetric.totalDownloads = assetsToDownload.size();
         try {
             CountDownLatch latch = new CountDownLatch(assetsToDownload.size());
             ExecutorService pool = Executors.newFixedThreadPool(WORKER_THREAD_POOL_SIZE);
@@ -103,6 +128,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
                     if (success) {
                         synchronized (assetsOnDisk) {
                             assetsOnDisk.add(assetItem.getName()); // store the font name
+                            assetsDownloaded.add(assetItem.getName());
                         }
                     }
                     latch.countDown();
@@ -112,6 +138,10 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         } catch (Exception e) {
             SwrveLogger.e("Error downloading assets.", e);
         }
+        currentDownloadMetric.successDownloads = assetsDownloaded.size();
+        saveCurrentDownloadMetric();
+
+        return assetsDownloaded;
     }
 
     protected Set<SwrveAssetsQueueItem> filterExistingFiles(Set<SwrveAssetsQueueItem> assetsQueue) {
@@ -156,11 +186,11 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         }
 
         String url;
-        String debugGetParams = debugParams(assetItem);
-        if (debugGetParams == null) {
+        String additionalParams = getAdditionalParams(assetItem);
+        if (additionalParams == null) {
             url = cdnRoot + assetItem.getName();
         } else {
-            url = cdnRoot + assetItem.getName() + "?" + debugGetParams;
+            url = cdnRoot + assetItem.getName() + "?" + additionalParams;
         }
         InputStream inputStream = null;
         try {
@@ -191,16 +221,24 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             byte[] fileContents = stream.toByteArray();
             String sha1File = SwrveHelper.sha1(fileContents);
             if (assetItem.getDigest().equals(sha1File)) {
-                String fileAssetName = getFileAssetName(assetItem.getName(), httpsConnection.getContentType());
-                FileOutputStream fileStream = new FileOutputStream(new File(storageDir, fileAssetName));
-                fileStream.write(fileContents); // Save to file
-                fileStream.close();
-                success = true;
+                try {
+                    String fileAssetName = getFileAssetName(assetItem.getName(), httpsConnection.getContentType());
+                    FileOutputStream fileStream = new FileOutputStream(new File(storageDir, fileAssetName));
+                    fileStream.write(fileContents); // Save to file
+                    fileStream.close();
+                    success = true;
+                } catch (Exception e) {
+                    currentDownloadMetric.exceptionSave = e.getClass().getSimpleName();
+                    throw e;
+                }
             } else {
                 SwrveLogger.e("Error downloading assetItem:%s. Did not match digest:%s", assetItem, sha1File);
+                currentDownloadMetric.failSha = assetItem.getDigest();
             }
         } catch (Exception e) {
             SwrveLogger.e("Error downloading asset:%s", e, assetItem);
+            currentDownloadMetric.exception = e.getClass().getSimpleName();
+            currentDownloadMetric.exceptionAsset = assetItem.getName();
         } finally {
             if (inputStream != null) {
                 try {
@@ -213,35 +251,53 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         return success;
     }
 
-    private String debugParams(SwrveAssetsQueueItem assetItem) {
-        String debugParams = null;
-        try {
-            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-            int appId = swrveCommon.getAppId();
-            if (appId != 6915) {
-                return debugParams; // Only apply debug params to cdn asset downloads for 1 app 6915
-            }
-            Map<String, String> params = new HashMap<>();
+    private String getAdditionalParams(SwrveAssetsQueueItem assetItem) {
+        String additionalParams = null;
+        if (SwrveCommon.getInstance() == null || SwrveCommon.getInstance().getAppId() != ASSET_DOWNLOAD_LIMITS_APP_ID) {
+            return additionalParams;
+        }
 
-            params.put("app_id", String.valueOf(appId));
+        try {
+            Map<String, String> params = new HashMap<>();
+            params.put("app_id", String.valueOf(SwrveCommon.getInstance().getAppId()));
             params.put("campaign_id", String.valueOf(assetItem.getCampaignId()));
             params.put("client_time", String.valueOf(System.currentTimeMillis()));
-            String userId = swrveCommon.getUserId();
+            String userId = SwrveCommon.getInstance().getUserId();
             if (SwrveHelper.isNotNullOrEmpty(userId)) {
                 params.put("user_id", userId);
             }
-            String deviceId = swrveCommon.getDeviceId();
+            String deviceId = SwrveCommon.getInstance().getDeviceId();
             if (SwrveHelper.isNotNullOrEmpty(deviceId)) {
                 params.put("device_id", deviceId);
             }
             long usableSpaceBytes = new File(storageDir.getAbsoluteFile().toString()).getUsableSpace();
             params.put("usable_space", String.valueOf(usableSpaceBytes));
+            params.put("dc", String.valueOf(assetItem.getDownloadCount())); // download_count
+            params.put("ca", currentActivityName); // current_activity
 
-            debugParams = SwrveHelper.encodeParameters(params);
+            previousDownloadMetric = getPreviousDownloadMetric();
+            if (previousDownloadMetric != null) {
+                params.put("td", String.valueOf(previousDownloadMetric.totalDownloads));
+                params.put("sd", String.valueOf(previousDownloadMetric.successDownloads));
+                if (previousDownloadMetric.exception != null) {
+                    params.put("ex", previousDownloadMetric.exception);
+                }
+                if (previousDownloadMetric.exceptionAsset != null) {
+                    params.put("ea", previousDownloadMetric.exceptionAsset);
+                }
+                if (previousDownloadMetric.exceptionSave != null) {
+                    params.put("es", previousDownloadMetric.exceptionSave);
+                }
+                if (previousDownloadMetric.failSha != null) {
+                    params.put("fs", previousDownloadMetric.failSha);
+                }
+            }
+
+            additionalParams = SwrveHelper.encodeParameters(params);
         } catch (Exception e) {
-            SwrveLogger.e("SwrveSDK: Error adding debug params to SwrveAssetsManager request.", e);
+            SwrveLogger.e("SwrveSDK: Error adding additional params to SwrveAssetsManager request.", e);
         }
-        return debugParams;
+        return additionalParams;
     }
 
     protected boolean downloadAssetFromExternalSource(final SwrveAssetsQueueItem assetItem) {
@@ -319,5 +375,42 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
             downloadedAssetName = downloadedAssetName + SwrveAssetsTypes.MIMETYPES.get(mimeType);
         }
         return downloadedAssetName;
+    }
+
+    private void saveCurrentDownloadMetric() {
+        SharedPreferences.Editor preferences = context.getSharedPreferences("swrve_asset_downloads", 0).edit();
+        preferences.putInt("td", currentDownloadMetric.totalDownloads);
+        preferences.putInt("sd", currentDownloadMetric.successDownloads);
+        preferences.putString("ex", currentDownloadMetric.exception);
+        preferences.putString("ea", currentDownloadMetric.exceptionAsset);
+        preferences.putString("es", currentDownloadMetric.exceptionSave);
+        preferences.putString("fs", currentDownloadMetric.failSha);
+        preferences.commit();
+        previousDownloadMetric = currentDownloadMetric;
+    }
+
+    private AssetDownloadMetric getPreviousDownloadMetric() {
+        if (previousDownloadMetric != null) {
+            return previousDownloadMetric;
+        }
+        AssetDownloadMetric assetDownloadMetric = new AssetDownloadMetric();
+        SharedPreferences preferences = context.getSharedPreferences("swrve_asset_downloads", 0);
+        assetDownloadMetric.totalDownloads = preferences.getInt("td", 0);
+        assetDownloadMetric.successDownloads = preferences.getInt("sd", 0);
+        assetDownloadMetric.exception = preferences.getString("ex", null);
+        assetDownloadMetric.exceptionAsset = preferences.getString("ea", null);
+        assetDownloadMetric.exceptionSave = preferences.getString("es", null);
+        assetDownloadMetric.failSha = preferences.getString("fs", null);
+        return assetDownloadMetric;
+    }
+
+    private class AssetDownloadMetric {
+        int totalDownloads;
+        int successDownloads;
+        // The following metrics only keep record of the last occurrence of it.
+        String exception; // The name of the global exception.
+        String exceptionAsset; // The asset where the exception happened.
+        String exceptionSave; // The name of the exception related to saving asset to disk.
+        String failSha; // The name of an asset which did not match the sha1.
     }
 }

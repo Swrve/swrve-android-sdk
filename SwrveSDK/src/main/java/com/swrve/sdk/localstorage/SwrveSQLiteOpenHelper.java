@@ -18,7 +18,7 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
     private Context context;
 
     // Database
-    protected static final int SWRVE_DB_VERSION = 4;
+    protected static final int SWRVE_DB_VERSION = 5;
 
     // User table
     protected static final String USER_TABLE_NAME = "users";
@@ -48,6 +48,12 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
     protected static final String OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID = "user_id";
     protected static final String OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID = "campaign_id";
     protected static final String OFFLINE_CAMPAIGNS_COLUMN_JSON = "campaign_json";
+
+    // Asset logs table
+    protected static final String ASSET_LOGS_TABLE_NAME = "asset_logs";
+    protected static final String ASSET_LOGS_COLUMN_NAME = "name";
+    protected static final String ASSET_LOGS_COLUMN_DOWNLOAD_COUNT = "download_count";
+    protected static final String ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME = "last_download_time";
 
     SwrveSQLiteOpenHelper(Context context, String dbName, int version) {
         super(context, dbName, null, version);
@@ -108,6 +114,14 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
                 OFFLINE_CAMPAIGNS_COLUMN_JSON + " TEXT NOT NULL," +
                 "PRIMARY KEY (" + OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID + "," + OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID + ")" +
                 ");");
+
+        db.execSQL("CREATE TABLE " + ASSET_LOGS_TABLE_NAME + " (" +
+                ASSET_LOGS_COLUMN_NAME + " TEXT NOT NULL, " +
+                ASSET_LOGS_COLUMN_DOWNLOAD_COUNT + " INTEGER NOT NULL, " +
+                ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME + " INTEGER NOT NULL, " +
+                "PRIMARY KEY (" + ASSET_LOGS_COLUMN_NAME + ")" +
+                ");");
+        db.execSQL("CREATE INDEX asset_logs_last_download_time_idx ON " + ASSET_LOGS_TABLE_NAME + "(" + ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME + ");");
     }
 
     @Override
@@ -192,6 +206,16 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
                         "campaign_json_data TEXT NOT NULL, " +
                         "PRIMARY KEY (swrve_user_id, campaign_id)" +
                         ");");
+
+            case 4:
+
+                db.execSQL("CREATE TABLE asset_logs (" +
+                        "name TEXT NOT NULL, " +
+                        "download_count INTEGER NOT NULL, " +
+                        "last_download_time INTEGER NOT NULL, " +
+                        "PRIMARY KEY (name)" +
+                        ")");
+                db.execSQL("CREATE INDEX asset_logs_last_download_time_idx ON asset_logs(last_download_time)");
         }
     }
 

@@ -36,4 +36,8 @@ public interface LocalStorage {
 
     void saveOfflineCampaign(String userId, String campaignId, String campaignData);
     String getOfflineCampaign(String userId, String campaignId);
+
+    int getAssetDownloadCount(String assetName);
+    void incrementAssetDownloadCount(String assetName, long time);
+    void truncateAssetLogs(int rows);
 }

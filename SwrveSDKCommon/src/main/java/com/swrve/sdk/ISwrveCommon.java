@@ -18,6 +18,7 @@ interface ISwrveCommon {
     String SDK_PREFS_KEY_TRACKING_STATE = "trackingState";
     String SDK_PREFS_KEY_FLUSH_FREQ     = "swrve_cr_flush_frequency";
     String SDK_PREFS_KEY_FLUSH_DELAY    = "swrve_cr_flush_delay";
+    String SDK_PREFS_KEY_ADL            = "swrve_cr_asset_download_limit";
     String SDK_PREFS_REFERRER_ID        = "swrve.referrer_id";
 
     // cache constants
@@ -76,6 +77,7 @@ interface ISwrveCommon {
     String SWRVE_PERMISSION_NOTIFICATION                    = "swrve.permission.android.notification";
     String SWRVE_PERMISSION_NOTIFICATION_SHOW_RATIONALE     = "swrve.permission.android.notification_show_rationale";
     String SWRVE_PERMISSION_NOTIFICATION_ANSWERED_TIMES     = "swrve.permission.android.notification_answered_times";
+    String SWRVE_ASSET_SHA1_CHECK                           = "swrve.asset.sha1_check";
 
     // user Update
     String SWRVE_REFERRER_ID                = "swrve.referrer_id";
@@ -124,6 +126,7 @@ interface ISwrveCommon {
     String EVENT_FIRST_SESSION                      = "Swrve.first_session";
     String EVENT_NOTIFICATION_CHANGE_GRANTED        = "Swrve.permission.android.notification.granted";
     String EVENT_NOTIFICATION_CHANGE_DENIED         = "Swrve.permission.android.notification.denied";
+    String EVENT_ASSET_DOWNLOAD_LIMIT_EXCEEDED      = "Swrve.asset_download_limit_exceeded";
 
     // platform information
     String OS_ANDROID                         = "android";

@@ -180,6 +180,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
             }
 
+            campaignsAndResourcesAssetDownloadLimit = getAssetDownloadLimit(); // this needs to be before calling initCampaigns
             initCampaigns(userId); // Initialize campaigns from cache
 
             if (config.getEmbeddedMessageConfig() != null) {
@@ -850,6 +851,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         Integer flushDelay = responseJson.getInt("flush_refresh_delay");
                                         campaignsAndResourcesFlushRefreshDelay = flushDelay;
                                         settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_DELAY, campaignsAndResourcesFlushRefreshDelay);
+                                    }
+
+                                    if (responseJson.has("asset_download_limit")) {
+                                        Integer assetDownloadLimit = responseJson.getInt("asset_download_limit");
+                                        campaignsAndResourcesAssetDownloadLimit = assetDownloadLimit;
+                                        settingsEditor.putInt(SDK_PREFS_KEY_ADL, campaignsAndResourcesAssetDownloadLimit);
                                     }
 
                                     if (responseJson.has("real_time_user_properties")) {
@@ -2465,6 +2472,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public int getFlushRefreshDelay() {
         SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
         return settings.getInt(SDK_PREFS_KEY_FLUSH_DELAY, SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY);
+    }
+
+    private int getAssetDownloadLimit() {
+        SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
+        return settings.getInt(SDK_PREFS_KEY_ADL, DEFAULT_ASSET_DOWNLOAD_LIMIT);
     }
 
     @Override

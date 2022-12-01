@@ -7,6 +7,7 @@ public class SwrveAssetsQueueItem {
     private final String digest;
     private final boolean isImage;
     private final boolean isExternalSource;
+    private int downloadCount;
 
     public SwrveAssetsQueueItem(int campaignId, String name, String digest, boolean isImage, boolean isExternalSource) {
         this.campaignId = campaignId;
@@ -34,6 +35,14 @@ public class SwrveAssetsQueueItem {
 
     public int getCampaignId() {
         return campaignId;
+    }
+
+    public int getDownloadCount() {
+        return downloadCount;
+    }
+
+    public void setDownloadCount(int downloadCount) {
+        this.downloadCount = downloadCount;
     }
 
     // SwrveAssetsQueueItem used in a Set, so equals() and hashCode() are important

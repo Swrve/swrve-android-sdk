@@ -19,6 +19,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -28,6 +29,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -191,16 +193,11 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
         assetsQueue.add(new SwrveAssetsQueueItem(1, "someAsset", "someAsset", true, false));
 
-        SwrveAssetsCompleteCallback callback = new SwrveAssetsCompleteCallback() {
-            @Override
-            public void complete() {
-                // empty
-            }
-        };
-        SwrveAssetsCompleteCallback callbackSpy = Mockito.spy(callback);
-        assetsManager.downloadAssets(assetsQueue, callbackSpy);
+        final AtomicBoolean callbackExecuted = new AtomicBoolean(false);
+        SwrveAssetsCompleteCallback callback = (assetsDownloaded, sha1Verified) -> callbackExecuted.set(true);
+        assetsManager.downloadAssets(assetsQueue, callback);
 
-        Mockito.verify(callbackSpy, Mockito.atLeastOnce()).complete();
+        await().untilTrue(callbackExecuted);
     }
 
     @Test

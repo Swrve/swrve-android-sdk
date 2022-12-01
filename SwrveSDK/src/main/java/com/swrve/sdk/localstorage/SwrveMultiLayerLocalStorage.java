@@ -18,7 +18,7 @@ import static com.swrve.sdk.localstorage.LocalStorage.SIGNATURE_SUFFIX;
  */
 public class SwrveMultiLayerLocalStorage {
 
-    protected int NOTIFICATIONS_AUTHENICATED_MAX_ROWS = 100;
+    protected int NOTIFICATIONS_AUTHENTICATED_MAX_ROWS = 100;
 
     private LocalStorage primaryStorage; // in-memory temporary and fast storage
     private LocalStorage secondaryStorage; // sql-ite database
@@ -231,7 +231,7 @@ public class SwrveMultiLayerLocalStorage {
         if (secondaryStorage != null) {
             secondaryStorage.saveNotificationAuthenticated(notificationId, System.currentTimeMillis());
             // After adding an entry truncate the table to remove the oldest.
-            secondaryStorage.truncateNotificationsAuthenticated(NOTIFICATIONS_AUTHENICATED_MAX_ROWS);
+            secondaryStorage.truncateNotificationsAuthenticated(NOTIFICATIONS_AUTHENTICATED_MAX_ROWS);
         }
     }
 
@@ -262,4 +262,25 @@ public class SwrveMultiLayerLocalStorage {
         }
         return campaignData;
     }
+
+    public int getAssetDownloadCount(String assetName) {
+        int assetDownloadCount = 0;
+        if (secondaryStorage != null) {
+            assetDownloadCount = secondaryStorage.getAssetDownloadCount(assetName);
+        }
+        return assetDownloadCount;
+    }
+
+    public void incrementAssetDownloadCount(String assetName, long time) {
+        if (secondaryStorage != null) {
+            secondaryStorage.incrementAssetDownloadCount(assetName, time);
+        }
+    }
+
+    public void truncateAssetLogs(int rows) {
+        if (secondaryStorage != null) {
+            secondaryStorage.truncateAssetLogs(rows);
+        }
+    }
+
 }

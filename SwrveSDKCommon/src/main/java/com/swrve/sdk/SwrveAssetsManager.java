@@ -8,6 +8,8 @@ import java.util.Set;
  */
 interface SwrveAssetsManager {
 
+    int ASSET_DOWNLOAD_LIMITS_APP_ID = 6915;
+
     /**
      * The root url of the cdn to download image assets. Should end in a forward slash.
      * @param cdnImages The image cdn url

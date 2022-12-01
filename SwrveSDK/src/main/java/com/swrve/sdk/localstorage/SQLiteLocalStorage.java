@@ -20,6 +20,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_DOWNLOAD_COUNT;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATEGORY;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
@@ -449,5 +453,67 @@ public class SQLiteLocalStorage implements LocalStorage {
             }
         }
         return jsonData;
+    }
+
+    @Override
+    public int getAssetDownloadCount(String assetName) {
+        int count = 0;
+        if (assetName == null || assetName.isEmpty()) {
+            count = 0;
+        } else if (database.isOpen()) {
+            Cursor cursor = null;
+            try {
+                String sql = "SELECT " + ASSET_LOGS_COLUMN_DOWNLOAD_COUNT + " " +
+                        "FROM " + ASSET_LOGS_TABLE_NAME + " " +
+                        "WHERE " + ASSET_LOGS_COLUMN_NAME + " = '" + assetName + "' ";
+                cursor = database.rawQuery(sql, null);
+                cursor.moveToFirst();
+                if (!cursor.isAfterLast()) {
+                    count = cursor.getInt(0);
+                    cursor.moveToNext();
+                }
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred getting asset download count:%s", e, assetName);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        return count;
+    }
+
+    @Override
+    public void incrementAssetDownloadCount(String assetName, long time) {
+        if (assetName == null || assetName.isEmpty()) {
+            return;
+        } else if (database.isOpen()) {
+            int count = getAssetDownloadCount(assetName) + 1; // increment the current value
+            ContentValues values = new ContentValues();
+            values.put(ASSET_LOGS_COLUMN_NAME, assetName);
+            values.put(ASSET_LOGS_COLUMN_DOWNLOAD_COUNT, count);
+            values.put(ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME, time);
+            insertOrUpdate(ASSET_LOGS_TABLE_NAME, values, ASSET_LOGS_COLUMN_NAME + "= ?", new String[]{assetName});
+        }
+    }
+
+    @Override
+    public void truncateAssetLogs(int rows) {
+        if (database.isOpen()) {
+            database.beginTransaction();
+            try {
+                String whereQuery = "SELECT " + ASSET_LOGS_COLUMN_NAME
+                        + " FROM " + ASSET_LOGS_TABLE_NAME
+                        + " ORDER BY " + ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME
+                        + " DESC LIMIT -1 OFFSET " + rows;
+                String deleteQuery = "DELETE FROM " + ASSET_LOGS_TABLE_NAME
+                        + " WHERE " + ASSET_LOGS_COLUMN_NAME
+                        + " IN (" + whereQuery + ")";
+                database.execSQL(deleteQuery);
+                database.setTransactionSuccessful(); // Commit
+            } finally {
+                database.endTransaction();
+            }
+        }
     }
 }

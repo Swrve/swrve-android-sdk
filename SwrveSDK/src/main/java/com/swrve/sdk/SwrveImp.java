@@ -6,6 +6,9 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
+import static com.swrve.sdk.ISwrveCommon.EVENT_ASSET_DOWNLOAD_LIMIT_EXCEEDED;
+import static com.swrve.sdk.ISwrveCommon.SWRVE_ASSET_SHA1_CHECK;
+import static com.swrve.sdk.SwrveAssetsManager.ASSET_DOWNLOAD_LIMITS_APP_ID;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static com.swrve.sdk.SwrveTrackingState.STOPPED;
@@ -82,7 +85,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.7.0";
+    protected static String version = "10.8.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 2;
     protected static final int IN_APP_CAMPAIGN_VERSION = 10;
@@ -101,6 +104,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 150;
     protected static long DEFAULT_MAX_SHOWS = 99999;
     protected static int DEFAULT_MIN_DELAY = 55;
+    private static int ASSET_LOGS_ROW_LIMIT = 1000;
+    protected static int DEFAULT_ASSET_DOWNLOAD_LIMIT = 150;
     protected WeakReference<Application> application;
     protected WeakReference<Context> context;
     protected WeakReference<Activity> activityContext;
@@ -134,6 +139,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected boolean autoShowMessagesEnabled;
     protected Integer campaignsAndResourcesFlushFrequency;
     protected Integer campaignsAndResourcesFlushRefreshDelay;
+    protected Integer campaignsAndResourcesAssetDownloadLimit = -1;
     protected String campaignsAndResourcesLastETag;
     protected Date campaignsAndResourcesLastRefreshed;
     protected boolean campaignsAndResourcesInitialized = false;
@@ -439,8 +445,79 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         if (downloadAssetsExecutor.isShutdown()) {
             SwrveLogger.i("Trying to handle a downloadAssets execution while shutdown");
         } else {
-            final SwrveAssetsCompleteCallback callback = () -> autoShowMessages();
-            downloadAssetsExecutor.execute(SwrveRunnables.withoutExceptions(() -> swrveAssetsManager.downloadAssets(assetsQueue, callback)));
+            final SwrveAssetsCompleteCallback callback = (Set<String> assetsDownloaded, boolean sha1Verified) -> {
+                if (sha1Verified) {
+                    updateAssetLogs(assetsDownloaded);
+                    multiLayerLocalStorage.truncateAssetLogs(ASSET_LOGS_ROW_LIMIT);
+                    autoShowMessages();
+                } else {
+                    try {
+                        JSONObject deviceInfo = new JSONObject();
+                        deviceInfo.put(SWRVE_ASSET_SHA1_CHECK, "fail");
+                        deviceUpdate(profileManager.getUserId(), deviceInfo);
+                    } catch (Exception ex) {
+                        SwrveLogger.e("Exception queuing device update for failed sha1 verification.", ex);
+                    }
+                }
+            };
+            downloadAssetsExecutor.execute(SwrveRunnables.withoutExceptions(() -> {
+                if (swrveAssetsManager instanceof SwrveAssetsManagerImp) {
+                    ((SwrveAssetsManagerImp) swrveAssetsManager).currentActivityName = activityContext.get().getLocalClassName();
+                }
+                checkAssetDownloadLimits(assetsQueue);
+                swrveAssetsManager.downloadAssets(assetsQueue, callback);
+            }));
+        }
+    }
+
+    protected void checkAssetDownloadLimits(Set<SwrveAssetsQueueItem> assetsQueue) {
+        if (campaignsAndResourcesAssetDownloadLimit == -1) {
+            SwrveLogger.v("SwrveSDK skipping check for excessive asset downloads.");
+            return;
+        } else if (campaignsAndResourcesAssetDownloadLimit == 0) {
+            assetsQueue.clear();
+            SwrveLogger.w("SwrveSDK asset download limit is zero, so removing all assets from download queue");
+            return;
+        } else {
+            filterExcessiveAssetDownloads(assetsQueue);
+        }
+    }
+
+    protected void filterExcessiveAssetDownloads(Set<SwrveAssetsQueueItem> assetsQueue) {
+        if (appId != ASSET_DOWNLOAD_LIMITS_APP_ID) {
+            return;
+        }
+
+        SwrveLogger.v("SwrveSDK checking for excessive asset downloads. QueueSize:%s", assetsQueue.size());
+        Iterator<SwrveAssetsQueueItem> itDownloadQueue = assetsQueue.iterator();
+        boolean anyAssetFiltered = false;
+        while (itDownloadQueue.hasNext()) {
+            SwrveAssetsQueueItem item = itDownloadQueue.next();
+            int downloadCount = multiLayerLocalStorage.getAssetDownloadCount(item.getName());
+            if (downloadCount >= campaignsAndResourcesAssetDownloadLimit) {
+                SwrveLogger.w("SwrveSDK asset download limit exceeded for asset %s, so skipping download.", item.getName());
+                itDownloadQueue.remove();
+                anyAssetFiltered = true;
+            } else {
+                item.setDownloadCount(downloadCount);
+            }
+        }
+        SwrveLogger.v("SwrveSDK finished checking for excessive asset downloads. QueueSize:%s", assetsQueue.size());
+
+        if (anyAssetFiltered) {
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("name", EVENT_ASSET_DOWNLOAD_LIMIT_EXCEEDED);
+            queueEvent(profileManager.getUserId(), "event", parameters, null, false);
+        }
+    }
+
+    private void updateAssetLogs(Set<String> assetsDownloaded) {
+        if (assetsDownloaded == null) {
+            return;
+        }
+        long time = getNow().getTime();
+        for (String asset : assetsDownloaded) {
+            multiLayerLocalStorage.incrementAssetDownloadCount(asset, time);
         }
     }
 

@@ -23,6 +23,10 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.util.Arrays;
 
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_DOWNLOAD_COUNT;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATEGORY;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
@@ -65,7 +69,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         SQLiteDatabase database = sqLiteOpenHelper.getWritableDatabase();
 
         Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table'", null);
-        assertEquals("Should be 6 tables in database.", 7, cursor.getCount());
+        assertEquals("Should be 8 tables in database.", 8, cursor.getCount());
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='android_metadata'", null);
         assertEquals("Should be 1 table called android_metadata in database.", 1, cursor.getCount());
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + EVENTS_TABLE_NAME + "'", null);
@@ -80,6 +84,8 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         assertEquals("Should be 1 table called sqlite_sequence in database.", 1, cursor.getCount());
         cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + OFFLINE_CAMPAIGNS_TABLE_NAME + "'", null);
         assertEquals("Should be 1 table called offline_campaigns in database.", 1, cursor.getCount());
+        cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + ASSET_LOGS_TABLE_NAME + "'", null);
+        assertEquals("Should be 1 table called asset_logs in database.", 1, cursor.getCount());
 
         cursor = database.rawQuery("SELECT * FROM " + EVENTS_TABLE_NAME, null);
         String[] columnNames = cursor.getColumnNames();
@@ -120,6 +126,13 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         assertTrue("onCreate of tables failed as there should be a campaign_json column", Arrays.asList(columnNames).contains(OFFLINE_CAMPAIGNS_COLUMN_JSON));
         assertEquals("Should be 0 rows.", 0, cursor.getCount());
 
+        cursor = database.rawQuery("SELECT * FROM " + ASSET_LOGS_TABLE_NAME, null);
+        columnNames = cursor.getColumnNames();
+        assertEquals("Should only be 3 columns in asset_logs", 3, columnNames.length);
+        assertTrue("onCreate of tables failed as there should be a name column", Arrays.asList(columnNames).contains(ASSET_LOGS_COLUMN_NAME));
+        assertTrue("onCreate of tables failed as there should be a download_count column", Arrays.asList(columnNames).contains(ASSET_LOGS_COLUMN_DOWNLOAD_COUNT));
+        assertTrue("onCreate of tables failed as there should be a last_download_time column", Arrays.asList(columnNames).contains(ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME));
+        assertEquals("Should be 0 rows.", 0, cursor.getCount());
 
         database.close();
     }
