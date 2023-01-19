@@ -16,14 +16,17 @@ import static com.swrve.sdk.SwrveFlavour.HUAWEI;
 
 import android.app.UiModeManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -528,5 +531,32 @@ public final class SwrveHelper {
 
     public static String getPermissionAnsweredCacheKey(String permission) {
         return CACHE_PERMISSION_ANSWERED_TIMES_PREFIX + permission;
+    }
+
+    public static Intent getNotificationPermissionSettingsIntent(Context context) {
+        Intent intent = new Intent();
+        // Settings.ACTION_APP_NOTIFICATION_SETTINGS and Settings.EXTRA_APP_PACKAGE added api level 26
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+            intent.putExtra("app_package", context.getPackageName());
+            intent.putExtra("app_uid", context.getApplicationInfo().uid);
+        } else {
+            // fallback to settings page
+            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setData(Uri.parse("package:" + context.getPackageName()));
+        }
+        return intent;
+    }
+
+    public static Intent getAppSettingsIntent(Context context) {
+        Intent intent = new Intent();
+        intent.setAction(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", context.getPackageName(), null);
+        intent.setData(uri);
+        return intent;
     }
 }

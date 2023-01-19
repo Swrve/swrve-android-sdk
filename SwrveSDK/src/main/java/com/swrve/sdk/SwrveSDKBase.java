@@ -410,6 +410,16 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Send impression event for an embedded control campaign
+     *
+     * @param message embedded message that has been processed
+     */
+    public static void embeddedControlMessageImpressionEvent(SwrveEmbeddedMessage message) {
+        checkInstanceCreated();
+        instance.embeddedControlMessageImpressionEvent(message);
+    }
+
+    /**
      * Get the personalized data string from a SwrveEmbeddedMessage campaign with a map of custom
      * personalization properties.
      *

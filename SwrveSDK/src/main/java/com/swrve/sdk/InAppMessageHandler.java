@@ -13,6 +13,7 @@ import static com.swrve.sdk.SwrveInAppMessageActivity.SWRVE_AD_MESSAGE;
 import static com.swrve.sdk.SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY;
 import static com.swrve.sdk.messaging.SwrveActionType.Dismiss;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -31,6 +32,7 @@ import com.swrve.sdk.messaging.SwrveOrientation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -110,10 +112,19 @@ class InAppMessageHandler {
                 clipboardButtonClicked(button, action, pageId, pageName);
                 break;
             case RequestCapabilty:
-                // Not required for android
+                requestCapabilityButtonClicked(action);
                 break;
             case PageLink:
                 sendNavigationEvent(pageId, pageName, Long.parseLong(button.getAction()), button.getButtonId());
+                break;
+            case OpenNotificationSettings:
+                openNotificationSettingsButtonClicked();
+                break;
+            case OpenAppSettings:
+                openAppSettingsButtonClicked();
+                break;
+            case StartGeo:
+                startGeoButtonClicked();
                 break;
             default:
                 break;
@@ -190,6 +201,38 @@ class InAppMessageHandler {
         } catch (Exception e) {
             SwrveLogger.e("Couldn't copy text to clipboard: %s", e, stringToCopy);
         }
+    }
+
+    private void requestCapabilityButtonClicked(String action) {
+        if (SwrveHelper.isNullOrEmpty(action)) {
+            SwrveLogger.e("Swrve requestCapabilityButtonClicked but action is null.");
+        } else {
+            SwrvePermissionRequesterActivity.requestPermission(context, action);
+        }
+    }
+
+    private void openAppSettingsButtonClicked() {
+        Intent intent = SwrveHelper.getAppSettingsIntent(context);
+        context.startActivity(intent);
+    }
+
+    protected void startGeoButtonClicked() {
+        try {
+            Class swrveGeoSDK = Class.forName("com.swrve.sdk.geo.SwrveGeoSDK");
+            if (swrveGeoSDK != null && context instanceof Activity) {
+                Method method = swrveGeoSDK.getMethod("start", Activity.class);
+                method.invoke(null, context);
+            }
+        } catch (ClassNotFoundException e) {
+            SwrveLogger.v("SwrveGeoSDK is not integrated.");
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveGeoSDK could not be started.", e);
+        }
+    }
+
+    private void openNotificationSettingsButtonClicked() {
+        Intent intent = SwrveHelper.getNotificationPermissionSettingsIntent(context);
+        context.startActivity(intent);
     }
 
     protected void backButtonClicked(long currentPageId) {

@@ -252,7 +252,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         verify(swrveSpy).saveNotificationAuthenticated(123);
     }
 
-    @Ignore("Ignored for now. Failing regularly in CI but passing locally ok.")
+//    @Ignore("Ignored for now. Failing regularly in CI but passing locally ok.")
     @Test
     public void testNotificationAuthenticatedTrackingStateStopped() throws Exception {
 
@@ -737,6 +737,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         swrveSpy = Mockito.spy(swrveReal);
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveCommon.setSwrveCommon(swrveSpy);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
     }
 
     private void sendMessage(boolean authenticated, boolean grantNotificationPermission) {

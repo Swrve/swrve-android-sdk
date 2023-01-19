@@ -450,4 +450,137 @@ public class TriggerTest extends SwrveBaseTest {
         assertEquals(1, qaCampaignInfoMap.size());
         assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
     }
+
+    @Test
+    public void testCampaignTriggerConditionNUMERIC() throws Exception {
+        QaUser qaUserMock = Mockito.mock(QaUser.class);
+        qaUserMock.loggingEnabled = true;
+        QaUser.instance = qaUserMock;
+
+        String text = SwrveTestUtils.getAssetAsText(mActivity, "campaign_trigger_conditionNUMERIC.json");
+        assertNotNull(text);
+        JSONObject jsonObject = new JSONObject(text);
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(SwrveTestUtils.getTestSwrveCampaignManager(), new SwrveCampaignDisplayer(), jsonObject, new HashSet<>(), null);
+        assertNotNull(campaign);
+
+        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
+        Map<String, String> payload = new HashMap<>();
+        payload.put("flight", "17");
+        assertNotNull(campaign.getMessageForEvent("flight_search1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "18");
+        assertNull(campaign.getMessageForEvent("flight_search1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "16");
+        assertNull(campaign.getMessageForEvent("flight_search1", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "5");
+        assertNotNull(campaign.getMessageForEvent("flight_search2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "11");
+        assertNull(campaign.getMessageForEvent("flight_search2", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "11");
+        assertNotNull(campaign.getMessageForEvent("flight_search3", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "5");
+        assertNull(campaign.getMessageForEvent("flight_search3", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "15");
+        assertNotNull(campaign.getMessageForEvent("flight_search4", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "23");
+        assertNull(campaign.getMessageForEvent("flight_search4", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "8");
+        assertNull(campaign.getMessageForEvent("flight_search4", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "12");
+        assertNotNull(campaign.getMessageForEvent("flight_search5", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "9");
+        assertNull(campaign.getMessageForEvent("flight_search5", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passengers1", "10");
+        payload.put("passengers2", "4");
+        assertNotNull(campaign.getMessageForEvent("flight_search6", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passengers2", "10");
+        assertNull(campaign.getMessageForEvent("flight_search6", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "15");
+        assertNull(campaign.getMessageForEvent("flight_search7", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "23");
+        assertNotNull(campaign.getMessageForEvent("flight_search7", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+
+        qaCampaignInfoMap = new HashMap<>();
+        payload = new HashMap<>();
+        payload.put("passenger", "8");
+        assertNotNull(campaign.getMessageForEvent("flight_search7", payload, new Date(), qaCampaignInfoMap));
+        assertEquals(1, qaCampaignInfoMap.size());
+        assertTrue(qaCampaignInfoMap.get(campaign.getId()).displayed);
+    }
 }

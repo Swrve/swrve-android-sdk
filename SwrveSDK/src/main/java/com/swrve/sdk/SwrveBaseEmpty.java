@@ -239,6 +239,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void embeddedControlMessageImpressionEvent(SwrveEmbeddedMessage message) {
+    }
+
+    @Override
     public String getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
         return null;
     }

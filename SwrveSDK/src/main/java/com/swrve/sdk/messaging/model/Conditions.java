@@ -13,13 +13,23 @@ public class Conditions {
         AND,
         @SerializedName("contains")
         CONTAINS,
+        @SerializedName("number_gt")
+        NUMBER_GT,
+        @SerializedName("number_lt")
+        NUMBER_LT,
+        @SerializedName("number_between")
+        NUMBER_BETWEEN,
+        @SerializedName("number_not_between")
+        NUMBER_NOT_BETWEEN,
+        @SerializedName("number_eq")
+        NUMBER_EQ,
         @SerializedName("eq")
         EQ
     }
 
     private Op op = null;
     private String key;
-    private String value;
+    private Object value;
     private List<Arg> args;
 
     public String getKey() {
@@ -30,7 +40,7 @@ public class Conditions {
         return op;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 

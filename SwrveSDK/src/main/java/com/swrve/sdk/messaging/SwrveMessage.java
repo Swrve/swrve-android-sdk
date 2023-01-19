@@ -28,6 +28,7 @@ public class SwrveMessage implements SwrveBaseMessage {
     private final SwrveInAppCampaign campaign;
     private final List<SwrveMessageFormat> formats;
     private final File cacheDir;
+    private boolean control;
 
     public SwrveMessage(SwrveInAppCampaign campaign, JSONObject messageData, File cacheDir) throws JSONException {
         this.campaign = campaign;
@@ -52,6 +53,14 @@ public class SwrveMessage implements SwrveBaseMessage {
             SwrveMessageFormat messageFormat = new SwrveMessageFormat(this, messageFormatData);
             getFormats().add(messageFormat);
         }
+
+        if (messageData.has("control")) {
+            this.control = messageData.getBoolean("control");
+        }
+    }
+
+    public boolean isControl() {
+        return control;
     }
 
     public int getId() {

@@ -1,174 +1,806 @@
 {
-    "cdn_root": "http://localhost:8083/cdn/",
-    "campaigns": [
-        {
-            "id": 1,
-            "end_date": 1927994560000,
-            "triggers": [{
-                "event_name": "Swrve.Messages.showAtSessionStart",
-                "conditions": {}
-            }
-            ],
-            "start_date": 1362671700000,
-            "message":
-                {
-                    "template": {
-                        "template_id": "20",
-                        "formats": [
-                            {
-                                "orientation" : "portrait",
-                                "size": {
-                                    "w": {
-                                        "type": "number",
-                                        "value": 320
-                                    },
-                                    "h": {
-                                        "type": "number",
-                                        "value": 240
-                                    }
-                                },
-                                "images": [
-                                ],
-                                "buttons": [
-                                    {
-                                        "name": "request1",
-                                        "x": {
-                                            "type": "number",
-                                            "value": 100
-                                        },
-                                        "y": {
-                                            "type": "number",
-                                            "value": 100
-                                        },
-                                        "w": {
-                                            "type": "number",
-                                            "value": 100
-                                        },
-                                        "h": {
-                                            "type": "number",
-                                            "value": 100
-                                        },
-                                        "action": {
-                                            "type": "text",
-                                            "value": "swrve.contacts"
-                                        },
-                                        "image_up": {
-                                            "type": "asset",
-                                            "value": "8721fd4e657980a5e12d498e73aed6e6a565dfca"
-                                        },
-                                        "type": {
-                                            "type": "text",
-                                            "value": "REQUEST_CAPABILITY"
-                                        }
-                                    }
-                                ],
-                                "name": "Kindle (English (US))",
-                                "language": "en-US"
-                            }
-                        ]
-                    },
-                    "id": 1,
-                    "name": "Kindle",
-                    "rules": {}
+  "cdn_root": "http://www.someurl.com/",
+  "campaigns": [
+    {
+      "id": 1,
+      "start_date": 1670345025000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 0
+      },
+      "triggers": [],
+      "message_center": true,
+      "message": {
+        "id": 1,
+        "template": {
+          "formats": [
+            {
+              "name": "[0.6094808126410836]all - landscape",
+              "orientation": "landscape",
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1080
                 },
-            "rules": {
-                "display_order": "random",
-                "dismiss_after_views": 2,
-                "delay_first_message": 0,
-                "min_delay_between_messages": 0
-            }
-        },
-        {
-            "id": 2,
-            "end_date": 1927994560000,
-                "triggers": [{
-                    "event_name": "Swrve.Messages.showAtSessionStart",
-                    "conditions": {}
+                "h": {
+                  "type": "number",
+                  "value": 1920
                 }
-            ],
-            "start_date": 1362671700000,
-            "message":
+              },
+              "images": [
                 {
-                    "template": {
-                    	"template_id": "20",
-                        "formats": [
-                            {
-                            	"orientation" : "portrait",
-                                "size": {
-                                    "w": {
-                                        "type": "number",
-                                        "value": 320
-                                    },
-                                    "h": {
-                                        "type": "number",
-                                        "value": 240
-                                    }
-                                },
-                                "images": [
-                                ],
-                                "buttons": [
-                                    {
-                                        "name": "accept",
-                                        "x": {
-                                            "type": "number",
-                                            "value": 0
-                                        },
-                                        "y": {
-                                            "type": "number",
-                                            "value": 0
-                                        },
-                                        "w": {
-                                            "type": "number",
-                                            "value": 0
-                                        },
-                                        "h": {
-                                            "type": "number",
-                                            "value": 0
-                                        },
-                                        "image_up": {
-                                            "type": "asset",
-                                            "value": "8721fd4e657980a5e12d498e73aed6e6a565dfca"
-                                        },
-                                        "action": {
-                                            "type": "text",
-                                            "value": ""
-                                        },
-                                        "game_id": {
-                                            "type": "number",
-                                            "value": "1"
-                                        },
-                                        "type": {
-                                            "type": "text",
-                                            "value": "INSTALL"
-                                        }
-                                    }
-                                ],
-                                "name": "Kindle (English (US))",
-                                "language": "en-US"
-                            }
-                        ]
-                    },
-                    "id": 2,
-                    "name": "Kindle",
-                    "rules": {}
+                  "name": "Background",
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 1441
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 2340
+                  },
+                  "image_width": 1441,
+                  "image_height": 2340,
+                  "image_filename": "bg_push_permissions.png",
+                  "image": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "color": {
+                    "type": "color",
+                    "value": "FFFFFF"
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "Button 1",
+                  "x": {
+                    "type": "number",
+                    "value": 321
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": -807
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_Dismiss.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "DISMISS"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
                 },
-            "rules": {
-                "display_order": "random",
-                "dismiss_after_views": 2,
-                "delay_first_message": 0,
-                "min_delay_between_messages": 0
+                {
+                  "name": "Button 2",
+                  "x": {
+                    "type": "number",
+                    "value": -234
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 729
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_settings.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "OPEN_APP_SETTINGS"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "scaled_by": 0.6094808126410836,
+              "scaled_from": "all - portrait",
+              "scale": 1
             }
-        }
-    ],
-    "game_data": {
-        "150": {
-            "app_store_url": "https://itunes.apple.com/us/app/ascension-chronicle-godslayer/id441838733?mt=8"
-        }
+          ]
+        },
+        "name": "open app settings",
+        "rules": {
+          "orientations": "landscape"
+        },
+        "priority": 9999
+      },
+      "subject": "open app settings",
+      "in_app_version": 12
     },
-    "rules": {
-        "min_delay_between_messages": 0,
-        "max_messages_per_session": 99999,
-        "delay_first_message": 0
+    {
+      "id": 2,
+      "start_date": 1670345025000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 0
+      },
+      "triggers": [],
+      "message_center": true,
+      "message": {
+        "id": 2,
+        "template": {
+          "formats": [
+            {
+              "name": "[0.6094808126410836]all - landscape",
+              "orientation": "landscape",
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1080
+                },
+                "h": {
+                  "type": "number",
+                  "value": 1920
+                }
+              },
+              "images": [
+                {
+                  "name": "Background",
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 1441
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 2340
+                  },
+                  "image_width": 1441,
+                  "image_height": 2340,
+                  "image_filename": "bg_push_permissions.png",
+                  "image": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "color": {
+                    "type": "color",
+                    "value": "FFFFFF"
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "Button 1",
+                  "x": {
+                    "type": "number",
+                    "value": 321
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": -807
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_Dismiss.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "DISMISS"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                },
+                {
+                  "name": "Button 2",
+                  "x": {
+                    "type": "number",
+                    "value": -234
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 729
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_settings.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "REQUEST_CAPABILITY"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": "android.permission.POST_NOTIFICATIONS"
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "scaled_by": 0.6094808126410836,
+              "scaled_from": "all - portrait",
+              "scale": 1
+            }
+          ]
+        },
+        "name": "request notification permission",
+        "rules": {
+          "orientations": "landscape"
+        },
+        "priority": 9999
+      },
+      "subject": "request notification permission",
+      "in_app_version": 12
     },
-    "version": 2
+    {
+      "id": 3,
+      "start_date": 1670345025000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 0
+      },
+      "triggers": [],
+      "message_center": true,
+      "message": {
+        "id": 3,
+        "template": {
+          "formats": [
+            {
+              "name": "[0.6094808126410836]all - landscape",
+              "orientation": "landscape",
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1080
+                },
+                "h": {
+                  "type": "number",
+                  "value": 1920
+                }
+              },
+              "images": [
+                {
+                  "name": "Background",
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 1441
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 2340
+                  },
+                  "image_width": 1441,
+                  "image_height": 2340,
+                  "image_filename": "bg_push_permissions.png",
+                  "image": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "color": {
+                    "type": "color",
+                    "value": "FFFFFF"
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "Button 1",
+                  "x": {
+                    "type": "number",
+                    "value": 321
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": -807
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_Dismiss.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "DISMISS"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                },
+                {
+                  "name": "Button 2",
+                  "x": {
+                    "type": "number",
+                    "value": -234
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 729
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_settings.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "OPEN_NOTIFICATION_SETTINGS"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "scaled_by": 0.6094808126410836,
+              "scaled_from": "all - portrait",
+              "scale": 1
+            }
+          ]
+        },
+        "name": "open permission settings",
+        "rules": {
+          "orientations": "landscape"
+        },
+        "priority": 9999
+      },
+      "subject": "open permission settings",
+      "in_app_version": 12
+    },
+    {
+      "id": 4,
+      "start_date": 1670345025000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 0
+      },
+      "triggers": [],
+      "message_center": true,
+      "message": {
+        "id": 4,
+        "template": {
+          "formats": [
+            {
+              "name": "[0.6094808126410836]all - landscape",
+              "orientation": "landscape",
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1080
+                },
+                "h": {
+                  "type": "number",
+                  "value": 1920
+                }
+              },
+              "images": [
+                {
+                  "name": "Background",
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 1441
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 2340
+                  },
+                  "image_width": 1441,
+                  "image_height": 2340,
+                  "image_filename": "bg_push_permissions.png",
+                  "image": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "color": {
+                    "type": "color",
+                    "value": "FFFFFF"
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "Button 1",
+                  "x": {
+                    "type": "number",
+                    "value": 321
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": -807
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_Dismiss.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "DISMISS"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                },
+                {
+                  "name": "Button 2",
+                  "x": {
+                    "type": "number",
+                    "value": -234
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 729
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_settings.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "REQUEST_CAPABILITY"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": "android.permission.CAMERA"
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "scaled_by": 0.6094808126410836,
+              "scaled_from": "all - portrait",
+              "scale": 1
+            }
+          ]
+        },
+        "name": "request camera permission",
+        "rules": {
+          "orientations": "landscape"
+        },
+        "priority": 9999
+      },
+      "subject": "request camera permission",
+      "in_app_version": 12
+    },
+    {
+      "id": 5,
+      "start_date": 1670345025000,
+      "end_date": 2145920400000,
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 0
+      },
+      "triggers": [],
+      "message_center": true,
+      "message": {
+        "id": 5,
+        "template": {
+          "formats": [
+            {
+              "name": "[0.6094808126410836]all - landscape",
+              "orientation": "landscape",
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1080
+                },
+                "h": {
+                  "type": "number",
+                  "value": 1920
+                }
+              },
+              "images": [
+                {
+                  "name": "Background",
+                  "x": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 1441
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 2340
+                  },
+                  "image_width": 1441,
+                  "image_height": 2340,
+                  "image_filename": "bg_push_permissions.png",
+                  "image": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "color": {
+                    "type": "color",
+                    "value": "FFFFFF"
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "Button 1",
+                  "x": {
+                    "type": "number",
+                    "value": 321
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": -807
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_Dismiss.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "DISMISS"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                },
+                {
+                  "name": "Button 2",
+                  "x": {
+                    "type": "number",
+                    "value": -234
+                  },
+                  "y": {
+                    "type": "number",
+                    "value": 729
+                  },
+                  "w": {
+                    "type": "number",
+                    "value": 135
+                  },
+                  "h": {
+                    "type": "number",
+                    "value": 108
+                  },
+                  "image_width": 366,
+                  "image_height": 244,
+                  "image_filename": "600x400_settings.png",
+                  "image_up": {
+                    "type": "asset",
+                    "value": "13c1f62022e248dac7c9a6fac01255140a8360a1"
+                  },
+                  "type": {
+                    "type": "text",
+                    "value": "START_GEO"
+                  },
+                  "action": {
+                    "type": "text",
+                    "value": ""
+                  },
+                  "game_id": {
+                    "type": "number",
+                    "value": ""
+                  },
+                  "media_format": "image"
+                }
+              ],
+              "scaled_by": 0.6094808126410836,
+              "scaled_from": "all - portrait",
+              "scale": 1
+            }
+          ]
+        },
+        "name": "start geo",
+        "rules": {
+          "orientations": "landscape"
+        },
+        "priority": 9999
+      },
+      "subject": "start geo",
+      "in_app_version": 12
+    }
+  ],
+  "game_data": {
+    "150": {
+      "app_store_url": "https://www.someurl.com"
+    }
+  },
+  "rules": {
+    "min_delay_between_messages": 0,
+    "max_messages_per_session": 9999,
+    "delay_first_message": 0
+  },
+  "version": 2
 }

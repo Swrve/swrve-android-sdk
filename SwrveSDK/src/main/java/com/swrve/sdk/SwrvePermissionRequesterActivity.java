@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -16,11 +17,16 @@ import androidx.core.content.ContextCompat;
 public class SwrvePermissionRequesterActivity extends Activity {
 
     private static final int PERMISSION_REQUEST_CODE = 101;
+    private static final int SETTINGS_REQUEST_CODE = 102;
     private static final String EXTRAS_KEY_PERMISSION = "PERMISSION";
 
     private boolean shouldShowRequestPermissionRationaleStart = false;
 
     public static void requestPermission(Context context, String permission) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            SwrveLogger.v("SwrveSDK: Permissions requests are not required below API level 23.");
+            return;
+        }
         Intent intent = new Intent(context, SwrvePermissionRequesterActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRAS_KEY_PERMISSION, permission);
@@ -46,12 +52,37 @@ public class SwrvePermissionRequesterActivity extends Activity {
         shouldShowRequestPermissionRationaleStart = shouldShowRequestPermissionRationale(permission);
 
         if (SwrveHelper.isNotNullOrEmpty(permission) && ContextCompat.checkSelfPermission(this, permission) == PERMISSION_DENIED) {
-            String[] permissions = new String[]{permission};
-            requestPermissions(permissions, PERMISSION_REQUEST_CODE);
+            final Swrve swrve = (Swrve) SwrveSDK.getInstance();
+            int permissionAnsweredTime = swrve.getPermissionAnsweredTime(permission);
+            if (permissionAnsweredTime >= 2) {
+                showSettings(permission); // infer that we cannot request the permission directly so show settings instead
+            } else {
+                String[] permissions = new String[]{permission};
+                requestPermissions(permissions, PERMISSION_REQUEST_CODE);
+            }
         } else {
             SwrveLogger.v("SwrveSDK: %s permission is already GRANTED", permission);
             finish();
         }
+    }
+
+    private void showSettings(String permission) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && POST_NOTIFICATIONS.equalsIgnoreCase(permission)) {
+            Intent intent = SwrveHelper.getNotificationPermissionSettingsIntent(this);
+            startActivityForResult(intent, SETTINGS_REQUEST_CODE);
+        } else {
+            Intent intent = SwrveHelper.getAppSettingsIntent(this);
+            startActivityForResult(intent, SETTINGS_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SETTINGS_REQUEST_CODE) {
+            queueDeviceUpdate(); // It could be any permission (not one tracked by swrve) and it might not have changed, but queue device update just in case.
+        }
+        finish();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

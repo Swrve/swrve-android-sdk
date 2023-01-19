@@ -38,6 +38,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
         super.setUp();
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
         swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.disableSwrveBackgroundEventSender(swrveSpy);
         SwrveTestUtils.setSDKInstance(swrveSpy);

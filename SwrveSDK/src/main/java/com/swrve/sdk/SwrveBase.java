@@ -143,6 +143,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             initResources(userId); // Initialize resources from cache
 
+            if (config.getEmbeddedMessageConfig() != null) {
+                if (config.getEmbeddedMessageConfig().getEmbeddedMessageListener() != null) {
+                    embeddedMessageListener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
+                }
+                if (config.getEmbeddedMessageConfig().getEmbeddedListener() != null) {
+                    embeddedListener = config.getEmbeddedMessageConfig().getEmbeddedListener();
+                }
+            }
+
+            eventListener = new SwrveEventListener(this, embeddedMessageListener, embeddedListener); // init event listener before any events such as session start are queued
+
             sessionStart(); // this should be sent immediately and then refresh campaigns executes
             generateNewSessionInterval();
 
@@ -182,14 +193,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             campaignsAndResourcesAssetDownloadLimit = getAssetDownloadLimit(); // this needs to be before calling initCampaigns
             initCampaigns(userId); // Initialize campaigns from cache
-
-            if (config.getEmbeddedMessageConfig() != null) {
-                if (config.getEmbeddedMessageConfig().getEmbeddedMessageListener() != null) {
-                    embeddedMessageListener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
-                }
-            }
-
-            eventListener = new SwrveEventListener(this, embeddedMessageListener);
 
             initABTestDetails(userId);
 
@@ -1195,7 +1198,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         queueMessageImpressionEvent(message.getId(), "true");
     }
 
-    private void queueMessageImpressionEvent(int messageId, String embedded) {
+    protected void queueMessageImpressionEvent(int messageId, String embedded) {
         String viewEvent = "Swrve.Messages.Message-" + messageId + ".impression";
         SwrveLogger.i("Sending view event: %s" + viewEvent);
 
@@ -1220,6 +1223,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", clickEvent);
         queueEvent(profileManager.getUserId(), "event", parameters, payload, false);
+    }
+
+    private void _sendImpressionEventForControlCampaign(SwrveEmbeddedMessage message) {
+        if (message == null) {
+            return; // exit fast
+        }
+        queueMessageImpressionEvent(message.getId(), "true");
     }
 
     private String _getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
@@ -1679,6 +1689,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public void embeddedControlMessageImpressionEvent(SwrveEmbeddedMessage message) {
+        if (!isSdkReady()) return;
+
+        try {
+            _sendImpressionEventForControlCampaign(message);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
     public String getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
         if (!isSdkReady()) return null;
 
@@ -1875,13 +1896,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             && campaign.supportsOrientation(orientation)
                             && campaign.areAssetsReady(getAssetsOnDisk(), personalizedProperties)) {
                         if (campaign instanceof SwrveInAppCampaign) {
-                            // Check personalization for matching key/value pairs
                             SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessage();
-                            boolean messagesCanResolve = true;
-                            if (message.supportsOrientation(orientation)) {
-                                messagesCanResolve = SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizedProperties);
-                            }
-                            if (messagesCanResolve) {
+                            if (filterRedundantCampaign(message)) {
+                                SwrveLogger.v("SwrveSDK filtering message center IAM as it requests a capability/permission that is already granted or redundant action.");
+                            } else if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizedProperties)) { // Check personalization for matching key/value pairs
                                 SwrveMessageCenterDetails personalizedMessageCenterDetails = personalizeMessageCenterDetails(message.getMessageCenterDetails(), personalizedProperties);
                                 campaign.setMessageCenterDetails(personalizedMessageCenterDetails);
                                 result.add(campaign);
@@ -1957,7 +1975,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         } else if (campaign instanceof SwrveEmbeddedCampaign) {
             SwrveEmbeddedCampaign embeddedCampaign = (SwrveEmbeddedCampaign) campaign;
-            if (embeddedCampaign != null && embeddedMessageListener != null) {
+            if (embeddedCampaign != null && embeddedListener != null) {
+                Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
+                embeddedListener.onMessage(getContext(), embeddedCampaign.getMessage(), personalizedProperties, embeddedCampaign.getMessage().isControl());
+                return true;
+            }
+            else if (embeddedCampaign != null && embeddedMessageListener != null) {
                 Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
                 embeddedMessageListener.onMessage(getContext(), embeddedCampaign.getMessage(), personalizedProperties);
                 return true;
@@ -2549,7 +2572,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e("Exception sending session start event", e);
         }
 
-        eventListener.onEvent(EventHelper.getEventName("session_start", null), null);
+        if (eventListener != null) {
+            eventListener.onEvent(EventHelper.getEventName("session_start", null), null);
+        }
         QaUser.wrappedEvents(sessionStartEvent);
     }
 

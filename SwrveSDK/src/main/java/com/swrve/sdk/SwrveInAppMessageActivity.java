@@ -40,7 +40,7 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        inAppMessageHandler = new InAppMessageHandler(getApplicationContext(), getIntent(), savedInstanceState);
+        inAppMessageHandler = new InAppMessageHandler(this, getIntent(), savedInstanceState);
         if (inAppMessageHandler.message == null) {
             finish();
             return;

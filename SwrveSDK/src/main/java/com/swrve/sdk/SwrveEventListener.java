@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat;
 import com.swrve.sdk.conversations.SwrveConversation;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessage;
@@ -26,10 +27,12 @@ class SwrveEventListener implements ISwrveEventListener {
 
     private final SwrveBase<?, ?> sdk;
     private final SwrveEmbeddedMessageListener embeddedMessageListener;
+    private final SwrveEmbeddedListener embeddedListener;
 
-    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveEmbeddedMessageListener embeddedMessageListener) {
+    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveEmbeddedMessageListener embeddedMessageListener, SwrveEmbeddedListener embeddedListener) {
         this.sdk = sdk;
         this.embeddedMessageListener = embeddedMessageListener;
+        this.embeddedListener = embeddedListener;
     }
 
     @Override
@@ -51,12 +54,31 @@ class SwrveEventListener implements ISwrveEventListener {
         SwrveOrientation deviceOrientation = SwrveOrientation.parse(sdk.getContext().getResources().getConfiguration().orientation);
         SwrveBaseMessage message = sdk.getBaseMessageForEvent(eventName, payload, deviceOrientation);
         if (message != null) {
+            if (message.isControl()) {
+                SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
+            }
             sdk.lastEventPayloadUsed = payload; // Save the last used payload for personalization
             if (message instanceof SwrveMessage) {
-                sdk.displaySwrveMessage((SwrveMessage) message, null);
-            } else if (message instanceof SwrveEmbeddedMessage && embeddedMessageListener != null) {
+                if (message.isControl()) {
+                    // skip setting campaign state, these campaigns should never been shown to user.
+                    // we send an impression event for backend reporting.
+                    sdk.queueMessageImpressionEvent(message.getId(), "false");
+                } else {
+                    sdk.displaySwrveMessage((SwrveMessage) message, null);
+                }
+            } else if (message instanceof SwrveEmbeddedMessage) {
                 Map<String, String> personalizationProperties = sdk.retrievePersonalizationProperties(payload, null);
-                embeddedMessageListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
+                if (embeddedListener != null) {
+                    embeddedListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties, message.isControl());
+                } else {
+                    if (message.isControl()) {
+                        sdk.queueMessageImpressionEvent(message.getId(), "true");
+                    } else {
+                        if (embeddedMessageListener != null) {
+                            embeddedMessageListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
+                        }
+                    }
+                }
             }
             sdk.lastEventPayloadUsed = null; // Remove ref
         }

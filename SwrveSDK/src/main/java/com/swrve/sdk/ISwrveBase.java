@@ -71,6 +71,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void embeddedMessageWasShownToUser(SwrveEmbeddedMessage message);
 
+    void embeddedControlMessageImpressionEvent(SwrveEmbeddedMessage message);
+
     String getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties);
 
     String getPersonalizedText(String text, Map<String, String> personalizationProperties);

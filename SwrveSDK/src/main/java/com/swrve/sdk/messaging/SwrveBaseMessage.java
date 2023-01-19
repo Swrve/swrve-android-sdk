@@ -11,4 +11,6 @@ public interface SwrveBaseMessage {
     SwrveBaseCampaign getCampaign();
 
     boolean supportsOrientation(SwrveOrientation orientation);
+
+    boolean isControl();
 }

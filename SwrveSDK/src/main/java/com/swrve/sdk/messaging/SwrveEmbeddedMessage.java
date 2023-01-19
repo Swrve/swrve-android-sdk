@@ -38,6 +38,8 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
     protected EMBEDDED_CAMPAIGN_TYPE type;
     // Name of message
     protected String name;
+    // Campaign is either a control or treatment
+    protected boolean control;
 
     /*
      * Load embedded message from JSON data.
@@ -77,6 +79,10 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
 
         if(messageData.has("message_center_details")) {
             this.messageCenterDetails = new SwrveMessageCenterDetails(messageData.getJSONObject("message_center_details"));
+        }
+
+        if (messageData.has("control")) {
+            this.control = messageData.getBoolean("control");
         }
     }
     /**
@@ -166,5 +172,12 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return whether campaign is control or treatment
+     */
+    public boolean isControl() {
+        return control;
     }
 }

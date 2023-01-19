@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
@@ -13,6 +14,8 @@ import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static com.swrve.sdk.SwrveTrackingState.STOPPED;
 import static com.swrve.sdk.SwrveTrackingState.UNKNOWN;
+import static com.swrve.sdk.messaging.SwrveActionType.RequestCapabilty;
+import static com.swrve.sdk.messaging.SwrveActionType.StartGeo;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -30,6 +33,7 @@ import android.view.WindowManager;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.conversations.SwrveConversation;
@@ -38,13 +42,13 @@ import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.InMemoryLocalStorage;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
-import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
@@ -61,6 +65,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,10 +90,10 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.8.0";
+    protected static String version = "10.9.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
-    protected static final int EMBEDDED_CAMPAIGN_VERSION = 2;
-    protected static final int IN_APP_CAMPAIGN_VERSION = 10;
+    protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 12;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -117,6 +122,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected C config;
     protected ISwrveEventListener eventListener;
     protected SwrveEmbeddedMessageListener embeddedMessageListener;
+    protected SwrveEmbeddedListener embeddedListener;
     protected SwrveMessagePersonalizationProvider personalizationProvider;
     protected SwrveResourcesListener resourcesListener;
     protected ExecutorService autoShowExecutor;
@@ -461,8 +467,12 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 }
             };
             downloadAssetsExecutor.execute(SwrveRunnables.withoutExceptions(() -> {
-                if (swrveAssetsManager instanceof SwrveAssetsManagerImp) {
-                    ((SwrveAssetsManagerImp) swrveAssetsManager).currentActivityName = activityContext.get().getLocalClassName();
+
+                if (swrveAssetsManager instanceof SwrveAssetsManagerImp && activityContext != null) {
+                    Activity currentActivity = activityContext.get();
+                    if (currentActivity != null) {
+                        ((SwrveAssetsManagerImp) swrveAssetsManager).currentActivityName = currentActivity.getLocalClassName();
+                    }
                 }
                 checkAssetDownloadLimits(assetsQueue);
                 swrveAssetsManager.downloadAssets(assetsQueue, callback);
@@ -650,7 +660,17 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 SwrveBaseMessage message = swrve.getBaseMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
                 if (message != null && message.supportsOrientation(getDeviceOrientation())) {
                     if (message instanceof SwrveMessage) {
-                        displaySwrveMessage((SwrveMessage) message, null);
+                        if (message.isControl()) {
+                            SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
+                            // skip setting campaign state, these campaigns should never been shown to user.
+                            // we send an impression event for backend reporting.
+                            swrve.queueMessageImpressionEvent(message.getId(), "false");
+                        } else {
+                            displaySwrveMessage((SwrveMessage) message, null);
+                        }
+                    } else if (embeddedListener != null && message instanceof SwrveEmbeddedMessage) {
+                        Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
+                        embeddedListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties, message.isControl());
                     } else if (embeddedMessageListener != null && message instanceof SwrveEmbeddedMessage) {
                         Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
                         embeddedMessageListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
@@ -669,7 +689,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
 
         Map<String, String> personalizationProperties = retrievePersonalizationProperties(lastEventPayloadUsed, properties);
-        if (message.supportsOrientation(getDeviceOrientation())) {
+        if (!message.supportsOrientation(getDeviceOrientation())) {
+            SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
+        } else if (filterRedundantCampaign(message)) {
+            SwrveLogger.i("Will not display the in-app message as it requests a capability/permission that is already granted or redundant action.");
+        } else {
             if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizationProperties)) {
                 Intent intent = new Intent(getContext(), SwrveInAppMessageActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -683,9 +707,47 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
                 getContext().startActivity(intent);
             }
-        } else {
-            SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
         }
+    }
+
+    protected boolean filterRedundantCampaign(SwrveMessage message) {
+        // Check all buttons to see if any are requesting a capability that's already granted, or an action is redundant
+        for (final SwrveMessageFormat format : message.getFormats()) {
+            for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
+                SwrveMessagePage page = entry.getValue();
+                for (final SwrveButton button : page.getButtons()) {
+                    if (RequestCapabilty.equals(button.getActionType())) {
+                        String permission = button.getAction();
+                        if (SwrveHelper.isNullOrEmpty(permission)) {
+                            continue; // added for safety
+                        } else if (ContextCompat.checkSelfPermission(getContext(), permission) == PERMISSION_GRANTED) {
+                            return true;
+                        }
+                    } else if (StartGeo.equals(button.getActionType()) && filterStartGeoSDKCampaign()) {
+                        return true; // Don't show campaign to start the geosdk if its already started or not integrated
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    protected boolean filterStartGeoSDKCampaign() {
+        boolean filterStartGeoSDKCampaign = false;
+        try {
+            Class swrveGeoSDK = Class.forName("com.swrve.sdk.geo.SwrveGeoSDK");
+            if (swrveGeoSDK != null) {
+                Method method = swrveGeoSDK.getMethod("isStarted", Context.class);
+                filterStartGeoSDKCampaign = (boolean) method.invoke(null, getContext()); // filter the campaign if its already started
+            }
+        } catch (ClassNotFoundException e) {
+            SwrveLogger.v("SwrveGeoSDK is not integrated.");
+            filterStartGeoSDKCampaign = true;
+        } catch (Exception e) {
+            SwrveLogger.e("Exception trying to assert if SwrveGeoSDK is started.", e);
+            filterStartGeoSDKCampaign = true;
+        }
+        return filterStartGeoSDKCampaign;
     }
 
     protected void autoShowConversation(SwrveBase<T, C> swrve) {
@@ -835,12 +897,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         }
                     } else if (campaignData.has("message")) {
                         campaign = loadCampaignFromJSON(campaignData, campaignAssetQueue, personalizationProperties);
-                        boolean filterCampaignWithCapabilityRequest =  filterCampaignCapabilityRequest((SwrveInAppCampaign)campaign);
-                        if (filterCampaignWithCapabilityRequest) {
-                            campaign = null;
-                            SwrveLogger.i("Campaign with capability request is currently not supported");
-                        }
-
                     } else if (campaignData.has("embedded_message")) {
                         campaign = loadEmbeddedCampaignFromJSON(campaignData);
                     }
@@ -1234,23 +1290,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     @Override
     public Set<String> getAssetsOnDisk() {
         return swrveAssetsManager == null ? new HashSet<>() : swrveAssetsManager.getAssetsOnDisk();
-    }
-
-    protected Boolean filterCampaignCapabilityRequest(SwrveInAppCampaign campaign){
-        SwrveMessage message = campaign.getMessage();
-        if (message != null) {
-            for (final SwrveMessageFormat format : message.getFormats()) {
-                for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
-                    SwrveMessagePage page = entry.getValue();
-                    for (final SwrveButton button : page.getButtons()) {
-                        if (SwrveActionType.RequestCapabilty.equals(button.getActionType())) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     protected Map<String, String> retrievePersonalizationProperties(Map<String, String> eventPayload, Map<String, String> properties) {

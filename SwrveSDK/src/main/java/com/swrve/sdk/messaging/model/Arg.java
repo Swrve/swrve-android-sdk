@@ -8,12 +8,22 @@ public class Arg {
         @SerializedName("eq")
         EQ,
         @SerializedName("contains")
-        CONTAINS
+        CONTAINS,
+        @SerializedName("number_gt")
+        NUMBER_GT,
+        @SerializedName("number_lt")
+        NUMBER_LT,
+        @SerializedName("number_eq")
+        NUMBER_EQ,
+        @SerializedName("number_not_between")
+        NUMBER_NOT_BETWEEN,
+        @SerializedName("number_between")
+        NUMBER_BETWEEN
     }
 
     private String key;
     private Op op;
-    private String value;
+    private Object value;
 
     public String getKey() {
         return key;
@@ -23,7 +33,7 @@ public class Arg {
         return op;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 

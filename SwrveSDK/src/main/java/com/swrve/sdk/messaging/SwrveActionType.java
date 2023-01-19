@@ -10,8 +10,10 @@ public enum SwrveActionType {
     Install,            // Go to the url specified in the action string
     CopyToClipboard,    // Copy the contents of the action string associated to clipboard
     RequestCapabilty,   // Request capability
-    PageLink;           // Link to another IAM page
-
+    PageLink,           // Link to another IAM page
+    OpenNotificationSettings, // Open notification settings
+    OpenAppSettings,    // Open app settings
+    StartGeo;           // Start SwrveGeoSDK
     /**
      * Convert from string to SwrveActionType.
      *
@@ -31,6 +33,12 @@ public enum SwrveActionType {
             return RequestCapabilty;
         } else if (type.equalsIgnoreCase("page_link")) {
             return PageLink;
+        } else if (type.equalsIgnoreCase("open_notification_settings")) {
+            return OpenNotificationSettings;
+        } else if (type.equalsIgnoreCase("open_app_settings")) {
+            return OpenAppSettings;
+        } else if (type.equalsIgnoreCase("start_geo")) {
+            return StartGeo;
         }
         return Custom;
     }

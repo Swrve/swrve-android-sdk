@@ -90,6 +90,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
         swrveSpy.init(mActivity);
         swrveSpy.activityContext = new WeakReference<>(mActivity);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
     }
 
     @After
@@ -135,10 +136,12 @@ public class SwrveUnitTest extends SwrveBaseTest {
     public void testSwitchAppId() throws Exception {
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
         Swrve swrve1 = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrve1); // wait until swrve2 instance is fully created
         assertTrue(swrve1.isStarted());
 
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
         Swrve swrve2 = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 2, "apiKey_different");
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrve2); // wait until swrve2 instance is fully created
         assertTrue(swrve2.isStarted()); // after switching appId, the sdk will still be started.
     }
 
@@ -274,9 +277,12 @@ public class SwrveUnitTest extends SwrveBaseTest {
 
     @Test
     public void testDeviceUpdate() {
+        doReturn(mActivity).when(swrveSpy).getActivityContext();
+        JSONObject deviceInfo = swrveSpy.getDeviceInfo();
+        SwrveLogger.i("Got deviceInfo:" + deviceInfo);
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("attributes", swrveSpy.getDeviceInfo());
-        swrveSpy.deviceUpdate(swrveSpy.getUserId(),swrveSpy.getDeviceInfo());
+        parameters.put("attributes", deviceInfo);
+        swrveSpy.deviceUpdate(swrveSpy.getUserId(), deviceInfo);
         SwrveTestUtils.assertQueueEvent(swrveSpy, "device_update", parameters, null);
     }
 

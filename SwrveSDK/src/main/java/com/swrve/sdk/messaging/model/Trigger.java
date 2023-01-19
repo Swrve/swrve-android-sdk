@@ -21,10 +21,11 @@ public class Trigger {
             GsonBuilder gsonBuilder = new GsonBuilder();
             gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
             Gson gson = gsonBuilder.create();
-            Type listType = new TypeToken<List<Trigger>>(){}.getType();
+            Type listType = new TypeToken<List<Trigger>>() {
+            }.getType();
             triggers = gson.fromJson(json, listType);
             triggers = validateTriggers(triggers, id);
-        }catch (JsonParseException ex) {
+        } catch (JsonParseException ex) {
             SwrveLogger.e("Could not parse campaign[%s] trigger json:%s" + json, ex, id, json);
         }
         return triggers;
@@ -44,13 +45,13 @@ public class Trigger {
                     return null;
                 } else {
                     for (Arg arg : conditions.getArgs()) {
-                        if (arg.getKey() == null || arg.getOp() == null || arg.getValue() == null || (!Arg.Op.CONTAINS.equals(arg.getOp()) && !Arg.Op.EQ.equals(arg.getOp()))) {
+                        if (arg.getKey() == null || arg.getOp() == null || arg.getValue() == null) {
                             SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                             return null;
                         }
                     }
                 }
-            }else if (Conditions.Op.EQ.equals(conditions.getOp()) || Conditions.Op.CONTAINS.equals(conditions.getOp())) {
+            } else if (Conditions.Op.NUMBER_BETWEEN.equals(conditions.getOp()) || Conditions.Op.NUMBER_EQ.equals(conditions.getOp()) || Conditions.Op.NUMBER_LT.equals(conditions.getOp()) || Conditions.Op.NUMBER_NOT_BETWEEN.equals(conditions.getOp()) || Conditions.Op.NUMBER_GT.equals(conditions.getOp()) || Conditions.Op.EQ.equals(conditions.getOp()) || Conditions.Op.CONTAINS.equals(conditions.getOp())) {
                 if (conditions.getKey() == null || conditions.getValue() == null) {
                     SwrveLogger.e("Invalid trigger in campaign[%s] trigger:%s", id, trigger);
                     return null;

@@ -62,17 +62,13 @@ import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveImageView;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
-import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageCenterDetails;
-import com.swrve.sdk.messaging.SwrveMessageFocusListener;
 import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveTextImageView;
 import com.swrve.sdk.messaging.SwrveTextView;
 import com.swrve.sdk.test.R;
 
-import org.awaitility.Duration;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,27 +78,15 @@ import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
-import org.robolectric.shadows.ShadowApplication;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwrveInAppMessageActivityTest extends SwrveBaseTest {

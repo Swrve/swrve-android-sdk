@@ -1,29 +1,5 @@
 package com.swrve.sdk;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-
-import androidx.test.core.app.ApplicationProvider;
-
-import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
-import com.swrve.sdk.rest.IRESTClient;
-import com.swrve.sdk.rest.IRESTResponseListener;
-import com.swrve.sdk.rest.RESTResponse;
-
-import org.awaitility.Duration;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.robolectric.Robolectric;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static com.swrve.sdk.SwrveTrackingState.STOPPED;
 import static org.awaitility.Awaitility.await;
@@ -41,6 +17,30 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import com.swrve.sdk.conversations.SwrveConversation;
+import com.swrve.sdk.conversations.ui.ConversationActivity;
+import com.swrve.sdk.rest.IRESTClient;
+import com.swrve.sdk.rest.IRESTResponseListener;
+import com.swrve.sdk.rest.RESTResponse;
+
+import org.awaitility.Durations;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.robolectric.Robolectric;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StopTrackingTest extends SwrveBaseTest {
 
@@ -143,13 +143,13 @@ public class StopTrackingTest extends SwrveBaseTest {
         final AtomicBoolean initCallback = new AtomicBoolean(false);
         setRestClientToAssertDeviceUpdate(initCallback, "swrve.tracking_state", "STARTED");
         swrveSpy.init(mActivity);
-        await().atMost(Duration.ONE_MINUTE).untilTrue(initCallback); // wait until device info queued and swrve.tracking_state sent
+        await().atMost(Durations.ONE_MINUTE).untilTrue(initCallback); // wait until device info queued and swrve.tracking_state sent
 
         // test device update after stop called
         final AtomicBoolean stopTrackingCallback = new AtomicBoolean(false);
         setRestClientToAssertDeviceUpdate(stopTrackingCallback, "swrve.tracking_state", "STOPPED");
         SwrveSDK.stopTracking();
-        await().atMost(Duration.ONE_MINUTE).untilTrue(stopTrackingCallback); // wait until device info queued and swrve.tracking_state sent
+        await().atMost(Durations.ONE_MINUTE).untilTrue(stopTrackingCallback); // wait until device info queued and swrve.tracking_state sent
     }
 
     private void setRestClientToAssertDeviceUpdate(final AtomicBoolean callbackCompleted, String deviceUpdateAttributeName, String deviceUpdateAttributeExpectedValue) {
