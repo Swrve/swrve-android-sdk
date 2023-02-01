@@ -90,7 +90,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.9.0";
+    protected static String version = "10.9.1";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
     protected static final int IN_APP_CAMPAIGN_VERSION = 12;
@@ -1202,10 +1202,22 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         if (resourcesListener != null) {
             Activity activity = getActivityContext();
             if (activity != null) {
-                activity.runOnUiThread(() -> resourcesListener.onResourcesUpdated());
+                activity.runOnUiThread(() -> {
+                    if (resourcesListener != null) { // requires another null check because it executes on another thread
+                        try {
+                            resourcesListener.onResourcesUpdated();
+                        } catch (Exception e) {
+                            SwrveLogger.e("SwrveSDK exception trying to call SwrveResourcesListener.onResourcesUpdated", e);
+                        }
+                    }
+                });
             } else {
                 // If we do not have access to the activity context run on current thread
-                resourcesListener.onResourcesUpdated();
+                try {
+                    resourcesListener.onResourcesUpdated();
+                } catch (Exception e) {
+                    SwrveLogger.e("SwrveSDK exception trying to call SwrveResourcesListener.onResourcesUpdated", e);
+                }
             }
         }
     }
