@@ -8,6 +8,7 @@
         <activity
             android:name="com.swrve.sdk.SwrveNotificationEngageActivity"
             android:theme="@android:style/Theme.Light"
+            android:launchMode="singleInstance"
             android:exported="false" />
 
     </application>
