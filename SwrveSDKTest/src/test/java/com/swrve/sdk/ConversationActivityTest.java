@@ -204,8 +204,8 @@ public class ConversationActivityTest extends SwrveBaseTest {
 
         View conversationLayoutModal = conversationRelativeLayout.findViewById(com.swrve.sdk.conversations.R.id.swrve__conversation_modal);
         RelativeLayout.LayoutParams modalParams = (RelativeLayout.LayoutParams) conversationLayoutModal.getLayoutParams();
-        assertEquals(0, modalParams.topMargin);
-        assertEquals(0, modalParams.bottomMargin);
+        assertEquals(25, modalParams.topMargin);
+        assertEquals(25, modalParams.bottomMargin);
 
         // increase the width to over the max and refresh the layout
         outsideParams.width = maxModalWidthPx + 1;

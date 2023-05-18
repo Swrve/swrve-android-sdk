@@ -17,7 +17,7 @@ public class SwrveSSLSocketFactoryConfig {
     }
 
     public SSLSocketFactory getFactory(String url) {
-        if (url.contains("content-cdn.swrve")) {
+        if (url.contains("content-cdn.swrve") || url.contains("campaign-content.swrve")) {
             return getCdnSSLSocketFactory();
         } else if (url.contains("content.swrve")) {
             return getContentSSLSocketFactory();

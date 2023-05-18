@@ -1,5 +1,8 @@
 package com.swrve.sdk.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,9 +16,6 @@ import org.junit.Test;
 import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowActivity;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
 
 public class SwrveIntentHelperTest extends SwrveBaseTest {
 
@@ -49,7 +49,7 @@ public class SwrveIntentHelperTest extends SwrveBaseTest {
 
     @Test
     public void testOpenDeepLink() {
-        SwrveIntentHelper.openDeepLink(mainActivity, "www.google.com");
+        SwrveIntentHelper.openDeepLink(mainActivity, "www.google.com", null);
         ShadowActivity shadowMainActivity = Shadows.shadowOf(mainActivity);
         Intent nextIntent = shadowMainActivity.peekNextStartedActivityForResult().intent;
         assertEquals(nextIntent.getAction(), (Intent.ACTION_VIEW));

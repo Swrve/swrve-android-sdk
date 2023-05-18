@@ -82,6 +82,30 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                             SwrveLogger.w("Campaign id:%s text templating could not be resolved for button dynamic image url. %s", getId(), exception.getMessage());
                         }
                     }
+
+                    if (button.getTheme() != null) {
+                        SwrveButtonTheme buttonTheme = button.getTheme();
+                        if (SwrveHelper.isNotNullOrEmpty(buttonTheme.getBgImage())) {
+                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), buttonTheme.getBgImage(), buttonTheme.getBgImage(), true, false));
+                        }
+                        if (SwrveHelper.isNotNullOrEmpty(buttonTheme.getFontFile()) && !SwrveTextUtils.isSystemFont(buttonTheme.getFontFile())) {
+                            assetsQueue.add(new SwrveAssetsQueueItem(getId(), buttonTheme.getFontFile(), buttonTheme.getFontDigest(), false, false));
+                        }
+
+                        if (buttonTheme.getPressedState() != null) {
+                            SwrveButtonThemeState pressedThemeState = buttonTheme.getPressedState();
+                            if (SwrveHelper.isNotNullOrEmpty(pressedThemeState.getBgImage())) {
+                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), pressedThemeState.getBgImage(), pressedThemeState.getBgImage(), true, false));
+                            }
+                        }
+
+                        if (buttonTheme.getFocusedState() != null) {
+                            SwrveButtonThemeState focusedThemeState = buttonTheme.getFocusedState();
+                            if (SwrveHelper.isNotNullOrEmpty(focusedThemeState.getBgImage())) {
+                                assetsQueue.add(new SwrveAssetsQueueItem(getId(), focusedThemeState.getBgImage(), focusedThemeState.getBgImage(), true, false));
+                            }
+                        }
+                    }
                 }
 
                 for (SwrveImage image : page.getImages()) {
@@ -99,7 +123,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
                     }
 
                     if (image.isMultiLine && SwrveHelper.isNotNullOrEmpty(image.getFontFile()) && SwrveHelper.isNotNullOrEmpty(image.getFontDigest())) {
-                        if (!image.getFontFile().equals("_system_font_")) {
+                        if (!SwrveTextUtils.isSystemFont(image.getFontFile())) {
                             assetsQueue.add(new SwrveAssetsQueueItem(getId(), image.getFontFile(), image.getFontDigest(), false, false));
                         }
                     }

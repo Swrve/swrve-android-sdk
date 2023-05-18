@@ -1,6 +1,5 @@
 package com.swrve.sdk.geo.sample;
 
-import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -10,6 +9,7 @@ import android.graphics.drawable.BitmapDrawable;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.multidex.MultiDexApplication;
 
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrveSDK;
@@ -17,7 +17,7 @@ import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.geo.SwrveGeoConfig;
 import com.swrve.sdk.geo.SwrveGeoSDK;
 
-public class SampleApplication extends Application {
+public class SampleApplication extends MultiDexApplication {
 
     private static final int YOUR_APP_ID = 0;
     private static final String YOUR_API_KEY = "YOUR_API_KEY";

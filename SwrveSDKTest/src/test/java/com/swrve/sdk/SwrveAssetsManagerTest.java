@@ -1,5 +1,10 @@
 package com.swrve.sdk;
 
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
 
 import com.swrve.sdk.test.MainActivity;
@@ -21,6 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPOutputStream;
+
 import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.mockwebserver.Dispatcher;
@@ -28,11 +34,6 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
-
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class SwrveAssetsManagerTest extends SwrveBaseTest {
 
@@ -110,9 +111,15 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
                 } else if (request.getPath().contains("asset4")) {
                     return new MockResponse().setResponseCode(200).setBody("digest4").setHeader("Content-Type", "image/gif");
                 } else if (request.getPath().contains("externalAsset1")) {
-                    return new MockResponse().setResponseCode(200).setBody("externalAsset1");
+                    return new MockResponse().setResponseCode(200).setBody("externalAsset1"); // do not set the content type
                 } else if (request.getPath().contains("externalAsset2")) {
                     return new MockResponse().setResponseCode(200).setBody("externalAsset2").setHeader("Content-Type", "image/gif");
+                } else if (request.getPath().contains("externalAsset3")) {
+                    return new MockResponse().setResponseCode(200).setBody("externalAsset3").setHeader("Content-Type", "image/jpeg");
+                } else if (request.getPath().contains("externalAsset4")) {
+                    return new MockResponse().setResponseCode(200).setBody("externalAsset4").setHeader("Content-Type", "image/png");
+                } else if (request.getPath().contains("externalAsset5")) {
+                    return new MockResponse().setResponseCode(200).setBody("externalAsset5").setHeader("Content-Type", "image/bmp");
                 }
                 return new MockResponse().setResponseCode(404);
             }
@@ -126,6 +133,9 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         String cdnPath = server.url("/").toString();
         final String externalAsset1Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset1").getBytes());
         final String externalAsset2Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset2").getBytes());
+        final String externalAsset3Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset3").getBytes());
+        final String externalAsset4Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset4").getBytes());
+        final String externalAsset5Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset5").getBytes());
 
         SwrveAssetsManagerImp assetsManager = new SwrveAssetsManagerImp(mActivity);
         assetsManager.setCdnImages(cdnPath);
@@ -142,6 +152,9 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         SwrveAssetsQueueItem item4 = new SwrveAssetsQueueItem(1, "asset4_which_is_a_gif", digest4, true, false);
         SwrveAssetsQueueItem item5 = new SwrveAssetsQueueItem(1, externalAsset1Sha1, (cdnPath + "externalAsset1"), true, true);
         SwrveAssetsQueueItem item6 = new SwrveAssetsQueueItem(1, externalAsset2Sha1, (cdnPath + "externalAsset2"), true, true);
+        SwrveAssetsQueueItem item7 = new SwrveAssetsQueueItem(1, externalAsset3Sha1, (cdnPath + "externalAsset3"), true, true);
+        SwrveAssetsQueueItem item8 = new SwrveAssetsQueueItem(1, externalAsset4Sha1, (cdnPath + "externalAsset4"), true, true);
+        SwrveAssetsQueueItem item9 = new SwrveAssetsQueueItem(1, externalAsset5Sha1, (cdnPath + "externalAsset5"), true, true);
 
         assetsQueue.add(item1);
         assetsQueue.add(item2);
@@ -149,6 +162,9 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         assetsQueue.add(item4);
         assetsQueue.add(item5);
         assetsQueue.add(item6);
+        assetsQueue.add(item7);
+        assetsQueue.add(item8);
+        assetsQueue.add(item9);
 
         assertCacheFileExists("asset1");
         assertCacheFileDoesNotExist(digest2);
@@ -162,19 +178,25 @@ public class SwrveAssetsManagerTest extends SwrveBaseTest {
         ArgumentCaptor<SwrveAssetsQueueItem> assetPathCaptor = ArgumentCaptor.forClass(SwrveAssetsQueueItem.class);
         Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAsset(assetPathCaptor.capture());
         Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce()).downloadAssetFromExternalSource(assetPathCaptor.capture());
-        assertEquals(5, assetPathCaptor.getAllValues().size());
+        assertEquals(8, assetPathCaptor.getAllValues().size());
         assertTrue("An attempt to download asset2 did not occur", assetPathCaptor.getAllValues().contains(item2));
         assertTrue("An attempt to download asset3 did not occur", assetPathCaptor.getAllValues().contains(item3));
         assertTrue("An attempt to download asset4 did not occur", assetPathCaptor.getAllValues().contains(item4));
         assertTrue("An attempt to download externalAsset1 did not occur", assetPathCaptor.getAllValues().contains(item5));
         assertTrue("An attempt to download externalAsset2 did not occur", assetPathCaptor.getAllValues().contains(item6));
+        assertTrue("An attempt to download externalAsset3 did not occur", assetPathCaptor.getAllValues().contains(item7));
+        assertTrue("An attempt to download externalAsset4 did not occur", assetPathCaptor.getAllValues().contains(item8));
+        assertTrue("An attempt to download externalAsset5 did not occur", assetPathCaptor.getAllValues().contains(item9));
 
         assertCacheFileExists("asset1");
         assertCacheFileExists("asset2");
         assertCacheFileExists("asset3");
         assertCacheFileExists("asset4_which_is_a_gif" + ".gif"); // Note the gif extension is used in the filename
-        assertCacheFileExists(externalAsset1Sha1);
+        assertCacheFileDoesNotExist(externalAsset1Sha1); // No content type is set
         assertCacheFileExists(externalAsset2Sha1 + ".gif"); // Note the gif extension is used in the filename
+        assertCacheFileExists(externalAsset3Sha1); // jpeg
+        assertCacheFileExists(externalAsset4Sha1); // png
+        assertCacheFileExists(externalAsset5Sha1); // bmp
     }
 
     @Test

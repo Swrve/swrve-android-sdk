@@ -34,7 +34,7 @@ public class RESTClient implements IRESTClient {
     private static final String COMMA_SEPARATOR = ", ", SEMICOLON_SEPARATOR = "; ";
 
     private final int httpTimeout;
-    private final SwrveSSLSocketFactoryConfig socketFactories;
+    protected final SwrveSSLSocketFactoryConfig socketFactories;
     /**
      * Safeguarded against multiple writers
      * and on copy-and-clean when writing the headers.

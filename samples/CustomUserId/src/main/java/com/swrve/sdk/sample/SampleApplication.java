@@ -1,13 +1,14 @@
 package com.swrve.sdk.sample;
 
-import android.app.Application;
 import android.util.Log;
+
+import androidx.multidex.MultiDexApplication;
 
 import com.swrve.sdk.SwrveInitMode;
 import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.config.SwrveConfig;
 
-public class SampleApplication extends Application {
+public class SampleApplication extends MultiDexApplication {
 
     private static final String LOG_TAG = "SwrveSample";
     private int YOUR_APP_ID = 0;

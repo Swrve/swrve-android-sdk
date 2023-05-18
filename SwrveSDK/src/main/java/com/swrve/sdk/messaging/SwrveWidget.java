@@ -2,16 +2,12 @@ package com.swrve.sdk.messaging;
 
 import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.Typeface;
 
 import com.swrve.sdk.SwrveHelper;
-import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.messaging.SwrveTextViewStyle.TextAlignment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.File;
 
 /**
  * Base in-app message element widget class.
@@ -80,7 +76,7 @@ abstract class SwrveWidget {
                 String fontFile = multiLineData.getString("font_file");
                 this.fontFile = fontFile;
 
-                if (fontFile.equals("_system_font_")) {
+                if (SwrveTextUtils.isSystemFont(fontFile)) {
                     this.fontNativeStyle = SwrveTextViewStyle.FONT_NATIVE_STYLE.parse(multiLineData.getString("font_native_style"));
                 }
 
@@ -217,33 +213,6 @@ abstract class SwrveWidget {
 
     public int getLeftPadding() {
         return leftPadding;
-    }
-
-    public Typeface getTypeface(Typeface defaultTypeface) {
-        Typeface typeface = defaultTypeface;
-        boolean isSystemFont = SwrveHelper.isNotNullOrEmpty(getFontFile()) && getFontFile().equals("_system_font_");
-        if (isSystemFont) {
-            switch (getFontNativeStyle()) {
-                case NORMAL:
-                    typeface = Typeface.defaultFromStyle(Typeface.NORMAL);
-                    break;
-                case BOLD:
-                    typeface = Typeface.defaultFromStyle(Typeface.BOLD);
-                    break;
-                case ITALIC:
-                    typeface = Typeface.defaultFromStyle(Typeface.ITALIC);
-                    break;
-                case BOLDITALIC:
-                    typeface = Typeface.defaultFromStyle(Typeface.BOLD_ITALIC);
-                    break;
-            }
-        } else if (SwrveHelper.isNotNullOrEmpty(getFontFile())) {
-            File fontFile = new File(SwrveSDK.getInstance().getCacheDir(), getFontFile());
-            if (fontFile.exists()) {
-                typeface = Typeface.createFromFile(fontFile);
-            }
-        }
-        return typeface;
     }
 
     public int getForegroundColor(int defaultForegroundColor) {

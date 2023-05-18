@@ -7,7 +7,7 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
-    <style name="Theme.InAppMessage" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+    <style name="Theme.InAppMessage" parent="Theme.MaterialComponents">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>

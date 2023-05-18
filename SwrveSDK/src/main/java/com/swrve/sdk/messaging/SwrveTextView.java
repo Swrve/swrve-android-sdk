@@ -1,19 +1,23 @@
 package com.swrve.sdk.messaging;
 
+import static android.util.TypedValue.COMPLEX_UNIT_DIP;
+
 import android.content.Context;
-import android.graphics.Paint;
 import android.graphics.text.LineBreaker;
 import android.os.Build;
 import android.text.Layout;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.ViewTreeObserver;
+
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.widget.TextViewCompat;
 
 import com.swrve.sdk.SwrveHelper;
 
 public class SwrveTextView extends AppCompatTextView {
+
+    protected SwrveTextUtils swrveTextUtils = new SwrveTextUtils();
 
     // exposed for testing
     public SwrveTextView(Context context) {
@@ -54,7 +58,7 @@ public class SwrveTextView extends AppCompatTextView {
                 break;
         }
 
-        float calibratedTextSizePX = getCalibratedTextSize(textViewStyle.getFontSize(), calibration);
+        float calibratedTextSizePX = swrveTextUtils.getCalibratedTextSize(getTypeface(), textViewStyle.getFontSize(), calibration);
         //convert calibratedTextSizePX to DP so user preference font resizing will work below
         float calibratedTextSizeDP = SwrveHelper.convertPixelsToDp(calibratedTextSizePX, getContext());
 
@@ -72,7 +76,7 @@ public class SwrveTextView extends AppCompatTextView {
             }
             //auto size text to fit, we may switch back to calibratedTextSizePX if text actually fits inside container, without need for scaling
             //see global layout observer below
-            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 1, 200, 1, TextViewCompat.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 1, 200, 1, COMPLEX_UNIT_DIP);
             addListenerForResizing(calibratedTextSizePX, textViewStyle.getLineHeight());
         }
     }
@@ -104,20 +108,4 @@ public class SwrveTextView extends AppCompatTextView {
         setLineSpacing(linespacing, 1);
     }
 
-    protected float getCalibratedTextSize(float fontSize, SwrveCalibration calibration) {
-        float scaledBaseFontSize = 1;
-        int baseFontSize = 1;
-        if (calibration != null) {
-            scaledBaseFontSize = getScaledBaseFontSize(calibration.getText(), calibration.getWidth(), calibration.getHeight());
-            baseFontSize = calibration.getBaseFontSize();
-        }
-        float scaledFontSize = (fontSize / baseFontSize) * scaledBaseFontSize;
-        return scaledFontSize;
-    }
-
-    public float getScaledBaseFontSize(String text, int width, int height) {
-        Paint paintText = new Paint();
-        paintText.setTypeface(getTypeface());
-        return SwrveHelper.getTextSizeToFitImage(paintText, text, width, height);
-    }
 }

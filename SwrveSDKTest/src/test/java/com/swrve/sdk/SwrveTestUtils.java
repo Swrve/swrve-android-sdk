@@ -56,6 +56,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -534,5 +535,25 @@ public class SwrveTestUtils {
         Mockito.doReturn(socketFactory).when(sslSocketFactoryConfig).getFactory(Mockito.anyString());
         SwrveCommon.setSwrveCommon(swrveCommonSpy);
         return sslSocketFactoryConfig;
+    }
+
+    public static void copyFileFromAssetsToCache(Context context, Swrve swrve, String filename) {
+        try {
+            URL resourceUrl = context.getClassLoader().getResource(filename);
+            InputStream inputStream = resourceUrl.openStream();
+
+            File file = new File(context.getCacheDir(), filename);
+            OutputStream out = new FileOutputStream(file);
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1) {
+                out.write(buffer, 0, len);
+            }
+            out.close();
+            inputStream.close();
+            ((SwrveAssetsManagerImp)swrve.swrveAssetsManager).assetsOnDisk.add(filename);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception", e);
+        }
     }
 }

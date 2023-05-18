@@ -7,6 +7,7 @@ android {
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_TESTS)
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
         applicationId 'com.swrve.sdk.test'
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -65,6 +66,7 @@ dependencies {
     api project(path: ':SwrveSDK')
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
+    api 'androidx.multidex:multidex:2.0.1'
 
     huaweiImplementation 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION
 

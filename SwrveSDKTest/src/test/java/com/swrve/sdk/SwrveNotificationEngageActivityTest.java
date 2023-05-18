@@ -14,9 +14,7 @@ import android.content.pm.ResolveInfo;
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 
 import java.util.List;
 

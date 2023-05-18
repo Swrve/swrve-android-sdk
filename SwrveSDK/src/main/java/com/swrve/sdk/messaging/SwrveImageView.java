@@ -3,15 +3,28 @@ package com.swrve.sdk.messaging;
 import android.content.Context;
 import android.view.MotionEvent;
 
-import androidx.appcompat.widget.AppCompatImageView;
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
+
+import java.util.Map;
 
 /**
  * Android view representing a background image.
  */
-public class SwrveImageView extends AppCompatImageView {
+public class SwrveImageView extends SwrveBaseImageView {
 
-    public SwrveImageView(Context context) {
+    public SwrveImageView(Context context, SwrveImage image, Map<String, String> inAppPersonalization,
+                          SwrveImageFileInfo imageFileInfo) throws SwrveSDKTextTemplatingException {
         super(context);
+        setContentDescription(image, inAppPersonalization, null);
+        setFocusable(false);
+        if (imageFileInfo.usingDynamic) {
+            setScaleType(ScaleType.FIT_CENTER);
+            setAdjustViewBounds(true);
+        } else {
+            setScaleType(ScaleType.FIT_XY);
+        }
+
+        loadImage(imageFileInfo);
     }
 
     @Override

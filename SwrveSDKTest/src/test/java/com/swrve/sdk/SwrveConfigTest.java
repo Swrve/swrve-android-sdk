@@ -1,10 +1,13 @@
 package com.swrve.sdk;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.view.View;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
@@ -19,24 +22,13 @@ import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFocusListener;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URL;
 import java.util.Locale;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 public class SwrveConfigTest extends SwrveBaseTest {
-
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-    }
 
     @Test
     public void testLocaleSetter() {
@@ -148,7 +140,6 @@ public class SwrveConfigTest extends SwrveBaseTest {
         assertEquals(installListener, inAppConfig.getInstallButtonListener());
         assertEquals(dismissListener, inAppConfig.getDismissButtonListener());
         assertEquals(clipboardListener, inAppConfig.getClipboardButtonListener());
-
     }
 
     @Test

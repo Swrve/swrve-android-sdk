@@ -9,6 +9,7 @@ android {
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -34,6 +35,7 @@ android {
 dependencies {
     api 'androidx.appcompat:appcompat:' + project.ANDROIDX_APPCOMPAT_VERSION
     api 'com.google.android.material:material:' + project.ANDROIDX_MATERIAL_VERSION
+    api 'androidx.multidex:multidex:2.0.1'
 
     // Instead of using the local SDK source below, uncomment line below
 //  api 'com.swrve.sdk.android:swrve-firebase:X.X.X' // Google FCM push version (where X.X.X is the version)

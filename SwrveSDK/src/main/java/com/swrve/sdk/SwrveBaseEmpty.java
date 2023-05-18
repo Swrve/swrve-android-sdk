@@ -409,4 +409,9 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     public SwrveSSLSocketFactoryConfig getSSLSocketFactoryConfig() {
         return null;
     }
+
+    @Override
+    public SwrveDeeplinkListener getSwrveDeeplinkListener() {
+        return null;
+    }
 }

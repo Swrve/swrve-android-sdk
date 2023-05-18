@@ -58,6 +58,7 @@ dependencies {
     api project(':SwrveSDKCommon')
     api project(':SwrveConversationSDK')
     api 'androidx.appcompat:appcompat:' + project.ANDROIDX_APPCOMPAT_VERSION
+    api 'com.google.android.material:material:' + project.ANDROIDX_MATERIAL_VERSION
     api 'com.google.code.gson:gson:' + project.GSON_VERSION
     api 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
     api 'androidx.viewpager2:viewpager2:' + project.ANDROIDX_VIEWPAGER2_VERSION

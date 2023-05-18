@@ -1,5 +1,7 @@
 package com.swrve.sdk.conversations.ui;
 
+import static com.swrve.sdk.conversations.ui.SwrveConversationHelper.setBackgroundDrawable;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.UiModeManager;
@@ -13,9 +15,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -25,6 +24,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.swrve.sdk.SwrveBaseConversation;
 import com.swrve.sdk.SwrveConversationConstants;
@@ -54,8 +57,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.swrve.sdk.conversations.ui.SwrveConversationHelper.setBackgroundDrawable;
 
 public class ConversationFragment extends Fragment implements OnClickListener, ConversationInputChangedListener {
 
@@ -387,7 +388,7 @@ public class ConversationFragment extends Fragment implements OnClickListener, C
                             String urlStr = visitUriDetails.get(ControlActions.DEEPLINK_URL_URI_KEY);
                             sendReply(model, reply);
                             sendDeepLinkActionEvent(page.getTag(), model);
-                            SwrveIntentHelper.openDeepLink(activity, urlStr);
+                            SwrveIntentHelper.openDeepLink(activity, urlStr, null);
                         }
                     } else {
                         // There are no actions associated with Button. Send a normal reply

@@ -10,6 +10,8 @@ import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
+import com.swrve.sdk.messaging.SwrveButtonTheme;
+import com.swrve.sdk.messaging.SwrveButtonThemeState;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
@@ -21,14 +23,19 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class SwrveCampaignUnitTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
+
+    private String [] BUTTON_THEME_ASSETS = new String[] {"background", "default_bg", "default_icon", "3417d97a686debe00ff011309ab48d018486.ttf", "pressed_bg", "pressed_icon", "focused_bg", "focused_icon"};
 
     @Before
     public void setUp() throws Exception {
@@ -95,6 +102,89 @@ public class SwrveCampaignUnitTest extends SwrveBaseTest {
         assertEquals(-1l, page2.getSwipeForward());
         assertEquals(1, page2.getImages().size());
         assertEquals(2, page2.getButtons().size());
+    }
+
+    @Test
+    public void testButtonThemeJSON() throws JSONException {
+        String json = SwrveTestUtils.getAssetAsText(ApplicationProvider.getApplicationContext(), "campaign_native_button_everything.json");
+        JSONObject campaigns = new JSONObject(json);
+        JSONObject campaignData = campaigns.getJSONArray("campaigns").getJSONObject(0);
+        Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(swrveSpy, new SwrveCampaignDisplayer(), campaignData, assetsQueue, null);
+
+        assertNotNull(campaign);
+
+        SwrveMessageFormat format = campaign.getMessage().getFormats().get(0);
+        SwrveButton button = format.getPages().get(456l).getButtons().get(0);
+        assertNotNull(button);
+        assertNotNull(button.getTheme());
+        SwrveButtonTheme buttonTheme = button.getTheme();
+        assertEquals(16, buttonTheme.getFontSize());
+        assertEquals("18c23417d97a686debe00ff011309ab48d018486", buttonTheme.getFontDigest());
+        assertEquals("", buttonTheme.getFontNativeStyle());
+        assertEquals(1, buttonTheme.getTopPadding());
+        assertEquals(2, buttonTheme.getRightPadding());
+        assertEquals(3, buttonTheme.getBottomPadding());
+        assertEquals(4, buttonTheme.getLeftPadding());
+        assertEquals("default_bg", buttonTheme.getBgImage());
+        assertEquals("#000000ff", buttonTheme.getFontColor());
+        assertEquals("#FFFFFFFF", buttonTheme.getBgColor());
+        assertEquals(5, buttonTheme.getBorderWidth());
+        assertEquals("#0000001f", buttonTheme.getBorderColor());
+        assertEquals(10, buttonTheme.getCornerRadius());
+        assertTrue(buttonTheme.isTruncate());
+        assertEquals("CENTER", buttonTheme.getHAlign());
+
+        assertNotNull(buttonTheme.getPressedState());
+        SwrveButtonThemeState pressedState = buttonTheme.getPressedState();
+        assertEquals("#ffd0d0d0", pressedState.getFontColor());
+        assertEquals("#7f7e7a7a", pressedState.getBgColor());
+        assertEquals("#a7f3f700", pressedState.getBorderColor());
+        assertEquals("pressed_bg", pressedState.getBgImage());
+
+        assertNotNull(buttonTheme.getFocusedState());
+        SwrveButtonThemeState focusState = buttonTheme.getFocusedState();
+        assertEquals("#05000005", focusState.getFontColor());
+        assertEquals("#05000006", focusState.getBgColor());
+        assertEquals("#05000007", focusState.getBorderColor());
+        assertEquals("focused_bg", focusState.getBgImage());
+    }
+
+    @Test
+    public void testCampaignAssetsReadyForButtonTheme() throws Exception {
+        // Verify happy case where everything is downloaded and campaign is returned
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_native_button_everything.json", BUTTON_THEME_ASSETS);
+        assertNotNull(swrveSpy.getMessageCenterCampaign(102, null));
+    }
+
+    @Test
+    public void testCampaignAssetsReadyForButtonTheme_missing_default_bg() throws Exception {
+        assertCampaignAssetsReadyForButtonTheme("default_bg");
+    }
+
+    @Test
+    public void testCampaignAssetsReadyForButtonTheme_missing_font() throws Exception {
+        assertCampaignAssetsReadyForButtonTheme("3417d97a686debe00ff011309ab48d018486.ttf");
+    }
+
+    @Test
+    public void testCampaignAssetsReadyForButtonTheme_missing_pressed_bg() throws Exception {
+        assertCampaignAssetsReadyForButtonTheme("pressed_bg");
+    }
+
+    @Test
+    public void testCampaignAssetsReadyForButtonTheme_missing_focused_bg() throws Exception {
+        assertCampaignAssetsReadyForButtonTheme("focused_bg");
+    }
+
+    private void assertCampaignAssetsReadyForButtonTheme(String missingAsset) throws Exception {
+        List<String> assets = new ArrayList<>(Arrays.asList(BUTTON_THEME_ASSETS));
+        assertTrue(assets.remove(missingAsset));
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_native_button_everything.json", assets.toArray(new String[0]));
+        assertNull(swrveSpy.getMessageCenterCampaign(102, null));
+        assets.add(missingAsset);
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_native_button_everything.json", assets.toArray(new String[0])); // load again with missing asset
+        assertNotNull(swrveSpy.getMessageCenterCampaign(102, null));
     }
 
     @Test

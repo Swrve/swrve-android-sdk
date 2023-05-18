@@ -157,26 +157,32 @@ public class SwrveMessage implements SwrveBaseMessage {
 
                 // check buttons
                 for (SwrveButton button : page.getButtons()) {
-                    String buttonAsset = button.getImage();
-                    boolean hasButtonImage = this.assetInCache(assetsOnDisk, buttonAsset);
-
-                    if (!hasButtonImage && SwrveHelper.isNotNullOrEmpty(button.getDynamicImageUrl())) {
-                        try {
-                            String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
-                            if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
-                                hasButtonImage = true;
-                            } else {
-                                SwrveLogger.i("Button dynamic asset not yet downloaded: %s", resolvedUrl);
-                                return false;
-                            }
-                        } catch (Exception e) {
-                            SwrveLogger.i("Could not resolve personalization", e);
+                    if (button.getTheme() != null) { // if there's a theme then no need to check "image_up"
+                        if (!areButtonThemeAssetsReady(assetsOnDisk, button.getTheme())) {
+                            return false;
                         }
-                    }
+                    } else {
+                        String buttonAsset = button.getImage();
+                        boolean hasButtonImage = this.assetInCache(assetsOnDisk, buttonAsset);
 
-                    if (!hasButtonImage) {
-                        SwrveLogger.i("Button asset not yet downloaded: %s", buttonAsset);
-                        return false;
+                        if (!hasButtonImage && SwrveHelper.isNotNullOrEmpty(button.getDynamicImageUrl())) {
+                            try {
+                                String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
+                                if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
+                                    hasButtonImage = true;
+                                } else {
+                                    SwrveLogger.i("Button dynamic asset not yet downloaded: %s", resolvedUrl);
+                                    return false;
+                                }
+                            } catch (Exception e) {
+                                SwrveLogger.i("Could not resolve personalization", e);
+                            }
+                        }
+
+                        if (!hasButtonImage) {
+                            SwrveLogger.i("Button asset not yet downloaded: %s", buttonAsset);
+                            return false;
+                        }
                     }
                 }
 
@@ -206,7 +212,7 @@ public class SwrveMessage implements SwrveBaseMessage {
 
                     if (image.isMultiLine()) {
                         String font_file = image.getFontFile();
-                        if (SwrveHelper.isNotNullOrEmpty(font_file) && !font_file.equals("_system_font_")) {
+                        if (SwrveHelper.isNotNullOrEmpty(font_file) && !SwrveTextUtils.isSystemFont(font_file)) {
                             if (!this.assetInCache(assetsOnDisk, font_file)) {
                                 SwrveLogger.i("Font asset not yet downloaded: %s", font_file);
                                 return false;
@@ -216,6 +222,39 @@ public class SwrveMessage implements SwrveBaseMessage {
                 }
             }
         }
+        return true;
+    }
+
+    private boolean areButtonThemeAssetsReady(Set<String> assetsOnDisk, SwrveButtonTheme buttonTheme) {
+        if (SwrveHelper.isNotNullOrEmpty(buttonTheme.getBgImage()) && !this.assetInCache(assetsOnDisk, buttonTheme.getBgImage())) {
+            SwrveLogger.i("Button bg image not yet downloaded: %s", buttonTheme.getBgImage());
+            return false;
+        }
+
+        String font_file = buttonTheme.getFontFile();
+        if (SwrveHelper.isNotNullOrEmpty(font_file) && !SwrveTextUtils.isSystemFont(font_file)) {
+            if (!this.assetInCache(assetsOnDisk, font_file)) {
+                SwrveLogger.i("Button font asset not yet downloaded: %s", font_file);
+                return false;
+            }
+        }
+
+        if (buttonTheme.getPressedState() != null) {
+            SwrveButtonThemeState pressedThemeState = buttonTheme.getPressedState();
+            if (SwrveHelper.isNotNullOrEmpty(pressedThemeState.getBgImage()) && !this.assetInCache(assetsOnDisk, pressedThemeState.getBgImage())) {
+                SwrveLogger.i("Button pressed bg image not yet downloaded: %s", pressedThemeState.getBgImage());
+                return false;
+            }
+        }
+
+        if (buttonTheme.getFocusedState() != null) {
+            SwrveButtonThemeState focusedThemeState = buttonTheme.getFocusedState();
+            if (SwrveHelper.isNotNullOrEmpty(focusedThemeState.getBgImage()) && !this.assetInCache(assetsOnDisk, focusedThemeState.getBgImage())) {
+                SwrveLogger.i("Button focused bg image not yet downloaded: %s", focusedThemeState.getBgImage());
+                return false;
+            }
+        }
+
         return true;
     }
 }

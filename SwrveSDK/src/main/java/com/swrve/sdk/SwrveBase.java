@@ -840,6 +840,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                             loadPreviousCampaignState = false;
                                         }
                                         updateQaUser(jsonQa.toString());
+                                        // The qauser push token is stored separately to regular users and requires an update for newly identified users who happen to be a qauser also.
+                                        deviceUpdate(profileManager.getUserId(), _getDeviceInfo());
+                                        sendQueuedEvents();
                                     } else {
                                         updateQaUser("");
                                     }
@@ -2186,6 +2189,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return config.getSilentPushListener();
     }
 
+    @Override
+    public SwrveDeeplinkListener getSwrveDeeplinkListener() {
+        return config.getSwrveDeeplinkListener();
+    }
+
     /*
      * eo ISwrveCommon
      */
@@ -2222,7 +2230,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      */
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-        if (isEngageActivity(activity)) {
+        if (isEngageActivity(activity) || isSplashActivity(activity)) {
             return;
         }
         bindToActivity(activity);
@@ -2240,7 +2248,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityResumed(Activity activity) {
-        if (isEngageActivity(activity)) {
+        if (isEngageActivity(activity) || isSplashActivity(activity)) {
             return;
         }
         bindToActivity(activity);
@@ -2253,7 +2261,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityPaused(Activity activity) {
-        if (isEngageActivity(activity)) {
+        if (isEngageActivity(activity) || isSplashActivity(activity)) {
             return;
         }
         lifecycleExecutorExecute(() -> {
@@ -2265,7 +2273,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityStopped(Activity activity) {
-        if (isEngageActivity(activity)) {
+        if (isEngageActivity(activity) || isSplashActivity(activity)) {
             return;
         }
         lifecycleExecutorExecute(() -> {
@@ -2297,6 +2305,20 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.v("SwrveNotificationEngageActivity has been launched so skip ActivityLifecycleCallbacks method and use next Activity that is launched");
         }
         return isEngageActivity;
+    }
+
+    protected boolean isSplashActivity(Activity activity) {
+        boolean isSplashActivity = false;
+        if (config.getSplashActivity() == null) {
+            return isSplashActivity;
+        }
+        String splashActivityName = config.getSplashActivity().getCanonicalName();
+        String activityName = activity.getClass().getCanonicalName();
+        if (splashActivityName != null && activityName != null && activityName.contains(splashActivityName)) {
+            isSplashActivity = true;
+            SwrveLogger.v("SplashActivity has been launched so skip ActivityLifecycleCallbacks method and use next Activity that is launched");
+        }
+        return isSplashActivity;
     }
 
     @Override

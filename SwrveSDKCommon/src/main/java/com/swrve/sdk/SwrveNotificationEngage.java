@@ -147,7 +147,6 @@ class SwrveNotificationEngage {
     }
 
     private void openDeeplink(Bundle msg, String uri) {
-        SwrveLogger.d("Found push deeplink. Will attempt to open: %s", uri);
         Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
         msgBundleCopy.remove(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
         msgBundleCopy.remove(SwrveNotificationConstants.DEEPLINK_KEY);

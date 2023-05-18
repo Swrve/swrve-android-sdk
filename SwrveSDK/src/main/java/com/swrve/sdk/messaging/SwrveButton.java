@@ -19,6 +19,7 @@ public class SwrveButton extends SwrveWidget {
     private String accessibilityText; //Alternative text for use with accessibility voice over
     private JSONArray events;
     private JSONArray userUpdates;
+    private SwrveButtonTheme theme;
 
     public SwrveButton(SwrveMessage message, JSONObject buttonData) throws JSONException {
         super(buttonData);
@@ -62,6 +63,10 @@ public class SwrveButton extends SwrveWidget {
         if (buttonData.has("user_updates")) {
             this.userUpdates = buttonData.getJSONArray("user_updates");
         }
+
+        if (buttonData.has("theme")) {
+            theme = new SwrveButtonTheme(buttonData.getJSONObject("theme"));
+        }
     }
 
     public String getName() {
@@ -102,5 +107,9 @@ public class SwrveButton extends SwrveWidget {
 
     public JSONArray getUserUpdates() {
         return userUpdates;
+    }
+
+    public SwrveButtonTheme getTheme() {
+        return theme;
     }
 }

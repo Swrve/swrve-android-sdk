@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.Settings;
 
 import androidx.core.app.NotificationManagerCompat;
@@ -45,6 +46,7 @@ import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
+import com.swrve.sdk.test.SplashActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,7 +61,9 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
+import org.robolectric.shadows.ShadowActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -1090,4 +1094,32 @@ public class SwrveUnitTest extends SwrveBaseTest {
         verify(eventListenerSpy, times(1)).requestNotificationPermission(mActivity);
     }
 
+    @Test
+    public void testSplashActivity() throws Exception {
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+        SwrveConfig config = new SwrveConfig();
+        config.setSplashActivity(SplashActivity.class);
+        Swrve swrve = SwrveTestUtils.createSpyInstance(config);
+
+        SplashActivity splashActivity = Robolectric.buildActivity(SplashActivity.class).create().visible().get();
+        assertTrue(swrve.isSplashActivity(splashActivity));
+
+        assertFalse(swrve.isSplashActivity(mActivity));
+    }
+
+    @Test
+    public void testOpenDeepLinkWithDeeplinkListener() {
+        Bundle bundleMock = mock(Bundle.class);
+        SwrveDeeplinkListener deeplinkListenerMock = mock(SwrveDeeplinkListener.class);
+        ISwrveCommon swrveCommonMock = mock(ISwrveCommon.class);
+        doReturn(deeplinkListenerMock).when(swrveCommonMock).getSwrveDeeplinkListener();
+        SwrveCommon.setSwrveCommon(swrveCommonMock);
+
+        String uri = "www.google.com";
+        SwrveIntentHelper.openDeepLink(mActivity, uri, bundleMock);
+        ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
+        assertNull(shadowMainActivity.peekNextStartedActivityForResult());
+
+        verify(deeplinkListenerMock, Mockito.times(1)).handleDeeplink(mActivity, uri, bundleMock);
+    }
 }

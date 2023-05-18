@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:4.0.0'
+    }
+}
+
 android {
     compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
 
@@ -9,6 +18,7 @@ android {
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -34,6 +44,7 @@ android {
 dependencies {
     api 'com.google.android.material:material:' + project.ANDROIDX_MATERIAL_VERSION
     api 'androidx.appcompat:appcompat:' + project.ANDROIDX_APPCOMPAT_VERSION
+    api 'androidx.multidex:multidex:2.0.1'
 
     // In your app please include the SDK using the following dependency
 //  api 'com.swrve.sdk.android:swrve:X.X.X' // No Google Services push (where X.X.X is the version)
@@ -41,3 +52,5 @@ dependencies {
     // Use the local SDK source
     api project(path: ':SwrveSDK')
 }
+
+apply plugin: 'com.getkeepsafe.dexcount'

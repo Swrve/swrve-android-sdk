@@ -1,5 +1,13 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.robolectric.Shadows.shadowOf;
+
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -23,13 +31,6 @@ import org.robolectric.shadows.ShadowPendingIntent;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-
-import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.robolectric.Shadows.shadowOf;
 
 public class SwrveNotificationTestUtils {
     public static void assertEngagedEvent(String eventJson, String eventName) {
@@ -105,7 +106,12 @@ public class SwrveNotificationTestUtils {
         ShadowNotification shadowNotification = shadowOf(notification);
         // In the case of a rich push, we should expect the title to be set to something else
         if (!intentExtras.containsKey(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY)) {
-            assertEquals("com.swrve.sdk.test", shadowNotification.getContentTitle());
+            if (shadowNotification.getContentTitle().equals("androidx.multidex.MultiDexApplication")
+                    || shadowNotification.getContentTitle().equals("com.swrve.sdk.test")) {
+                // passed
+            } else {
+                fail();
+            }
         } else {
             SwrveNotification extrasPPayload = SwrveNotification.fromJson(extras.getString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY));
             if (extrasPPayload != null) {

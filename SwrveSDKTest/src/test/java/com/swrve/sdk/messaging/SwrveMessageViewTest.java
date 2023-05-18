@@ -87,8 +87,7 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
     private int getPersonalizedButtonCount(SwrveMessageView view) {
         int buttons = 0;
         for (int i = 0; i < view.getChildCount(); i++) {
-            Class<?> viewClass = view.getChildAt(i).getClass();
-            if (viewClass == SwrveTextImageView.class) {
+            if (view.getChildAt(i) instanceof SwrveTextImageView) {
                 buttons++;
             }
         }

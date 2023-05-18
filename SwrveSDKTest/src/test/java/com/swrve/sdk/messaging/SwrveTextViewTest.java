@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -86,7 +87,9 @@ public class SwrveTextViewTest extends SwrveBaseTest {
         SwrveTextView textView = Mockito.spy(new SwrveTextView(mActivity));
 
         // Robolectric has limited support for testing Paint and Canvas, so mock the following method. Execute a test in Firebase Test Lab for this instead
-        doReturn(100.0f).when(textView).getScaledBaseFontSize("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 5000, 500);
+        SwrveTextUtils spySwrveTextUtils = spy(new SwrveTextUtils());
+        doReturn(100.0f).when(spySwrveTextUtils).getScaledBaseFontSize(textViewStyle.getTextTypeFace(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 5000, 500);
+        textView.swrveTextUtils = spySwrveTextUtils;
 
         // now init
         textView.init("my_test_string", textViewStyle, getDummySwrveCalibration());
@@ -119,7 +122,9 @@ public class SwrveTextViewTest extends SwrveBaseTest {
         // Robolectric has limited support for testing Paint and Canvas, so mock the following method. Execute a test in Firebase Test Lab for this instead
         // setAutoSizeTextTypeWithDefaults will default to 14, as there is no layout in this test.
         // return a value that will set calibrated text to > than 14 to test logic flow, setting to 20 will return calibratedTextSizePX of 15
-        doReturn(20.0f).when(textView).getScaledBaseFontSize("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 5000, 500);
+        SwrveTextUtils spySwrveTextUtils = spy(new SwrveTextUtils());
+        doReturn(20.0f).when(spySwrveTextUtils).getScaledBaseFontSize(textViewStyle.getTextTypeFace(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 5000, 500);
+        textView.swrveTextUtils = spySwrveTextUtils;
 
         // now init
         textView.init("my_test_string", textViewStyle, getDummySwrveCalibration());
@@ -157,7 +162,9 @@ public class SwrveTextViewTest extends SwrveBaseTest {
         // Robolectric has limited support for testing Paint and Canvas, so mock the following method. Execute a test in Firebase Test Lab for this instead
         // setAutoSizeTextTypeWithDefaults will default to 14, as there is no layout in this test.
         // return a value that will set calibrated text to < than 14 to test logic flow, setting to 12 will return calibratedTextSizePX of 9
-        doReturn(12.0f).when(textView).getScaledBaseFontSize("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 5000, 500);
+        SwrveTextUtils spySwrveTextUtils = spy(new SwrveTextUtils());
+        doReturn(12.0f).when(spySwrveTextUtils).getScaledBaseFontSize(textViewStyle.getTextTypeFace(), "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 5000, 500);
+        textView.swrveTextUtils = spySwrveTextUtils;
 
         // now init
         textView.init("my_test_string", textViewStyle, getDummySwrveCalibration());

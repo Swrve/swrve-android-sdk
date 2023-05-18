@@ -1,5 +1,9 @@
 package com.swrve.sdk;
 
+import static android.view.Gravity.CENTER;
+import static android.view.Gravity.CENTER_VERTICAL;
+import static android.view.Gravity.LEFT;
+import static android.view.Gravity.RIGHT;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DISMISS;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_NAVIGATION;
@@ -12,7 +16,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -21,6 +24,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.robolectric.Shadows.shadowOf;
+import static org.robolectric.annotation.GraphicsMode.Mode.NATIVE;
 
 import android.app.Activity;
 import android.content.ClipData;
@@ -28,11 +33,12 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -42,13 +48,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.google.common.collect.Maps;
 import com.swrve.sdk.config.SwrveConfig;
@@ -56,7 +60,6 @@ import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveBaseInteractableView;
 import com.swrve.sdk.messaging.SwrveButtonView;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveImageView;
@@ -67,6 +70,7 @@ import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveTextImageView;
 import com.swrve.sdk.messaging.SwrveTextView;
+import com.swrve.sdk.messaging.SwrveThemedMaterialButton;
 import com.swrve.sdk.test.R;
 
 import org.json.JSONObject;
@@ -78,7 +82,9 @@ import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
+import org.robolectric.annotation.GraphicsMode;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -546,7 +552,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // sendEventsInBackground 2 times: navigation, pageView
         verify(swrveSpy, times(2)).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), eventsCaptor.capture());
-        assertNavigationEvent(eventsCaptor, 1, "123", "page1", 111l, 456l);
+        assertNavigationEvent(eventsCaptor, 1, "123", "page1", 111l, 456l, "button next");
         assertPageViewEvent(eventsCaptor, 2, "456", "page2");
 
         reset(swrveSpy);
@@ -556,7 +562,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals(123, view.getPage().getPageId());
 
         verify(swrveSpy, times(1)).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), eventsCaptor.capture());
-        assertNavigationEvent(eventsCaptor, 3, "456", "page2", 222l, 123l);
+        assertNavigationEvent(eventsCaptor, 3, "456", "page2", 222l, 123l, "button previous");
 
         reset(swrveSpy);
 
@@ -746,7 +752,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         // sendEventsInBackground 3 times: pageView, navigation, pageView
         verify(swrveSpy, times(3)).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), eventsCaptor.capture());
         assertPageViewEvent(eventsCaptor, 0, "123", "page1");
-        assertNavigationEvent(eventsCaptor, 1, "123", "page1", 111222l, 456l);
+        assertNavigationEvent(eventsCaptor, 1, "123", "page1", 111222l, 456l, "Button");
         assertPageViewEvent(eventsCaptor, 2, "456", "page2");
 
         reset(swrveSpy);
@@ -777,7 +783,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Just the one event which is the button navigation from page 2 to page 1
         verify(swrveSpy, times(1)).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), eventsCaptor.capture());
-        assertNavigationEvent(eventsCaptor, 3, "456", "page2", 222111l, 123l);
+        assertNavigationEvent(eventsCaptor, 3, "456", "page2", 222111l, 123l, "Button");
     }
 
     @Test
@@ -1668,7 +1674,54 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveTextImageView swrveTextImageView3 = (SwrveTextImageView) view.getChildAt(6);
         assertEquals(swrveTextImageView3.getContentDescription(), "Text TEST123");
         assertTrue(swrveTextImageView3.isImportantForAccessibility());
+    }
 
+    @Test
+    @GraphicsMode(NATIVE)
+    public void testThemedButton() throws Exception {
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_native_buttons.json", "535.1030.b60343e5f678c56d52e80b00e604104a73d256f2.ttf");
+        SwrveTestUtils.copyFileFromAssetsToCache(mActivity, swrveSpy, "9973b5003e299dab6394258c459e82b58a7a7633");
+        SwrveTestUtils.copyFileFromAssetsToCache(mActivity, swrveSpy, "73efb349f6e6ab7753bdfc1073d2035d607bbd40");
+
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
+        assertEquals(1, campaigns.size());
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0));
+
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        SwrveMessageView view = getSwrveMessageView(activity);
+        assertNotNull(view);
+
+        assertTrue(view.getChildAt(0) instanceof ImageView);
+
+        ColorStateList fontColor = getColorStateList("#FF000000", "#FFFF0000", null);
+        Typeface typeface = Typeface.defaultFromStyle(Typeface.NORMAL);
+
+        // 1st button
+        ColorStateList background1 = getColorStateList("#FFFF0000", "#ffffd700", null);
+        assertThemedButton(view, 1, "Text Button", "Text Button", 0,
+                91.4f, typeface, fontColor, background1, 0, null, LEFT | CENTER_VERTICAL);
+
+        // 2nd button
+        ColorStateList fontColor2 = getColorStateList("#FF000000", "#FFFF0000", "#ff4add00");
+        ColorStateList background2 = getColorStateList("#FFFF0000", "#ffffd700", "#ffffff00");
+        ColorStateList strokeColor2 = getColorStateList("#FF000000", "#FFFF0000", "#FF0040DD");
+        assertThemedButton(view, 2, "Text Button longer  text", "Custom accessibility text", 40,
+                43.5f, typeface, fontColor2, background2, 4, strokeColor2, CENTER);
+
+        // 3rd button (image button)
+        assertThemedButton(view, 3, "system 12", "system 12", 0,
+                52.2f, typeface, fontColor, null, 0, null, RIGHT | CENTER_VERTICAL);
+
+        // 4th button
+        File fontFile = new File(SwrveSDK.getInstance().getCacheDir(), "535.1030.b60343e5f678c56d52e80b00e604104a73d256f2.ttf");
+        Typeface typeface4 = Typeface.createFromFile(fontFile);
+        ColorStateList background4 = getColorStateList("#667fd8ff", "#ffffd700", null);
+        assertThemedButton(view, 4, "Comic 16", "Comic 16", 0,
+                69.7f, typeface4, fontColor, background4, 0, null, CENTER);
     }
 
     // Helpers
@@ -1697,10 +1750,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     private ImageView findButtonWithAction(SwrveMessageView view, SwrveActionType actionType) {
         for (int i = 0; i < view.getChildCount(); i++) {
             View childView = view.getChildAt(i);
-            if (childView instanceof SwrveBaseInteractableView) {
-                SwrveBaseInteractableView swrveBaseInteractableView = (SwrveBaseInteractableView) childView;
-                if (swrveBaseInteractableView.getType() == actionType) {
-                    return swrveBaseInteractableView;
+            if (childView instanceof SwrveButtonView) {
+                SwrveButtonView swrveButtonView = (SwrveButtonView) childView;
+                if (swrveButtonView.getType() == actionType) {
+                    return swrveButtonView;
                 }
             }
         }
@@ -1760,13 +1813,81 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveTestUtils.assertGenericEvent(event.toString(), pageId, GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW, expectedPayload);
     }
 
-    private void assertNavigationEvent(ArgumentCaptor<ArrayList> eventsCaptor, int eventIndex, String pageId, String pageName, long buttonId, long toPageId) throws Exception {
+    private void assertNavigationEvent(ArgumentCaptor<ArrayList> eventsCaptor, int eventIndex, String pageId, String pageName, long buttonId, long toPageId, String buttonName) throws Exception {
         ArrayList events = eventsCaptor.getAllValues().get(eventIndex);
         JSONObject event = new JSONObject((String) events.get(0));
         Map<String, Object> expectedPayload = new HashMap<>();
+        expectedPayload.put("buttonName", buttonName);
         expectedPayload.put("pageName", pageName);
         expectedPayload.put("buttonId", buttonId);
         expectedPayload.put("to", toPageId);
         SwrveTestUtils.assertGenericEvent(event.toString(), pageId, GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_NAVIGATION, expectedPayload);
+    }
+
+    private void assertThemedButton(SwrveMessageView view, int i, String text, String accessibilityText, int cornerRadius,
+                                    float textSize, Typeface typeface, ColorStateList textColors, ColorStateList colorBackground,
+                                    int strokeWidth, ColorStateList strokeColor, int gravity) {
+
+        assertTrue(view.getChildAt(i) instanceof SwrveThemedMaterialButton);
+        SwrveThemedMaterialButton buttonView = (SwrveThemedMaterialButton) view.getChildAt(i);
+
+        assertEquals(text, buttonView.getText().toString());
+        assertEquals(accessibilityText, buttonView.getContentDescription().toString());
+        assertEquals(cornerRadius, buttonView.getCornerRadius());
+        assertEquals(typeface, buttonView.getTypeface());
+        assertEquals(1, buttonView.getMaxLines());
+        assertEquals(0, buttonView.getLetterSpacing(), 0);
+        assertEquals(textSize, buttonView.getTextSize(), 0.1);
+
+        // font colors
+        assertEquals(textColors.getDefaultColor(), buttonView.getTextColors().getDefaultColor());
+        int pressedFontColor = buttonView.getTextColors().getColorForState(new int[]{android.R.attr.state_pressed}, 1);
+        assertEquals(textColors.getColorForState(new int[]{android.R.attr.state_pressed}, 1), pressedFontColor);
+        int focusedFontColor = buttonView.getTextColors().getColorForState(new int[]{android.R.attr.state_focused}, 1);
+        assertEquals(textColors.getColorForState(new int[]{android.R.attr.state_focused}, 1), focusedFontColor);
+
+        // background
+        if (colorBackground == null) {
+            assertTrue(buttonView.getBackground() instanceof StateListDrawable);
+            StateListDrawable stateListDrawable = (StateListDrawable)buttonView.getBackground();
+            assertTrue(stateListDrawable.hasFocusStateSpecified());
+            assertNull(buttonView.getBackgroundTintMode());
+        } else {
+            assertEquals(colorBackground.getDefaultColor(), buttonView.getBackgroundTintList().getDefaultColor());
+            int pressedBg = buttonView.getBackgroundTintList().getColorForState(new int[]{android.R.attr.state_pressed}, 1);
+            assertEquals(colorBackground.getColorForState(new int[]{android.R.attr.state_pressed}, 1), pressedBg);
+            int focusedBg = buttonView.getBackgroundTintList().getColorForState(new int[]{android.R.attr.state_focused}, 1);
+            assertEquals(colorBackground.getColorForState(new int[]{android.R.attr.state_focused}, 1), focusedBg);
+        }
+
+        // border
+        assertEquals(strokeWidth, buttonView.getStrokeWidth());
+        if (strokeColor == null) {
+            assertEquals(strokeColor, buttonView.getStrokeColor());
+        } else {
+            assertEquals(strokeColor.getDefaultColor(), buttonView.getStrokeColor().getDefaultColor());
+            int pressedStroke = buttonView.getStrokeColor().getColorForState(new int[]{android.R.attr.state_pressed}, 1);
+            assertEquals(strokeColor.getColorForState(new int[]{android.R.attr.state_pressed}, 1), pressedStroke);
+            int focusedStroke = buttonView.getStrokeColor().getColorForState(new int[]{android.R.attr.state_focused}, 1);
+            assertEquals(strokeColor.getColorForState(new int[]{android.R.attr.state_focused}, 1), focusedStroke);
+        }
+
+        assertEquals(gravity, buttonView.getGravity());
+    }
+
+    private ColorStateList getColorStateList(String defaultColorHex, String pressedColorHex, String focusedColorHex) {
+        int[][] stateList = new int[][]{
+                new int[]{android.R.attr.state_pressed},
+                new int[]{android.R.attr.state_focused},
+                new int[]{}
+        };
+        int defaultColor = Color.parseColor(defaultColorHex);
+        int pressedColor = Color.parseColor(pressedColorHex);
+        int focusedColor = pressedColor;
+        if (SwrveHelper.isNotNullOrEmpty(focusedColorHex)) {
+            focusedColor = Color.parseColor(focusedColorHex);
+        }
+        int[] colors = new int[]{pressedColor, focusedColor, defaultColor};
+        return new ColorStateList(stateList, colors);
     }
 }

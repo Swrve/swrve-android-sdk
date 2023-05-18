@@ -7,29 +7,26 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 
 import com.swrve.sdk.SwrveHelper;
+import com.swrve.sdk.SwrveTextTemplating;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
+
+import java.util.Map;
 
 // Single line text view which generates a canvas image
-public class SwrveTextImageView extends SwrveBaseInteractableView {
+public class SwrveTextImageView extends SwrveBaseImageView {
 
-    private static final float TEST_FONT_SIZE = 200;
-
-    public int width;
-    public int height;
     public SwrveInAppMessageConfig inAppConfig;
-    public String text;
-    public Bitmap viewBitmap;
-    public String action;
+    protected String text;
 
-    public SwrveTextImageView(Context context, SwrveActionType type, SwrveInAppMessageConfig inAppConfig, String text, int canvasWidth, int canvasHeight, String action) {
-        super(context, type, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor());
+    public SwrveTextImageView(Context context, SwrveWidget swrveWidget, Map<String, String> inAppPersonalization,
+                              SwrveInAppMessageConfig inAppConfig, int width, int height) throws SwrveSDKTextTemplatingException {
+        super(context, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor());
         this.inAppConfig = inAppConfig;
-        this.text = text;
-        this.width = canvasWidth;
-        this.height = canvasHeight;
-        this.action = action;
+        setText(swrveWidget, inAppPersonalization);
+        setContentDescription(swrveWidget, inAppPersonalization, text); // the text must be personalized already
 
-        this.viewBitmap = Bitmap.createBitmap(this.width, this.height, Bitmap.Config.ARGB_8888);
+        Bitmap viewBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(viewBitmap);
 
         // Fill the entire canvas with this solid color
@@ -45,7 +42,7 @@ public class SwrveTextImageView extends SwrveBaseInteractableView {
         paintText.setColor(inAppConfig.getPersonalizedTextForegroundColor());
 
         // Calculate the text size needed to fill the available space
-        fitTextSizeToImage(this.text, paintText, this.width, this.height);
+        fitTextSizeToImage(this.text, paintText, width, height);
 
         // Align text in the center and draw it
         Rect rect = new Rect();
@@ -56,7 +53,12 @@ public class SwrveTextImageView extends SwrveBaseInteractableView {
         canvas.drawText(this.text, x, y, paintText);
 
         // Set the image bitmap after we've generated it
-        this.setImageBitmap(this.viewBitmap);
+        setImageBitmap(viewBitmap);
+        setScaleType(ScaleType.FIT_XY);
+    }
+
+    private void setText(SwrveWidget swrveWidget, Map<String, String> inAppPersonalization) throws SwrveSDKTextTemplatingException {
+        this.text = SwrveTextTemplating.apply(swrveWidget.getText(), inAppPersonalization);
     }
 
     private void fitTextSizeToImage(String text, Paint paint, int maxWidth, int maxHeight) {
@@ -65,11 +67,6 @@ public class SwrveTextImageView extends SwrveBaseInteractableView {
         }
         float textSizeToFitImage = SwrveHelper.getTextSizeToFitImage(paint, text, maxWidth, maxHeight);
         paint.setTextSize(textSizeToFitImage);
-    }
-
-    @Override
-    public String getAction() {
-        return action;
     }
 
     public String getText() {

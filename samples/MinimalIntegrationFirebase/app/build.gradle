@@ -8,6 +8,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 33
         consumerProguardFiles 'proguard-rules.pro'
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -24,7 +25,8 @@ android {
 
 dependencies {
     api 'com.google.android.material:material:1.0.0'
-    api 'com.swrve.sdk.android:swrve-firebase:10.9.2'
+    api 'androidx.multidex:multidex:2.0.1'
+    api 'com.swrve.sdk.android:swrve-firebase:10.10.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

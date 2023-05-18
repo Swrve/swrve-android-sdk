@@ -115,7 +115,7 @@ class InAppMessageHandler {
                 requestCapabilityButtonClicked(action);
                 break;
             case PageLink:
-                sendNavigationEvent(pageId, pageName, Long.parseLong(button.getAction()), button.getButtonId());
+                sendNavigationEvent(pageId, pageName, Long.parseLong(button.getAction()), button.getButtonId(), button.getName());
                 break;
             case OpenNotificationSettings:
                 openNotificationSettingsButtonClicked();
@@ -170,18 +170,14 @@ class InAppMessageHandler {
         message.getCampaign().messageDismissed();
 
         if (sdk.getCustomButtonListener() != null) {
+            SwrveLogger.d("SwrveSDK: Passing to CustomButtonListener to open: %s", resolvedButtonAction);
             sdk.getCustomButtonListener().onAction(resolvedButtonAction, message.getName());
         } else {
-            // Parse action as an Uri
-            try {
-                Uri uri = Uri.parse(resolvedButtonAction);
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-            } catch (Exception e) {
-                SwrveLogger.e("Couldn't launch default custom action: %s", e, resolvedButtonAction);
-            }
+            Bundle bundle = new Bundle();
+            bundle.putString("buttonName", message.getName()); // TODO should we just add more meta data here?
+            SwrveIntentHelper.openDeepLink(context, resolvedButtonAction, bundle);
         }
+
         qaUserCampaignButtonClicked(button.getAction(), button.getActionType(), button.getName());
     }
 
@@ -282,7 +278,7 @@ class InAppMessageHandler {
         }
     }
 
-    private void sendNavigationEvent(long pageId, String pageName, long pageToId, long buttonId) {
+    private void sendNavigationEvent(long pageId, String pageName, long pageToId, long buttonId, String buttonName) {
         if (sentNavigationEvents.contains(buttonId)) {
             SwrveLogger.v("SwrveSDK: Navigation event for button_id %s already sent.", buttonId);
             return;
@@ -298,6 +294,9 @@ class InAppMessageHandler {
             Map<String, Object> payload = new HashMap<>();
             if (SwrveHelper.isNotNullOrEmpty(pageName)) {
                 payload.put(GENERIC_EVENT_PAYLOAD_PAGE_NAME, pageName);
+            }
+            if (SwrveHelper.isNotNullOrEmpty(buttonName)) {
+                payload.put(GENERIC_EVENT_PAYLOAD_BUTTON_NAME, buttonName);
             }
             if (pageToId > 0) {
                 payload.put(GENERIC_EVENT_PAYLOAD_TO, pageToId);

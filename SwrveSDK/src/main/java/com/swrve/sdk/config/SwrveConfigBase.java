@@ -1,6 +1,7 @@
 package com.swrve.sdk.config;
 
 import com.swrve.sdk.SwrveAppStore;
+import com.swrve.sdk.SwrveDeeplinkListener;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveInitMode;
 import com.swrve.sdk.SwrveNotificationConfig;
@@ -53,14 +54,8 @@ public abstract class SwrveConfigBase {
     private SwrveInitMode initMode = SwrveInitMode.AUTO;
     private boolean autoStartLastUser = true;
     private SwrveSSLSocketFactoryConfig sslSocketFactoryConfig = null;
-
-    public SwrveSSLSocketFactoryConfig getSSlSocketFactoryConfig() {
-        return sslSocketFactoryConfig;
-    }
-
-    public void setSSlSocketFactoryConfig(SwrveSSLSocketFactoryConfig sslSocketFactoryConfig) {
-        this.sslSocketFactoryConfig = sslSocketFactoryConfig;
-    }
+    private Class<?> splashActivity;
+    private SwrveDeeplinkListener deeplinkListener;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -577,5 +572,57 @@ public abstract class SwrveConfigBase {
      */
     public void setEmbeddedMessageConfig(SwrveEmbeddedMessageConfig embeddedMessageConfig) {
         this.embeddedMessageConfig = embeddedMessageConfig;
+    }
+
+    /**
+     * The configuration for SwrveSSLSocketFactoryConfig.
+     *
+     * @return the configured SwrveSSLSocketFactoryConfig
+     */
+    public SwrveSSLSocketFactoryConfig getSSlSocketFactoryConfig() {
+        return sslSocketFactoryConfig;
+    }
+
+    /**
+     * Set the SwrveSSLSocketFactoryConfig
+     *
+     * @param sslSocketFactoryConfig The SwrveSSLSocketFactoryConfig to set.
+     */
+    public void setSSlSocketFactoryConfig(SwrveSSLSocketFactoryConfig sslSocketFactoryConfig) {
+        this.sslSocketFactoryConfig = sslSocketFactoryConfig;
+    }
+
+    /**
+     * @return The splash activity configured.
+     */
+    public Class<?> getSplashActivity() {
+        return splashActivity;
+    }
+
+    /**
+     * Set this configuration so the sdk will delay init until another activity (usually your MainActivity)
+     * is started and your SplashActivity is finished. This will delay auto show at startup campaigns and
+     * campaigns from push notifications until your app is ready.
+     *
+     * @param splashActivity subclass of Activity or FragmentActivity or AppCompatActivity
+     */
+    public void setSplashActivity(Class<?> splashActivity) {
+        this.splashActivity = splashActivity;
+    }
+
+    /**
+     * Get the SwrveDeeplinkListener
+     * @return the configured SwrveDeeplinkListener
+     */
+    public SwrveDeeplinkListener getSwrveDeeplinkListener() {
+        return deeplinkListener;
+    }
+
+    /**
+     * Set the SwrveDeeplinkListener
+     * @param deeplinkListener the SwrveDeeplinkListener
+     */
+    public void setSwrveDeeplinkListener(SwrveDeeplinkListener deeplinkListener) {
+        this.deeplinkListener = deeplinkListener;
     }
 }

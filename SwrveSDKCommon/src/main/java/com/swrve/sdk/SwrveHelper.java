@@ -30,7 +30,10 @@ import android.provider.Settings;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 
 import com.swrve.sdk.ISwrveCommon.SupportedUIMode;
 
@@ -558,5 +561,16 @@ public final class SwrveHelper {
         Uri uri = Uri.fromParts("package", context.getPackageName(), null);
         intent.setData(uri);
         return intent;
+    }
+
+    public static void scaleView(View v, float startScale, float endScale) {
+        Animation anim = new ScaleAnimation(
+                startScale, endScale,
+                startScale, endScale,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f);
+        anim.setFillAfter(true);
+        anim.setDuration(100);
+        v.startAnimation(anim);
     }
 }
