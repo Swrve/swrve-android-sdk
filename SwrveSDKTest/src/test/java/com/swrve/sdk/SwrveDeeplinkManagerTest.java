@@ -1,5 +1,25 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS_DEBUG;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static com.swrve.sdk.SwrveDeeplinkManager.SWRVE_AD_MESSAGE;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -31,26 +51,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.swrve.sdk.ISwrveCommon.CACHE_AD_CAMPAIGNS_DEBUG;
-import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_ID_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
-import static com.swrve.sdk.SwrveDeeplinkManager.SWRVE_AD_MESSAGE;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
 
@@ -388,6 +388,45 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
 
     @Test
     public void testHandleDeeplink_MessageEmbedded() throws Exception {
+        final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
+
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
+            embeddedCallbackBool.set(true);
+        }).build();
+
+        swrveSpy.config.setEmbeddedMessageConfig(embeddedMessageConfig);
+
+        Bundle bundle = new Bundle();
+        bundle.putString("target_url","swrve://app?ad_content=295422&ad_source=facebook&ad_campaign=BlackFriday");
+
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+
+        //*** 1. Generic Event is queued
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jObj = new JSONObject(jsonString);
+
+        assertTrue(jObj.has("time"));
+        assertTrue(jObj.has("seqnum"));
+        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
+        assertTrue(jObj.get("id").equals("-1"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
+        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
+        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
+        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295422"));
+
+        // 2. Test EmbeddedMessageListener was fired
+        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
+        await().untilTrue(embeddedCallbackBool);
+    }
+
+    @Test
+    public void testHandleDeeplink_MessageEmbeddedDeprecatedListener() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
 
         SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {

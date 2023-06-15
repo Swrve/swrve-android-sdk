@@ -16,6 +16,7 @@ import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
@@ -309,16 +310,20 @@ class SwrveDeeplinkManager {
                     context.startActivity(intent);
                 }
             } else if (campaign instanceof SwrveEmbeddedCampaign) {
-                SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
-                SwrveEmbeddedMessageListener embeddedMessageListener = null;
-                if (config != null && config.getEmbeddedMessageConfig() != null){
-                    embeddedMessageListener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
-                }
-
-                if(embeddedMessageListener != null) {
-                    Swrve swrve = (Swrve) SwrveSDK.getInstance();
-                    Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);;
-                    embeddedMessageListener.onMessage(context, message, properties);
+                if (config != null && config.getEmbeddedMessageConfig() != null) {
+                    if (config.getEmbeddedMessageConfig().getEmbeddedListener() != null) {
+                        SwrveEmbeddedListener listener = config.getEmbeddedMessageConfig().getEmbeddedListener();
+                        SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
+                        Swrve swrve = (Swrve) SwrveSDK.getInstance();
+                        Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);
+                        listener.onMessage(context, message, properties, message.isControl());
+                    } else if (config.getEmbeddedMessageConfig().getEmbeddedMessageListener() != null) {
+                        SwrveEmbeddedMessageListener listener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
+                        SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
+                        Swrve swrve = (Swrve) SwrveSDK.getInstance();
+                        Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);
+                        listener.onMessage(context, message, properties);
+                    }
                 }
             }
         }
