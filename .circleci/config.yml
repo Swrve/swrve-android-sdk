@@ -3,7 +3,7 @@ version: 2.1
 executors:
   swrve-executor:
     docker:
-      - image: circleci/android:api-30
+      - image: cimg/android:2023.05
     environment:
       JVM_OPTS: -Xmx2048m
       JAVA_OPTS: -Xms518m -Xmx2048m

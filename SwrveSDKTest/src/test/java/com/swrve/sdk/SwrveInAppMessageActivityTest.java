@@ -9,6 +9,10 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DISMISS;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_NAVIGATION;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_IAM;
+import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.CopyToClipboard;
+import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Custom;
+import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Dismiss;
+import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Impression;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -60,8 +64,11 @@ import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
+import com.swrve.sdk.messaging.SwrveButtonTextImageView;
 import com.swrve.sdk.messaging.SwrveButtonView;
+import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
+import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveImageView;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
@@ -884,7 +891,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = getSwrveMessageView(activity);
 
         // Press clipboard button
-        ImageView swrveButtonView = findButtonWithAction(view, SwrveActionType.CopyToClipboard);
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.CopyToClipboard);
         swrveButtonView.performClick();
 
         // Verify button copies text to system clipboard
@@ -1076,6 +1083,118 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         payload.put("name", "custom");
         payload.put("embedded", "false");
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
+    }
+
+    @Test
+    public void testMessageListener() throws Exception {
+        final AtomicBoolean impresisonCallback = new AtomicBoolean(false);
+        final AtomicBoolean customCallback = new AtomicBoolean(false);
+        final AtomicBoolean copyCallback = new AtomicBoolean(false);
+        final AtomicBoolean dismissCallback = new AtomicBoolean(false);
+
+        SwrveInAppMessageConfig inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
+                .personalizationProvider(eventPayload -> {
+                    HashMap<String, String> values = Maps.newHashMap();
+                    values.put("test_1", "test1 value");
+                    values.put("test_cp", "12345678 value");
+                    return values;
+                })
+                .messageListener((context, messageAction, messageDetails, selectedButton) -> {
+                    switch (messageAction) {
+                        case Impression:
+                            impresisonCallback.set(true);
+                            assertEquals(messageDetails.getCampaignSubject(), "");
+                            assertEquals(messageDetails.getVariantId(), 165);
+                            assertEquals(messageDetails.getCampaignId(), 102);
+                            assertEquals(messageDetails.getMessageName(), "Kindle");
+                            assertEquals(messageAction, Impression);
+                            assertEquals(selectedButton, null);
+                            assertEquals(messageDetails.getButtons().size(), 3);
+                            break;
+                        case Custom:
+                            assertEquals(messageDetails.getVariantId(), 165);
+                            assertEquals(messageDetails.getCampaignId(), 102);
+                            assertEquals(messageDetails.getMessageName(), "Kindle");
+                            assertEquals(messageAction, Custom);
+                            assertEquals(selectedButton.getButtonName(), "accept");
+                            assertEquals(selectedButton.getButtonText(), null);
+                            assertEquals(selectedButton.getActionType(), SwrveActionType.Custom);
+                            assertEquals(selectedButton.getActionString(), "12345678 value");
+                            assertEquals(messageDetails.getButtons().size(), 3);
+                            customCallback.set(true);
+                            break;
+                        case Dismiss:
+                            assertEquals(messageDetails.getVariantId(), 165);
+                            assertEquals(messageDetails.getCampaignId(), 102);
+                            assertEquals(messageDetails.getMessageName(), "Kindle");
+                            assertEquals(messageAction, Dismiss);
+                            assertEquals(selectedButton.getButtonName(), "close");
+                            assertEquals(selectedButton.getButtonText(), null);
+                            assertEquals(selectedButton.getActionType(), SwrveActionType.Dismiss);
+                            assertEquals(selectedButton.getActionString(), "");
+                            assertEquals(messageDetails.getButtons().size(), 3);
+                            dismissCallback.set(true);
+                            break;
+                        case CopyToClipboard:
+                            assertEquals(messageDetails.getVariantId(), 165);
+                            assertEquals(messageDetails.getCampaignId(), 102);
+                            assertEquals(messageDetails.getMessageName(), "Kindle");
+                            assertEquals(messageAction, CopyToClipboard);
+                            assertEquals(selectedButton.getButtonName(), "custom");
+                            assertEquals(selectedButton.getButtonText(), "Text test1 value");
+                            assertEquals(selectedButton.getActionType(), SwrveActionType.CopyToClipboard);
+                            assertEquals(selectedButton.getActionString(), "test1 value");
+                            assertEquals(messageDetails.getButtons().size(), 3);
+                            copyCallback.set(true);
+                            break;
+                        default:
+                            break;
+                    }
+                })
+                .clipboardButtonListener(new SwrveClipboardButtonListener() {
+                    @Override
+                    public void onAction(String clipboardContents) {
+                        Assert.fail("This shouldn't be called if the message listener is implemented");
+                    }
+                })
+                .customButtonListener(new SwrveCustomButtonListener() {
+                    @Override
+                    public void onAction(String customAction, String campaignName) {
+                        Assert.fail("This shouldn't be called if the message listener is implemented");
+                    }
+                })
+                .dismissButtonListener(new SwrveDismissButtonListener() {
+                    @Override
+                    public void onAction(String campaignSubject, String buttonName, String campaignName) {
+                        Assert.fail("This shouldn't be called if the message listener is implemented");
+                    }
+                })
+                .build();
+
+        config.setInAppMessageConfig(inAppConfigBuilder);
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
+        // Trigger IAM
+        swrveSpy.event("show.personalized");
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        SwrveMessageView view = getSwrveMessageView(activity);
+
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Custom);
+        swrveButtonView.performClick();
+
+        SwrveButtonView swrveButtonView2 = findButton(view, SwrveActionType.Dismiss);
+        swrveButtonView2.performClick();
+
+        SwrveButtonTextImageView swrveButtonView3 = findTextButton(view, SwrveActionType.CopyToClipboard);
+        swrveButtonView3.performClick();
+
+        await().untilTrue(impresisonCallback);
+        await().untilTrue(dismissCallback);
+        await().untilTrue(copyCallback);
+        await().untilTrue(customCallback);
     }
 
     @Test
@@ -1294,7 +1413,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assetsOnDisk.add(gifAsset2);
         assetsOnDisk.add(gifAsset3);
         assetsOnDisk.add(gifAsset4);
-        ((SwrveAssetsManagerImp)swrveSpy.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
+        ((SwrveAssetsManagerImp) swrveSpy.swrveAssetsManager).assetsOnDisk = assetsOnDisk;
 
         // for the sake of the unit test it doesn't matter what gif image is used, so copy the next_arrow.gif file to cache for each of the assets.
         SwrveTestUtils.writeResourceFileToCache("next_arrow.gif", gifAsset1 + ".gif"); // add .gif extension to the file name!
@@ -1747,11 +1866,11 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         return null;
     }
 
-    private ImageView findButtonWithAction(SwrveMessageView view, SwrveActionType actionType) {
+    private SwrveButtonTextImageView findTextButton(SwrveMessageView view, SwrveActionType actionType) {
         for (int i = 0; i < view.getChildCount(); i++) {
             View childView = view.getChildAt(i);
-            if (childView instanceof SwrveButtonView) {
-                SwrveButtonView swrveButtonView = (SwrveButtonView) childView;
+            if (childView instanceof SwrveButtonTextImageView) {
+                SwrveButtonTextImageView swrveButtonView = (SwrveButtonTextImageView) childView;
                 if (swrveButtonView.getType() == actionType) {
                     return swrveButtonView;
                 }
@@ -1849,7 +1968,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         // background
         if (colorBackground == null) {
             assertTrue(buttonView.getBackground() instanceof StateListDrawable);
-            StateListDrawable stateListDrawable = (StateListDrawable)buttonView.getBackground();
+            StateListDrawable stateListDrawable = (StateListDrawable) buttonView.getBackground();
             assertTrue(stateListDrawable.hasFocusStateSpecified());
             assertNull(buttonView.getBackgroundTintMode());
         } else {

@@ -9,6 +9,7 @@ import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFocusListener;
+import com.swrve.sdk.messaging.SwrveInAppMessageListener;
 import com.swrve.sdk.messaging.SwrveMessagePersonalizationProvider;
 
 public class SwrveInAppMessageConfig {
@@ -28,6 +29,7 @@ public class SwrveInAppMessageConfig {
     private SwrveMessagePersonalizationProvider personalizationProvider;
     private SwrveInAppWindowListener windowListener;
     private SwrveMessageFocusListener messageFocusListener;
+    private SwrveInAppMessageListener messageListener;
 
     private SwrveInAppMessageConfig(Builder builder) {
         this.defaultBackgroundColor = builder.defaultBackgroundColor;
@@ -44,6 +46,7 @@ public class SwrveInAppMessageConfig {
         this.personalizationProvider = builder.personalizationProvider;
         this.windowListener = builder.windowListener;
         this.messageFocusListener = builder.messageFocusListener;
+        this.messageListener = builder.messagesListener;
     }
 
     /**
@@ -119,25 +122,27 @@ public class SwrveInAppMessageConfig {
 
     /**
      * Custom listener to process in-app message custom button clicks.
-     *
+     * @deprecated Use SwrveMessageListener
      * @return The custom listener
      */
+    @Deprecated
     public SwrveCustomButtonListener getCustomButtonListener() {
         return customButtonListener;
     }
 
     /**
      * In-app button listener to get notified of in-app message dismiss button clicks.
-     *
-     * @return The custom listener
+     * @deprecated Use SwrveMessageListener
+     * @return The dismiss listener
      */
+    @Deprecated
     public SwrveDismissButtonListener getDismissButtonListener() {
         return dismissButtonListener;
     }
 
     /**
      * Custom listener to process in-app message copy-to-clipboard button clicks.
-     *
+     * @deprecated Use SwrveMessageListener
      * @return The custom listener
      */
     public SwrveClipboardButtonListener getClipboardButtonListener() {
@@ -151,6 +156,15 @@ public class SwrveInAppMessageConfig {
      */
     public SwrveMessagePersonalizationProvider getPersonalizationProvider() {
         return personalizationProvider;
+    }
+
+    /**
+     * In-app message listener
+     *
+     * @return The message listener
+     */
+    public SwrveInAppMessageListener getMessageListener() {
+        return messageListener;
     }
 
     /**
@@ -187,6 +201,7 @@ public class SwrveInAppMessageConfig {
         protected SwrveMessagePersonalizationProvider personalizationProvider;
         protected SwrveInAppWindowListener windowListener;
         protected SwrveMessageFocusListener messageFocusListener;
+        protected SwrveInAppMessageListener messagesListener;
 
         /**
          * Builder constructor
@@ -346,6 +361,17 @@ public class SwrveInAppMessageConfig {
          */
         public Builder messageFocusListener(SwrveMessageFocusListener messageFocusListener) {
             this.messageFocusListener = messageFocusListener;
+            return this;
+        }
+
+        /**
+         * Message listener to process in-app message actions and views
+         *
+         * @param messageListener The Message listener
+         * @return this builder
+         */
+        public Builder messageListener(SwrveInAppMessageListener messageListener) {
+            this.messagesListener = messageListener;
             return this;
         }
 

@@ -18,6 +18,7 @@ public class SwrveEmbeddedMessageConfig {
      * @deprecated Use SwrveEmbeddedListener
      * @return The custom listener
      */
+    @Deprecated
     public SwrveEmbeddedMessageListener getEmbeddedMessageListener() {
         return embeddedMessageListener;
     }

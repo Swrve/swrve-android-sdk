@@ -523,7 +523,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
     @Test
     public void testMessagePriorityInverse() throws Exception {
-        // https://swrvedev.jira.com/browse/SWRVE-10432
+        // https://emailabove.jira.com/browse/MOBILE-10432
         // We were not clearing the bucket of candidate messages, ever...
 
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_priority_reverse.json");
@@ -785,7 +785,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
     @Test
     public void testConversationPriorityInverse() throws Exception {
-        // https://swrvedev.jira.com/browse/SWRVE-10432
+        // https://emailabove.jira.com/browse/MOBILE-10432
         // We were not clearing the bucket of candidate messages, ever...
         // Test that the same problem does not affect conversations
 

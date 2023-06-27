@@ -252,7 +252,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
         inAppMessageHandler.customEventDelayQueueSeconds = 0;
 
-        inAppMessageHandler.buttonClicked(buttonDismiss, "someAction", 0, "");
+        inAppMessageHandler.buttonClicked(buttonDismiss, "someAction", "", 0, "");
 
         Thread.sleep(100l); // Custom events are sent a short period of time later so sleep
 
@@ -277,7 +277,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
         inAppMessageHandler.customEventDelayQueueSeconds = 0;
 
-        inAppMessageHandler.buttonClicked(buttonInstall, "someAction", 0, "");
+        inAppMessageHandler.buttonClicked(buttonInstall, "someAction", "",0, "");
 
         boolean clickFound = false;
         Object[] events = getAllEvents().values().toArray();
@@ -312,7 +312,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
         inAppMessageHandler.customEventDelayQueueSeconds = 0;
 
-        inAppMessageHandler.buttonClicked(buttonCustom, "someAction", 0, "");
+        inAppMessageHandler.buttonClicked(buttonCustom, "someAction", "", 0, "");
 
         boolean clickFound = false;
         Object[] events = getAllEvents().values().toArray();
@@ -337,7 +337,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         SwrveButton buttonCustom = createButton("OPEN_APP_SETTINGS", "campaign.json", "", 150);
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(mActivity, null, null);
-        inAppMessageHandler.buttonClicked(buttonCustom, "", 0, "");
+        inAppMessageHandler.buttonClicked(buttonCustom, "", "", 0, "");
 
         Shadows.shadowOf(mActivity.getMainLooper()).idle();
 
@@ -354,7 +354,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         SwrveButton buttonCustom = createButton("OPEN_NOTIFICATION_SETTINGS", "campaign.json", "", 150);
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(mActivity, null, null);
-        inAppMessageHandler.buttonClicked(buttonCustom, "", 0, "");
+        inAppMessageHandler.buttonClicked(buttonCustom, "", "", 0, "");
 
         Shadows.shadowOf(mActivity.getMainLooper()).idle();
 
@@ -370,7 +370,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         SwrveButton buttonCustom = createButton("START_GEO", "campaign.json", "", 150);
         InAppMessageHandler inAppMessageHandlerSpy = spy(new InAppMessageHandler(mActivity, null, null));
-        inAppMessageHandlerSpy.buttonClicked(buttonCustom, "", 0, "");
+        inAppMessageHandlerSpy.buttonClicked(buttonCustom, "", "", 0, "");
 
         Shadows.shadowOf(mActivity.getMainLooper()).idle();
 
@@ -386,7 +386,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         SwrveButton buttonCustom = createButton("REQUEST_CAPABILITY", "campaign.json", "android.permission.POST_NOTIFICATIONS", 150);
         InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), null, null);
-        inAppMessageHandler.buttonClicked(buttonCustom, "android.permission.POST_NOTIFICATIONS", 0, "");
+        inAppMessageHandler.buttonClicked(buttonCustom, "android.permission.POST_NOTIFICATIONS", "", 0, "");
 
         Shadows.shadowOf(mActivity.getMainLooper()).idle();
 

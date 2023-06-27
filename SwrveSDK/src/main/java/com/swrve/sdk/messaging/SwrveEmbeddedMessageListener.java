@@ -9,6 +9,7 @@ import java.util.Map;
  * Note: the methods in this interface will be invoked from the UI thread.
  * @deprecated Use SwrveEmbeddedListener
  */
+@Deprecated
 public interface SwrveEmbeddedMessageListener {
     /**
      * This method is invoked when an Embedded Campaign was triggered
@@ -18,5 +19,6 @@ public interface SwrveEmbeddedMessageListener {
      * @param personalizationProperties string map of personalization key / value pairs.
      * @deprecated Use SwrveEmbeddedListener
      */
+    @Deprecated
     void onMessage(Context context, SwrveEmbeddedMessage message, Map<String, String> personalizationProperties);
 }

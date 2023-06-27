@@ -90,6 +90,40 @@
             }
           ],
           "buttons": [{
+            "name": "close",
+            "x": {
+              "type": "number",
+              "value": 932
+            },
+            "y": {
+              "type": "number",
+              "value": 32
+            },
+            "w": {
+              "type": "number",
+              "value": 50
+            },
+            "h": {
+              "type": "number",
+              "value": 50
+            },
+            "image_up": {
+              "type": "asset",
+              "value": "1111111111111111111111111"
+            },
+            "action": {
+              "type": "text",
+              "value": ""
+            },
+            "game_id": {
+              "type": "number",
+              "value": ""
+            },
+            "type": {
+              "type": "text",
+              "value": "DISMISS"
+            }
+          },{
             "name": "accept",
             "x": {
               "type": "number",

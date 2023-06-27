@@ -202,9 +202,9 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         inAppMessageHandler.sendPageViewEvent(pageId);
     }
 
-    public void buttonClicked(SwrveButton button, String action, long pageId, String pageName) {
+    public void buttonClicked(SwrveButton button, String resolvedAction, String resolvedText, long pageId, String pageName) {
         try {
-            inAppMessageHandler.buttonClicked(button, action, pageId, pageName);
+            inAppMessageHandler.buttonClicked(button, resolvedAction, resolvedText, pageId, pageName);
             if (button.getActionType() == PageLink) {
                 long pageToId = Long.parseLong(button.getAction());
                 showPage(pageToId);

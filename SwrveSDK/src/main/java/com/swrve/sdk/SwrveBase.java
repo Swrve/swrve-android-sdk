@@ -6,6 +6,7 @@ import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static com.swrve.sdk.SwrveTrackingState.STOPPED;
+import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Impression;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -46,8 +47,12 @@ import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageButtonDetails;
 import com.swrve.sdk.messaging.SwrveMessageCenterDetails;
+import com.swrve.sdk.messaging.SwrveMessageDetails;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveInAppMessageListener;
+import com.swrve.sdk.messaging.SwrveMessagePage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -1184,6 +1189,36 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
 
         queueMessageImpressionEvent(message.getId(), "false");
+
+        if (getMessageListener() != null) {
+            String subject;
+            if (message.getCampaign() != null && message.getCampaign().getMessageCenterDetails() != null) {
+                subject = message.getCampaign().getMessageCenterDetails().getSubject();
+            } else {
+                subject = message.getCampaign().getSubject();
+            }
+            List<SwrveMessageButtonDetails> buttons = new ArrayList<>();
+            for (Map.Entry<Long, SwrveMessagePage> page : messageFormat.getPages().entrySet()) {
+                for (SwrveButton messageButton : page.getValue().getButtons()) {
+
+                    String personalizedText = messageButton.getText();
+                    String personalizedAction = messageButton.getAction();
+                    try {
+                        Map<String, String> properties = retrievePersonalizationProperties(lastEventPayloadUsed, null);
+                        personalizedText = SwrveTextTemplating.apply(personalizedText, properties);
+                        personalizedAction = SwrveTextTemplating.apply(personalizedAction, properties);
+                    } catch (SwrveSDKTextTemplatingException e) {
+                        SwrveLogger.e("Failed to resolve personalization in messageWasShownToUser");
+                    }
+
+                    SwrveMessageButtonDetails messageButtonDetails = new SwrveMessageButtonDetails(messageButton.getName(), personalizedText, messageButton.getActionType(), personalizedAction);
+                    buttons.add(messageButtonDetails);
+                }
+            }
+            SwrveMessageDetails messageDetails = new SwrveMessageDetails(subject, message.getCampaign().getId(), message.getId(), message.getName(), buttons);
+            Context ctx = (getContext() == null) ? null : getContext().getApplicationContext();
+            getMessageListener().onAction(ctx, Impression, messageDetails, null);
+        }
     }
 
     private void _embeddedMessageWasShownToUser(SwrveEmbeddedMessage message) {
@@ -1797,6 +1832,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
         if (inAppConfig != null) {
             return inAppConfig.getDismissButtonListener();
+        }
+        return null;
+    }
+
+    public SwrveInAppMessageListener getMessageListener() {
+        SwrveInAppMessageConfig inAppConfig = config.getInAppMessageConfig();
+        if (inAppConfig != null) {
+            return inAppConfig.getMessageListener();
         }
         return null;
     }

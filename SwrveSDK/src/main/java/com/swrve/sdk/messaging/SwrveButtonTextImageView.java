@@ -13,10 +13,13 @@ public class SwrveButtonTextImageView extends SwrveTextImageView {
 
     private String action;
 
+    private SwrveActionType type;
+
     public SwrveButtonTextImageView(Context context, SwrveButton swrveButton, Map<String, String> inAppPersonalization,
                                     SwrveInAppMessageConfig inAppConfig, int canvasWidth, int canvasHeight) throws SwrveSDKTextTemplatingException {
         super(context, swrveButton, inAppPersonalization, inAppConfig, canvasWidth, canvasHeight);
         setAction(swrveButton, inAppPersonalization);
+        this.type = swrveButton.getActionType();
         setContentDescription(swrveButton, inAppPersonalization, text); // the text must be personalized already, which happens in superclass SwrveTextImageView
         setFocusable(true);
     }
@@ -31,5 +34,9 @@ public class SwrveButtonTextImageView extends SwrveTextImageView {
 
     protected String getAction() {
         return action;
+    }
+
+    public SwrveActionType getType() {
+        return type;
     }
 }

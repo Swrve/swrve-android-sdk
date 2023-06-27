@@ -216,15 +216,18 @@ public class SwrveMessageView extends RelativeLayout {
         }
 
         final View buttonView;
-        final String buttonAction;
+        final String resolvedButtonAction;
+        final String resolvedButtonText;
         if (SwrveHelper.isNullOrEmpty(button.getText())) {
             SwrveButtonView swrveButtonView = new SwrveButtonView(getContext(), button, inAppPersonalization, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor(), imageFileInfo);
             buttonView = swrveButtonView;
-            buttonAction = swrveButtonView.getAction();
+            resolvedButtonAction = swrveButtonView.getAction();
+            resolvedButtonText = button.getText();
         } else {
             SwrveButtonTextImageView swrveButtonTextImageView = new SwrveButtonTextImageView(getContext(), button, inAppPersonalization, inAppConfig, imageFileInfo.image.getWidth(), imageFileInfo.image.getHeight());
             buttonView = swrveButtonTextImageView;
-            buttonAction = swrveButtonTextImageView.getAction();
+            resolvedButtonAction = swrveButtonTextImageView.getAction();
+            resolvedButtonText = swrveButtonTextImageView.getText();
         }
 
         // Position and size
@@ -233,7 +236,7 @@ public class SwrveMessageView extends RelativeLayout {
 
         buttonView.setOnClickListener(v -> {
             SwrveInAppMessageActivity inAppMessageActivity = (SwrveInAppMessageActivity) getContext();
-            inAppMessageActivity.buttonClicked(button, buttonAction, page.getPageId(), getPage().getPageName());
+            inAppMessageActivity.buttonClicked(button, resolvedButtonAction, resolvedButtonText, page.getPageId(), getPage().getPageName());
         });
 
         // Add to parent
@@ -257,7 +260,7 @@ public class SwrveMessageView extends RelativeLayout {
 
         buttonView.setOnClickListener(v -> {
             SwrveInAppMessageActivity inAppMessageActivity = (SwrveInAppMessageActivity) getContext();
-            inAppMessageActivity.buttonClicked(button, buttonView.getAction(), page.getPageId(), getPage().getPageName());
+            inAppMessageActivity.buttonClicked(button, buttonView.getAction(), buttonView.getText().toString(), page.getPageId(), getPage().getPageName());
         });
 
         addView(buttonView);

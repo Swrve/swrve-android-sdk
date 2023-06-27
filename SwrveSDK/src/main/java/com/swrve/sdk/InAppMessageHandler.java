@@ -12,6 +12,8 @@ import static com.swrve.sdk.SwrveInAppMessageActivity.MESSAGE_ID_KEY;
 import static com.swrve.sdk.SwrveInAppMessageActivity.SWRVE_AD_MESSAGE;
 import static com.swrve.sdk.SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY;
 import static com.swrve.sdk.messaging.SwrveActionType.Dismiss;
+import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.CopyToClipboard;
+import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Custom;
 
 import android.app.Activity;
 import android.content.ClipData;
@@ -25,7 +27,10 @@ import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveMessage;
+import com.swrve.sdk.messaging.SwrveMessageButtonDetails;
+import com.swrve.sdk.messaging.SwrveMessageDetails;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
+import com.swrve.sdk.messaging.SwrveInAppMessageListener;
 import com.swrve.sdk.messaging.SwrveMessagePage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
@@ -97,22 +102,22 @@ class InAppMessageHandler {
         sdk.messageWasShownToUser(format);
     }
 
-    protected void buttonClicked(SwrveButton button, String action, long pageId, String pageName) {
+    protected void buttonClicked(SwrveButton button, String resolvedAction, String resolvedText, long pageId, String pageName) {
         switch (button.getActionType()) {
             case Dismiss:
-                dismissButtonClicked(button.getAction(), button.getActionType(), pageId, pageName, button.getButtonId(), button.getName());
+                dismissButtonClicked(button, pageId, pageName, resolvedText);
                 break;
             case Custom:
-                customButtonClicked(button, action, pageId, pageName);
+                customButtonClicked(button, resolvedAction, pageId, pageName, resolvedText);
                 break;
             case Install:
                 installButtonClicked(button, pageId, pageName);
                 break;
             case CopyToClipboard:
-                clipboardButtonClicked(button, action, pageId, pageName);
+                clipboardButtonClicked(button, resolvedAction, pageId, pageName, resolvedText);
                 break;
             case RequestCapabilty:
-                requestCapabilityButtonClicked(action);
+                requestCapabilityButtonClicked(resolvedAction);
                 break;
             case PageLink:
                 sendNavigationEvent(pageId, pageName, Long.parseLong(button.getAction()), button.getButtonId(), button.getName());
@@ -165,38 +170,75 @@ class InAppMessageHandler {
         qaUserCampaignButtonClicked(button.getAction(), button.getActionType(), button.getName());
     }
 
-    private void customButtonClicked(SwrveButton button, String resolvedButtonAction, long pageId, String pageName) {
+    private void customButtonClicked(SwrveButton button, String resolvedAction, long pageId, String pageName, String resolvedText) {
         sdk.queueMessageClickEvent(button, pageId, pageName);
         message.getCampaign().messageDismissed();
 
-        if (sdk.getCustomButtonListener() != null) {
-            SwrveLogger.d("SwrveSDK: Passing to CustomButtonListener to open: %s", resolvedButtonAction);
-            sdk.getCustomButtonListener().onAction(resolvedButtonAction, message.getName());
+        if (sdk.getMessageListener() != null) {
+            SwrveMessageDetails messageDetails = getMessageDetails(message, format);
+            SwrveMessageButtonDetails selectedButton = new SwrveMessageButtonDetails(button.getName(), resolvedText, button.getActionType(), resolvedAction);
+            sdk.getMessageListener().onAction(context.getApplicationContext(), Custom, messageDetails, selectedButton);
+        } else if (sdk.getCustomButtonListener() != null) {
+            SwrveLogger.d("SwrveSDK: Passing to CustomButtonListener to open: %s", resolvedAction);
+            sdk.getCustomButtonListener().onAction(resolvedAction, message.getName());
         } else {
             Bundle bundle = new Bundle();
             bundle.putString("buttonName", message.getName()); // TODO should we just add more meta data here?
-            SwrveIntentHelper.openDeepLink(context, resolvedButtonAction, bundle);
+            SwrveIntentHelper.openDeepLink(context, resolvedAction, bundle);
         }
 
         qaUserCampaignButtonClicked(button.getAction(), button.getActionType(), button.getName());
     }
 
-    private void clipboardButtonClicked(SwrveButton button, String stringToCopy, long pageId, String pageName) {
+    private void clipboardButtonClicked(SwrveButton button, String resolvedAction, long pageId, String pageName, String resolvedText) {
+        // resolvedAction is the string that is copied to the clipboard
         sdk.queueMessageClickEvent(button, pageId, pageName);
         message.getCampaign().messageDismissed();
 
         try {
             ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("simple text", stringToCopy);
+            ClipData clip = ClipData.newPlainText("simple text", resolvedAction);
             clipboard.setPrimaryClip(clip);
 
-            if (sdk.getClipboardButtonListener() != null) {
-                sdk.getClipboardButtonListener().onAction(stringToCopy);
+            if (sdk.getMessageListener() != null) {
+                SwrveMessageDetails messageDetails = getMessageDetails(message, format);
+                SwrveMessageButtonDetails selectedButton = new SwrveMessageButtonDetails(button.getName(), resolvedText, button.getActionType(), resolvedAction);
+                sdk.getMessageListener().onAction(context.getApplicationContext(), CopyToClipboard, messageDetails, selectedButton);
+            } else if (sdk.getClipboardButtonListener() != null) {
+                sdk.getClipboardButtonListener().onAction(resolvedAction);
             }
-
         } catch (Exception e) {
-            SwrveLogger.e("Couldn't copy text to clipboard: %s", e, stringToCopy);
+            SwrveLogger.e("Couldn't copy text to clipboard: %s", e, resolvedAction);
         }
+    }
+
+    private SwrveMessageDetails getMessageDetails(SwrveMessage message, SwrveMessageFormat messageFormat) {
+        String subject;
+        if (message.getCampaign() != null && message.getCampaign().getMessageCenterDetails() != null) {
+            subject = message.getCampaign().getMessageCenterDetails().getSubject();
+        } else {
+            subject = message.getCampaign().getSubject();
+        }
+
+        List<SwrveMessageButtonDetails> buttons = new ArrayList<>();
+        for (Map.Entry<Long, SwrveMessagePage> page : messageFormat.getPages().entrySet()) {
+            for (SwrveButton messageButton : page.getValue().getButtons()) {
+
+                String personalizedText = messageButton.getText();
+                String personalizedAction = messageButton.getAction();
+                try {
+                    personalizedText = SwrveTextTemplating.apply(personalizedText, inAppPersonalization);
+                    personalizedAction = SwrveTextTemplating.apply(personalizedAction, inAppPersonalization);
+                } catch (SwrveSDKTextTemplatingException e) {
+                    SwrveLogger.e("Failed to resolve personalization in InAppMessageHandler: getMessageDetails");
+                }
+
+                SwrveMessageButtonDetails messageButtonDetails = new SwrveMessageButtonDetails(messageButton.getName(), personalizedText, messageButton.getActionType(), personalizedAction);
+                buttons.add(messageButtonDetails);
+            }
+        }
+        SwrveMessageDetails messageDetails = new SwrveMessageDetails(subject, message.getCampaign().getId(), message.getId(), message.getName(), buttons);
+        return messageDetails;
     }
 
     private void requestCapabilityButtonClicked(String action) {
@@ -239,15 +281,27 @@ class InAppMessageHandler {
             pageId = page.getPageId();
             pageName = page.getPageName();
         }
-        dismissButtonClicked("", Dismiss, pageId, pageName, 0, null);
+        dismissButtonClicked(null, pageId, pageName, "");
     }
 
-    private void dismissButtonClicked(String action, SwrveActionType swrveActionType, long pageId, String pageName, long buttonId, String buttonName) {
+    private void dismissButtonClicked(SwrveButton button, long pageId, String pageName, String resolvedText) {
+        //button can be null if IAM is dismissed via OS see: backButtonClicked
+        String buttonName = (button != null) ? button.getName() : null;
+        String action = (button != null) ? button.getAction() : "";
+        long buttonId = (button != null) ? button.getButtonId() : 0;
+
         sendDismissEvent(message.getId(), pageId, pageName, buttonId, buttonName);
-        if (sdk.getDismissButtonListener() != null) {
+        if (sdk.getMessageListener() != null) {
+            SwrveMessageButtonDetails swrveMessageButtonDetails = null;
+            if (button != null) {
+                swrveMessageButtonDetails = new SwrveMessageButtonDetails(button.getName(), resolvedText, button.getActionType(), button.getAction());
+            }
+            SwrveMessageDetails messageDetails = getMessageDetails(message, format);
+            sdk.getMessageListener().onAction(context.getApplicationContext(), SwrveInAppMessageListener.SwrveMessageAction.Dismiss, messageDetails, swrveMessageButtonDetails);
+        } else if (sdk.getDismissButtonListener() != null) {
             sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), buttonName, message.getName());
         }
-        qaUserCampaignButtonClicked(action, swrveActionType, buttonName);
+        qaUserCampaignButtonClicked(action, Dismiss, buttonName);
     }
 
     private void sendDismissEvent(int variantId, long pageId, String pageName, long buttonId, String buttonName) {
@@ -477,7 +531,7 @@ class InAppMessageHandler {
                 newPayload.put(key, personalizedText);
             }
         } catch (SwrveSDKTextTemplatingException e) {
-            SwrveLogger.w("Failed to resolve personalization in InAppMessageHandler for key:%s value:%s", key, value);
+            SwrveLogger.e("Failed to resolve personalization in InAppMessageHandler for key:%s value:%s", key, value);
         }
     }
 }

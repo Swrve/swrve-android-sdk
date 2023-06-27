@@ -802,7 +802,7 @@ public class SwrveUnitTest extends SwrveBaseTest {
         });
     }
 
-    @Ignore("SWRVE-27318 unstable test, so rewrite")
+    @Ignore("MOBILE-27318 unstable test, so rewrite")
     @Test
     public void testGetUserResourcesDiff() throws Exception {
 

@@ -55,7 +55,7 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
         SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message,  message.getFormats().get(0), personalization, 0);
         assertNotNull(view);
-        assertEquals(4, view.getChildCount());
+        assertEquals(5, view.getChildCount());
         assertEquals(2, getPersonalizedButtonCount(view)); // personalization gets counted as buttons
         assertEquals(1, getImageCount(view));
     }
