@@ -117,16 +117,16 @@ class InAppMessageHandler {
                 clipboardButtonClicked(button, resolvedAction, pageId, pageName, resolvedText);
                 break;
             case RequestCapabilty:
-                requestCapabilityButtonClicked(resolvedAction);
+                requestCapabilityButtonClicked(button, resolvedAction, pageId, pageName);
                 break;
             case PageLink:
                 sendNavigationEvent(pageId, pageName, Long.parseLong(button.getAction()), button.getButtonId(), button.getName());
                 break;
             case OpenNotificationSettings:
-                openNotificationSettingsButtonClicked();
+                openNotificationSettingsButtonClicked(button, pageId, pageName);
                 break;
             case OpenAppSettings:
-                openAppSettingsButtonClicked();
+                openAppSettingsButtonClicked(button, pageId, pageName);
                 break;
             case StartGeo:
                 startGeoButtonClicked();
@@ -241,7 +241,8 @@ class InAppMessageHandler {
         return messageDetails;
     }
 
-    private void requestCapabilityButtonClicked(String action) {
+    private void requestCapabilityButtonClicked(SwrveButton button, String action, long pageId, String pageName) {
+        sdk.queueMessageClickEvent(button, pageId, pageName);
         if (SwrveHelper.isNullOrEmpty(action)) {
             SwrveLogger.e("Swrve requestCapabilityButtonClicked but action is null.");
         } else {
@@ -249,7 +250,8 @@ class InAppMessageHandler {
         }
     }
 
-    private void openAppSettingsButtonClicked() {
+    private void openAppSettingsButtonClicked(SwrveButton button, long pageId, String pageName) {
+        sdk.queueMessageClickEvent(button, pageId, pageName);
         Intent intent = SwrveHelper.getAppSettingsIntent(context);
         context.startActivity(intent);
     }
@@ -268,7 +270,8 @@ class InAppMessageHandler {
         }
     }
 
-    private void openNotificationSettingsButtonClicked() {
+    private void openNotificationSettingsButtonClicked(SwrveButton button, long pageId, String pageName) {
+        sdk.queueMessageClickEvent(button, pageId, pageName);
         Intent intent = SwrveHelper.getNotificationPermissionSettingsIntent(context);
         context.startActivity(intent);
     }

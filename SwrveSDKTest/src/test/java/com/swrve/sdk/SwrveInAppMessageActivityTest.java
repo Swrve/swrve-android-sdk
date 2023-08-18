@@ -476,6 +476,68 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testIAMButtonClickEvents() throws Exception {
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_capabilities.json", "13c1f62022e248dac7c9a6fac01255140a8360a1");
+        List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
+        swrveSpy.showMessageCenterCampaign(campaigns.get(3), null);
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        SwrveMessageView view = getSwrveMessageView(activity);
+
+        // Press Request Permissions button
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.RequestCapabilty);
+        swrveButtonView.performClick();
+
+        Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
+        parameters.put("name", "Swrve.Messages.Message-4.click");
+        payload.put("name", "Button 2");
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
+        activityController.close();
+
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0), null);
+        activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        view = getSwrveMessageView(activity);
+
+        // Press Open App Settings button
+        swrveButtonView = findButton(view, SwrveActionType.OpenAppSettings);
+        swrveButtonView.performClick();
+
+        parameters.clear();
+        payload.clear();
+        parameters.put("name", "Swrve.Messages.Message-1.click");
+        payload.put("name", "Button 2");
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
+        activityController.close();
+
+        // Press Notification Settings button
+        swrveSpy.showMessageCenterCampaign(campaigns.get(2), null);
+        activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        view = getSwrveMessageView(activity);
+        swrveButtonView = findButton(view, SwrveActionType.OpenNotificationSettings);
+        swrveButtonView.performClick();
+
+        parameters.clear();
+        payload.clear();
+        parameters.put("name", "Swrve.Messages.Message-3.click");
+        payload.put("name", "Button 2");
+        payload.put("embedded", "false");
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
+        activityController.close();
+    }
+
+    @Test
     public void testMultiPageNoSwipe() throws Exception {
 
         initSDK();
