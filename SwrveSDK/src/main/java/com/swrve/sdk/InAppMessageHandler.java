@@ -178,16 +178,22 @@ class InAppMessageHandler {
             SwrveMessageDetails messageDetails = getMessageDetails(message, format);
             SwrveMessageButtonDetails selectedButton = new SwrveMessageButtonDetails(button.getName(), resolvedText, button.getActionType(), resolvedAction);
             sdk.getMessageListener().onAction(context.getApplicationContext(), Custom, messageDetails, selectedButton);
+            // if this listener is implemented we still want to process deeplinks internally. Customer can overide this by implementing the SwrveDeeplinkListener. Note: This is different behaviour to the deprecated getCustomButtonListener below.
+            processDeeplink(resolvedAction, button.getName());
         } else if (sdk.getCustomButtonListener() != null) {
             SwrveLogger.d("SwrveSDK: Passing to CustomButtonListener to open: %s", resolvedAction);
             sdk.getCustomButtonListener().onAction(resolvedAction, message.getName());
         } else {
-            Bundle bundle = new Bundle();
-            bundle.putString("buttonName", message.getName()); // TODO should we just add more meta data here?
-            SwrveIntentHelper.openDeepLink(context, resolvedAction, bundle);
+            processDeeplink(resolvedAction, button.getName());
         }
 
         qaUserCampaignButtonClicked(button.getAction(), button.getActionType(), button.getName());
+    }
+
+    private void processDeeplink(String resolvedAction, String buttonName) {
+        Bundle bundle = new Bundle();
+        bundle.putString("buttonName", buttonName);
+        SwrveIntentHelper.openDeepLink(context, resolvedAction, bundle);
     }
 
     private void clipboardButtonClicked(SwrveButton button, String resolvedAction, long pageId, String pageName, String resolvedText) {

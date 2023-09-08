@@ -22,13 +22,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Shadows.shadowOf;
 import static org.robolectric.annotation.GraphicsMode.Mode.NATIVE;
 
 import android.app.Activity;
@@ -88,8 +89,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.GraphicsMode;
+import org.robolectric.shadows.ShadowActivity;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -1148,6 +1151,57 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testMessageListenerWithDeeplinkListner() throws Exception {
+        final AtomicBoolean customCallback = new AtomicBoolean(false);
+        SwrveInAppMessageConfig inAppConfigBuilder = new SwrveInAppMessageConfig.Builder()
+                .personalizationProvider(eventPayload -> {
+                    HashMap<String, String> values = Maps.newHashMap();
+                    values.put("test_1", "test1 value");
+                    values.put("test_cp", "http://www.google.com");
+                    return values;
+                })
+                .messageListener((context, messageAction, messageDetails, selectedButton) -> {
+                    switch (messageAction) {
+                        case Impression:
+                            break;
+                        case Custom:
+                            customCallback.set(true);
+                            break;
+                        case Dismiss:
+                            break;
+                        case CopyToClipboard:
+                            break;
+                        default:
+                            break;
+                    }
+                })
+                .build();
+
+        config.setInAppMessageConfig(inAppConfigBuilder);
+        initSDK();
+        // setup mock for deeplink listener
+        SwrveDeeplinkListener deeplinkListenerMock = mock(SwrveDeeplinkListener.class);
+        doReturn(deeplinkListenerMock).when(swrveSpy).getSwrveDeeplinkListener();
+        SwrveCommon.setSwrveCommon(swrveSpy);
+
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
+        // Trigger IAM
+        swrveSpy.event("show.personalized");
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+
+        SwrveMessageView view = getSwrveMessageView(activity);
+
+        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Custom);
+        swrveButtonView.performClick();
+
+        verify(deeplinkListenerMock, Mockito.times(1)).handleDeeplink(any(Activity.class), eq("http://www.google.com"), any(Bundle.class) );
+
+        await().untilTrue(customCallback);
+    }
+
+    @Test
     public void testMessageListener() throws Exception {
         final AtomicBoolean impresisonCallback = new AtomicBoolean(false);
         final AtomicBoolean customCallback = new AtomicBoolean(false);
@@ -1158,7 +1212,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
                 .personalizationProvider(eventPayload -> {
                     HashMap<String, String> values = Maps.newHashMap();
                     values.put("test_1", "test1 value");
-                    values.put("test_cp", "12345678 value");
+                    values.put("test_cp", "http://www.google.com");
                     return values;
                 })
                 .messageListener((context, messageAction, messageDetails, selectedButton) -> {
@@ -1181,7 +1235,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
                             assertEquals(selectedButton.getButtonName(), "accept");
                             assertEquals(selectedButton.getButtonText(), null);
                             assertEquals(selectedButton.getActionType(), SwrveActionType.Custom);
-                            assertEquals(selectedButton.getActionString(), "12345678 value");
+                            assertEquals(selectedButton.getActionString(), "http://www.google.com");
                             assertEquals(messageDetails.getButtons().size(), 3);
                             customCallback.set(true);
                             break;
@@ -1252,6 +1306,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         SwrveButtonTextImageView swrveButtonView3 = findTextButton(view, SwrveActionType.CopyToClipboard);
         swrveButtonView3.performClick();
+
+        // verfiy deeplink was called internally
+        ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
+        Intent nextIntent = shadowMainActivity.peekNextStartedActivityForResult().intent;
+        assertEquals(nextIntent.getAction(), (Intent.ACTION_VIEW));
+        assertEquals(nextIntent.getData().toString(), ("http://www.google.com"));
 
         await().untilTrue(impresisonCallback);
         await().untilTrue(dismissCallback);
