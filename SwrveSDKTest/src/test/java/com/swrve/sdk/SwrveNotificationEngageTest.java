@@ -6,8 +6,8 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
@@ -146,10 +146,16 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         Mockito.verify(engageSpy).closeNotification(1);
     }
 
-    private Intent createPushEngagedIntent(Bundle eventPayload) {
+    private Intent createPushEngagedIntent(Bundle eventPayload, String trackingData, String platform) {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "4567");
+        if (SwrveHelper.isNotNullOrEmpty(trackingData)) {
+            extras.putString(SwrveNotificationConstants.TRACKING_DATA_KEY, trackingData);
+        }
+        if (SwrveHelper.isNotNullOrEmpty(platform)) {
+            extras.putString(SwrveNotificationConstants.PLATFORM_KEY, platform);
+        }
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH);
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
         intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
@@ -160,7 +166,27 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
     public void testEventPushEngaged() {
         Bundle eventPayload = new Bundle();
         eventPayload.putString("k1", "v1");
-        Intent intent = createPushEngagedIntent(eventPayload);
+        Intent intent = createPushEngagedIntent(eventPayload, null, null);
+
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
+        notificationEngage.processIntent(intent);
+
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(1)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
+        ArrayList engagementEvents = arrayListCaptor.getAllValues().get(0);
+        Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
+        SwrveNotificationTestUtils.assertEngagedEvent((String) engagementEvents.get(0), "Swrve.Messages.Push-4567.engaged", expectedPayload);
+    }
+
+    @Test
+    public void testEventPushEngagedWithTrackingData() {
+        Bundle eventPayload = new Bundle();
+        eventPayload.putString("k1", "v1");
+        eventPayload.putString("trackingData", "1234");
+        eventPayload.putString("platform", "android");
+        Intent intent = createPushEngagedIntent(eventPayload, "1234", "android");
 
         SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
         notificationEngage.processIntent(intent);
@@ -198,10 +224,16 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         SwrveTestUtils.assertGenericEvent((String)events.get(0), "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
     }
 
-    private Intent createPushButtonEngagedIntent(Bundle eventPayload) {
+    private Intent createPushButtonEngagedIntent(Bundle eventPayload, String trackingData, String platform) {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "4567");
+        if (SwrveHelper.isNotNullOrEmpty(trackingData)) {
+            extras.putString(SwrveNotificationConstants.TRACKING_DATA_KEY, trackingData);
+        }
+        if (SwrveHelper.isNotNullOrEmpty(platform)) {
+            extras.putString(SwrveNotificationConstants.PLATFORM_KEY, platform);
+        }
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
         intent.putExtra(SwrveNotificationConstants.CONTEXT_ID_KEY, "2");
         intent.putExtra(SwrveNotificationConstants.BUTTON_TEXT_KEY, "btn3");
@@ -215,7 +247,28 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
     public void testEventPushButtonEngaged() {
         Bundle eventPayload = new Bundle();
         eventPayload.putString("k1", "v1");
-        Intent intent = createPushButtonEngagedIntent(eventPayload);
+        Intent intent = createPushButtonEngagedIntent(eventPayload, null, null);
+
+        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
+        notificationEngage.processIntent(intent);
+
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> arrayListCaptor = ArgumentCaptor.forClass(ArrayList.class);
+        verify(swrveSpy, Mockito.atLeast(1)).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), arrayListCaptor.capture());
+
+        ArrayList events = (ArrayList) arrayListCaptor.getAllValues().get(0);
+        Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
+        SwrveNotificationTestUtils.assertEngagedEvent((String)events.get(0), "Swrve.Messages.Push-4567.engaged", expectedPayload);
+    }
+
+    @Test
+    public void testEventPushButtonEngagedWithTrackingData() {
+        Bundle eventPayload = new Bundle();
+        eventPayload.putString("k1", "v1");
+        eventPayload.putString("trackingData", "1234");
+        eventPayload.putString("platform", "android");
+        Intent intent = createPushButtonEngagedIntent(eventPayload, "1234", "android");
 
         SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
         notificationEngage.processIntent(intent);

@@ -6,8 +6,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -51,7 +51,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
@@ -867,6 +869,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // Send a valid Rich Payload
         Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.TRACKING_DATA_KEY, "5ea0fb1b8a24b8f9f76f675b7350200f314312fa");
+        bundle.putString(SwrveNotificationConstants.PLATFORM_KEY, "android");
         bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
         bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
         String json = "{\n" +
@@ -910,11 +914,22 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // Should send an engagement event
         ArrayList engagementEvents = (ArrayList) arrayListCaptor.getAllValues().get(0);
-        SwrveNotificationTestUtils.assertEngagedEvent((String) engagementEvents.get(0), "Swrve.Messages.Push-1.engaged", null);
+
+        Map<String, String> expectedEngagedPayload  = new HashMap<>();
+        expectedEngagedPayload.put("trackingData","5ea0fb1b8a24b8f9f76f675b7350200f314312fa");
+        expectedEngagedPayload.put("platform","android");
+
+        SwrveNotificationTestUtils.assertEngagedEvent((String) engagementEvents.get(0), "Swrve.Messages.Push-1.engaged", expectedEngagedPayload);
 
         // Should send a button click event
         ArrayList buttonClickEvents= (ArrayList) arrayListCaptor.getAllValues().get(1);
-        SwrveTestUtils.assertGenericEvent((String)buttonClickEvents.get(0), "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, null);
+
+        Map<String, String> expectedButtonPayload  = new HashMap<>();
+        expectedButtonPayload.put("buttonText","[button text 3]");
+        expectedButtonPayload.put("trackingData","5ea0fb1b8a24b8f9f76f675b7350200f314312fa");
+        expectedButtonPayload.put("platform","android");
+
+        SwrveTestUtils.assertGenericEvent((String)buttonClickEvents.get(0), "2", GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK, expectedButtonPayload);
 
         reset(swrveSpy); // reset so verify sendEventsInBackground is not called when resumed
 

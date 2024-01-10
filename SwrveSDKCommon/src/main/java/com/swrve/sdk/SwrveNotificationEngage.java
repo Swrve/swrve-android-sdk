@@ -1,6 +1,8 @@
 package com.swrve.sdk;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_TEXT;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
 
 import android.annotation.SuppressLint;
 import android.app.NotificationManager;
@@ -69,6 +71,12 @@ class SwrveNotificationEngage {
         String campaignType = extras.getString(SwrveNotificationConstants.CAMPAIGN_TYPE);
         Bundle eventPayload = extras.getBundle(SwrveNotificationConstants.EVENT_PAYLOAD);
         Map<String, String> eventPayloadMap = SwrveHelper.getBundleAsMap(eventPayload);
+        if (pushBundle.containsKey(SwrveNotificationConstants.TRACKING_DATA_KEY)) {
+            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, pushBundle.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
+        }
+        if (pushBundle.containsKey(SwrveNotificationConstants.PLATFORM_KEY)) {
+            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_PLATFORM, pushBundle.getString(SwrveNotificationConstants.PLATFORM_KEY));
+        }
 
         // send engaged event
         EventHelper.sendEngagedEvent(context, campaignType, id, eventPayloadMap);
@@ -102,6 +110,12 @@ class SwrveNotificationEngage {
         String campaignType = extras.getString(SwrveNotificationConstants.CAMPAIGN_TYPE);
         Bundle eventPayloadBundle = extras.getBundle(SwrveNotificationConstants.EVENT_PAYLOAD);
         Map<String, String> eventPayloadMap = SwrveHelper.getBundleAsMap(eventPayloadBundle);
+        if (pushBundle.containsKey(SwrveNotificationConstants.TRACKING_DATA_KEY)) {
+            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, pushBundle.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
+        }
+        if (pushBundle.containsKey(SwrveNotificationConstants.PLATFORM_KEY)) {
+            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_PLATFORM, pushBundle.getString(SwrveNotificationConstants.PLATFORM_KEY));
+        }
         EventHelper.sendEngagedEvent(context, campaignType, msgId, eventPayloadMap);
         if (pushBundle.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
             openDeeplink(pushBundle, pushBundle.getString(SwrveNotificationConstants.DEEPLINK_KEY));

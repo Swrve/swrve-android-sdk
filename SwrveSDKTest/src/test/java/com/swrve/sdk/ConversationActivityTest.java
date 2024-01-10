@@ -29,6 +29,7 @@ import org.robolectric.shadows.ShadowActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -256,6 +257,5 @@ public class ConversationActivityTest extends SwrveBaseTest {
         conversation.getPages().add(newPage);
         success = ConversationActivity.showConversation(mActivity, conversation, null);
         assertFalse("Conversation should not be shown with UNKNOWN atoms", success);
-
     }
 }

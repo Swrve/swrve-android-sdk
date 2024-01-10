@@ -795,19 +795,19 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveConversation conversation1 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
         assertNotNull(conversation1);
         assertEquals(103, conversation1.getId());
-        conversation1.getCampaign().messageWasShownToUser();
+        conversation1.getCampaign().messageWasHandledOrShownToUser();
 
         // Second highest conversation
         SwrveConversation conversation2 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
         assertNotNull(conversation2);
         assertEquals(104, conversation2.getId());
-        conversation2.getCampaign().messageWasShownToUser();
+        conversation2.getCampaign().messageWasHandledOrShownToUser();
 
         // Lowest conversation (out of 3)
         SwrveConversation conversation3 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
         assertNotNull(conversation3);
         assertEquals(102, conversation3.getId());
-        conversation3.getCampaign().messageWasShownToUser();
+        conversation3.getCampaign().messageWasHandledOrShownToUser();
 
         // Highest IAM
         SwrveMessage message1 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
@@ -824,19 +824,19 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveConversation conversation1 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
         assertNotNull(conversation1);
         assertEquals(103, conversation1.getId());
-        conversation1.getCampaign().messageWasShownToUser();
+        conversation1.getCampaign().messageWasHandledOrShownToUser();
 
         // Second highest conversation
         SwrveConversation conversation2 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
         assertNotNull(conversation2);
         assertEquals(102, conversation2.getId());
-        conversation2.getCampaign().messageWasShownToUser();
+        conversation2.getCampaign().messageWasHandledOrShownToUser();
 
         // Lowest conversation (out of 3)
         SwrveConversation conversation3 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
         assertNotNull(conversation3);
         assertEquals(104, conversation3.getId());
-        conversation3.getCampaign().messageWasShownToUser();
+        conversation3.getCampaign().messageWasHandledOrShownToUser();
 
         // Highest IAM
         SwrveMessage message1 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");

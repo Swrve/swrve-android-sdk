@@ -1,5 +1,17 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.SwrveGoogleUtil.CACHE_GOOGLE_ADVERTISING_ID;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+
 import android.app.Activity;
 import android.content.Context;
 
@@ -17,24 +29,10 @@ import org.hamcrest.CoreMatchers;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-
-import static com.swrve.sdk.SwrveGoogleUtil.CACHE_GOOGLE_ADVERTISING_ID;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 public class SwrveGoogleUtilTest extends SwrveBaseTest {
 
@@ -119,10 +117,11 @@ public class SwrveGoogleUtilTest extends SwrveBaseTest {
         deviceUpdate.put("existingkey", "existingvalue");
 
         googleUtil.appendDeviceUpdate(deviceUpdate);
-        assertTrue(deviceUpdate.length() == 3);
+        assertTrue(deviceUpdate.length() == 4);
         assertEquals("existingvalue", deviceUpdate.get("existingkey"));
         assertEquals("test1", deviceUpdate.get("swrve.GAID"));
         assertEquals("test2", deviceUpdate.get("swrve.gcm_token"));
+        assertEquals(1, deviceUpdate.get("swrve.play_services_available"));
     }
 
     private Task getDummyTask(String token) {

@@ -69,6 +69,29 @@ public class SwrveCampaignInfluenceTests extends SwrveBaseTest {
     }
 
     @Test
+    public void testSaveInfluencePushWithTrackingData() {
+
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "2");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "2");
+        bundle.putString(SwrveNotificationConstants.TRACKING_DATA_KEY, "sometrackingdata");
+        bundle.putString(SwrveNotificationConstants.PLATFORM_KEY, "android");
+
+        Context context = swrveSpy.getContext();
+        SwrveCampaignInfluence campaignInfluence = new SwrveCampaignInfluence();
+        campaignInfluence.saveInfluencedCampaign(swrveSpy.getContext(), "2", bundle, new Date());
+
+        SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
+        List<SwrveCampaignInfluence.InfluenceData> influencedData = campaignInfluence.getSavedInfluencedData(sharedPreferences);
+
+        assertNotNull(influencedData);
+        assertFalse(influencedData.get(0).silent);
+        assertEquals(influencedData.get(0).trackingId, "2");
+        assertEquals(influencedData.get(0).trackingData, "sometrackingdata");
+        assertEquals(influencedData.get(0).platform, "android");
+    }
+
+    @Test
     public void testSaveAndDeleteMultipleInfluences() {
 
         Bundle bundle = new Bundle();

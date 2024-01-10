@@ -197,6 +197,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
 
             campaignsAndResourcesAssetDownloadLimit = getAssetDownloadLimit(); // this needs to be before calling initCampaigns
+            identifyRefreshPeriod = getIdentifyPeriod();
             initCampaigns(userId); // Initialize campaigns from cache
 
             initABTestDetails(userId);
@@ -209,6 +210,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             startCampaignsAndResourcesTimer(true);
 
             checkNotificationPermissionChange();
+
+            reIdentifyUser();
 
             SwrveLogger.i("Init finished");
         } catch (Exception exp) {
@@ -603,6 +606,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 SwrveLogger.e("Exception occurred shutting down downloadAssetsExecutor", e);
             }
         }
+        if (identifyExecutor != null) {
+            try {
+                identifyExecutor.shutdown();
+                identifyExecutor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                SwrveLogger.e("Exception occurred shutting down identifyExecutor", e);
+            }
+        }
         unregisterActivityLifecycleCallbacks();
     }
 
@@ -868,6 +879,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         Integer assetDownloadLimit = responseJson.getInt("asset_download_limit");
                                         campaignsAndResourcesAssetDownloadLimit = assetDownloadLimit;
                                         settingsEditor.putInt(SDK_PREFS_KEY_ADL, campaignsAndResourcesAssetDownloadLimit);
+                                    }
+
+                                    if (responseJson.has("identify_refresh_period")) {
+                                        int identifyRefreshPeriodNew = responseJson.getInt("identify_refresh_period");
+                                        if (identifyRefreshPeriodNew != identifyRefreshPeriod) {
+                                            identifyRefreshPeriod = identifyRefreshPeriodNew;
+                                            settingsEditor.putInt(SDK_PREFS_KEY_ID_REFRESH_PERIOD, identifyRefreshPeriod);
+                                            reIdentifyUser();
+                                        }
                                     }
 
                                     if (responseJson.has("real_time_user_properties")) {
@@ -1185,7 +1205,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         SwrveMessage message = messageFormat.getMessage();
         SwrveInAppCampaign campaign = message.getCampaign();
         if (campaign != null) {
-            campaign.messageWasShownToUser();
+            campaign.messageWasHandledOrShownToUser();
         }
 
         queueMessageImpressionEvent(message.getId(), "false");
@@ -1230,7 +1250,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         SwrveEmbeddedCampaign campaign = message.getCampaign();
         if (campaign != null) {
-            campaign.messageWasShownToUser();
+            campaign.messageWasHandledOrShownToUser();
         }
 
         queueMessageImpressionEvent(message.getId(), "true");
@@ -2014,7 +2034,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveConversationCampaign conversationCampaign = (SwrveConversationCampaign) campaign;
             if (conversationCampaign != null && conversationCampaign.getConversation() != null) {
                 ConversationActivity.showConversation(getContext(), conversationCampaign.getConversation(), config.getOrientation());
-                conversationCampaign.messageWasShownToUser();
+                conversationCampaign.messageWasHandledOrShownToUser();
                 return true;
             } else {
                 SwrveLogger.e("No conversation campaign or conversation listener.");
@@ -2409,7 +2429,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _identify(final String externalUserId, final SwrveIdentityResponse identityResponse) {
+    private void _identify(final String externalUserId, final SwrveIdentityResponse identityResponse) {
+        _identify(externalUserId, identityResponse, true);
+    }
+
+    protected void _identify(final String externalUserId, final SwrveIdentityResponse identityResponse, boolean checkCache) {
         if (SwrveHelper.isNullOrEmpty(externalUserId)) {
             SwrveLogger.d("External user id cannot be null or empty");
             if (identityResponse != null) {
@@ -2418,23 +2442,30 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             return;
         }
 
-        // if identify is called from Application class, swrve may not be init'ed yet, we need to open db.
-        openLocalStorageConnection();
+        if (identifyExecutor.isShutdown()) {
+            SwrveLogger.i("Cannot identify while sdk is shutdown");
+        } else {
+            identifyExecutor.execute(SwrveRunnables.withoutExceptions(() -> {
 
-        // always flush events and pause event sending
-        if (isStarted()) {
-            sendQueuedEvents();
+                // if identify is called from Application class, swrve may not be init'ed yet, we need to open db.
+                openLocalStorageConnection();
+
+                // always flush events and pause event sending
+                if (isStarted()) {
+                    sendQueuedEvents();
+                }
+                pauseEventSending();
+
+                SwrveUser cachedSwrveUser = multiLayerLocalStorage.getUserByExternalUserId(externalUserId);
+
+                if (checkCache && identifyCachedUser(cachedSwrveUser, identityResponse)) {
+                    SwrveLogger.d("Identity API call skipped, user loaded from cache. Event sending reenabled");
+                    return;
+                }
+
+                identifyUnknownUser(externalUserId, identityResponse, cachedSwrveUser);
+            }));
         }
-        pauseEventSending();
-
-        SwrveUser cachedSwrveUser = multiLayerLocalStorage.getUserByExternalUserId(externalUserId);
-
-        if (identifyCachedUser(cachedSwrveUser, identityResponse)) {
-            SwrveLogger.d("Identity API call skipped, user loaded from cache. Event sending reenabled");
-            return;
-        }
-
-        identifyUnknownUser(externalUserId, identityResponse, cachedSwrveUser);
     }
 
     private boolean identifyCachedUser(SwrveUser cachedSwrveUser, SwrveIdentityResponse identityResponse) {
@@ -2449,6 +2480,58 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return isVerified;
     }
 
+    protected void reIdentifyUser() {
+
+        if (!shouldReIdentify()) {
+            return;
+        }
+
+        String externalUserId = getExternalUserId();
+        if (SwrveHelper.isNotNullOrEmpty(externalUserId)) {
+            SwrveIdentityResponse identityResponse = new SwrveIdentityResponse() {
+                @Override
+                public void onSuccess(String status, String swrveId) {
+                    SwrveLogger.i("Re-identify successful. Status:%s userId:%s", status, swrveId);
+                }
+
+                @Override
+                public void onError(int responseCode, String errorMessage) {
+                    SwrveLogger.e("Re-identify failed. ResponseCode:%s errorMessage:%s", responseCode, errorMessage);
+                }
+            };
+
+            _identify(externalUserId, identityResponse, false); // note checkCache is false will should force identify network call
+        }
+    }
+
+    protected boolean shouldReIdentify() {
+        boolean shouldReIdentify = false;
+        if (config.getInitMode() == SwrveInitMode.MANAGED || identifyRefreshPeriod == DEFAULT_IDENTIFY_REFRESH_PERIOD) {
+            return shouldReIdentify; // not applicable for managed mode or default period
+        }
+
+        String userId = profileManager.getUserId();
+        SwrveUser currentUser = multiLayerLocalStorage.getUserBySwrveUserId(userId);
+        if (currentUser == null || currentUser.getExternalUserId() == null || !currentUser.isVerified()) {
+            return shouldReIdentify; // not applicable for unverified users
+        }
+
+        Date identifyDate = getIdentifyDateForUser(userId);
+        if (identifyDate == null) {
+            SwrveLogger.i("Identify date does not exist. Will re-identify now.");
+            shouldReIdentify = true;
+        } else {
+            Date currentDate = getNow();
+            Date expirationDate = SwrveHelper.addTimeInterval(identifyDate, identifyRefreshPeriod, Calendar.DATE);
+            if (expirationDate.before(currentDate)) {
+                SwrveLogger.i("Identify date expired. Will re-identify now.");
+                shouldReIdentify = true;
+            }
+        }
+
+        return shouldReIdentify;
+    }
+
     private void identifyUnknownUser(final String externalUserId, final SwrveIdentityResponse identityResponse, SwrveUser cachedSwrveUser) {
 
         final String unidentifiedUserId = getUnidentifiedUserId(externalUserId, cachedSwrveUser);
@@ -2459,6 +2542,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 // Update User in DB
                 SwrveUser verifiedUser = new SwrveUser(swrveId, externalUserId, true);
                 multiLayerLocalStorage.saveUser(verifiedUser);
+
+                saveIdentifyDate(getNow(), swrveId);
 
                 if (!unidentifiedUserId.equalsIgnoreCase(swrveId)) {
                     identifiedOnAnotherDevice = true;
@@ -2565,6 +2650,30 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     private int getAssetDownloadLimit() {
         SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
         return settings.getInt(SDK_PREFS_KEY_ADL, DEFAULT_ASSET_DOWNLOAD_LIMIT);
+    }
+
+    protected int getIdentifyPeriod() {
+        SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
+        return settings.getInt(SDK_PREFS_KEY_ID_REFRESH_PERIOD, DEFAULT_IDENTIFY_REFRESH_PERIOD);
+    }
+
+    protected Date getIdentifyDateForUser(String userId) {
+        SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
+        String key = userId + CACHE_USER_IDENTIFY_DATE;
+        long timeInMilliSeconds = settings.getLong(key, 0L);
+        if (timeInMilliSeconds == 0) {
+            return null;
+        }
+        return new Date(timeInMilliSeconds);
+    }
+
+    protected void saveIdentifyDate(Date date, String userId) {
+        SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
+        SharedPreferences.Editor settingsEditor = settings.edit();
+        String key = userId + CACHE_USER_IDENTIFY_DATE;
+        long dateAsLong = date.getTime();
+        settingsEditor.putLong(key, dateAsLong);
+        settingsEditor.commit();
     }
 
     @Override

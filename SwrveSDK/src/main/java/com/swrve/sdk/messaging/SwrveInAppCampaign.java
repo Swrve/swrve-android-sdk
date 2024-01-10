@@ -235,8 +235,8 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
      * Notify that a message was shown to the user.
      */
     @Override
-    public void messageWasShownToUser() {
-        super.messageWasShownToUser();
+    public void messageWasHandledOrShownToUser() {
+        super.messageWasHandledOrShownToUser();
     }
 
     @Override

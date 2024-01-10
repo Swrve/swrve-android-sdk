@@ -131,6 +131,9 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
                 boolean deleteEvents = true;
                 if (SwrveHelper.userErrorResponseCode(response.responseCode)) {
                     logResponse(response, numOfEvents);
+                    if (SwrveHelper.userErrorRetryResponseCode(response.responseCode)) {
+                       deleteEvents = false;
+                    }
                     SwrveLogger.e("Error sending events to Swrve. responseCode: %s\tresponseBody:%s", response.responseCode, response.responseBody);
                 } else if (SwrveHelper.successResponseCode(response.responseCode)) {
                     sendResponseLogs(localStorage);

@@ -11,10 +11,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -675,6 +675,57 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         pushManagerSpy.sendPushDeliveredEvent(pushBundle, false, "some_reason");
 
         verify(campaignDeliveryManagerSpy, never()).sendCampaignDelivery(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void testSendPushDeliveryWithTrackingData() {
+        Bundle pushBundle = new Bundle();
+        pushBundle.putString(SwrveNotificationConstants.TRACKING_DATA_KEY, "5ea0fb1b8a24b8f9f76f675b7350200f314312fa");
+        pushBundle.putString(SwrveNotificationConstants.PLATFORM_KEY, "android");
+        pushBundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
+        pushBundle.putString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, "888");
+        pushBundle.putString(GENERIC_EVENT_PAYLOAD_MSG_ID, "777");
+        pushBundle.putString(GENERIC_EVENT_PAYLOAD_SENT_TIME, "999");
+        SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
+        doReturn(9876l).when(pushManagerSpy).getTime();
+        CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.mock(CampaignDeliveryManager.class);
+        doReturn(campaignDeliveryManagerSpy).when(pushManagerSpy).getCampaignDeliveryManager();
+
+        pushManagerSpy.sendPushDeliveredEvent(pushBundle, true, "");
+
+        // @formatter:off
+        String expectedJson = "{" +
+                    "\"user\":\"testUserId\"," +
+                    "\"session_token\":\"some_session_key\"," +
+                    "\"version\":\"3\"," +
+                    "\"app_version\":\"some_app_version\"," +
+                    "\"unique_device_id\":\"some_device_id\"," +
+                    "\"data\":[" +
+                        "{" +
+                            "\"type\":\"generic_campaign_event\"," +
+                            "\"time\":9876," +
+                            "\"seqnum\":1," +
+                            "\"actionType\":\"delivered\"," +
+                            "\"campaignType\":\"push\"," +
+                            "\"id\":\"123\"," +
+                            "\"payload\":{" +
+                                "\"displayed\":\"true\"," +
+                                "\"silent\":\"false\"," +
+                                "\"additional_info\":" +
+                                "{" +
+                                    "\"provider.message_id\":\"777\"," +
+                                    "\"provider.sent_time\":\"999\"," +
+                                    "\"_sid\":\"888\"" +
+                                "}," +
+                                "\"platform\":\"android\"," +
+                                "\"trackingData\":\"5ea0fb1b8a24b8f9f76f675b7350200f314312fa\"" +
+                            "}" +
+                        "}" +
+                    "]" +
+                "}";
+        // @formatter:on
+
+        verify(campaignDeliveryManagerSpy, atLeastOnce()).sendCampaignDelivery("CampaignDeliveryWork_888", "some_endpoint/1/batch", expectedJson);
     }
 
     @Test

@@ -1,5 +1,30 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.EVENT_FIRST_SESSION;
+import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
+import static com.swrve.sdk.SwrveTrackingState.STARTED;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.robolectric.Shadows.shadowOf;
+
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -23,36 +48,17 @@ import com.swrve.sdk.rest.RESTResponse;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.swrve.sdk.ISwrveCommon.EVENT_FIRST_SESSION;
-import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
-import static com.swrve.sdk.SwrveTrackingState.STARTED;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.robolectric.Shadows.shadowOf;
 
 public class SwrveIdentityTest extends SwrveBaseTest {
 
@@ -130,7 +136,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         final AtomicBoolean identityCallback = new AtomicBoolean(false);
         TestSwrveIdentityResponse testSwrveIdentityResponse = new TestSwrveIdentityResponse(identityCallback);
         TestSwrveIdentityResponse testSwrveIdentityResponseSpy = Mockito.spy(testSwrveIdentityResponse);
-        swrveSpy._identify("SomeExternalId", testSwrveIdentityResponseSpy);
+        swrveSpy.identify("SomeExternalId", testSwrveIdentityResponseSpy);
         await().untilTrue(identityCallback);
 
         Mockito.verify(testSwrveIdentityResponseSpy).onSuccess("some_server_response_status", currentSwrveUserId);
@@ -145,14 +151,15 @@ public class SwrveIdentityTest extends SwrveBaseTest {
             // test success case by creating success response's below
 
             swrveSpy.profileManager = new SwrveProfileManagerIdentifySuccess("user1", mActivity, 1, "apiKey", new SwrveConfig(), null);
-            swrveSpy._identify("", null); // test null identityResponse with blank externalUserId
+            swrveSpy.identify("", null); // test null identityResponse with blank externalUserId
             assertEquals(currentSwrveUserId, swrveSpy.getUserId());
 
             swrveSpy.profileManager = new SwrveProfileManagerIdentifySuccess("user2", mActivity, 1, "apiKey", new SwrveConfig(), null);
-            swrveSpy._identify("user2", null); // test null identityResponse with new externalUserId
+            swrveSpy.identify("user2", null); // test null identityResponse with new externalUserId
+            await().until(() -> swrveSpy.getUserId().equals("user2"));
             assertEquals("user2", swrveSpy.getUserId());
 
-            swrveSpy._identify("user2", null); // test null identityResponse with existing externalUserId
+            swrveSpy.identify("user2", null); // test null identityResponse with existing externalUserId
             assertEquals("user2", swrveSpy.getUserId());
 
             // test error case by creating error response's below
@@ -160,7 +167,8 @@ public class SwrveIdentityTest extends SwrveBaseTest {
             swrveSpy.profileManager = new SwrveProfileManagerIdentifyError(mActivity, 1, "apiKey", new SwrveConfig(), null);
             currentSwrveUserId = swrveSpy.getUserId();
 
-            swrveSpy._identify("DiffExternalId", null); // test null identityResponse and error response
+            swrveSpy.identify("DiffExternalId", null); // test null identityResponse and error response
+            await().until(() -> !(swrveSpy.getUserId().equals("user2"))); // wait until user is switched and is not user2
             assertNotEquals(currentSwrveUserId, swrveSpy.getUserId()); // new userid should be generated
 
         } catch (Exception ex) {
@@ -177,7 +185,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         final AtomicBoolean identityCallback = new AtomicBoolean(false);
         TestSwrveIdentityResponse testSwrveIdentityResponse = new TestSwrveIdentityResponse(identityCallback);
         TestSwrveIdentityResponse testSwrveIdentityResponseSpy = Mockito.spy(testSwrveIdentityResponse);
-        swrveSpy._identify("SomeExternalId", testSwrveIdentityResponseSpy);
+        swrveSpy.identify("SomeExternalId", testSwrveIdentityResponseSpy);
         await().untilTrue(identityCallback);
 
         Mockito.verify(testSwrveIdentityResponseSpy, never()).onSuccess(anyString(), anyString());
@@ -192,7 +200,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         final AtomicBoolean identityCallback = new AtomicBoolean(false);
         TestSwrveIdentityResponse testSwrveIdentityResponse = new TestSwrveIdentityResponse(identityCallback);
         TestSwrveIdentityResponse testSwrveIdentityResponseSpy = Mockito.spy(testSwrveIdentityResponse);
-        swrveSpy._identify(null, testSwrveIdentityResponseSpy);
+        swrveSpy.identify(null, testSwrveIdentityResponseSpy);
         await().untilTrue(identityCallback);
 
         Mockito.verify(testSwrveIdentityResponseSpy, never()).onSuccess(anyString(), anyString());
@@ -207,7 +215,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         final AtomicBoolean identityCallback = new AtomicBoolean(false);
         TestSwrveIdentityResponse testSwrveIdentityResponse = new TestSwrveIdentityResponse(identityCallback);
         TestSwrveIdentityResponse testSwrveIdentityResponseSpy = Mockito.spy(testSwrveIdentityResponse);
-        swrveSpy._identify("", testSwrveIdentityResponseSpy);
+        swrveSpy.identify("", testSwrveIdentityResponseSpy);
         await().untilTrue(identityCallback);
 
         Mockito.verify(testSwrveIdentityResponseSpy, never()).onSuccess(anyString(), anyString());
@@ -496,8 +504,96 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         Mockito.verify(swrveSpy, times(1)).queuePausedEvents();
     }
 
-    // Helper methods below
+    @Test
+    public void testShouldReIdentify() {
 
+        SwrveUser cachedUser = new SwrveUser(swrveSpy.getUserId(), testExternalId, true);
+        swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveUser(cachedUser);
+        swrveSpy.config.setInitMode(SwrveInitMode.AUTO);
+        swrveSpy.identifyRefreshPeriod = 2;
+
+        Date identifyDate = swrveSpy.getIdentifyDateForUser(swrveSpy.getUserId());
+        assertNull(identifyDate);
+        assertTrue(swrveSpy.shouldReIdentify());
+
+        Date dateNow = new Date();
+        swrveSpy.saveIdentifyDate(dateNow, cachedUser.getSwrveUserId());
+        assertFalse(swrveSpy.shouldReIdentify());
+
+        Date date2DaysInPast = SwrveHelper.addTimeInterval(dateNow, -2, Calendar.DATE);
+        swrveSpy.saveIdentifyDate(date2DaysInPast, cachedUser.getSwrveUserId());
+        assertTrue(swrveSpy.shouldReIdentify());
+
+        // change initmode to managed and assert false, change back to auto and assert true
+        swrveSpy.config.setInitMode(SwrveInitMode.MANAGED);
+        assertFalse(swrveSpy.shouldReIdentify());
+        swrveSpy.config.setInitMode(SwrveInitMode.AUTO);
+        assertTrue(swrveSpy.shouldReIdentify());
+
+        // change identifyRefreshPeriod to -1 and assert false, change back to 2 and assert true
+        swrveSpy.identifyRefreshPeriod = -1;
+        assertFalse(swrveSpy.shouldReIdentify());
+        swrveSpy.identifyRefreshPeriod = 2;
+        assertTrue(swrveSpy.shouldReIdentify());
+
+        // change verified user to false and assert false, change back and assert true
+        cachedUser.setVerified(false);
+        swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveUser(cachedUser);
+        assertFalse(swrveSpy.shouldReIdentify());
+        cachedUser.setVerified(true);
+        swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveUser(cachedUser);
+        assertTrue(swrveSpy.shouldReIdentify());
+
+        // add identify date as now and assert false, add date 1 day ago and assert false, add date 2 day ago and assert true
+        swrveSpy.saveIdentifyDate(dateNow, cachedUser.getSwrveUserId());
+        assertFalse(swrveSpy.shouldReIdentify());
+        swrveSpy.saveIdentifyDate(SwrveHelper.addTimeInterval(dateNow, -1, Calendar.DATE), cachedUser.getSwrveUserId());
+        assertFalse(swrveSpy.shouldReIdentify());
+        swrveSpy.saveIdentifyDate(SwrveHelper.addTimeInterval(dateNow, -2, Calendar.DATE), cachedUser.getSwrveUserId());
+        assertTrue(swrveSpy.shouldReIdentify());
+    }
+
+    @Test
+    public void testIdentifyDateSaved() {
+
+        final String currentSwrveUserId = swrveSpy.getUserId();
+        assertNull(swrveSpy.getIdentifyDateForUser(currentSwrveUserId));
+
+        int responseCode = 200;
+        String response = "{\"swrve_id\" : " + currentSwrveUserId + ", \"status\" : \"some_server_response_status\"}";
+        mockRestResponse(responseCode, response);
+
+        final AtomicBoolean identityCallback = new AtomicBoolean(false);
+        TestSwrveIdentityResponse testSwrveIdentityResponse = new TestSwrveIdentityResponse(identityCallback);
+        TestSwrveIdentityResponse testSwrveIdentityResponseSpy = Mockito.spy(testSwrveIdentityResponse);
+        swrveSpy.identify("SomeExternalId", testSwrveIdentityResponseSpy);
+        await().untilTrue(identityCallback);
+
+        assertNotNull(swrveSpy.getIdentifyDateForUser(currentSwrveUserId));
+    }
+
+    @Test
+    public void testReIdentify() {
+
+        SwrveUser cachedUser = new SwrveUser(swrveSpy.getUserId(), testExternalId, true);
+        swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveUser(cachedUser);
+
+        doReturn(true).when(swrveSpy).shouldReIdentify();
+
+        verify(swrveSpy, never())._identify(anyString(), any(SwrveIdentityResponse.class), anyBoolean());
+        swrveSpy.reIdentifyUser();
+
+        ArgumentCaptor<String> externalUserIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<SwrveIdentityResponse> identityResponseCaptor = ArgumentCaptor.forClass(SwrveIdentityResponse.class);
+        ArgumentCaptor<Boolean> checkCacheCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(swrveSpy, times(1))._identify(externalUserIdCaptor.capture(), identityResponseCaptor.capture(), checkCacheCaptor.capture());
+
+        assertEquals("ExternalUserId", externalUserIdCaptor.getValue());
+        assertNotNull(identityResponseCaptor.getValue());
+        assertFalse(checkCacheCaptor.getValue().booleanValue());
+    }
+
+    // Helper methods below
     private void assertNumberOfNotification(int numberOfNotifications) {
         NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
@@ -558,7 +654,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
     private void identifyAndWait(String externalUserId) {
         final AtomicBoolean identityCallback = new AtomicBoolean(false);
-        swrveSpy._identify(externalUserId, new SwrveIdentityResponse() {
+        swrveSpy.identify(externalUserId, new SwrveIdentityResponse() {
             @Override
             public void onSuccess(String status, String swrveId) {
                 identityCallback.set(true);

@@ -82,6 +82,10 @@ public final class SwrveHelper {
         return (val == null || val.length() == 0);
     }
 
+    public static boolean isInvalidAPIKey(String val) {
+        return val.toLowerCase(Locale.ENGLISH).startsWith("secret-");
+    }
+
     public static boolean isNotNullOrEmpty(String val) {
         return !isNullOrEmpty(val);
     }
@@ -225,6 +229,10 @@ public final class SwrveHelper {
 
     public static boolean userErrorResponseCode(int responseCode) {
         return (responseCode >= 400 && responseCode < 500);
+    }
+
+    public static boolean userErrorRetryResponseCode(int responseCode) {
+        return responseCode == 429;
     }
 
     public static boolean successResponseCode(int responseCode) {

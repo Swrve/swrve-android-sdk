@@ -90,7 +90,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.11.2";
+    protected static String version = "10.12.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
     protected static final int IN_APP_CAMPAIGN_VERSION = 13;
@@ -111,6 +111,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected static int DEFAULT_MIN_DELAY = 55;
     private static int ASSET_LOGS_ROW_LIMIT = 1000;
     protected static int DEFAULT_ASSET_DOWNLOAD_LIMIT = 150;
+    protected static int DEFAULT_IDENTIFY_REFRESH_PERIOD = -1;
+
     protected WeakReference<Application> application;
     protected WeakReference<Context> context;
     protected WeakReference<Activity> activityContext;
@@ -134,6 +136,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected ExecutorService storageExecutor;
     protected ExecutorService restClientExecutor;
     protected ExecutorService downloadAssetsExecutor;
+    protected ExecutorService identifyExecutor;
     protected ScheduledThreadPoolExecutor campaignsAndResourcesExecutor;
     protected SwrveResourceManager resourceManager;
     protected List<SwrveBaseCampaign> campaigns;
@@ -146,6 +149,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected Integer campaignsAndResourcesFlushFrequency;
     protected Integer campaignsAndResourcesFlushRefreshDelay;
     protected Integer campaignsAndResourcesAssetDownloadLimit = -1;
+    protected Integer identifyRefreshPeriod = -1;
     protected String campaignsAndResourcesLastETag;
     protected Date campaignsAndResourcesLastRefreshed;
     protected boolean campaignsAndResourcesInitialized = false;
@@ -193,6 +197,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         this.restClientExecutor = Executors.newSingleThreadExecutor();
         this.lifecycleExecutor = Executors.newSingleThreadExecutor();
         this.downloadAssetsExecutor = Executors.newSingleThreadExecutor();
+        this.identifyExecutor = Executors.newSingleThreadExecutor();
 
         initProfileManager(applicationContext);
         initAppVersion(applicationContext, config);
@@ -655,7 +660,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     if (message instanceof SwrveMessage) {
                         if (message.isControl()) {
                             SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
-                            // skip setting campaign state, these campaigns should never been shown to user.
+                            // these campaigns should never been shown to user but mark as handled
+                            message.getCampaign().messageWasHandledOrShownToUser();
                             // we send an impression event for backend reporting.
                             swrve.queueMessageImpressionEvent(message.getId(), "false");
                         } else {
@@ -749,7 +755,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, new HashMap<String, String>());
                 if (conversation != null) {
                     ConversationActivity.showConversation(getContext(), conversation, config.getOrientation());
-                    conversation.getCampaign().messageWasShownToUser();
+                    conversation.getCampaign().messageWasHandledOrShownToUser();
                     autoShowMessagesEnabled = false;
                     QaUser.campaignTriggeredMessageNoDisplay(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, null);
                 }

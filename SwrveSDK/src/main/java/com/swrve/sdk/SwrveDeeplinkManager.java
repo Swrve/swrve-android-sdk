@@ -295,7 +295,7 @@ class SwrveDeeplinkManager {
             if (campaign instanceof SwrveConversationCampaign) {
                 SwrveConversation conversation = ((SwrveConversationCampaign) campaign).getConversation();
                 ConversationActivity.showConversation(context, conversation, config.getOrientation());
-                conversation.getCampaign().messageWasShownToUser();
+                conversation.getCampaign().messageWasHandledOrShownToUser();
             } else if (campaign instanceof SwrveInAppCampaign) {
                 SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessage();
 

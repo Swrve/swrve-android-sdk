@@ -46,10 +46,9 @@ public class SwrveHmsMessageService extends HmsMessageService {
                 if (!SwrveHelper.isSwrvePush(extras)) {
                     SwrveLogger.i("SwrveHmsMessageService: Received Push: but not processing as it doesn't contain: %s or %s", SwrveNotificationConstants.SWRVE_TRACKING_KEY, SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
                     return;
-                } else if (SwrvePushSidDeDuper.isDupe(this, remoteMessage.getDataOfMap())) {
-                    SwrveLogger.i("SwrveHmsMessageService Received Push: but not processing as _sid has been processed before.");
-                    return;
                 }
+                // HmsMessageService is a Service that runs on the main thread. Network i/o is prohibited on this thread so use a worker thread (SwrvePushServiceDefault) to continue.
+                // The SwrvePushServiceDefault has de-duping logic so we can just call handle and don't need to worry about de-duping here.
 
                 handle(extras);
             }
@@ -59,7 +58,6 @@ public class SwrveHmsMessageService extends HmsMessageService {
     }
 
     protected void handle(Bundle extras) {
-        // HmsMessageService is a Service that runs on the main thread. Network i/o is prohibited on this thread so use a worker thread to continue
         SwrvePushServiceDefault.handle(this, extras);
     }
 }

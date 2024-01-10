@@ -1070,7 +1070,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     @Test
     public void testDismissButtonListenerBackButton() throws Exception {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName, campaignName) -> {
-            if (buttonName == null) {
+            if (buttonName == "os_back_button") {
                 testDismissButtonBackButton = true;
             }
             testDismissCampaignName = campaignName;
@@ -1108,8 +1108,9 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         event = new JSONObject((String) events.get(0));
         assertEquals(EVENT_TYPE_GENERIC_CAMPAIGN, event.get("type"));
         assertEquals("165", event.get("id"));
-        assertFalse(event.has("payload")); // for older campaigns there are no pages. back button has no name
-        SwrveTestUtils.assertGenericEvent(event.toString(), "0", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_DISMISS, null);
+        Map<String, String> expectedPayloadNav = new HashMap<>();
+        expectedPayloadNav.put("buttonName", "os_back_button");
+        SwrveTestUtils.assertGenericEvent(event.toString(), "0", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_DISMISS, expectedPayloadNav);
     }
 
     @Test

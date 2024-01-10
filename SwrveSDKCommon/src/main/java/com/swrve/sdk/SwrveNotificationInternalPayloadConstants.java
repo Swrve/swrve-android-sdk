@@ -5,6 +5,8 @@ import java.util.List;
 
 // Internal keys present in the Bundle root level
 public class SwrveNotificationInternalPayloadConstants {
+    public static final String TRACKING_DATA_KEY = "_td";
+    public static final String PLATFORM_KEY = "_smp";
     public static final String SWRVE_TRACKING_KEY = "_p";
     public static final String SWRVE_INFLUENCED_WINDOW_MINS_KEY = "_siw";
     public static final String SWRVE_AUTH_USER_KEY = "_aui";
@@ -22,7 +24,7 @@ public class SwrveNotificationInternalPayloadConstants {
             SWRVE_TRACKING_KEY, SWRVE_INFLUENCED_WINDOW_MINS_KEY,
             SWRVE_AUTH_USER_KEY, TEXT_KEY, DEEPLINK_KEY, SWRVE_NESTED_JSON_PAYLOAD_KEY,
             TIMESTAMP_KEY, PUSH_ID_CACHE_SIZE_KEY, SWRVE_PAYLOAD_KEY, SOUND_KEY,
-            SWRVE_UNIQUE_MESSAGE_ID_KEY, SWRVE_UNIQUE_MESSAGE_ID_MAX_CACHE_KEY
+            SWRVE_UNIQUE_MESSAGE_ID_KEY, SWRVE_UNIQUE_MESSAGE_ID_MAX_CACHE_KEY, TRACKING_DATA_KEY, PLATFORM_KEY
     );
 }
 

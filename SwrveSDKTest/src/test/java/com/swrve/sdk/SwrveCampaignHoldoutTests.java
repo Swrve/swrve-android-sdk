@@ -20,6 +20,7 @@ import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
+import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 
@@ -49,6 +50,7 @@ public class SwrveCampaignHoldoutTests extends SwrveBaseTest {
     private void initSDK() throws Exception {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
         swrveSpy = Mockito.spy(swrveReal);
+
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
@@ -78,7 +80,15 @@ public class SwrveCampaignHoldoutTests extends SwrveBaseTest {
     public void testEmbeddedMessageHoldoutNoCallback() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_holdouts.json");
+
+        Map campaignsStateList = swrveSpy.campaignsState;
+        SwrveCampaignState campaignState = (SwrveCampaignState) campaignsStateList.get(165); // 165 is id for embedded campaign in above json file
+        assertEquals(campaignState.toJSON().get("status"), SwrveCampaignState.Status.Unseen.toString() );
         swrveSpy.event("trigger_embedded");
+        assertEquals(campaignState.toJSON().get("status"), SwrveCampaignState.Status.Seen.toString() );
+
+        // control campaign must triggers saveCampaignsState method
+        verify(swrveSpy, Mockito.atLeastOnce()).saveCampaignsState(anyString());
         verify(swrveSpy, Mockito.atLeastOnce()).queueMessageImpressionEvent(20, "true");
     }
 
@@ -86,7 +96,16 @@ public class SwrveCampaignHoldoutTests extends SwrveBaseTest {
     public void testIAMMessageHoldout() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_holdouts.json");
+
+        Map campaignsStateList = swrveSpy.campaignsState;
+        SwrveCampaignState campaignState = (SwrveCampaignState) campaignsStateList.get(21); // 21 is id for embedded campaign in above json file
+        assertEquals(campaignState.toJSON().get("status"), SwrveCampaignState.Status.Unseen.toString() );
         swrveSpy.event("trigger_iam");
+        assertEquals(campaignState.toJSON().get("status"), SwrveCampaignState.Status.Seen.toString() );
+
+        // control campaign must triggers saveCampaignsState method
+        verify(swrveSpy, Mockito.atLeastOnce()).saveCampaignsState(anyString());
+
         verify(swrveSpy, Mockito.atLeastOnce()).queueMessageImpressionEvent(165, "false");
         verify(swrveSpy, Mockito.never()).displaySwrveMessage(any(SwrveMessage.class), anyMap());
     }

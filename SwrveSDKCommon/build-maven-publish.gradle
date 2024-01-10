@@ -3,7 +3,7 @@ apply plugin: 'signing'
 
 task androidCommonJavadoc(type: Javadoc, dependsOn: "assembleRelease") {
     description "Generates Javadoc for release."
-    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    ext.androidJar = "${android.sdkDirectory}/platforms/android-${android.compileSdk}/android.jar"
     classpath += files(ext.androidJar)
     failOnError true
     include 'com/swrve/**'

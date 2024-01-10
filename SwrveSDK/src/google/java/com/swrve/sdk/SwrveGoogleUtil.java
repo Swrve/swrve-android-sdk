@@ -2,6 +2,8 @@ package com.swrve.sdk;
 
 import android.content.Context;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
@@ -20,6 +22,8 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
 
     protected static final String SWRVE_FIREBASE_TOKEN = "swrve.gcm_token";
     protected static final String SWRVE_GOOGLE_ADVERTISING_ID = "swrve.GAID";
+    protected static final String SWRVE_GOOGLE_PLAY_SERVICES_AVAILABLE = "swrve.play_services_available";
+
     protected static final String CACHE_GOOGLE_ADVERTISING_ID = "GoogleAdvertisingId";
     protected static final String CACHE_REGISTRATION_ID = "RegistrationId";
 
@@ -28,6 +32,16 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
     protected String registrationId;
     protected String advertisingId;
     protected boolean logAdvertisingId;
+
+    static int getGooglePlayServicesAvailable(Context context) {
+        int googlePlayServicesAvailable = -1000;
+        try {
+            googlePlayServicesAvailable = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK getGooglePlayServicesAvailable exception.", e);
+        }
+        return googlePlayServicesAvailable;
+    }
 
     public SwrveGoogleUtil(Context context, SwrveTrackingState trackingState) {
         this.context = context;
@@ -127,6 +141,10 @@ class SwrveGoogleUtil implements SwrvePlatformUtil {
         }
         if (!SwrveHelper.isNullOrEmpty(advertisingId)) {
             deviceUpdate.put(SWRVE_GOOGLE_ADVERTISING_ID, advertisingId);
+        }
+        int googlePlayServicesAvailable = getGooglePlayServicesAvailable(context);
+        if (!(googlePlayServicesAvailable == ConnectionResult.SUCCESS)) {
+            deviceUpdate.put(SWRVE_GOOGLE_PLAY_SERVICES_AVAILABLE, googlePlayServicesAvailable); // only send if its not success
         }
     }
 

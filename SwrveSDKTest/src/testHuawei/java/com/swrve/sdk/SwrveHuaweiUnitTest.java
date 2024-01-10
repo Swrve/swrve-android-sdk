@@ -1,31 +1,5 @@
 package com.swrve.sdk;
 
-import android.content.Context;
-
-import androidx.test.core.app.ApplicationProvider;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.huawei.agconnect.config.AGConnectServicesConfig;
-import com.huawei.hms.aaid.HmsInstanceId;
-import com.huawei.hms.common.ApiException;
-import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.shadows.gms.common.ShadowGoogleApiAvailability;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.swrve.sdk.ISwrveCommon.CACHE_DEVICE_PROP_KEY;
 import static com.swrve.sdk.SwrveHuaweiUtil.HMS_CACHE_REGISTRATION_ID;
 import static org.junit.Assert.assertEquals;
@@ -36,18 +10,36 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.robolectric.shadows.gms.Shadows.shadowOf;
+
+import android.content.Context;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.huawei.hms.aaid.HmsInstanceId;
+import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+import org.robolectric.shadows.gms.common.ShadowGoogleApiAvailability;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SwrveHuaweiUnitTest extends SwrveBaseTest {
 
@@ -170,9 +162,10 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
         assertEquals("false", jsonObject.get("user_initiated"));
         assertTrue(jsonObject.has("attributes"));
         JSONObject attributes = (JSONObject) jsonObject.get("attributes");
-        assertTrue(attributes.length() == 2);
+        assertTrue(attributes.length() == 3);
         assertEquals("reg2", attributes.get("swrve.gcm_token"));
         assertEquals("testadvertisingId", attributes.get("swrve.GAID"));
+        assertEquals(1, attributes.get("swrve.play_services_available"));
     }
 
     @Test
@@ -250,9 +243,10 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
         googleUtilSpy.registrationId = "testreg";
 
         swrveSpy.extraDeviceInfo(deviceUpdate);
-        assertTrue(deviceUpdate.length() == 2);
+        assertTrue(deviceUpdate.length() == 3);
         assertEquals("existingvalue", deviceUpdate.get("existingkey"));
         assertEquals("testreg", deviceUpdate.get("swrve.gcm_token"));
+        assertEquals(1, deviceUpdate.get("swrve.play_services_available"));
     }
 
     @Test
@@ -276,7 +270,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testInitAppId() throws ApiException {
+    public void testInitAppId() {
         // Call executors right away to remove threading problems in test
         Mockito.doAnswer((Answer<Void>) invocation -> {
             if (invocation.getArguments().length > 0) {
@@ -316,7 +310,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testRegisterInBackground() throws ApiException {
+    public void testRegisterInBackground() {
         SwrveHuaweiUtil huaweiUtilSpy = spy(new SwrveHuaweiUtil(ApplicationProvider.getApplicationContext(), SwrveTrackingState.UNKNOWN));
         swrveSpy.platformUtil = huaweiUtilSpy;
         doReturn(mock(HmsInstanceId.class)).when(huaweiUtilSpy).getHMSInstance();

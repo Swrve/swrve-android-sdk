@@ -1,5 +1,16 @@
 package com.swrve.sdk;
 
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.content.SharedPreferences;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -14,17 +25,6 @@ import org.mockito.stubbing.Answer;
 import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
 
@@ -41,6 +41,13 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.disableAssetsManager(swrveSpy);
         SwrveTestUtils.disableRestClientExecutor(swrveSpy);
+    }
+
+    @Before
+    public void tearDown() throws Exception {
+        super.tearDown();
+        // change default back -1 because one of the tests changes it. Important this is done to avoid affecting other tests because it is a static variable
+        SwrveImp.DEFAULT_IDENTIFY_REFRESH_PERIOD = -1;
     }
 
     @Test
@@ -227,6 +234,31 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
 
         verify(swrveSpy, times(0)).invokeResourceListener();
     }
+
+    @Test
+    public void testSameIdentifyRefreshPeriod() {
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        SwrveImp.DEFAULT_IDENTIFY_REFRESH_PERIOD = 21; // change default to 21
+        assertEquals(21, swrveSpy.getIdentifyPeriod());
+        String campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "campaign_with_identify_refresh_period.json");
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.init(mActivity);
+        assertEquals(21, swrveSpy.getIdentifyPeriod());
+        verify(swrveSpy, times(1)).reIdentifyUser(); // reIdentifyUser should be called once
+    }
+
+    @Test
+    public void testNewIdentifyRefreshPeriodTriggersReIdentifyUser() {
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        assertEquals(-1, swrveSpy.getIdentifyPeriod());
+        String campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "campaign_with_identify_refresh_period.json");
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.init(mActivity);
+        assertEquals(21, swrveSpy.getIdentifyPeriod()); // verify new value is saved to storage
+        verify(swrveSpy, times(2)).reIdentifyUser(); // reIdentifyUser should be called twice
+    }
+
+    // Private helper methods
 
     private void mockAndCountCallsToCheckForCampaignAndResourcesUpdates() {
         doAnswer((Answer<Void>) invocation -> {

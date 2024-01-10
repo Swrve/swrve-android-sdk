@@ -124,7 +124,7 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
         events.add("{\"event2\": \"429\"}");
         events.add("{\"event3\": \"429\"}");
         storeAndSendEvents(429, events);
-        assertEquals(1, secondaryStorage.getFirstNEvents(10, userId).size()); // one existing event in the queue, 3 dropped due to 429 response code
+        assertEquals(4, secondaryStorage.getFirstNEvents(10, userId).size()); // four existing events in the queue, including 3 retained for retry due to 429 response code
 
         String headers = "{null=[HTTP/1.1 429], X-Android-Selected-Protocol=[http/1.1], Connection=[Close], X-Android-Response-Source=[NETWORK], X-Android-Sent-Millis=[1565687743648], X-Android-Received-Millis=[1565687743788], Content-Type=[text/plain]}";
         assertResponseLog(429, 3, 1, "429", headers);
@@ -135,7 +135,7 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
         events.add("{\"event4\": \"413\"}");
         events.add("{\"event5\": \"413\"}");
         storeAndSendEvents(413, events);
-        assertEquals(1, secondaryStorage.getFirstNEvents(10, userId).size()); // one existing event in the queue, 2 dropped due to 413 response code
+        assertEquals(4, secondaryStorage.getFirstNEvents(10, userId).size()); // four existing events in the queue, 2 dropped due to 413 response code
 
         headers = "{null=[HTTP/1.1 413], X-Android-Selected-Protocol=[http/1.1], Connection=[Close], X-Android-Response-Source=[NETWORK], X-Android-Sent-Millis=[1565687743648], X-Android-Received-Millis=[1565687743788], Content-Type=[text/plain]}";
         assertResponseLog(413, 2, 1, "413", headers);
@@ -146,7 +146,7 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
         events.add("{\"event6\": \"429\"}");
         events.add("{\"event7\": \"429\"}");
         storeAndSendEvents(429, events);
-        assertEquals(1, secondaryStorage.getFirstNEvents(10, userId).size()); // one existing event in the queue, 2 dropped due to 429 response code
+        assertEquals(6, secondaryStorage.getFirstNEvents(10, userId).size()); // four existing events in the queue, 2 additional due to 429 response code
 
         headers = "{null=[HTTP/1.1 429], X-Android-Selected-Protocol=[http/1.1], Connection=[Close], X-Android-Response-Source=[NETWORK], X-Android-Sent-Millis=[1565687743648], X-Android-Received-Millis=[1565687743788], Content-Type=[text/plain]}";
         assertResponseLog(429, 5, 2, "429", headers);
@@ -156,7 +156,7 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
         events.clear();
         events.add("{\"event8\": \"301\"}");
         storeAndSendEvents(301, events);
-        assertEquals(1, secondaryStorage.getFirstNEvents(10, userId).size()); // one existing event in the queue, 1 dropped due to 301 response code
+        assertEquals(6, secondaryStorage.getFirstNEvents(10, userId).size()); // six existing events in the queue, 1 dropped due to 301 response code
 
         headers = "{null=[HTTP/1.1 301], X-Android-Selected-Protocol=[http/1.1], Connection=[Close], X-Android-Response-Source=[NETWORK], X-Android-Sent-Millis=[1565687743648], X-Android-Received-Millis=[1565687743788], Content-Type=[text/plain]}";
         assertResponseLog(301, 1, 1, "301", headers);
@@ -166,7 +166,7 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
         events.clear();
         events.add("{\"event9\": \"100\"}");
         storeAndSendEvents(100, events);
-        assertEquals(1, secondaryStorage.getFirstNEvents(10, userId).size()); // one existing event in the queue, 1 dropped due to 100 response code
+        assertEquals(6, secondaryStorage.getFirstNEvents(10, userId).size()); // six existing events in the queue, 1 dropped due to 100 response code
 
         headers = "{null=[HTTP/1.1 100], X-Android-Selected-Protocol=[http/1.1], Connection=[Close], X-Android-Response-Source=[NETWORK], X-Android-Sent-Millis=[1565687743648], X-Android-Received-Millis=[1565687743788], Content-Type=[text/plain]}";
         assertResponseLog(100, 1, 1, "100", headers);

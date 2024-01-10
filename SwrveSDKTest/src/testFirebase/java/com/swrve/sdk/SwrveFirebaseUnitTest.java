@@ -1,24 +1,5 @@
 package com.swrve.sdk;
 
-import android.content.Context;
-
-import androidx.test.core.app.ApplicationProvider;
-
-import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-import org.robolectric.RobolectricTestRunner;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +11,23 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+
+import android.content.Context;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SwrveFirebaseUnitTest extends SwrveBaseTest {
 
@@ -88,8 +86,9 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
         assertEquals("false", jsonObject.get("user_initiated"));
         assertTrue(jsonObject.has("attributes"));
         JSONObject attributes = (JSONObject) jsonObject.get("attributes");
-        assertTrue(attributes.length() == 2);
+        assertTrue(attributes.length() == 3);
         assertEquals("reg2", attributes.get("swrve.gcm_token"));
         assertEquals("testadvertisingId", attributes.get("swrve.GAID"));
+        assertEquals(1, attributes.get("swrve.play_services_available"));
     }
 }

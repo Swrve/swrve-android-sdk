@@ -46,7 +46,7 @@ class SwrveEventListener implements ISwrveEventListener {
         SwrveConversation conversation = sdk.getConversationForEvent(eventName, payload);
         if (conversation != null) {
             ConversationActivity.showConversation(sdk.getContext(), conversation, sdk.config.getOrientation());
-            conversation.getCampaign().messageWasShownToUser();
+            conversation.getCampaign().messageWasHandledOrShownToUser();
             QaUser.campaignTriggeredMessageNoDisplay(eventName, payload);
             return;
         }
@@ -60,7 +60,8 @@ class SwrveEventListener implements ISwrveEventListener {
             sdk.lastEventPayloadUsed = payload; // Save the last used payload for personalization
             if (message instanceof SwrveMessage) {
                 if (message.isControl()) {
-                    // skip setting campaign state, these campaigns should never been shown to user.
+                    // campaigns should never been shown to user but mark campaign is sown
+                    message.getCampaign().messageWasHandledOrShownToUser();
                     // we send an impression event for backend reporting.
                     sdk.queueMessageImpressionEvent(message.getId(), "false");
                 } else {
@@ -72,6 +73,9 @@ class SwrveEventListener implements ISwrveEventListener {
                     embeddedListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties, message.isControl());
                 } else {
                     if (message.isControl()) {
+                        // campaigns should never been shown to user but mark campaign is sown
+                        message.getCampaign().messageWasHandledOrShownToUser();
+                        // we send an impression event for backend reporting.
                         sdk.queueMessageImpressionEvent(message.getId(), "true");
                     } else {
                         if (embeddedMessageListener != null) {

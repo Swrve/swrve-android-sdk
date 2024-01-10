@@ -2,8 +2,8 @@ package com.swrve.sdk.localstorage;
 
 import com.swrve.sdk.SwrveUser;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -28,7 +28,6 @@ public interface LocalStorage {
     void deleteUser(String swrveUserId);
     SwrveUser getUserByExternalUserId(String externalUserId);
     SwrveUser getUserBySwrveUserId(String swrveUserId);
-
     void truncateNotificationsAuthenticated(int rows);
     void saveNotificationAuthenticated(int notificationId, long time);
     List<Integer> getNotificationsAuthenticated();

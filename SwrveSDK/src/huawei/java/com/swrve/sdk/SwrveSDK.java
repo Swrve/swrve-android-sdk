@@ -35,6 +35,8 @@ public class SwrveSDK extends SwrveSDKBase {
             SwrveHelper.logAndThrowException("Application is null");
         } else if (SwrveHelper.isNullOrEmpty(apiKey)) {
             SwrveHelper.logAndThrowException("Api key not specified");
+        } else if (SwrveHelper.isInvalidAPIKey(apiKey)) {
+            SwrveHelper.logAndThrowException("Api key should not start with secret-");
         }
 
         if (!SwrveHelper.sdkAvailable(config.getModelBlackList())) {

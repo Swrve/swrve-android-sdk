@@ -1,5 +1,30 @@
 package com.swrve.sdk.localstorage;
 
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_DOWNLOAD_COUNT;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATEGORY;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVENT;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_JSON;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_TABLE_NAME;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.SWRVE_DB_VERSION;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_EXTERNAL_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_SWRVE_USER_ID;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_VERFIED;
+import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_TABLE_NAME;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -19,31 +44,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_DOWNLOAD_COUNT;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_LAST_DOWNLOAD_TIME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_CATEGORY;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_RAW_DATA;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_COLUMN_USER_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.CACHE_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVENT;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_JSON;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.SWRVE_DB_VERSION;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_EXTERNAL_USER_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_SWRVE_USER_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_COLUMN_VERFIED;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.USER_TABLE_NAME;
 
 /**
  * Used internally to provide a persistent storage of data on the device.

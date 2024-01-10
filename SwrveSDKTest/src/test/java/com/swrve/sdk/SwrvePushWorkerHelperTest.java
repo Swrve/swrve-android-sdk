@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 
@@ -36,6 +36,19 @@ public class SwrvePushWorkerHelperTest extends SwrveBaseTest {
         assertEquals(2, data.size());
         assertEquals("123", data.getString(SwrveNotificationConstants.SWRVE_TRACKING_KEY));
         assertEquals("456", data.getString("some_key"));
+    }
+
+    @Test
+    public void testHandleDuplicateSwrvePush() {
+        Map<String, String> mapData = new HashMap<>();
+        mapData.put(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
+        mapData.put(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, "456");
+        mapData.put("some_key", "456");
+        SwrvePushWorkerHelper helperSpy = spy(new SwrvePushWorkerHelper(ApplicationProvider.getApplicationContext(), SwrvePushManagerWorker.class, mapData));
+        doNothing().when(helperSpy).enqueueUniqueWorkRequest(any(Context.class), anyString(), any(OneTimeWorkRequest.class));
+
+        assertTrue(helperSpy.handle());
+        assertFalse(helperSpy.handle());
     }
 
     @Test

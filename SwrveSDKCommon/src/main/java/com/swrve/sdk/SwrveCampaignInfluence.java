@@ -21,6 +21,8 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
 import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY;
 import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY;
 
@@ -67,8 +69,17 @@ public class SwrveCampaignInfluence {
         // Check if is a silent Push
         boolean silentPush = (msg.containsKey(SWRVE_SILENT_TRACKING_KEY));
 
+        String trackingData = "";
+        if (SwrveHelper.isNotNullOrEmpty(msg.getString(SwrveNotificationConstants.TRACKING_DATA_KEY))){
+            trackingData = msg.getString(SwrveNotificationConstants.TRACKING_DATA_KEY);
+        }
+        String platform = "";
+        if (SwrveHelper.isNotNullOrEmpty(msg.getString(SwrveNotificationConstants.PLATFORM_KEY))){
+            platform = msg.getString(SwrveNotificationConstants.PLATFORM_KEY);
+        }
+
         // Add the new push influenced data to the list
-        InfluenceData newInfluenceData = new InfluenceData(trackingId, influencedDate.getTime(), silentPush);
+        InfluenceData newInfluenceData = new InfluenceData(trackingId, influencedDate.getTime(), silentPush, platform, trackingData);
         SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
         List<InfluenceData> influencedData = getSavedInfluencedData(sharedPreferences);
         influencedData.add(newInfluenceData);
@@ -107,6 +118,13 @@ public class SwrveCampaignInfluence {
                         payload.put("delta", String.valueOf(deltaMillis / (1000 * 60)));
                         payload.put("silent", String.valueOf(influenceData.silent));
 
+                        //add tracking data
+                        if (SwrveHelper.isNotNullOrEmpty(influenceData.platform)){
+                            payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, influenceData.platform);
+                        }
+                        if (SwrveHelper.isNotNullOrEmpty(influenceData.trackingData)){
+                            payload.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, influenceData.trackingData);
+                        }
                         String eventAsJSON = EventHelper.eventAsJSON(EVENT_TYPE_GENERIC_CAMPAIGN, parameters, payload, swrveCommon.getNextSequenceNumber(), System.currentTimeMillis());
                         influencedEvents.add(eventAsJSON);
                     }
@@ -128,6 +146,8 @@ public class SwrveCampaignInfluence {
     }
 
     public class InfluenceData {
+        String platform;
+        String trackingData;
         String trackingId;
         long maxInfluencedMillis;
         boolean silent;
@@ -135,6 +155,8 @@ public class SwrveCampaignInfluence {
         public InfluenceData(String influenceCachedJson) {
             try {
                 JSONObject jsonInfluenceObj = new JSONObject(influenceCachedJson);
+                this.platform = jsonInfluenceObj.getString("platform");
+                this.trackingData = jsonInfluenceObj.getString("trackingData");
                 this.trackingId = jsonInfluenceObj.getString("trackingId");
                 this.maxInfluencedMillis = jsonInfluenceObj.getLong("maxInfluencedMillis");
                 this.silent = jsonInfluenceObj.getBoolean("silent");
@@ -143,7 +165,9 @@ public class SwrveCampaignInfluence {
             }
         }
 
-        public InfluenceData(String trackingId, long maxInfluenceMillis, boolean silent) {
+        public InfluenceData(String trackingId, long maxInfluenceMillis, boolean silent, String platform, String trackingData) {
+            this.platform = platform;
+            this.trackingData = trackingData;
             this.trackingId = trackingId;
             this.maxInfluencedMillis = maxInfluenceMillis;
             this.silent = silent;
@@ -156,6 +180,8 @@ public class SwrveCampaignInfluence {
         public JSONObject toJson() {
             try {
                 JSONObject result = new JSONObject();
+                result.put("platform", platform);
+                result.put("trackingData", trackingData);
                 result.put("trackingId", trackingId);
                 result.put("maxInfluencedMillis", maxInfluencedMillis);
                 result.put("silent", silent);

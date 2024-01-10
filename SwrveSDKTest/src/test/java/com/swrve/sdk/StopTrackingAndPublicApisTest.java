@@ -164,7 +164,7 @@ public class StopTrackingAndPublicApisTest extends SwrveBaseTest {
         SwrveConfigBase config = SwrveSDK.getConfig();
         assertNotNull(config);
 
-        doNothing().when(swrveSpy)._identify(anyString(), any(SwrveIdentityResponse.class));
+        doNothing().when(swrveSpy).identify(anyString(), any(SwrveIdentityResponse.class));
         SwrveSDK.identify("", new SwrveIdentityResponse() {
             @Override
             public void onSuccess(String status, String swrveId) {
@@ -173,7 +173,7 @@ public class StopTrackingAndPublicApisTest extends SwrveBaseTest {
             public void onError(int responseCode, String errorMessage) {
             }
         });
-        verify(swrveSpy, times(1))._identify(anyString(), any(SwrveIdentityResponse.class)); // note this api is allowed.
+        verify(swrveSpy, times(1)).identify(anyString(), any(SwrveIdentityResponse.class)); // note this api is allowed.
 
         // change initmode to MANAGED and stop it again
         Mockito.reset(swrveSpy);

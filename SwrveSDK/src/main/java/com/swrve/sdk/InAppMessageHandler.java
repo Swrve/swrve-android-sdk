@@ -51,6 +51,7 @@ class InAppMessageHandler {
     private static final String SAVE_INSTANCE_STATE_CURRENT_PAGE_ID = "CURRENT_PAGE_ID";
     private static final String SAVE_INSTANCE_STATE_SENT_NAVIGATION_EVENTS = "SENT_NAVIGATION_EVENTS";
     private static final String SAVE_INSTANCE_STATE_SENT_PAGEVIEW_EVENTS = "SENT_PAGEVIEW_EVENTS";
+    private static final String BACK_BUTTON_NAME = "os_back_button";
 
     private final SwrveBase sdk;
     private final Context context;
@@ -294,8 +295,8 @@ class InAppMessageHandler {
     }
 
     private void dismissButtonClicked(SwrveButton button, long pageId, String pageName, String resolvedText) {
-        //button can be null if IAM is dismissed via OS see: backButtonClicked
-        String buttonName = (button != null) ? button.getName() : null;
+        // button can be null if IAM is dismissed via OS see: backButtonClicked
+        String buttonName = (button != null) ? button.getName() : BACK_BUTTON_NAME;
         String action = (button != null) ? button.getAction() : "";
         long buttonId = (button != null) ? button.getButtonId() : 0;
 

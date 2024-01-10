@@ -216,7 +216,7 @@ public abstract class SwrveBaseCampaign {
     /**
      * Used by sublcasses to inform that the campaign was displayed.
      */
-    public void messageWasShownToUser() {
+    public void messageWasHandledOrShownToUser() {
         setStatus(SwrveCampaignState.Status.Seen);
         incrementImpressions();
         setMessageMinDelayThrottle();

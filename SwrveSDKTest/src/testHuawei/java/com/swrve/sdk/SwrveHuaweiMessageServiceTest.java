@@ -63,12 +63,6 @@ public class SwrveHuaweiMessageServiceTest extends SwrveBaseTest {
         assertEquals("2", actualBundle.getString("_p"));
         assertEquals("123", actualBundle.getString("provider.message_id"));
         assertEquals("0", actualBundle.getString("provider.sent_time"));
-
-        // use same bundle as last with the same sid
-        serviceSpy.onMessageReceived(pushBundleWithSid.build());
-        bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
-        verify(serviceSpy, atLeastOnce()).handle(bundleCaptor.capture());
-        assertEquals(2, bundleCaptor.getAllValues().size()); // the size stays at 2 meaning the duplicate was caught
     }
 
     @Test

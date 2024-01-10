@@ -7,11 +7,14 @@ import com.swrve.sdk.SwrveUser;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.swrve.sdk.localstorage.LocalStorage.SIGNATURE_SUFFIX;
+
+import android.database.SQLException;
 
 /**
  * Used internally to provide a multi-layer primary and secondary LocalStorage

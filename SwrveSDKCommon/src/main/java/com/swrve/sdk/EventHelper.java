@@ -26,6 +26,8 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_REASON;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SILENT;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
 import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY;
 
 import android.content.Context;
@@ -237,6 +239,12 @@ final class EventHelper {
         payload.put(GENERIC_EVENT_PAYLOAD_DISPLAYED, String.valueOf(displayed));
         if (SwrveHelper.isNotNullOrEmpty(reason)) {
             payload.put(GENERIC_EVENT_PAYLOAD_REASON, reason);
+        }
+        if (extras.containsKey(SwrveNotificationConstants.TRACKING_DATA_KEY)) {
+            payload.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, extras.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
+        }
+        if (extras.containsKey(SwrveNotificationConstants.PLATFORM_KEY)) {
+            payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, extras.getString(SwrveNotificationConstants.PLATFORM_KEY));
         }
 
         JSONObject additionalInfo = new JSONObject();

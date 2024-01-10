@@ -21,6 +21,8 @@ interface ISwrveCommon {
     String SDK_PREFS_KEY_ADL            = "swrve_cr_asset_download_limit";
     String SDK_PREFS_REFERRER_ID        = "swrve.referrer_id";
 
+    String SDK_PREFS_KEY_ID_REFRESH_PERIOD = "swrve_identity_refresh_period";
+
     // cache constants
     String CACHE_DEVICE_ID = "device_id";
     String CACHE_CAMPAIGNS = "CMCC2";
@@ -30,6 +32,9 @@ interface ISwrveCommon {
     String CACHE_AD_CAMPAIGNS_DEBUG = "AdCampaign";
     String CACHE_NOTIFICATION_CAMPAIGNS_DEBUG = "NotificationCampaign";
     String CACHE_USER_JOINED_TIME = "SwrveSDK.userJoinedTime";
+
+    String CACHE_USER_IDENTIFY_DATE = "_identify_date";
+
     String CACHE_CAMPAIGNS_STATE = "SwrveCampaignSettings";
     String CACHE_SEQNUM = "seqnum";
     String CACHE_QA = "swrve.q1";
@@ -123,6 +128,8 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_TO                 = "to";
     String GENERIC_EVENT_PAYLOAD_BUTTON_ID          = "buttonId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_NAME        = "buttonName";
+    String GENERIC_EVENT_PAYLOAD_TRACKING_DATA      = "trackingData";
+    String GENERIC_EVENT_PAYLOAD_PLATFORM           = "platform";
     String EVENT_FIRST_SESSION                      = "Swrve.first_session";
     String EVENT_NOTIFICATION_CHANGE_GRANTED        = "Swrve.permission.android.notification.granted";
     String EVENT_NOTIFICATION_CHANGE_DENIED         = "Swrve.permission.android.notification.denied";

@@ -18,7 +18,7 @@ import static com.swrve.sdk.SwrveBackgroundEventSender.DATA_KEY_EVENTS;
 import static com.swrve.sdk.SwrveBackgroundEventSender.DATA_KEY_USER_ID;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
