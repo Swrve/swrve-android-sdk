@@ -92,7 +92,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
     }
 
     private boolean verifySha1() {
-        if (SwrveCommon.getInstance() == null || SwrveCommon.getInstance().getAppId() != ASSET_DOWNLOAD_LIMITS_APP_ID) {
+        if (SwrveCommon.getInstance() == null) {
             return true;
         } else {
             String testSha1 = SwrveHelper.sha1(SHA1_TEST_STRING.getBytes(StandardCharsets.UTF_8));
@@ -236,7 +236,7 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
 
     private String getAdditionalParams(SwrveAssetsQueueItem assetItem) {
         String additionalParams = null;
-        if (SwrveCommon.getInstance() == null || SwrveCommon.getInstance().getAppId() != ASSET_DOWNLOAD_LIMITS_APP_ID) {
+        if (SwrveCommon.getInstance() == null) {
             return additionalParams;
         }
 

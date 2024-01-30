@@ -3,10 +3,15 @@ package com.swrve.sdk;
 import static com.swrve.sdk.messaging.SwrveActionType.PageLink;
 
 import android.content.pm.ActivityInfo;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -15,10 +20,14 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveInAppMessageFragment;
+import com.swrve.sdk.messaging.SwrveInAppStoryButton;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessagePage;
 import com.swrve.sdk.messaging.SwrveOrientation;
+import com.swrve.sdk.messaging.SwrveInAppStoryView;
+import com.swrve.sdk.messaging.SwrveStoryDismissButton;
+import com.swrve.sdk.messaging.SwrveStorySettings;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -35,6 +44,9 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
     protected ScreenSlidePagerAdapter adapter;
     protected boolean isSwipeable;
     protected long currentPageIdNonSwipe;
+    private SwrveInAppStoryView storyView;
+    private SwrveInAppStoryView.SwrveInAppStorySegmentListener storyViewListener;
+    protected GestureDetector storyGestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +115,8 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
                 }
             }
         }
+
+        addStoryView();
 
         if (isSwipeable) {
             View singlePageFragment = findViewById(R.id.swrve_iam_frag_container);
@@ -182,6 +196,22 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (storyView != null) {
+            storyView.pauseAnimation();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (storyView != null) {
+            storyView.resumeAnimation();
+        }
+    }
+
     private void showPage(long pageId) {
         if (isSwipeable) {
             int index = adapter.trunk.indexOf(pageId);
@@ -193,8 +223,14 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
             }
         } else {
             SwrveInAppMessageFragment fragment = SwrveInAppMessageFragment.newInstance(pageId);
+            if (storyGestureDetector != null) {
+                fragment.addGestureDetection(storyGestureDetector);
+            }
             getSupportFragmentManager().beginTransaction().replace(R.id.swrve_iam_frag_container, fragment).commit();
             currentPageIdNonSwipe = pageId;
+            if (storyView != null) {
+                storyView.startSegmentAtIndex(getSwrveMessageFormat().getIndexForPageId(currentPageIdNonSwipe));
+            }
         }
     }
 
@@ -228,6 +264,92 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         return inAppMessageHandler.inAppPersonalization;
     }
 
+    private void addStoryView() {
+        SwrveStorySettings storySettings = getSwrveMessageFormat().getStorySettings();
+        if (storySettings == null) {
+            return;
+        }
+
+        SwrveInAppStoryView.SwrveInAppStorySegmentListener segmentListener = getInAppStorySegmentListener();
+        FrameLayout pagedMessageContainer = findViewById(R.id.swrve_iam_pager_container);
+
+        storyView = new SwrveInAppStoryView(this, segmentListener, storySettings,
+                inAppMessageHandler.format.getPages().size(), inAppMessageHandler.format.getPageDurations());
+
+        pagedMessageContainer.addView(storyView);
+
+        if (storySettings.isGesturesEnabled()) {
+            InAppStoryGestureListener storyTapListener = new InAppStoryGestureListener(pagedMessageContainer);
+            storyGestureDetector = new GestureDetector(this, storyTapListener);
+
+            storyView.addOnLayoutChangeListener((view, left, top, right, bottom,
+                                                 oldLeft, oldTop, oldRight, oldBottom) ->
+                    storyTapListener.setTapAreaWidth((right - left) / 2));
+        }
+
+        if (storySettings.getDismissButton() != null) {
+            Point dismissMargins = new Point(storySettings.getRightPadding(),
+                    storySettings.getTopPadding() + storySettings.getBarHeight() + storySettings.getDismissButton().getMarginTop());
+
+            SwrveInAppStoryButton dismissButton = new SwrveInAppStoryButton(this,
+                    storySettings.getDismissButton(), dismissMargins,
+                    sdk.getConfig().getInAppMessageConfig().getStoryDismissButton(),
+                    sdk.getConfig().getInAppMessageConfig().getMessageFocusListener());
+
+            pagedMessageContainer.addView(dismissButton);
+
+            dismissButton.setOnClickListener((View view) -> {
+                dismissStory();
+            });
+        }
+    }
+
+    private void dismissStory() {
+        SwrveStoryDismissButton button = getSwrveMessageFormat().getStorySettings().getDismissButton();
+        inAppMessageHandler.dismissMessage(currentPageIdNonSwipe, button.getButtonId(), button.getName());
+        storyView.close();
+        finish();
+    }
+
+    private SwrveInAppStoryView.SwrveInAppStorySegmentListener getInAppStorySegmentListener() {
+        if (storyViewListener == null) {
+            storyViewListener = new SwrveInAppStoryView.SwrveInAppStorySegmentListener() {
+                @Override
+                public void segmentFinished(int segmentIndex) {
+                    runOnUiThread(() -> {
+                        //Auto-progression uses order of pages as they are in the data array
+                        handleStorySegmentChange(segmentIndex + 1);
+                    });
+                }
+            };
+        }
+        return storyViewListener;
+    }
+
+    private void handleStorySegmentChange(int newSegmentIndex) {
+        long nextPageId = getSwrveMessageFormat().getPageIdAtIndex(newSegmentIndex);
+        if (nextPageId == 0) {
+            handleLastPageProgression(getSwrveMessageFormat().getStorySettings());
+        } else {
+            showPage(nextPageId);
+        }
+    }
+
+    private void handleLastPageProgression(SwrveStorySettings storySettings) {
+        if (storySettings.getLastPageProgression() == SwrveStorySettings.LastPageProgression.DISMISS) {
+            SwrveLogger.d("Last page progression is dismiss, so dismissing");
+            inAppMessageHandler.dismissMessage(currentPageIdNonSwipe,
+                    storySettings.getLastPageDismissId(),
+                    storySettings.getLastPageDismissName());
+            finish();
+        } else if (storySettings.getLastPageProgression() == SwrveStorySettings.LastPageProgression.LOOP) {
+            SwrveLogger.d("Last page progression is loop, so restarting the story");
+            showPage(getSwrveMessageFormat().getFirstPageId());
+        } else if (storySettings.getLastPageProgression() == SwrveStorySettings.LastPageProgression.STOP) {
+            SwrveLogger.d("Last page progression is stop, so remain on last page");
+        }
+    }
+
     class ScreenSlidePagerAdapter extends FragmentStateAdapter {
 
         public final LinkedList<Long> trunk;
@@ -246,6 +368,38 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         @Override
         public int getItemCount() {
             return trunk.size();
+        }
+    }
+
+    private class InAppStoryGestureListener extends GestureDetector.SimpleOnGestureListener {
+        private int tapAreaWidth;
+        private View view;
+
+        public InAppStoryGestureListener(View view) {
+            this.view = view;
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
+            if (storyViewListener != null) {
+                if (e.getX() > (view.getWidth() - tapAreaWidth)) {
+                    if (storyView.getCurrentIndex() < storyView.getNumberOfSegments() - 1) {
+                        SwrveInAppMessageActivity.this.handleStorySegmentChange(storyView.getCurrentIndex() + 1);
+                    }
+                    return true;
+                } else if (e.getX() < tapAreaWidth) {
+                    if (storyView.getCurrentIndex() > 0) {
+                        SwrveInAppMessageActivity.this.handleStorySegmentChange(storyView.getCurrentIndex() - 1);
+                    }
+                    return true;
+                }
+            }
+
+            return super.onSingleTapConfirmed(e);
+        }
+
+        public void setTapAreaWidth(int width) {
+            tapAreaWidth = width;
         }
     }
 }

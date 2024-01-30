@@ -181,7 +181,6 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveConfig config = new SwrveConfig();
         config.setAutoDownloadCampaignsAndResources(true);
         swrveSpy = SwrveTestUtils.createSpyInstance(config);
-        swrveSpy.appId = SwrveAssetsManager.ASSET_DOWNLOAD_LIMITS_APP_ID;
 
         final AtomicBoolean callbackBool = new AtomicBoolean(false);
         SwrveAssetsManager assetsManager = new SwrveAssetsManager() {
@@ -930,15 +929,16 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     private void dismissInAppMessage(SwrveInAppMessageActivity activity) {
         ViewGroup parentView = activity.findViewById(android.R.id.content);
         LinearLayout linearLayout = (LinearLayout)parentView.getChildAt(0);
+        FrameLayout swrveLayout = (FrameLayout)linearLayout.getChildAt(0);
         FrameLayout frameLayout;
         if (activity.isSwipeable) {
-            assertEquals(View.GONE, linearLayout.getChildAt(1).getVisibility()); // index 1 is the second child which should be gone.
-            ViewPager2 viewPager2 = (ViewPager2) linearLayout.getChildAt(0);
+            assertEquals(View.GONE, swrveLayout.getChildAt(1).getVisibility()); // index 1 is the second child which should be gone.
+            ViewPager2 viewPager2 = (ViewPager2) swrveLayout.getChildAt(0);
             RecyclerView recyclerView = (RecyclerView) viewPager2.getChildAt(0);
             frameLayout = (FrameLayout) recyclerView.getChildAt(0);
         } else {
-            assertEquals(View.GONE, linearLayout.getChildAt(0).getVisibility());
-            frameLayout = (FrameLayout) linearLayout.getChildAt(1); // index 1 because its the second child. Viewpager is first, but gone.
+            assertEquals(View.GONE, swrveLayout.getChildAt(0).getVisibility());
+            frameLayout = (FrameLayout) swrveLayout.getChildAt(1); // index 1 because its the second child. Viewpager is first, but gone.
         }
         SwrveMessageView view = (SwrveMessageView) frameLayout.getChildAt(0);
         // Press install button

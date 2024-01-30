@@ -1,6 +1,7 @@
 package com.swrve.sdk.messaging;
 
 import android.os.Bundle;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,8 @@ public class SwrveInAppMessageFragment extends Fragment {
     private static final String PAGE_ID = "PAGE_ID";
 
     private long pageId;
+
+    private GestureDetector gestureDetector;
 
     public static SwrveInAppMessageFragment newInstance(long pageId) {
         Bundle args = new Bundle();
@@ -39,7 +42,7 @@ public class SwrveInAppMessageFragment extends Fragment {
             Map<String, String> inAppPersonalization = inAppMessageActivity.getInAppPersonalization();
             pageId = getArguments().getLong(PAGE_ID);
 
-            rootView = new SwrveMessageView(getContext(), config, message, format, inAppPersonalization, pageId);
+            rootView = new SwrveMessageView(getContext(), config, message, format, inAppPersonalization, pageId, gestureDetector);
         } catch (SwrveMessageViewBuildException e) {
             SwrveLogger.e("Error in SwrveInAppMessageFragment while creating the SwrveMessageView", e);
         }
@@ -50,5 +53,9 @@ public class SwrveInAppMessageFragment extends Fragment {
     public void onResume() {
         super.onResume();
         ((SwrveInAppMessageActivity) getActivity()).sendPageViewEvent(pageId);
+    }
+
+    public void addGestureDetection(GestureDetector gestureDetector) {
+        this.gestureDetector = gestureDetector;
     }
 }

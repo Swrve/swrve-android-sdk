@@ -9,7 +9,6 @@ import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
 import static com.swrve.sdk.ISwrveCommon.EVENT_ASSET_DOWNLOAD_LIMIT_EXCEEDED;
 import static com.swrve.sdk.ISwrveCommon.SWRVE_ASSET_SHA1_CHECK;
-import static com.swrve.sdk.SwrveAssetsManager.ASSET_DOWNLOAD_LIMITS_APP_ID;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static com.swrve.sdk.SwrveTrackingState.STOPPED;
@@ -90,10 +89,10 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.12.0";
+    protected static String version = "10.13.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
-    protected static final int IN_APP_CAMPAIGN_VERSION = 13;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 14;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -492,10 +491,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     protected void filterExcessiveAssetDownloads(Set<SwrveAssetsQueueItem> assetsQueue) {
-        if (appId != ASSET_DOWNLOAD_LIMITS_APP_ID) {
-            return;
-        }
-
         SwrveLogger.v("SwrveSDK checking for excessive asset downloads. QueueSize:%s", assetsQueue.size());
         Iterator<SwrveAssetsQueueItem> itDownloadQueue = assetsQueue.iterator();
         boolean anyAssetFiltered = false;

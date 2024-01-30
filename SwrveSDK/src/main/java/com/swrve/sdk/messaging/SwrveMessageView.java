@@ -5,6 +5,7 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -23,6 +24,7 @@ import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +45,14 @@ public class SwrveMessageView extends RelativeLayout {
     private Map<String, String> inAppPersonalization;
     private List<String> loadErrorReasons = new ArrayList<>();
 
+    private WeakReference<GestureDetector> gestureDetector;
+
     public SwrveMessageView(Context context, SwrveConfigBase config, SwrveMessage message, SwrveMessageFormat format, Map<String, String> inAppPersonalization, long pageId)
+            throws SwrveMessageViewBuildException {
+        this(context, config, message, format, inAppPersonalization, pageId, null);
+    }
+
+    public SwrveMessageView(Context context, SwrveConfigBase config, SwrveMessage message, SwrveMessageFormat format, Map<String, String> inAppPersonalization, long pageId, GestureDetector gestureDetector)
             throws SwrveMessageViewBuildException {
         super(context);
         this.message = message;
@@ -54,6 +63,9 @@ public class SwrveMessageView extends RelativeLayout {
             return;
         }
         this.page = format.getPages().get(pageId);
+        if(gestureDetector != null) {
+            this.gestureDetector = new WeakReference<>(gestureDetector);
+        }
 
         // Sample size has to be a power of two or 1
         if (config.getMinSampleSize() > 0 && (config.getMinSampleSize() % 2) == 0) {
@@ -122,6 +134,10 @@ public class SwrveMessageView extends RelativeLayout {
             return;
         }
 
+        if(gestureDetector != null) {
+            addGestureInterceptor(screenWidth, screenHeight);
+        }
+
         List<SwrveButton> buttons = page.getButtons();
         for (final SwrveButton button : buttons) {
             if (button.getTheme() != null) {
@@ -133,6 +149,25 @@ public class SwrveMessageView extends RelativeLayout {
                 break;
             }
         }
+    }
+
+    public void setGestureDetector(GestureDetector gestureDetector) {
+        this.gestureDetector = new WeakReference(gestureDetector);
+    }
+
+    private void addGestureInterceptor(int screenWidth, int screenHeight) {
+        View interceptorOverlay = new View(getContext());
+        interceptorOverlay.setClickable(true);
+        interceptorOverlay.setFocusable(false);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(screenWidth, screenHeight);
+        interceptorOverlay.setLayoutParams(params);
+        interceptorOverlay.setOnTouchListener((view, motionEvent) -> {
+                    if (gestureDetector != null && gestureDetector.get() != null) {
+                        return gestureDetector.get().onTouchEvent(motionEvent);
+                    }
+                    return false;
+                });
+        addView(interceptorOverlay);
     }
 
     private void addMultilineView(SwrveImage image) throws SwrveSDKTextTemplatingException {

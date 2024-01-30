@@ -127,8 +127,7 @@ task androidHuaweiSourcesJar(type: Jar) {
                 artifactId project.SWRVE_CORE_ARTIFACT_ID
                 groupId project.SWRVE_GROUP_ID
                 version project.SWRVE_SDK_VERSION
-//                artifacts = [androidCoreJavadocsJar, "$buildDir/outputs/aar/${project.name}-core-release.aar", androidCoreSourcesJar]
-                artifacts = ["$buildDir/outputs/aar/${project.name}-core-release.aar"]
+                artifacts = [androidCoreJavadocsJar, "$buildDir/outputs/aar/${project.name}-core-release.aar", androidCoreSourcesJar]
 
                 // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
                 // so we have to manually add them to the pom
@@ -182,8 +181,7 @@ task androidHuaweiSourcesJar(type: Jar) {
                 artifactId project.SWRVE_AMAZON_ARTIFACT_ID
                 groupId project.SWRVE_GROUP_ID
                 version project.SWRVE_SDK_VERSION
-//                artifacts = [androidAmazonJavadocsJar, "$buildDir/outputs/aar/${project.name}-amazon-release.aar", androidAmazonSourcesJar]
-                artifacts = ["$buildDir/outputs/aar/${project.name}-amazon-release.aar"]
+                artifacts = [androidAmazonJavadocsJar, "$buildDir/outputs/aar/${project.name}-amazon-release.aar", androidAmazonSourcesJar]
 
                 // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
                 // so we have to manually add them to the pom
@@ -291,8 +289,7 @@ task androidHuaweiSourcesJar(type: Jar) {
                 artifactId project.SWRVE_HUAWEI_ARTIFACT_ID
                 groupId project.SWRVE_GROUP_ID
                 version project.SWRVE_SDK_VERSION
-//                artifacts = [androidHuaweiJavadocsJar, "$buildDir/outputs/aar/${project.name}-huawei-release.aar", androidHuaweiSourcesJar]
-                artifacts = ["$buildDir/outputs/aar/${project.name}-huawei-release.aar"]
+                artifacts = [androidHuaweiJavadocsJar, "$buildDir/outputs/aar/${project.name}-huawei-release.aar", androidHuaweiSourcesJar]
 
                 // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
                 // so we have to manually add them to the pom
@@ -367,33 +364,18 @@ if (isSignAndroidRelease != null && isSignAndroidRelease.toBoolean()) {
     signing {
         sign publishing.publications
     }
+    tasks.withType(Sign).configureEach { task ->
+        task.dependsOn tasks.withType(Jar)
+    }
+    tasks.withType(PublishToMavenRepository).configureEach { task ->
+        task.dependsOn tasks.withType(Sign)
+    }
 } else {
     project.logger.lifecycle('Swrve: Not setting sign publishing.publications')
+    tasks.withType(PublishToMavenRepository).configureEach {task ->
+        task.dependsOn tasks.withType(Jar)
+    }
 }
-
-//Gradle 8 introduces an error if maven publish dependencies not declared
-//tasks.withType(PublishToMavenRepository).configureEach { task ->
-//    if(task.name == "publishCorePublicationToMavenRepository"){
-//        task.dependsOn(["androidAmazonJavadocsJar","androidAmazonSourcesJar",
-//                        "androidFirebaseJavadocsJar","androidFirebaseSourcesJar",
-//                        "androidHuaweiJavadocsJar","androidHuaweiSourcesJar"])
-//    }
-//    if(task.name == "publishAmazonPublicationToMavenRepository"){
-//        task.dependsOn(["androidCoreJavadocsJar","androidCoreSourcesJar",
-//                        "androidFirebaseJavadocsJar","androidFirebaseSourcesJar",
-//                        "androidHuaweiJavadocsJar","androidHuaweiSourcesJar"])
-//    }
-//    if(task.name == "publishFirebasePublicationToMavenRepository"){
-//        task.dependsOn(["androidCoreJavadocsJar","androidCoreSourcesJar",
-//                        "androidAmazonJavadocsJar","androidAmazonSourcesJar",
-//                        "androidHuaweiJavadocsJar","androidHuaweiSourcesJar"])
-//    }
-//    if(task.name == "publishHuaweiPublicationToMavenRepository"){
-//        task.dependsOn(["androidCoreJavadocsJar","androidCoreSourcesJar",
-//                        "androidAmazonJavadocsJar","androidAmazonSourcesJar",
-//                        "androidFirebaseJavadocsJar","androidFirebaseSourcesJar"])
-//    }
-//}
 
 
 

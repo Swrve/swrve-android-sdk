@@ -18,6 +18,7 @@ public class SwrveMessagePage {
     private long pageId;
     private long swipeForward;
     private long swipeBackward;
+    private int pageDuration;   // milliseconds
 
     public SwrveMessagePage(SwrveMessage message, JSONObject pageData) throws JSONException {
 
@@ -54,6 +55,10 @@ public class SwrveMessagePage {
         if (pageData.has("swipe_backward")) {
             this.swipeBackward = pageData.getLong("swipe_backward");
         }
+
+        if (pageData.has("page_duration")) {
+            this.pageDuration = pageData.getInt("page_duration");
+        }
     }
 
     public List<SwrveButton> getButtons() {
@@ -78,5 +83,9 @@ public class SwrveMessagePage {
 
     public long getSwipeBackward() {
         return swipeBackward;
+    }
+
+    public int getPageDuration() {
+        return pageDuration;
     }
 }

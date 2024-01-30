@@ -280,7 +280,7 @@ public class SwrveNotificationBuilder {
         }
 
         // Notification Priority (checks if it's not zero since default doesn't need to be set)
-        if (swrveNotification.getPriority() != 0) {
+        if (getSDKVersion() < Build.VERSION_CODES.O && swrveNotification.getPriority() != 0) {
             builder.setPriority(swrveNotification.getPriority());
         }
 

@@ -294,12 +294,24 @@ class InAppMessageHandler {
         dismissButtonClicked(null, pageId, pageName, "");
     }
 
+    protected void dismissMessage(long currentPageId, long buttonId, String buttonName) {
+        String pageName = "";
+        if (format.getPages().containsKey(currentPageId)) {
+            pageName = format.getPages().get(currentPageId).getPageName();
+        }
+        dismissButtonEventsSend(null, buttonId, buttonName, "dismiss", currentPageId, pageName, "");
+    }
+
     private void dismissButtonClicked(SwrveButton button, long pageId, String pageName, String resolvedText) {
         // button can be null if IAM is dismissed via OS see: backButtonClicked
         String buttonName = (button != null) ? button.getName() : BACK_BUTTON_NAME;
         String action = (button != null) ? button.getAction() : "";
         long buttonId = (button != null) ? button.getButtonId() : 0;
 
+        dismissButtonEventsSend(button, buttonId, buttonName, action, pageId, pageName, resolvedText);
+    }
+
+    private void dismissButtonEventsSend(SwrveButton button, long buttonId, String buttonName, String buttonAction, long pageId, String pageName, String resolvedText) {
         sendDismissEvent(message.getId(), pageId, pageName, buttonId, buttonName);
         if (sdk.getMessageListener() != null) {
             SwrveMessageButtonDetails swrveMessageButtonDetails = null;
@@ -311,7 +323,7 @@ class InAppMessageHandler {
         } else if (sdk.getDismissButtonListener() != null) {
             sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), buttonName, message.getName());
         }
-        qaUserCampaignButtonClicked(action, Dismiss, buttonName);
+        qaUserCampaignButtonClicked(buttonAction, Dismiss, buttonName);
     }
 
     private void sendDismissEvent(int variantId, long pageId, String pageName, long buttonId, String buttonName) {

@@ -2,6 +2,7 @@ package com.swrve.sdk.config;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.StateListDrawable;
 
 import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
@@ -30,6 +31,7 @@ public class SwrveInAppMessageConfig {
     private SwrveInAppWindowListener windowListener;
     private SwrveMessageFocusListener messageFocusListener;
     private SwrveInAppMessageListener messageListener;
+    private StateListDrawable storyDismissButton;
 
     private SwrveInAppMessageConfig(Builder builder) {
         this.defaultBackgroundColor = builder.defaultBackgroundColor;
@@ -47,6 +49,7 @@ public class SwrveInAppMessageConfig {
         this.windowListener = builder.windowListener;
         this.messageFocusListener = builder.messageFocusListener;
         this.messageListener = builder.messagesListener;
+        this.storyDismissButton = builder.storyDismissButton;
     }
 
     /**
@@ -185,6 +188,15 @@ public class SwrveInAppMessageConfig {
         return messageFocusListener;
     }
 
+    /**
+     * IAS dismiss button
+     *
+     * @return the list of drawables for button states
+     */
+    public StateListDrawable getStoryDismissButton() {
+        return storyDismissButton;
+    }
+
     public static class Builder {
         private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
         private int clickColor = Color.argb(100, 0, 0, 0); // Default button click color for IAM
@@ -202,6 +214,7 @@ public class SwrveInAppMessageConfig {
         protected SwrveInAppWindowListener windowListener;
         protected SwrveMessageFocusListener messageFocusListener;
         protected SwrveInAppMessageListener messagesListener;
+        protected StateListDrawable storyDismissButton;
 
         /**
          * Builder constructor
@@ -372,6 +385,17 @@ public class SwrveInAppMessageConfig {
          */
         public Builder messageListener(SwrveInAppMessageListener messageListener) {
             this.messagesListener = messageListener;
+            return this;
+        }
+
+        /**
+         * Button images to use for In-app story dismiss button
+         *
+         * @param storyDismissButton The StateList of drawables
+         * @return this builder
+         */
+        public Builder storyDismissButton(StateListDrawable storyDismissButton) {
+            this.storyDismissButton = storyDismissButton;
             return this;
         }
 

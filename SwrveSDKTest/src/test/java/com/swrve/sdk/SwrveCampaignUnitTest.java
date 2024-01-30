@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -16,6 +17,7 @@ import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessagePage;
+import com.swrve.sdk.messaging.SwrveStorySettings;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -249,4 +251,107 @@ public class SwrveCampaignUnitTest extends SwrveBaseTest {
         message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNotNull(message);
     }
+
+    @Test
+    public void testInAppStoryJSON() throws JSONException {
+        String json = SwrveTestUtils.getAssetAsText(ApplicationProvider.getApplicationContext(), "campaign_in_app_story.json");
+        JSONObject campaigns = new JSONObject(json);
+        JSONObject campaignData = campaigns.getJSONArray("campaigns").getJSONObject(0);
+        Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
+        SwrveInAppCampaign campaign = new SwrveInAppCampaign(swrveSpy, new SwrveCampaignDisplayer(), campaignData, assetsQueue, null);
+
+        SwrveMessageFormat format = campaign.getMessage().getFormats().get(0);
+        assertEquals(1, format.getFirstPageId());
+        Map<Long, SwrveMessagePage> pages  = format.getPages();
+        assertNotNull(pages);
+
+        SwrveStorySettings storySettings = format.getStorySettings();
+        assertEquals(2500, storySettings.getPageDuration());
+        assertEquals(12345, storySettings.getLastPageDismissId());
+        assertEquals("Auto Dismiss?", storySettings.getLastPageDismissName());
+        assertEquals(SwrveStorySettings.LastPageProgression.DISMISS, storySettings.getLastPageProgression());
+        assertEquals(1, storySettings.getTopPadding());
+        assertEquals(2, storySettings.getLeftPadding());
+        assertEquals(3, storySettings.getBottomPadding());
+        assertEquals(4, storySettings.getRightPadding());
+        assertEquals("#fffffffa", storySettings.getBarColor());
+        assertEquals("#fffffffb", storySettings.getBarBgColor());
+        assertEquals(10, storySettings.getBarHeight());
+        assertEquals(6, storySettings.getSegmentGap());
+        assertNotNull(storySettings.getDismissButton());
+        assertEquals(12345678, storySettings.getDismissButton().getButtonId());
+        assertEquals("Dismiss?", storySettings.getDismissButton().getName());
+        assertEquals("#fffffffc", storySettings.getDismissButton().getColor());
+        assertEquals("#fffffffd", storySettings.getDismissButton().getPressedColor());
+        assertEquals("#fffffffe", storySettings.getDismissButton().getFocusedColor());
+        assertEquals(50, storySettings.getDismissButton().getSize());
+        assertEquals(11, storySettings.getDismissButton().getMarginTop());
+        assertTrue(storySettings.isGesturesEnabled());
+        assertEquals("Dismiss", storySettings.getDismissButton().getAccessibilityText());
+    }
+
+    @Test
+    public void testInAppStoryDifferentDataJSON() throws JSONException {
+        // gestureEnabled is nullable so tests below cover all possible combinations
+        SwrveStorySettings storySettings1 = getDummyStorySettings("loop", false, true, true);
+        assertEquals(SwrveStorySettings.LastPageProgression.LOOP, storySettings1.getLastPageProgression());
+        assertTrue(storySettings1.isGesturesEnabled());
+        assertNotNull(storySettings1.getDismissButton());
+
+        SwrveStorySettings storySettings2 = getDummyStorySettings("stop", true, false, false);
+        assertEquals(SwrveStorySettings.LastPageProgression.STOP, storySettings2.getLastPageProgression());
+        assertFalse(storySettings2.isGesturesEnabled());
+        assertNull(storySettings2.getDismissButton());
+
+        SwrveStorySettings storySettings3 = getDummyStorySettings("dismiss", true, true, false);
+        assertEquals(SwrveStorySettings.LastPageProgression.DISMISS, storySettings3.getLastPageProgression());
+        assertTrue(storySettings3.isGesturesEnabled());
+        assertNull(storySettings3.getDismissButton());
+    }
+
+    private SwrveStorySettings getDummyStorySettings(String lastPageProgression, boolean hasGestures, boolean gestureEnabled,  boolean hasDismissButton) throws JSONException {
+// @formatter:off
+        String json =
+                "{\n" +
+                    "\"page_duration\": 7500,\n" +
+                    "\"last_page_progression\": \"" + lastPageProgression + "\",\n";
+        if (hasGestures) {
+                    json +="\"gestures_enabled\": " + gestureEnabled + ",\n";
+        }
+        json +=
+                    "\"padding\": {\n" +
+                        "\"top\": 1,\n" +
+                        "\"left\": 2,\n" +
+                        "\"bottom\": 3,\n" +
+                        "\"right\": 4\n" +
+                    "},\n" +
+                    "\"progress_bar\": {\n" +
+                        "\"bar_color\": \"#ffffffff\",\n" +
+                        "\"bg_color\": \"#ffffffff\",\n" +
+                        "\"w\": -1,\n" +
+                        "\"h\": 10,\n" +
+                        "\"segment_gap\": 6\n" +
+                    "}\n";
+
+        if (hasDismissButton) {
+            json +=
+                    ",\n" +
+                    "\"dismiss_button\": {\n" +
+                        "\"id\": 12345,\n" +
+                        "\"name\": \"Dismiss?\",\n" +
+                        "\"color\": \"#ffffffff\",\n" +
+                        "\"pressed_color\": \"#ffffffff\",\n" +
+                        "\"focused_color\": \"#ffffffff\",\n" +
+                        "\"size\": 7,\n" +
+                        "\"margin_top\": 8,\n" +
+                        "\"accessibility_text\": \"Dismiss\"\n" +
+                    "}";
+        }
+        json += "}";
+// @formatter:on
+        JSONObject jsonObject = new JSONObject(json);
+        return new SwrveStorySettings(jsonObject);
+    }
+
+
 }

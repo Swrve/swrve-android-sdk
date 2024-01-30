@@ -10,7 +10,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,8 +26,11 @@ public class SwrveMessageFormat {
     private SwrveOrientation orientation;
     private Integer backgroundColor;
     private Map<Long, SwrveMessagePage> pages;
+    private ArrayList<Long> pagesOrdered;
+    private List<Integer> pageDurations;
     private SwrveMessage message;
     private SwrveCalibration calibration;
+    private SwrveStorySettings storySettings;
     private long firstPageId;
 
     public SwrveMessageFormat(SwrveMessage message, JSONObject messageFormatData) throws JSONException {
@@ -52,6 +57,8 @@ public class SwrveMessageFormat {
         }
 
         this.pages = new HashMap<>();
+        this.pagesOrdered = new ArrayList<>();
+        this.pageDurations = new ArrayList<>();
         if (messageFormatData.has("pages")) {
 
             JSONArray jsonPages = messageFormatData.getJSONArray("pages");
@@ -59,6 +66,10 @@ public class SwrveMessageFormat {
                 JSONObject pageData = jsonPages.getJSONObject(i);
                 SwrveMessagePage page = new SwrveMessagePage(message, pageData);
                 pages.put(page.getPageId(), page);
+                pagesOrdered.add(page.getPageId());
+                if(page.getPageDuration() > 0) {
+                    pageDurations.add(page.getPageDuration());
+                }
                 if (i == 0) {
                     firstPageId = page.getPageId(); // the first page is the first element in the array
                 }
@@ -72,6 +83,10 @@ public class SwrveMessageFormat {
 
         if (messageFormatData.has("calibration")) {
             this.calibration = new SwrveCalibration(messageFormatData.getJSONObject("calibration"));
+        }
+
+        if (messageFormatData.has("story_settings")) {
+            this.storySettings = new SwrveStorySettings(messageFormatData.getJSONObject("story_settings"));
         }
     }
 
@@ -107,7 +122,26 @@ public class SwrveMessageFormat {
         return firstPageId;
     }
 
+    public long getPageIdAtIndex(int index) {
+        if(pagesOrdered.size() > index){
+            return pagesOrdered.get(index);
+        }
+        return 0l;
+    }
+
+    public int getIndexForPageId(long pageId) {
+        return pagesOrdered.indexOf(pageId);
+    }
+
     public String getName() {
         return name;
+    }
+
+    public SwrveStorySettings getStorySettings() {
+        return storySettings;
+    }
+
+    public List<Integer> getPageDurations() {
+        return pageDurations;
     }
 }
