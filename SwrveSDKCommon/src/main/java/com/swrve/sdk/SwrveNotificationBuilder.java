@@ -79,7 +79,7 @@ public class SwrveNotificationBuilder {
     }
 
     public NotificationCompat.Builder build(String msgText, Bundle msg, String campaignType, Bundle eventPayload) {
-        SwrveNotification swrveNotification = parseBundle(msg);
+        setMessage(msg);
         return build(msgText, msg, swrveNotification, campaignType, eventPayload);
     }
 
@@ -157,6 +157,11 @@ public class SwrveNotificationBuilder {
         return mBuilder;
     }
 
+    protected void setMessage(Bundle message) {
+        this.msg = message;
+        this.swrveNotification = parseBundle(message);
+    }
+
     private SwrveNotification parseBundle(Bundle msg) {
         SwrveNotification swrveNotification = null;
         String swrvePushPayload = msg.getString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY);
@@ -170,7 +175,7 @@ public class SwrveNotificationBuilder {
     }
 
     @TargetApi(value = 26)
-    private String getNotificationChannelId() {
+    protected String getNotificationChannelId() {
 
         if (getSDKVersion() < Build.VERSION_CODES.O) {
             return null;

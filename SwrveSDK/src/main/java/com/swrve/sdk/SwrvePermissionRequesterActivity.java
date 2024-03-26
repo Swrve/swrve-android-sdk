@@ -107,8 +107,8 @@ public class SwrvePermissionRequesterActivity extends Activity {
             if (shouldShowRequestPermissionRationaleStart != shouldShowRequestPermissionRationaleNow) {
                 // if changed then the prompt was answered (back button or outside prompt wasn't pressed)
                 incrementNotificationPermissionAnsweredTime(permission);
-                queueDeviceUpdate();
             }
+            queueDeviceUpdate();
         } finally {
             finish(); // always call finish because this activity is a blank UI
         }

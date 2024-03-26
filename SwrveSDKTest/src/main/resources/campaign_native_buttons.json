@@ -45,7 +45,7 @@
               "images": [
                 {
                   "name": "Background",
-                  "ui_order": 0,
+                  "iam_z_index": 0,
                   "x": {
                     "type": "number",
                     "value": 0
@@ -79,7 +79,7 @@
               "buttons": [
                 {
                   "name": "MButton1",
-                  "ui_order": 2,
+                  "iam_z_index": 2,
                   "x": {
                     "type": "number",
                     "value": 265
@@ -153,7 +153,7 @@
                 },
                 {
                   "name": "MButton2",
-                  "ui_order": 4,
+                  "iam_z_index": 4,
                   "x": {
                     "type": "number",
                     "value": 265
@@ -233,7 +233,7 @@
                 },
                 {
                   "name": "Msystem 12",
-                  "ui_order": 6,
+                  "iam_z_index": 6,
                   "x": {
                     "type": "number",
                     "value": 265
@@ -304,7 +304,7 @@
                 },
                 {
                   "name": "MComic 16",
-                  "ui_order": 8,
+                  "iam_z_index": 8,
                   "x": {
                     "type": "number",
                     "value": 265

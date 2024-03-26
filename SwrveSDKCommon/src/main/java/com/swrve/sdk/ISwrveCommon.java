@@ -123,6 +123,10 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO    = "additional_info";
     String GENERIC_EVENT_PAYLOAD_MSG_ID             = "provider.message_id";
     String GENERIC_EVENT_PAYLOAD_SENT_TIME          = "provider.sent_time";
+    String GENERIC_EVENT_PAYLOAD_PRIORITY           = "provider.priority";
+    String GENERIC_EVENT_PAYLOAD_CHANNEL_ID         = "channel_id";
+    String GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID  = "channel_parent_id";
+
     String GENERIC_EVENT_PAYLOAD_SID                = "_sid";
     String GENERIC_EVENT_PAYLOAD_PAGE_NAME          = "pageName";
     String GENERIC_EVENT_PAYLOAD_TO                 = "to";

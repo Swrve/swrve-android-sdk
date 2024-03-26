@@ -26,6 +26,8 @@ import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,37 +120,48 @@ public class SwrveMessageView extends RelativeLayout {
         setMinimumHeight(format.getSize().y);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-        List<SwrveImage> images = page.getImages();
-        for (final SwrveImage image : images) {
-            if (image.isMultiLine()) {
-                addMultilineView(image);
-            } else {
-                addImageView(image, screenWidth, screenHeight);
+        List<SwrveWidget> pageElements = getPageElements();
+        for (final SwrveWidget widget : pageElements) {
+            if (widget instanceof SwrveButton) {
+                SwrveButton button = (SwrveButton) widget;
+                if (button.getTheme() != null) {
+                    addThemedButton(button);
+                } else {
+                    addImageViewButton(button, screenWidth, screenHeight);
+                }
+            } else if (widget instanceof SwrveImage) {
+                SwrveImage image = (SwrveImage) widget;
+                if (image.isMultiLine()) {
+                    addMultilineView(image);
+                } else {
+                    addImageView(image, screenWidth, screenHeight);
+                }
             }
             if (loadErrorReasons.size() > 0) {
                 break;
             }
         }
 
-        if (loadErrorReasons.size() > 0) {
-            return;
-        }
-
-        if(gestureDetector != null) {
+        if (gestureDetector != null) {
             addGestureInterceptor(screenWidth, screenHeight);
         }
+    }
 
-        List<SwrveButton> buttons = page.getButtons();
-        for (final SwrveButton button : buttons) {
-            if (button.getTheme() != null) {
-                addThemedButton(button);
-            } else {
-                addImageViewButton(button, screenWidth, screenHeight);
+    private List<SwrveWidget> getPageElements() {
+        // Combine page elements together (images and buttons)
+        // Images must be added before buttons to preserve the order of the elements for backwards compatibility
+        // If iam_z_index is set then it will be sorted by the iam_z_index
+        List<SwrveWidget> pageElements = new ArrayList<>();
+        pageElements.addAll(page.getImages());
+        pageElements.addAll(page.getButtons());
+
+        Collections.sort(pageElements, new Comparator<SwrveWidget>() {
+            @Override
+            public int compare(SwrveWidget widget1, SwrveWidget widget2) {
+                return Integer.compare(widget1.getIamZIndex(), widget2.getIamZIndex());
             }
-            if (loadErrorReasons.size() > 0) {
-                break;
-            }
-        }
+        });
+        return pageElements;
     }
 
     public void setGestureDetector(GestureDetector gestureDetector) {

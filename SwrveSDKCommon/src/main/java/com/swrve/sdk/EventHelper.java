@@ -20,8 +20,11 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_DISPLAYED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PRIORITY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_REASON;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SID;
@@ -256,6 +259,15 @@ final class EventHelper {
         }
         if (extras.containsKey(SWRVE_UNIQUE_MESSAGE_ID_KEY)) {
             additionalInfo.put(GENERIC_EVENT_PAYLOAD_SID, extras.getString(SWRVE_UNIQUE_MESSAGE_ID_KEY));
+        }
+        if (extras.containsKey(GENERIC_EVENT_PAYLOAD_PRIORITY)) {
+            additionalInfo.put(GENERIC_EVENT_PAYLOAD_PRIORITY, extras.getString(GENERIC_EVENT_PAYLOAD_PRIORITY));
+        }
+        if (extras.containsKey(GENERIC_EVENT_PAYLOAD_CHANNEL_ID)) {
+            additionalInfo.put(GENERIC_EVENT_PAYLOAD_CHANNEL_ID, extras.getString(GENERIC_EVENT_PAYLOAD_CHANNEL_ID));
+        }
+        if (extras.containsKey(GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID)) {
+            additionalInfo.put(GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID, extras.getString(GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID));
         }
         if(additionalInfo.length() > 0) {
             payload.put(GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO, additionalInfo);

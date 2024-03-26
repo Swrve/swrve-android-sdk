@@ -6,6 +6,7 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PRIORITY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -541,6 +542,7 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         pushBundle.putString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, "888");
         pushBundle.putString(GENERIC_EVENT_PAYLOAD_MSG_ID, "777");
         pushBundle.putString(GENERIC_EVENT_PAYLOAD_SENT_TIME, "999");
+        pushBundle.putString(GENERIC_EVENT_PAYLOAD_PRIORITY, "1");
         SwrvePushManagerImp pushManagerSpy = Mockito.spy(new SwrvePushManagerImp(mActivity));
         doReturn(9876l).when(pushManagerSpy).getTime();
         CampaignDeliveryManager campaignDeliveryManagerSpy = Mockito.mock(CampaignDeliveryManager.class);
@@ -570,7 +572,8 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
                                 "{" +
                                     "\"provider.message_id\":\"777\"," +
                                     "\"provider.sent_time\":\"999\"," +
-                                    "\"_sid\":\"888\"" +
+                                    "\"_sid\":\"888\"," +
+                                    "\"provider.priority\":\"1\"" +
                                 "}" +
                             "}" +
                         "}" +

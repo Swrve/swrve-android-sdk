@@ -3,14 +3,23 @@ package com.swrve.sdk;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
 import static com.swrve.sdk.ISwrveCommon.SWRVE_NOTIFICATIONS_ENABLED;
 import static com.swrve.sdk.ISwrveCommon.SWRVE_PERMISSION_NOTIFICATION;
 import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_TRACKING_KEY;
 import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.core.app.NotificationCompat;
@@ -27,6 +36,9 @@ public abstract class SwrvePushManagerImpBase {
     protected final Context context;
     protected final ISwrveCommon swrveCommon;
 
+    protected String notificationChannelId;
+    protected String channelGroupId;
+
     public SwrvePushManagerImpBase(Context context) {
         SwrveCommon.checkInstanceCreated();
         this.context = context;
@@ -39,6 +51,8 @@ public abstract class SwrvePushManagerImpBase {
 
     public abstract SwrveNotificationFilter getNotificationFilter();
 
+    protected abstract SwrveNotificationBuilder getSwrveNotificationBuilder();
+
     protected void process(final Bundle msg) {
 
         String silentId = SwrveHelper.getSilentPushId(msg);
@@ -49,6 +63,8 @@ public abstract class SwrvePushManagerImpBase {
         } else {
             boolean displayed = true;
             String reason = "";
+            notificationChannelId = null;
+            channelGroupId = null;
             boolean isAuthenticatedPush = isAuthenticatedNotification(msg);
             if (isAuthenticatedPush && isDifferentUserForAuthenticatedPush(msg)) {
                 displayed = false;
@@ -60,6 +76,11 @@ public abstract class SwrvePushManagerImpBase {
                 displayed = false;
                 reason = "permission_denied";
                 sendDeviceUpdateWithDeniedNotificationPermission();
+            } else if (isNotificationChannelDisabled(msg)) {
+                displayed = false;
+                reason = "channel_disabled";
+                msg.putString(GENERIC_EVENT_PAYLOAD_CHANNEL_ID, notificationChannelId);
+                msg.putString(GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID, channelGroupId);
             }
             sendPushDeliveredEvent(msg, displayed, reason);
 
@@ -68,6 +89,40 @@ public abstract class SwrvePushManagerImpBase {
                 processNotification(msg, pushId);
             }
         }
+    }
+
+    @TargetApi(value = 28)
+    private boolean isNotificationChannelDisabled(final Bundle msg) {
+        if (getOSBuildVersion() < Build.VERSION_CODES.O) {
+            return false;
+        }
+
+        SwrveNotificationBuilder swrveNotificationBuilder = getSwrveNotificationBuilder();
+        if (swrveNotificationBuilder != null) {
+            swrveNotificationBuilder.setMessage(msg);
+            notificationChannelId = swrveNotificationBuilder.getNotificationChannelId();
+            try {
+                NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                if (notificationChannelId != null) {
+                    NotificationChannel channel = mNotificationManager.getNotificationChannel(notificationChannelId);
+                    if (channel != null) {
+                        boolean isMuted = channel.getImportance() == NotificationManager.IMPORTANCE_NONE;
+                        if (!isMuted && getOSBuildVersion() >= Build.VERSION_CODES.P) {
+                            channelGroupId = channel.getGroup();
+                            if (channelGroupId != null) {
+                                NotificationChannelGroup group = mNotificationManager.getNotificationChannelGroup(channel.getGroup());
+                                isMuted = group.isBlocked();
+                            }
+                        }
+                        return isMuted;
+                    }
+                }
+            } catch (Exception e) {
+                SwrveLogger.e("Exception in isNotificationDisabled.", e);
+            }
+        }
+
+        return false;
     }
 
     protected boolean isAuthenticatedNotification(Bundle msg) {

@@ -44,6 +44,7 @@ abstract class SwrveWidget {
     protected int leftPadding;
     protected String foregroundColor;
     protected String backgroundColor;
+    private int iamZIndex;
 
     public SwrveWidget() {
     }
@@ -104,6 +105,10 @@ abstract class SwrveWidget {
                     this.backgroundColor = multiLineData.getString("bg_color");
                 }
             }
+        }
+
+        if (data.has("iam_z_index")) {
+            this.iamZIndex = data.getInt("iam_z_index");
         }
     }
 
@@ -229,5 +234,9 @@ abstract class SwrveWidget {
         } else {
             return defaultBackgroundColor;
         }
+    }
+
+    public int getIamZIndex() {
+        return iamZIndex;
     }
 }

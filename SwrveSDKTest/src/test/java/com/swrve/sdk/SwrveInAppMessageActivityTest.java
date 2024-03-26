@@ -2354,6 +2354,48 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         activity.finish();
     }
 
+    @Test
+    public void testIAMPageElementOrder_iam_z_index() throws Exception {
+
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaigns_iam_z_index_tests.json", "asset1");
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 1); // Use message 1 from the test json
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+        SwrveMessageView messageView = getSwrveMessageView(activity);
+        assertNotNull(messageView);
+        assertEquals(4, messageView.getChildCount());
+
+        // test that the order of page elements is the same as defined by the iam_z_index in the json
+        assertEquals(SwrveButtonView.class, messageView.getChildAt(0).getClass());
+        assertEquals(SwrveThemedMaterialButton.class, messageView.getChildAt(1).getClass());
+        assertEquals(SwrveTextView.class, messageView.getChildAt(2).getClass());
+        assertEquals(SwrveImageView.class, messageView.getChildAt(3).getClass());
+    }
+
+    @Test
+    public void testIAMPageElementOrder_json_array() throws Exception {
+
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaigns_iam_z_index_tests.json", "asset1");
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 2); // Use message 2 from the test json
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+        SwrveMessageView messageView = getSwrveMessageView(activity);
+        assertNotNull(messageView);
+        assertEquals(4, messageView.getChildCount());
+
+        // test that the order of page elements is the same as the order in the json array
+        assertEquals(SwrveTextView.class, messageView.getChildAt(0).getClass());
+        assertEquals(SwrveImageView.class, messageView.getChildAt(1).getClass());
+        assertEquals(SwrveButtonView.class, messageView.getChildAt(2).getClass());
+        assertEquals(SwrveThemedMaterialButton.class, messageView.getChildAt(3).getClass());
+    }
+
     // Helpers
 
     private void simulateTap(View view, Point point) {

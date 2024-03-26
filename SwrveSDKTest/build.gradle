@@ -23,12 +23,8 @@ android {
         unitTests {
             includeAndroidResources = true
         }
-        String isCIRCLECI = System.getenv('CIRCLECI')
-        if (isCIRCLECI != null && isCIRCLECI.toBoolean()) {
-            project.logger.lifecycle('Swrve: Running in CIRCLECI. Setting maxHeapSize 1024m from SwrveSDKTest/build.gradle')
-            unitTests.all {
-                maxHeapSize = "1024m"
-            }
+        unitTests.all {
+            maxHeapSize = "2048m"
         }
     }
 
