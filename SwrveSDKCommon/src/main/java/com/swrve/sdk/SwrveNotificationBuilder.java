@@ -383,6 +383,13 @@ public class SwrveNotificationBuilder {
                     builder.setTicker(pushPayload.getTicker());
                 }
                 setMediaText(builder);
+            } else {
+                // Ensure a push marked public will show the title,body,etc. on the lock screen,
+                // regardless of the user's channel lock screen setting
+                // (otherwise it could be treated as sensitive content and not shown)
+                if(pushPayload.getVisibility() == SwrveNotification.VisibilityType.PUBLIC) {
+                    builder.setPublicVersion(builder.build());
+                }
             }
         }
     }
