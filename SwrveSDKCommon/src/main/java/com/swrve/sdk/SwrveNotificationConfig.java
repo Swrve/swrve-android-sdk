@@ -6,14 +6,14 @@ import java.util.List;
 
 public class SwrveNotificationConfig {
 
-    private Class<?> activityClass;
-    private int iconDrawableId;
-    private int iconMaterialDrawableId;
-    private NotificationChannel defaultNotificationChannel;
-    private int largeIconDrawableId;
-    private String accentColorHex;
-    private SwrveNotificationFilter notificationFilter;
-    private List<String> pushNotificationPermissionEvents;
+    private final Class<?> activityClass;
+    private final int iconDrawableId;
+    private final int iconMaterialDrawableId;
+    private final NotificationChannel defaultNotificationChannel;
+    private final int largeIconDrawableId;
+    private final String accentColorHex;
+    private final SwrveNotificationFilter notificationFilter;
+    private final List<String> pushNotificationPermissionEvents;
 
     private SwrveNotificationConfig(Builder builder) {
         this.activityClass = builder.activityClass;
@@ -54,9 +54,9 @@ public class SwrveNotificationConfig {
     }
 
     /**
-     * The default notification channel for which notifications should appear in.
+     * The default/fallback notification channel for which notifications should appear in.
      *
-     * @return The default NotificationChannel
+     * @return The default/fallback NotificationChannel
      */
     public NotificationChannel getDefaultNotificationChannel() {
         return defaultNotificationChannel;
@@ -101,9 +101,9 @@ public class SwrveNotificationConfig {
     public static class Builder {
 
         private Class<?> activityClass;
-        private int iconDrawableId;
-        private int iconMaterialDrawableId;
-        private NotificationChannel defaultNotificationChannel;
+        private final int iconDrawableId;
+        private final int iconMaterialDrawableId;
+        private final NotificationChannel defaultNotificationChannel;
         private int largeIconDrawableId;
         private String accentColorHex;
         private SwrveNotificationFilter notificationFilter;
@@ -114,8 +114,8 @@ public class SwrveNotificationConfig {
          *
          * @param iconDrawableId             the notification icon drawable to be shown in the status bar for below api level 21
          * @param iconMaterialDrawableId     the notification icon drawable to be shown in the status bar for above api level 20
-         * @param defaultNotificationChannel Set the default notification channel used to display notifications. This is required if you target Android O (API 26) or higher.
-         *                                   We recommend that the channel is created before setting it in our config. Our SDK will attempt to create it if it doesn't exist.
+         * @param defaultNotificationChannel Set the default notification (or fallback) channel used to display notifications if
+         *                                   none is specified in the dashboard. If null, notifications will not be displayed.
          */
         public Builder(int iconDrawableId, int iconMaterialDrawableId, NotificationChannel defaultNotificationChannel) {
             this.iconDrawableId = iconDrawableId;

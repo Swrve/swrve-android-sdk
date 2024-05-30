@@ -54,18 +54,14 @@ class SwrveEventListener implements ISwrveEventListener {
         SwrveOrientation deviceOrientation = SwrveOrientation.parse(sdk.getContext().getResources().getConfiguration().orientation);
         SwrveBaseMessage message = sdk.getBaseMessageForEvent(eventName, payload, deviceOrientation);
         if (message != null) {
-            if (message.isControl()) {
-                SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
-            }
             sdk.lastEventPayloadUsed = payload; // Save the last used payload for personalization
             if (message instanceof SwrveMessage) {
-                if (message.isControl()) {
-                    // campaigns should never been shown to user but mark campaign is sown
-                    message.getCampaign().messageWasHandledOrShownToUser();
-                    // we send an impression event for backend reporting.
-                    sdk.queueMessageImpressionEvent(message.getId(), "false");
-                } else {
-                    sdk.displaySwrveMessage((SwrveMessage) message, null);
+                if (sdk.canDisplaySwrveMessage((SwrveMessage) message, null)) {
+                    if (message.isControl()) {
+                        handleControlCampaign(message, "false");
+                    } else {
+                        sdk.displaySwrveMessage((SwrveMessage) message, null);
+                    }
                 }
             } else if (message instanceof SwrveEmbeddedMessage) {
                 Map<String, String> personalizationProperties = sdk.retrievePersonalizationProperties(payload, null);
@@ -73,10 +69,7 @@ class SwrveEventListener implements ISwrveEventListener {
                     embeddedListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties, message.isControl());
                 } else {
                     if (message.isControl()) {
-                        // campaigns should never been shown to user but mark campaign is sown
-                        message.getCampaign().messageWasHandledOrShownToUser();
-                        // we send an impression event for backend reporting.
-                        sdk.queueMessageImpressionEvent(message.getId(), "true");
+                        handleControlCampaign(message, "true");
                     } else {
                         if (embeddedMessageListener != null) {
                             embeddedMessageListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
@@ -86,6 +79,12 @@ class SwrveEventListener implements ISwrveEventListener {
             }
             sdk.lastEventPayloadUsed = null; // Remove ref
         }
+    }
+
+    private void handleControlCampaign(SwrveBaseMessage message, String embedded) {
+        SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
+        message.getCampaign().messageWasHandledOrShownToUser(); // control campaigns should never been shown to user but mark campaign as shown
+        sdk.queueMessageImpressionEvent(message.getId(), embedded); // send an impression event for backend reporting.
     }
 
     private void handleNotificationPermissionEvents(Activity activity, String eventName) {

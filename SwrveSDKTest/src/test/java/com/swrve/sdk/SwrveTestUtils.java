@@ -47,6 +47,7 @@ import com.swrve.sdk.rest.RESTResponse;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockingDetails;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
@@ -82,7 +83,10 @@ public class SwrveTestUtils {
         SwrveLogger.i("SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance() start");
         ISwrveBase swrve = SwrveSDK.getInstance();
         if (swrve != null) {
-            swrve.shutdown();
+            MockingDetails details = Mockito.mockingDetails(swrve);
+            if (details.isSpy() || !details.isMock()) {
+                swrve.shutdown();
+            }
         }
         removeSingleton(SwrveSDKBase.class, "instance");
         LocalStorageTestUtils.closeSQLiteOpenHelperInstance();

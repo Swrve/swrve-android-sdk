@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_ORIGINAL_PRIORITY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PRIORITY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 
@@ -36,6 +37,7 @@ public class SwrveFirebaseMessagingService extends FirebaseMessagingService {
                 extras.putString(GENERIC_EVENT_PAYLOAD_MSG_ID, remoteMessage.getMessageId());
                 extras.putString(GENERIC_EVENT_PAYLOAD_SENT_TIME, String.valueOf(remoteMessage.getSentTime()));
                 extras.putString(GENERIC_EVENT_PAYLOAD_PRIORITY, String.valueOf(remoteMessage.getPriority()));
+                extras.putString(GENERIC_EVENT_PAYLOAD_ORIGINAL_PRIORITY, String.valueOf(remoteMessage.getOriginalPriority()));
 
                 if (!SwrveHelper.isSwrvePush(extras)) {
                     SwrveLogger.i("SwrveSDK Received Push: but not processing as it doesn't contain: %s or %s", SwrveNotificationConstants.SWRVE_TRACKING_KEY, SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);

@@ -89,7 +89,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.14.0";
+    protected static String version = "10.15.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
     protected static final int IN_APP_CAMPAIGN_VERSION = 15;
@@ -169,7 +169,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected SwrveCampaignInfluence campaignInfluence = new SwrveCampaignInfluence();
     protected String notificationSwrveCampaignId;
     protected boolean identifiedOnAnotherDevice;
-    protected SwrveSessionListener sessionListener;
+    protected List<WeakReference<SwrveSessionListener>> sessionListeners;
     protected List<EventQueueItem> pausedEvents = Collections.synchronizedList(new ArrayList<EventQueueItem>());
     protected Map<String, String> lastEventPayloadUsed;
     protected String foregroundActivity = "";
@@ -652,13 +652,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             if (autoShowMessagesEnabled) {
                 SwrveBaseMessage message = swrve.getBaseMessageForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER);
                 if (message != null && message.supportsOrientation(getDeviceOrientation())) {
-                    if (message instanceof SwrveMessage) {
+                    if (message instanceof SwrveMessage && canDisplaySwrveMessage((SwrveMessage) message, null)) {
                         if (message.isControl()) {
                             SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
-                            // these campaigns should never been shown to user but mark as handled
-                            message.getCampaign().messageWasHandledOrShownToUser();
-                            // we send an impression event for backend reporting.
-                            swrve.queueMessageImpressionEvent(message.getId(), "false");
+                            message.getCampaign().messageWasHandledOrShownToUser(); // Control campaigns should never been shown to user but mark as handled
+                            swrve.queueMessageImpressionEvent(message.getId(), "false"); // send an impression event for backend reporting
                         } else {
                             displaySwrveMessage((SwrveMessage) message, null);
                         }
@@ -666,8 +664,14 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
                         embeddedListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties, message.isControl());
                     } else if (embeddedMessageListener != null && message instanceof SwrveEmbeddedMessage) {
-                        Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
-                        embeddedMessageListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
+                        if (message.isControl()) {
+                            SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
+                            message.getCampaign().messageWasHandledOrShownToUser(); // control campaigns should never been shown to user but mark campaign as shown
+                            swrve.queueMessageImpressionEvent(message.getId(), "true");
+                        } else {
+                            Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
+                            embeddedMessageListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
+                        }
                     }
                     autoShowMessagesEnabled = false;
                 }
@@ -678,30 +682,34 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     protected void displaySwrveMessage(final SwrveMessage message, Map<String, String> properties) {
-        if (context == null || getContext() == null) {
-            return;
-        }
+
+        Intent intent = new Intent(getContext(), SwrveInAppMessageActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
 
         Map<String, String> personalizationProperties = retrievePersonalizationProperties(lastEventPayloadUsed, properties);
-        if (!message.supportsOrientation(getDeviceOrientation())) {
+        if (personalizationProperties != null) {
+            // Cannot pass a Map to intent, converting to HashMap
+            HashMap<String, String> personalization = new HashMap<>(personalizationProperties);
+            intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
+        }
+
+        getContext().startActivity(intent);
+    }
+
+    protected boolean canDisplaySwrveMessage(final SwrveMessage message, Map<String, String> properties) {
+        boolean canDisplaySwrveMessage = false;
+        Map<String, String> personalizationProperties = retrievePersonalizationProperties(lastEventPayloadUsed, properties);
+        if (context == null || getContext() == null) {
+            SwrveLogger.i("Can't display the in-app message as context is null");
+        } else if (!message.supportsOrientation(getDeviceOrientation())) {
             SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
         } else if (filterRedundantCampaign(message)) {
             SwrveLogger.i("Will not display the in-app message as it requests a capability/permission that is already granted or redundant action.");
-        } else {
-            if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizationProperties)) {
-                Intent intent = new Intent(getContext(), SwrveInAppMessageActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, message.getId());
-
-                if (personalizationProperties != null) {
-                    // Cannot pass a Map to intent, converting to HashMap
-                    HashMap<String, String> personalization = new HashMap<>(personalizationProperties);
-                    intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
-                }
-
-                getContext().startActivity(intent);
-            }
+        } else if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizationProperties)) {
+            canDisplaySwrveMessage = true;
         }
+        return canDisplaySwrveMessage;
     }
 
     protected boolean filterRedundantCampaign(SwrveMessage message) {

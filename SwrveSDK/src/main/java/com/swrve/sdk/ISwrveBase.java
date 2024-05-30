@@ -63,6 +63,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     String getUserId();
 
+    String getDeviceId();
+
     JSONObject getDeviceInfo() throws JSONException;
 
     void refreshCampaignsAndResources();

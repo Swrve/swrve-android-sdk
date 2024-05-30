@@ -24,6 +24,7 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_DISPLAYED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_ORIGINAL_PRIORITY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PRIORITY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_REASON;
@@ -262,6 +263,9 @@ final class EventHelper {
         }
         if (extras.containsKey(GENERIC_EVENT_PAYLOAD_PRIORITY)) {
             additionalInfo.put(GENERIC_EVENT_PAYLOAD_PRIORITY, extras.getString(GENERIC_EVENT_PAYLOAD_PRIORITY));
+        }
+        if (extras.containsKey(GENERIC_EVENT_PAYLOAD_ORIGINAL_PRIORITY)) {
+            additionalInfo.put(GENERIC_EVENT_PAYLOAD_ORIGINAL_PRIORITY, extras.getString(GENERIC_EVENT_PAYLOAD_ORIGINAL_PRIORITY));
         }
         if (extras.containsKey(GENERIC_EVENT_PAYLOAD_CHANNEL_ID)) {
             additionalInfo.put(GENERIC_EVENT_PAYLOAD_CHANNEL_ID, extras.getString(GENERIC_EVENT_PAYLOAD_CHANNEL_ID));

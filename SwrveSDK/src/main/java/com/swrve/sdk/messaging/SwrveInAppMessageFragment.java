@@ -43,7 +43,7 @@ public class SwrveInAppMessageFragment extends Fragment {
             pageId = getArguments().getLong(PAGE_ID);
 
             rootView = new SwrveMessageView(getContext(), config, message, format, inAppPersonalization, pageId, gestureDetector);
-        } catch (SwrveMessageViewBuildException e) {
+        } catch (Exception e) {
             SwrveLogger.e("Error in SwrveInAppMessageFragment while creating the SwrveMessageView", e);
         }
         return rootView;

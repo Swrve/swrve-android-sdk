@@ -63,6 +63,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -285,8 +286,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         long sessionTime = getSessionTime();
         restClientExecutorExecute(() -> sendSessionStart(sessionTime));
 
-        if (sessionListener != null) {
-            sessionListener.sessionStarted();
+        if (sessionListeners != null) {
+            for (WeakReference<SwrveSessionListener> listenerRef : sessionListeners) {
+                SwrveSessionListener sessionListener = listenerRef.get();
+                if (sessionListener == null) {
+                    SwrveLogger.w("SwrveSDK: A session listener is not valid. Not notifying of session start.");
+                } else {
+                    sessionListener.sessionStarted();
+                }
+            }
         }
     }
 
@@ -1081,11 +1089,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @SuppressLint("UseSparseArrays")
-    protected SwrveBaseMessage _getBaseMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation) {
+    protected SwrveBaseMessage _getBaseMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation, Date now) {
         SwrveBaseMessage result = null;
         SwrveBaseCampaign campaign = null;
 
-        Date now = getNow();
         Map<Integer, Integer> availableCampaignsIgnoredList = new HashMap<>();
         Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
 
@@ -1684,7 +1691,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected SwrveBaseMessage getBaseMessageForEvent(String event, Map<String, String> payload) {
         try {
-            return _getBaseMessageForEvent(event, payload, SwrveOrientation.Both);
+            return _getBaseMessageForEvent(event, payload, SwrveOrientation.Both, getNow());
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -1693,7 +1700,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected SwrveBaseMessage getBaseMessageForEvent(String event, Map<String, String> payload, SwrveOrientation orientation) {
         try {
-            return _getBaseMessageForEvent(event, payload, orientation);
+            return _getBaseMessageForEvent(event, payload, orientation, getNow());
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -2023,7 +2030,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (campaign instanceof SwrveInAppCampaign) {
             Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
             SwrveInAppCampaign iamCampaign = (SwrveInAppCampaign) campaign;
-            if (iamCampaign != null && iamCampaign.getMessage() != null) {
+            if (iamCampaign != null && iamCampaign.getMessage() != null && canDisplaySwrveMessage(iamCampaign.getMessage(), personalizedProperties)) {
                 // Display message in the in-app campaign
                 displaySwrveMessage(iamCampaign.getMessage(), personalizedProperties);
                 return true;
@@ -2678,7 +2685,31 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void setSessionListener(SwrveSessionListener sessionListener) {
-        this.sessionListener = sessionListener;
+        if (sessionListeners == null) {
+            sessionListeners = new ArrayList<>(1);
+        }
+        synchronized (sessionListeners) {
+            if (sessionListener == null) {
+                //A null parameter will remove all session listeners, for backward-compatibility
+                sessionListeners.clear();
+                return;
+            }
+            sessionListeners.add(new WeakReference<>(sessionListener));
+        }
+    }
+
+    @Override
+    public void removeSessionListener(SwrveSessionListener sessionListener) {
+        if (sessionListeners != null) {
+            synchronized (sessionListeners) {
+                for(WeakReference<SwrveSessionListener> listenerReference : sessionListeners) {
+                    if(listenerReference.get() != null && listenerReference.get().equals(sessionListener)) {
+                        sessionListeners.remove(listenerReference);
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     @Override

@@ -51,6 +51,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwrveInitModeTest extends SwrveBaseTest {
@@ -169,6 +170,15 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         config.setInitMode(SwrveInitMode.AUTO);
         createSwrveSpy(config);
         assertMethodsDoNothing();
+    }
+
+    @Test
+    public void testDeviceId() throws Exception {
+        SwrveConfig config = new SwrveConfig();
+        createSwrveSpy(config);
+        assertNotNull(swrveReal.getDeviceId());
+        UUID validUUID = UUID.fromString(swrveReal.getDeviceId());
+        assertNotNull(validUUID);
     }
 
     private void assertMethodsDoNothing() throws Exception {

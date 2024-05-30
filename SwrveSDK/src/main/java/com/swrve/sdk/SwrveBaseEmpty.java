@@ -380,6 +380,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void removeSessionListener(SwrveSessionListener sessionListener) {
+    }
+
+    @Override
     public void fetchNotificationCampaigns(Set<Long> campaignIds) {
     }
 

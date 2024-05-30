@@ -414,10 +414,35 @@ public class SwrveUnitTest extends SwrveBaseTest {
     @Test
     public void testSessionStart() {
         SwrveSessionListener sessionListenerMock =  mock(SwrveSessionListener.class);
-        swrveSpy.sessionListener = sessionListenerMock;
+        swrveSpy.setSessionListener(sessionListenerMock);
         SwrveSDK.sessionStart();
         verify(swrveSpy, atLeastOnce()).restClientExecutorExecute(any(Runnable.class));
         verify(sessionListenerMock, atLeastOnce()).sessionStarted();
+    }
+
+    @Test
+    public void testSessionListeners() {
+        //Verify that when multiple sessionListeners are set, they all get called
+        SwrveSessionListener sessionListenerMock1 =  mock(SwrveSessionListener.class);
+        SwrveSessionListener sessionListenerMock2 =  mock(SwrveSessionListener.class);
+        swrveSpy.setSessionListener(sessionListenerMock1);
+        swrveSpy.setSessionListener(sessionListenerMock2);
+        SwrveSDK.sessionStart();
+        verify(swrveSpy, atLeastOnce()).restClientExecutorExecute(any(Runnable.class));
+        verify(sessionListenerMock1, atLeastOnce()).sessionStarted();
+        verify(sessionListenerMock2, atLeastOnce()).sessionStarted();
+
+        swrveSpy.removeSessionListener(sessionListenerMock2);
+        SwrveSDK.sessionStart();
+        verify(swrveSpy, atLeastOnce()).restClientExecutorExecute(any(Runnable.class));
+        verify(sessionListenerMock1, times(2)).sessionStarted();
+        verify(sessionListenerMock2, atMost(1)).sessionStarted();
+
+        //Ensure setSessionListener with value of null has the effect of removing all session listeners
+        swrveSpy.setSessionListener(null);
+        verify(swrveSpy, atLeastOnce()).restClientExecutorExecute(any(Runnable.class));
+        verify(sessionListenerMock1, times(2)).sessionStarted();
+        verify(sessionListenerMock2, times(1)).sessionStarted();
     }
 
     @Test

@@ -17,6 +17,7 @@ import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessagePage;
+import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveStorySettings;
 
 import org.json.JSONException;
@@ -28,6 +29,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -212,14 +214,12 @@ public class SwrveCampaignUnitTest extends SwrveBaseTest {
 
         // Even after corresponding app throttle limit has expired
         Date secondsLater31 = new Date(System.currentTimeMillis() + 31000l);
-        doReturn(secondsLater31).when(swrveSpy).getNow();
-        message = swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
+        message = swrveSpy._getBaseMessageForEvent("Swrve.currency_given", new HashMap<String, String>(), SwrveOrientation.Both, secondsLater31);
         assertNull(message);
 
         // Return message after both limits expire
         Date secondsLater60 = new Date(System.currentTimeMillis() + 60000l);
-        doReturn(secondsLater60).when(swrveSpy).getNow();
-        message = swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
+        message = swrveSpy._getBaseMessageForEvent("Swrve.currency_given", new HashMap<String, String>(), SwrveOrientation.Both, secondsLater60);
         assertNotNull(message);
         assertTrue("message should be instanceof SwrveMessage", (message instanceof SwrveMessage));
         assertEquals(165, message.getId());

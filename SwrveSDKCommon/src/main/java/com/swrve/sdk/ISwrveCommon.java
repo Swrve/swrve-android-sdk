@@ -124,6 +124,7 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_MSG_ID             = "provider.message_id";
     String GENERIC_EVENT_PAYLOAD_SENT_TIME          = "provider.sent_time";
     String GENERIC_EVENT_PAYLOAD_PRIORITY           = "provider.priority";
+    String GENERIC_EVENT_PAYLOAD_ORIGINAL_PRIORITY  = "provider.original_priority";
     String GENERIC_EVENT_PAYLOAD_CHANNEL_ID         = "channel_id";
     String GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID  = "channel_parent_id";
 
@@ -208,6 +209,8 @@ interface ISwrveCommon {
     int getFlushRefreshDelay();
 
     void setSessionListener(SwrveSessionListener sessionListener);
+
+    void removeSessionListener(SwrveSessionListener sessionListener);
 
     void fetchNotificationCampaigns(Set<Long> campaignIds);
 

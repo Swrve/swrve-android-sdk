@@ -40,7 +40,7 @@ public class SwrveFirebaseMessagingServiceTest extends SwrveBaseTest {
         bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
         Mockito.verify(mockSwrvePushManagerImp, Mockito.atLeastOnce()).processMessage(bundleCaptor.capture());
         Bundle actualBundle = bundleCaptor.getAllValues().get(0);
-        assertEquals(5, actualBundle.size());
+        assertEquals(6, actualBundle.size());
         assertEquals("validBundle", actualBundle.getString("text"));
         assertEquals("1", actualBundle.getString("_p"));
 
@@ -55,11 +55,13 @@ public class SwrveFirebaseMessagingServiceTest extends SwrveBaseTest {
         Mockito.verify(mockSwrvePushManagerImp, Mockito.atLeastOnce()).processMessage(bundleCaptor.capture());
         assertEquals(2, bundleCaptor.getAllValues().size()); // the size increases to 2
         actualBundle = bundleCaptor.getAllValues().get(1); // second index
-        assertEquals(6, actualBundle.size());
+        assertEquals(7, actualBundle.size());
         assertEquals("validBundle", actualBundle.getString("text"));
         assertEquals("2", actualBundle.getString("_p"));
         assertEquals("123", actualBundle.getString("provider.message_id"));
         assertEquals("0", actualBundle.getString("provider.sent_time"));
+        assertEquals("0", actualBundle.getString("provider.priority"));
+        assertEquals("0", actualBundle.getString("provider.original_priority"));
 
         // use same bundle as last with the same sid
         serviceSpy.onMessageReceived(pushBundleWithSid.build());

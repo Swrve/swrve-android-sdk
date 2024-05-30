@@ -364,6 +364,16 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Get the device id
+     *
+     * @return device id
+     */
+    public static String getDeviceId() {
+        checkInstanceCreated();
+        return instance.getDeviceId();
+    }
+
+    /**
      * Collect device information
      *
      * @return device information
