@@ -4,6 +4,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS;
 import static com.swrve.sdk.ISwrveCommon.CACHE_CAMPAIGNS_STATE;
 import static com.swrve.sdk.ISwrveCommon.CACHE_ETAG;
+import static com.swrve.sdk.ISwrveCommon.CACHE_PIM;
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
 import static com.swrve.sdk.ISwrveCommon.CACHE_REALTIME_USER_PROPERTIES;
 import static com.swrve.sdk.ISwrveCommon.CACHE_RESOURCES;
@@ -89,8 +90,9 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.15.1";
+    protected static String version = "10.16.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
+    protected static final int PUSH_INBOX_VERSION = 1;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
     protected static final int IN_APP_CAMPAIGN_VERSION = 15;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
@@ -173,6 +175,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected List<EventQueueItem> pausedEvents = Collections.synchronizedList(new ArrayList<EventQueueItem>());
     protected Map<String, String> lastEventPayloadUsed;
     protected String foregroundActivity = "";
+    protected SwrvePushInboxManager pushInboxManager;
+    protected SwrvePushInboxUpdateListener pushInboxUpdateListener;
+    protected String pushInboxHash;
 
     protected SwrveImp(Application application, int appId, String apiKey, C config) {
         SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
@@ -595,6 +600,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_CAMPAIGNS, campaignContent.toString(), getUniqueKey(userId)));
     }
 
+    protected void savePIMInCache(final JSONArray pimContent) {
+        final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
+        storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_PIM, pimContent.toString(), getUniqueKey(userId)));
+    }
+
     protected void saveResourcesInCache(final JSONArray resourcesContent) {
         final String userId = profileManager.getUserId(); // user can change so retrieve now as a final String for thread safeness
         storageExecutorExecute(() -> multiLayerLocalStorage.setAndFlushSecureSharedEntryForUser(userId, CACHE_RESOURCES, resourcesContent.toString(), getUniqueKey(userId)));
@@ -986,6 +996,21 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
+    protected void loadPIMFromJSONArray(JSONArray pimJsonArray, String userId) {
+        if (pimJsonArray == null || pimJsonArray.length() == 0) {
+            return;
+        }
+        SwrveLogger.i("Push Inbox Messages JSON array: %s", pimJsonArray);
+        getPushInboxManager(userId).loadMessages(pimJsonArray);
+    }
+
+    protected SwrvePushInboxManager getPushInboxManager(String userId) {
+        if (pushInboxManager == null) {
+            pushInboxManager = new SwrvePushInboxManager(getContext(), restClient, apiKey, userId, config.getContentUrl().toString());
+        }
+        return pushInboxManager;
+    }
+
     protected void saveCampaignsState(final String userId) {
         try {
             // Save campaigns state
@@ -1174,6 +1199,21 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
     }
 
+    protected void initPIMFromCache(String userId) {
+        try {
+            String pimFromCache = multiLayerLocalStorage.getSecureCacheEntryForUser(userId, CACHE_PIM, getUniqueKey(userId));
+            if (!SwrveHelper.isNullOrEmpty(pimFromCache)) {
+                JSONArray pimJsonArray = new JSONArray(pimFromCache);
+                loadPIMFromJSONArray(pimJsonArray, userId);
+                SwrveLogger.i("Loaded push inbox messages from cache.");
+            }
+        } catch (SecurityException e) {
+            invalidSignatureError(userId, CACHE_PIM);
+        } catch (Exception e) {
+            SwrveLogger.e("Could not load push inbox messages", e);
+            invalidateETag(userId);
+        }
+    }
 
     private void loadCampaignsStateFromCache() {
         try {
@@ -1219,6 +1259,30 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     resourcesListener.onResourcesUpdated();
                 } catch (Exception e) {
                     SwrveLogger.e("SwrveSDK exception trying to call SwrveResourcesListener.onResourcesUpdated", e);
+                }
+            }
+        }
+    }
+
+    protected void invokePushInboxUpdateListener() {
+        if (pushInboxUpdateListener != null) {
+            Activity activity = getActivityContext();
+            if (activity != null) {
+                activity.runOnUiThread(() -> {
+                    if (pushInboxUpdateListener != null) { // requires another null check because it executes on another thread
+                        try {
+                            pushInboxUpdateListener.onMessagesUpdated();
+                        } catch (Exception e) {
+                            SwrveLogger.e("SwrveSDK exception trying to call SwrvePushInboxUpdateListener.onMessagesUpdated", e);
+                        }
+                    }
+                });
+            } else {
+                // If we do not have access to the activity context run on current thread
+                try {
+                    pushInboxUpdateListener.onMessagesUpdated();
+                } catch (Exception e) {
+                    SwrveLogger.e("SwrveSDK exception trying to call SwrvePushInboxUpdateListener.onMessagesUpdated", e);
                 }
             }
         }

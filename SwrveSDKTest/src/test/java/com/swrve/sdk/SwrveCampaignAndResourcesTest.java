@@ -258,6 +258,38 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
         verify(swrveSpy, times(2)).reIdentifyUser(); // reIdentifyUser should be called twice
     }
 
+    @Test
+    public void testInvokePushInboxUpdateListener() {
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        String campaignsResponseJson1  = "{\"push_inbox_hash\": \"test_hash_1\"}";
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson1);
+        swrveSpy.campaignsAndResourcesInitialized = true;
+        swrveSpy.init(mActivity);
+
+        verify(swrveSpy, times(1)).invokePushInboxUpdateListener(); // verify that the listener is invoked only once
+
+        swrveSpy.refreshCampaignsAndResources();
+        verify(swrveSpy, times(1)).invokePushInboxUpdateListener(); // even after refresh, the listener is not invoked again
+
+        String campaignsResponseJson2  = "{\"push_inbox_hash\": \"test_hash_2\"}";
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson2);
+        swrveSpy.refreshCampaignsAndResources();
+        verify(swrveSpy, times(2)).invokePushInboxUpdateListener(); // new hash so the listener is invoked again
+
+        swrveSpy.refreshCampaignsAndResources();
+        verify(swrveSpy, times(2)).invokePushInboxUpdateListener(); // even after refresh, the listener is not invoked again
+    }
+
+    @Test
+    public void testInvokePushInboxUpdateListenerOnceFirstTime() {
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        String campaignsResponseJson = "{}";
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+        swrveSpy.campaignsAndResourcesInitialized = false;
+        swrveSpy.init(mActivity);
+        verify(swrveSpy, times(1)).invokePushInboxUpdateListener();
+    }
+
     // Private helper methods
 
     private void mockAndCountCallsToCheckForCampaignAndResourcesUpdates() {

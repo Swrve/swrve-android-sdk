@@ -1,5 +1,8 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_KEY_USER_ID;
+import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -17,9 +20,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_KEY_USER_ID;
-import static com.swrve.sdk.ISwrveCommon.SDK_PREFS_NAME;
 
 class SwrveProfileManager<C extends SwrveConfigBase> {
 

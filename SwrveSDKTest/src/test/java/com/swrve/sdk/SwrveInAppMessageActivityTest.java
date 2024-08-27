@@ -9,6 +9,7 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DISMISS;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_NAVIGATION;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_IAM;
+import static com.swrve.sdk.Swrve.FLAVOUR;
 import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.CopyToClipboard;
 import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Custom;
 import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Dismiss;
@@ -40,25 +41,19 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ApplicationProvider;
@@ -78,15 +73,10 @@ import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveImageView;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
-import com.swrve.sdk.messaging.SwrveInAppStoryView;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
 import com.swrve.sdk.messaging.SwrveMessageCenterDetails;
-import com.swrve.sdk.messaging.SwrveMessageFocusListener;
-import com.swrve.sdk.messaging.SwrveMessageFormat;
 import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
-import com.swrve.sdk.messaging.SwrveInAppStoryButton;
-import com.swrve.sdk.messaging.SwrveStorySettings;
 import com.swrve.sdk.messaging.SwrveTextImageView;
 import com.swrve.sdk.messaging.SwrveTextView;
 import com.swrve.sdk.messaging.SwrveThemedMaterialButton;
@@ -108,7 +98,6 @@ import org.robolectric.shadows.ShadowActivity;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -116,7 +105,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
@@ -422,6 +410,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
@@ -480,6 +470,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Swrve.Messages.Message-165.click
@@ -588,6 +580,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Press dismiss button
@@ -603,6 +597,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         expectedPayload.put("buttonName", "close");
         expectedPayload.put("pageName", "page2");
         expectedPayload.put("buttonId", "999");
+        expectedPayload.put("deviceType", "mobile");
+        expectedPayload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertGenericEvent(event.toString(), "456", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_DISMISS, expectedPayload);
     }
 
@@ -692,6 +688,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payloadImpression = new HashMap<>();
         parametersImpression.put("name", "Swrve.Messages.Message-165.impression");
         payloadImpression.put("embedded", "false");
+        payloadImpression.put("deviceType", "mobile");
+        payloadImpression.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parametersImpression, payloadImpression);
 
         // Swrve.Messages.Message-165.click
@@ -738,6 +736,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
@@ -768,6 +768,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Press dismiss button
@@ -938,6 +940,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
         // Swrve.Messages.Message-165.click
@@ -1021,6 +1025,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
 
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
@@ -1067,7 +1073,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         JSONObject event = new JSONObject((String) events.get(0));
         assertEquals(EVENT_TYPE_GENERIC_CAMPAIGN, event.get("type"));
         assertEquals("165", event.get("id"));
-        assertFalse(event.has("payload")); // for older campaigns there are no pages. back button has no name
+        assertTrue(event.has("payload")); // for older campaigns there are no pages. back button has no name, so only device_type and platform exist
+        JSONObject payload = event.getJSONObject("payload");
+        assertEquals("mobile", payload.get("deviceType"));
+        assertEquals(SwrveHelper.getPlatformOS(mActivity, FLAVOUR), payload.get("platform"));
         SwrveTestUtils.assertGenericEvent(event.toString(), "0", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW, null);
 
         // dismiss
@@ -1077,6 +1086,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals("165", event.get("id"));
         Map<String, String> expectedPayloadNav = new HashMap<>();
         expectedPayloadNav.put("buttonName", "close");
+        expectedPayloadNav.put("deviceType", "mobile");
+        expectedPayloadNav.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertGenericEvent(event.toString(), "0", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_DISMISS, expectedPayloadNav);
     }
 
@@ -1113,7 +1124,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         JSONObject event = new JSONObject((String) events.get(0));
         assertEquals(EVENT_TYPE_GENERIC_CAMPAIGN, event.get("type"));
         assertEquals("165", event.get("id"));
-        assertFalse(event.has("payload")); // for older campaigns there are no pages. back button has no name
+        assertTrue(event.has("payload")); // for older campaigns there are no pages. back button has no name, so only device_type and platform exist
+        JSONObject payload = event.getJSONObject("payload");
+        assertEquals("mobile", payload.get("deviceType"));
+        assertEquals(SwrveHelper.getPlatformOS(mActivity, FLAVOUR), payload.get("platform"));
         SwrveTestUtils.assertGenericEvent(event.toString(), "0", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW, null);
 
         // dismiss
@@ -1123,6 +1137,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertEquals("165", event.get("id"));
         Map<String, String> expectedPayloadNav = new HashMap<>();
         expectedPayloadNav.put("buttonName", "os_back_button");
+        expectedPayloadNav.put("deviceType", "mobile");
+        expectedPayloadNav.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertGenericEvent(event.toString(), "0", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_DISMISS, expectedPayloadNav);
     }
 
@@ -1152,6 +1168,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payload = new HashMap<>();
         parameters.put("name", "Swrve.Messages.Message-165.impression");
         payload.put("embedded", "false");
+        payload.put("deviceType", "mobile");
+        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
 
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
 
@@ -2108,6 +2126,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         JSONObject event = new JSONObject((String) events.get(0));
         Map<String, Object> expectedPayload = new HashMap<>();
         expectedPayload.put("pageName", pageName);
+        expectedPayload.put("deviceType", "mobile");
+        expectedPayload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertGenericEvent(event.toString(), pageId, GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW, expectedPayload);
     }
 
@@ -2119,6 +2139,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         expectedPayload.put("pageName", pageName);
         expectedPayload.put("buttonId", buttonId);
         expectedPayload.put("to", toPageId);
+        expectedPayload.put("deviceType", "mobile");
+        expectedPayload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertGenericEvent(event.toString(), pageId, GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_NAVIGATION, expectedPayload);
     }
 

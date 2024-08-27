@@ -26,6 +26,7 @@ interface ISwrveCommon {
     // cache constants
     String CACHE_DEVICE_ID = "device_id";
     String CACHE_CAMPAIGNS = "CMCC2";
+    String CACHE_PIM = "PIM";
     String CACHE_RESOURCES = "srcngt2";
     String CACHE_REALTIME_USER_PROPERTIES = "cmrp2s";
     String CACHE_RESOURCES_DIFF = "rsdfngt2";
@@ -39,6 +40,8 @@ interface ISwrveCommon {
     String CACHE_SEQNUM = "seqnum";
     String CACHE_QA = "swrve.q1";
     String CACHE_ETAG = "swrve.etag";
+    String CACHE_PUSH_INBOX_HASH = "swrve.pushinboxhash";
+
     String CACHE_PERMISSION_ANSWERED_TIMES_PREFIX = "permission_answered_times_";
     String CACHE_PERMISSION_RATIONALE_WAS_TRUE_PREFIX = "permission_rationale_was_true_";
     String CACHE_PERMISSION_CURRENT_PREFIX = "permission_current_";
@@ -83,6 +86,7 @@ interface ISwrveCommon {
     String SWRVE_PERMISSION_NOTIFICATION_SHOW_RATIONALE     = "swrve.permission.android.notification_show_rationale";
     String SWRVE_PERMISSION_NOTIFICATION_ANSWERED_TIMES     = "swrve.permission.android.notification_answered_times";
     String SWRVE_ASSET_SHA1_CHECK                           = "swrve.asset.sha1_check";
+    String SWRVE_PUSH_INBOX_SUPPORTED                       = "swrve.support.push_inbox";
 
     // user Update
     String SWRVE_REFERRER_ID                = "swrve.referrer_id";
@@ -104,6 +108,7 @@ interface ISwrveCommon {
     String GENERIC_EVENT_CAMPAIGN_TYPE_GEO          = "geo";
     String GENERIC_EVENT_CAMPAIGN_TYPE_PUSH         = "push";
     String GENERIC_EVENT_CAMPAIGN_TYPE_IAM          = "iam";
+    String GENERIC_EVENT_CAMPAIGN_TYPE_PIM          = "push_inbox";
     String GENERIC_EVENT_ACTION_TYPE_KEY            = "actionType";
     String GENERIC_EVENT_ACTION_TYPE_IMPRESSION     = "impression";
     String GENERIC_EVENT_ACTION_TYPE_DELIVERED      = "delivered";
@@ -113,6 +118,9 @@ interface ISwrveCommon {
     String GENERIC_EVENT_ACTION_TYPE_DISMISS        = "dismiss";
     String GENERIC_EVENT_ACTION_TYPE_NAVIGATION     = "navigation";
     String GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW      = "page_view";
+    String GENERIC_EVENT_ACTION_TYPE_PIM_READ       = "read";
+    String GENERIC_EVENT_ACTION_TYPE_PIM_ENGAGED    = "engaged";
+    String GENERIC_EVENT_ACTION_TYPE_PIM_DELETE     = "delete";
     String GENERIC_EVENT_CONTEXT_ID_KEY             = "contextId";
     String GENERIC_EVENT_CAMPAIGN_ID_KEY            = "campaignId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_TEXT        = "buttonText";
@@ -135,6 +143,9 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_BUTTON_NAME        = "buttonName";
     String GENERIC_EVENT_PAYLOAD_TRACKING_DATA      = "trackingData";
     String GENERIC_EVENT_PAYLOAD_PLATFORM           = "platform";
+    String GENERIC_EVENT_PAYLOAD_PIM_STATE          = "state";
+    String GENERIC_EVENT_PAYLOAD_PIM_MESSAGE_ID     = "messageId";
+    String GENERIC_EVENT_PAYLOAD_DEVICE_TYPE        = "deviceType";
     String EVENT_FIRST_SESSION                      = "Swrve.first_session";
     String EVENT_NOTIFICATION_CHANGE_GRANTED        = "Swrve.permission.android.notification.granted";
     String EVENT_NOTIFICATION_CHANGE_DENIED         = "Swrve.permission.android.notification.denied";

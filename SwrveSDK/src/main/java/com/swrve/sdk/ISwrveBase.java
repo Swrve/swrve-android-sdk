@@ -41,6 +41,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void setResourcesListener(SwrveResourcesListener resourcesListener);
 
+    void setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener);
+
     void getUserResources(final SwrveUserResourcesListener listener);
 
     void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener);
@@ -120,5 +122,13 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     void start(Activity context, String userId);
 
     boolean isStarted();
+
+    List<SwrvePushInboxMessage> getPushInboxMessages();
+
+    void readPushInboxMessage(long messageId, SwrvePushInboxListener listener);
+
+    void engagePushInboxMessage(long messageId, SwrvePushInboxListener listener);
+
+    void deletePushInboxMessage(long messageId, SwrvePushInboxListener listener);
 
 }

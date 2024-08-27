@@ -108,6 +108,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener) {
+    }
+
+    @Override
     public void getUserResources(SwrveUserResourcesListener listener) {
         if (listener != null) {
             listener.onUserResourcesSuccess(new HashMap<>(), null);
@@ -417,5 +421,22 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public SwrveDeeplinkListener getSwrveDeeplinkListener() {
         return null;
+    }
+
+    @Override
+    public List<SwrvePushInboxMessage> getPushInboxMessages() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void engagePushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+    }
+
+    @Override
+    public void readPushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+    }
+
+    @Override
+    public void deletePushInboxMessage(long messageId, SwrvePushInboxListener listener) {
     }
 }

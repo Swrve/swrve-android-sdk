@@ -32,6 +32,7 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 
@@ -200,10 +201,12 @@ public final class SwrveHelper {
             SwrveLogger.i("Current device does not have a Window Service active");
             return 0;
         }
-        Display display = windowManager.getDefaultDisplay();
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            return display.getWidth();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowMetrics windowMetrics = windowManager.getCurrentWindowMetrics();
+            return windowMetrics.getBounds().width();
         } else {
+            Display display = windowManager.getDefaultDisplay();
             Point size = new Point();
             display.getSize(size);
             return size.x;
@@ -217,10 +220,11 @@ public final class SwrveHelper {
             return 0;
         }
 
-        Display display = windowManager.getDefaultDisplay();
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            return display.getHeight();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowMetrics windowMetrics = windowManager.getCurrentWindowMetrics();
+            return windowMetrics.getBounds().height();
         } else {
+            Display display = windowManager.getDefaultDisplay();
             Point size = new Point();
             display.getSize(size);
             return size.y;

@@ -2,6 +2,7 @@ package com.swrve.sdk;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DISMISS;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_IAM;
+import static com.swrve.sdk.Swrve.FLAVOUR;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -239,6 +240,8 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         expectedPayload.put("buttonName", "Auto Dismiss?");
         expectedPayload.put("pageName", "page3");
         expectedPayload.put("buttonId", "12345");
+        expectedPayload.put("deviceType", "mobile");
+        expectedPayload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertGenericEvent(event.toString(), "3", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_DISMISS, expectedPayload);
     }
     @Test
@@ -381,6 +384,8 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         expectedPayload.put("buttonName", "Dismiss?");
         expectedPayload.put("pageName", "page1");
         expectedPayload.put("buttonId", "12345678");
+        expectedPayload.put("deviceType", "mobile");
+        expectedPayload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
         SwrveTestUtils.assertGenericEvent(event.toString(), "1", GENERIC_EVENT_CAMPAIGN_TYPE_IAM, GENERIC_EVENT_ACTION_TYPE_DISMISS, expectedPayload);
     }
 

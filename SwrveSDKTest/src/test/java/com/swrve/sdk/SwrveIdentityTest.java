@@ -294,6 +294,23 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testIdentify_UpdatesPushInboxManager() {
+
+        final String currentSwrveUserId = swrveSpy.getUserId();
+        swrveSpy.getPushInboxMessages(); // init push inbox manager
+        assertEquals(currentSwrveUserId, swrveSpy.pushInboxManager.getUserId());
+
+        // User1 will return SwrverUser1
+        String response = "{\"swrve_id\" : \"SwrveUser1\", \"status\" : \"existing_external_id_with_matching_swrve_id\"}";
+        mockRestResponse(200, response);
+        identifyAndWait("User1");
+        assertEquals("SwrveUser1", swrveSpy.getUserId());
+
+        swrveSpy.getPushInboxMessages(); // init push inbox manager
+        assertEquals("SwrveUser1", swrveSpy.pushInboxManager.getUserId()); // push inbox manager should have the new user id
+    }
+
+    @Test
     public void testIdentify_SwrveUser_Cache_Object_Updated() {
 
         mockRestException(new Exception());

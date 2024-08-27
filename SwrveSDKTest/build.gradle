@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     namespace 'com.swrve.sdk.test'
@@ -52,8 +53,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
@@ -63,11 +64,12 @@ dependencies {
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
     api 'androidx.multidex:multidex:2.0.1'
+    //implementation 'androidx.core:core-ktx:+'
 
     huaweiImplementation 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION
 
     // Unit tests
-    testImplementation 'org.mockito:mockito-core:3.6.28'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
 
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.9.3'
     testImplementation 'com.squareup.okhttp3:okhttp-tls:4.9.3'
@@ -90,3 +92,4 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
+

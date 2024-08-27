@@ -6,8 +6,11 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_IAM;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_NAME;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_DEVICE_TYPE;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PAGE_NAME;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TO;
+import static com.swrve.sdk.Swrve.FLAVOUR;
 import static com.swrve.sdk.SwrveInAppMessageActivity.MESSAGE_ID_KEY;
 import static com.swrve.sdk.SwrveInAppMessageActivity.SWRVE_AD_MESSAGE;
 import static com.swrve.sdk.SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY;
@@ -345,6 +348,8 @@ class InAppMessageHandler {
             if (buttonId > 0) {
                 payload.put(GENERIC_EVENT_PAYLOAD_BUTTON_ID, "" + buttonId);
             }
+            payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, SwrveHelper.getPlatformOS(context, FLAVOUR));
+            payload.put(GENERIC_EVENT_PAYLOAD_DEVICE_TYPE, SwrveHelper.getPlatformDeviceType(context));
 
             int seqNum = sdk.getNextSequenceNumber();
             ArrayList<String> events = EventHelper.createGenericEvent(time, id, campaignType, actionType, contextId, campaignId, payload, seqNum);
@@ -380,6 +385,8 @@ class InAppMessageHandler {
             if (buttonId > 0) {
                 payload.put(GENERIC_EVENT_PAYLOAD_BUTTON_ID, buttonId);
             }
+            payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, SwrveHelper.getPlatformOS(context, FLAVOUR));
+            payload.put(GENERIC_EVENT_PAYLOAD_DEVICE_TYPE, SwrveHelper.getPlatformDeviceType(context));
 
             int seqNum = sdk.getNextSequenceNumber();
             ArrayList<String> events = EventHelper.createGenericEvent(time, id, campaignType, actionType, contextId, campaignId, payload, seqNum);
@@ -409,6 +416,8 @@ class InAppMessageHandler {
             if (SwrveHelper.isNotNullOrEmpty(pageName)) {
                 payload.put(GENERIC_EVENT_PAYLOAD_PAGE_NAME, pageName);
             }
+            payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, SwrveHelper.getPlatformOS(context, FLAVOUR));
+            payload.put(GENERIC_EVENT_PAYLOAD_DEVICE_TYPE, SwrveHelper.getPlatformDeviceType(context));
 
             int seqNum = sdk.getNextSequenceNumber();
             ArrayList<String> events = EventHelper.createGenericEvent(time, id, campaignType, actionType, contextId, campaignId, payload, seqNum);

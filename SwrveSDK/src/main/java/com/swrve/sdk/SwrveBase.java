@@ -3,6 +3,8 @@ package com.swrve.sdk;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
+import static com.swrve.sdk.SwrvePushInboxListenerResult.ResultCode.ERROR;
+import static com.swrve.sdk.Swrve.FLAVOUR;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static com.swrve.sdk.SwrveTrackingState.STOPPED;
@@ -201,12 +203,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             identifyRefreshPeriod = getIdentifyPeriod();
             initCampaigns(userId); // Initialize campaigns from cache
 
+            initPIMFromCache(userId); // Initialize push inbox messages from cache
             initABTestDetails(userId);
 
             // Retrieve values for resource/campaigns flush frequencies and ETag
             campaignsAndResourcesFlushFrequency = settings.getInt(SDK_PREFS_KEY_FLUSH_FREQ, SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY);
             campaignsAndResourcesFlushRefreshDelay = getFlushRefreshDelay();
             campaignsAndResourcesLastETag = multiLayerLocalStorage.getCacheEntry(userId, CACHE_ETAG);
+            pushInboxHash = multiLayerLocalStorage.getCacheEntry(userId, CACHE_PUSH_INBOX_HASH);
 
             startCampaignsAndResourcesTimer(true);
 
@@ -746,6 +750,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 long usableSpaceBytes = new File(getCacheDir().getAbsoluteFile().toString()).getUsableSpace();
                 deviceInfo.put(SWRVE_USABLE_SPACE, usableSpaceBytes);
             }
+
+            deviceInfo.put(SWRVE_PUSH_INBOX_SUPPORTED, true);
         }
 
         extraDeviceInfo(deviceInfo);
@@ -921,6 +927,21 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         loadCampaignsFromCache(userId);
                                     }
 
+                                    if (responseJson.has("push_inbox")) {
+                                        JSONArray pimJsonArray = responseJson.getJSONArray("push_inbox");
+                                        savePIMInCache(pimJsonArray);
+                                        loadPIMFromJSONArray(pimJsonArray, userId);
+                                    }
+
+                                    if (responseJson.has("push_inbox_hash")) {
+                                        String newPushInboxHash = responseJson.getString("push_inbox_hash");
+                                        if (!newPushInboxHash.equals(pushInboxHash)) {
+                                            invokePushInboxUpdateListener();
+                                            multiLayerLocalStorage.setCacheEntry(userId, CACHE_PUSH_INBOX_HASH, newPushInboxHash);
+                                            pushInboxHash = newPushInboxHash;
+                                        }
+                                    }
+
                                     if (responseJson.has("user_resources")) {
                                         // Update resource manager
                                         JSONArray resourceJson = responseJson.getJSONArray("user_resources");
@@ -962,6 +983,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 // Invoke listeners once to denote that the first attempt at downloading has finished
                                 // independent of whether the resources or campaigns have changed from cached values
                                 invokeResourceListener();
+                                invokePushInboxUpdateListener();
                             }
                         }
                     });
@@ -1196,6 +1218,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (SwrveHelper.isNotNullOrEmpty(pageName)) {
             payload.put("pageName", pageName);
         }
+        payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, SwrveHelper.getPlatformOS(getContext(), FLAVOUR));
+        payload.put(GENERIC_EVENT_PAYLOAD_DEVICE_TYPE, SwrveHelper.getPlatformDeviceType(getContext()));
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", clickEvent);
@@ -1269,6 +1293,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         Map<String, String> payload = new HashMap<>();
         payload.put("embedded", embedded);
+        payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, SwrveHelper.getPlatformOS(getContext(), FLAVOUR));
+        payload.put(GENERIC_EVENT_PAYLOAD_DEVICE_TYPE, SwrveHelper.getPlatformDeviceType(getContext()));
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("name", viewEvent);
@@ -1338,6 +1364,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         this.resourcesListener = resourcesListener;
     }
 
+    protected void _setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener) {
+        this.pushInboxUpdateListener = pushInboxUpdateListener;
+    }
+
     protected Date _getInitialisedTime() {
         return initialisedTime;
     }
@@ -1387,17 +1417,28 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     private boolean isValidEventName(String name) {
+        if (name == null) {
+            SwrveLogger.e("Event names cannot be null. This event will not be sent.");
+            return false;
+        }
+
+        String trimmedEventName = name.trim();
+        if (trimmedEventName.isEmpty()) {
+            SwrveLogger.e("Event names cannot be empty. This event will not be sent.");
+            return false;
+        }
         List<String> restrictedNamesStartWith = new ArrayList<String>() {{
             add("Swrve.");
             add("swrve.");
         }};
 
         for (String restricted : restrictedNamesStartWith) {
-            if (name == null || name.startsWith(restricted)) {
+            if (name.startsWith(restricted)) {
                 SwrveLogger.e("Event names cannot begin with %s* This event will not be sent. Eventname:%s", restricted, name);
                 return false;
             }
         }
+
         return true;
     }
 
@@ -1820,6 +1861,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public void setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener) {
+        try {
+            _setPushInboxUpdateListener(pushInboxUpdateListener);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
     public Date getInitialisedTime() {
         if (!isSdkReady()) return new Date();
 
@@ -2098,6 +2148,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         params.put("app_store", config.getAppStore());
         params.put("embedded_campaign_version", String.valueOf(EMBEDDED_CAMPAIGN_VERSION));
         params.put("in_app_version", String.valueOf(IN_APP_CAMPAIGN_VERSION));
+
+        params.put("push_inbox_version", String.valueOf(PUSH_INBOX_VERSION));
 
         // Device info
         params.put("device_width", String.valueOf(deviceWidth));
@@ -2412,6 +2464,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         profileManager.setUserId(newUserId);
         profileManager.updateSessionToken();
+        pushInboxManager = null; // reset push inbox manager, access to push inbox will be reloaded when needed
 
         if (getActivityContext() != null) {
             initialised = false;
@@ -2819,4 +2872,44 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
+    @Override
+    public List<SwrvePushInboxMessage> getPushInboxMessages() {
+        if (!isSdkReady()) {
+            return new ArrayList<>();
+        }
+        return getPushInboxManager(getUserId()).getFilteredMessages();
+    }
+
+    @Override
+    public void readPushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+        if (!isSdkReady()) {
+            if (listener != null) {
+                listener.onComplete(messageId, new SwrvePushInboxListenerResult(ERROR, "SDK is not ready", 0));
+            }
+            return;
+        }
+        getPushInboxManager(getUserId()).readMessage(messageId, listener);
+    }
+
+    @Override
+    public void engagePushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+        if (!isSdkReady()) {
+            if (listener != null) {
+                listener.onComplete(messageId, new SwrvePushInboxListenerResult(ERROR, "SDK is not ready", 0));
+            }
+            return;
+        }
+        getPushInboxManager(getUserId()).engageMessage(messageId, listener);
+    }
+
+    @Override
+    public void deletePushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+        if (!isSdkReady()) {
+            if (listener != null) {
+                listener.onComplete(messageId, new SwrvePushInboxListenerResult(ERROR, "SDK is not ready", 0));
+            }
+            return;
+        }
+        getPushInboxManager(getUserId()).deleteMessage(messageId, listener);
+    }
 }

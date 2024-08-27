@@ -674,4 +674,62 @@ public abstract class SwrveSDKBase {
         checkInstanceCreated();
         return instance.isStarted();
     }
+
+    /**
+     * Gets a list of eligible push inbox messages.
+     *
+     * @return List of SwrvePushInboxMessage
+     */
+    public static List<SwrvePushInboxMessage> getPushInboxMessages() {
+        checkInstanceCreated();
+        return instance.getPushInboxMessages();
+    }
+
+    /**
+     * Mark the Push Inbox Message as read. This is an asynchronous operation and the listener will be called when the
+     * operation is complete. Check the returned result object for success or failure.
+     *
+     * @param messageId the messageId of the SwrvePushInboxMessage to update as read
+     * @param listener  the listener to trigger after this operation has completed
+     */
+    public static void readPushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+        checkInstanceCreated();
+        instance.readPushInboxMessage(messageId, listener);
+    }
+
+    /**
+     * Mark the Push Inbox Message as read and send engagement event. This is an asynchronous operation and the
+     * listener will be called when the operation is complete. Check the returned result object for success or failure.
+     *
+     * @param messageId the messageId of the SwrvePushInboxMessage to update as read and engaged
+     * @param listener  the listener to trigger after this operation has completed
+     */
+    public static void engagePushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+        checkInstanceCreated();
+        instance.engagePushInboxMessage(messageId, listener);
+    }
+
+    /**
+     * Delete the Push Inbox Message. This is an asynchronous operation and the listener will be called when the
+     * operation is complete. Check the returned result object for success or failure.
+     *
+     * @param messageId the messageId of the SwrvePushInboxMessage to delete
+     * @param listener  the listener to trigger after this operation has completed
+     */
+    public static void deletePushInboxMessage(long messageId, SwrvePushInboxListener listener) {
+        checkInstanceCreated();
+        instance.deletePushInboxMessage(messageId, listener);
+    }
+
+    /**
+     * The pushInboxUpdateListener onMessagesUpdated() method is invoked when Push Inbox messages
+     * have been initially loaded and each time messages are updated/changed.
+     *
+     * @param pushInboxUpdateListener Called when the push inbox messages are initially loaded and each time messages are updated/changed.
+     */
+    public static void setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener) {
+        checkInstanceCreated();
+        instance.setPushInboxUpdateListener(pushInboxUpdateListener);
+    }
+
 }

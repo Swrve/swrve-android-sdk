@@ -26,14 +26,18 @@ import java.util.UUID;
 import static android.content.Context.MODE_PRIVATE;
 import static com.swrve.sdk.SwrveEventsManagerImp.PREF_EVENT_SEND_RESPONSE_LOG;
 import static com.swrve.sdk.SwrveTestUtils.createFakeRestClient;
+import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
-public class SwrveEventsManagerTest extends SwrveBaseTest {
+import androidx.test.core.app.ApplicationProvider;
 
+public class SwrveEventsManagerTest extends SwrveBaseTest {
+    private Swrve swrveSpy;
     private SwrveMultiLayerLocalStorage multiLayerLocalStorage = null;
     private InMemoryLocalStorage secondaryStorage = null;
     private String userId = "userId";
@@ -41,6 +45,10 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveReal); // wait until swrve instance is fully created before getting a mockito spy.
+        swrveSpy = Mockito.spy(swrveReal);
+
         secondaryStorage = new InMemoryLocalStorage();
         multiLayerLocalStorage = new SwrveMultiLayerLocalStorage(new InMemoryLocalStorage());
         // using an InMemoryLocalStorage as secondary storage to avoid sqlite thread issues.
@@ -251,6 +259,27 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
         assertEquals(expectedEvents, actualEvents);
 
         assertFalse(SwrveEventsManagerImp.shouldSendResponseLogs);
+    }
+
+    @Test
+    public void testEventWithValidNameBeingQueued() {
+
+        reset(swrveSpy); // reset the setup init calls on swrveSpy so the times()/never() test can be done below
+        assertNotNull(swrveSpy.pausedEvents);
+        assertEquals(swrveSpy.pausedEvents.size(), 0);
+
+        swrveSpy.pauseEventSending();
+        assertTrue(swrveSpy.profileManager.getTrackingState() == EVENT_SENDING_PAUSED);
+
+        SwrveSDK.event("Swrve.someEvent"); //invalid name, will not be queued
+        SwrveSDK.event("swrve.someEvent"); // invalid name, will not be queued
+        SwrveSDK.event("anotherEvent", new HashMap<>()); // valid event , queued
+        SwrveSDK.event("", new HashMap<>()); //invalid name, will not be queued
+        SwrveSDK.event("   ", new HashMap<>()); //invalid name, will not be queued
+        SwrveSDK.event("anotherEvent ", new HashMap<>()); // valid event , queued
+        SwrveSDK.event("anotherEvent withSpace ", new HashMap<>()); // valid event , queued
+
+        assertEquals(swrveSpy.pausedEvents.size(), 3);
     }
 
     private void storeAndSendEvents(int responseCode, ArrayList<String> events) throws Exception {
