@@ -4,9 +4,10 @@ executors:
   swrve-executor:
     docker:
       - image: cimg/android:2024.01
-    environment:
-      JVM_OPTS: -Xmx2048m
-      JAVA_OPTS: -Xms518m -Xmx2048m
+    resource_class: large
+    # environment:
+    #   JVM_OPTS: -Xmx2048m
+    #   JAVA_OPTS: -Xms518m -Xmx2048m
 
 jobs:
   build:
