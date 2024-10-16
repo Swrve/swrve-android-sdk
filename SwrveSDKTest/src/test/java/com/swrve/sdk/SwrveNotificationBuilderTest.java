@@ -32,6 +32,7 @@ import android.os.Bundle;
 
 import androidx.annotation.RequiresApi;
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.filters.SdkSuppress;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
@@ -435,7 +436,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotNull(shadowNotification.getBigPicture());
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
     @Config(sdk = Build.VERSION_CODES.M)
     @Test
     public void testAdvancedBigImagePushVideoFallback() {
@@ -500,7 +501,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals("https://fallback_sd", intentExtras.get(SwrveNotificationConstants.DEEPLINK_KEY));
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.N)
     @Config(sdk = Build.VERSION_CODES.N)
     @Test
     public void testAdvancedBigImagePushBigTextFallback() {
@@ -608,8 +609,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNull(shadowNotification.getBigPicture());
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    @Config(sdk = Build.VERSION_CODES.KITKAT)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
+    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
     @Test
     public void testAdvancedBigTextPushWith1Action() {
         // Send a valid Rich Payload
@@ -662,8 +663,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(221, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    @Config(sdk = Build.VERSION_CODES.KITKAT)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
+    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
     @Test
     public void testAdvancedBigImagePushWith2Actions() {
         // Send a valid Rich Payload
@@ -739,8 +740,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(222, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    @Config(sdk = Build.VERSION_CODES.KITKAT)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
+    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
     @Test
     public void testAdvancedBigTextPushWith3Actions() {
         // Send a valid Rich Payload
@@ -853,8 +854,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(requestCodeStart + 4, builderSpy.requestCode); // final value of requestCode
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    @Config(sdk = Build.VERSION_CODES.KITKAT)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
+    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
     @Test
     public void testButtonClickEvents() throws Exception {
         SwrveConfig config = new SwrveConfig();
@@ -939,8 +940,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         verify(swrveSpy, never()).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    @Config(sdk = Build.VERSION_CODES.KITKAT)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
+    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
     @Test
     public void testEngagedEvents() throws Exception {
         SwrveConfig config = new SwrveConfig();
@@ -1003,7 +1004,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     @Config(sdk = Build.VERSION_CODES.O)
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
     @Test
     public void testNotificationChannelFromConfig() {
         NotificationChannel channel = new NotificationChannel("swrve_channel", "Swrve channel", NotificationManager.IMPORTANCE_LOW);
@@ -1049,7 +1050,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     @Config(sdk = Build.VERSION_CODES.O)
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
     @Test
     public void testNotificationChannelIdFromPayload() {
 
@@ -1089,7 +1090,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     @Config(sdk = Build.VERSION_CODES.O)
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
     @Test
     public void testNotificationChannelFromPayload() {
 

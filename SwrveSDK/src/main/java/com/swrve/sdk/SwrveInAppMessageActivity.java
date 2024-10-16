@@ -11,6 +11,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -50,6 +51,11 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            EdgeToEdge.enable(this);
+        }
+
         super.onCreate(savedInstanceState);
 
         inAppMessageHandler = new InAppMessageHandler(this, getIntent(), savedInstanceState);
@@ -67,10 +73,6 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         setRequestedOrientation();
 
         SwrveConfigBase config = sdk.getConfig();
-        // Add the status bar if configured that way
-        if (!config.getInAppMessageConfig().isHideToolbar()) {
-            setTheme(R.style.Theme_InAppMessageWithToolbar);
-        }
 
         setContentView(R.layout.swrve_frag_iam);
 

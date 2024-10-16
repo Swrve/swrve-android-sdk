@@ -254,10 +254,6 @@ public class SwrveTestUtils {
                 return new SwrveConfig();
             }
 
-            @Override
-            public String getAppStoreURLForApp(int appId) {
-                return "";
-            }
         };
     }
 

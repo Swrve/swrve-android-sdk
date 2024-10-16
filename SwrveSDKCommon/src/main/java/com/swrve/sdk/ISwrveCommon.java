@@ -58,7 +58,6 @@ interface ISwrveCommon {
     String SWRVE_DEVICE_WIDTH               = "swrve.device_width";
     String SWRVE_DEVICE_HEIGHT              = "swrve.device_height";
     String SWRVE_DEVICE_DPI                 = "swrve.device_dpi";
-    String SWRVE_CONVERSATION_VERSION       = "swrve.conversation_version";
     String SWRVE_ANDROID_DEVICE_XDPI        = "swrve.android_device_xdpi";
     String SWRVE_ANDROID_DEVICE_YDPI        = "swrve.android_device_ydpi";
     String SWRVE_LANGUAGE                   = "swrve.language";

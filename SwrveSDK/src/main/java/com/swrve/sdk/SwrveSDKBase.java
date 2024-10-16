@@ -456,17 +456,6 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get app store link configured in the dashboard for a given app id.
-     *
-     * @param appId id of the app
-     * @return String App store link for the app
-     */
-    public static String getAppStoreURLForApp(int appId) {
-        checkInstanceCreated();
-        return instance.getAppStoreURLForApp(appId);
-    }
-
-    /**
      * Get location of the chosen cache folder where the resources will be  downloaded.
      *
      * @return File path to the chosen cache folder
@@ -616,22 +605,6 @@ public abstract class SwrveSDKBase {
     public static String getExternalUserId() {
         checkInstanceCreated();
         return instance.getExternalUserId();
-    }
-
-    /**
-     * Add a custom payload for user input events:
-     * Selecting a star-rating,
-     * Selecting a choice on a text questionnaire
-     * Selecting play on a video
-     * <p>
-     * If key pair values added is greater than 5 or Keys added conflict with existing swrve internal keys then
-     * the custom payload will be rejected and not added for the event. A debug log error will be generated.
-     *
-     * @param payload Map with custom key pair values.
-     */
-    public static void setCustomPayloadForConversationInput(Map payload) {
-        checkInstanceCreated();
-        instance.setCustomPayloadForConversationInput(payload);
     }
 
     public static ISwrveBase getInstance() {

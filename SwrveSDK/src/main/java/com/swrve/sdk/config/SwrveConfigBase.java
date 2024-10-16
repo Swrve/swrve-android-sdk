@@ -22,7 +22,7 @@ import java.util.Locale;
  */
 public abstract class SwrveConfigBase {
 
-    private long maxSqliteDbSize = 1 * 1024 * 1024; // Maximum size of the internal SQLite database.
+    private long maxSqliteDbSize = 25 * 1024 * 1024; // Maximum size of the internal SQLite database.
     private int maxEventsPerFlush = 50; // Maximum number of events to send per flush.
     private String dbName = "swrve.db";
     private SwrveStack selectedStack = SwrveStack.US;

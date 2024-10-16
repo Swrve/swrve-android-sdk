@@ -257,11 +257,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public String getAppStoreURLForApp(int appId) {
-        return null;
-    }
-
-    @Override
     public File getCacheDir() {
         return cacheDir;
     }
@@ -368,10 +363,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public String getExternalUserId() {
         return "";
-    }
-
-    @Override
-    public void setCustomPayloadForConversationInput(Map payload) {
     }
 
     @Override

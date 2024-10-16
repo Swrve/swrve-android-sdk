@@ -62,8 +62,8 @@ android {
 
 dependencies {
     api project(':SwrveSDKCommon')
-    api project(':SwrveConversationSDK')
     api 'androidx.appcompat:appcompat:' + project.ANDROIDX_APPCOMPAT_VERSION
+    api 'androidx.activity:activity:' + project.ANDROIDX_ACTIVITY_VERSION
     api 'com.google.android.material:material:' + project.ANDROIDX_MATERIAL_VERSION
     api 'com.google.code.gson:gson:' + project.GSON_VERSION
     api 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
@@ -78,6 +78,7 @@ dependencies {
     firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
     huaweiApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
     huaweiApi 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION
+    api 'com.google.android.gms:play-services-base:' + project.PLAY_SERVICES_BASE_VERSION
 }
 
 apply from: "build-maven-publish.gradle"

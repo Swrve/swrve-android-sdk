@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verify;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,7 +40,6 @@ import androidx.test.core.app.ApplicationProvider;
 import com.google.common.collect.Lists;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -62,7 +60,6 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
-import org.robolectric.android.controller.ActivityController;
 import org.robolectric.shadows.ShadowActivity;
 
 import java.lang.ref.WeakReference;
@@ -363,44 +360,6 @@ public class SwrveUnitTest extends SwrveBaseTest {
         assertFalse("Test getting the joined value when sdk has NOT been initialised.", swrveSpy.initialised);
         String joined2 = swrveSpy.getJoined();
         assertEquals(joined2, joined1);
-    }
-
-    @Test
-    public void testStartStopCampaignsAndResourcesTimer() {
-
-        // blank to begin with until onResume is called
-        assertEquals("", swrveSpy.foregroundActivity);
-
-        // Resume MainActivity
-        swrveSpy.onResume(mActivity);
-
-        // verify MainActivity is foregroundActivity and startCampaignsAndResourcesTimer is called
-        assertEquals(mActivity.getClass().getCanonicalName(), swrveSpy.foregroundActivity);
-        verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(true);
-
-        // Resume ConversationActivity
-        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
-        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, intent);
-        ConversationActivity conversationActivity = activityController.get();
-        swrveSpy.onResume(conversationActivity);
-
-        // verify conversationActivity is foregroundActivity and startCampaignsAndResourcesTimer is called
-        assertEquals(conversationActivity.getClass().getCanonicalName(), swrveSpy.foregroundActivity);
-        verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(false); // session start is false this time
-
-        // Stop main activity
-        swrveSpy.onStop(mActivity);
-
-        // verify foregroundActivity is still conversationActivity and shutdownCampaignsAndResourcesTimer is not called
-        assertEquals(conversationActivity.getClass().getCanonicalName(), swrveSpy.foregroundActivity);
-        verify(swrveSpy, never()).shutdownCampaignsAndResourcesTimer();
-
-        // Stop conversation activity
-        swrveSpy.onStop(conversationActivity);
-
-        // verify foregroundActivity is blank and shutdownCampaignsAndResourcesTimer is called
-        assertEquals("", swrveSpy.foregroundActivity);
-        verify(swrveSpy, atLeastOnce()).shutdownCampaignsAndResourcesTimer();
     }
 
     @Test

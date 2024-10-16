@@ -58,6 +58,7 @@ public class SwrveHmsMessageService extends HmsMessageService {
     }
 
     protected void handle(Bundle extras) {
-        SwrvePushServiceDefault.handle(this, extras);
+        SwrvePushWorkerHelper workerHelper = new SwrvePushWorkerHelper(this, SwrvePushManagerWorker.class, extras);
+        workerHelper.handle();
     }
 }

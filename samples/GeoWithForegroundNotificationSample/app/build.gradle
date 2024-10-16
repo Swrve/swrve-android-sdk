@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 
 android {
     namespace 'com.swrve.sdk.geo.sample'
-    compileSdk 33
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.swrve.sdk.geo.sample"
-        minSdkVersion 19
-        targetSdkVersion 33
+        minSdkVersion 21
+        targetSdkVersion 35
         multiDexEnabled true
     }
 

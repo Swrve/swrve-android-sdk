@@ -64,6 +64,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
     api 'androidx.multidex:multidex:2.0.1'
+    testImplementation 'androidx.test:runner:1.1.0'
     //implementation 'androidx.core:core-ktx:+'
 
     huaweiImplementation 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION

@@ -63,18 +63,17 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.google.common.collect.Maps;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveButtonTextImageView;
 import com.swrve.sdk.messaging.SwrveButtonView;
-import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveImageView;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveInAppMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
+import com.swrve.sdk.messaging.SwrveMessageButtonDetails;
 import com.swrve.sdk.messaging.SwrveMessageCenterDetails;
+import com.swrve.sdk.messaging.SwrveMessageDetails;
 import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.messaging.SwrveTextImageView;
@@ -109,10 +108,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
-    private String testInstallButtonSuccess;
-    private String testCustomButtonSuccess;
+    private boolean testCustomButtonSuccess;
     private String testCustomButtonCampaignName;
-    private String testDismissButtonName;
+    private boolean testDismissButtonSuccess;
     private String testDismissCampaignName;
     private boolean testDismissButtonBackButton;
 
@@ -416,16 +414,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testCreateActivityWithNoMessageAndFinishes() throws Exception {
-        initSDK();
-        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
-        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent);
-        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
-        assertNotNull(activity);
-        assertTrue(activity.isFinishing());
-    }
-
-    @Test
     public void testOnBackPressed() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
@@ -438,49 +426,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertFalse(activity.isFinishing());
         activity.onBackPressed();
         assertTrue(activity.isFinishing());
-    }
-
-    @Test
-    public void testInstallButtonListenerIntercept() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().installButtonListener(appStoreUrl -> {
-            testInstallButtonSuccess = appStoreUrl;
-            return false;
-        });
-        config.setInAppMessageConfig(inAppConfigBuilder.build());
-        initSDK();
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
-        // Trigger IAM
-        swrveSpy.currencyGiven("gold", 20);
-        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
-        SwrveInAppMessageActivity activity = pair.second;
-        assertNotNull(activity);
-
-        SwrveMessageView view = getSwrveMessageView(activity);
-
-        // Press install button
-        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Install);
-        swrveButtonView.performClick();
-
-        String expectedUrl = swrveSpy.getAppStoreURLForApp(150);
-        assertNotNull(expectedUrl);
-        assertEquals(expectedUrl, testInstallButtonSuccess);
-
-        // Swrve.Messages.Message-165.impression
-        Map<String, Object> parameters = new HashMap<>();
-        Map<String, Object> payload = new HashMap<>();
-        parameters.put("name", "Swrve.Messages.Message-165.impression");
-        payload.put("embedded", "false");
-        payload.put("deviceType", "mobile");
-        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
-        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
-
-        // Swrve.Messages.Message-165.click
-        parameters.clear();
-        payload.clear();
-        parameters.put("name", "Swrve.Messages.Message-165.click");
-        payload.put("name", "accept");
-        payload.put("embedded", "false");
-        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
     }
 
     @Test
@@ -678,8 +623,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = getSwrveMessageView(activity);
         assertEquals(123, view.getPage().getPageId());
 
-        // Press install button
-        clickButton(activity, view, SwrveActionType.Install);
+        // Press button
+        clickButton(activity, view, SwrveActionType.Custom);
 
         assertTrue(activity.isFinishing());
 
@@ -697,7 +642,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Map<String, Object> payloadClick = new HashMap<>();
         parametersClick.put("name", "Swrve.Messages.Message-165.click");
         payloadClick.put("embedded", "false");
-        payloadClick.put("name", "install button");
+        payloadClick.put("name", "custom button");
         payloadClick.put("contextId", "123");
         payloadClick.put("pageName", "page1");
         SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parametersClick, payloadClick);
@@ -914,46 +859,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testInstallButtonLaunchesUrl() throws Exception {
-        initSDK();
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
-        // Trigger IAM
-        swrveSpy.currencyGiven("gold", 20);
-        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
-        SwrveInAppMessageActivity activity = pair.second;
-        assertNotNull(activity);
-
-        SwrveMessageView view = getSwrveMessageView(activity);
-
-        // Press install button
-        SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Install);
-        swrveButtonView.performClick();
-
-        // Detect intent from url
-        String expectedUrl = swrveSpy.getAppStoreURLForApp(150);
-        Intent nextIntent = mShadowActivity.getNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(expectedUrl, nextIntent.getDataString());
-
-        // Swrve.Messages.Message-165.impression
-        Map<String, Object> parameters = new HashMap<>();
-        Map<String, Object> payload = new HashMap<>();
-        parameters.put("name", "Swrve.Messages.Message-165.impression");
-        payload.put("embedded", "false");
-        payload.put("deviceType", "mobile");
-        payload.put("platform", SwrveHelper.getPlatformOS(mActivity, FLAVOUR));
-        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
-
-        // Swrve.Messages.Message-165.click
-        parameters.clear();
-        payload.clear();
-        parameters.put("name", "Swrve.Messages.Message-165.click");
-        payload.put("name", "accept");
-        payload.put("embedded", "false");
-        SwrveTestUtils.assertQueueEvent(swrveSpy, "event", parameters, payload);
-    }
-
-    @Test
     public void testClipboardButtonCopiesText() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization_mc.json", "1111111111111111111111111");
@@ -995,12 +900,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testCustomButtonListenerIntercept() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().customButtonListener(new SwrveCustomButtonListener() {
-            @Override
-            public void onAction(String customAction, String campaignName) {
-                testCustomButtonSuccess = customAction;
-                testCustomButtonCampaignName = campaignName;
-            }
+        testCustomButtonSuccess = false;
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().messageListener((context, action, messageDetails, selectedButton) -> {
+            testCustomButtonSuccess = action == SwrveInAppMessageListener.SwrveMessageAction.Custom;
+            testCustomButtonCampaignName = messageDetails.getMessageName();
         });
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
@@ -1017,7 +920,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Custom);
         swrveButtonView.performClick();
 
-        assertEquals("custom_action", testCustomButtonSuccess);
+        assertTrue(testCustomButtonSuccess);
         assertEquals("Kindle", testCustomButtonCampaignName);
 
         // Swrve.Messages.Message-165.impression
@@ -1041,9 +944,10 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testDismissButtonListener() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName, campaignName) -> {
-            testDismissButtonName = buttonName;
-            testDismissCampaignName = campaignName;
+        testDismissButtonSuccess = false;
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().messageListener((context, action, messageDetails, selectedButton) -> {
+            testDismissButtonSuccess = action == Dismiss;
+            testDismissCampaignName = messageDetails.getMessageName();
         });
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
@@ -1060,7 +964,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveButtonView swrveButtonView = findButton(view, SwrveActionType.Dismiss);
         swrveButtonView.performClick();
 
-        assertEquals("close", testDismissButtonName);
+        assertTrue(testDismissButtonSuccess);
         assertEquals("Kindle", testDismissCampaignName);
 
         ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
@@ -1093,11 +997,11 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     @Test
     public void testDismissButtonListenerBackButton() throws Exception {
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().dismissButtonListener((campaignSubject, buttonName, campaignName) -> {
-            if (buttonName == "os_back_button") {
+        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().messageListener((context, action, messageDetails, selectedButton) -> {
+            if (action == Dismiss) {
                 testDismissButtonBackButton = true;
             }
-            testDismissCampaignName = campaignName;
+            testDismissCampaignName = messageDetails.getMessageName();
         });
         config.setInAppMessageConfig(inAppConfigBuilder.build());
         initSDK();
@@ -1297,24 +1201,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
                             break;
                         default:
                             break;
-                    }
-                })
-                .clipboardButtonListener(new SwrveClipboardButtonListener() {
-                    @Override
-                    public void onAction(String clipboardContents) {
-                        Assert.fail("This shouldn't be called if the message listener is implemented");
-                    }
-                })
-                .customButtonListener(new SwrveCustomButtonListener() {
-                    @Override
-                    public void onAction(String customAction, String campaignName) {
-                        Assert.fail("This shouldn't be called if the message listener is implemented");
-                    }
-                })
-                .dismissButtonListener(new SwrveDismissButtonListener() {
-                    @Override
-                    public void onAction(String campaignSubject, String buttonName, String campaignName) {
-                        Assert.fail("This shouldn't be called if the message listener is implemented");
                     }
                 })
                 .build();
@@ -1855,22 +1741,6 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         } else {
             assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, activity.getRequestedOrientation());
         }
-    }
-
-    @Test
-    public void testMessageHideToolbarDisabled() throws Exception {
-
-        SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder().hideToolbar(false);
-        config.setInAppMessageConfig(inAppConfigBuilder.build());
-        initSDK();
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_right_away.json", "1111111111111111111111111");
-        // Trigger IAM
-        swrveSpy.currencyGiven("gold", 20);
-
-        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(mShadowActivity.peekNextStartedActivity());
-        SwrveInAppMessageActivity activity = pair.second;
-        assertNotNull(activity);
-        assertEquals(R.style.Theme_InAppMessageWithToolbar, getThemeResourceId(activity));
     }
 
     @Test

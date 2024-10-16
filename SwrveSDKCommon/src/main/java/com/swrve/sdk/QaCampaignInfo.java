@@ -8,11 +8,6 @@ public class QaCampaignInfo {
                 return "iam";
             }
         },
-        CONVERSATION {
-            public String toString() {
-                return "conversation";
-            }
-        },
         EMBEDDED {
             public String toString() { return "embedded"; }
         }

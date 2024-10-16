@@ -1,5 +1,11 @@
 package com.swrve.sdk;
 
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.model.Arg;
 import com.swrve.sdk.messaging.model.Conditions;
@@ -16,12 +22,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 public class TriggerTest extends SwrveBaseTest {
 
@@ -264,12 +264,6 @@ public class TriggerTest extends SwrveBaseTest {
         assertNull(campaign.getMessageForEvent("music.condition2", null, new Date(), qaCampaignInfoMap));
         assertEquals(1, qaCampaignInfoMap.size());
         assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
-
-        // null event name
-        qaCampaignInfoMap = new HashMap<>();
-        assertNull(campaign.getMessageForEvent(null, null, new Date(), qaCampaignInfoMap));
-        assertEquals(1, qaCampaignInfoMap.size());
-        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
     }
 
     @Test
@@ -340,12 +334,6 @@ public class TriggerTest extends SwrveBaseTest {
         // match the event name but null payload
         qaCampaignInfoMap = new HashMap<>();
         assertNull(campaign.getMessageForEvent("music.condition2", null, new Date(), qaCampaignInfoMap));
-        assertEquals(1, qaCampaignInfoMap.size());
-        assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
-
-        // null event name
-        qaCampaignInfoMap = new HashMap<>();
-        assertNull(campaign.getMessageForEvent(null, null, new Date(), qaCampaignInfoMap));
         assertEquals(1, qaCampaignInfoMap.size());
         assertFalse(qaCampaignInfoMap.get(campaign.getId()).displayed);
     }

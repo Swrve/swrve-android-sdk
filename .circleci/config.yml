@@ -5,9 +5,6 @@ executors:
     docker:
       - image: cimg/android:2024.01
     resource_class: large
-    # environment:
-    #   JVM_OPTS: -Xmx2048m
-    #   JAVA_OPTS: -Xms518m -Xmx2048m
 
 jobs:
   build:
@@ -15,7 +12,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveConversationSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
+          key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
           name: Build and Test SwrveSDKTest Firebase flavour
           command: ./gradlew :SwrveSDKTest:testFirebaseDebug
@@ -27,7 +24,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle
-          key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveConversationSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
+          key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
           name: Build MinimalIntegrationFirebase App
           command: |

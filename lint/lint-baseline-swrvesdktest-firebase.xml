@@ -86,15 +86,4 @@
             file="src/main/res"/>
     </issue>
 
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation"
-        errorLine1="    @Ignore"
-        errorLine2="    ~~~~~~~">
-        <location
-            file="src/test/java/com/swrve/sdk/ConversationActivityTest.java"
-            line="160"
-            column="5"/>
-    </issue>
-
 </issues>

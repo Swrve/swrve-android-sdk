@@ -22,9 +22,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,14 +35,11 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
-import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveButtonView;
 import com.swrve.sdk.messaging.SwrveCampaignState;
-import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageView;
@@ -90,35 +85,6 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     public void tearDown() throws Exception {
         super.tearDown();
         Mockito.reset(swrveSpy);
-    }
-
-    @Test
-    public void testAppStoreURLForGame() throws Exception {
-
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-
-        assertNotNull(swrveSpy.getAppStoreURLForApp(150));
-        assertNull(swrveSpy.getAppStoreURLForApp(250));
-
-        SwrveMessage message = swrveSpy.getMessageForId(165);
-        assertNotNull(message);
-
-        Iterator<SwrveButton> buttonsIt = message.getFormats().get(0).getPages().get(0l).getButtons().iterator();
-        boolean correct = false;
-        while (buttonsIt.hasNext()) {
-            SwrveButton button = buttonsIt.next();
-            if (button.getActionType() == SwrveActionType.Install && button.getAppId() == 150) {
-                correct = true;
-            }
-        }
-
-        assertTrue(correct);
-    }
-
-    @Test
-    public void testAppStoreURLEmpty() {
-        assertNull(swrveSpy.getAppStoreURLForApp(150));
-        assertNull(swrveSpy.getAppStoreURLForApp(250));
     }
 
     @Test
@@ -545,7 +511,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
     @Test
     public void testMessageCenterWithOnlyNonMessageCenterCampaigns() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_event.json",
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_event.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         assertEquals(0, swrveSpy.getMessageCenterCampaigns().size());
     }
@@ -553,23 +519,21 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     @Test
     public void testIAMMessageCenter() throws Exception {
 
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_message_center.json",
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_center.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
         Date today = new Date();
         doReturn(today).when(swrveSpy).getNow();
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns().size());
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Both).size());
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
-        // One IAM does not support the portrait orientation
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns().size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Both).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
 
         Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
 
         SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
         assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
         assertNotNull(campaign.getDownloadDate());
-        assertEquals("IAM subject", campaign.getSubject());
+        assertEquals("IAM subject", campaign.getMessageCenterDetails().getSubject());
         assertEquals(5, campaign.getPriority());
         assertEquals("Kindle", campaign.getName());
 
@@ -613,22 +577,20 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     @Test
     public void testIAMMessageCenterWithPersonalization() throws Exception {
 
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_message_center.json",
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_center.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
         Date today = new Date();
         doReturn(today).when(swrveSpy).getNow();
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns().size());
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Both).size());
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
-        // One IAM does not support the portrait orientation
-        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Portrait).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns().size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Both).size());
+        assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
 
         Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
 
         SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
         assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
-        assertEquals("IAM subject", campaign.getSubject());
+        assertEquals("IAM subject", campaign.getMessageCenterDetails().getSubject());
         assertEquals(5, campaign.getPriority());
 
         HashMap<String, String> testProperties = new HashMap<>();
@@ -671,7 +633,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
     @Test
     public void testIAMMessageCenterProgrammaticallySeen() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_message_center.json",
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_center.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
 
         SwrveInAppCampaign campaign = (SwrveInAppCampaign) swrveSpy.getMessageCenterCampaign(102, null);
@@ -680,188 +642,6 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         // Mark the campaign as seen programmatically (for custom IAM renderers)
         swrveSpy.markMessageCenterCampaignAsSeen(campaign);
         assertEquals(SwrveCampaignState.Status.Seen, campaign.getStatus());
-    }
-
-    @Test
-    public void testConversationsActivityHonoursPortraitOrientation() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_message_center.json",
-                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns().size());
-
-        swrveSpy.config.setOrientation(SwrveOrientation.Portrait);
-        SwrveConversationCampaign campaign = (SwrveConversationCampaign) swrveSpy.getMessageCenterCampaign(103, null);
-        swrveSpy.showMessageCenterCampaign(campaign);
-        // Next activity started should be the ConversationActivity
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, ConversationActivity.class));
-        Robolectric.flushForegroundThreadScheduler();
-        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, nextIntent);
-        ConversationActivity activity = activityController.create().start().visible().get();
-        assertNotNull(activity);
-        assertEquals(activity.getRequestedOrientation(), ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
-    }
-
-    @Test
-    public void testConversationMessageCenter() throws Exception {
-
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_message_center.json",
-                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-
-        Date today = new Date();
-        doReturn(today).when(swrveSpy).getNow();
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns().size());
-
-        Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
-
-        SwrveConversationCampaign campaign = (SwrveConversationCampaign) swrveSpy.getMessageCenterCampaign(103, null);
-        assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
-        assertEquals("Conversation subject", campaign.getSubject());
-        assertEquals(6, campaign.getPriority());
-        swrveSpy.showMessageCenterCampaign(campaign);
-        // Next activity started should be the ConversationActivity
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, ConversationActivity.class));
-        Robolectric.flushForegroundThreadScheduler();
-
-        assertEquals(1, campaign.getImpressions());
-        assertEquals(SwrveCampaignState.Status.Seen, campaign.getStatus());
-        // We can still get the conversation, even though the rules specify a limit of 1 impression
-        assertEquals(campaign.getId(), swrveSpy.getMessageCenterCampaigns().get(1).getId());
-
-        // Remove the campaign, we will never get it again
-        swrveSpy.removeMessageCenterCampaign(campaign);
-        assertFalse(swrveSpy.getMessageCenterCampaigns().contains(campaign));
-        assertEquals(SwrveCampaignState.Status.Deleted, campaign.getStatus());
-    }
-
-    @Test
-    public void testDisplayConversationOrMessageForEvent() throws Exception {
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_event.json",
-                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-
-        assertEquals(2, swrveSpy.campaigns.size());
-
-        Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
-
-        swrveSpy._event("Swrve.currency_given");
-
-        Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
-
-        // Test has a conversation and IAM triggered with Swrve.currency_given, but only the conversation should be started.
-        // Next activity started should be the ConversationActivity
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, ConversationActivity.class));
-    }
-
-    @Test
-    public void testConversationsActivityHonoursLandscapeOrientation() throws Exception {
-
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_message_center.json",
-                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-        assertEquals(2, swrveSpy.getMessageCenterCampaigns().size());
-
-        swrveSpy.config.setOrientation(SwrveOrientation.Landscape);
-        SwrveConversationCampaign campaign = (SwrveConversationCampaign) swrveSpy.getMessageCenterCampaigns().get(1);
-        swrveSpy.showMessageCenterCampaign(campaign);
-        // Next activity started should be the ConversationActivity
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, ConversationActivity.class));
-        Robolectric.flushForegroundThreadScheduler();
-        ActivityController<ConversationActivity> activityController = Robolectric.buildActivity(ConversationActivity.class, nextIntent);
-        ConversationActivity activity = activityController.create().start().visible().get();
-        assertNotNull(activity);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            assertEquals(activity.getRequestedOrientation(), ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
-        } else {
-            assertEquals(activity.getRequestedOrientation(), ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-        }
-    }
-
-    @Test
-    public void testConversationPriorityInverse() throws Exception {
-        // https://emailabove.jira.com/browse/MOBILE-10432
-        // We were not clearing the bucket of candidate messages, ever...
-        // Test that the same problem does not affect conversations
-
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_priority_reverse.json");
-
-        // Highest priority conversation first
-        SwrveConversation conversation1 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
-        assertNotNull(conversation1);
-        assertEquals(103, conversation1.getId());
-        conversation1.getCampaign().messageWasHandledOrShownToUser();
-
-        // Second highest conversation
-        SwrveConversation conversation2 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
-        assertNotNull(conversation2);
-        assertEquals(104, conversation2.getId());
-        conversation2.getCampaign().messageWasHandledOrShownToUser();
-
-        // Lowest conversation (out of 3)
-        SwrveConversation conversation3 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
-        assertNotNull(conversation3);
-        assertEquals(102, conversation3.getId());
-        conversation3.getCampaign().messageWasHandledOrShownToUser();
-
-        // Highest IAM
-        SwrveMessage message1 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
-        assertNotNull(message1);
-        assertEquals(1, message1.getId());
-    }
-
-    @Test
-    public void testConversationPriority() throws Exception {
-
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign_priority.json");
-
-        // Highest priority conversation first
-        SwrveConversation conversation1 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
-        assertNotNull(conversation1);
-        assertEquals(103, conversation1.getId());
-        conversation1.getCampaign().messageWasHandledOrShownToUser();
-
-        // Second highest conversation
-        SwrveConversation conversation2 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
-        assertNotNull(conversation2);
-        assertEquals(102, conversation2.getId());
-        conversation2.getCampaign().messageWasHandledOrShownToUser();
-
-        // Lowest conversation (out of 3)
-        SwrveConversation conversation3 = swrveSpy.getConversationForEvent("Swrve.buy_in", null);
-        assertNotNull(conversation3);
-        assertEquals(104, conversation3.getId());
-        conversation3.getCampaign().messageWasHandledOrShownToUser();
-
-        // Highest IAM
-        SwrveMessage message1 = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.buy_in");
-        assertNotNull(message1);
-        assertEquals(1, message1.getId());
-    }
-
-    @Test
-    public void testDisplayConversationOrMessageForAutoShow() throws Exception {
-
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_and_conversation_auto.json",
-                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
-
-        assertEquals(2, swrveSpy.campaigns.size());
-
-        swrveSpy.campaignsAndResourcesInitialized = true;
-        swrveSpy.autoShowMessagesEnabled = true;
-        swrveSpy.autoShowMessages();
-        Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
-
-        // Test has a conversation and IAM triggered with Swrve.Messages.showAtSessionStart, but only the conversation should be started.
-        // Next activity started should be the ConversationActivity
-        Intent nextIntent = mShadowActivity.peekNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(new ComponentName(mActivity, ConversationActivity.class), nextIntent.getComponent());
-        assertFalse(swrveSpy.autoShowMessagesEnabled);
     }
 
     @Test

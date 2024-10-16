@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.swrve.sdk.ISwrveCommon.CACHE_QA;
-import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.CONVERSATION;
 import static com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE.IAM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -117,7 +116,6 @@ public class QaUserTest extends SwrveBaseTest {
 
         List<QaCampaignInfo> campaignInfoList = new ArrayList<>();
         campaignInfoList.add(new QaCampaignInfo(1, 11, IAM, false, ""));
-        campaignInfoList.add(new QaCampaignInfo(2, 22, CONVERSATION, false, ""));
 
         QaUser.campaignsDownloaded(campaignInfoList);
 
@@ -129,11 +127,6 @@ public class QaUserTest extends SwrveBaseTest {
                                 "\"id\":1," +
                                 "\"variant_id\":11," +
                                 "\"type\":\"iam\"" +
-                            "}," +
-                            "{" +
-                                "\"id\":2," +
-                                "\"variant_id\":22," +
-                                "\"type\":\"conversation\"" +
                             "}" +
                         "]" +
                  "}";
@@ -159,7 +152,6 @@ public class QaUserTest extends SwrveBaseTest {
 
         List<QaCampaignInfo> campaignInfoList = new ArrayList<>();
         campaignInfoList.add(new QaCampaignInfo(1, 11, IAM, false, ""));
-        campaignInfoList.add(new QaCampaignInfo(2, 22, CONVERSATION, false, ""));
 
         Map<String, String> payload = new HashMap<>();
         payload.put("k1", "v1");
@@ -177,118 +169,6 @@ public class QaUserTest extends SwrveBaseTest {
                         "\"displayed\":false," +
                         "\"reason\":\"Too soon\"," +
                         "\"campaigns\":[]" +
-                 "}";
-        // @formatter:on
-        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
-        verifyEventQueued(qaUserSpy, event);
-    }
-
-    @Test
-    public void testCampaignTriggeredConversation() {
-
-        QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
-        QaUser.update();
-        qaUser = QaUser.getInstance();
-        assertTrue(QaUser.isLoggingEnabled());
-
-        QaUser qaUserSpy = Mockito.spy(qaUser);
-        QaUser.instance = qaUserSpy;
-
-        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
-        Mockito.doReturn(999L).when(qaUserSpy).getTime();
-
-        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
-        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, CONVERSATION, false, ""));
-        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, CONVERSATION, false, ""));
-
-        Map<String, String> payload = new HashMap<>();
-        payload.put("k1", "v1");
-        payload.put("k2", "v2");
-        QaUser.campaignTriggeredConversation("myevent", payload, false, qaCampaignInfoMap);
-
-        // @formatter:off
-        String logDetails =
-                "{" +
-                        "\"event_name\":\"myevent\"," +
-                        "\"event_payload\":{" +
-                                "\"k1\":\"v1\"," +
-                                "\"k2\":\"v2\"" +
-                            "}," +
-                        "\"displayed\":false," +
-                        "\"reason\":\"The loaded campaigns returned no conversation\"," +
-                        "\"campaigns\":[" +
-                            "{" +
-                                "\"id\":1," +
-                                "\"variant_id\":11," +
-                                "\"type\":\"conversation\"," +
-                                "\"displayed\":false," +
-                                "\"reason\":\"\"" +
-                            "}," +
-                            "{" +
-                                "\"id\":2," +
-                                "\"variant_id\":22," +
-                                "\"type\":\"conversation\"," +
-                                "\"displayed\":false," +
-                                "\"reason\":\"\"" +
-                            "}" +
-                        "]" +
-                 "}";
-        // @formatter:on
-        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
-        verifyEventQueued(qaUserSpy, event);
-    }
-
-    @Test
-    public void testCampaignTriggeredConversationDisplayed() {
-
-        QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
-        QaUser.update();
-        qaUser = QaUser.getInstance();
-        assertTrue(QaUser.isLoggingEnabled());
-
-        QaUser qaUserSpy = Mockito.spy(qaUser);
-        QaUser.instance = qaUserSpy;
-
-        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
-        Mockito.doReturn(999L).when(qaUserSpy).getTime();
-
-        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
-        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, CONVERSATION, false, ""));
-        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, CONVERSATION, true, ""));
-
-        Map<String, String> payload = new HashMap<>();
-        payload.put("k1", "v1");
-        payload.put("k2", "v2");
-        QaUser.campaignTriggeredConversation("myevent", payload, true, qaCampaignInfoMap);
-
-        // @formatter:off
-        String logDetails =
-                "{" +
-                        "\"event_name\":\"myevent\"," +
-                        "\"event_payload\":{" +
-                                "\"k1\":\"v1\"," +
-                                "\"k2\":\"v2\"" +
-                            "}," +
-                        "\"displayed\":true," +
-                        "\"reason\":\"\"," +
-                        "\"campaigns\":[" +
-                            "{" +
-                                "\"id\":1," +
-                                "\"variant_id\":11," +
-                                "\"type\":\"conversation\"," +
-                                "\"displayed\":false," +
-                                "\"reason\":\"\"" +
-                            "}," +
-                            "{" +
-                                "\"id\":2," +
-                                "\"variant_id\":22," +
-                                "\"type\":\"conversation\"," +
-                                "\"displayed\":true," +
-                                "\"reason\":\"\"" +
-                            "}" +
-                        "]" +
                  "}";
         // @formatter:on
         String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
@@ -346,103 +226,6 @@ public class QaUserTest extends SwrveBaseTest {
                         "}" +
                     "]" +
                 "}";
-        // @formatter:on
-        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
-        verifyEventQueued(qaUserSpy, event);
-    }
-
-    @Test
-    public void testCampaignTriggeredIamNoDisplay() {
-
-        QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
-        QaUser.update();
-        qaUser = QaUser.getInstance();
-        assertTrue(QaUser.isLoggingEnabled());
-
-        QaUser qaUserSpy = Mockito.spy(qaUser);
-        QaUser.instance = qaUserSpy;
-
-        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
-        Mockito.doReturn(999L).when(qaUserSpy).getTime();
-
-        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
-        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, IAM, false, ""));
-        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, IAM, false, ""));
-
-        Map<String, String> payload = new HashMap<>();
-        payload.put("k1", "v1");
-        payload.put("k2", "v2");
-        QaUser.campaignTriggeredMessageNoDisplay("myevent", payload);
-
-        // @formatter:off
-        String logDetails =
-                "{" +
-                    "\"event_name\":\"myevent\"," +
-                    "\"event_payload\":{" +
-                        "\"k1\":\"v1\"," +
-                        "\"k2\":\"v2\"" +
-                    "}," +
-                    "\"displayed\":false," +
-                    "\"reason\":\"No In App Message triggered because Conversation displayed\"," +
-                    "\"campaigns\":[]" +
-                "}";
-        // @formatter:on
-        String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
-        verifyEventQueued(qaUserSpy, event);
-    }
-
-    @Test
-    public void testCampaignTriggeredIamDisplayed() {
-
-        QaUser qaUser = QaUser.getInstance();
-        Mockito.doReturn(qaJsonTrue).when(swrveCommonSpy).getCachedData(qaUser.userId, CACHE_QA);
-        QaUser.update();
-        qaUser = QaUser.getInstance();
-        assertTrue(QaUser.isLoggingEnabled());
-
-        QaUser qaUserSpy = Mockito.spy(qaUser);
-        QaUser.instance = qaUserSpy;
-
-        Mockito.doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(Mockito.anyLong());
-        Mockito.doReturn(999L).when(qaUserSpy).getTime();
-
-        Map<Integer, QaCampaignInfo> qaCampaignInfoMap = new HashMap<>();
-        qaCampaignInfoMap.put(1, new QaCampaignInfo(1, 11, IAM, false, ""));
-        qaCampaignInfoMap.put(2, new QaCampaignInfo(2, 22, IAM, true, ""));
-
-        Map<String, String> payload = new HashMap<>();
-        payload.put("k1", "v1");
-        payload.put("k2", "v2");
-        QaUser.campaignTriggeredConversation("myevent", payload, true, qaCampaignInfoMap);
-
-        // @formatter:off
-        String logDetails =
-                "{" +
-                        "\"event_name\":\"myevent\"," +
-                        "\"event_payload\":{" +
-                                "\"k1\":\"v1\"," +
-                                "\"k2\":\"v2\"" +
-                            "}," +
-                        "\"displayed\":true," +
-                        "\"reason\":\"\"," +
-                        "\"campaigns\":[" +
-                            "{" +
-                                "\"id\":1," +
-                                "\"variant_id\":11," +
-                                "\"type\":\"iam\"," +
-                                "\"displayed\":false," +
-                                "\"reason\":\"\"" +
-                            "}," +
-                            "{" +
-                                "\"id\":2," +
-                                "\"variant_id\":22," +
-                                "\"type\":\"iam\"," +
-                                "\"displayed\":true," +
-                                "\"reason\":\"\"" +
-                            "}" +
-                        "]" +
-                 "}";
         // @formatter:on
         String event = getExpectedEvent("sdk", "campaign-triggered", logDetails);
         verifyEventQueued(qaUserSpy, event);

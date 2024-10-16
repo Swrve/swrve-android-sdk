@@ -1,26 +1,13 @@
 package com.swrve.sdk.config;
 
 import com.swrve.sdk.messaging.SwrveEmbeddedListener;
-import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 
 public class SwrveEmbeddedMessageConfig {
 
-    protected SwrveEmbeddedMessageListener embeddedMessageListener;
     protected SwrveEmbeddedListener embeddedListener;
 
     private SwrveEmbeddedMessageConfig(SwrveEmbeddedMessageConfig.Builder builder) {
-        this.embeddedMessageListener = builder.embeddedMessageListener;
         this.embeddedListener = builder.embeddedListener;
-    }
-
-    /**
-     * Custom listener which returns embeddedMessageListener
-     * @deprecated Use SwrveEmbeddedListener
-     * @return The custom listener
-     */
-    @Deprecated
-    public SwrveEmbeddedMessageListener getEmbeddedMessageListener() {
-        return embeddedMessageListener;
     }
 
     /**
@@ -33,24 +20,12 @@ public class SwrveEmbeddedMessageConfig {
     }
 
     public static class Builder {
-        private SwrveEmbeddedMessageListener embeddedMessageListener = null;
         private SwrveEmbeddedListener embeddedListener = null;
 
         /**
          * Builder constructor
          */
         public Builder() {
-        }
-
-        /**
-         * listener to process embedded campaign data for custom rendering
-         *
-         * @param embeddedMessageListener The custom listener
-         * @return this builder
-         */
-        public SwrveEmbeddedMessageConfig.Builder embeddedMessageListener(SwrveEmbeddedMessageListener embeddedMessageListener) {
-            this.embeddedMessageListener = embeddedMessageListener;
-            return this;
         }
 
         /**

@@ -81,8 +81,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     String getPersonalizedText(String text, Map<String, String> personalizationProperties);
 
-    String getAppStoreURLForApp(int appId);
-
     File getCacheDir();
 
     Date getInitialisedTime();
@@ -114,8 +112,6 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     void identify(final String userId, final SwrveIdentityResponse identityResponse);
 
     String getExternalUserId();
-
-    void setCustomPayloadForConversationInput(Map payload);
 
     void start(Activity context);
 

@@ -36,8 +36,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.swrve.sdk.config.SwrveConfigBase;
-import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.device.AndroidTelephonyManagerWrapper;
 import com.swrve.sdk.device.ITelephonyManager;
 import com.swrve.sdk.localstorage.InMemoryLocalStorage;
@@ -46,11 +44,9 @@ import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveCampaignState;
-import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
@@ -90,7 +86,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "10.16.0";
+    protected static String version = "11.0.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
     protected static final int PUSH_INBOX_VERSION = 1;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
@@ -124,7 +120,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected String language;
     protected C config;
     protected ISwrveEventListener eventListener;
-    protected SwrveEmbeddedMessageListener embeddedMessageListener;
     protected SwrveEmbeddedListener embeddedListener;
     protected SwrveMessagePersonalizationProvider personalizationProvider;
     protected SwrveResourcesListener resourcesListener;
@@ -145,7 +140,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected Map<Integer, SwrveCampaignState> campaignsState;
     protected Map<String, String> realTimeUserProperties;
     protected SwrveAssetsManager swrveAssetsManager;
-    protected SparseArray<String> appStoreURLs;
     protected boolean autoShowMessagesEnabled;
     protected Integer campaignsAndResourcesFlushFrequency;
     protected Integer campaignsAndResourcesFlushRefreshDelay;
@@ -646,7 +640,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         Activity activity = activityContext.get();
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
-                                autoShowConversation(swrve);
                                 autoShowMessage(swrve);
                             });
                         }
@@ -673,15 +666,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     } else if (embeddedListener != null && message instanceof SwrveEmbeddedMessage) {
                         Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
                         embeddedListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties, message.isControl());
-                    } else if (embeddedMessageListener != null && message instanceof SwrveEmbeddedMessage) {
-                        if (message.isControl()) {
-                            SwrveLogger.v("SwrveSDK: %s is a control message and will not be displayed.", message.getId());
-                            message.getCampaign().messageWasHandledOrShownToUser(); // control campaigns should never been shown to user but mark campaign as shown
-                            swrve.queueMessageImpressionEvent(message.getId(), "true");
-                        } else {
-                            Map<String, String> personalizationProperties = retrievePersonalizationProperties(null, null);
-                            embeddedMessageListener.onMessage(swrve.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
-                        }
                     }
                     autoShowMessagesEnabled = false;
                 }
@@ -762,22 +746,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return filterStartGeoSDKCampaign;
     }
 
-    protected void autoShowConversation(SwrveBase<T, C> swrve) {
-        try {
-            if (autoShowMessagesEnabled) {
-                SwrveConversation conversation = swrve.getConversationForEvent(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, new HashMap<String, String>());
-                if (conversation != null) {
-                    ConversationActivity.showConversation(getContext(), conversation, config.getOrientation());
-                    conversation.getCampaign().messageWasHandledOrShownToUser();
-                    autoShowMessagesEnabled = false;
-                    QaUser.campaignTriggeredMessageNoDisplay(SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, null);
-                }
-            }
-        } catch (Exception exp) {
-            SwrveLogger.e("Could not launch conversation automatically.", exp);
-        }
-    }
-
     /*
      * Ensure that after SwrveConfig.autoShowMessagesMaxDelay milliseconds autoshow is disabled
      */
@@ -792,7 +760,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }, config.getInAppMessageConfig().getAutoShowMessagesMaxDelay(), TimeUnit.MILLISECONDS);
     }
 
-    @SuppressLint("UseSparseArrays")
     protected void loadCampaignsFromJSON(String userId, JSONObject json, Map<Integer, SwrveCampaignState> states, boolean loadPreviousCampaignState) {
         if (json == null) {
             SwrveLogger.i("NULL JSON for campaigns, aborting load.");
@@ -830,15 +797,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 while (gamesDataIt.hasNext()) {
                     String appId = gamesDataIt.next();
                     JSONObject gameData = gamesData.getJSONObject(appId);
-                    if (gameData.has("app_store_url")) {
-                        String url = gameData.getString("app_store_url");
-                        this.appStoreURLs.put(Integer.parseInt(appId), url);
-                        if (SwrveHelper.isNullOrEmpty(url)) {
-                            SwrveLogger.e("App store link %s is empty!", appId);
-                        } else {
-                            SwrveLogger.i("App store Link %s: %s", appId, url);
-                        }
-                    }
                 }
             }
 
@@ -900,14 +858,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
                 if (passesAllFilters) {
                     SwrveBaseCampaign campaign = null;
-                    if (campaignData.has("conversation")) {
-                        int conversationVersionDownloaded = campaignData.optInt("conversation_version", 1);
-                        if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
-                            campaign = loadConversationCampaignFromJSON(campaignData, assetsQueue);
-                        } else {
-                            SwrveLogger.i("Conversation version %s cannot be loaded with this SDK version", conversationVersionDownloaded);
-                        }
-                    } else if (campaignData.has("message")) {
+                    if (campaignData.has("message")) {
                         campaign = loadCampaignFromJSON(campaignData, campaignAssetQueue, personalizationProperties);
                     } else if (campaignData.has("embedded_message")) {
                         campaign = loadEmbeddedCampaignFromJSON(campaignData);
@@ -931,10 +882,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                         SwrveLogger.i("Got campaign with id %s", campaign.getId());
 
                         if (QaUser.isLoggingEnabled()) {
-                            if (campaign instanceof SwrveConversationCampaign) {
-                                int variantId = ((SwrveConversationCampaign) campaign).getConversation().getId();
-                                qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, campaign.getCampaignType(), false, ""));
-                            } else if (campaign instanceof SwrveInAppCampaign) {
+                            if (campaign instanceof SwrveInAppCampaign) {
                                 int variantId = ((SwrveInAppCampaign) campaign).getVariantId();
                                 qaCampaignInfoList.add(new QaCampaignInfo(campaign.getId(), variantId, campaign.getCampaignType(), false, ""));
                             } else if (campaign instanceof SwrveEmbeddedCampaign) {
@@ -990,10 +938,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected SwrveEmbeddedCampaign loadEmbeddedCampaignFromJSON(JSONObject campaignData) throws JSONException {
         return new SwrveEmbeddedCampaign(this, campaignDisplayer, campaignData);
-    }
-
-    protected SwrveConversationCampaign loadConversationCampaignFromJSON(JSONObject campaignData, Set<SwrveAssetsQueueItem> assetsQueue) throws JSONException {
-        return new SwrveConversationCampaign(this, campaignDisplayer, campaignData, assetsQueue);
     }
 
     protected void loadPIMFromJSONArray(JSONArray pimJsonArray, String userId) {

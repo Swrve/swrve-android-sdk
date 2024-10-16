@@ -111,7 +111,9 @@ public class MessageCenterFragment extends Fragment {
             final SwrveBaseCampaign item = getItem(position);
 
             // Subject
-            subjectTextView.setText(item.getSubject());
+            if(item.getMessageCenterDetails() != null) {
+                subjectTextView.setText(item.getMessageCenterDetails().getSubject());
+            }
 
             // Status icon
             switch (item.getStatus()) {

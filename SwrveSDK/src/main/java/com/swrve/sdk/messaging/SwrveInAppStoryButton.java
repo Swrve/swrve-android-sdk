@@ -9,10 +9,14 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.Gravity;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.swrve.sdk.R;
@@ -82,6 +86,22 @@ public class SwrveInAppStoryButton extends MaterialButton {
         setBackgroundTintMode(PorterDuff.Mode.SRC_ATOP);
 
         setRippleColor(null);
+
+        enableApplyWindowInsets();
+
+    }
+
+    private void enableApplyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(this, (v, allInsets) -> {
+                Insets insets = allInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                params.topMargin += insets.top;
+                params.rightMargin += insets.right;
+                params.leftMargin += insets.left;
+                setLayoutParams(params);
+                ViewCompat.setOnApplyWindowInsetsListener(this, null);
+                return WindowInsetsCompat.CONSUMED;
+        });
     }
 
     @Override

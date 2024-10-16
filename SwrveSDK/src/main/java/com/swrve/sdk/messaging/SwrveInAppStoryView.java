@@ -6,15 +6,16 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
-
-import com.swrve.sdk.SwrveLogger;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -118,6 +119,21 @@ public class SwrveInAppStoryView extends View {
         params.rightMargin = settings.getRightPadding();
 
         setLayoutParams(params);
+
+        enableApplyWindowInsets();
+    }
+
+    private void enableApplyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(this, (v, allInsets) -> {
+                Insets insets = allInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                params.topMargin += insets.top;
+                params.leftMargin += insets.left;
+                params.rightMargin += insets.right;
+                setLayoutParams(params);
+                ViewCompat.setOnApplyWindowInsetsListener(this, null);
+                return WindowInsetsCompat.CONSUMED;
+            });
     }
 
     @Override
@@ -222,7 +238,7 @@ public class SwrveInAppStoryView extends View {
     }
 
     public int getSegmentDuration() {
-        if(segmentDurations != null && segmentDurations.size() > currentIndex ) {
+        if(segmentDurations != null && currentIndex >= 0 && segmentDurations.size() > currentIndex ) {
             return segmentDurations.get(currentIndex);
         } else {
             return segmentDuration;

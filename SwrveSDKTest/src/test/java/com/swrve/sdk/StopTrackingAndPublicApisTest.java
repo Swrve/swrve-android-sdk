@@ -152,9 +152,6 @@ public class StopTrackingAndPublicApisTest extends SwrveBaseTest {
         SwrveSDK.refreshCampaignsAndResources();
         verify(swrveSpy, never())._refreshCampaignsAndResources();
 
-        String appStoreUrl = SwrveSDK.getAppStoreURLForApp(572);
-        assertNull(appStoreUrl);
-
         File cacheDir = SwrveSDK.getCacheDir();
         assertNotNull(cacheDir);
 

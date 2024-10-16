@@ -165,7 +165,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_in_app_story.json", "asset1", "asset2");
         List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-        assertEquals(2, campaigns.size());
+        assertEquals(3, campaigns.size());
         SwrveInAppCampaign campaign = (SwrveInAppCampaign) campaigns.get(0);
         SwrveMessageFormat format = campaign.getMessage().getFormats().get(0);
         format.getStorySettings().setLastPageProgression(SwrveStorySettings.LastPageProgression.STOP);
@@ -202,7 +202,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_in_app_story.json", "asset1", "asset2");
         List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-        assertEquals(2, campaigns.size());
+        assertEquals(3, campaigns.size());
         SwrveInAppCampaign campaign = (SwrveInAppCampaign) campaigns.get(0);
         SwrveMessageFormat format = campaign.getMessage().getFormats().get(0);
         format.getStorySettings().setLastPageProgression(SwrveStorySettings.LastPageProgression.DISMISS);
@@ -249,7 +249,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_in_app_story.json", "asset1", "asset2");
         List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-        assertEquals(2, campaigns.size());
+        assertEquals(3, campaigns.size());
         SwrveInAppCampaign campaign = (SwrveInAppCampaign) campaigns.get(0);
         SwrveMessageFormat format = campaign.getMessage().getFormats().get(0);
         format.getStorySettings().setLastPageProgression(SwrveStorySettings.LastPageProgression.LOOP);
@@ -462,6 +462,21 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         });
         assertEquals(2,storyView.getCurrentIndex());
         activity.finish();
+    }
+
+    @Test
+    public void testStoryWithNoPages() throws Exception {
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_in_app_story.json", "asset1", "asset2");
+        SwrveTestUtils.copyFileFromAssetsToCache(mActivity, swrveSpy, "73efb349f6e6ab7753bdfc1073d2035d607bbd40");
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
+
+        //Test Story campaign with no pages set
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 167);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+        assertTrue(activity.isFinishing());
     }
 
     private SwrveMessageView waitForStoryProgression(SwrveInAppMessageActivity activity, long toPageId) {

@@ -124,9 +124,6 @@ public class UnsupportedTest extends SwrveBaseTest {
 
         sdk.refreshCampaignsAndResources();
 
-        String appStoreUrl = sdk.getAppStoreURLForApp(572);
-        assertNull(appStoreUrl);
-
         File cacheDir = sdk.getCacheDir();
         assertNotNull(cacheDir);
 

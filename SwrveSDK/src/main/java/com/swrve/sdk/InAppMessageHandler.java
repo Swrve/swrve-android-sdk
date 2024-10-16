@@ -114,9 +114,6 @@ class InAppMessageHandler {
             case Custom:
                 customButtonClicked(button, resolvedAction, pageId, pageName, resolvedText);
                 break;
-            case Install:
-                installButtonClicked(button, pageId, pageName);
-                break;
             case CopyToClipboard:
                 clipboardButtonClicked(button, resolvedAction, pageId, pageName, resolvedText);
                 break;
@@ -143,37 +140,6 @@ class InAppMessageHandler {
         queueButtonUserUpdates(button.getUserUpdates());
     }
 
-    private void installButtonClicked(SwrveButton button, long pageId, String pageName) {
-        sdk.queueMessageClickEvent(button, pageId, pageName);
-        message.getCampaign().messageDismissed();
-
-        String appInstallLink = sdk.getAppStoreURLForApp(button.getAppId());
-        // In case the install link was not set correctly log issue and return early
-        // without calling the install button listener not starting the install intent
-        if (SwrveHelper.isNullOrEmpty(appInstallLink)) {
-            SwrveLogger.e("Could not launch install action as there was no app install link found. Please supply a valid app install link.");
-            return;
-        }
-        boolean freeEvent = true;
-        if (sdk.getInstallButtonListener() != null) {
-            freeEvent = sdk.getInstallButtonListener().onAction(appInstallLink);
-        }
-        if (freeEvent) {
-            // Launch app store
-            try {
-                Uri uri = Uri.parse(appInstallLink);
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-            } catch (android.content.ActivityNotFoundException anfe) {
-                SwrveLogger.e("Couldn't launch install action. No activity found for: %s", anfe, appInstallLink);
-            } catch (Exception exp) {
-                SwrveLogger.e("Couldn't launch install action for: %s", exp, appInstallLink);
-            }
-        }
-        qaUserCampaignButtonClicked(button.getAction(), button.getActionType(), button.getName());
-    }
-
     private void customButtonClicked(SwrveButton button, String resolvedAction, long pageId, String pageName, String resolvedText) {
         sdk.queueMessageClickEvent(button, pageId, pageName);
         message.getCampaign().messageDismissed();
@@ -184,9 +150,6 @@ class InAppMessageHandler {
             sdk.getMessageListener().onAction(context.getApplicationContext(), Custom, messageDetails, selectedButton);
             // if this listener is implemented we still want to process deeplinks internally. Customer can overide this by implementing the SwrveDeeplinkListener. Note: This is different behaviour to the deprecated getCustomButtonListener below.
             processDeeplink(resolvedAction, button.getName());
-        } else if (sdk.getCustomButtonListener() != null) {
-            SwrveLogger.d("SwrveSDK: Passing to CustomButtonListener to open: %s", resolvedAction);
-            sdk.getCustomButtonListener().onAction(resolvedAction, message.getName());
         } else {
             processDeeplink(resolvedAction, button.getName());
         }
@@ -214,20 +177,18 @@ class InAppMessageHandler {
                 SwrveMessageDetails messageDetails = getMessageDetails(message, format);
                 SwrveMessageButtonDetails selectedButton = new SwrveMessageButtonDetails(button.getName(), resolvedText, button.getActionType(), resolvedAction);
                 sdk.getMessageListener().onAction(context.getApplicationContext(), CopyToClipboard, messageDetails, selectedButton);
-            } else if (sdk.getClipboardButtonListener() != null) {
-                sdk.getClipboardButtonListener().onAction(resolvedAction);
             }
         } catch (Exception e) {
             SwrveLogger.e("Couldn't copy text to clipboard: %s", e, resolvedAction);
         }
+
+        qaUserCampaignButtonClicked(button.getAction(), SwrveActionType.CopyToClipboard , button.getName());
     }
 
     private SwrveMessageDetails getMessageDetails(SwrveMessage message, SwrveMessageFormat messageFormat) {
-        String subject;
+        String subject = "";
         if (message.getCampaign() != null && message.getCampaign().getMessageCenterDetails() != null) {
             subject = message.getCampaign().getMessageCenterDetails().getSubject();
-        } else {
-            subject = message.getCampaign().getSubject();
         }
 
         List<SwrveMessageButtonDetails> buttons = new ArrayList<>();
@@ -323,8 +284,6 @@ class InAppMessageHandler {
             }
             SwrveMessageDetails messageDetails = getMessageDetails(message, format);
             sdk.getMessageListener().onAction(context.getApplicationContext(), SwrveInAppMessageListener.SwrveMessageAction.Dismiss, messageDetails, swrveMessageButtonDetails);
-        } else if (sdk.getDismissButtonListener() != null) {
-            sdk.getDismissButtonListener().onAction(message.getCampaign().getSubject(), buttonName, message.getName());
         }
         qaUserCampaignButtonClicked(buttonAction, Dismiss, buttonName);
     }

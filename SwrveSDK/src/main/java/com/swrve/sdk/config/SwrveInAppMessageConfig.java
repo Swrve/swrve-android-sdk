@@ -3,12 +3,7 @@ package com.swrve.sdk.config;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.StateListDrawable;
-
-import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
-import com.swrve.sdk.messaging.SwrveCustomButtonListener;
-import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveInAppWindowListener;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
 import com.swrve.sdk.messaging.SwrveMessageFocusListener;
 import com.swrve.sdk.messaging.SwrveInAppMessageListener;
 import com.swrve.sdk.messaging.SwrveMessagePersonalizationProvider;
@@ -17,16 +12,11 @@ public class SwrveInAppMessageConfig {
 
     private int defaultBackgroundColor;
     private int clickColor;
-    private boolean hideToolbar;
     private int personalizedTextBackgroundColor;
     private int personalizedTextForegroundColor;
     private Typeface personalizedTextTypeface;
     private long autoShowMessagesMaxDelay;
 
-    private SwrveInstallButtonListener installButtonListener;
-    private SwrveCustomButtonListener customButtonListener;
-    private SwrveDismissButtonListener dismissButtonListener;
-    private SwrveClipboardButtonListener clipboardButtonListener;
     private SwrveMessagePersonalizationProvider personalizationProvider;
     private SwrveInAppWindowListener windowListener;
     private SwrveMessageFocusListener messageFocusListener;
@@ -36,15 +26,10 @@ public class SwrveInAppMessageConfig {
     private SwrveInAppMessageConfig(Builder builder) {
         this.defaultBackgroundColor = builder.defaultBackgroundColor;
         this.clickColor = builder.clickColor;
-        this.hideToolbar = builder.hideToolbar;
         this.personalizedTextBackgroundColor = builder.personalizedTextBackgroundColor;
         this.personalizedTextForegroundColor = builder.personalizedTextForegroundColor;
         this.personalizedTextTypeface = builder.personalizedTextTypeface;
         this.autoShowMessagesMaxDelay = builder.autoShowMessagesMaxDelay;
-        this.installButtonListener = builder.installButtonListener;
-        this.customButtonListener = builder.customButtonListener;
-        this.dismissButtonListener = builder.dismissButtonListener;
-        this.clipboardButtonListener = builder.clipboardButtonListener;
         this.personalizationProvider = builder.personalizationProvider;
         this.windowListener = builder.windowListener;
         this.messageFocusListener = builder.messageFocusListener;
@@ -68,13 +53,6 @@ public class SwrveInAppMessageConfig {
      */
     public int getClickColor() {
         return clickColor;
-    }
-
-    /**
-     * @return Whether the SDK will hide the toolbar when displaying in-app messages.
-     */
-    public boolean isHideToolbar() {
-        return hideToolbar;
     }
 
     /**
@@ -111,45 +89,6 @@ public class SwrveInAppMessageConfig {
      */
     public long getAutoShowMessagesMaxDelay() {
         return autoShowMessagesMaxDelay;
-    }
-
-
-    /**
-     * Custom listener to process in-app message install button clicks.
-     *
-     * @return The custom listener
-     */
-    public SwrveInstallButtonListener getInstallButtonListener() {
-        return installButtonListener;
-    }
-
-    /**
-     * Custom listener to process in-app message custom button clicks.
-     * @deprecated Use SwrveMessageListener
-     * @return The custom listener
-     */
-    @Deprecated
-    public SwrveCustomButtonListener getCustomButtonListener() {
-        return customButtonListener;
-    }
-
-    /**
-     * In-app button listener to get notified of in-app message dismiss button clicks.
-     * @deprecated Use SwrveMessageListener
-     * @return The dismiss listener
-     */
-    @Deprecated
-    public SwrveDismissButtonListener getDismissButtonListener() {
-        return dismissButtonListener;
-    }
-
-    /**
-     * Custom listener to process in-app message copy-to-clipboard button clicks.
-     * @deprecated Use SwrveMessageListener
-     * @return The custom listener
-     */
-    public SwrveClipboardButtonListener getClipboardButtonListener() {
-        return clipboardButtonListener;
     }
 
     /**
@@ -200,16 +139,11 @@ public class SwrveInAppMessageConfig {
     public static class Builder {
         private int defaultBackgroundColor = Color.TRANSPARENT; // Default in-app background color used if none is specified in the template.
         private int clickColor = Color.argb(100, 0, 0, 0); // Default button click color for IAM
-        private boolean hideToolbar = true; // Hide the toolbar when displaying in-app messages.
         private int personalizedTextBackgroundColor = Color.TRANSPARENT; // Default Background color for Personalized Text in IAMs
         private int personalizedTextForegroundColor = Color.BLACK; // Default Text Color for Personalized Text in IAMs
         private Typeface personalizedTextTypeface = null; // Default will use System Font
         private long autoShowMessagesMaxDelay = 5000; // Maximum delay for in-app messages to appear after initialization.
 
-        protected SwrveInstallButtonListener installButtonListener;
-        protected SwrveCustomButtonListener customButtonListener;
-        protected SwrveDismissButtonListener dismissButtonListener;
-        protected SwrveClipboardButtonListener clipboardButtonListener;
         protected SwrveMessagePersonalizationProvider personalizationProvider;
         protected SwrveInAppWindowListener windowListener;
         protected SwrveMessageFocusListener messageFocusListener;
@@ -242,18 +176,6 @@ public class SwrveInAppMessageConfig {
             this.clickColor = clickColor;
             return this;
         }
-
-        /**
-         * Hide the toolbar when displaying in-app messages.
-         *
-         * @param hideToolbar true to hide the toolbar when displaying in-app messages\
-         * @return this builder
-         */
-        public Builder hideToolbar(boolean hideToolbar) {
-            this.hideToolbar = hideToolbar;
-            return this;
-        }
-
 
         /**
          * Set the in-app message personalized text background color. Used for the background of the text
@@ -296,50 +218,6 @@ public class SwrveInAppMessageConfig {
          */
         public Builder autoShowMessagesMaxDelay(long autoShowMessagesMaxDelay) {
             this.autoShowMessagesMaxDelay = autoShowMessagesMaxDelay;
-            return this;
-        }
-
-        /**
-         * Custom listener to process in-app message install button clicks.
-         *
-         * @param installButtonListener The custom listener
-         * @return this builder
-         */
-        public Builder installButtonListener(SwrveInstallButtonListener installButtonListener) {
-            this.installButtonListener = installButtonListener;
-            return this;
-        }
-
-        /**
-         * Custom listener to process in-app message custom button clicks.
-         *
-         * @param customButtonListener The custom listener
-         * @return this builder
-         */
-        public Builder customButtonListener(SwrveCustomButtonListener customButtonListener) {
-            this.customButtonListener = customButtonListener;
-            return this;
-        }
-
-        /**
-         * In-app button listener to get notified of in-app message dismiss button clicks.
-         *
-         * @param dismissButtonListener The in-app dismiss button listener
-         * @return this builder
-         */
-        public Builder dismissButtonListener(SwrveDismissButtonListener dismissButtonListener) {
-            this.dismissButtonListener = dismissButtonListener;
-            return this;
-        }
-
-        /**
-         * Custom listener to process in-app message copy-to-clipboard button clicks.
-         *
-         * @param clipboardButtonListener The clipboard listener
-         * @return this builder
-         */
-        public Builder clipboardButtonListener(SwrveClipboardButtonListener clipboardButtonListener) {
-            this.clipboardButtonListener = clipboardButtonListener;
             return this;
         }
 

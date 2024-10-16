@@ -246,8 +246,6 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         swrveSpy.messageWasShownToUser(null);
         assertNoEventsWereQueued();
 
-        assertNull(swrveSpy.getAppStoreURLForApp(1));
-
         Date d1 = swrveSpy.getInitialisedTime();
         Date d2 = swrveSpy.getInitialisedTime();
         assertNotNull(d1);
@@ -281,13 +279,9 @@ public class SwrveInitModeTest extends SwrveBaseTest {
 
         assertNotNull(swrveSpy.getUserId());
 
-        swrveSpy.queueConversationEvent("name", "payload", "page", 0, testMap);
         assertNoEventsWereQueued();
 
         assertNull(swrveSpy.getExternalUserId());
-
-        swrveSpy.setCustomPayloadForConversationInput(testMap);
-        assertNull(SwrveConversationEventHelper.getCustomPayload());
     }
 
     private void assertProcessedEngagedIntent() throws PendingIntent.CanceledException {

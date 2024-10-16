@@ -59,9 +59,6 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
             @Override
             public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) throws UnsupportedEncodingException {
                 String response = null;
-                if (params.containsValue("295412")) {
-                    response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_conversation.json");
-                }
                 if (params.containsValue("295411")) {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message.json");
                 }

@@ -8,12 +8,9 @@ import android.os.Build;
 
 import androidx.core.content.ContextCompat;
 
-import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
@@ -26,12 +23,10 @@ import java.util.Map;
 class SwrveEventListener implements ISwrveEventListener {
 
     private final SwrveBase<?, ?> sdk;
-    private final SwrveEmbeddedMessageListener embeddedMessageListener;
     private final SwrveEmbeddedListener embeddedListener;
 
-    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveEmbeddedMessageListener embeddedMessageListener, SwrveEmbeddedListener embeddedListener) {
+    public SwrveEventListener(SwrveBase<?, ?> sdk, SwrveEmbeddedListener embeddedListener) {
         this.sdk = sdk;
-        this.embeddedMessageListener = embeddedMessageListener;
         this.embeddedListener = embeddedListener;
     }
 
@@ -42,14 +37,6 @@ class SwrveEventListener implements ISwrveEventListener {
         }
 
         handleNotificationPermissionEvents(sdk.getActivityContext(), eventName);
-
-        SwrveConversation conversation = sdk.getConversationForEvent(eventName, payload);
-        if (conversation != null) {
-            ConversationActivity.showConversation(sdk.getContext(), conversation, sdk.config.getOrientation());
-            conversation.getCampaign().messageWasHandledOrShownToUser();
-            QaUser.campaignTriggeredMessageNoDisplay(eventName, payload);
-            return;
-        }
 
         SwrveOrientation deviceOrientation = SwrveOrientation.parse(sdk.getContext().getResources().getConfiguration().orientation);
         SwrveBaseMessage message = sdk.getBaseMessageForEvent(eventName, payload, deviceOrientation);
@@ -70,10 +57,6 @@ class SwrveEventListener implements ISwrveEventListener {
                 } else {
                     if (message.isControl()) {
                         handleControlCampaign(message, "true");
-                    } else {
-                        if (embeddedMessageListener != null) {
-                            embeddedMessageListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties);
-                        }
                     }
                 }
             }

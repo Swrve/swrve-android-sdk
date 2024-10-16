@@ -114,17 +114,6 @@ public abstract class SwrveBaseCampaign {
     }
 
     /**
-     * This is populated by the Campaign description field from your Dashboard. Migrate to using the SwrveMessageCenterDetails subject;
-     *
-     * @return the name of the campaign.
-     * @deprecated Use SwrveMessageCenterDetails subject instead.
-     */
-    @Deprecated
-    public String getSubject() {
-        return subject;
-    }
-
-    /**
      * @param date Current date
      * @return true if the campaign is active at the given time.
      */

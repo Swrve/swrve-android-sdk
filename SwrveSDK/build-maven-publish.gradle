@@ -149,11 +149,6 @@ task androidHuaweiSourcesJar(type: Jar) {
                                 dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
                                 dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
                                 dependencyNode.appendNode('scope', 'compile')
-                            } else if (it.name == 'SwrveConversationSDK') {
-                                dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                                dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
-                                dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                                dependencyNode.appendNode('scope', 'compile')
                             } else {
                                 dependencyNode.appendNode('groupId', it.group)
                                 dependencyNode.appendNode('artifactId', it.name)
@@ -201,11 +196,6 @@ task androidHuaweiSourcesJar(type: Jar) {
                             if (it.name == 'SwrveSDKCommon') {
                                 dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
                                 dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
-                                dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                                dependencyNode.appendNode('scope', 'compile')
-                            } else if (it.name == 'SwrveConversationSDK') {
-                                dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                                dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
                                 dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
                                 dependencyNode.appendNode('scope', 'compile')
                             } else {
@@ -257,11 +247,6 @@ task androidHuaweiSourcesJar(type: Jar) {
                                 dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
                                 dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
                                 dependencyNode.appendNode('scope', 'compile')
-                            } else if (it.name == 'SwrveConversationSDK') {
-                                dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                                dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
-                                dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                                dependencyNode.appendNode('scope', 'compile')
                             } else {
                                 dependencyNode.appendNode('groupId', it.group)
                                 dependencyNode.appendNode('artifactId', it.name)
@@ -309,11 +294,6 @@ task androidHuaweiSourcesJar(type: Jar) {
                             if (it.name == 'SwrveSDKCommon') {
                                 dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
                                 dependencyNode.appendNode('artifactId', project.SWRVE_COMMON_ARTIFACT_ID)
-                                dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
-                                dependencyNode.appendNode('scope', 'compile')
-                            } else if (it.name == 'SwrveConversationSDK') {
-                                dependencyNode.appendNode('groupId', project.SWRVE_GROUP_ID)
-                                dependencyNode.appendNode('artifactId', project.SWRVE_CONVERSATIONS_ARTIFACT_ID)
                                 dependencyNode.appendNode('version', project.SWRVE_SDK_VERSION)
                                 dependencyNode.appendNode('scope', 'compile')
                             } else {

@@ -205,31 +205,11 @@ public class QaUser {
         }
     }
 
-    static void campaignTriggeredConversation(String eventName, Map<String, String> eventPayload, boolean displayed, Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
-        try {
-            QaUser qaUser = QaUser.getInstance();
-            String noCampaignTriggeredReason = displayed ? "" : "The loaded campaigns returned no conversation";
-            qaUser._campaignTriggered(eventName, eventPayload, displayed, noCampaignTriggeredReason, qaCampaignInfoMap);
-        } catch (Exception e) {
-            SwrveLogger.e("Error trying to queue campaign-triggered qalogevent.", e);
-        }
-    }
-
     static void campaignTriggeredMessage(String eventName, Map<String, String> eventPayload, boolean displayed, Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
         try {
             QaUser qaUser = QaUser.getInstance();
             String noCampaignTriggeredReason = displayed ? "" : "The loaded campaigns returned no message";
             qaUser._campaignTriggered(eventName, eventPayload, displayed, noCampaignTriggeredReason, qaCampaignInfoMap);
-        } catch (Exception e) {
-            SwrveLogger.e("Error trying to queue campaign-triggered qalogevent.", e);
-        }
-    }
-
-    static void campaignTriggeredMessageNoDisplay(String eventName, Map<String, String> eventPayload) {
-        try {
-            QaUser qaUser = QaUser.getInstance();
-            String noDisplayReason = "No In App Message triggered because Conversation displayed";
-            qaUser._campaignTriggered(eventName, eventPayload, false, noDisplayReason, new HashMap<Integer, QaCampaignInfo>());
         } catch (Exception e) {
             SwrveLogger.e("Error trying to queue campaign-triggered qalogevent.", e);
         }

@@ -24,8 +24,6 @@ import android.content.Intent;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -87,30 +85,6 @@ public class StopTrackingTest extends SwrveBaseTest {
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
         intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
         SwrveInAppMessageActivity activity = Robolectric.buildActivity(SwrveInAppMessageActivity.class, intent).create().get();
-
-        // verify it is the current activity showing and not finishing
-        Activity activityCurrent = swrveSpy.activityContext.get();
-        assertEquals(activity, activityCurrent);
-        assertFalse(activityCurrent.isFinishing());
-
-        swrveSpy.stopTracking();
-
-        // verify it is finishing after stop
-        activityCurrent = swrveSpy.activityContext.get();
-        assertTrue(activityCurrent.isFinishing());
-    }
-
-    @Test
-    public void testStopTrackingAndConversation() throws Exception {
-
-        // build Conversation and show it
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "conversation_campaign.json", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f", "2617fb3c279e30dd7c180de8679a2e2d33cf3552");
-        SwrveConversation conversation = swrveSpy.getConversationForEvent("swrve.messages.showatsessionstart", new HashMap<>());
-        assertNotNull(conversation);
-        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), ConversationActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("conversation", conversation);
-        ConversationActivity activity = Robolectric.buildActivity(ConversationActivity.class, intent).create().get();
 
         // verify it is the current activity showing and not finishing
         Activity activityCurrent = swrveSpy.activityContext.get();

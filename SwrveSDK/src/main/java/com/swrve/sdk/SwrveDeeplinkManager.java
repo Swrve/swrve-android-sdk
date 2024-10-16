@@ -11,14 +11,10 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.conversations.SwrveConversation;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveConversationCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.rest.IRESTClient;
@@ -223,20 +219,7 @@ class SwrveDeeplinkManager {
         JSONObject jsonCampaign = json.getJSONObject("campaign");
         final Set<SwrveAssetsQueueItem> assetsQueue = new HashSet<>();
 
-        if (jsonCampaign.has("conversation")) {
-            JSONObject conversationJson = jsonCampaign.getJSONObject("conversation");
-            if (!hasValidFilters(conversationJson)) {
-                SwrveLogger.w("SwrveDeeplinkManager: has invalid filter. No campaigns loaded");
-                return;
-            }
-            int conversationVersionDownloaded = conversationJson.optInt("conversation_version", 1);
-            if (conversationVersionDownloaded <= ISwrveConversationSDK.CONVERSATION_VERSION) {
-                Swrve swrve = (Swrve) SwrveSDK.getInstance();
-                campaign = new SwrveConversationCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue);
-            } else {
-                SwrveLogger.i("SwrveDeeplinkManager: Conversation version %s cannot be loaded with this SDK version", conversationVersionDownloaded);
-            }
-        } else if (jsonCampaign.has("message")) {
+        if (jsonCampaign.has("message")) {
             Swrve swrve = (Swrve) SwrveSDK.getInstance();
             Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);;
             campaign = new SwrveInAppCampaign(swrve, this.swrveCampaignDisplayer, jsonCampaign, assetsQueue, properties);
@@ -268,19 +251,6 @@ class SwrveDeeplinkManager {
         return true;
     }
 
-    protected boolean hasValidFilters(JSONObject conversationJson) throws JSONException {
-        // Check filters (permission requests, platform)
-        boolean passesAllFilters = true;
-        if (conversationJson.has("filters")) {
-            JSONArray filters = conversationJson.getJSONArray("filters");
-            for (int ri = 0; ri < filters.length() && passesAllFilters; ri++) {
-                String lastCheckedFilter = filters.getString(ri);
-                passesAllFilters = supportsDeviceFilter(lastCheckedFilter);
-            }
-        }
-        return passesAllFilters;
-    }
-
     protected boolean supportsDeviceFilter(String requirement) {
         return SUPPORTED_REQUIREMENTS.contains(requirement.toLowerCase(Locale.ENGLISH));
     }
@@ -292,11 +262,7 @@ class SwrveDeeplinkManager {
     protected void showCampaign(SwrveBaseCampaign campaign, Context context, SwrveConfig config) {
         alreadySeenCampaignId = String.valueOf(campaign.getId());
         if (campaign != null) {
-            if (campaign instanceof SwrveConversationCampaign) {
-                SwrveConversation conversation = ((SwrveConversationCampaign) campaign).getConversation();
-                ConversationActivity.showConversation(context, conversation, config.getOrientation());
-                conversation.getCampaign().messageWasHandledOrShownToUser();
-            } else if (campaign instanceof SwrveInAppCampaign) {
+            if (campaign instanceof SwrveInAppCampaign) {
                 SwrveMessage message = ((SwrveInAppCampaign) campaign).getMessage();
 
                 Swrve swrve = (Swrve) SwrveSDK.getInstance();
@@ -317,12 +283,6 @@ class SwrveDeeplinkManager {
                         Swrve swrve = (Swrve) SwrveSDK.getInstance();
                         Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);
                         listener.onMessage(context, message, properties, message.isControl());
-                    } else if (config.getEmbeddedMessageConfig().getEmbeddedMessageListener() != null) {
-                        SwrveEmbeddedMessageListener listener = config.getEmbeddedMessageConfig().getEmbeddedMessageListener();
-                        SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
-                        Swrve swrve = (Swrve) SwrveSDK.getInstance();
-                        Map<String, String> properties = swrve.retrievePersonalizationProperties(null, null);
-                        listener.onMessage(context, message, properties);
                     }
                 }
             }

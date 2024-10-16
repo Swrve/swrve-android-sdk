@@ -28,7 +28,6 @@ import android.os.Bundle;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
-import com.swrve.sdk.conversations.ui.ConversationActivity;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -80,11 +79,7 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
             public void get(String endpoint, Map<String, String> params, IRESTResponseListener callback) {
                 String response = null;
                 int httpCode = -1;
-                if (params.containsValue("295412")) {
-                    response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_conversation.json");
-                    httpCode = 200;
-                }
-                else if (params.containsValue("295411")) {
+                if (params.containsValue("295411")) {
                     response = SwrveTestUtils.getAssetAsText(mActivity, "ad_journey_campaign_message.json");
                     httpCode = 200;
                 }
@@ -177,63 +172,6 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
         assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("install"));
         assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("blackfriday"));
         assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("291145"));
-    }
-
-    @Test
-    public void testHandleDeeplink_Conversation() throws Exception {
-
-        // 1. Test generic_campaign_event queued / sent
-        // 2. Test conversation was shown
-        // 3. Test conversation details were written to cache (for QA purposes)
-
-        Bundle bundle = new Bundle();
-        bundle.putString("target_url","swrve://app?ad_content=295412&ad_source=facebook&ad_campaign=BlackFriday");
-
-        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-
-        // 1. Generic Event is queued
-
-        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
-        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
-        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
-
-        List<ArrayList> capturedProperties = events.getAllValues();
-        String jsonString = capturedProperties.get(0).get(0).toString();
-        JSONObject jObj = new JSONObject(jsonString);
-
-        assertTrue(jObj.has("time"));
-        assertTrue(jObj.has("seqnum"));
-        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
-        assertTrue(jObj.get("id").equals("-1"));
-        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
-        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
-        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
-        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295412"));
-
-        // 2. Test Conversation was shown
-
-        await().until(campaignShown());
-
-        ShadowActivity shadowMainActivity = Shadows.shadowOf(mActivity);
-        Intent nextIntent = shadowMainActivity.peekNextStartedActivity();
-        assertNotNull(nextIntent);
-        assertEquals(nextIntent.getComponent(), new ComponentName(mActivity, ConversationActivity.class));
-
-        SwrveBaseConversation conversation = (SwrveBaseConversation) nextIntent.getSerializableExtra("conversation");
-        assertEquals(conversation.getId(), 8587);
-        assertEquals(conversation.getName(), ("FB Ad Journey Conversation Test"));
-
-        // 3. Conversation Cached
-
-        ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-        final String userId = swrveCommon.getUserId();
-        String adCampaigns = swrveSpy.multiLayerLocalStorage.getCacheEntry(userId, CACHE_AD_CAMPAIGNS_DEBUG);
-        JSONObject rootJson = new JSONObject(adCampaigns);
-        JSONObject campaignJson = rootJson.getJSONObject("campaign");
-        assertEquals(campaignJson.getInt("id"), 295412);
-        assertEquals(campaignJson.get("subject"), "Survey");
-        assertTrue(campaignJson.has("conversation"));
     }
 
     @Test
@@ -426,49 +364,10 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testHandleDeeplink_MessageEmbeddedDeprecatedListener() throws Exception {
-        final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
-            embeddedCallbackBool.set(true);
-        }).build();
-
-        swrveSpy.config.setEmbeddedMessageConfig(embeddedMessageConfig);
-
-        Bundle bundle = new Bundle();
-        bundle.putString("target_url","swrve://app?ad_content=295422&ad_source=facebook&ad_campaign=BlackFriday");
-
-        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-
-        //*** 1. Generic Event is queued
-        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
-        ArgumentCaptor<String> userIdCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
-        Mockito.verify(swrveSpy, Mockito.atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdCaptor.capture(), events.capture());
-
-        List<ArrayList> capturedProperties = events.getAllValues();
-        String jsonString = capturedProperties.get(0).get(0).toString();
-        JSONObject jObj = new JSONObject(jsonString);
-
-        assertTrue(jObj.has("time"));
-        assertTrue(jObj.has("seqnum"));
-        assertTrue(jObj.get("type").equals(EVENT_TYPE_GENERIC_CAMPAIGN));
-        assertTrue(jObj.get("id").equals("-1"));
-        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_TYPE_KEY).equals("external_source_facebook"));
-        assertTrue(jObj.get(GENERIC_EVENT_ACTION_TYPE_KEY).equals("reengage"));
-        assertTrue(jObj.get(GENERIC_EVENT_CONTEXT_ID_KEY).equals("BlackFriday"));
-        assertTrue(jObj.get(GENERIC_EVENT_CAMPAIGN_ID_KEY).equals("295422"));
-
-        // 2. Test EmbeddedMessageListener was fired
-        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-        await().untilTrue(embeddedCallbackBool);
-    }
-
-    @Test
     public void testHandleDeeplink_MessageEmbedded_withPersonalization() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
 
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedMessageListener((context, message, personalizationProperties) -> {
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
             if(!personalizationProperties.isEmpty()) {
                 if(personalizationProperties.containsKey("key") && personalizationProperties.containsKey("user.updated_test_key")){
                     embeddedCallbackBool.set(true);
@@ -564,19 +463,6 @@ public class SwrveDeeplinkManagerTest extends SwrveBaseTest {
 
         SwrveMessage message = swrveSpy.getAdMesage();
         assertEquals(message.getId(), 298099);
-    }
-
-    @Test
-    public void testHandleDeeplink_ConversationShownOncePerAppLoad() {
-
-        Bundle bundle = new Bundle();
-        bundle.putString("target_url","swrve://app?ad_content=295412&ad_source=facebook&ad_campaign=BlackFriday");
-
-        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadCampaign("295412","reengage");
-        await().until(campaignShown());
-        swrveSpy.swrveDeeplinkManager.handleDeeplink(bundle);
-        verify(swrveSpy.swrveDeeplinkManager, times(1)).loadCampaign("295412","reengage");
     }
 
     @Test

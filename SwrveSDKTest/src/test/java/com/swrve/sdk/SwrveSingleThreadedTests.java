@@ -263,39 +263,6 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     }
 
     @Test
-    public void testButtonInstallWasPressed() throws Exception {
-        swrveSpy.init(mActivity);
-        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-
-        SwrveButton buttonInstall = createButton("INSTALL", "campaign.json", null, 150);
-        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
-        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
-        HashMap<String, String> personalization = new HashMap<>();
-        personalization.put("test_1", "some personalized value1");
-        personalization.put("test_2", "some personalized value2");
-        intent.putExtra(SwrveInAppMessageActivity.SWRVE_PERSONALISATION_KEY, personalization);
-        InAppMessageHandler inAppMessageHandler = new InAppMessageHandler(ApplicationProvider.getApplicationContext(), intent, null);
-        inAppMessageHandler.customEventDelayQueueSeconds = 0;
-
-        inAppMessageHandler.buttonClicked(buttonInstall, "someAction", "",0, "");
-
-        boolean clickFound = false;
-        Object[] events = getAllEvents().values().toArray();
-        for (int i = 0, j = events.length; i < j && !clickFound; i++) {
-            String eventData = (String) events[i];
-            clickFound = eventData.contains("Swrve.Messages.Message-" + buttonInstall.getMessage().getId());
-        }
-        assertTrue(clickFound);
-
-        Thread.sleep(100l); // Custom events are sent a short period of time later so sleep
-
-        // 4 new buttons events should be queued, Test Json has Swrve. event which should not be sent
-        assertEquals(8, getAllEvents().size());
-
-        verifyDataCapturedFromButtonClick();
-    }
-
-    @Test
     public void testButtonCustomWasPressed() throws Exception {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");

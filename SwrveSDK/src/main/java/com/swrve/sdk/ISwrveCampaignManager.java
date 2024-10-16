@@ -22,6 +22,4 @@ public interface ISwrveCampaignManager {
 
     SwrveConfigBase getConfig();
 
-    String getAppStoreURLForApp(int appId);
-
 }
