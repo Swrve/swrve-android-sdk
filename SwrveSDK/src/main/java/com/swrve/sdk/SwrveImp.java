@@ -86,11 +86,11 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "11.0.0";
-    protected static final int CAMPAIGN_ENDPOINT_VERSION = 9;
+    protected static String version = "11.1.0";
+    protected static final int CAMPAIGN_ENDPOINT_VERSION = 10;
     protected static final int PUSH_INBOX_VERSION = 1;
-    protected static final int EMBEDDED_CAMPAIGN_VERSION = 3;
-    protected static final int IN_APP_CAMPAIGN_VERSION = 15;
+    protected static final int EMBEDDED_CAMPAIGN_VERSION = 4;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 16;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -700,6 +700,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             SwrveLogger.i("Can't display the in-app message as it doesn't support the current orientation");
         } else if (filterRedundantCampaign(message)) {
             SwrveLogger.i("Will not display the in-app message as it requests a capability/permission that is already granted or redundant action.");
+        } else if (!message.getCampaign().isActive(getNow())) {
+            SwrveLogger.i("Can't display the in-app message as campaign is no longer active");
         } else if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizationProperties)) {
             canDisplaySwrveMessage = true;
         }

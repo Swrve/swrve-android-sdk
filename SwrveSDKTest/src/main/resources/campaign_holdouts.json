@@ -2,12 +2,13 @@
   "cdn_root": "http://localhost:8083/cdn/",
   "campaigns": [{
     "id": 165,
-    "end_date": 2364568900000,
+    "end_date_iso": "2044-12-05T16:41:40Z",
     "triggers": [{
       "event_name": "trigger_embedded",
       "conditions": {}
     }],
-    "start_date": 1362671700000,
+    "start_date_iso": "2013-03-07T15:55:00Z",
+    "timezone_type": "global",
     "embedded_message": {
       "control": true,
       "id": 20,
@@ -29,12 +30,13 @@
   },
     {
       "id": 21,
-      "end_date": 2364568900000,
+      "end_date_iso": "2044-12-05T16:41:40Z",
       "triggers": [{
         "event_name": "trigger_iam",
         "conditions": {}
       }],
-      "start_date": 1362671700000,
+      "start_date_iso": "2013-03-07T15:55:00Z",
+      "timezone_type": "global",
       "message": {
         "control": true,
         "template": {

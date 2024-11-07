@@ -1945,7 +1945,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         } else if (campaign instanceof SwrveEmbeddedCampaign) {
             SwrveEmbeddedCampaign embeddedCampaign = (SwrveEmbeddedCampaign) campaign;
-            if (embeddedCampaign != null && embeddedListener != null) {
+            if (embeddedCampaign != null && embeddedListener != null && embeddedCampaign.isActive(getNow())) {
                 Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
                 embeddedListener.onMessage(getContext(), embeddedCampaign.getMessage(), personalizedProperties, embeddedCampaign.getMessage().isControl());
                 return true;

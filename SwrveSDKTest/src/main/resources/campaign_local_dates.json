@@ -1,32 +1,22 @@
 {
-  "cdn_root": "http://www.sonecdn.com/",
+  "cdn_root": "http://localhost:8083/cdn/",
   "campaigns": [
     {
-      "id": 102,
-      "end_date_iso": "2044-12-05T16:41:40Z",
+      "id": 1,
+      "start_date_iso": "2024-09-12T00:00:00",
+      "end_date_iso": "2024-09-12T23:59:59",
+      "timezone_type": "local",
       "triggers": [
         {
-          "event_name": "trigger_iam",
-          "conditions": {}
-        },
-        {
-          "event_name": "Swrve.buy_in",
+          "event_name": "Swrve.currency_given",
           "conditions": {}
         }
       ],
-      "start_date_iso": "2013-03-07T15:55:00Z",
-      "timezone_type": "global",
       "message": {
         "template": {
           "template_id": "20",
           "formats": [
             {
-              "calibration": {
-                "width": 5000,
-                "height": 500,
-                "base_font_size": 20,
-                "text": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-              },
               "orientation": "landscape",
               "size": {
                 "w": {
@@ -45,12 +35,9 @@
                     "type": "color",
                     "value": "FFFFFF"
                   },
-                  "multiline_text": {
-                    "type": "text",
-                    "value": "triggered multiline Text \\n with a ${test_line}.",
-                    "h_align": "right",
-                    "font_size": 40,
-                    "scrollable": false
+                  "image": {
+                    "type": "asset",
+                    "value": "dummyAsset"
                   },
                   "x": {
                     "type": "number",
@@ -62,11 +49,11 @@
                   },
                   "w": {
                     "type": "number",
-                    "value": 1000
+                    "value": 900
                   },
                   "h": {
                     "type": "number",
-                    "value": 700
+                    "value": 600
                   }
                 }
               ],
@@ -91,7 +78,7 @@
                   },
                   "image_up": {
                     "type": "asset",
-                    "value": "1111111111111111111111111"
+                    "value": "dummyAsset"
                   },
                   "action": {
                     "type": "text",
@@ -99,50 +86,11 @@
                   },
                   "game_id": {
                     "type": "number",
-                    "value": "150"
+                    "value": "2"
                   },
                   "type": {
                     "type": "text",
                     "value": "INSTALL"
-                  }
-                },
-                {
-                  "name": "custom",
-                  "x": {
-                    "type": "number",
-                    "value": 0
-                  },
-                  "y": {
-                    "type": "number",
-                    "value": 80
-                  },
-                  "w": {
-                    "type": "number",
-                    "value": 229
-                  },
-                  "h": {
-                    "type": "number",
-                    "value": 114
-                  },
-                  "image_up": {
-                    "type": "asset",
-                    "value": "1111111111111111111111111"
-                  },
-                  "action": {
-                    "type": "text",
-                    "value": "custom_action"
-                  },
-                  "game_id": {
-                    "type": "number",
-                    "value": ""
-                  },
-                  "type": {
-                    "type": "text",
-                    "value": "CUSTOM"
-                  },
-                  "text": {
-                    "type": "text",
-                    "value": "value"
                   }
                 },
                 {
@@ -165,7 +113,7 @@
                   },
                   "image_up": {
                     "type": "asset",
-                    "value": "1111111111111111111111111"
+                    "value": "dummyAsset"
                   },
                   "action": {
                     "type": "text",
@@ -181,28 +129,30 @@
                   }
                 }
               ],
-              "name": "Kindle (English (US))",
+              "name": "IAM",
               "language": "en-US"
             }
           ]
         },
-        "id": 165,
-        "name": "Kindle",
-        "rules": {
-        }
+        "id": 1,
+        "name": "IAM",
+        "rules": {}
       },
       "rules": {
         "display_order": "random",
-        "dismiss_after_views": 9999,
+        "dismiss_after_views": 5,
         "delay_first_message": 0,
         "min_delay_between_messages": 0
       }
     }
   ],
-  "game_data": {},
+  "game_data": {
+    "150": {
+      "app_store_url": "https://itunes.apple.com/us/app/ascension-chronicle-godslayer/id441838733?mt=8"
+    }
+  },
   "rules": {
     "min_delay_between_messages": 0,
-    "max_messages_per_session": 9999,
     "delay_first_message": 0
   },
   "version": 2

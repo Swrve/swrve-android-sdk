@@ -1,6 +1,7 @@
 package com.swrve.sdk
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign
+import com.swrve.sdk.messaging.SwrveBaseCampaign.SwrveTimezoneType
 import com.swrve.sdk.messaging.SwrveInAppCampaign
 import com.swrve.sdk.messaging.model.Arg
 import com.swrve.sdk.messaging.model.Conditions
@@ -9,17 +10,19 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Logic for displaying campaigns based on conditions and limits.
  */
 class SwrveCampaignDisplayer {
-    protected val timestampFormat: SimpleDateFormat = SimpleDateFormat("HH:mm:ss ZZZZ", Locale.US)
+    private val timestampFormat = SimpleDateFormat("HH:mm:ss ZZZZ", Locale.US)
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss z", Locale.US)
 
-    protected var showMessagesAfterLaunch: Date? = null
-    protected var showMessagesAfterDelay: Date? = null
-    protected var minDelayBetweenMessage: Int = 0
-    protected var messagesLeftToShow: Long = 0
+    var showMessagesAfterLaunch: Date? = null
+    private var showMessagesAfterDelay: Date? = null
+    var minDelayBetweenMessage: Int = 0
+    var messagesLeftToShow: Long = 0
 
     fun decrementMessagesLeftToShow() {
         this.messagesLeftToShow = this.messagesLeftToShow - 1
@@ -49,7 +52,7 @@ class SwrveCampaignDisplayer {
         return true
     }
 
-    fun shouldShowCampaign(campaign: SwrveBaseCampaign, event: String, payload: Map<String?, String>?, now: Date, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>?, elementCount: Int): Boolean {
+    fun shouldShowCampaign(campaign: SwrveBaseCampaign, event: String, payload: Map<String?, String>?, now: Date, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>, elementCount: Int): Boolean {
         if (!canTrigger(campaign, event, payload, qaCampaignInfoMap)) {
             return false
         }
@@ -87,7 +90,7 @@ class SwrveCampaignDisplayer {
         return true
     }
 
-    fun canTrigger(swrveCampaign: SwrveBaseCampaign, eventName: String?, payload: Map<String?, String>?, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>?): Boolean {
+    fun canTrigger(swrveCampaign: SwrveBaseCampaign, eventName: String?, payload: Map<String?, String>?, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>): Boolean {
         if (swrveCampaign.triggers == null || swrveCampaign.triggers.size == 0) {
             val text = "Campaign [" + swrveCampaign.id + "], no triggers (could be message centre). Skipping this campaign."
             logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
@@ -378,18 +381,79 @@ class SwrveCampaignDisplayer {
         return (swrveCampaignState.showMessagesAfterDelay != null && now.before(swrveCampaignState.showMessagesAfterDelay))
     }
 
-    fun isCampaignActive(swrveCampaign: SwrveBaseCampaign, now: Date?, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>?): Boolean {
-        if (swrveCampaign.startDate.after(now)) {
-            val text = "Campaign " + swrveCampaign.id + " has not started yet"
+    fun isCampaignActive(swrveCampaign: SwrveBaseCampaign, now: Date, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>): Boolean {
+        val startDate = swrveCampaign.startDate // evaluate start date
+        if (startDate.after(now)) {
+            val startDateLog = getLogDate(startDate, swrveCampaign.timezoneType)
+            val nowLog = getLogDate(now, swrveCampaign.timezoneType)
+            val text = "Campaign ${swrveCampaign.id} has not started yet. Start:$startDateLog TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
             logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
             return false
         }
-        if (swrveCampaign.endDate.before(now)) {
-            val text = "Campaign " + swrveCampaign.id + " has finished"
+        val endDate = swrveCampaign.endDate // evaluate end date
+        if (endDate.before(now)) {
+            val endDateLog = getLogDate(endDate, swrveCampaign.timezoneType)
+            val nowLog = getLogDate(now, swrveCampaign.timezoneType)
+            val text = "Campaign ${swrveCampaign.id} has finished. End:$endDateLog TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
             logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
             return false
         }
+
+        swrveCampaign.blackoutDates?.forEach { blackoutDate ->
+            val from = SwrveUtils.parseIso8601Date(blackoutDate.from, swrveCampaign.timezoneType)
+            val to = SwrveUtils.parseIso8601Date(blackoutDate.to, swrveCampaign.timezoneType)
+            if (now.after(from) && now.before(to)) {
+                val fromLog = getLogDate(from, swrveCampaign.timezoneType)
+                val toLog = getLogDate(to, swrveCampaign.timezoneType)
+                val nowLog = getLogDate(now, swrveCampaign.timezoneType)
+                val text = "Campaign ${swrveCampaign.id} is in blackout period. Blackout from:$fromLog to:$toLog TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
+                logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
+                return false // exit early by returning false as soon as a blackout period is found
+            }
+        }
+
+        if (!hasActiveTimeInterval(swrveCampaign, now)) {
+            val nowLog = getLogDate(now, swrveCampaign.timezoneType)
+            val text = "Campaign ${swrveCampaign.id} is outside active interval time. TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
+            logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
+            return false
+        }
+
         return true
+    }
+
+    private fun hasActiveTimeInterval(swrveCampaign: SwrveBaseCampaign, now: Date): Boolean {
+        if (swrveCampaign.intervalTimes == null || swrveCampaign.intervalTimes.isEmpty()) {
+            return true // no interval times set so always return true
+        }
+        swrveCampaign.intervalTimes.forEach { intervalTime ->
+            val fromSeconds = getSecondsSinceMidnight(intervalTime.from)
+            val toSeconds = getSecondsSinceMidnight(intervalTime.to)
+            val nowSeconds = getSecondsSinceMidnight(now, swrveCampaign.timezoneType)
+            if (nowSeconds in fromSeconds..toSeconds) {
+                return true
+            }
+        }
+        return false // no interval times matched so return false
+    }
+
+    private fun getSecondsSinceMidnight(time: String): Int {
+        val timeParts = time.split(":") // Time must be in the format HH:mm:ss
+        val hours = timeParts[0].toInt()
+        val minutes = timeParts[1].toInt()
+        val seconds = timeParts[2].toInt()
+        return hours * 3600 + minutes * 60 + seconds
+    }
+
+    private fun getSecondsSinceMidnight(now: Date, timezoneType: SwrveTimezoneType): Int {
+        val timezone = when (timezoneType) {
+            SwrveTimezoneType.GLOBAL -> TimeZone.getTimeZone("UTC")
+            SwrveTimezoneType.LOCAL -> TimeZone.getDefault()
+        }
+        val calendar = Calendar.getInstance(timezone).apply {
+            time = now
+        }
+        return calendar.get(Calendar.HOUR_OF_DAY) * 3600 + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.SECOND)
     }
 
     private fun hasShowTooManyMessagesAlready(): Boolean {
@@ -414,10 +478,14 @@ class SwrveCampaignDisplayer {
                 qaCampaignInfoMap[swrveCampaign.getId()] = QaCampaignInfo(swrveCampaign.getId().toLong(), variantId.toLong(), QaCampaignInfo.CAMPAIGN_TYPE.IAM, displayed, text)
             }
         }
+
         SwrveLogger.i(text)
+        if (!QaUser.isLoggingEnabled()) {
+            return
+        }
     }
 
-    private fun logAndAddReason(campaign: SwrveBaseCampaign, displayed: Boolean, qaInfo: MutableMap<Int?, QaCampaignInfo?>?, event: String, trigger: Trigger, payload: Map<String?, String>?): Boolean {
+    private fun logAndAddReason(campaign: SwrveBaseCampaign, displayed: Boolean, qaInfo: MutableMap<Int?, QaCampaignInfo?>, event: String, trigger: Trigger, payload: Map<String?, String>?): Boolean {
         val text = if (!displayed) {
             "Campaign [" + campaign.id + "], Trigger [" + trigger + "], does not match eventName[" + event + "] & payload[" + payload + "]. Skipping this trigger."
         } else {
@@ -425,6 +493,18 @@ class SwrveCampaignDisplayer {
         }
         logAndAddReason(campaign, text, displayed, qaInfo)
         return displayed
+    }
+
+    private fun getLogDate(date: Date, timezoneType: SwrveTimezoneType): String {
+        val timezone = when (timezoneType) {
+            SwrveTimezoneType.GLOBAL -> TimeZone.getTimeZone("UTC")
+            SwrveTimezoneType.LOCAL -> TimeZone.getDefault()
+        }
+        dateFormat.timeZone = timezone
+        val calendar = Calendar.getInstance(timezone).apply {
+            time = date
+        }
+        return dateFormat.format(calendar.time)
     }
 
     private fun noMessagesWereShown(event: String, eventPayload: Map<String, String>?, reason: String) {

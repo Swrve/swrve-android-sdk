@@ -1,7 +1,8 @@
 {
     "id": 123,
-    "start_date": 1458751213000,
-    "end_date": 2145920400000,
+    "start_date_iso": "2016-03-23T16:40:13Z",
+    "end_date_iso": "2038-01-01T01:00:00Z",
+    "timezone_type": "global",
     "rules": {
         "delay_first_message": 0,
         "dismiss_after_views": 9999,

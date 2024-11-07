@@ -2,20 +2,34 @@
   "cdn_root": "http://www.someurl.com/",
   "campaigns": [
     {
-      "id": 102,
-      "end_date_iso": "2044-12-05T16:41:40Z",
+      "id": 100,
+      "start_date_iso": "2024-09-10T00:00:00Z",
+      "end_date_iso": "2050-09-10T00:00:00Z",
+      "timezone_type": "global",
+      "interval_times": [
+        {
+          "from": "09:00:00",
+          "to": "13:00:00"
+        },
+        {
+          "from": "14:00:00",
+          "to": "17:30:00"
+        }
+      ],
       "triggers": [
+        {
+          "event_name": "trigger.global",
+          "conditions": {}
+        }
       ],
       "message_center": true,
-      "start_date_iso": "2013-03-07T15:55:00Z",
-      "timezone_type": "global",
-      "in_app_version": 7,
+      "in_app_version": 16,
       "message": {
         "template": {
           "template_id": "20",
           "formats": [
             {
-              "name": "my multipage campaign",
+              "name": "my campaign",
               "orientation": "landscape",
               "language": "en-US",
               "size": {
@@ -30,8 +44,8 @@
               },
               "pages": [
                 {
-                  "page_id": 123,
-                  "page_name": "page1",
+                  "page_id": 3,
+                  "page_name": "page3",
                   "template_id": 987,
                   "swipe_forward": -1,
                   "swipe_backward": -1,
@@ -44,7 +58,7 @@
                       },
                       "image": {
                         "type": "asset",
-                        "value": "asset1"
+                        "value": "dummyAsset"
                       },
                       "x": {
                         "type": "number",
@@ -65,151 +79,6 @@
                     }
                   ],
                   "buttons": [
-                    {
-                      "name": "custom button",
-                      "x": {
-                        "type": "number",
-                        "value": -200
-                      },
-                      "y": {
-                        "type": "number",
-                        "value": 80
-                      },
-                      "w": {
-                        "type": "number",
-                        "value": 229
-                      },
-                      "h": {
-                        "type": "number",
-                        "value": 114
-                      },
-                      "image_up": {
-                        "type": "asset",
-                        "value": "asset_install"
-                      },
-                      "action": {
-                        "type": "text",
-                        "value": ""
-                      },
-                      "game_id": {
-                        "type": "number",
-                        "value": "150"
-                      },
-                      "type": {
-                        "type": "text",
-                        "value": "CUSTOM"
-                      }
-                    },
-                    {
-                      "name": "button next",
-                      "button_id": 111,
-                      "x": {
-                        "type": "number",
-                        "value": -200
-                      },
-                      "y": {
-                        "type": "number",
-                        "value": 80
-                      },
-                      "w": {
-                        "type": "number",
-                        "value": 229
-                      },
-                      "h": {
-                        "type": "number",
-                        "value": 114
-                      },
-                      "image_up": {
-                        "type": "asset",
-                        "value": "asset2"
-                      },
-                      "action": {
-                        "type": "text",
-                        "value": "456"
-                      },
-                      "game_id": {
-                        "type": "number",
-                        "value": "2"
-                      },
-                      "type": {
-                        "type": "text",
-                        "value": "PAGE_LINK"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "page_id": 456,
-                  "page_name": "page2",
-                  "template_id": 987,
-                  "swipe_forward": -1,
-                  "swipe_backward": -1,
-                  "images": [
-                    {
-                      "name": "Background",
-                      "color": {
-                        "type": "color",
-                        "value": "FFFFFF"
-                      },
-                      "image": {
-                        "type": "asset",
-                        "value": "asset3"
-                      },
-                      "x": {
-                        "type": "number",
-                        "value": 0
-                      },
-                      "y": {
-                        "type": "number",
-                        "value": 0
-                      },
-                      "w": {
-                        "type": "number",
-                        "value": 900
-                      },
-                      "h": {
-                        "type": "number",
-                        "value": 600
-                      }
-                    }
-                  ],
-                  "buttons": [
-                    {
-                      "name": "button previous",
-                      "button_id": 222,
-                      "x": {
-                        "type": "number",
-                        "value": -200
-                      },
-                      "y": {
-                        "type": "number",
-                        "value": 80
-                      },
-                      "w": {
-                        "type": "number",
-                        "value": 229
-                      },
-                      "h": {
-                        "type": "number",
-                        "value": 114
-                      },
-                      "image_up": {
-                        "type": "asset",
-                        "value": "asset4"
-                      },
-                      "action": {
-                        "type": "text",
-                        "value": "123"
-                      },
-                      "game_id": {
-                        "type": "number",
-                        "value": "2"
-                      },
-                      "type": {
-                        "type": "text",
-                        "value": "PAGE_LINK"
-                      }
-                    },
                     {
                       "name": "close",
                       "button_id": 999,
@@ -231,7 +100,7 @@
                       },
                       "image_up": {
                         "type": "asset",
-                        "value": "asset5"
+                        "value": "dummyAsset"
                       },
                       "action": {
                         "type": "text",
@@ -252,7 +121,138 @@
             }
           ]
         },
-        "id": 165,
+        "id": 1,
+        "name": "campaign name",
+        "rules": {}
+      },
+      "rules": {
+        "display_order": "random",
+        "dismiss_after_views": 5,
+        "delay_first_message": 0,
+        "min_delay_between_messages": 0
+      }
+    },
+    {
+      "id": 200,
+      "start_date_iso": "2024-09-10T00:00:00",
+      "end_date_iso": "2050-09-10T00:00:00",
+      "timezone_type": "local",
+      "interval_times": [
+        {
+          "from": "09:00:00",
+          "to": "13:00:00"
+        },
+        {
+          "from": "14:00:00",
+          "to": "17:30:00"
+        }
+      ],
+      "triggers": [
+        {
+          "event_name": "trigger.local",
+          "conditions": {}
+        }
+      ],
+      "message_center": true,
+      "in_app_version": 16,
+      "message": {
+        "template": {
+          "template_id": "20",
+          "formats": [
+            {
+              "name": "my campaign",
+              "orientation": "landscape",
+              "language": "en-US",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 320
+                },
+                "h": {
+                  "type": "number",
+                  "value": 240
+                }
+              },
+              "pages": [
+                {
+                  "page_id": 3,
+                  "page_name": "page3",
+                  "template_id": 987,
+                  "swipe_forward": -1,
+                  "swipe_backward": -1,
+                  "images": [
+                    {
+                      "name": "Background",
+                      "color": {
+                        "type": "color",
+                        "value": "FFFFFF"
+                      },
+                      "image": {
+                        "type": "asset",
+                        "value": "dummyAsset"
+                      },
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 900
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 600
+                      }
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "name": "close",
+                      "button_id": 999,
+                      "x": {
+                        "type": "number",
+                        "value": 932
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 32
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 50
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 50
+                      },
+                      "image_up": {
+                        "type": "asset",
+                        "value": "dummyAsset"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": ""
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "DISMISS"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "id": 2,
         "name": "campaign name",
         "rules": {}
       },

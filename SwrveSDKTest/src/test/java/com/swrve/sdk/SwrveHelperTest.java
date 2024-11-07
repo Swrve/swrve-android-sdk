@@ -140,5 +140,4 @@ public class SwrveHelperTest extends SwrveBaseTest {
         assertEquals("denied", SwrveHelper.getPermissionString(PackageManager.PERMISSION_DENIED));
         assertEquals("unknown", SwrveHelper.getPermissionString(32423542));
     }
-
 }

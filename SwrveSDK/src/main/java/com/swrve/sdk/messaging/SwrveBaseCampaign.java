@@ -5,14 +5,17 @@ import com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE;
 import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.SwrveUtils;
 import com.swrve.sdk.messaging.model.Trigger;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +24,39 @@ import java.util.Set;
  * Swrve campaign containing messages targeted for the current device and user id.
  */
 public abstract class SwrveBaseCampaign {
+
+    public enum SwrveTimezoneType {
+        GLOBAL, LOCAL;
+
+        public static SwrveTimezoneType parse(String timezoneType) {
+            if (timezoneType.equalsIgnoreCase("global")) {
+                return GLOBAL;
+            } else if (timezoneType.equalsIgnoreCase("local")) {
+                return LOCAL;
+            }
+            return GLOBAL;
+        }
+    }
+
+    public class SwrveBlackoutDate {
+        public final String from;
+        public final String to;
+
+        SwrveBlackoutDate(String from, String to) {
+            this.from = from;
+            this.to = to;
+        }
+    }
+
+    public class SwrveIntervalTime {
+        public final String from;
+        public final String to;
+
+        SwrveIntervalTime(String from, String to) {
+            this.from = from;
+            this.to = to;
+        }
+    }
 
     // Default campaign throttle limits
     protected static int DEFAULT_DELAY_FIRST_MESSAGE = 180;
@@ -31,8 +67,11 @@ public abstract class SwrveBaseCampaign {
     protected SwrveCampaignDisplayer campaignDisplayer;
     protected int id;
     protected SwrveCampaignState saveableState; // The state of the campaign that will be kept saved by the SDK
-    protected Date startDate;
-    protected Date endDate;
+    private String startDateIso;
+    private String endDateIso;
+    private SwrveTimezoneType timezoneType;
+    private List<SwrveBlackoutDate> blackoutDates;
+    private List<SwrveIntervalTime> intervalTimes;
     protected List<Trigger> triggers;
     protected boolean messageCenter;
     protected String subject; // subject of the campaign
@@ -62,7 +101,6 @@ public abstract class SwrveBaseCampaign {
         this.minDelayBetweenMessage = DEFAULT_MIN_DELAY_BETWEEN_MSGS;
         this.showMessagesAfterLaunch = SwrveHelper.addTimeInterval(campaignManager.getInitialisedTime(), DEFAULT_DELAY_FIRST_MESSAGE, Calendar.SECOND);
 
-
         // Parse campaign triggers
         if (campaignData.has("triggers")) {
             String triggersJson = campaignData.getString("triggers");
@@ -75,8 +113,7 @@ public abstract class SwrveBaseCampaign {
 
             JSONObject rules = campaignData.getJSONObject("rules");
             if (rules.has("dismiss_after_views")) {
-                int totalImpressions = rules.getInt("dismiss_after_views");
-                this.maxImpressions = totalImpressions;
+                this.maxImpressions = rules.getInt("dismiss_after_views");
             }
             if (rules.has("delay_first_message")) {
                 int delayFirstMessage = rules.getInt("delay_first_message");
@@ -88,12 +125,40 @@ public abstract class SwrveBaseCampaign {
         }
 
         // Parse campaign dates
-        if (campaignData.has("start_date")) {
-            this.startDate = new Date(campaignData.getLong("start_date"));
+        if (campaignData.has("start_date_iso")) {
+            this.startDateIso = campaignData.getString("start_date_iso");
         }
 
-        if (campaignData.has("end_date")) {
-            this.endDate = new Date(campaignData.getLong("end_date"));
+        if (campaignData.has("end_date_iso")) {
+            this.endDateIso = campaignData.getString("end_date_iso");
+        }
+
+        if (campaignData.has("timezone_type")) {
+            this.timezoneType = SwrveTimezoneType.parse(campaignData.getString("timezone_type"));
+        }
+
+        if (campaignData.has("blackout_dates")) {
+            this.blackoutDates = new ArrayList<>();
+            JSONArray jsonArray = campaignData.getJSONArray("blackout_dates");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject blackoutDate = jsonArray.getJSONObject(i);
+                if (blackoutDate.has("from") && blackoutDate.has("to")) {
+                    SwrveBlackoutDate swrveBlackoutDate = new SwrveBlackoutDate(blackoutDate.getString("from"), blackoutDate.getString("to"));
+                    this.blackoutDates.add(swrveBlackoutDate);
+                }
+            }
+        }
+
+        if (campaignData.has("interval_times")) {
+            this.intervalTimes = new ArrayList<>();
+            JSONArray jsonArray = campaignData.getJSONArray("interval_times");
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject intervalTime = jsonArray.getJSONObject(i);
+                if (intervalTime.has("from") && intervalTime.has("to")) {
+                    SwrveIntervalTime swrveIntervalTime = new SwrveIntervalTime(intervalTime.getString("from"), intervalTime.getString("to"));
+                    this.intervalTimes.add(swrveIntervalTime);
+                }
+            }
         }
     }
 
@@ -118,7 +183,7 @@ public abstract class SwrveBaseCampaign {
      * @return true if the campaign is active at the given time.
      */
     public boolean isActive(Date date) {
-        return campaignDisplayer.isCampaignActive(this, date, null);
+        return campaignDisplayer.isCampaignActive(this, date, new HashMap<>());
     }
 
     /**
@@ -150,14 +215,28 @@ public abstract class SwrveBaseCampaign {
      * @return the campaign start date.
      */
     public Date getStartDate() {
-        return startDate;
+        Date date;
+        try {
+            date = SwrveUtils.parseIso8601Date(startDateIso, timezoneType);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK: Error parsing campaign start date", e);
+            date = new Date(Long.MAX_VALUE); // Default to future date so it doesn't show
+        }
+        return date;
     }
 
     /**
      * @return the campaign end date.
      */
     public Date getEndDate() {
-        return endDate;
+        Date date;
+        try {
+            date = SwrveUtils.parseIso8601Date(endDateIso, timezoneType);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK: Error parsing campaign end date", e);
+            date = new Date(0L); // Default to past date so it doesn't show
+        }
+        return date;
     }
 
     /**
@@ -271,5 +350,17 @@ public abstract class SwrveBaseCampaign {
      */
     public int getPriority() {
         return priority;
+    }
+
+    public SwrveTimezoneType getTimezoneType() {
+        return timezoneType;
+    }
+
+    public List<SwrveBlackoutDate> getBlackoutDates() {
+        return blackoutDates;
+    }
+
+    public List<SwrveIntervalTime> getIntervalTimes() {
+        return intervalTimes;
     }
 }

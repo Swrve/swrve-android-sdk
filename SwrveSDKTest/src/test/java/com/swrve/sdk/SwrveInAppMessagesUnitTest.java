@@ -36,6 +36,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
 import com.swrve.sdk.messaging.SwrveActionType;
+import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButton;
 import com.swrve.sdk.messaging.SwrveButtonView;
@@ -58,10 +59,12 @@ import org.robolectric.shadows.ShadowApplication;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -567,6 +570,36 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         swrveSpy.removeMessageCenterCampaign(campaign);
         assertFalse(swrveSpy.getMessageCenterCampaigns().contains(campaign));
         assertEquals(SwrveCampaignState.Status.Deleted, campaign.getStatus());
+    }
+
+    @Test
+    public void testIAMMessageCenterIsActive() throws Exception {
+
+        Date dateUTC = Date.from(Instant.parse("2024-09-10T12:00:00Z")); // Ensure Z is added for UTC
+        doReturn(dateUTC).when(swrveSpy).getNow();
+        swrveSpy.initialisedTime = dateUTC;
+
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_blackouts_and_intervals.json", "dummyAsset");
+
+        // Get the active campaign and assert if can be shown
+        SwrveBaseCampaign campaign = SwrveSDK.getMessageCenterCampaign(100, null);
+        assertNotNull(campaign);
+        assertTrue(SwrveSDK.showMessageCenterCampaign(campaign));
+
+        // campaign black out date is 2024-09-11T00:00:00Z so move current time to that date
+        dateUTC = Date.from(Instant.parse("2024-09-11T12:00:00Z"));
+        doReturn(dateUTC).when(swrveSpy).getNow();
+        assertFalse(SwrveSDK.showMessageCenterCampaign(campaign));
+
+        // campaign end date is 2050-09-10T00:00:00Z so move current time just BEFORE that
+        dateUTC = Date.from(Instant.parse("2050-09-09T12:00:00Z"));
+        doReturn(dateUTC).when(swrveSpy).getNow();
+        assertTrue(SwrveSDK.showMessageCenterCampaign(campaign));
+
+        // campaign end date is 2050-09-10T00:00:00Z so move current time just beyond that
+        dateUTC = Date.from(Instant.parse("2050-09-10T12:00:00Z"));
+        doReturn(dateUTC).when(swrveSpy).getNow();
+        assertFalse(SwrveSDK.showMessageCenterCampaign(campaign));
     }
 
     private Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> createIAMActivityFromIntent(Intent intent) {

@@ -6,8 +6,9 @@
   "campaigns": [
     {
       "id": 513598,
-      "start_date": 1646907797000,
-      "end_date": 2145920400000,
+      "start_date_iso": "2022-03-10T10:23:17Z",
+      "end_date_iso": "2038-01-01T01:00:00Z",
+      "timezone_type": "global",
       "rules": {
         "delay_first_message": 1,
         "dismiss_after_views": 99999,
