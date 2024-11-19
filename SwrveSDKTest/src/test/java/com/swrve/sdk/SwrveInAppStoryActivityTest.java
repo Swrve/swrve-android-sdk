@@ -9,11 +9,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
@@ -21,6 +24,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -316,6 +320,48 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         simulateTap(swrveLayout, leftTapPoint);
         await().atMost(Duration.ofSeconds(1)).until(() -> storyView.getCurrentIndex() == 1);
 
+    }
+
+    @Test
+    public void testInAppStoryHandleTapsWithDeeplinks() throws Exception {
+        initSDK();
+        SwrveDeeplinkListener deeplinkListenerMock = mock(SwrveDeeplinkListener.class);
+        doReturn(deeplinkListenerMock).when(swrveSpy).getSwrveDeeplinkListener();
+        SwrveCommon.setSwrveCommon(swrveSpy);
+
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_in_app_story.json", "asset1", "asset2");
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
+        intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
+        Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
+        SwrveInAppMessageActivity activity = pair.second;
+        assertNotNull(activity);
+        SwrveMessageView messageView = getSwrveMessageView(activity);
+        assertNotNull(messageView);
+        FrameLayout frameLayout = (FrameLayout)messageView.getParent().getParent();
+        SwrveInAppStoryView storyView = (SwrveInAppStoryView) frameLayout.getChildAt(2);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        LinearLayout linearLayout = (LinearLayout) parentView.getChildAt(0);
+        FrameLayout swrveLayout = (FrameLayout)linearLayout.getChildAt(0);
+
+        // Ensure start on page 1
+        await().atMost(Duration.ofSeconds(1)).until(() -> storyView.getCurrentIndex() == 0);
+
+        // Tap right to page 2
+        Point rightTapPoint = new Point((int)(storyView.getWidth() * 0.75), storyView.getWidth() / 2);
+        simulateTap(swrveLayout, rightTapPoint);
+        await().atMost(Duration.ofSeconds(1)).until(() -> storyView.getCurrentIndex() == 1);
+
+        // Tap deeplink button which should trigger deeplink listener and close the activity
+        int xCenter = SwrveHelper.getDisplayWidth(mActivity) / 2;
+        int yCenter = SwrveHelper.getDisplayHeight(mActivity) / 2;
+        Point deeplinkTapPoint = new Point(xCenter + 10, yCenter + 10); // Deeplink button is at x = 0, y = 0 and has height/width of 50
+        simulateTap(swrveLayout, deeplinkTapPoint);
+        verify(deeplinkListenerMock, Mockito.times(1)).handleDeeplink(any(Activity.class), eq("https://www.google.com"), any(Bundle.class) );
+
+        Robolectric.flushForegroundThreadScheduler();
+        SwrveInAppMessageActivity finalActivity = activity;
+        await().atMost(Duration.ofSeconds(1)).until(() -> finalActivity.isFinishing());
     }
 
     @Test

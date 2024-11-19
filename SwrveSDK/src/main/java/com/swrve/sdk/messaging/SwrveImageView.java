@@ -29,6 +29,6 @@ public class SwrveImageView extends SwrveBaseImageView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return true;
+        return true; // Consume the event to avoid propagating to views below. Note that for Stories, the SwrveMessageView will handle the touch events.
     }
 }

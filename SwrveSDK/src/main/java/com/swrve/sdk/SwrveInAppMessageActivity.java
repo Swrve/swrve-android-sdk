@@ -384,12 +384,12 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         @Override
         public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
             if (storyViewListener != null) {
-                if (e.getX() > (view.getWidth() - tapAreaWidth)) {
+                if (e.getRawX() > (view.getWidth() - tapAreaWidth)) {
                     if (storyView.getCurrentIndex() < storyView.getNumberOfSegments() - 1) {
                         SwrveInAppMessageActivity.this.handleStorySegmentChange(storyView.getCurrentIndex() + 1);
                     }
                     return true;
-                } else if (e.getX() < tapAreaWidth) {
+                } else if (e.getRawX() < tapAreaWidth) {
                     if (storyView.getCurrentIndex() > 0) {
                         SwrveInAppMessageActivity.this.handleStorySegmentChange(storyView.getCurrentIndex() - 1);
                     }

@@ -66,7 +66,7 @@
                   ],
                   "buttons": [
                     {
-                      "name": "install button",
+                      "name": "custom button",
                       "x": {
                         "type": "number",
                         "value": 0
@@ -77,11 +77,11 @@
                       },
                       "w": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "h": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "image_up": {
                         "type": "asset",
@@ -89,7 +89,7 @@
                       },
                       "action": {
                         "type": "text",
-                        "value": ""
+                        "value": "https://www.google.com"
                       },
                       "game_id": {
                         "type": "number",
@@ -97,7 +97,7 @@
                       },
                       "type": {
                         "type": "text",
-                        "value": "INSTALL"
+                        "value": "CUSTOM"
                       }
                     },
                     {
@@ -186,11 +186,11 @@
                       },
                       "w": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "h": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "image_up": {
                         "type": "asset",
@@ -198,7 +198,7 @@
                       },
                       "action": {
                         "type": "text",
-                        "value": ""
+                        "value": "https://www.google.com"
                       },
                       "game_id": {
                         "type": "number",
@@ -502,7 +502,7 @@
                   ],
                   "buttons": [
                     {
-                      "name": "install button",
+                      "name": "custom button",
                       "x": {
                         "type": "number",
                         "value": 0
@@ -513,11 +513,11 @@
                       },
                       "w": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "h": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "image_up": {
                         "type": "asset",
@@ -525,7 +525,7 @@
                       },
                       "action": {
                         "type": "text",
-                        "value": ""
+                        "value": "https://www.google.com"
                       },
                       "game_id": {
                         "type": "number",
@@ -533,7 +533,7 @@
                       },
                       "type": {
                         "type": "text",
-                        "value": "INSTALL"
+                        "value": "CUSTOM"
                       }
                     },
                     {
@@ -622,11 +622,11 @@
                       },
                       "w": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "h": {
                         "type": "number",
-                        "value": 5
+                        "value": 50
                       },
                       "image_up": {
                         "type": "asset",
@@ -634,7 +634,7 @@
                       },
                       "action": {
                         "type": "text",
-                        "value": ""
+                        "value": "https://www.google.com"
                       },
                       "game_id": {
                         "type": "number",

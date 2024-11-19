@@ -1,5 +1,6 @@
 package com.swrve.sdk.messaging;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.UiModeManager;
 import android.content.Context;
@@ -65,7 +66,7 @@ public class SwrveMessageView extends RelativeLayout {
             return;
         }
         this.page = format.getPages().get(pageId);
-        if(gestureDetector != null) {
+        if (gestureDetector != null) {
             this.gestureDetector = new WeakReference<>(gestureDetector);
         }
 
@@ -120,6 +121,11 @@ public class SwrveMessageView extends RelativeLayout {
         setMinimumHeight(format.getSize().y);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
+        if (gestureDetector != null && gestureDetector.get() != null) {
+            // Add gesture interceptor to bottom of the view stack by adding it first before buttons and images
+            addGestureInterceptor(screenWidth, screenHeight);
+        }
+
         List<SwrveWidget> pageElements = getPageElements();
         for (final SwrveWidget widget : pageElements) {
             if (widget instanceof SwrveButton) {
@@ -141,10 +147,6 @@ public class SwrveMessageView extends RelativeLayout {
                 break;
             }
         }
-
-        if (gestureDetector != null) {
-            addGestureInterceptor(screenWidth, screenHeight);
-        }
     }
 
     private List<SwrveWidget> getPageElements() {
@@ -164,25 +166,27 @@ public class SwrveMessageView extends RelativeLayout {
         return pageElements;
     }
 
-    public void setGestureDetector(GestureDetector gestureDetector) {
-        this.gestureDetector = new WeakReference(gestureDetector);
-    }
-
     private void addGestureInterceptor(int screenWidth, int screenHeight) {
         View interceptorOverlay = new View(getContext());
         interceptorOverlay.setClickable(true);
         interceptorOverlay.setFocusable(false);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(screenWidth, screenHeight);
         interceptorOverlay.setLayoutParams(params);
-        interceptorOverlay.setOnTouchListener((view, motionEvent) -> {
-                    if (gestureDetector != null && gestureDetector.get() != null) {
-                        return gestureDetector.get().onTouchEvent(motionEvent);
-                    }
-                    return false;
-                });
+        interceptorOverlay.setOnTouchListener(getGestureOnTouchListener());
         addView(interceptorOverlay);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    private View.OnTouchListener getGestureOnTouchListener() {
+        return (view, motionEvent) -> {
+            if (gestureDetector != null && gestureDetector.get() != null) {
+                return gestureDetector.get().onTouchEvent(motionEvent);
+            }
+            return false;
+        };
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     private void addMultilineView(SwrveImage image) throws SwrveSDKTextTemplatingException {
         String imageText = image.getText();
         if (SwrveHelper.isNullOrEmpty(imageText)) {
@@ -231,9 +235,14 @@ public class SwrveMessageView extends RelativeLayout {
         lparams.topMargin = image.getPosition().y;
         textView.setLayoutParams(lparams);
 
+        if (gestureDetector != null && gestureDetector.get() != null) {
+            textView.setOnTouchListener(getGestureOnTouchListener());
+        }
+
         addView(textView);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void addImageView(SwrveImage image, int screenWidth, int screenHeight) throws SwrveSDKTextTemplatingException {
 
         SwrveImageFileInfo imageFileInfo = getImageFileInfo(image, image.getFile(), screenWidth, screenHeight);
@@ -251,6 +260,10 @@ public class SwrveMessageView extends RelativeLayout {
         // Position and size
         RelativeLayout.LayoutParams lparams = getLayoutParams(image, imageFileInfo);
         imageView.setLayoutParams(lparams);
+
+        if (gestureDetector != null && gestureDetector.get() != null) {
+            imageView.setOnTouchListener(getGestureOnTouchListener());
+        }
 
         // Add to parent
         addView(imageView);

@@ -64,8 +64,7 @@ public class SwrveStorySettings {
         this.barHeight = progressBar.getInt("h");
         this.segmentGap = progressBar.getInt("segment_gap");
 
-        // future proofing ability to disable gestures
-        if (jsonObject.has("gestures_enabled") && !jsonObject.isNull("gestures_enabled")) {
+        if (jsonObject.has("gestures_enabled") && !jsonObject.isNull("gestures_enabled")) { // gestures_enabled not part of original schema so check it exists
             this.gesturesEnabled = jsonObject.getBoolean("gestures_enabled");
         } else {
             this.gesturesEnabled = true;
