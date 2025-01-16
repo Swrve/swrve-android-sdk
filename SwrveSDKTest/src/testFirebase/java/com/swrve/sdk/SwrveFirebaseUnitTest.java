@@ -91,4 +91,28 @@ public class SwrveFirebaseUnitTest extends SwrveBaseTest {
         assertEquals("testadvertisingId", attributes.get("swrve.GAID"));
         assertEquals(1, attributes.get("swrve.play_services_available"));
     }
+
+    @Test
+    public void testSendPushEngagedEvent() throws JSONException {
+        SwrveSDK.sendPushEngagedEvent(ApplicationProvider.getApplicationContext(), "123", "value_of_td", "value_of_smp");
+
+        ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+        ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+        Mockito.verify(swrveSpy, atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), events.capture());
+
+        List<ArrayList> capturedProperties = events.getAllValues();
+        String jsonString = capturedProperties.get(0).get(0).toString();
+        JSONObject jsonObject = new JSONObject(jsonString);
+
+        assertTrue(jsonObject.has("time"));
+        assertTrue(jsonObject.has("seqnum"));
+        assertEquals("event", jsonObject.get("type"));
+        assertEquals("Swrve.Messages.Push-123.engaged", jsonObject.get("name"));
+        assertTrue(jsonObject.has("payload"));
+        JSONObject payload = (JSONObject) jsonObject.get("payload");
+        assertTrue(payload.length() == 2);
+        assertEquals("value_of_td", payload.get("trackingData"));
+        assertEquals("value_of_smp", payload.get("platform"));
+    }
 }
