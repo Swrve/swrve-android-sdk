@@ -54,7 +54,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testPushInboxMessagesJsonParsed() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
         assertEquals(8, swrveSpy.pushInboxManager.getMessages().size)
@@ -81,7 +81,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testGetPushInboxMessages() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages_past_and_future.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages_past_and_future.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -97,7 +97,7 @@ class PushInboxTest : SwrveBaseTest() {
     fun testEngage_sdkNotReady() {
 
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -123,7 +123,7 @@ class PushInboxTest : SwrveBaseTest() {
     fun testRead_sdkNotReady() {
 
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -149,7 +149,7 @@ class PushInboxTest : SwrveBaseTest() {
     fun testDelete_sdkNotReady() {
 
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -174,7 +174,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testRead_restServerError() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -205,7 +205,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testRead_restAlreadyRead() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -236,7 +236,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testDelete_restServerError() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -267,7 +267,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testRead_restUserError() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -298,7 +298,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testDelete_restUserError() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -329,7 +329,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testRead_restUserRetryError() { // explicit test the case where the server returns a 429
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -360,7 +360,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testRead_restSuccess() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -402,7 +402,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testEngage_restSuccess() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -453,7 +453,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testEngage_restSuccessAlreadyRead() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -500,7 +500,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testEngage_restFailure() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -546,7 +546,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testDelete_restSuccess() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -589,7 +589,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testRead_restException() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -619,7 +619,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testDelete_restException() {
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 
@@ -649,7 +649,7 @@ class PushInboxTest : SwrveBaseTest() {
     @Test
     fun testRead_restRetry() { //test the restClient retry-on-error
         SwrveTestUtils.runSingleThreaded(swrveSpy)
-        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "push_inbox_messages.json")
+        val campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity!!, "push_inbox_messages.json")
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson)
         swrveSpy.init(mActivity)
 

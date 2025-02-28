@@ -193,29 +193,40 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
     }
 
     @Test
-    public void testFlush() {
-        int eventsAddedOnInit = 3;
+    public void testFlush() throws Exception {
+        int secondaryEventsAddedOnInit = 3; // session_start, Swrve.first_session, device_update
         String userId = swrveSpy.getUserId();
         swrveSpy.onCreate(mActivity);
+
+        // add a bunch of cache entries and events....but only add them to primary storage
         for (int i = 0; i < 50; i++) {
             swrveSpy.multiLayerLocalStorage.getPrimaryStorage().setCacheEntry(userId, "category" + i, "rawData" + i);
+            swrveSpy.multiLayerLocalStorage.addEvent(userId, "event" + i);
         }
 
-        // 50 events plus firstsession event, and user device prop event
-        assertEquals(eventsAddedOnInit, getAllEventsInPrimaryStorage(userId).size());
-        swrveSpy.flushToDisk();
-        // Data has been moved to the other storage
-        assertEquals(0, getAllEventsInPrimaryStorage(userId).size());
+        // Assert before flush
+        assertEquals("Events in primary storage before flush not correct", 50, getAllEventsInPrimaryStorage().size());
+        assertEquals("Events in secondary storage before flush not correct", secondaryEventsAddedOnInit, getAllEventsInSecondaryStorage().size());
+        assertNotNull(swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getCacheItem(userId, "category0")); // assert one item in primary storage
+        assertNull(swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getCacheItem(userId, "category0")); // assert in secondary storage
 
-        int storageCount = swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getFirstNEvents(150, userId).size();
-        assertEquals(eventsAddedOnInit, storageCount);
+        swrveSpy.flushToDisk();
+
+        // Assert after flush
+        assertEquals("Primary storage should be empty after flush", 0, getAllEventsInPrimaryStorage().size());
+        assertEquals("Secondary storage should hold all now", secondaryEventsAddedOnInit + 50, getAllEventsInSecondaryStorage().size());
+        assertNull(swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getCacheItem(userId, "category0"));
         for (int i = 0; i < 50; i++) {
             assertNotNull(swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getCacheItem(userId, "category" + i));
         }
     }
 
-    private LinkedHashMap<Long, String> getAllEventsInPrimaryStorage(String userId) {
-        return swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getFirstNEvents(Integer.MAX_VALUE, userId);
+    private LinkedHashMap<Long, String> getAllEventsInPrimaryStorage() {
+        return swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getFirstNEvents(Integer.MAX_VALUE, swrveSpy.getUserId());
+    }
+
+    private LinkedHashMap<Long, String> getAllEventsInSecondaryStorage() {
+        return swrveSpy.multiLayerLocalStorage.getSecondaryStorage().getFirstNEvents(Integer.MAX_VALUE, swrveSpy.getUserId());
     }
 
     @Test
@@ -239,7 +250,9 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
 
-        assertEquals(3, getAllEvents().size());
+        assertEquals(0, getAllEventsInPrimaryStorage().size());
+        assertEquals("Expect 3 events: session_start, Swrve.first_session, device_update",
+                3, getAllEventsInSecondaryStorage().size());
 
         SwrveButton buttonDismiss = createButton("DISMISS", "campaign.json", null, 150);
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
@@ -256,8 +269,12 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         Thread.sleep(100l); // Custom events are sent a short period of time later so sleep
 
-        // 4 new buttons events should be queued, Test Json has Swrve. event which should not be sent
-        assertEquals(7, getAllEvents().size());
+        // Check primary storage for data captured from button click
+        assertEquals("Events in Primary storage not correct", 4, getAllEventsInPrimaryStorage().size());
+
+        // Check secondary storage for internal Swrve events
+        assertEquals("Expect 3 events: session_start, Swrve.first_session, device_update",
+                3, getAllEventsInSecondaryStorage().size());
 
         verifyDataCapturedFromButtonClick();
     }
@@ -267,7 +284,9 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         swrveSpy.init(mActivity);
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
 
-        assertEquals(3, getAllEvents().size());
+        assertEquals(0, getAllEventsInPrimaryStorage().size());
+        assertEquals("Expect 3 events: session_start, Swrve.first_session, device_update",
+                3, getAllEventsInSecondaryStorage().size());
 
         SwrveButton buttonCustom = createButton("CUSTOM", "campaign.json", null, 150);
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveInAppMessageActivity.class);
@@ -282,7 +301,7 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
         inAppMessageHandler.buttonClicked(buttonCustom, "someAction", "", 0, "");
 
         boolean clickFound = false;
-        Object[] events = getAllEvents().values().toArray();
+        Object[] events = getAllEventsInSecondaryStorage().values().toArray();
         for (int i = 0, j = events.length; i < j && !clickFound; i++) {
             String eventData = (String) events[i];
             clickFound = eventData.contains("Swrve.Messages.Message-" + buttonCustom.getMessage().getId());
@@ -291,8 +310,12 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         Thread.sleep(100l); // Custom events are sent a short period of time later so sleep
 
-        // 4 new buttons events should be queued, Test Json has Swrve. event which should not be sent
-        assertEquals(8, getAllEvents().size());
+        // Check primary storage for data captured from button click
+        assertEquals("Events in Primary storage not correct", 4, getAllEventsInPrimaryStorage().size());
+
+        // Check secondary storage for internal Swrve events
+        assertEquals("Expect 4 events: session_start, Swrve.first_session, device_update, Swrve.Message-165.click",
+                4, getAllEventsInSecondaryStorage().size());
 
         verifyDataCapturedFromButtonClick();
     }
@@ -440,10 +463,6 @@ public class SwrveSingleThreadedTests extends SwrveBaseTest {
 
         SwrveButton btn = new SwrveButton(message, new JSONObject(buttonJson));
         return btn;
-    }
-
-    private LinkedHashMap<Long, String> getAllEvents() {
-        return swrveSpy.multiLayerLocalStorage.getPrimaryStorage().getFirstNEvents(Integer.MAX_VALUE, swrveSpy.getUserId());
     }
 
     private void verifyDataCapturedFromButtonClick() {

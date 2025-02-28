@@ -15,6 +15,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -58,6 +60,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwrveIdentityTest extends SwrveBaseTest {
@@ -371,25 +374,34 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
     @Test
     public void testFirstSessionEvents() {
+        String userId = SwrveSDK.getUserId();
 
         // as part of setup a new user is created and first session event is sent
-        Mockito.verify(swrveSpy, times(1))._event(EVENT_FIRST_SESSION);
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", EVENT_FIRST_SESSION);
+        Mockito.verify(swrveSpy, times(1)).queueEvent(userId, "event", parameters, null, true);
 
         // identify and respond with same userId which shouldn't send another first session event
         mock200RestResponseWithSameUserId();
         identifyAndWait("NewExternalUser");
-        Mockito.verify(swrveSpy, times(1))._event(EVENT_FIRST_SESSION);
+        userId = SwrveSDK.getUserId();
+        Mockito.verify(swrveSpy, times(1)).queueEvent(userId, "event", parameters, null, true);
 
         // identify and respond with diff userId which shouldn't send another first session event
         String response = "{\"swrve_id\" : \"SwrveUser1\", \"status\" : \"existing_external_id_with_matching_swrve_id\"}";
         mockRestResponse(200, response);
         identifyAndWait("User1");
-        Mockito.verify(swrveSpy, times(1))._event(EVENT_FIRST_SESSION);
+        userId = SwrveSDK.getUserId();
+        Mockito.verify(swrveSpy, never()).queueEvent(userId, "event", parameters, null, true);
 
         // identify again and this time respond with same userId which SHOULD send a first session event
         mock200RestResponseWithSameUserId();
         identifyAndWait("User245646");
-        Mockito.verify(swrveSpy, times(2))._event(EVENT_FIRST_SESSION);
+        userId = SwrveSDK.getUserId();
+        Mockito.verify(swrveSpy, times(1)).queueEvent(userId, "event", parameters, null, true);
+
+        // total number of first session events should be 2 across all userIds
+        Mockito.verify(swrveSpy, times(2)).queueEvent(anyString(), eq("event"), eq(parameters), isNull(), eq(true));
     }
 
     @Test

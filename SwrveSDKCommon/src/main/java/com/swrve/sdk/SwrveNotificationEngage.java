@@ -4,7 +4,6 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_TEXT;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
 
-import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -14,7 +13,6 @@ import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
 
-import com.swrve.sdk.notifications.model.SwrveNotification;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 
 import org.json.JSONObject;
@@ -25,6 +23,11 @@ import java.util.Map;
 class SwrveNotificationEngage {
 
     private final Context context;
+    private Bundle extras; // the root bundle extras
+    private Bundle pushBundle; // the push bundle
+    private String pushId;
+    private String campaignType;
+    private Map<String, String> eventPayload;
 
     SwrveNotificationEngage(Context context) {
         this.context = context;
@@ -37,54 +40,73 @@ class SwrveNotificationEngage {
         }
 
         try {
-            Bundle extras = intent.getExtras();
-            Bundle pushBundle = extras.getBundle(SwrveNotificationConstants.PUSH_BUNDLE);
+            extras = intent.getExtras();
+            pushBundle = extras.getBundle(SwrveNotificationConstants.PUSH_BUNDLE);
             if (pushBundle == null) {
                 return;
             }
             Object rawId = pushBundle.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
-            String msgId = (rawId != null) ? rawId.toString() : null;
-            if (SwrveHelper.isNullOrEmpty(msgId)) {
+            pushId = (rawId != null) ? rawId.toString() : null;
+            if (SwrveHelper.isNullOrEmpty(pushId)) {
                 return;
             }
 
-            new SwrveCampaignInfluence().removeInfluenceCampaign(context, msgId); // Clear the influence data for this push
+            new SwrveCampaignInfluence().removeInfluenceCampaign(context, pushId); // Clear the influence data for this push
 
-            // Cannot send any event if the SDK is not started
+            campaignType = getCampaignType();
+            eventPayload = getEventPayload();
+
             String contextId = extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY);
             if (SwrveHelper.isNotNullOrEmpty(contextId)) {
-                sendButtonEngagedEvent(extras, pushBundle, msgId, contextId);
+                handleButtonEngagement(contextId);
             } else {
-                setNotificationSwrveCampaignIdFromPayload(pushBundle);
-                sendEngagedEvent(extras, pushBundle, msgId);
+                handleNotificationEngagement();
             }
-
-            executeCustomNotificationListener(pushBundle);
-
         } catch (Exception e) {
             SwrveLogger.e("SwrveNotificationEngage.processIntent", e);
         }
+
+        executeCustomNotificationListener(pushBundle);
     }
 
-    private void sendButtonEngagedEvent(Bundle extras, Bundle pushBundle, String id, String contextId) throws Exception {
-        SwrveLogger.d("SwrveSDK: Found engaged event: %s, with contextId: %s", id, contextId);
-        String campaignType = extras.getString(SwrveNotificationConstants.CAMPAIGN_TYPE);
-        Bundle eventPayload = extras.getBundle(SwrveNotificationConstants.EVENT_PAYLOAD);
-        Map<String, String> eventPayloadMap = SwrveHelper.getBundleAsMap(eventPayload);
+    private String getCampaignType() {
+        return extras.getString(SwrveNotificationConstants.CAMPAIGN_TYPE);
+    }
+
+    private Map<String, String> getEventPayload() {
+        Bundle eventPayloadExtra = extras.getBundle(SwrveNotificationConstants.EVENT_PAYLOAD); // some flows, such as geo, pass in event payloads
+        Map<String, String> eventPayload = SwrveHelper.getBundleAsMap(eventPayloadExtra);
         if (pushBundle.containsKey(SwrveNotificationConstants.TRACKING_DATA_KEY)) {
-            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, pushBundle.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
+            eventPayload.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, pushBundle.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
         }
         if (pushBundle.containsKey(SwrveNotificationConstants.PLATFORM_KEY)) {
-            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_PLATFORM, pushBundle.getString(SwrveNotificationConstants.PLATFORM_KEY));
+            eventPayload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, pushBundle.getString(SwrveNotificationConstants.PLATFORM_KEY));
+        }
+        return eventPayload;
+    }
+
+    private void handleButtonEngagement(String contextId) throws Exception {
+        SwrveLogger.d("SwrveSDK: Handle button engagement pushId: %s, with contextId: %s", pushId, contextId);
+
+        EventHelper.sendEngagedEvent(context, campaignType, pushId, eventPayload);
+
+        String buttonText = extras.getString(SwrveNotificationConstants.BUTTON_TEXT_KEY);
+        eventPayload.put(GENERIC_EVENT_PAYLOAD_BUTTON_TEXT, buttonText);
+        EventHelper.sendButtonClickEvent(context, campaignType, pushId, contextId, eventPayload);
+
+        // Button has been pressed, now close the notification
+        int notificationId = extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID);
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.cancel(notificationId);
+
+        SwrveNotificationButton.ActionType buttonActionType = (SwrveNotificationButton.ActionType) extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY);
+        if (buttonActionType == SwrveNotificationButton.ActionType.OPEN_CAMPAIGN) {
+            setNotificationSwrveCampaignId(extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY)); // Open campaign functionality is not supported yet in the BE - this is future proofing
         }
 
-        // send engaged event
-        EventHelper.sendEngagedEvent(context, campaignType, id, eventPayloadMap);
-
-        // send button click event
-        String buttonText = extras.getString(SwrveNotificationConstants.BUTTON_TEXT_KEY);
-        eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_BUTTON_TEXT, buttonText);
-        EventHelper.sendButtonClickEvent(context, campaignType, id, contextId, eventPayloadMap);
+        if (SwrveCommon.getInstance().getNotificationConfig() != null && !SwrveCommon.getInstance().getNotificationConfig().useEngagementProxy()) {
+            return; // if not using the engagement proxy, then the target activity will already be opened
+        }
 
         SwrveNotificationButton.ActionType type = (SwrveNotificationButton.ActionType) extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY);
         switch (type) {
@@ -95,28 +117,25 @@ class SwrveNotificationEngage {
                 openActivity(pushBundle);
                 break;
             case OPEN_CAMPAIGN:
-                setNotificationSwrveCampaignIdFromButtonAction(extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
                 openActivity(pushBundle);
                 break;
             case DISMISS:
                 break;
         }
-        int notificationId = extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID);
-        closeNotification(notificationId); // Button has been pressed, now close the notification
     }
 
-    private void sendEngagedEvent(Bundle extras, Bundle pushBundle, String msgId) throws Exception {
-        SwrveLogger.d("SwrveSDK: Found engaged event: %s", msgId);
-        String campaignType = extras.getString(SwrveNotificationConstants.CAMPAIGN_TYPE);
-        Bundle eventPayloadBundle = extras.getBundle(SwrveNotificationConstants.EVENT_PAYLOAD);
-        Map<String, String> eventPayloadMap = SwrveHelper.getBundleAsMap(eventPayloadBundle);
-        if (pushBundle.containsKey(SwrveNotificationConstants.TRACKING_DATA_KEY)) {
-            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, pushBundle.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
+    private void handleNotificationEngagement() throws Exception {
+        SwrveLogger.d("SwrveSDK: Handle notification engagement pushId: %s", pushId);
+
+        String campaignId = extras.getString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY);
+        setNotificationSwrveCampaignId(campaignId);
+
+        EventHelper.sendEngagedEvent(context, campaignType, pushId, eventPayload);
+
+        if (SwrveCommon.getInstance().getNotificationConfig() != null && !SwrveCommon.getInstance().getNotificationConfig().useEngagementProxy()) {
+            return; // if not using the engagement proxy, then the target activity will already be opened
         }
-        if (pushBundle.containsKey(SwrveNotificationConstants.PLATFORM_KEY)) {
-            eventPayloadMap.put(GENERIC_EVENT_PAYLOAD_PLATFORM, pushBundle.getString(SwrveNotificationConstants.PLATFORM_KEY));
-        }
-        EventHelper.sendEngagedEvent(context, campaignType, msgId, eventPayloadMap);
+
         if (pushBundle.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
             openDeeplink(pushBundle, pushBundle.getString(SwrveNotificationConstants.DEEPLINK_KEY));
         } else {
@@ -124,112 +143,111 @@ class SwrveNotificationEngage {
         }
     }
 
-    private void setNotificationSwrveCampaignIdFromPayload(Bundle pushBundle) {
-        ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-
-        String swrvePushPayload = pushBundle.getString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY);
-        if (SwrveHelper.isNotNullOrEmpty(swrvePushPayload)) {
-            SwrveNotification swrveNotification = SwrveNotification.fromJson(swrvePushPayload);
-            if (swrveNotification != null) {
-                if (swrveNotification.getCampaign() != null) {
-                    String swrveCampaignId = swrveNotification.getCampaign().getId();
-                    swrveCommon.setNotificationSwrveCampaignId(swrveCampaignId);
-                }
-            }
-        }
-    }
-
-    private void setNotificationSwrveCampaignIdFromButtonAction(String campaignId) {
+    private void setNotificationSwrveCampaignId(String campaignId) {
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
         if (SwrveHelper.isNotNullOrEmpty(campaignId)) {
-            swrveCommon.setNotificationSwrveCampaignId(campaignId);
+            swrveCommon.setNotificationSwrveCampaignId(campaignId); // set the campaign to open from the notification
         }
     }
 
     private void executeCustomNotificationListener(Bundle msg) {
-        ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-        SwrvePushNotificationListener listener = swrveCommon.getNotificationListener();
-        if (listener != null) {
-            JSONObject payload = SwrveHelper.convertPayloadToJSONObject(msg);
-            listener.onPushNotification(payload);
+        try {
+            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
+            SwrvePushNotificationListener listener = swrveCommon.getNotificationListener();
+            if (listener != null) {
+                JSONObject payload = SwrveHelper.convertPayloadToJSONObject(msg);
+                listener.onPushNotification(payload);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveNotificationEngage.executeCustomNotificationListener Error executing CustomNotificationListener", e);
         }
     }
 
-    protected void closeNotification(int notificationID) {
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.cancel(notificationID);
+    protected void openDeeplink(Bundle msg, String deeplink) {
+        Intent intent = getDeeplinkIntent(msg, deeplink);
+        if (SwrveCommon.getInstance() != null && SwrveCommon.getInstance().getSwrveDeeplinkListener() != null) {
+            SwrveLogger.d("SwrveSDK: Passing to SwrveDeeplinkListener to open deeplink: %s", deeplink);
+            SwrveCommon.getInstance().getSwrveDeeplinkListener().handleDeeplink(context, deeplink, extras);
+        } else {
+            SwrveLogger.d("SwrveSDK: Opening deeplink: %s", deeplink);
+            context.startActivity(intent);
+        }
     }
 
-    private void openDeeplink(Bundle msg, String uri) {
-        Bundle msgBundleCopy = new Bundle(msg); // make copy of extras and remove any that have been handled
-        msgBundleCopy.remove(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
-        msgBundleCopy.remove(SwrveNotificationConstants.DEEPLINK_KEY);
-        SwrveIntentHelper.openDeepLink(context, uri, msgBundleCopy);
-        closeNotificationBar();
+    static Intent getDeeplinkIntent(Bundle msg, String deeplink) {
+        Intent intent;
+        SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
+        if (notificationConfig != null && notificationConfig.getNotificationIntentListener() != null) {
+            intent = notificationConfig.getNotificationIntentListener().onNotificationEngage(msg, deeplink);
+        } else {
+            intent = SwrveIntentHelper.getDeepLinkIntent(deeplink, msg);
+        }
+        return intent;
     }
 
-    private void openActivity(Bundle msg) throws PendingIntent.CanceledException {
-        Intent intent = getActivityIntent(msg);
+    protected void openActivity(Bundle msg) throws PendingIntent.CanceledException {
+        Intent intent = getActivityIntent(context, msg);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getActivity(context, generateTimestampId(), intent, flags);
         pendingIntent.send();
-        closeNotificationBar();
     }
 
-    private Intent getActivityIntent(Bundle msg) {
+    static Intent getActivityIntent(Context context, Bundle msg) {
         Intent intent = null;
-        Class<?> clazz = getActivityClass();
-        if (clazz != null) {
-            intent = new Intent(context, clazz);
-            intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
-            intent.setAction("openActivity");
+        SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
+        if (notificationConfig != null && notificationConfig.getNotificationIntentListener() != null) {
+            intent = notificationConfig.getNotificationIntentListener().onNotificationEngage(msg, null);
+        } else {
+            Class<?> clazz = getActivityClass(context);
+            if (clazz != null) {
+                intent = new Intent(context, clazz);
+                intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
+                intent.setAction("openActivity");
+                intent.addFlags(SwrveIntentHelper.getDefaultIntentFlags());
+            }
         }
         return intent;
-    }
-
-    @SuppressLint("MissingPermission")
-    private void closeNotificationBar() {
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            // When performing a button action on notifications, you need to close the notification drawer explicitly
-            // note, this requires permission android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS if on 31+
-            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-            context.sendBroadcast(it);
-        }
     }
 
     private int generateTimestampId() {
         return (int) (new Date().getTime() % Integer.MAX_VALUE);
     }
 
-    private Class<?> getActivityClass() {
+    static Class<?> getActivityClass(Context context) {
         Class<?> clazz = null;
         SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
         if (notificationConfig != null && notificationConfig.getActivityClass() != null) {
             clazz = notificationConfig.getActivityClass();
         } else {
             // If no class configured then use the default launcher activity
-            try {
-                String activity = null;
-                PackageManager packageManager = context.getPackageManager();
-                ResolveInfo resolveInfo = packageManager.resolveActivity(packageManager.getLaunchIntentForPackage(context.getPackageName()), PackageManager.MATCH_DEFAULT_ONLY);
-                if (resolveInfo != null) {
-                    activity = resolveInfo.activityInfo.name;
-                    if (activity.startsWith(".")) {
-                        activity = context.getPackageName() + activity; // Append application package as it starts with .
-                    }
+            clazz = getDefaultActivityClass(context);
+        }
+        return clazz;
+    }
+
+    static Class<?> getDefaultActivityClass(Context context) {
+        Class<?> clazz = null;
+        try {
+            String activity = null;
+            PackageManager packageManager = context.getPackageManager();
+            ResolveInfo resolveInfo = packageManager.resolveActivity(packageManager.getLaunchIntentForPackage(context.getPackageName()), PackageManager.MATCH_DEFAULT_ONLY);
+            if (resolveInfo != null) {
+                activity = resolveInfo.activityInfo.name;
+                if (activity.startsWith(".")) {
+                    activity = context.getPackageName() + activity; // Append application package as it starts with .
                 }
-                if (SwrveHelper.isNotNullOrEmpty(activity)) {
-                    if (activity.startsWith(".")) {
-                        activity = context.getPackageName() + activity; // Append application package as it starts with .
-                    }
-                    clazz = Class.forName(activity);
-                }
-            } catch (Exception e) {
-                SwrveLogger.e("Exception getting activity class to start when notification is engaged.", e);
             }
+            if (SwrveHelper.isNotNullOrEmpty(activity)) {
+                if (activity.startsWith(".")) {
+                    activity = context.getPackageName() + activity; // Append application package as it starts with .
+                }
+                clazz = Class.forName(activity);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception getting activity class to start when notification is engaged.", e);
         }
         return clazz;
     }

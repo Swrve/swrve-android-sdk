@@ -9,14 +9,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
@@ -325,8 +322,14 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
     @Test
     public void testInAppStoryHandleTapsWithDeeplinks() throws Exception {
         initSDK();
-        SwrveDeeplinkListener deeplinkListenerMock = mock(SwrveDeeplinkListener.class);
-        doReturn(deeplinkListenerMock).when(swrveSpy).getSwrveDeeplinkListener();
+        final AtomicBoolean waitCallback = new AtomicBoolean(false);
+        swrveSpy.getConfig().setSwrveDeeplinkListener(new SwrveDeeplinkListener() {
+            @Override
+            public void handleDeeplink(Context context, String uri, Bundle extras) {
+                assertEquals("https://www.google.com", uri);
+                waitCallback.set(true);
+            }
+        });
         SwrveCommon.setSwrveCommon(swrveSpy);
 
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_in_app_story.json", "asset1", "asset2");
@@ -357,7 +360,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         int yCenter = SwrveHelper.getDisplayHeight(mActivity) / 2;
         Point deeplinkTapPoint = new Point(xCenter + 10, yCenter + 10); // Deeplink button is at x = 0, y = 0 and has height/width of 50
         simulateTap(swrveLayout, deeplinkTapPoint);
-        verify(deeplinkListenerMock, Mockito.times(1)).handleDeeplink(any(Activity.class), eq("https://www.google.com"), any(Bundle.class) );
+        await().untilTrue(waitCallback);
 
         Robolectric.flushForegroundThreadScheduler();
         SwrveInAppMessageActivity finalActivity = activity;

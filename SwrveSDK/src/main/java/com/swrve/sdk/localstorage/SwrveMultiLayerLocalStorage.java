@@ -138,6 +138,15 @@ public class SwrveMultiLayerLocalStorage {
         }
     }
 
+    // Swrve events get priority and are stored in the permanent storage first
+    public long addSwrveEvent(String userId, String eventJSON) throws Exception {
+        if (secondaryStorage != null && secondaryStorage instanceof SQLiteLocalStorage) {
+            return secondaryStorage.addEvent(userId, eventJSON);
+        } else {
+            return addEvent(userId, eventJSON);
+        }
+    }
+
     public void setAndFlushSecureSharedEntryForUser(String userId, String category, String rawData, String uniqueKey) {
         synchronized (cacheLock) {
             try {

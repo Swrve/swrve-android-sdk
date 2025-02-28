@@ -520,12 +520,10 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * This configuration can only be used in initMode MANAGED.
+     * If true, sessions will start automatically when the UI is shown.
+     * If false, the sdk will delay starting session until the start api is called.
      *
-     * @param autoStartLastUser If true, the sdk will delay starting until the start api is
-     *                          called and the userId is set. Once set, it will autostart
-     *                          when UI is shown. Set to false to force the sdk to always
-     *                          delay tracking until a start api is called.
+     * @param autoStartLastUser true/false boolean to control when sessions start. Default is true.
      */
     public void setAutoStartLastUser(boolean autoStartLastUser) {
         this.autoStartLastUser = autoStartLastUser;

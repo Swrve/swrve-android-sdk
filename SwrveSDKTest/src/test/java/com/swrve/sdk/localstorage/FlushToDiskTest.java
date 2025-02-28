@@ -1,5 +1,7 @@
 package com.swrve.sdk.localstorage;
 
+import static org.junit.Assert.assertEquals;
+
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -7,13 +9,12 @@ import androidx.test.core.app.ApplicationProvider;
 import com.swrve.sdk.SwrveBaseTest;
 import com.swrve.sdk.SwrveLogger;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.robolectric.shadows.ShadowLog;
 
 import java.util.LinkedHashMap;
-
-import static org.junit.Assert.assertEquals;
 
 public class FlushToDiskTest  extends SwrveBaseTest {
     private LocalStorage primaryLocalStorage;
@@ -28,6 +29,12 @@ public class FlushToDiskTest  extends SwrveBaseTest {
         secondaryLocalStorage = new SQLiteLocalStorage(ApplicationProvider.getApplicationContext(), "flushToDiskTest", 2024 * 2024 * 2024);
         multiLayerLocalStorage = new SwrveMultiLayerLocalStorage(primaryLocalStorage);
         multiLayerLocalStorage.setSecondaryStorage(secondaryLocalStorage);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        ApplicationProvider.getApplicationContext().deleteDatabase("flushToDiskTest");
     }
 
     @Test

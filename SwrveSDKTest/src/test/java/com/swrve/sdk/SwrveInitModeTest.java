@@ -352,7 +352,6 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     }
 
     private void assertNoEventsWereQueued() {
-        verify(swrveSpy, Mockito.atMost(0)).queueEvent(anyString(), Mockito.any(Map.class), Mockito.any(Map.class));
         verify(swrveSpy, Mockito.atMost(0)).queueEvent(anyString(), anyString(), Mockito.any(Map.class), Mockito.any(Map.class), anyBoolean());
     }
 

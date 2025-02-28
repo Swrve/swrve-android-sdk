@@ -44,8 +44,8 @@ public class SwrveImageScaler {
             int bitmapHeight = options.outHeight;
 
             // Calculate inSampleSize
-            options.inSampleSize = Math.max(calculateInSampleSize(options, reqWidth,
-                    reqHeight), minSampleSize);
+            int calculatedInSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+            options.inSampleSize = Math.max(calculatedInSampleSize, minSampleSize);
 
             // Decode bitmap with inSampleSize set
             options.inJustDecodeBounds = false;

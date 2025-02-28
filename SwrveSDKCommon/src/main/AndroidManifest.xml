@@ -7,7 +7,7 @@
             android:exported="false" />
         <activity
             android:name="com.swrve.sdk.SwrveNotificationEngageActivity"
-            android:theme="@android:style/Theme.Light"
+            android:theme="@style/Swrve.Theme.Transparent"
             android:launchMode="singleInstance"
             android:exported="false" />
 

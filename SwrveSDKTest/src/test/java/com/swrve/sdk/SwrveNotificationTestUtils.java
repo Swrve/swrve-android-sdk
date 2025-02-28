@@ -84,18 +84,10 @@ public class SwrveNotificationTestUtils {
         PendingIntent pendingIntent = notification.contentIntent;
         ShadowPendingIntent shadowPendingIntent = shadowOf(pendingIntent);
         assertNotNull(shadowPendingIntent);
-        Intent intent = null;
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            assertTrue(shadowPendingIntent.isActivityIntent());
-            assertEquals(1, shadowPendingIntent.getSavedIntents().length);
-            intent = shadowPendingIntent.getSavedIntents()[0];
-            assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
-        } else {
-            assertTrue(shadowPendingIntent.isBroadcastIntent());
-            assertEquals(1, shadowPendingIntent.getSavedIntents().length);
-            intent = shadowPendingIntent.getSavedIntents()[0];
-            assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", intent.getComponent().getClassName());
-        }
+        assertTrue(shadowPendingIntent.isActivityIntent());
+        assertEquals(1, shadowPendingIntent.getSavedIntents().length);
+        Intent intent = shadowPendingIntent.getSavedIntents()[0];
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
         assertNotNull(intent);
         Bundle intentExtras = intent.getBundleExtra(SwrveNotificationConstants.PUSH_BUNDLE);
         assertNotNull(intentExtras);

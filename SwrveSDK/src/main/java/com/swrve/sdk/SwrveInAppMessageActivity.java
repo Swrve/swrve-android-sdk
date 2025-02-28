@@ -228,10 +228,14 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
             if (storyGestureDetector != null) {
                 fragment.addGestureDetection(storyGestureDetector);
             }
-            getSupportFragmentManager().beginTransaction().replace(R.id.swrve_iam_frag_container, fragment).commit();
-            currentPageIdNonSwipe = pageId;
-            if (storyView != null) {
-                storyView.startSegmentAtIndex(getSwrveMessageFormat().getIndexForPageId(currentPageIdNonSwipe));
+            if (!isFinishing() && !isDestroyed()) { // Activity could be finishing/destroyed if user presses back button and same time next page is supposed to be shown
+                getSupportFragmentManager().beginTransaction().replace(R.id.swrve_iam_frag_container, fragment).commit();
+                currentPageIdNonSwipe = pageId;
+                if (storyView != null) {
+                    storyView.startSegmentAtIndex(getSwrveMessageFormat().getIndexForPageId(currentPageIdNonSwipe));
+                }
+            } else {
+                SwrveLogger.w("SwrveInAppMessageActivity: cannot show page %s because activity is finishing or destroyed.", pageId);
             }
         }
     }

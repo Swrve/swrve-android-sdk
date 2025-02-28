@@ -29,7 +29,11 @@ class QueueEventRunnable implements Runnable {
             int seqNum = SwrveCommon.getInstance().getNextSequenceNumber();
             long time = System.currentTimeMillis();
             eventString = EventHelper.eventAsJSON(eventType, parameters, payload, seqNum, time);
-            multiLayerLocalStorage.addEvent(userId, eventString);
+            if (isSwrveEvent(eventType, parameters)) {
+                multiLayerLocalStorage.addSwrveEvent(userId, eventString);
+            } else {
+                multiLayerLocalStorage.addEvent(userId, eventString);
+            }
             SwrveLogger.i("Event queued of type: %s and seqNum:%s for userId:%s", eventType, seqNum, userId);
 
             List<String> events = new ArrayList<>();
@@ -38,6 +42,15 @@ class QueueEventRunnable implements Runnable {
         } catch (Exception e) {
             SwrveLogger.e("Unable to insert QueueEvent into local storage. EventString:" + eventString, e);
         }
+    }
+
+    private boolean isSwrveEvent(String eventType, Map<String, Object> parameters) {
+        if (eventType.equals("device_update")) {
+            return true;
+        } else if (eventType.equals("event") && parameters.containsKey("name") && parameters.get("name").toString().startsWith("Swrve.")) {
+            return true;
+        }
+        return false;
     }
 }
 

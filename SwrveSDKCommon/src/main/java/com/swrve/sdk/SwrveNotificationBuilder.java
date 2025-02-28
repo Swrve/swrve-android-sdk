@@ -61,6 +61,7 @@ public class SwrveNotificationBuilder {
     protected String campaignType; // accessed in unity subclass
     private Bundle eventPayload;
     private int notificationId;
+    private String iamCampaignId; // a campaign to show (eg: IAM) after engaging with push
     protected int requestCode;
     private SwrveNotificationDetails notificationDetails = new SwrveNotificationDetails();
 
@@ -169,6 +170,9 @@ public class SwrveNotificationBuilder {
             swrveNotification = SwrveNotification.fromJson(swrvePushPayload);
             if (swrveNotification != null && swrveNotification.getNotificationId() > 0) {
                 notificationId = swrveNotification.getNotificationId();
+            }
+            if (swrveNotification != null && swrveNotification.getCampaign() != null) {
+                iamCampaignId = swrveNotification.getCampaign().getId();
             }
         }
         return swrveNotification;
@@ -517,71 +521,103 @@ public class SwrveNotificationBuilder {
         return actions;
     }
 
-    private NotificationCompat.Action createNotificationAction(String buttonText, int icon, String actionKey, SwrveNotificationButton.ActionType actionType, String actionUrl) {
+    protected NotificationCompat.Action createNotificationAction(String buttonText, int icon, String actionKey, SwrveNotificationButton.ActionType actionType, String actionUrl) {
         boolean isDismissAction = actionType == SwrveNotificationButton.ActionType.DISMISS;
-        Intent intent = createButtonIntent(context, msg, actionType, isDismissAction);
+        Intent intent = createButtonIntent(context, msg, actionType, actionUrl, isDismissAction);
+        intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
+        intent.putExtra(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, notificationId);
+        intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, campaignType);
+        intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+        intent.putExtra(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, msg.getString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY));
         intent.putExtra(SwrveNotificationConstants.CONTEXT_ID_KEY, actionKey);
-        intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY, actionType);
+        intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY, actionType); // if actionType==OPEN_CAMPAIGN, then actionUrl will be the campaign id. Not actually supported yet.
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_URL_KEY, actionUrl);
         intent.putExtra(SwrveNotificationConstants.BUTTON_TEXT_KEY, buttonText);
-        intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+
         int flags = PendingIntent.FLAG_CANCEL_CURRENT;
         if (getSDKVersion() >= Build.VERSION_CODES.M) {
             flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         }
-        PendingIntent pendingIntentButton = getPendingIntent(getSDKVersion(), intent, flags, isDismissAction);
+        PendingIntent pendingIntentButton = getPendingIntent(intent, flags, isDismissAction);
         return new NotificationCompat.Action.Builder(icon, buttonText, pendingIntentButton).build();
     }
 
     // Called by Unity - overridden in Unity version of SwrveNotificationBuilder
-    public Intent createButtonIntent(Context context, Bundle msg, SwrveNotificationButton.ActionType actionType, boolean isDismissAction) {
-        Class clazz = getIntentClass(getSDKVersion(), isDismissAction);
-        Intent intent = new Intent(context, clazz);
-        intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
-        intent.putExtra(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, notificationId);
-        intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, campaignType);
+    public Intent createButtonIntent(Context context, Bundle msg, SwrveNotificationButton.ActionType actionType, String actionUrl, boolean isDismissAction) {
+        Intent intent;
+        SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
+        if (notificationConfig == null || notificationConfig.useEngagementProxy()) {
+            Class clazz = getIntentClass(isDismissAction);
+            intent = new Intent(context, clazz);
+            intent.addFlags(SwrveIntentHelper.getDefaultIntentFlags());
+        } else if (actionType == SwrveNotificationButton.ActionType.OPEN_URL && SwrveHelper.isNotNullOrEmpty(actionUrl)) {
+            intent = SwrveNotificationEngage.getDeeplinkIntent(msg, actionUrl);
+        } else if (isDismissAction) {
+            Class clazz = SwrveNotificationEngageReceiver.class; // use broadcast receiver for dismiss action because no UI required
+            intent = new Intent(context, clazz);
+        } else {
+            intent = SwrveNotificationEngage.getActivityIntent(context, msg);
+        }
         return intent;
     }
 
     // Called by Unity
     public PendingIntent createPendingIntent(Bundle msg, String campaignType, Bundle eventPayload) {
         Intent intent = createIntent(msg, campaignType, eventPayload);
-        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
-        if (getSDKVersion() >= Build.VERSION_CODES.M) {
-            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        }
-        PendingIntent pendingIntent = getPendingIntent(getSDKVersion(), intent, flags, false);
-        return pendingIntent;
-    }
-
-    private Intent createIntent(Bundle msg, String campaignType, Bundle eventPayload) {
-        Class clazz = getIntentClass(getSDKVersion(), false);
-        Intent intent = new Intent(context, clazz);
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
         intent.putExtra(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, notificationId);
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, campaignType);
         intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+        intent.putExtra(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, msg.getString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY));
+        if (SwrveHelper.isNotNullOrEmpty(iamCampaignId)) {
+            intent.putExtra(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, iamCampaignId);
+        }
+
+        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
+        if (getSDKVersion() >= Build.VERSION_CODES.M) {
+            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pendingIntent = getPendingIntent(intent, flags, false);
+        return pendingIntent;
+    }
+
+    // createIntent is the main intent that will be launched when the notification is engaged with.
+    // It is not the intent that will be launched when a button is clicked. It is never a dismiss
+    // action hence false is always passed to getIntentClass.
+    private Intent createIntent(Bundle msg, String campaignType, Bundle eventPayload) {
+        Intent intent;
+        SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
+        if (notificationConfig == null || notificationConfig.useEngagementProxy()) {
+            Class clazz = getIntentClass(false);
+            intent = new Intent(context, clazz);
+            intent.addFlags(SwrveIntentHelper.getDefaultIntentFlags());
+        } else if (msg.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
+            String deeplink = msg.getString(SwrveNotificationConstants.DEEPLINK_KEY);
+            intent = SwrveNotificationEngage.getDeeplinkIntent(msg, deeplink);
+        } else {
+            intent = SwrveNotificationEngage.getActivityIntent(context, msg);
+        }
         return intent;
     }
 
     // Called by Unity - overridden in Unity version of SwrveNotificationBuilder
-    public Class getIntentClass(int sdkVersion, boolean isDismissAction) {
+    public Class getIntentClass(boolean isDismissAction) {
         Class clazz;
         // A dismiss action should dismiss the notification without opening the app
-        if (sdkVersion >= Build.VERSION_CODES.S && !isDismissAction) {
-            clazz = SwrveNotificationEngageActivity.class;
+        if (isDismissAction) {
+            clazz = SwrveNotificationEngageReceiver.class; // use broadcast receiver for dismiss action because no UI required
         } else {
-            clazz = SwrveNotificationEngageReceiver.class;
+            clazz = SwrveNotificationEngageActivity.class; // everything else should use proxy activity
         }
         return clazz;
     }
 
-    protected PendingIntent getPendingIntent(int sdkVersion, Intent intent, int flags, boolean isDismissAction) {
+    protected PendingIntent getPendingIntent(Intent intent, int flags, boolean isDismissAction) {
         PendingIntent pendingIntent;
-        if (sdkVersion >= Build.VERSION_CODES.S && !isDismissAction) {
-            pendingIntent = PendingIntent.getActivity(context, requestCode++, intent, flags);
+        if (isDismissAction) {
+            pendingIntent = PendingIntent.getBroadcast(context, requestCode++, intent, flags); // use broadcast PI for dismiss action to avoid UI
         } else {
-            pendingIntent = PendingIntent.getBroadcast(context, requestCode++, intent, flags);
+            pendingIntent = PendingIntent.getActivity(context, requestCode++, intent, flags); // everything else should use activity PI
         }
         return pendingIntent;
     }

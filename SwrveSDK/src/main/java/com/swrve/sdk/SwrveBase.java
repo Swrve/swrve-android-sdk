@@ -2,20 +2,20 @@ package com.swrve.sdk;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static com.swrve.sdk.SwrvePushInboxListenerResult.ResultCode.ERROR;
 import static com.swrve.sdk.Swrve.FLAVOUR;
+import static com.swrve.sdk.SwrvePushInboxListenerResult.ResultCode.ERROR;
 import static com.swrve.sdk.SwrveTrackingState.EVENT_SENDING_PAUSED;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static com.swrve.sdk.SwrveTrackingState.STOPPED;
 import static com.swrve.sdk.messaging.SwrveInAppMessageListener.SwrveMessageAction.Impression;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -39,12 +39,12 @@ import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveInAppMessageListener;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageButtonDetails;
 import com.swrve.sdk.messaging.SwrveMessageCenterDetails;
 import com.swrve.sdk.messaging.SwrveMessageDetails;
 import com.swrve.sdk.messaging.SwrveMessageFormat;
-import com.swrve.sdk.messaging.SwrveInAppMessageListener;
 import com.swrve.sdk.messaging.SwrveMessagePage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 import com.swrve.sdk.rest.IRESTResponseListener;
@@ -248,7 +248,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             multiLayerLocalStorage.setCacheEntry(profileManager.getUserId(), CACHE_USER_JOINED_TIME, String.valueOf(userJoinedTime)); // Save to memory and secondary storage
             // Only send first_session event if user hasn't already identified on a different device.
             if (identifiedOnAnotherDevice == false) {
-                _event(EVENT_FIRST_SESSION); // First time we see this user
+                // First time we see this user
+                Map<String, Object> parameters = new HashMap<>();
+                parameters.put("name", EVENT_FIRST_SESSION);
+                queueEvent(profileManager.getUserId(), "event", parameters, null, true);
             }
         }
     }
@@ -288,38 +291,20 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         }
     }
 
-    protected void _event(String name) {
-        _event(name, null);
-    }
-
-    protected void _event(String name, Map<String, String> payload) {
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("name", name);
-        try {
-            if (payload != null && payload.size() > 0) {
-                new JSONObject(payload); // validate payload: if payload is invalid exception is thrown and caught by calling method.
-            }
-        } catch (Exception ex) {
-            SwrveLogger.e("SwrveSDK: JSONException when encoding payload event. Not queueing.", ex);
-            return;
-        }
-        queueEvent("event", parameters, payload);
-    }
-
     protected void _purchase(String item, String currency, int cost, int quantity) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("item", item);
         parameters.put("currency", currency);
         parameters.put("cost", Integer.toString(cost));
         parameters.put("quantity", Integer.toString(quantity));
-        queueEvent("purchase", parameters, null);
+        queueEvent(profileManager.getUserId(), "purchase", parameters, null, true);
     }
 
     protected void _currencyGiven(String givenCurrency, double givenAmount) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("given_currency", givenCurrency);
         parameters.put("given_amount", Double.toString(givenAmount));
-        queueEvent("currency_given", parameters, null);
+        queueEvent(profileManager.getUserId(), "currency_given", parameters, null, true);
     }
 
     protected void _userUpdate(Map<String, String> attributes) {
@@ -330,7 +315,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e("SwrveSDK: JSONException when encoding user attributes. Not queueing.", ex);
             return;
         }
-        queueEvent("user", parameters, null);
+        queueEvent(profileManager.getUserId(), "user", parameters, null, true);
     }
 
     protected void _userUpdate(String name, Date date) {
@@ -344,7 +329,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.e("SwrveSDK: JSONException when encoding user date attributes. Not queueing.", ex);
             return;
         }
-        queueEvent("user", parameters, null);
+        queueEvent(profileManager.getUserId(), "user", parameters, null, true);
     }
 
     private String getStringFromDate(Date date) {
@@ -1305,7 +1290,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
         try {
             if (isValidEventName(name)) {
-                _event(name);
+                Map<String, Object> parameters = new HashMap<>();
+                parameters.put("name", name);
+                queueEvent(profileManager.getUserId(), "event", parameters, null, true);
             }
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
@@ -1317,8 +1304,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (!isSdkReady()) return;
 
         try {
-            if (isValidEventName(name)) {
-                _event(name, payload);
+            if (isValidEventName(name) && isValidPayload(payload)) {
+                Map<String, Object> parameters = new HashMap<>();
+                parameters.put("name", name);
+                queueEvent(profileManager.getUserId(), "event", parameters, payload, true);
             }
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
@@ -1348,6 +1337,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             }
         }
 
+        return true;
+    }
+
+    private boolean isValidPayload(Map<String, String> payload) throws Exception {
+        if (payload != null && payload.size() > 0) {
+            new JSONObject(payload); // validate payload: if payload is invalid exception is thrown and caught by calling method.
+        }
         return true;
     }
 
@@ -2166,11 +2162,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
      */
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-        if (isEngageActivity(activity) || isSplashActivity(activity)) {
-            return;
-        }
         bindToActivity(activity);
         lifecycleExecutorExecute(() -> {
+
+            if (config.getNotificationConfig() != null && !config.getNotificationConfig().useEngagementProxy()) {
+                handlePushEngagement(activity.getIntent()); // Process push engage before checking if splash activity
+            }
+
+            if (isEngageActivity(activity) || isSplashActivity(activity)) {
+                return;
+            }
+
             if (isStarted()) {
                 onCreate(activity);
             }
@@ -2184,11 +2186,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public void onActivityResumed(Activity activity) {
-        if (isEngageActivity(activity) || isSplashActivity(activity)) {
-            return;
-        }
         bindToActivity(activity);
         lifecycleExecutorExecute(() -> {
+
+            if (config.getNotificationConfig() != null && !config.getNotificationConfig().useEngagementProxy()) {
+                handlePushEngagement(activity.getIntent()); // Process push engage before checking if splash activity
+            }
+
+            if (isEngageActivity(activity) || isSplashActivity(activity)) {
+                return;
+            }
+
             if (isStarted()) {
                 onResume(activity);
             }
@@ -2255,6 +2263,19 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             SwrveLogger.v("SplashActivity has been launched so skip ActivityLifecycleCallbacks method and use next Activity that is launched");
         }
         return isSplashActivity;
+    }
+
+    protected void handlePushEngagement(Intent intent) {
+        Bundle bundle = intent.getExtras();
+        if (bundle == null || !bundle.containsKey("_sid")) {
+            return;
+        }
+        String sid = bundle.getString("_sid");
+        if (!processedSids.contains(sid)) {
+            SwrveNotificationEngage swrveNotificationEngage = new SwrveNotificationEngage(activityContext.get());
+            swrveNotificationEngage.processIntent(intent);
+            processedSids.add(sid);
+        }
     }
 
     @Override
@@ -2632,7 +2653,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             String deviceId = SwrveLocalStorageUtil.getDeviceId(multiLayerLocalStorage);
             String sessionToken = profileManager.getSessionToken();
             SwrveEventsManager swrveEventsManager = getSwrveEventsManager(userId, deviceId, sessionToken);
-            swrveEventsManager.storeAndSendEvents(sessionStartEvent, multiLayerLocalStorage.getPrimaryStorage());
+            LocalStorage storage = multiLayerLocalStorage.getSecondaryStorage(); // Prioritise SQLiteLocalStorage storage for session start event
+            storage = (storage instanceof SQLiteLocalStorage) ? storage : multiLayerLocalStorage.getPrimaryStorage();
+            swrveEventsManager.storeAndSendEvents(sessionStartEvent, storage);
         } catch (Exception e) {
             SwrveLogger.e("Exception sending session start event", e);
         }

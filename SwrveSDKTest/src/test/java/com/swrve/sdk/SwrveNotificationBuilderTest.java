@@ -2,12 +2,14 @@ package com.swrve.sdk;
 
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -30,11 +32,11 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 
-import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.SdkSuppress;
 
-import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import com.swrve.sdk.test.MainActivity;
 
@@ -55,6 +57,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
@@ -62,18 +65,25 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     private SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
             .activityClass(MainActivity.class)
             .build();
+    private Swrve swrveSpy;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS);
-        ISwrveCommon swrveCommonSpy = mock(ISwrveCommon.class);
-        SwrveCommon.setSwrveCommon(swrveCommonSpy);
-        doReturn(notificationConfig).when(swrveCommonSpy).getNotificationConfig();
-        doReturn(ApplicationProvider.getApplicationContext().getCacheDir()).when(swrveCommonSpy).getCacheDir(ApplicationProvider.getApplicationContext());
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.flushLifecycleExecutorQueue(swrveSpy);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
+        SwrveTestUtils.disableSwrveBackgroundEventSender(swrveSpy);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+        doNothing().when(swrveSpy).checkForCampaignAndResourcesUpdates();
+        doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
+        SwrveCommon.setSwrveCommon(swrveSpy);
+        doReturn(notificationConfig).when(swrveSpy).getNotificationConfig();
+        doReturn(ApplicationProvider.getApplicationContext().getCacheDir()).when(swrveSpy).getCacheDir(ApplicationProvider.getApplicationContext());
         pushServiceManagerSpy = spy(new SwrvePushManagerImp(ApplicationProvider.getApplicationContext()));
-        doNothing().when(swrveCommonSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
-        doReturn(Mockito.mock(CampaignDeliveryManager.class)).when(pushServiceManagerSpy).getCampaignDeliveryManager();
+        doReturn(mock(CampaignDeliveryManager.class)).when(pushServiceManagerSpy).getCampaignDeliveryManager();
     }
 
     @Test
@@ -493,10 +503,10 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         PendingIntent pendingIntent = notification.contentIntent;
         ShadowPendingIntent shadowPendingIntent = shadowOf(pendingIntent);
         assertNotNull(shadowPendingIntent);
-        assertTrue(shadowPendingIntent.isBroadcastIntent());
+        assertTrue(shadowPendingIntent.isActivity());
         assertEquals(1, shadowPendingIntent.getSavedIntents().length);
         Intent shadowIntent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", shadowIntent.getComponent().getClassName());
         Bundle intentExtras = shadowIntent.getBundleExtra(SwrveNotificationConstants.PUSH_BUNDLE);
         assertEquals("https://fallback_sd", intentExtras.get(SwrveNotificationConstants.DEEPLINK_KEY));
     }
@@ -559,10 +569,10 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         PendingIntent pendingIntent = notification.contentIntent;
         ShadowPendingIntent shadowPendingIntent = shadowOf(pendingIntent);
         assertNotNull(shadowPendingIntent);
-        assertTrue(shadowPendingIntent.isBroadcastIntent());
+        assertTrue(shadowPendingIntent.isActivity());
         assertEquals(1, shadowPendingIntent.getSavedIntents().length);
         Intent shadowIntent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", shadowIntent.getComponent().getClassName());
         Bundle intentExtras = shadowIntent.getBundleExtra(SwrveNotificationConstants.PUSH_BUNDLE);
         assertNull(intentExtras.get(SwrveNotificationConstants.DEEPLINK_KEY)); // this should not be set
     }
@@ -858,14 +868,6 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
     @Test
     public void testButtonClickEvents() throws Exception {
-        SwrveConfig config = new SwrveConfig();
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
-        Swrve swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveCommon.setSwrveCommon(swrveSpy);
-        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class));
         swrveSpy.init(mActivity);
 
         // Send a valid Rich Payload
@@ -944,15 +946,6 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
     @Test
     public void testEngagedEvents() throws Exception {
-        SwrveConfig config = new SwrveConfig();
-        config.setNotificationConfig(notificationConfig);
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
-        Swrve swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        doNothing().when(swrveSpy).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveCommon.setSwrveCommon(swrveSpy);
-        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class));
         swrveSpy.init(mActivity);
 
         // Send a valid Rich Payload
@@ -973,18 +966,11 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         notification.contentIntent.send();
 
-        // Launch SwrveNotificationEngageReceiver (imitate single engagement with notification)
-        List<Intent> broadcastIntents = mShadowActivity.getBroadcastIntents();
-        assertEquals(1, broadcastIntents.size());
-        Intent engageEventIntent = broadcastIntents.get(0);
+        // Launch SwrveNotificationEngage (imitate single engagement with notification)
+        Intent engageEventIntent = mShadowActivity.getNextStartedActivity();
         SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
-        // Clear pending intents
-        mShadowActivity.getBroadcastIntents().clear();
-        notificationEngage.processIntent(engageEventIntent);
 
-        broadcastIntents = mShadowActivity.getBroadcastIntents();
-        assertEquals(1, broadcastIntents.size());
-        assertEquals("android.intent.action.CLOSE_SYSTEM_DIALOGS", broadcastIntents.get(0).getAction());
+        notificationEngage.processIntent(engageEventIntent);
 
         ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
         ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -1009,7 +995,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     public void testNotificationChannelFromConfig() {
         NotificationChannel channel = new NotificationChannel("swrve_channel", "Swrve channel", NotificationManager.IMPORTANCE_LOW);
         channel.setDescription("All the news from Swrve");
-        ISwrveCommon mockSwrveCommon = Mockito.mock(ISwrveCommon.class);
+        ISwrveCommon mockSwrveCommon = mock(ISwrveCommon.class);
         when(mockSwrveCommon.getDefaultNotificationChannel()).thenReturn(channel);
         SwrveCommon.setSwrveCommon(mockSwrveCommon);
 
@@ -1094,7 +1080,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     @Test
     public void testNotificationChannelFromPayload() {
 
-        ISwrveCommon mockSwrveCommon = Mockito.mock(ISwrveCommon.class);
+        ISwrveCommon mockSwrveCommon = mock(ISwrveCommon.class);
         SwrveCommon.setSwrveCommon(mockSwrveCommon);
 
         String channelId = "my_channel_id";
@@ -1182,39 +1168,183 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         ShadowPendingIntent shadowPendingIntent;
         Intent shadowIntent;
 
-        // api level 30 --> use SwrveNotificationEngageReceiver
-        Intent intentApi30 = new Intent(mActivity, builder.getIntentClass(30, false));
-        pendingIntent = builder.getPendingIntent(30, intentApi30, PendingIntent.FLAG_CANCEL_CURRENT, false);
+        // dismiss action == false --> use SwrveNotificationEngageActivity
+        Intent intentApi = new Intent(mActivity, builder.getIntentClass(false));
+        pendingIntent = builder.getPendingIntent(intentApi, PendingIntent.FLAG_CANCEL_CURRENT, false);
         shadowPendingIntent = shadowOf(pendingIntent);
-        assertTrue(shadowPendingIntent.isBroadcastIntent());
-        shadowIntent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
-
-        // api level 31 - dismiss action --> use SwrveNotificationEngageReceiver
-        Intent intentApi31Dismiss = new Intent(mActivity, builder.getIntentClass(31, true));
-        pendingIntent = builder.getPendingIntent(31, intentApi31Dismiss, PendingIntent.FLAG_CANCEL_CURRENT, true);
-        shadowPendingIntent = shadowOf(pendingIntent);
-        assertTrue(shadowPendingIntent.isBroadcastIntent());
-        shadowIntent = shadowPendingIntent.getSavedIntents()[0];
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
-
-        // api level 31 - NOT a dismiss action --> use SwrveNotificationEngageActivity
-        Intent intentApi31 = new Intent(mActivity, builder.getIntentClass(31, false));
-        pendingIntent = builder.getPendingIntent(31, intentApi31, PendingIntent.FLAG_CANCEL_CURRENT, false);
-        shadowPendingIntent = shadowOf(pendingIntent);
-        assertTrue(shadowPendingIntent.isActivityIntent());
+        assertTrue(shadowPendingIntent.isActivity());
         shadowIntent = shadowPendingIntent.getSavedIntents()[0];
         assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", shadowIntent.getComponent().getClassName());
+
+        // dismiss action == true --> use SwrveNotificationEngageReceiver
+        Intent intentApiDismiss = new Intent(mActivity, builder.getIntentClass(true));
+        pendingIntent = builder.getPendingIntent(intentApiDismiss, PendingIntent.FLAG_CANCEL_CURRENT, true);
+        shadowPendingIntent = shadowOf(pendingIntent);
+        assertTrue(shadowPendingIntent.isBroadcast());
+        shadowIntent = shadowPendingIntent.getSavedIntents()[0];
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", shadowIntent.getComponent().getClassName());
     }
 
     @Test
     public void testGetIntentClass() {
         SwrveNotificationBuilder builder = new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig);
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", builder.getIntentClass(30, false).getName());
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", builder.getIntentClass(30, true).getName());
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", builder.getIntentClass(true).getName());
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", builder.getIntentClass(false).getName());
+    }
 
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageReceiver", builder.getIntentClass(31, true).getName());
-        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", builder.getIntentClass(31, false).getName());
+    @Test
+    public void testNotificationButtonIntentUseEngagementProxyTrue() {
+        String pushId = "1";
+        Intent intent = getNotificationButtonIntent(true, SwrveNotificationButton.ActionType.OPEN_APP, null, pushId, null);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
+
+        // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        await().until(pushButtonClickSent(pushId));
+        verify(swrveSpy, never()).handlePushEngagement(any());
+        assertTrue(swrveSpy.processedSids.isEmpty());
+    }
+
+    @Test
+    public void testNotificationButtonIntentUseEngagementProxyFalseOpenApp() {
+        String pushId = "2";
+        Intent intent = getNotificationButtonIntent(false, SwrveNotificationButton.ActionType.OPEN_APP, null, pushId, null);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName());
+
+        // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        await().until(pushButtonClickSent(pushId));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    @Test
+    public void testNotificationButtonIntentUseEngagementProxyFalseOpenDeeplink() {
+        String pushId = "3";
+        String deeplink = "swrve://deeplink";
+        Intent intent = getNotificationButtonIntent(false, SwrveNotificationButton.ActionType.OPEN_URL, deeplink, pushId, null);
+        assertNotNull(intent);
+        assertEquals("android.intent.action.VIEW", intent.getAction());
+        assertEquals(deeplink, intent.getData().toString());
+
+        // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        await().until(pushButtonClickSent(pushId));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    @Test
+    public void testNotificationButtonIntentUseEngagementProxyFalseOpenCampaign() {
+        String pushId = "4";
+        Intent intent = getNotificationButtonIntent(false, SwrveNotificationButton.ActionType.OPEN_CAMPAIGN, null, pushId, null);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName()); // open campaign opens the MainActivity
+
+        // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        await().until(pushButtonClickSent(pushId));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    private Intent getNotificationButtonIntent(boolean useEngagementProxy, SwrveNotificationButton.ActionType actionType, String actionUrl, String pushId, String iamCampaign) {
+
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+                .activityClass(MainActivity.class)
+                .useEngagementProxy(useEngagementProxy)
+                .build();
+        doReturn(notificationConfig).when(swrveSpy).getNotificationConfig();
+        swrveSpy.config.setNotificationConfig(notificationConfig);
+
+        // create a dummy builder and call the method directly that creates the a notification action
+        SwrveNotificationBuilder builder = new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig);
+        Bundle dummyBundle = dummyBundle(pushId, iamCampaign);
+        builder.build("dummy text", dummyBundle, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
+        NotificationCompat.Action notificationAction = builder.createNotificationAction("buttonText", 0, "0", actionType, actionUrl);
+        assertNotNull(notificationAction);
+        return getIntent(notificationAction.getActionIntent());
+    }
+
+    @Test
+    public void testNotificationMainIntentUseEngagementProxyTrue() {
+        String pushId = "5";
+        Intent intent = getNotificationMainIntent(true, pushId, null, null);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
+
+        // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        verify(swrveSpy, never()).handlePushEngagement(any());
+        assertTrue(swrveSpy.processedSids.isEmpty());
+    }
+
+    @Test
+    public void testNotificationMainIntentUseEngagementProxyFalseOpenApp() {
+        String pushId = "6";
+        Intent intent = getNotificationMainIntent(false, pushId, null, null);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName());
+
+        // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    @Test
+    public void testNotificationMainIntentUseEngagementProxyFalseOpenDeeplink() {
+        String pushId = "7";
+        String deeplink = "swrve://deeplink";
+        Intent intent = getNotificationMainIntent(false, pushId, null, deeplink);
+        assertNotNull(intent);
+        assertEquals("android.intent.action.VIEW", intent.getAction());
+        assertEquals(deeplink, intent.getData().toString());
+
+        // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    @Test
+    public void testNotificationMainIntentUseEngagementProxyFalseOpenCampaign() {
+
+        String pushId = "8";
+        String campaignId = "1234";
+        Intent intent = getNotificationMainIntent(false, pushId, campaignId, null);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName()); // open campaign opens the MainActivity
+
+        // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    private Intent getNotificationMainIntent(boolean useEngagementProxy, String pushId, String iamCampaign, String deeplink) {
+
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+                .activityClass(MainActivity.class)
+                .useEngagementProxy(useEngagementProxy)
+                .build();
+        doReturn(notificationConfig).when(swrveSpy).getNotificationConfig();
+        swrveSpy.config.setNotificationConfig(notificationConfig);
+
+        // create a dummy builder and call the method directly that creates the main pending intent
+        SwrveNotificationBuilder builder = new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig);
+        Bundle dummyBundle = dummyBundle(pushId, iamCampaign);
+        if (SwrveHelper.isNotNullOrEmpty(deeplink)) {
+            dummyBundle.putString(SwrveNotificationConstants.DEEPLINK_KEY, deeplink);
+        }
+        builder.build("dummy text", dummyBundle, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
+        PendingIntent pendingIntent = builder.createPendingIntent(dummyBundle, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
+        assertNotNull(pendingIntent);
+        return getIntent(pendingIntent);
     }
 
     // HELPER METHODS
@@ -1234,4 +1364,72 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     private Intent getIntent(PendingIntent pendingIntent) {
         return ((ShadowPendingIntent) Shadow.extract(pendingIntent)).getSavedIntent();
     }
+
+    private Bundle dummyBundle(String pushId, String iamCampaign) {
+        // A basic bundle
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, pushId);
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        String json = "{\n" +
+                " \"title\": \"title\",\n" +
+                " \"subtitle\": \"subtitle\",\n";
+        if (iamCampaign != null) {
+            json += " \"campaign\": { \"id\": \"" + iamCampaign + "\" },\n";
+        }
+        json += " \"version\": 1\n" +
+                "}\n";
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
+        bundle.putString("customData", "some custom values");
+        bundle.putString("sound", "default");
+        int firstTimestamp = generateTimestampId();
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+        bundle.putString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, pushId);
+        return bundle;
+    }
+
+    private Callable<Boolean> pushEngagedSent(String pushId) {
+        return () -> {
+            ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+            ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+            try {
+                verify(swrveSpy, atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), events.capture());
+            } catch (Throwable t) {
+                return false; // Verification failed, try again
+            }
+            List<ArrayList> capturedProperties = events.getAllValues();
+            for (ArrayList event : capturedProperties) {
+                String jsonString = event.get(0).toString();
+                //{"type":"event","time":1740138936022,"seqnum":1,"name":"Swrve.Messages.Push-2.engaged"}
+                if (jsonString.contains("\"name\":\"Swrve.Messages.Push-" + pushId + ".engaged\"}")) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    private Callable<Boolean> pushButtonClickSent(String pushId) {
+        return () -> {
+            ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
+            ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<ArrayList> events = ArgumentCaptor.forClass(ArrayList.class);
+            try {
+                verify(swrveSpy, atLeastOnce()).sendEventsInBackground(contextCaptor.capture(), userIdStringCaptor.capture(), events.capture());
+            } catch (Throwable t) {
+                return false; // Verification failed, try again
+            }
+            List<ArrayList> capturedProperties = events.getAllValues();
+            for (ArrayList event : capturedProperties) {
+                String jsonString = event.get(0).toString();
+                //{"type":"generic_campaign_event","time":1740138785306,"seqnum":2,"actionType":"button_click","campaignType":"push","contextId":"0","id":"2","payload":{"buttonText":"buttonText"}}
+                if (jsonString.contains("\"actionType\":\"button_click\",\"campaignType\":\"push\",\"contextId\":\"0\",\"id\":\"" + pushId + "\",\"payload\":{\"buttonText\":\"buttonText\"}}")) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
 }

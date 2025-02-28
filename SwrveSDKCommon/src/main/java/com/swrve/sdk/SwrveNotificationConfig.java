@@ -7,6 +7,8 @@ import java.util.List;
 public class SwrveNotificationConfig {
 
     private final Class<?> activityClass;
+    private final SwrveNotificationIntentListener notificationIntentListener;
+    private final boolean useEngagementProxy;
     private final int iconDrawableId;
     private final int iconMaterialDrawableId;
     private final NotificationChannel defaultNotificationChannel;
@@ -17,6 +19,8 @@ public class SwrveNotificationConfig {
 
     private SwrveNotificationConfig(Builder builder) {
         this.activityClass = builder.activityClass;
+        this.notificationIntentListener = builder.notificationIntentListener;
+        this.useEngagementProxy = builder.useEngagementProxy;
         this.iconDrawableId = builder.iconDrawableId;
         this.iconMaterialDrawableId = builder.iconMaterialDrawableId;
         this.defaultNotificationChannel = builder.defaultNotificationChannel;
@@ -33,6 +37,23 @@ public class SwrveNotificationConfig {
      */
     public Class<?> getActivityClass() {
         return activityClass;
+    }
+
+    /**
+     * Get the notification intent listener to be called when the notification is engaged with.
+     *
+     * @return The notification intent listener
+     */
+    public SwrveNotificationIntentListener getNotificationIntentListener() {
+        return notificationIntentListener;
+    }
+
+    /**
+     * The useEngagementProxy configuration.
+     * @return true to use the engagement proxy, false to not use it
+     */
+    public boolean useEngagementProxy() {
+        return useEngagementProxy;
     }
 
     /**
@@ -101,6 +122,8 @@ public class SwrveNotificationConfig {
     public static class Builder {
 
         private Class<?> activityClass;
+        private SwrveNotificationIntentListener notificationIntentListener;
+        private boolean useEngagementProxy = true; // default to true, but we might consider removing this and proxy in next major version
         private final int iconDrawableId;
         private final int iconMaterialDrawableId;
         private final NotificationChannel defaultNotificationChannel;
@@ -131,6 +154,43 @@ public class SwrveNotificationConfig {
          */
         public Builder activityClass(Class<?> activityClass) {
             this.activityClass = activityClass;
+            return this;
+        }
+
+        /**
+         * Set the notification intent listener to be called when the notification is engaged with.
+         * This is useful if you want to apply custom intent flags and extras. The Intent returned is
+         * called with context.startActivity(intent). If set, this will override the activityClass
+         * API and also the SwrveDeeplinkListener API. If not set, the SDK will apply default behavior.
+         *
+         * @param notificationIntentListener The notification intent listener
+         * @return this builder
+         */
+        public Builder notificationIntentListener(SwrveNotificationIntentListener notificationIntentListener) {
+            this.notificationIntentListener = notificationIntentListener;
+            return this;
+        }
+
+        /**
+         * Sets whether to use an engagement proxy activity for handling push notification engagements.
+         * <p>
+         * The engagement proxy is an invisible Activity that processes push notification intents and
+         * tracks user engagement before routing the intent to the target Activity.  Using the engagement
+         * proxy (the default behavior) ensures compatibility with various Android versions and devices,
+         * and allows the SDK to manage necessary Activity flags.
+         * <p>
+         * If set to {@code false}, the SDK bypasses the engagement proxy and delivers the push notification
+         * intent directly to your application's Activity.  In this case, you *must* override the
+         * {@code android.app.Activity#onNewIntent(Intent)} method in your target Activity and call
+         * {@code setIntent(intent)} to ensure proper handling of the notification intent. Failing to do
+         * so will result in losing engagement events and potentially missed executions of
+         * {@link com.swrve.sdk.SwrvePushNotificationListener}.
+         * @param useEngagementProxy {@code true} to use the engagement proxy (default), {@code false} to
+         *                           bypass it and handle intents directly in your Activity.
+         * @return This {@link Builder} instance for chaining.
+         */
+        public Builder useEngagementProxy(boolean useEngagementProxy) {
+            this.useEngagementProxy = useEngagementProxy;
             return this;
         }
 

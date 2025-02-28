@@ -43,40 +43,7 @@
                 "text": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
                 "base_font_size": 20
               },
-              "images": [
-                {
-                  "name": "Background",
-                  "iam_z_index": 0,
-                  "x": {
-                    "type": "number",
-                    "value": 0
-                  },
-                  "y": {
-                    "type": "number",
-                    "value": 0
-                  },
-                  "w": {
-                    "type": "number",
-                    "value": 1441
-                  },
-                  "h": {
-                    "type": "number",
-                    "value": 2340
-                  },
-                  "image_width": 1441,
-                  "image_height": 2340,
-                  "image_filename": "2364x3840.png",
-                  "image": {
-                    "type": "asset",
-                    "value": "73efb349f6e6ab7753bdfc1073d2035d607bbd40"
-                  },
-                  "color": {
-                    "type": "color",
-                    "value": "FFFFFF"
-                  },
-                  "media_format": "image"
-                }
-              ],
+              "images": [],
               "buttons": [
                 {
                   "name": "MButton1",
@@ -230,77 +197,6 @@
                       "border_color": "#FF0040DD"
                     },
                     "h_align": "CENTER"
-                  }
-                },
-                {
-                  "name": "Msystem 12",
-                  "iam_z_index": 6,
-                  "x": {
-                    "type": "number",
-                    "value": 265
-                  },
-                  "y": {
-                    "type": "number",
-                    "value": -260
-                  },
-                  "w": {
-                    "type": "number",
-                    "value": 488
-                  },
-                  "h": {
-                    "type": "number",
-                    "value": 108
-                  },
-                  "type": {
-                    "type": "text",
-                    "value": "DISMISS"
-                  },
-                  "action": {
-                    "type": "text",
-                    "value": ""
-                  },
-                  "text": {
-                    "type": "text",
-                    "value": "system 12"
-                  },
-                  "theme": {
-                    "font_size": 12,
-                    "font_postscript_name": "",
-                    "font_family": "",
-                    "font_style": "Regular",
-                    "font_native_style": "NORMAL",
-                    "font_file": "_system_font_",
-                    "font_digest": "",
-                    "padding": {
-                      "top": 9.751693002257337,
-                      "right": 9.751693002257337,
-                      "bottom": 9.751693002257337,
-                      "left": 9.751693002257337
-                    },
-                    "font_color": "#ff000000",
-                    "bg_image": {
-                      "type": "asset",
-                      "value": "9973b5003e299dab6394258c459e82b58a7a7633"
-                    },
-                    "bg_color": "",
-                    "border_width": 0,
-                    "border_color": "",
-                    "corner_radius": 0,
-                    "button_style_preset": {
-                      "id": "121",
-                      "version": 0
-                    },
-                    "truncate": true,
-                    "pressed_state": {
-                      "font_color": "#FFFF0000",
-                      "bg_color": "",
-                      "border_color": "",
-                      "bg_image": {
-                        "type": "asset",
-                        "value": "73efb349f6e6ab7753bdfc1073d2035d607bbd40"
-                      }
-                    },
-                    "h_align": "RIGHT"
                   }
                 },
                 {

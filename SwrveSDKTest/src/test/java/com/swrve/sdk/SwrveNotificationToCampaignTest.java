@@ -114,6 +114,7 @@ public class SwrveNotificationToCampaignTest extends SwrveBaseTest {
         Bundle extras = new Bundle();
         extras.putBundle(SwrveNotificationConstants.PUSH_BUNDLE, swrve);
         extras.putInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, 12345);
+        extras.putString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, "295411");
         intent.putExtras(extras);
         return intent;
     }

@@ -1,7 +1,13 @@
 package com.swrve.sdk.localstorage;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import androidx.test.core.app.ApplicationProvider;
 
+import com.swrve.sdk.SwrveBaseTest;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,10 +15,7 @@ import org.junit.Test;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
+public class SwrveMultiLayerLocalStorageTest extends SwrveBaseTest {
     private LocalStorage primaryLocalStorage;
     private LocalStorage secondaryLocalStorage;
     private SwrveMultiLayerLocalStorage multiLayerLocalStorage;
@@ -23,7 +26,12 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
         secondaryLocalStorage = new SQLiteLocalStorage(ApplicationProvider.getApplicationContext(), "flushToDiskTest", 2024 * 2024 * 2024);
         multiLayerLocalStorage = new SwrveMultiLayerLocalStorage(primaryLocalStorage);
         multiLayerLocalStorage.setSecondaryStorage(secondaryLocalStorage);
-        localStorage = secondaryLocalStorage;
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        ApplicationProvider.getApplicationContext().deleteDatabase("flushToDiskTest");
     }
 
     @Test
@@ -140,5 +148,6 @@ public class SwrveMultiLayerLocalStorageTest extends BaseLocalStorage {
             Assert.fail("testSaveNotificationAuthenticated failed because id's returned didn't match what was saved.");
         }
 
+        multiLayerLocalStorage.deleteNotificationsAuthenticated();
     }
 }

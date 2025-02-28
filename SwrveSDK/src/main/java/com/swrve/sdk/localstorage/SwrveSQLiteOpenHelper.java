@@ -183,17 +183,18 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
 
                 // Set userJoinedTime for current user. Remove SwrveSDK.installTime because appInstallTime is taken from the OS now.
                 if (SwrveHelper.isNotNullOrEmpty(userId)) {
-                    Cursor cursor = db.rawQuery("SELECT * FROM cache WHERE category='SwrveSDK.installTime'", null);
-                    cursor.moveToFirst();
-                    if (!cursor.isAfterLast()) {
-                        int index = cursor.getColumnIndex("raw_data");
-                        String installDate = cursor.getString(index);
-                        if (SwrveHelper.isNotNullOrEmpty(installDate)) {
-                            ContentValues values = new ContentValues();
-                            values.put("user_id", userId);
-                            values.put("category", "SwrveSDK.userJoinedTime");
-                            values.put("raw_data", installDate);
-                            db.insertOrThrow("cache", null, values);
+                    try (Cursor cursor = db.rawQuery("SELECT * FROM cache WHERE category='SwrveSDK.installTime'", null)) {
+                        cursor.moveToFirst();
+                        if (!cursor.isAfterLast()) {
+                            int index = cursor.getColumnIndex("raw_data");
+                            String installDate = cursor.getString(index);
+                            if (SwrveHelper.isNotNullOrEmpty(installDate)) {
+                                ContentValues values = new ContentValues();
+                                values.put("user_id", userId);
+                                values.put("category", "SwrveSDK.userJoinedTime");
+                                values.put("raw_data", installDate);
+                                db.insertOrThrow("cache", null, values);
+                            }
                         }
                     }
                 }

@@ -1,5 +1,16 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_INFLUENCED;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
+import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY;
+import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -14,17 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_INFLUENCED;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
-import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY;
-import static com.swrve.sdk.SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY;
 
 
 public class SwrveCampaignInfluence {
@@ -95,7 +95,7 @@ public class SwrveCampaignInfluence {
     public void removeInfluenceCampaign(Context context, String trackingId) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(INFLUENCED_PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor edit = sharedPreferences.edit();
-        edit.remove(trackingId).commit();
+        edit.remove(trackingId).apply();
     }
 
     public void processInfluenceData(Context context, ISwrveCommon swrveCommon) {

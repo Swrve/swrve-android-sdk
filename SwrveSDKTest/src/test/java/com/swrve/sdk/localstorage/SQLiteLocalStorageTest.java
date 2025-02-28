@@ -1,22 +1,5 @@
 package com.swrve.sdk.localstorage;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-
-import androidx.test.core.app.ApplicationProvider;
-
-import com.swrve.sdk.SwrveUser;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
@@ -26,6 +9,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import com.swrve.sdk.SwrveUser;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 public class SQLiteLocalStorageTest extends BaseLocalStorage {
 
@@ -37,9 +36,15 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
         localStorage = new SQLiteLocalStorage(ApplicationProvider.getApplicationContext(), "test", maxSize);
     }
 
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+        ApplicationProvider.getApplicationContext().deleteDatabase("test");
+    }
+
     @Test
     public void testOverflowSpace() {
-        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage)localStorage;
+        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
         assertEquals("Maximum size not being set correctly.", maxSize, sqLiteLocalStorage.database.getMaximumSize());
     }
 
@@ -122,17 +127,20 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
         sqLiteLocalStorage.saveNotificationAuthenticated(3, 125);
         sqLiteLocalStorage.saveNotificationAuthenticated(3, 126);
         SQLiteDatabase database = sqLiteLocalStorage.database;
-        Cursor cursor = database.rawQuery("SELECT * FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, null);
-        if (cursor.moveToFirst()) {
-            int row = 1;
-            while (cursor.isAfterLast() == false) {
-                long notificationId = cursor.getLong(cursor.getColumnIndex(NOTIFICATIONS_AUTHENTICATED_COLUMN_ID));
-                assertEquals(row, notificationId);
-                row++;
-                cursor.moveToNext();
+        try (Cursor cursor = database.rawQuery("SELECT * FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, null)) {
+            if (cursor.moveToFirst()) {
+                int row = 1;
+                while (cursor.isAfterLast() == false) {
+                    long notificationId = cursor.getLong(cursor.getColumnIndex(NOTIFICATIONS_AUTHENTICATED_COLUMN_ID));
+                    assertEquals(row, notificationId);
+                    row++;
+                    cursor.moveToNext();
+                }
+            } else {
+                fail("testSaveCurrentNotifications failed because cursor is empty and should contain entries.");
             }
-        } else {
-            fail("testSaveCurrentNotifications failed because cursor is empty and should contain entries.");
+        } finally {
+            sqLiteLocalStorage.deleteNotificationsAuthenticated(); // clean up
         }
     }
 
@@ -255,38 +263,40 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
         sqLiteLocalStorage.incrementAssetDownloadCount("asset6", 600); // most recent
 
         SQLiteDatabase database = sqLiteLocalStorage.database;
-        Cursor cursor1 = database.rawQuery("SELECT * FROM " + ASSET_LOGS_TABLE_NAME, null);
-        if (cursor1.moveToFirst()) {
-            assertEquals(6, cursor1.getCount());
-            int row = 1;
-            while (cursor1.isAfterLast() == false) {
-                String assetName = cursor1.getString(cursor1.getColumnIndex(ASSET_LOGS_COLUMN_NAME));
-                assertEquals("asset" + row, assetName);
-                row++;
-                cursor1.moveToNext();
+
+        try (Cursor cursor1 = database.rawQuery("SELECT * FROM " + ASSET_LOGS_TABLE_NAME, null)) {
+            if (cursor1.moveToFirst()) {
+                assertEquals(6, cursor1.getCount());
+                int row = 1;
+                while (cursor1.isAfterLast() == false) {
+                    String assetName = cursor1.getString(cursor1.getColumnIndex(ASSET_LOGS_COLUMN_NAME));
+                    assertEquals("asset" + row, assetName);
+                    row++;
+                    cursor1.moveToNext();
+                }
+            } else {
+                fail("testTruncateAssetLogs failed because cursor1 is empty and should contain entries.");
             }
-            cursor1.close();
-        } else {
-            fail("testTruncateAssetLogs failed because cursor1 is empty and should contain entries.");
         }
 
         // truncate
         sqLiteLocalStorage.truncateAssetLogs(4);
 
         // check table size is 4 and the older assets were removed
-        Cursor cursor2 = database.rawQuery("SELECT * FROM " + ASSET_LOGS_TABLE_NAME, null);
-        if (cursor2.moveToFirst()) {
-            assertEquals(4, cursor2.getCount());
-            int row = 3;
-            while (cursor2.isAfterLast() == false) {
-                String assetName = cursor2.getString(cursor2.getColumnIndex(ASSET_LOGS_COLUMN_NAME));
-                assertEquals("asset" + row, assetName);
-                row++;
-                cursor2.moveToNext();
+        try (Cursor cursor2 = database.rawQuery("SELECT * FROM " + ASSET_LOGS_TABLE_NAME, null)) {
+            if (cursor2.moveToFirst()) {
+                assertEquals(4, cursor2.getCount());
+                int row = 3;
+                while (cursor2.isAfterLast() == false) {
+                    String assetName = cursor2.getString(cursor2.getColumnIndex(ASSET_LOGS_COLUMN_NAME));
+                    assertEquals("asset" + row, assetName);
+                    row++;
+                    cursor2.moveToNext();
+                }
+                assertEquals(7, row);
+            } else {
+                fail("testTruncateAssetLogs failed because cursor2 is empty and should contain entries.");
             }
-            assertEquals(7, row);
-        } else {
-            fail("testTruncateAssetLogs failed because cursor2 is empty and should contain entries.");
         }
     }
 }

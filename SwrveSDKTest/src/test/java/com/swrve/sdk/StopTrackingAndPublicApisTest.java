@@ -3,7 +3,6 @@ package com.swrve.sdk;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -81,10 +80,10 @@ public class StopTrackingAndPublicApisTest extends SwrveBaseTest {
         verify(swrveSpy, never())._sessionStart();
 
         SwrveSDK.event("new_event");
-        verify(swrveSpy, never())._event("new_event");
+        verify(swrveSpy, never()).queueEvent(anyString(), anyString(), Mockito.any(Map.class), Mockito.any(Map.class), anyBoolean());
 
         SwrveSDK.event("event", payload);
-        verify(swrveSpy, never())._event("new_event", payload);
+        verify(swrveSpy, never()).queueEvent(anyString(), anyString(), Mockito.any(Map.class), Mockito.any(Map.class), anyBoolean());
 
         SwrveSDK.purchase("item", "USB", 10, 1);
         verify(swrveSpy, never())._purchase("item", "USB", 10, 1);

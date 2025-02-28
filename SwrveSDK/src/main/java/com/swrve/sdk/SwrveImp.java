@@ -17,7 +17,6 @@ import static com.swrve.sdk.SwrveTrackingState.UNKNOWN;
 import static com.swrve.sdk.messaging.SwrveActionType.RequestCapabilty;
 import static com.swrve.sdk.messaging.SwrveActionType.StartGeo;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
@@ -27,7 +26,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
-import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -86,7 +84,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "11.1.2";
+    protected static String version = "11.2.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 10;
     protected static final int PUSH_INBOX_VERSION = 1;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 4;
@@ -172,6 +170,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected SwrvePushInboxManager pushInboxManager;
     protected SwrvePushInboxUpdateListener pushInboxUpdateListener;
     protected String pushInboxHash;
+    protected Set<String> processedSids = new HashSet<>();
 
     protected SwrveImp(Application application, int appId, String apiKey, C config) {
         SwrveLogger.setLoggingEnabled(config.isLoggingEnabled());
@@ -303,7 +302,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 parameters.put("receipt_signature", receiptSignature);
             }
 
-            queueEvent("iap", parameters, null);
+            queueEvent(profileManager.getUserId(), "iap", parameters, null, true);
 
             if (config.isAutoDownloadCampaignsAndResources()) {
                 startCampaignsAndResourcesTimer(false);
@@ -376,11 +375,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             // Launch exception
             listener.onUserResourcesDiffError(exp);
         }
-    }
-
-    protected void queueEvent(String eventType, Map<String, Object> parameters, Map<String, String> payload) {
-        String userId = profileManager.getUserId();
-        queueEvent(userId, eventType, parameters, payload, true);
     }
 
     protected boolean queueEvent(String userId, String eventType, Map<String, Object> parameters, Map<String, String> payload, boolean triggerEventListener) {

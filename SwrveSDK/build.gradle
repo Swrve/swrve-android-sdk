@@ -32,7 +32,6 @@ android {
         huawei {
             flavorDimensions "swrve-sdk"
             consumerProguardFiles 'huawei-proguard-rules.pro'
-            minSdkVersion Integer.parseInt(project.HUAWEI_BUILD_MIN_SDK_VERSION)
         }
     }
 

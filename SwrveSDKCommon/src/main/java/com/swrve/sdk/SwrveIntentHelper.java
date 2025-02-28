@@ -31,16 +31,33 @@ public final class SwrveIntentHelper {
             }
 
             SwrveLogger.d("SwrveSDK: Opening deeplink: %s", uriString);
-            Uri uri = Uri.parse(uriString);
-            Intent intent = new Intent(Intent.ACTION_VIEW).setData(uri);
-            if (extras != null) {
-                intent.putExtras(extras);
-            }
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            Intent intent = getDeepLinkIntent(uriString, extras);
             context.startActivity(intent);
         } catch (Exception ex) {
             SwrveLogger.e("SwrveSDK: could not open deeplink uri:%s", ex, uriString);
         }
     }
+
+
+    public static Intent getDeepLinkIntent(String uriString, Bundle extras) {
+        Intent intent = null;
+        try {
+            Uri uri = Uri.parse(uriString);
+            intent = new Intent(Intent.ACTION_VIEW).setData(uri);
+            if (extras != null) {
+                intent.putExtras(extras);
+            }
+            intent.addFlags(getDefaultIntentFlags());
+        } catch (Exception ex) {
+            SwrveLogger.e("SwrveSDK: could not get deeplink intent uri:%s", ex, uriString);
+        }
+        return intent;
+    }
+
+    public static int getDefaultIntentFlags() {
+        return Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_NO_ANIMATION;
+    }
+
 }
