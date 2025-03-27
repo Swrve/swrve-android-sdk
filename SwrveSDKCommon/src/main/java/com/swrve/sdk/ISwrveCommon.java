@@ -102,6 +102,7 @@ interface ISwrveCommon {
     String EVENT_ID_KEY                             = "id";
     String EVENT_TYPE_KEY                           = "type";
     String EVENT_PAYLOAD_KEY                        = "payload";
+    String EVENT_PAYLOAD_DEEPLINK                   = "deeplink";
     String EVENT_TYPE_GENERIC_CAMPAIGN              = "generic_campaign_event";
     String GENERIC_EVENT_CAMPAIGN_TYPE_KEY          = "campaignType";
     String GENERIC_EVENT_CAMPAIGN_TYPE_GEO          = "geo";

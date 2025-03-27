@@ -40,6 +40,7 @@ import androidx.test.filters.SdkSuppress;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import com.swrve.sdk.test.MainActivity;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -1201,8 +1202,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
-        await().until(pushButtonClickSent(pushId));
+        await().until(pushEngagedSent(pushId, null));
+        await().until(pushButtonClickSent(pushId, null));
         verify(swrveSpy, never()).handlePushEngagement(any());
         assertTrue(swrveSpy.processedSids.isEmpty());
     }
@@ -1216,8 +1217,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
-        await().until(pushButtonClickSent(pushId));
+        await().until(pushEngagedSent(pushId, null));
+        await().until(pushButtonClickSent(pushId, null));
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
@@ -1232,8 +1233,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
-        await().until(pushButtonClickSent(pushId));
+        await().until(pushEngagedSent(pushId, deeplink));
+        await().until(pushButtonClickSent(pushId, deeplink));
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
@@ -1246,8 +1247,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
-        await().until(pushButtonClickSent(pushId));
+        await().until(pushEngagedSent(pushId, null));
+        await().until(pushButtonClickSent(pushId, null));
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
@@ -1278,7 +1279,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
+        await().until(pushEngagedSent(pushId, null));
         verify(swrveSpy, never()).handlePushEngagement(any());
         assertTrue(swrveSpy.processedSids.isEmpty());
     }
@@ -1292,7 +1293,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
+        await().until(pushEngagedSent(pushId, null));
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
@@ -1307,7 +1308,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
+        await().until(pushEngagedSent(pushId, deeplink));
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
@@ -1322,7 +1323,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
         // use ActivityScenario to start the activity which triggers Application.LifecycleCallbacks.
         ActivityScenario.launch(intent);
-        await().until(pushEngagedSent(pushId));
+        await().until(pushEngagedSent(pushId, null));
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
@@ -1388,7 +1389,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         return bundle;
     }
 
-    private Callable<Boolean> pushEngagedSent(String pushId) {
+    private Callable<Boolean> pushEngagedSent(String pushId, String deeplink) {
         return () -> {
             ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
             ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -1399,10 +1400,17 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
                 return false; // Verification failed, try again
             }
             List<ArrayList> capturedProperties = events.getAllValues();
+            String escapedDeeplink = JSONObject.quote(deeplink);
+            escapedDeeplink = escapedDeeplink.substring(1, escapedDeeplink.length() - 1); // Remove quotes
             for (ArrayList event : capturedProperties) {
                 String jsonString = event.get(0).toString();
-                //{"type":"event","time":1740138936022,"seqnum":1,"name":"Swrve.Messages.Push-2.engaged"}
-                if (jsonString.contains("\"name\":\"Swrve.Messages.Push-" + pushId + ".engaged\"}")) {
+                if (SwrveHelper.isNullOrEmpty(deeplink)) {
+                    if (jsonString.contains("\"name\":\"Swrve.Messages.Push-" + pushId + ".engaged\"}")) {
+                        //{"type":"event","time":1740138936022,"seqnum":1,"name":"Swrve.Messages.Push-2.engaged"}
+                        return true;
+                    }
+                } else if (jsonString.contains("\"name\":\"Swrve.Messages.Push-" + pushId + ".engaged\",\"payload\":{\"deeplink\":\"" + escapedDeeplink + "\"}}")) {
+                    //{"type":"event","time":1741962282622,"seqnum":1,"name":"Swrve.Messages.Push-7.engaged","payload":{"deeplink":"swrve://deeplink"}}
                     return true;
                 }
             }
@@ -1410,7 +1418,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         };
     }
 
-    private Callable<Boolean> pushButtonClickSent(String pushId) {
+    private Callable<Boolean> pushButtonClickSent(String pushId, String deeplink) {
         return () -> {
             ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
             ArgumentCaptor<String> userIdStringCaptor = ArgumentCaptor.forClass(String.class);
@@ -1421,10 +1429,17 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
                 return false; // Verification failed, try again
             }
             List<ArrayList> capturedProperties = events.getAllValues();
+            String escapedDeeplink = JSONObject.quote(deeplink);
+            escapedDeeplink = escapedDeeplink.substring(1, escapedDeeplink.length() - 1); // Remove quotes
             for (ArrayList event : capturedProperties) {
                 String jsonString = event.get(0).toString();
-                //{"type":"generic_campaign_event","time":1740138785306,"seqnum":2,"actionType":"button_click","campaignType":"push","contextId":"0","id":"2","payload":{"buttonText":"buttonText"}}
-                if (jsonString.contains("\"actionType\":\"button_click\",\"campaignType\":\"push\",\"contextId\":\"0\",\"id\":\"" + pushId + "\",\"payload\":{\"buttonText\":\"buttonText\"}}")) {
+                if (SwrveHelper.isNullOrEmpty(deeplink)) {
+                    if (jsonString.contains("\"actionType\":\"button_click\",\"campaignType\":\"push\",\"contextId\":\"0\",\"id\":\"" + pushId + "\",\"payload\":{\"buttonText\":\"buttonText\"}}")) {
+                        //{"type":"generic_campaign_event","time":1740138785306,"seqnum":2,"actionType":"button_click","campaignType":"push","contextId":"0","id":"2","payload":{"buttonText":"buttonText"}}
+                        return true;
+                    }
+                } else if (jsonString.contains("\"actionType\":\"button_click\",\"campaignType\":\"push\",\"contextId\":\"0\",\"id\":\"" + pushId + "\",\"payload\":{\"buttonText\":\"buttonText\",\"deeplink\":\"" + escapedDeeplink + "\"}}")) {
+                    //{"type":"generic_campaign_event","time":1741956519852,"seqnum":2,"actionType":"button_click","campaignType":"push","contextId":"0","id":"3","payload":{"buttonText":"buttonText","deeplink":"swrve:\/\/deeplink"}}
                     return true;
                 }
             }

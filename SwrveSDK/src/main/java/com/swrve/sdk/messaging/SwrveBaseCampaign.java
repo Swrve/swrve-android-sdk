@@ -1,5 +1,7 @@
 package com.swrve.sdk.messaging;
 
+import androidx.annotation.Nullable;
+
 import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.QaCampaignInfo.CAMPAIGN_TYPE;
 import com.swrve.sdk.SwrveCampaignDisplayer;
@@ -352,14 +354,17 @@ public abstract class SwrveBaseCampaign {
         return priority;
     }
 
+    @Nullable
     public SwrveTimezoneType getTimezoneType() {
         return timezoneType;
     }
 
+    @Nullable
     public List<SwrveBlackoutDate> getBlackoutDates() {
         return blackoutDates;
     }
 
+    @Nullable
     public List<SwrveIntervalTime> getIntervalTimes() {
         return intervalTimes;
     }

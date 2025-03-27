@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.swrve.sdk.config.SwrveConfig;
 
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_DEEPLINK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
@@ -143,6 +144,19 @@ public class SwrveSDK extends SwrveSDKBase {
      * @param platform     Platform of the push notification (the _smp value from the push payload)
      */
     public static void sendPushEngagedEvent(Context context, String pushId, String trackingData, String platform) {
+        sendPushEngagedEvent(context, pushId, trackingData, platform, null);
+    }
+
+    /**
+     * Called to send the push engaged event to Swrve.
+     *
+     * @param context      android context
+     * @param pushId       The push id for engagement (the _p value from the push payload)
+     * @param trackingData Additional tracking data to be sent with the event (the _td value from the push payload)
+     * @param platform     Platform of the push notification (the _smp value from the push payload)
+     * @param deeplink     Deeplink of the push notification
+     */
+    public static void sendPushEngagedEvent(Context context, String pushId, String trackingData, String platform, String deeplink) {
         checkInstanceCreated();
         Map<String, String> payload = new HashMap<>();
         if (SwrveHelper.isNotNullOrEmpty(trackingData)) {
@@ -150,6 +164,9 @@ public class SwrveSDK extends SwrveSDKBase {
         }
         if (SwrveHelper.isNotNullOrEmpty(platform)) {
             payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, platform);
+        }
+        if (SwrveHelper.isNotNullOrEmpty(deeplink)) {
+            payload.put(EVENT_PAYLOAD_DEEPLINK, deeplink);
         }
         EventHelper.sendEngagedEvent(context, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, pushId, payload);
     }

@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -119,4 +120,27 @@ public class SwrveWithRetryUnitTest extends SwrveBaseTest {
         swrveSpy.deviceUpdate(swrveSpy.getUserId(), deviceInfo);
         SwrveTestUtils.assertQueueEvent(swrveSpy, "device_update", parameters, null);
     }
+
+    @Test
+    public void testSendDeviceUpdateWithUpdatedNotificationPermission() {
+        doReturn(mActivity).when(swrveSpy).getActivityContext();
+
+        // send device update with denied notification permission
+        JSONObject deviceInfo = swrveSpy.getDeviceInfo();
+        assertEquals("denied", deviceInfo.optString("swrve.permission.android.notification"));
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("attributes", deviceInfo);
+        SwrveSDK.sendDeviceUpdate();
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "device_update", parameters, null);
+
+        // send device update with granted notification permission
+        shadowApplication.grantPermissions(new String[]{POST_NOTIFICATIONS}); // grant the POST_NOTIFICATIONS permission
+        deviceInfo = swrveSpy.getDeviceInfo();
+        assertEquals("granted", deviceInfo.optString("swrve.permission.android.notification"));
+        parameters = new HashMap<>();
+        parameters.put("attributes", deviceInfo);
+        SwrveSDK.sendDeviceUpdate();
+        SwrveTestUtils.assertQueueEvent(swrveSpy, "device_update", parameters, null);
+    }
+
 }

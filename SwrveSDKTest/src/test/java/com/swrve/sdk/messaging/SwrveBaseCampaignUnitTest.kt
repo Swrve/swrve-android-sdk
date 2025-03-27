@@ -13,6 +13,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -66,16 +67,27 @@ class SwrveBaseCampaignUnitTest : SwrveBaseTest() {
 
         assertEquals(SwrveTimezoneType.GLOBAL, campaign.getTimezoneType())
 
-        assertEquals(2, campaign.blackoutDates.size.toLong())
-        assertEquals("2024-09-11T00:00:00Z", campaign.blackoutDates[0].from)
-        assertEquals("2024-09-11T23:59:59Z", campaign.blackoutDates[0].to)
-        assertEquals("2024-09-13T00:00:00Z", campaign.blackoutDates[1].from)
-        assertEquals("2024-09-13T23:59:59Z", campaign.blackoutDates[1].to)
+        assertEquals(2, campaign.blackoutDates.orEmpty().size.toLong())
+        val blackoutDates = campaign.blackoutDates.orEmpty()
+        if (blackoutDates.isNotEmpty()) {
+            assertEquals("2024-09-11T00:00:00Z", blackoutDates[0].from)
+            assertEquals("2024-09-11T23:59:59Z", blackoutDates[0].to)
+            assertEquals("2024-09-13T00:00:00Z", blackoutDates[1].from)
+            assertEquals("2024-09-13T23:59:59Z", blackoutDates[1].to)
+        } else {
+            fail("blackoutDates list is empty")
+        }
 
-        assertEquals(2, campaign.intervalTimes.size.toLong())
-        assertEquals("09:00:00", campaign.intervalTimes[0].from)
-        assertEquals("13:00:00", campaign.intervalTimes[0].to)
-        assertEquals("14:00:00", campaign.intervalTimes[1].from)
-        assertEquals("17:30:00", campaign.intervalTimes[1].to)
+        assertEquals(2, campaign.intervalTimes.orEmpty().size.toLong())
+        val intervalTimes = campaign.intervalTimes.orEmpty()
+        if (intervalTimes.isNotEmpty()) {
+            assertEquals(2, intervalTimes.size.toLong())
+            assertEquals("09:00:00", intervalTimes[0].from)
+            assertEquals("13:00:00", intervalTimes[0].to)
+            assertEquals("14:00:00", intervalTimes[1].from)
+            assertEquals("17:30:00", intervalTimes[1].to)
+        } else {
+            fail("intervalTimes list is empty")
+        }
     }
 }

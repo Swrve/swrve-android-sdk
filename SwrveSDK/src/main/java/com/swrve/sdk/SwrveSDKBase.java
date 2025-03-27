@@ -705,4 +705,11 @@ public abstract class SwrveSDKBase {
         instance.setPushInboxUpdateListener(pushInboxUpdateListener);
     }
 
+    /**
+     * Send a device update to Swrve. This will update the device information on the Swrve backend.
+     */
+    public static void sendDeviceUpdate() {
+        checkInstanceCreated();
+        instance.sendDeviceUpdate();
+    }
 }

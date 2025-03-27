@@ -382,39 +382,40 @@ class SwrveCampaignDisplayer {
     }
 
     fun isCampaignActive(swrveCampaign: SwrveBaseCampaign, now: Date, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>): Boolean {
+        val timezoneType = swrveCampaign.timezoneType ?: return false // legacy campaigns without timezoneType are not supported. The server will refresh these campaigns with a timezoneType
         val startDate = swrveCampaign.startDate // evaluate start date
         if (startDate.after(now)) {
-            val startDateLog = getLogDate(startDate, swrveCampaign.timezoneType)
-            val nowLog = getLogDate(now, swrveCampaign.timezoneType)
-            val text = "Campaign ${swrveCampaign.id} has not started yet. Start:$startDateLog TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
+            val startDateLog = getLogDate(startDate, timezoneType)
+            val nowLog = getLogDate(now, timezoneType)
+            val text = "Campaign ${swrveCampaign.id} has not started yet. Start:$startDateLog TimezoneType:${timezoneType} Now:$nowLog"
             logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
             return false
         }
         val endDate = swrveCampaign.endDate // evaluate end date
         if (endDate.before(now)) {
-            val endDateLog = getLogDate(endDate, swrveCampaign.timezoneType)
-            val nowLog = getLogDate(now, swrveCampaign.timezoneType)
-            val text = "Campaign ${swrveCampaign.id} has finished. End:$endDateLog TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
+            val endDateLog = getLogDate(endDate, timezoneType)
+            val nowLog = getLogDate(now, timezoneType)
+            val text = "Campaign ${swrveCampaign.id} has finished. End:$endDateLog TimezoneType:${timezoneType} Now:$nowLog"
             logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
             return false
         }
 
         swrveCampaign.blackoutDates?.forEach { blackoutDate ->
-            val from = SwrveUtils.parseIso8601Date(blackoutDate.from, swrveCampaign.timezoneType)
-            val to = SwrveUtils.parseIso8601Date(blackoutDate.to, swrveCampaign.timezoneType)
+            val from = SwrveUtils.parseIso8601Date(blackoutDate.from, timezoneType)
+            val to = SwrveUtils.parseIso8601Date(blackoutDate.to, timezoneType)
             if (now.after(from) && now.before(to)) {
-                val fromLog = getLogDate(from, swrveCampaign.timezoneType)
-                val toLog = getLogDate(to, swrveCampaign.timezoneType)
-                val nowLog = getLogDate(now, swrveCampaign.timezoneType)
-                val text = "Campaign ${swrveCampaign.id} is in blackout period. Blackout from:$fromLog to:$toLog TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
+                val fromLog = getLogDate(from, timezoneType)
+                val toLog = getLogDate(to, timezoneType)
+                val nowLog = getLogDate(now, timezoneType)
+                val text = "Campaign ${swrveCampaign.id} is in blackout period. Blackout from:$fromLog to:$toLog TimezoneType:${timezoneType} Now:$nowLog"
                 logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
                 return false // exit early by returning false as soon as a blackout period is found
             }
         }
 
         if (!hasActiveTimeInterval(swrveCampaign, now)) {
-            val nowLog = getLogDate(now, swrveCampaign.timezoneType)
-            val text = "Campaign ${swrveCampaign.id} is outside active interval time. TimezoneType:${swrveCampaign.timezoneType} Now:$nowLog"
+            val nowLog = getLogDate(now, timezoneType)
+            val text = "Campaign ${swrveCampaign.id} is outside active interval time. TimezoneType:${timezoneType} Now:$nowLog"
             logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
             return false
         }
@@ -423,13 +424,15 @@ class SwrveCampaignDisplayer {
     }
 
     private fun hasActiveTimeInterval(swrveCampaign: SwrveBaseCampaign, now: Date): Boolean {
-        if (swrveCampaign.intervalTimes == null || swrveCampaign.intervalTimes.isEmpty()) {
+        val timezoneType = swrveCampaign.timezoneType ?: return false
+        val intervalTimes = swrveCampaign.intervalTimes
+        if (intervalTimes.isNullOrEmpty()) {
             return true // no interval times set so always return true
         }
-        swrveCampaign.intervalTimes.forEach { intervalTime ->
+        intervalTimes.forEach { intervalTime ->
             val fromSeconds = getSecondsSinceMidnight(intervalTime.from)
             val toSeconds = getSecondsSinceMidnight(intervalTime.to)
-            val nowSeconds = getSecondsSinceMidnight(now, swrveCampaign.timezoneType)
+            val nowSeconds = getSecondsSinceMidnight(now, timezoneType)
             if (nowSeconds in fromSeconds..toSeconds) {
                 return true
             }

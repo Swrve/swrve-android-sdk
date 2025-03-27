@@ -1851,6 +1851,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return bitmap;
     }
 
+    private List<SwrveBaseCampaign> _getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties, int campaignId) {
+        try {
+            return getMessageCenterCampaigns(orientation, properties, campaignId);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return new ArrayList<>();
+    }
+
     private List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties, int campaignId) {
         List<SwrveBaseCampaign> result = new ArrayList<>();
         if (!isSdkReady()) return result;
@@ -1891,28 +1900,28 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
-        return getMessageCenterCampaigns(orientation, properties, -1);
+        return _getMessageCenterCampaigns(orientation, properties, -1);
     }
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns() {
-        return getMessageCenterCampaigns(getDeviceOrientation(), null, -1);
+        return _getMessageCenterCampaigns(getDeviceOrientation(), null, -1);
     }
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
-        return getMessageCenterCampaigns(orientation, null, -1);
+        return _getMessageCenterCampaigns(orientation, null, -1);
 
     }
 
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
-        return getMessageCenterCampaigns(getDeviceOrientation(), properties, -1);
+        return _getMessageCenterCampaigns(getDeviceOrientation(), properties, -1);
     }
 
     @Override
     public SwrveBaseCampaign getMessageCenterCampaign(int campaignId, Map<String, String> properties) {
-        List<SwrveBaseCampaign> messageCenterCampaigns = getMessageCenterCampaigns(getDeviceOrientation(), properties, campaignId);
+        List<SwrveBaseCampaign> messageCenterCampaigns = _getMessageCenterCampaigns(getDeviceOrientation(), properties, campaignId);
         SwrveBaseCampaign campaign = null;
         if (messageCenterCampaigns != null && messageCenterCampaigns.size() == 1) {
             campaign = messageCenterCampaigns.get(0);
@@ -2741,5 +2750,16 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             return;
         }
         getPushInboxManager(getUserId()).deleteMessage(messageId, listener);
+    }
+
+    @Override
+    public void sendDeviceUpdate() {
+        if (!isSdkReady()) return;
+
+        try {
+            deviceUpdate(profileManager.getUserId(), _getDeviceInfo());
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
     }
 }

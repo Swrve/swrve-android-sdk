@@ -127,4 +127,5 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void deletePushInboxMessage(long messageId, SwrvePushInboxListener listener);
 
+    void sendDeviceUpdate();
 }

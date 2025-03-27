@@ -1,5 +1,6 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_DEEPLINK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_TEXT;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
@@ -27,7 +28,7 @@ class SwrveNotificationEngage {
     private Bundle pushBundle; // the push bundle
     private String pushId;
     private String campaignType;
-    private Map<String, String> eventPayload;
+    private Map<String, String> payload;
 
     SwrveNotificationEngage(Context context) {
         this.context = context;
@@ -54,7 +55,7 @@ class SwrveNotificationEngage {
             new SwrveCampaignInfluence().removeInfluenceCampaign(context, pushId); // Clear the influence data for this push
 
             campaignType = getCampaignType();
-            eventPayload = getEventPayload();
+            payload = getBasicPayload();
 
             String contextId = extras.getString(SwrveNotificationConstants.CONTEXT_ID_KEY);
             if (SwrveHelper.isNotNullOrEmpty(contextId)) {
@@ -73,26 +74,31 @@ class SwrveNotificationEngage {
         return extras.getString(SwrveNotificationConstants.CAMPAIGN_TYPE);
     }
 
-    private Map<String, String> getEventPayload() {
+    // This is the basic payload. Deeplink might be added later
+    private Map<String, String> getBasicPayload() {
         Bundle eventPayloadExtra = extras.getBundle(SwrveNotificationConstants.EVENT_PAYLOAD); // some flows, such as geo, pass in event payloads
-        Map<String, String> eventPayload = SwrveHelper.getBundleAsMap(eventPayloadExtra);
+        Map<String, String> basicPayload = SwrveHelper.getBundleAsMap(eventPayloadExtra);
         if (pushBundle.containsKey(SwrveNotificationConstants.TRACKING_DATA_KEY)) {
-            eventPayload.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, pushBundle.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
+            basicPayload.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, pushBundle.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
         }
         if (pushBundle.containsKey(SwrveNotificationConstants.PLATFORM_KEY)) {
-            eventPayload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, pushBundle.getString(SwrveNotificationConstants.PLATFORM_KEY));
+            basicPayload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, pushBundle.getString(SwrveNotificationConstants.PLATFORM_KEY));
         }
-        return eventPayload;
+        return basicPayload;
     }
 
     private void handleButtonEngagement(String contextId) throws Exception {
         SwrveLogger.d("SwrveSDK: Handle button engagement pushId: %s, with contextId: %s", pushId, contextId);
 
-        EventHelper.sendEngagedEvent(context, campaignType, pushId, eventPayload);
+        String url = extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY);
+        if (SwrveHelper.isNotNullOrEmpty(url)) {
+            payload.put(EVENT_PAYLOAD_DEEPLINK, url);
+        }
+        EventHelper.sendEngagedEvent(context, campaignType, pushId, payload);
 
         String buttonText = extras.getString(SwrveNotificationConstants.BUTTON_TEXT_KEY);
-        eventPayload.put(GENERIC_EVENT_PAYLOAD_BUTTON_TEXT, buttonText);
-        EventHelper.sendButtonClickEvent(context, campaignType, pushId, contextId, eventPayload);
+        payload.put(GENERIC_EVENT_PAYLOAD_BUTTON_TEXT, buttonText);
+        EventHelper.sendButtonClickEvent(context, campaignType, pushId, contextId, payload);
 
         // Button has been pressed, now close the notification
         int notificationId = extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID);
@@ -101,7 +107,7 @@ class SwrveNotificationEngage {
 
         SwrveNotificationButton.ActionType buttonActionType = (SwrveNotificationButton.ActionType) extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY);
         if (buttonActionType == SwrveNotificationButton.ActionType.OPEN_CAMPAIGN) {
-            setNotificationSwrveCampaignId(extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY)); // Open campaign functionality is not supported yet in the BE - this is future proofing
+            setNotificationSwrveCampaignId(url); // Open campaign functionality is not supported yet in the BE - this is future proofing
         }
 
         if (SwrveCommon.getInstance().getNotificationConfig() != null && !SwrveCommon.getInstance().getNotificationConfig().useEngagementProxy()) {
@@ -111,7 +117,7 @@ class SwrveNotificationEngage {
         SwrveNotificationButton.ActionType type = (SwrveNotificationButton.ActionType) extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY);
         switch (type) {
             case OPEN_URL:
-                openDeeplink(pushBundle, extras.getString(SwrveNotificationConstants.PUSH_ACTION_URL_KEY));
+                openDeeplink(pushBundle, url);
                 break;
             case OPEN_APP:
                 openActivity(pushBundle);
@@ -130,14 +136,18 @@ class SwrveNotificationEngage {
         String campaignId = extras.getString(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY);
         setNotificationSwrveCampaignId(campaignId);
 
-        EventHelper.sendEngagedEvent(context, campaignType, pushId, eventPayload);
+        String deepLink = pushBundle.getString(SwrveNotificationConstants.DEEPLINK_KEY);
+        if (SwrveHelper.isNotNullOrEmpty(deepLink)) {
+            payload.put(EVENT_PAYLOAD_DEEPLINK, deepLink);
+        }
+        EventHelper.sendEngagedEvent(context, campaignType, pushId, payload);
 
         if (SwrveCommon.getInstance().getNotificationConfig() != null && !SwrveCommon.getInstance().getNotificationConfig().useEngagementProxy()) {
             return; // if not using the engagement proxy, then the target activity will already be opened
         }
 
-        if (pushBundle.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
-            openDeeplink(pushBundle, pushBundle.getString(SwrveNotificationConstants.DEEPLINK_KEY));
+        if (SwrveHelper.isNotNullOrEmpty(deepLink)) {
+            openDeeplink(pushBundle, deepLink);
         } else {
             openActivity(pushBundle);
         }

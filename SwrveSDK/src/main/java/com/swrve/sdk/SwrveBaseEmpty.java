@@ -430,4 +430,8 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     @Override
     public void deletePushInboxMessage(long messageId, SwrvePushInboxListener listener) {
     }
+
+    @Override
+    public void sendDeviceUpdate() {
+    }
 }

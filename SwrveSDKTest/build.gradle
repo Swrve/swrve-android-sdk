@@ -40,6 +40,7 @@ android {
         }
         firebase {
             flavorDimensions "swrve-sdk"
+            getIsDefault().set(true)
         }
         huawei {
             flavorDimensions "swrve-sdk"
