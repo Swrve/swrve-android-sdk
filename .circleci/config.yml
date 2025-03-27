@@ -3,7 +3,7 @@ version: 2.1
 executors:
   swrve-executor:
     docker:
-      - image: cimg/android:2024.01
+      - image: cimg/android:2024.11.1
     resource_class: large
 
 jobs:
