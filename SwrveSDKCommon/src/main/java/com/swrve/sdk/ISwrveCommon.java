@@ -2,6 +2,7 @@ package com.swrve.sdk;
 
 import android.app.NotificationChannel;
 import android.content.Context;
+import android.content.Intent;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -232,4 +233,6 @@ interface ISwrveCommon {
     SwrveSSLSocketFactoryConfig getSSLSocketFactoryConfig();
 
     SwrveDeeplinkListener getSwrveDeeplinkListener();
+
+    void handlePushEngagement(Intent intent);
 }

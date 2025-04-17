@@ -1,11 +1,16 @@
 package com.swrve.sdk;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Browser;
+
+import java.util.List;
 
 public final class SwrveIntentHelper {
 
@@ -60,4 +65,26 @@ public final class SwrveIntentHelper {
                 | Intent.FLAG_ACTIVITY_NO_ANIMATION;
     }
 
+    @SuppressLint("QueryPermissionsNeeded")
+    public static boolean canOpenIntentInternally(Context context, Intent intent) {
+        try {
+            PackageManager packageManager = context.getPackageManager();
+            List<ResolveInfo> activityResolveInfoList = packageManager.queryIntentActivities(intent, 0);
+            String packageName = context.getPackageName();
+            for (ResolveInfo resolveInfo : activityResolveInfoList) {
+                if (resolveInfo.activityInfo.packageName.equals(packageName)) {
+                    return true;
+                }
+            }
+            List<ResolveInfo> receiverResolveInfoList = packageManager.queryBroadcastReceivers(intent, 0);
+            for (ResolveInfo resolveInfo : receiverResolveInfoList) {
+                if (resolveInfo.activityInfo.packageName.equals(packageName)) {
+                    return true;
+                }
+            }
+        } catch (Exception ex) {
+            SwrveLogger.e("SwrveSDK: could not check if intent can be opened", ex);
+        }
+        return false;
+    }
 }

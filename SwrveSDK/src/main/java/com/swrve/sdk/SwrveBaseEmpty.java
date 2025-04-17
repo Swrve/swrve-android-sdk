@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import android.app.Activity;
 import android.app.NotificationChannel;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.swrve.sdk.config.SwrveConfigBase;
@@ -433,5 +434,9 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
 
     @Override
     public void sendDeviceUpdate() {
+    }
+
+    @Override
+    public void handlePushEngagement(Intent intent) {
     }
 }

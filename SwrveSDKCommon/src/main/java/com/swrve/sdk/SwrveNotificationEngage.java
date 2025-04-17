@@ -23,7 +23,9 @@ import java.util.Map;
 
 class SwrveNotificationEngage {
 
+    public static final String DO_NOT_OPEN_INTENT = "do_not_open_intent";
     private final Context context;
+    private Intent intent;
     private Bundle extras; // the root bundle extras
     private Bundle pushBundle; // the push bundle
     private String pushId;
@@ -41,6 +43,7 @@ class SwrveNotificationEngage {
         }
 
         try {
+            this.intent = intent;
             extras = intent.getExtras();
             pushBundle = extras.getBundle(SwrveNotificationConstants.PUSH_BUNDLE);
             if (pushBundle == null) {
@@ -110,8 +113,8 @@ class SwrveNotificationEngage {
             setNotificationSwrveCampaignId(url); // Open campaign functionality is not supported yet in the BE - this is future proofing
         }
 
-        if (SwrveCommon.getInstance().getNotificationConfig() != null && !SwrveCommon.getInstance().getNotificationConfig().useEngagementProxy()) {
-            return; // if not using the engagement proxy, then the target activity will already be opened
+        if (extras.containsKey(DO_NOT_OPEN_INTENT) && extras.getBoolean(DO_NOT_OPEN_INTENT)) {
+            return; // if not using the engagement proxy, or intent is not an external deeplink, then the target intent/activity will already be opened
         }
 
         SwrveNotificationButton.ActionType type = (SwrveNotificationButton.ActionType) extras.get(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY);
@@ -142,8 +145,8 @@ class SwrveNotificationEngage {
         }
         EventHelper.sendEngagedEvent(context, campaignType, pushId, payload);
 
-        if (SwrveCommon.getInstance().getNotificationConfig() != null && !SwrveCommon.getInstance().getNotificationConfig().useEngagementProxy()) {
-            return; // if not using the engagement proxy, then the target activity will already be opened
+        if (extras.containsKey(DO_NOT_OPEN_INTENT) && extras.getBoolean(DO_NOT_OPEN_INTENT)) {
+            return; // if not using the engagement proxy, or intent is not an external deeplink, then the target intent/activity will already be opened
         }
 
         if (SwrveHelper.isNotNullOrEmpty(deepLink)) {

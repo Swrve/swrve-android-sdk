@@ -15,13 +15,14 @@ import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import java.util.List;
 
 public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
-    Context context = ApplicationProvider.getApplicationContext();
+    private Context context = ApplicationProvider.getApplicationContext();
 
     @Test
     public void testReceiverInManifest() {
@@ -39,11 +40,11 @@ public class SwrveNotificationEngageReceiverTest extends SwrveBaseTest {
 
     @Test
     public void testEngage() {
-        SwrveNotificationEngageReceiver receiverSpy = spy(new SwrveNotificationEngageReceiver());
-        SwrveNotificationEngage notificationEngageMock = mock(SwrveNotificationEngage.class);
-        doReturn(notificationEngageMock).when(receiverSpy).getSwrveNotificationEngage(context);
+        ISwrveCommon swrveCommon = mock(ISwrveCommon.class);
+        SwrveCommon.setSwrveCommon(swrveCommon);
         Intent intent = new Intent();
-        receiverSpy.onReceive(context, intent);
-        verify(notificationEngageMock, times(1)).processIntent(intent);
+        SwrveNotificationEngageReceiver receiver = new SwrveNotificationEngageReceiver();
+        receiver.onReceive(context, intent);
+        verify(swrveCommon, times(1)).handlePushEngagement(intent);
     }
 }

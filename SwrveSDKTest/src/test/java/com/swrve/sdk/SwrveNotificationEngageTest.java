@@ -12,7 +12,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.robolectric.Shadows.shadowOf;
 
@@ -68,7 +70,7 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
     @Test
     public void testOpenActivity() throws Exception {
 
-        SwrveNotificationEngage notificationEngageSpy = processIntent();
+        SwrveNotificationEngage notificationEngageSpy = processIntent(false);
         verify(notificationEngageSpy, Mockito.atLeastOnce()).openActivity(any(Bundle.class));
 
         Intent nextIntent = shadowApplication.peekNextStartedActivity();
@@ -87,17 +89,20 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         doReturn(notificationConfig).when(swrveSpy).getNotificationConfig();
         swrveSpy.config.setNotificationConfig(notificationConfig);
 
-        SwrveNotificationEngage notificationEngageSpy = processIntent();
+        SwrveNotificationEngage notificationEngageSpy = processIntent(true);
         verify(notificationEngageSpy, Mockito.never()).openActivity(any(Bundle.class));
     }
 
-    private SwrveNotificationEngage processIntent() {
+    private SwrveNotificationEngage processIntent(boolean doNotOpenIntent) {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString(SwrveNotificationConstants.TEXT_KEY, "validBundle");
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1234");
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH);
+        if (doNotOpenIntent) {
+            intent.putExtra(SwrveNotificationEngage.DO_NOT_OPEN_INTENT, true);
+        }
 
         SwrveNotificationEngage notificationEngageSpy = spy(new SwrveNotificationEngage(mActivity));
         notificationEngageSpy.processIntent(intent);
@@ -138,7 +143,7 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
 
     @Test
     public void testOpenDeeplink() {
-        SwrveNotificationEngage notificationEngageSpy = processDeeplinkIntent();
+        SwrveNotificationEngage notificationEngageSpy = processDeeplinkIntent(false);
         verify(notificationEngageSpy, Mockito.atLeastOnce()).openDeeplink(any(Bundle.class), anyString());
 
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
@@ -159,17 +164,20 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         doReturn(notificationConfig).when(swrveSpy).getNotificationConfig();
         swrveSpy.config.setNotificationConfig(notificationConfig);
 
-        SwrveNotificationEngage notificationEngageSpy = processDeeplinkIntent();
+        SwrveNotificationEngage notificationEngageSpy = processDeeplinkIntent(true);
         verify(notificationEngageSpy, Mockito.never()).openDeeplink(any(Bundle.class), anyString());
     }
 
-    private SwrveNotificationEngage processDeeplinkIntent() {
+    private SwrveNotificationEngage processDeeplinkIntent(boolean doNotOpenIntent) {
         Intent intent = new Intent();
         Bundle extras = new Bundle();
         extras.putString("customdata", "customdata_value");
         extras.putString(SwrveNotificationConstants.DEEPLINK_KEY, "swrve://deeplink/campaigns");
         extras.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "4567");
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
+        if (doNotOpenIntent) {
+            intent.putExtra(SwrveNotificationEngage.DO_NOT_OPEN_INTENT, true);
+        }
 
         SwrveNotificationEngage notificationEngageSpy = spy(new SwrveNotificationEngage(mActivity));
         notificationEngageSpy.processIntent(intent);
@@ -458,5 +466,32 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         ArrayList events = (ArrayList) arrayListCaptor.getAllValues().get(0);
         Map<String, String> expectedPayload = SwrveHelper.getBundleAsMap(eventPayload);
         SwrveTestUtils.assertGenericEvent((String)events.get(0), "", GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, expectedPayload);
+    }
+
+    @Test
+    public void testHandlePushEngagement() {
+
+        SwrveNotificationEngage notificationEngageMock = mock(SwrveNotificationEngage.class);
+        doReturn(notificationEngageMock).when(swrveSpy).getNotificationEngage();
+
+        String sid = "4567";
+        Intent intent1 = new Intent();
+        Bundle bundle1 = new Bundle();
+        bundle1.putString("_sid", sid);
+        intent1.putExtras(bundle1);
+        swrveSpy.handlePushEngagement(intent1);
+
+        Intent intent2 = new Intent();
+        Bundle bundle2 = new Bundle();
+        bundle2.putString("_sid", sid);
+        intent2.putExtras(bundle2);
+        swrveSpy.handlePushEngagement(intent2);
+
+        ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
+        verify(swrveSpy, times(2)).handlePushEngagement(intentCaptor.capture());
+        assertTrue(swrveSpy.processedSids.contains(sid));
+        assertEquals(1, swrveSpy.processedSids.size());
+        verify(swrveSpy, Mockito.times(1)).getNotificationEngage(); // the synchronized block ensures its called only once
+        verify(notificationEngageMock, Mockito.times(1)).processIntent(any(Intent.class));
     }
 }

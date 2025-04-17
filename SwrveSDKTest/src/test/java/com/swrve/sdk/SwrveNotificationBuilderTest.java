@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -45,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowNotification;
@@ -1204,8 +1206,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         ActivityScenario.launch(intent);
         await().until(pushEngagedSent(pushId, null));
         await().until(pushButtonClickSent(pushId, null));
-        verify(swrveSpy, never()).handlePushEngagement(any());
-        assertTrue(swrveSpy.processedSids.isEmpty());
+        assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
     @Test
@@ -1239,8 +1240,43 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testNotificationButtonIntentUseEngagementProxyFalseOpenCampaign() {
+    public void testNotificationButtonIntentUseEngagementProxyFalseOpenExternalDeeplink() {
+        // When deeplinks that cannot be handled by the app are clicked, the UseEngagementProxy setting might be overridden (if false) and SwrveNotificationEngageActivity should be launched.
         String pushId = "4";
+        String deeplink = "https://www.swrve.com";
+        Intent intent = getNotificationButtonIntent(false, SwrveNotificationButton.ActionType.OPEN_URL, deeplink, pushId, null);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
+
+        // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId, deeplink));
+        await().until(pushButtonClickSent(pushId, deeplink));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    @Test
+    public void testNotificationButtonIntentUseEngagementProxyFalseOpenAppFromNotificationIntentListener() {
+        // Its possible with open app action, that external deeplink is opened instead via notification intent listener. When this scenario happens and the
+        // UseEngagementProxy is false, then SwrveNotificationEngageActivity should be launched.
+        // This is the case when the notification intent listener opens an external deeplink.
+        String pushId = "5";
+        SwrveNotificationIntentListener intentListener = (pushBundle, deeplink1) -> {
+            return new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://www.swrve.com")); // opening an external deeplink even though its supposed to be open app
+        };
+        Intent intent = getNotificationButtonIntent(false, SwrveNotificationButton.ActionType.OPEN_APP, null, pushId, intentListener);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
+
+        // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId, null));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    @Test
+    public void testNotificationButtonIntentUseEngagementProxyFalseOpenCampaign() {
+        String pushId = "6";
         Intent intent = getNotificationButtonIntent(false, SwrveNotificationButton.ActionType.OPEN_CAMPAIGN, null, pushId, null);
         assertNotNull(intent);
         assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName()); // open campaign opens the MainActivity
@@ -1252,18 +1288,22 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
-    private Intent getNotificationButtonIntent(boolean useEngagementProxy, SwrveNotificationButton.ActionType actionType, String actionUrl, String pushId, String iamCampaign) {
+    private Intent getNotificationButtonIntent(boolean useEngagementProxy, SwrveNotificationButton.ActionType actionType, String actionUrl, String pushId, SwrveNotificationIntentListener intentListener) {
 
-        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        SwrveNotificationConfig.Builder notificationConfigBuilder = new SwrveNotificationConfig.Builder(
+                com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
-                .useEngagementProxy(useEngagementProxy)
-                .build();
+                .useEngagementProxy(useEngagementProxy);
+        if (intentListener != null) {
+            notificationConfigBuilder.notificationIntentListener(intentListener);
+        }
+        notificationConfig = notificationConfigBuilder.build();
         doReturn(notificationConfig).when(swrveSpy).getNotificationConfig();
         swrveSpy.config.setNotificationConfig(notificationConfig);
 
         // create a dummy builder and call the method directly that creates the a notification action
         SwrveNotificationBuilder builder = new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig);
-        Bundle dummyBundle = dummyBundle(pushId, iamCampaign);
+        Bundle dummyBundle = dummyBundle(pushId, null);
         builder.build("dummy text", dummyBundle, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
         NotificationCompat.Action notificationAction = builder.createNotificationAction("buttonText", 0, "0", actionType, actionUrl);
         assertNotNull(notificationAction);
@@ -1272,22 +1312,21 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
     @Test
     public void testNotificationMainIntentUseEngagementProxyTrue() {
-        String pushId = "5";
-        Intent intent = getNotificationMainIntent(true, pushId, null, null);
+        String pushId = "7";
+        Intent intent = getNotificationMainIntent(true, pushId, null, null, null);
         assertNotNull(intent);
         assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
 
         // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
         ActivityScenario.launch(intent);
         await().until(pushEngagedSent(pushId, null));
-        verify(swrveSpy, never()).handlePushEngagement(any());
-        assertTrue(swrveSpy.processedSids.isEmpty());
+        assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
     @Test
     public void testNotificationMainIntentUseEngagementProxyFalseOpenApp() {
-        String pushId = "6";
-        Intent intent = getNotificationMainIntent(false, pushId, null, null);
+        String pushId = "8";
+        Intent intent = getNotificationMainIntent(false, pushId, null, null, null);
         assertNotNull(intent);
         assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName());
 
@@ -1299,9 +1338,9 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
     @Test
     public void testNotificationMainIntentUseEngagementProxyFalseOpenDeeplink() {
-        String pushId = "7";
+        String pushId = "9";
         String deeplink = "swrve://deeplink";
-        Intent intent = getNotificationMainIntent(false, pushId, null, deeplink);
+        Intent intent = getNotificationMainIntent(false, pushId, null, deeplink, null);
         assertNotNull(intent);
         assertEquals("android.intent.action.VIEW", intent.getAction());
         assertEquals(deeplink, intent.getData().toString());
@@ -1313,11 +1352,30 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testNotificationMainIntentUseEngagementProxyFalseOpenAppFromNotificationIntentListener() {
+        // Its possible with open app action, that external deeplink is opened instead via notification intent listener. When this scenario happens and the
+        // UseEngagementProxy is false, then SwrveNotificationEngageActivity should be launched.
+        // This is the case when the notification intent listener opens an external deeplink.
+        String pushId = "10";
+        SwrveNotificationIntentListener intentListener = (pushBundle, deeplink1) -> {
+            return new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://www.swrve.com")); // opening an external deeplink even though its supposed to be open app
+        };
+        Intent intent = getNotificationMainIntent(false, pushId, null, null, intentListener);
+        assertNotNull(intent);
+        assertEquals("com.swrve.sdk.SwrveNotificationEngageActivity", intent.getComponent().getClassName());
+
+        // use ActivityScenario to start the SwrveNotificationEngageActivity activity.
+        ActivityScenario.launch(intent);
+        await().until(pushEngagedSent(pushId, null));
+        assertTrue(swrveSpy.processedSids.contains(pushId));
+    }
+
+    @Test
     public void testNotificationMainIntentUseEngagementProxyFalseOpenCampaign() {
 
-        String pushId = "8";
+        String pushId = "11";
         String campaignId = "1234";
-        Intent intent = getNotificationMainIntent(false, pushId, campaignId, null);
+        Intent intent = getNotificationMainIntent(false, pushId, campaignId, null, null);
         assertNotNull(intent);
         assertEquals("com.swrve.sdk.test.MainActivity", intent.getComponent().getClassName()); // open campaign opens the MainActivity
 
@@ -1327,12 +1385,16 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertTrue(swrveSpy.processedSids.contains(pushId));
     }
 
-    private Intent getNotificationMainIntent(boolean useEngagementProxy, String pushId, String iamCampaign, String deeplink) {
+    private Intent getNotificationMainIntent(boolean useEngagementProxy, String pushId, String iamCampaign, String deeplink, SwrveNotificationIntentListener intentListener) {
 
-        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        SwrveNotificationConfig.Builder notificationConfigBuilder = new SwrveNotificationConfig.Builder(
+                com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
-                .useEngagementProxy(useEngagementProxy)
-                .build();
+                .useEngagementProxy(useEngagementProxy);
+        if (intentListener != null) {
+            notificationConfigBuilder.notificationIntentListener(intentListener);
+        }
+        notificationConfig = notificationConfigBuilder.build();
         doReturn(notificationConfig).when(swrveSpy).getNotificationConfig();
         swrveSpy.config.setNotificationConfig(notificationConfig);
 
@@ -1402,19 +1464,20 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
             List<ArrayList> capturedProperties = events.getAllValues();
             String escapedDeeplink = JSONObject.quote(deeplink);
             escapedDeeplink = escapedDeeplink.substring(1, escapedDeeplink.length() - 1); // Remove quotes
+            int found = 0;
             for (ArrayList event : capturedProperties) {
                 String jsonString = event.get(0).toString();
                 if (SwrveHelper.isNullOrEmpty(deeplink)) {
                     if (jsonString.contains("\"name\":\"Swrve.Messages.Push-" + pushId + ".engaged\"}")) {
                         //{"type":"event","time":1740138936022,"seqnum":1,"name":"Swrve.Messages.Push-2.engaged"}
-                        return true;
+                        found++;
                     }
                 } else if (jsonString.contains("\"name\":\"Swrve.Messages.Push-" + pushId + ".engaged\",\"payload\":{\"deeplink\":\"" + escapedDeeplink + "\"}}")) {
                     //{"type":"event","time":1741962282622,"seqnum":1,"name":"Swrve.Messages.Push-7.engaged","payload":{"deeplink":"swrve://deeplink"}}
-                    return true;
+                    found++;
                 }
             }
-            return false;
+            return found == 1; // Only one push event should be found
         };
     }
 
@@ -1431,19 +1494,20 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
             List<ArrayList> capturedProperties = events.getAllValues();
             String escapedDeeplink = JSONObject.quote(deeplink);
             escapedDeeplink = escapedDeeplink.substring(1, escapedDeeplink.length() - 1); // Remove quotes
+            int found = 0;
             for (ArrayList event : capturedProperties) {
                 String jsonString = event.get(0).toString();
                 if (SwrveHelper.isNullOrEmpty(deeplink)) {
                     if (jsonString.contains("\"actionType\":\"button_click\",\"campaignType\":\"push\",\"contextId\":\"0\",\"id\":\"" + pushId + "\",\"payload\":{\"buttonText\":\"buttonText\"}}")) {
                         //{"type":"generic_campaign_event","time":1740138785306,"seqnum":2,"actionType":"button_click","campaignType":"push","contextId":"0","id":"2","payload":{"buttonText":"buttonText"}}
-                        return true;
+                        found++;
                     }
                 } else if (jsonString.contains("\"actionType\":\"button_click\",\"campaignType\":\"push\",\"contextId\":\"0\",\"id\":\"" + pushId + "\",\"payload\":{\"buttonText\":\"buttonText\",\"deeplink\":\"" + escapedDeeplink + "\"}}")) {
                     //{"type":"generic_campaign_event","time":1741956519852,"seqnum":2,"actionType":"button_click","campaignType":"push","contextId":"0","id":"3","payload":{"buttonText":"buttonText","deeplink":"swrve:\/\/deeplink"}}
-                    return true;
+                    found++;
                 }
             }
-            return false;
+            return found == 1; // Only one push event should be found
         };
     }
 

@@ -2274,17 +2274,26 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return isSplashActivity;
     }
 
-    protected void handlePushEngagement(Intent intent) {
+    @Override
+    public void handlePushEngagement(Intent intent) {
         Bundle bundle = intent.getExtras();
-        if (bundle == null || !bundle.containsKey("_sid")) {
+        if (bundle == null || !bundle.containsKey(GENERIC_EVENT_PAYLOAD_SID)) {
             return;
         }
-        String sid = bundle.getString("_sid");
-        if (!processedSids.contains(sid)) {
-            SwrveNotificationEngage swrveNotificationEngage = new SwrveNotificationEngage(activityContext.get());
-            swrveNotificationEngage.processIntent(intent);
-            processedSids.add(sid);
+        String sid = bundle.getString(GENERIC_EVENT_PAYLOAD_SID);
+        if (processedSids.contains(sid)) { // "double-checked locking" as a performance optimization
+            return;
         }
+        synchronized (processedSids) { // handlePushEngagement is called multiple times and we need to ensure that we only process the engagement once
+            if (!processedSids.contains(sid)) {
+                getNotificationEngage().processIntent(intent);
+                processedSids.add(sid);
+            }
+        }
+    }
+
+    protected SwrveNotificationEngage getNotificationEngage() {
+        return new SwrveNotificationEngage(getContext());
     }
 
     @Override

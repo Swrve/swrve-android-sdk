@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.Browser
 import com.swrve.sdk.SwrveBaseTest
 import com.swrve.sdk.SwrveIntentHelper
+import com.swrve.sdk.SwrveNotificationEngageReceiver
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -16,8 +17,7 @@ class SwrveIntentHelperTest : SwrveBaseTest() {
 
     @Before
     override fun setUp() {
-        mainActivity =
-            Robolectric.buildActivity(MainActivity::class.java).create().start().resume().visible().get()
+        mainActivity = Robolectric.buildActivity(MainActivity::class.java).create().start().resume().visible().get()
     }
 
     @Test
@@ -52,5 +52,30 @@ class SwrveIntentHelperTest : SwrveBaseTest() {
         val nextIntent = shadowMainActivity.peekNextStartedActivityForResult().intent
         Assert.assertEquals(nextIntent.action, (Intent.ACTION_VIEW))
         Assert.assertEquals(nextIntent.data.toString(), ("www.google.com"))
+    }
+
+    @Test
+    fun testCanOpenIntentInternally_activityExists() {
+        val testIntent = Intent(mainActivity, MainActivity::class.java)
+        Assert.assertTrue(SwrveIntentHelper.canOpenIntentInternally(mainActivity!!, testIntent))
+    }
+
+    @Test
+    fun testCanOpenIntentInternally_activityDoesNotExist() {
+        val testIntent = Intent(Intent.ACTION_VIEW, Uri.parse("test://external"))
+        Assert.assertFalse(SwrveIntentHelper.canOpenIntentInternally(mainActivity!!, testIntent))
+    }
+
+    @Test
+    fun testCanOpenIntentInternally_broadcastReceiverExists() {
+        val testIntent = Intent(mainActivity, SwrveNotificationEngageReceiver::class.java)
+        Assert.assertTrue(SwrveIntentHelper.canOpenIntentInternally(mainActivity!!, testIntent))
+    }
+
+    @Test
+    fun testCanOpenIntentInternally_broadcastReceiverDoesNotExist() {
+        // Use a common system broadcast action that the app is unlikely to handle by default
+        val testIntent = Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED)
+        Assert.assertFalse(SwrveIntentHelper.canOpenIntentInternally(mainActivity!!, testIntent))
     }
 }

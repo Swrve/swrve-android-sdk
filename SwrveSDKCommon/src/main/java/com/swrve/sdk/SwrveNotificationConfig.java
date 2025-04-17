@@ -185,6 +185,10 @@ public class SwrveNotificationConfig {
          * {@code setIntent(intent)} to ensure proper handling of the notification intent. Failing to do
          * so will result in losing engagement events and potentially missed executions of
          * {@link com.swrve.sdk.SwrvePushNotificationListener}.
+         * <p>
+         * If the engagement opens a deeplink to an external app, the SDK will override this setting and use the engagement proxy.
+         * <p>
+         * Note: This setting is advanced not recommended for most use cases
          * @param useEngagementProxy {@code true} to use the engagement proxy (default), {@code false} to
          *                           bypass it and handle intents directly in your Activity.
          * @return This {@link Builder} instance for chaining.

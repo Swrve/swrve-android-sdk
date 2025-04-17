@@ -547,9 +547,7 @@ public class SwrveNotificationBuilder {
         Intent intent;
         SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
         if (notificationConfig == null || notificationConfig.useEngagementProxy()) {
-            Class clazz = getIntentClass(isDismissAction);
-            intent = new Intent(context, clazz);
-            intent.addFlags(SwrveIntentHelper.getDefaultIntentFlags());
+            intent = getSwrveNotificationEngageIntent(isDismissAction);
         } else if (actionType == SwrveNotificationButton.ActionType.OPEN_URL && SwrveHelper.isNotNullOrEmpty(actionUrl)) {
             intent = SwrveNotificationEngage.getDeeplinkIntent(msg, actionUrl);
         } else if (isDismissAction) {
@@ -558,12 +556,12 @@ public class SwrveNotificationBuilder {
         } else {
             intent = SwrveNotificationEngage.getActivityIntent(context, msg);
         }
-        return intent;
+        return ensureIntentEngagementCanBeHandled(intent, notificationConfig);
     }
 
     // Called by Unity
     public PendingIntent createPendingIntent(Bundle msg, String campaignType, Bundle eventPayload) {
-        Intent intent = createIntent(msg, campaignType, eventPayload);
+        Intent intent = createIntent(msg);
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
         intent.putExtra(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, notificationId);
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, campaignType);
@@ -583,20 +581,26 @@ public class SwrveNotificationBuilder {
 
     // createIntent is the main intent that will be launched when the notification is engaged with.
     // It is not the intent that will be launched when a button is clicked. It is never a dismiss
-    // action hence false is always passed to getIntentClass.
-    private Intent createIntent(Bundle msg, String campaignType, Bundle eventPayload) {
+    // action hence false is always passed to getSwrveNotificationEngageIntent.
+    private Intent createIntent(Bundle msg) {
         Intent intent;
         SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
         if (notificationConfig == null || notificationConfig.useEngagementProxy()) {
-            Class clazz = getIntentClass(false);
-            intent = new Intent(context, clazz);
-            intent.addFlags(SwrveIntentHelper.getDefaultIntentFlags());
+            intent = getSwrveNotificationEngageIntent(false);
         } else if (msg.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
             String deeplink = msg.getString(SwrveNotificationConstants.DEEPLINK_KEY);
             intent = SwrveNotificationEngage.getDeeplinkIntent(msg, deeplink);
         } else {
             intent = SwrveNotificationEngage.getActivityIntent(context, msg);
         }
+
+        return ensureIntentEngagementCanBeHandled(intent, notificationConfig);
+    }
+
+    private Intent getSwrveNotificationEngageIntent(boolean isDismissAction) {
+        Class clazz = getIntentClass(isDismissAction);
+        Intent intent = new Intent(context, clazz);
+        intent.addFlags(SwrveIntentHelper.getDefaultIntentFlags());
         return intent;
     }
 
@@ -610,6 +614,21 @@ public class SwrveNotificationBuilder {
             clazz = SwrveNotificationEngageActivity.class; // everything else should use proxy activity
         }
         return clazz;
+    }
+
+    // After resolving the intent to show, verify it can be opened internally by the app when useEngagementProxy is false. If it can't be opened,
+    // then override the useEngagementProxy and fallback to opening via the Engagement Proxy. Otherwise, the engagement event may be lost.
+    private Intent ensureIntentEngagementCanBeHandled(Intent intent, SwrveNotificationConfig notificationConfig) {
+        if (notificationConfig != null && !notificationConfig.useEngagementProxy()) {
+            if (!SwrveIntentHelper.canOpenIntentInternally(context, intent)) {
+                SwrveLogger.w("Swrve: useEngagementProxy is false, but the intent cannot be handled by app. Falling back to using engagement proxy.");
+                intent = getSwrveNotificationEngageIntent(false);
+            } else {
+                // The intent can be opened internally by the app
+                intent.putExtra(SwrveNotificationEngage.DO_NOT_OPEN_INTENT, true); // flag to prevent opening the intent
+            }
+        }
+        return intent;
     }
 
     protected PendingIntent getPendingIntent(Intent intent, int flags, boolean isDismissAction) {
