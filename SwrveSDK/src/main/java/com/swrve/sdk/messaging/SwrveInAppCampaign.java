@@ -151,45 +151,18 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         this.message = message;
     }
 
-    /**
-     * Search for a message related to the given trigger event at the given
-     * time. This function will return null if too many messages were dismissed,
-     * the campaign start is in the future, the campaign end is in the past or
-     * the given event is not contained in the trigger set.
-     *
-     * @param event             trigger event
-     * @param payload           payload to compare conditions against
-     * @param now               device time
-     * @param qaCampaignInfoMap will contain the reason the campaign showed or didn't show
-     * @return SwrveMessage message setup to the given trigger or null
-     * otherwise.
-     */
-    public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap) {
-        return getMessageForEvent(event, payload, now, qaCampaignInfoMap, null);
-    }
-
-    /**
-     * Search for a message related to the given trigger event at the given
-     * time. This function will return null if too many messages were dismissed,
-     * the campaign start is in the future, the campaign end is in the past or
-     * the given event is not contained in the trigger set.
-     *
-     * @param event             trigger event
-     * @param payload           payload to compare conditions against
-     * @param now               device time
-     * @param qaCampaignInfoMap will contain the reason the campaign showed or didn't show
-     * @param properties        personalization properties which can be applied to the getMessageEvent
-     * @return SwrveMessage message setup to the given trigger or null
-     * otherwise.
-     */
-    public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> properties) {
+    public SwrveMessage getMessageForEvent(String event, Map<String, String> payload, Date now, Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> personalization) {
         int messageSize = (message == null) ? 0 : 1;
-        boolean canShowCampaign = campaignDisplayer.shouldShowCampaign(this, event, payload, now, qaCampaignInfoMap, messageSize);
-        if (canShowCampaign) {
-            SwrveLogger.i("%s matches a trigger in %s", event, id);
-            return getNextMessage(qaCampaignInfoMap, properties);
+        if (!campaignDisplayer.shouldShowCampaign(this, event, payload, now, qaCampaignInfoMap, messageSize)) {
+            return null;
+        } else if (!campaignDisplayer.checkAssets(this, personalization, campaignManager.getAssetsOnDisk(), qaCampaignInfoMap)) {
+            return null;
+        } else if (!campaignDisplayer.checkPersonalizationProperties(this, personalization, qaCampaignInfoMap)) {
+            return null;
         }
-        return null;
+
+        SwrveLogger.i("%s matches a trigger in %s", event, id);
+        return message;
     }
 
     /**
@@ -208,21 +181,6 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         if (message.getId() == messageId) {
             return message;
         }
-
-        return null;
-    }
-
-    protected SwrveMessage getNextMessage(Map<Integer, QaCampaignInfo> qaCampaignInfoMap, Map<String, String> properties) {
-        if (this.message != null && this.message.areAssetsReady(campaignManager.getAssetsOnDisk(), properties)) {
-            return this.message;
-        }
-
-        String resultText = "Campaign " + this.getId() + " hasn't finished downloading.";
-        if (qaCampaignInfoMap != null) {
-            int variantId = getVariantId();
-            qaCampaignInfoMap.put(id, new QaCampaignInfo(id, variantId, IAM, false, resultText));
-        }
-        SwrveLogger.i(resultText);
 
         return null;
     }

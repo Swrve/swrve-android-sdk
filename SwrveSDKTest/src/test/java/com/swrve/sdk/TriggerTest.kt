@@ -224,7 +224,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -239,7 +240,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -253,7 +255,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -267,7 +270,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -281,7 +285,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -295,7 +300,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition3",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -307,7 +313,8 @@ class TriggerTest : SwrveBaseTest() {
                 "random.event",
                 null,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -320,7 +327,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 null,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -333,7 +341,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 null,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -367,7 +376,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -381,7 +391,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -395,7 +406,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -409,7 +421,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -423,7 +436,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -437,7 +451,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition3",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -449,7 +464,8 @@ class TriggerTest : SwrveBaseTest() {
                 "random.event",
                 null,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -462,7 +478,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 null,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -475,7 +492,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 null,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -510,7 +528,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -524,7 +543,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -538,7 +558,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -552,7 +573,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -566,7 +588,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -580,7 +603,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -595,7 +619,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition3",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -609,7 +634,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition3",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -624,7 +650,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition4",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -638,7 +665,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition4",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -653,7 +681,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition5",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -668,7 +697,8 @@ class TriggerTest : SwrveBaseTest() {
                 "music.condition5",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -703,7 +733,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -717,7 +748,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -731,7 +763,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search1",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -745,7 +778,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -759,7 +793,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search2",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -773,7 +808,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search3",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -787,7 +823,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search3",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -801,7 +838,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search4",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -815,7 +853,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search4",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -829,7 +868,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search4",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -843,7 +883,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search5",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -857,7 +898,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search5",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -872,7 +914,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search6",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -886,7 +929,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search6",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -900,7 +944,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search7",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -914,7 +959,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search7",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
@@ -928,7 +974,8 @@ class TriggerTest : SwrveBaseTest() {
                 "flight_search7",
                 payload,
                 Date(),
-                qaCampaignInfoMap
+                qaCampaignInfoMap,
+                null
             )
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())

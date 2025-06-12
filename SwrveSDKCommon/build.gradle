@@ -1,4 +1,9 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+    id 'tech.yanand.maven-central-publish' version '1.3.0'
+}
 
 android {
     namespace 'com.swrve.swrvesdkcommon'

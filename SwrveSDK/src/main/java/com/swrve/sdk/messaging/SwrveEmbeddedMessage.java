@@ -22,32 +22,16 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
         }
     }
 
-    // Identifies the message in a campaign
     protected int id;
-    // Priority of the message
     protected int priority = 9999;
-    // Parent in-app campaign
     protected SwrveEmbeddedCampaign campaign;
-
     protected SwrveMessageCenterDetails messageCenterDetails;
-    // List of buttonNames provided
     protected List<String> buttons;
-    // The data provided for the embeddedCampaign
     protected String data;
-    // The type of data
     protected EMBEDDED_CAMPAIGN_TYPE type;
-    // Name of message
     protected String name;
-    // Campaign is either a control or treatment
     protected boolean control;
 
-    /*
-     * Load embedded message from JSON data.
-     *
-     * @param campaign    Related campaign.
-     * @param messageData JSON data containing the message details.
-     * @throws JSONException
-     */
     public SwrveEmbeddedMessage(SwrveEmbeddedCampaign campaign, JSONObject messageData) throws JSONException {
         setCampaign(campaign);
         setId(messageData.getInt("id"));
@@ -66,7 +50,7 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
         }
 
         if (messageData.has("data")) {
-            setData(messageData.getString("data"));
+            this.data = messageData.getString("data");
         }
 
         if (messageData.has("type")) {
@@ -96,6 +80,18 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
         this.id = id;
     }
 
+    public int getCampaignId() {
+        return campaign.getId();
+    }
+
+    public SwrveCampaignState getState() {
+        return campaign.getSaveableState();
+    }
+
+    public SwrveCampaignState.Status getStatus() {
+        return campaign.getStatus();
+    }
+
     /**
      * @return the message priority.
      */
@@ -123,10 +119,6 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
         this.campaign = campaign;
     }
 
-    protected void setMessageCenterDetails(SwrveMessageCenterDetails messageCenterDetails) {
-        this.messageCenterDetails = messageCenterDetails;
-    }
-
     /**
      * @return the names of the expected buttons
      */
@@ -139,14 +131,11 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
     }
 
     /**
-     * @return the embedded campaign data
+     * @return the raw embedded campaign data without personalization.
+     * Use SwrveSDK.getPersonalizedEmbeddedMessageData() to get the personalized data.
      */
     public String getData() {
         return data;
-    }
-
-    protected void setData(String data) {
-        this.data = data;
     }
 
     /**
@@ -180,4 +169,5 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
     public boolean isControl() {
         return control;
     }
+
 }

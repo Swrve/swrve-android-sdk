@@ -1,112 +1,126 @@
 package com.swrve.sdk;
 
-import androidx.test.core.app.ApplicationProvider;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import com.swrve.sdk.config.SwrveConfig;
-import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
 
     private Swrve swrveSpy;
-    private SwrveConfig config;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        config = new SwrveConfig();
-    }
-
-    private void initSDK() throws Exception {
-        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
-        swrveSpy = Mockito.spy(swrveReal);
-        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
-        SwrveTestUtils.setSDKInstance(swrveSpy);
-        SwrveTestUtils.disableAssetsManager(swrveSpy);
-        Mockito.doReturn(true).when(swrveSpy).restClientExecutorExecute(Mockito.any(Runnable.class)); // disable rest
+        swrveSpy = SwrveTestUtils.createSpyInstance();
+        SwrveTestUtils.disableRestClientExecutor(swrveSpy);
         swrveSpy.init(mActivity);
     }
 
     @Test
     public void testGetEmbeddedMessageFromMessageCenter() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
+        swrveSpy.embeddedListener = (context, message, personalizationProperties, isControl) -> {
             embeddedCallbackBool.set(true);
-        }).build();
-
-        config.setEmbeddedMessageConfig(embeddedMessageConfig);
-
-        initSDK();
-
+        };
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded_mc.json");
 
         List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-
         SwrveEmbeddedCampaign campaign = (SwrveEmbeddedCampaign) campaigns.get(0);
-        //assertEquals("Embedded subject", campaign.getSubject());
         assertEquals("Kindle", campaign.getName());
         assertNotNull(campaign.getDownloadDate());
-
         swrveSpy.showMessageCenterCampaign(campaigns.get(0));
         await().untilTrue(embeddedCallbackBool);
+    }
+
+    @Test
+    public void testGetEmbeddedMessageCenterCampaigns() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded_mc.json");
+
+        List<SwrveEmbeddedMessage> campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns();
+        assertEquals(2, campaigns.size());
+        SwrveEmbeddedMessage embeddedMessage133 = campaigns.get(0);
+        assertEquals(133, embeddedMessage133.getCampaignId());
+        assertEquals("Kindle", embeddedMessage133.getName());
+        assertNotNull(embeddedMessage133.getData());
+        assertEquals("test string", embeddedMessage133.getData());
+        SwrveEmbeddedMessage embeddedMessage134 = campaigns.get(1);
+        assertEquals(134, embeddedMessage134.getCampaignId());
+
+        SwrveSDK.removeMessageCenterCampaign(embeddedMessage133.getCampaignId());
+        campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns();
+        assertEquals(1, campaigns.size());
+        embeddedMessage134 = campaigns.get(0);
+        assertEquals(134, embeddedMessage134.getCampaignId());
     }
 
     @Test
     public void testGetEmbeddedMessageFromMessageCenterWithPersonalization() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
+        swrveSpy.embeddedListener = (context, message, personalizationProperties, isControl) -> {
             String resolvedData = SwrveSDK.getPersonalizedEmbeddedMessageData(message, personalizationProperties);
             embeddedCallbackBool.set((resolvedData != null && resolvedData.equalsIgnoreCase("personalization: WORKING")));
-        }).build();
-
-        config.setEmbeddedMessageConfig(embeddedMessageConfig);
-
-        initSDK();
-
-        // Set the personalization provider and the value that is required for the campaign
-        swrveSpy.personalizationProvider = eventPayload -> {
-            Map<String, String> properties = new HashMap<>();
-            properties.put("test_key", "WORKING");
-            return properties;
         };
 
+        // Set the personalization provider and the value that is required for the campaign
+        final Map<String, String> properties = new HashMap<>();
+        properties.put("test_key", "WORKING");
+        swrveSpy.personalizationProvider = eventPayload -> properties;
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded_mc_personalization.json");
 
         List<SwrveBaseCampaign> campaigns = swrveSpy.getMessageCenterCampaigns();
-        swrveSpy.showMessageCenterCampaign(campaigns.get(0));
+        assertEquals(2, campaigns.size());
+        SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign)campaigns.get(0)).getMessage();
+        assertNotNull(message);
+        assertEquals("personalization: ${test_key}", message.getData());
+        String personalizationData = SwrveSDK.getPersonalizedText(message.getData(), properties);
+        assertEquals("personalization: WORKING", personalizationData);
+        swrveSpy.showMessageCenterCampaign(campaigns.get(0)); // for embedded message center campaigns, its unlikely you will call "showMessageCenterCampaign"
         await().untilTrue(embeddedCallbackBool);
+    }
+
+    @Test
+    public void testGetEmbeddedMessageCenterCampaignsWithPersonalization() throws Exception {
+        // Set the personalization provider and the value that is required for the campaign
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded_mc_personalization.json");
+
+        List<SwrveEmbeddedMessage> campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns();
+        assertEquals(2, campaigns.size());
+        SwrveEmbeddedMessage embeddedMessage = campaigns.get(0);
+        assertNotNull(embeddedMessage);
+        assertEquals("personalization: ${test_key}", embeddedMessage.getData());
+        Map<String, String> properties = new HashMap<>();
+        properties.put("test_key", "WORKING");
+        String personalizationData = SwrveSDK.getPersonalizedText(embeddedMessage.getData(), properties);
+        assertEquals("personalization: WORKING", personalizationData);
+        String resolvedData = SwrveSDK.getPersonalizedEmbeddedMessageData(embeddedMessage, properties);
+        assertEquals("personalization: WORKING", resolvedData);
+
+        SwrveSDK.removeMessageCenterCampaign(embeddedMessage.getCampaignId());
+        campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns();
+        assertEquals(1, campaigns.size());
     }
 
     @Test
     public void testEmbeddedMessageCallbackFromTrigger() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
+        swrveSpy.eventListener = new SwrveEventListener(swrveSpy, (context, message, personalizationProperties, isControl) -> {
+            assertEquals("test string", message.getData());
             embeddedCallbackBool.set(true);
-        }).build();
-
-        config.setEmbeddedMessageConfig(embeddedMessageConfig);
-
-        initSDK();
-
+        });
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
 
         swrveSpy.event("trigger_embedded");
@@ -116,18 +130,13 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
     @Test
     public void testEmbeddedMessageCallbackFromTriggerWithPayload() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
+        swrveSpy.eventListener = new SwrveEventListener(swrveSpy, (context, message, personalizationProperties, isControl) -> {
             embeddedCallbackBool.set(true);
-        }).build();
-
-        config.setEmbeddedMessageConfig(embeddedMessageConfig);
-        initSDK();
-
+        });
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
 
-        HashMap<String, String> testPayload = new HashMap<String, String>();
+        HashMap<String, String> testPayload = new HashMap<>();
         testPayload.put("test", "value");
-
         swrveSpy.event("trigger_embedded", testPayload);
         await().untilTrue(embeddedCallbackBool);
     }
@@ -135,14 +144,12 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
     @Test
     public void testEmbeddedMessageCallbackFromTriggerWithPersonalization() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
+        swrveSpy.eventListener = new SwrveEventListener(swrveSpy, (context, message, personalizationProperties, isControl) -> {
+            assertEquals("{\"test\": \"${new_key}\"}", message.getData());
             String resolvedData = SwrveSDK.getPersonalizedText(message.getData(), personalizationProperties);
+            assertEquals("{\"test\": \"WORKING\"}", resolvedData);
             embeddedCallbackBool.set((resolvedData != null));
-        }).build();
-
-        config.setEmbeddedMessageConfig(embeddedMessageConfig);
-
-        initSDK();
+        });
 
         // Set the personalization provider and the value that is required for the campaign
         swrveSpy.personalizationProvider = eventPayload -> {
@@ -150,12 +157,10 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
             properties.put("new_key", "WORKING");
             return properties;
         };
-
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
 
-        HashMap<String, String> testPayload = new HashMap<String, String>();
+        HashMap<String, String> testPayload = new HashMap<>();
         testPayload.put("test", "value");
-
         swrveSpy.event("embedded_personalized", testPayload);
         await().untilTrue(embeddedCallbackBool);
     }
@@ -163,22 +168,18 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
     @Test
     public void testEmbeddedMessageImpressionAndEngagementEventCallback() throws Exception {
         final AtomicBoolean embeddedCallbackBool = new AtomicBoolean(false);
-        SwrveEmbeddedMessageConfig embeddedMessageConfig = new SwrveEmbeddedMessageConfig.Builder().embeddedListener((context, message, personalizationProperties, isControl) -> {
+        swrveSpy.eventListener = new SwrveEventListener(swrveSpy, (context, message, personalizationProperties, isControl) -> {
             swrveSpy.embeddedMessageWasShownToUser(message);
             swrveSpy.embeddedMessageButtonWasPressed(message, message.getButtons().get(0));
             embeddedCallbackBool.set(true);
-        }).build();
-
-        config.setEmbeddedMessageConfig(embeddedMessageConfig);
-        initSDK();
-
+        });
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
 
         // Initially count impressions
         SwrveBaseMessage baseMessage = swrveSpy.getBaseMessageForEvent("impression_trigger");
-        Assert.assertEquals(0 , baseMessage.getCampaign().getImpressions());
+        Assert.assertEquals(0, baseMessage.getCampaign().getImpressions());
 
-        HashMap<String, String> testPayload = new HashMap<String, String>();
+        HashMap<String, String> testPayload = new HashMap<>();
         testPayload.put("test", "value");
 
         swrveSpy.event("impression_trigger", testPayload);
@@ -200,6 +201,6 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
 
         // count impressions again
         baseMessage = swrveSpy.getBaseMessageForEvent("impression_trigger");
-        Assert.assertEquals(1 , baseMessage.getCampaign().getImpressions());
+        Assert.assertEquals(1, baseMessage.getCampaign().getImpressions());
     }
 }

@@ -35,12 +35,14 @@ class SwrveCampaignDisplayer {
         }
 
         if (!event.equals(SwrveBase.SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER, ignoreCase = true) && isTooSoonToShowMessageAfterLaunch(now)) {
-            noMessagesWereShown(event, eventPayload, "{App throttle limit} Too soon after launch. Wait until " + timestampFormat.format(showMessagesAfterLaunch))
+            val formattedTimestamp = showMessagesAfterLaunch?.let { timestampFormat.format(it) } ?: "Error"
+            noMessagesWereShown(event, eventPayload, "{App throttle limit} Too soon after launch. Wait until $formattedTimestamp")
             return false
         }
 
         if (isTooSoonToShowMessageAfterDelay(now)) {
-            noMessagesWereShown(event, eventPayload, "{App throttle limit} Too soon after last " + campaignType + ". Wait until " + timestampFormat.format(showMessagesAfterDelay))
+            val formattedTimestamp = showMessagesAfterDelay?.let { timestampFormat.format(it) } ?: "Error"
+            noMessagesWereShown(event, eventPayload, "{App throttle limit} Too soon after last " + campaignType + ". Wait until $formattedTimestamp")
             return false
         }
 
@@ -52,7 +54,7 @@ class SwrveCampaignDisplayer {
         return true
     }
 
-    fun shouldShowCampaign(campaign: SwrveBaseCampaign, event: String, payload: Map<String?, String>?, now: Date, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>, elementCount: Int): Boolean {
+    fun shouldShowCampaign(campaign: SwrveBaseCampaign, event: String, payload: Map<String?, String>?, now: Date, qaCampaignInfoMap: MutableMap<Int, QaCampaignInfo>, elementCount: Int): Boolean {
         if (!canTrigger(campaign, event, payload, qaCampaignInfoMap)) {
             return false
         }
@@ -90,7 +92,7 @@ class SwrveCampaignDisplayer {
         return true
     }
 
-    fun canTrigger(swrveCampaign: SwrveBaseCampaign, eventName: String?, payload: Map<String?, String>?, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>): Boolean {
+    fun canTrigger(swrveCampaign: SwrveBaseCampaign, eventName: String?, payload: Map<String?, String>?, qaCampaignInfoMap: MutableMap<Int, QaCampaignInfo>): Boolean {
         if (swrveCampaign.triggers == null || swrveCampaign.triggers.size == 0) {
             val text = "Campaign [" + swrveCampaign.id + "], no triggers (could be message centre). Skipping this campaign."
             logAndAddReason(swrveCampaign, text, false, qaCampaignInfoMap)
@@ -154,12 +156,12 @@ class SwrveCampaignDisplayer {
                             }
                         } else if (arg.op == Arg.Op.NUMBER_NOT_BETWEEN) {
                             if (payload != null && payload.containsKey(arg.key) && arg.value is Map<*, *>) {
-                                val values = arg.value as Map<String, Double>
-                                val lower = values["lower"]!!.toInt()
-                                val upper = values["upper"]!!.toInt()
-                                val payloadValue = payload[arg.key]!!.toInt()
+                                val values = safeCastToMapOfStringInt(arg.value)
+                                val lower = values?.get("lower")
+                                val upper = values?.get("upper")
+                                val payloadValue = payload[arg.key]?.toIntOrNull()
 
-                                if (payloadValue < lower || payloadValue > upper) {
+                                if (lower != null && upper != null && payloadValue != null && (payloadValue < lower || payloadValue > upper)) {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
                                     break
                                 } else {
@@ -172,12 +174,12 @@ class SwrveCampaignDisplayer {
                             }
                         } else if (arg.op == Arg.Op.NUMBER_BETWEEN) {
                             if (payload != null && payload.containsKey(arg.key) && arg.value is Map<*, *>) {
-                                val values = arg.value as Map<String, Double>
-                                val lower = values["lower"]!!.toInt()
-                                val upper = values["upper"]!!.toInt()
-                                val payloadValue = payload[arg.key]!!.toInt()
+                                val values = safeCastToMapOfStringInt(arg.value)
+                                val lower = values?.get("lower")
+                                val upper = values?.get("upper")
+                                val payloadValue = payload[arg.key]?.toIntOrNull()
 
-                                if (payloadValue > lower && payloadValue < upper) {
+                                if (lower != null && upper != null && payloadValue != null && payloadValue > lower && payloadValue < upper) {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
                                     break
                                 } else {
@@ -229,24 +231,24 @@ class SwrveCampaignDisplayer {
                             }
                         } else if (arg.op == Arg.Op.NUMBER_NOT_BETWEEN) {
                             if (payload != null && payload.containsKey(arg.key) && arg.value is Map<*, *>) {
-                                val values = arg.value as Map<String, Double>
-                                val lower = values["lower"]!!.toInt()
-                                val upper = values["upper"]!!.toInt()
-                                val payloadValue = payload[arg.key]!!.toInt()
+                                val values = safeCastToMapOfStringInt(arg.value)
+                                val lower = values?.get("lower")
+                                val upper = values?.get("upper")
+                                val payloadValue = payload[arg.key]?.toIntOrNull()
 
-                                if (payloadValue < lower || payloadValue > upper) {
+                                if (lower != null && upper != null && payloadValue != null && (payloadValue < lower || payloadValue > upper)) {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
                                     break
                                 }
                             }
                         } else if (arg.op == Arg.Op.NUMBER_BETWEEN) {
                             if (payload != null && payload.containsKey(arg.key) && arg.value is Map<*, *>) {
-                                val values = arg.value as Map<String, Double>
-                                val lower = values["lower"]!!.toInt()
-                                val upper = values["upper"]!!.toInt()
-                                val payloadValue = payload[arg.key]!!.toInt()
+                                val values = safeCastToMapOfStringInt(arg.value)
+                                val lower = values?.get("lower")
+                                val upper = values?.get("upper")
+                                val payloadValue = payload[arg.key]?.toIntOrNull()
 
-                                if (payloadValue > lower && payloadValue < upper) {
+                                if (lower != null && upper != null && payloadValue != null && payloadValue > lower && payloadValue < upper) {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
                                     break
                                 }
@@ -321,12 +323,12 @@ class SwrveCampaignDisplayer {
                     if (payload != null && payload.containsKey(conditions.key)) {
                         val value = conditions.value
                         if (value is Map<*, *>) {
-                            val values = value as Map<String, Double>
-                            val lower = values["lower"]!!.toInt()
-                            val upper = values["upper"]!!.toInt()
-                            val payloadValue = payload[conditions.key]!!.toInt()
+                            val values = safeCastToMapOfStringInt(value)
+                            val lower = values?.get("lower")
+                            val upper = values?.get("upper")
+                            val payloadValue = payload[conditions.key]?.toIntOrNull()
 
-                            if (payloadValue < lower || payloadValue > upper) {
+                            if (lower != null && upper != null && payloadValue != null && (payloadValue < lower || payloadValue > upper)) {
                                 return logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
                             } else {
                                 continue
@@ -343,12 +345,12 @@ class SwrveCampaignDisplayer {
                     if (payload != null && payload.containsKey(conditions.key)) {
                         val value = conditions.value
                         if (value is Map<*, *>) {
-                            val values = value as Map<String, Double>
-                            val lower = values["lower"]!!.toInt()
-                            val upper = values["upper"]!!.toInt()
-                            val payloadValue = payload[conditions.key]!!.toInt()
+                            val values = safeCastToMapOfStringInt(value)
+                            val lower = values?.get("lower")
+                            val upper = values?.get("upper")
+                            val payloadValue = payload[conditions.key]?.toIntOrNull()
 
-                            if (payloadValue > lower && payloadValue < upper) {
+                            if (lower != null && upper != null && payloadValue != null && payloadValue > lower && payloadValue < upper) {
                                 return logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
                             } else {
                                 continue
@@ -381,7 +383,7 @@ class SwrveCampaignDisplayer {
         return (swrveCampaignState.showMessagesAfterDelay != null && now.before(swrveCampaignState.showMessagesAfterDelay))
     }
 
-    fun isCampaignActive(swrveCampaign: SwrveBaseCampaign, now: Date, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>): Boolean {
+    fun isCampaignActive(swrveCampaign: SwrveBaseCampaign, now: Date, qaCampaignInfoMap: MutableMap<Int, QaCampaignInfo>): Boolean {
         val timezoneType = swrveCampaign.timezoneType ?: return false // legacy campaigns without timezoneType are not supported. The server will refresh these campaigns with a timezoneType
         val startDate = swrveCampaign.startDate // evaluate start date
         if (startDate.after(now)) {
@@ -474,21 +476,17 @@ class SwrveCampaignDisplayer {
         return now.before(showMessagesAfterDelay)
     }
 
-    private fun logAndAddReason(swrveCampaign: SwrveBaseCampaign?, text: String, displayed: Boolean, qaCampaignInfoMap: MutableMap<Int?, QaCampaignInfo?>?) {
-        if (QaUser.isLoggingEnabled() && swrveCampaign != null && qaCampaignInfoMap != null) {
+    private fun logAndAddReason(swrveCampaign: SwrveBaseCampaign, text: String, displayed: Boolean, qaCampaignInfoMap: MutableMap<Int, QaCampaignInfo>) {
+        if (QaUser.isLoggingEnabled()) {
             if (swrveCampaign is SwrveInAppCampaign) {
                 val variantId = swrveCampaign.variantId
                 qaCampaignInfoMap[swrveCampaign.getId()] = QaCampaignInfo(swrveCampaign.getId().toLong(), variantId.toLong(), QaCampaignInfo.CAMPAIGN_TYPE.IAM, displayed, text)
             }
         }
-
         SwrveLogger.i(text)
-        if (!QaUser.isLoggingEnabled()) {
-            return
-        }
     }
 
-    private fun logAndAddReason(campaign: SwrveBaseCampaign, displayed: Boolean, qaInfo: MutableMap<Int?, QaCampaignInfo?>, event: String, trigger: Trigger, payload: Map<String?, String>?): Boolean {
+    private fun logAndAddReason(campaign: SwrveBaseCampaign, displayed: Boolean, qaInfo: MutableMap<Int, QaCampaignInfo>, event: String, trigger: Trigger, payload: Map<String?, String>?): Boolean {
         val text = if (!displayed) {
             "Campaign [" + campaign.id + "], Trigger [" + trigger + "], does not match eventName[" + event + "] & payload[" + payload + "]. Skipping this trigger."
         } else {
@@ -518,5 +516,31 @@ class SwrveCampaignDisplayer {
     // Ensures a new message cannot be shown until now + minDelayBetweenMessage
     fun setMessageMinDelayThrottle(now: Date?) {
         this.showMessagesAfterDelay = SwrveHelper.addTimeInterval(now, this.minDelayBetweenMessage, Calendar.SECOND)
+    }
+
+    private fun safeCastToMapOfStringInt(value: Any?): Map<String, Int>? {
+        return (value as? Map<*, *>)
+            ?.filter { it.key is String && it.value is Number }
+            ?.map { it.key as String to (it.value as? Number)?.toInt() }
+            ?.filter { it.second != null }
+            ?.associate { it.first to it.second!! }
+    }
+
+    fun checkAssets(campaign: SwrveInAppCampaign, personalization: Map<String, String>?, assets: Set<String>, qaCampaignInfoMap: MutableMap<Int, QaCampaignInfo>): Boolean {
+        if (campaign.message.areAssetsReady(assets, personalization)) {
+            return true
+        }
+        val text = "Campaign [" + campaign.id + "] hasn't downloaded all assets."
+        logAndAddReason(campaign, text, false, qaCampaignInfoMap)
+        return false
+    }
+
+    fun checkPersonalizationProperties(campaign: SwrveInAppCampaign, personalization: Map<String, String>?, qaCampaignInfoMap: MutableMap<Int, QaCampaignInfo>): Boolean {
+        if (SwrveMessageTextTemplatingChecks.checkTextTemplating(campaign.message, personalization)) {
+            return true
+        }
+        val text = "Campaign [" + campaign.id + "] has unresolved personalization properties"
+        logAndAddReason(campaign, text, false, qaCampaignInfoMap)
+        return false
     }
 }

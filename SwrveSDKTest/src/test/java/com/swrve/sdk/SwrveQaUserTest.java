@@ -52,7 +52,7 @@ public class SwrveQaUserTest extends SwrveBaseTest {
         // Becomes a QA user
         campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "campaign_qa_reset.json");
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
         assertTrue(QaUser.isLoggingEnabled());
         assertTrue(QaUser.isResetDevice());
 
@@ -66,7 +66,7 @@ public class SwrveQaUserTest extends SwrveBaseTest {
         assertNull(message);
 
         // Reload campaigns
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
 
         // Impression rule still applies
         message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
@@ -89,7 +89,7 @@ public class SwrveQaUserTest extends SwrveBaseTest {
         // No qa user on subsequent response
         campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "campaign_qa_non_qa.json");
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
         assertFalse(QaUser.isLoggingEnabled());
         assertFalse(QaUser.isResetDevice());
     }
@@ -109,7 +109,7 @@ public class SwrveQaUserTest extends SwrveBaseTest {
 
         // Should remain a qauser when etag'ed response is received
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, "{}");
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
         assertTrue(QaUser.isLoggingEnabled());
         assertTrue(QaUser.isResetDevice());
     }

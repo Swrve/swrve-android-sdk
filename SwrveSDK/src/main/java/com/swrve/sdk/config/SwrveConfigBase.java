@@ -66,14 +66,14 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * @return Whether campaigns and resources will automatically be downloaded.
+     * @return Whether content will automatically be downloaded, eg: campaigns, push inbox messages, real time user properties.
      */
     public boolean isAutoDownloadCampaignsAndResources() {
         return this.autoDownloadCampaignsAndResources;
     }
 
     /**
-     * Download resources and in-app campaigns automatically.
+     * Download content automatically, eg: campaigns, push inbox messages, real time user properties.
      *
      * @param autoDownload Automatically download campaigns and resources.
      * @return the config object
@@ -251,7 +251,7 @@ public abstract class SwrveConfigBase {
     }
 
     /**
-     * Set to override the default location of the server used to obtain resources and in-app campaigns.
+     * Set to override the default location of the server used to obtain content.
      * If your company has a special API end-point enabled, then you should specify it here.
      * You should only need to change this value if you are working with Swrve support on a specific support issue.
      *

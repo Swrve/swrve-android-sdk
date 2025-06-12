@@ -240,7 +240,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
         assertEquals(null, swrveSpy.getJoined());
         assertEquals(0, swrveSpy.getDeviceInfo().length());
 
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
         verify(swrveSpy, Mockito.atMost(0)).restClientExecutorExecute(Mockito.any(Runnable.class));
 
         swrveSpy.messageWasShownToUser(null);

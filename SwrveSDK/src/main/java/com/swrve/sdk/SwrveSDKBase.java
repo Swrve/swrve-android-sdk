@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -388,11 +389,26 @@ public abstract class SwrveSDKBase {
      * Update campaign and resources values
      * This function will be called automatically to keep campaigns and resources up-to-date.
      * You should only call this function manually if you have changed the value of
-     * config.autoDownloadCampaignsAndResources to false.
+     * config.autoDownloadCampaignsAndResources to false. Use refreshContent() instead.
      */
     public static void refreshCampaignsAndResources() {
         checkInstanceCreated();
-        instance.refreshCampaignsAndResources();
+        instance.refreshContent(null);
+    }
+
+    /**
+     * Refresh content from server, which includes campaigns, resources, push inbox, real time user properties.
+     * Content is refreshed automatically but you can use this API to refresh manually or if
+     * config.autoDownloadCampaignsAndResources to false.
+     * This is an asynchronous operation and the listener will be called when the operation is complete.
+     * Check the returned result object for success or failure. Set the listener to null if you
+     * don't want to be notified when the operation is complete.
+     *
+     * @param listener  the listener to trigger after this operation has completed
+     */
+    public static void refreshContent(SwrveRefreshContentListener listener) {
+        checkInstanceCreated();
+        instance.refreshContent(listener);
     }
 
     /**
@@ -476,14 +492,11 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the list active MessageCenter campaigns targeted for this user.
-     * It will exclude campaigns that have been deleted with the
-     * removeMessageCenterCampaign method and those that do not support the current orientation.
+     * Gets active In-app and Embedded Message Center campaigns for the current orientation, excluding
+     * deleted campaigns. Use {@link #getMessageCenterCampaigns(SwrveOrientation)} with {@link SwrveOrientation#Both}
+     * for all orientations.
      *
-     * To obtain all MessageCenter campaigns independent of their orientation support
-     * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
-     *
-     * @return list of active MessageCenter campaigns.
+     * @return List of active {@link SwrveBaseCampaign} for the current orientation (empty if none).
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns() {
         checkInstanceCreated();
@@ -491,12 +504,12 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the list active MessageCenter campaigns targeted for this user.
-     * It will exclude campaigns that have been deleted with the
-     * removeMessageCenterCampaign method and those that do not support the given orientation.
+     * Gets active In-app and Embedded Message Center campaigns for the specified orientation,
+     * excluding deleted campaigns. Use {@link #getMessageCenterCampaigns(SwrveOrientation)} with
+     * {@link SwrveOrientation#Both} for all orientations.
      *
-     * @param orientation Orientation which the messages have to support
-     * @return list of active MessageCenter campaigns.
+     * @param orientation The required {@link SwrveOrientation}.
+     * @return List of active {@link SwrveBaseCampaign} for the {@code orientation} (empty if none).
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation) {
         checkInstanceCreated();
@@ -504,15 +517,12 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the list active MessageCenter campaigns targeted for this user.
-     * It will exclude campaigns that have been deleted with the
-     * removeMessageCenterCampaign method and those that do not support the current orientation.
-     * <p>
-     * To obtain all MessageCenter campaigns independent of their orientation support
-     * use the getMessageCenterCampaigns(SwrveOrientation.Both) method.
+     * Gets active In-app and Embedded Message Center campaigns for the current orientation, with personalization
+     * properties, excluding deleted campaigns. Use {@link #getMessageCenterCampaigns(SwrveOrientation, Map)} with
+     * {@link SwrveOrientation#Both} for all orientations.
      *
-     * @param properties additional properties which can be used for IAM personalization.
-     * @return list of active MessageCenter campaigns.
+     * @param properties Additional properties for personalization.
+     * @return List of active {@link SwrveBaseCampaign} for the current orientation (empty if none).
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
         checkInstanceCreated();
@@ -520,19 +530,41 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Get the list active MessageCenter campaigns targeted for this user.
-     * It will exclude campaigns that have been deleted with the
-     * removeMessageCenterCampaign method and those that do not support the given orientation.
+     * Gets active In-app and Embedded Message Center campaigns for the specified orientation, with personalization
+     * properties, excluding deleted campaigns.
      *
-     * @param orientation Orientation which the messages have to support
-     * @param properties additional properties which can be used for IAM personalization.
-     * @return list of active MessageCenter campaigns.
+     * @param orientation The required {@link SwrveOrientation}.
+     * @param properties  Additional properties for personalization.
+     * @return List of active {@link SwrveBaseCampaign} for the {@code orientation} (empty if none).
      */
     public static List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
         checkInstanceCreated();
         return instance.getMessageCenterCampaigns(orientation, properties);
     }
 
+    /**
+     * Gets active In-app Message Center campaigns for the specified orientation, with personalization properties,
+     * excluding deleted campaigns.
+     *
+     * @param orientation The required {@link SwrveOrientation}.
+     * @param properties  Additional properties for personalization.
+     * @return List of active {@link SwrveInAppCampaign} (empty if none).
+     */
+    public static List<SwrveInAppCampaign> getInAppMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
+        checkInstanceCreated();
+        return instance.getInAppMessageCenterCampaigns(orientation, properties);
+    }
+
+    /**
+     * Gets active Embedded Message Center campaigns, excluding deleted ones. The embedded message data is not personalized.
+     *
+     * @return List of active {@link SwrveEmbeddedMessage} (empty if none).
+     */
+    public static List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns() {
+        checkInstanceCreated();
+        return instance.getEmbeddedMessageCenterCampaigns();
+    }
+    
     /**
      * Get the active MessageCenter campaign targeted for this user. It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the current orientation.
@@ -581,6 +613,16 @@ public abstract class SwrveSDKBase {
     }
 
     /**
+     * Remove this campaign. It won't be returned anymore by the 'getMessageCenterCampaigns' methods.
+     *
+     * @param campaignId the id of the campaign to remove
+     */
+    public static void removeMessageCenterCampaign(int campaignId) {
+        checkInstanceCreated();
+        instance.removeMessageCenterCampaign(campaignId);
+    }
+
+    /**
      * Mark this campaign as seen. This is done automatically by Swrve but you can call this if you are rendering the messages on your own.
      *
      * @param campaign the campaign
@@ -588,6 +630,16 @@ public abstract class SwrveSDKBase {
     public static void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign) {
         checkInstanceCreated();
         instance.markMessageCenterCampaignAsSeen(campaign);
+    }
+
+    /**
+     * Mark this campaign as seen. This is done automatically by Swrve but you can call this if you are rendering the messages on your own.
+     *
+     * @param campaignId the id of the campaign to mark as seen
+     */
+    public static void markMessageCenterCampaignAsSeen(int campaignId) {
+        checkInstanceCreated();
+        instance.markMessageCenterCampaignAsSeen(campaignId);
     }
 
     protected static void checkInstanceCreated() throws RuntimeException {

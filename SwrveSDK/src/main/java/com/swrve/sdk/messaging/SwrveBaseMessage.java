@@ -4,6 +4,8 @@ public interface SwrveBaseMessage {
 
     int getId();
 
+    int getCampaignId();
+
     int getPriority();
 
     String getName();

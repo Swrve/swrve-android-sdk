@@ -1,6 +1,3 @@
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-
 task androidCommonJavadoc(type: Javadoc, dependsOn: "assembleRelease") {
     description "Generates Javadoc for release."
     ext.androidJar = "${android.sdkDirectory}/platforms/android-${android.compileSdk}/android.jar"
@@ -29,79 +26,71 @@ task androidCommonSourcesJar(type: Jar) {
     from files(android.sourceSets.main.java.srcDirs)
 }
 
-if (project.hasProperty('SWRVE_COMMON_ARTIFACT_ID')) {
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
 
-    if (System.getenv('GPG_KEY_ID') != null) {
-        project.ext['signing.keyId'] = System.getenv('GPG_KEY_ID')
-        project.ext['signing.password'] = System.getenv('GPG_KEY_PASSPHRASE')
-        project.ext['signing.secretKeyRingFile'] = System.getenv('GPG_KEYRING_FILE')
-    }
+publishing {
+    publications {
+        common(MavenPublication) {
+            artifactId project.SWRVE_COMMON_ARTIFACT_ID
+            groupId project.SWRVE_GROUP_ID
+            version project.SWRVE_SDK_VERSION
+            artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidCommonJavadocsJar, androidCommonSourcesJar]
 
-    publishing {
-        repositories {
-            maven {
-                if (System.getenv('PUBLISH_TO_SONATYPE') != null) {
-                    url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-                    name = "sonatype"
-                    credentials {
-                        username System.getenv('SONATYPE_USER')
-                        password System.getenv('SONATYPE_PASSWORD')
-                    }
-                } else {
-                    url "$buildDir/../publish" // SwrveCommonSDK/publish
+            // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
+            // so we have to manually add them to the pom
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('name', 'SwrveSDKCommon')
+                root.appendNode('description', 'SwrveSDKCommon is the common module to be used with SwrveSDK')
+                root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
+
+                def dependenciesNode = root.appendNode('dependencies')
+                // Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.getByName("releaseCompileClasspath").allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                    dependencyNode.appendNode('scope', 'compile')
                 }
-            }
-        }
 
-        publications {
-            common(MavenPublication) {
-                artifactId project.SWRVE_COMMON_ARTIFACT_ID
-                groupId project.SWRVE_GROUP_ID
-                version project.SWRVE_SDK_VERSION
-                artifacts = ["$buildDir/outputs/aar/${project.name}-release.aar", androidCommonJavadocsJar, androidCommonSourcesJar]
+                def scm = root.appendNode('scm')
+                scm.appendNode('url', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('connection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
+                scm.appendNode('developerConnection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
 
-                // The publication doesn't know about our dependencies due to components.java not being present in aar pieces
-                // so we have to manually add them to the pom
-                pom.withXml {
-                    def root = asNode()
-                    root.appendNode('name', 'SwrveSDKCommon')
-                    root.appendNode('description', 'SwrveSDKCommon is the common module to be used with SwrveSDK')
-                    root.appendNode('url', 'https://github.com/Swrve/swrve-android-sdk')
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'The Apache Software License, Version 2.0')
+                license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
 
-                    def dependenciesNode = root.appendNode('dependencies')
-                    // Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-                    configurations.getByName("releaseCompileClasspath").allDependencies.each {
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
-                        dependencyNode.appendNode('scope', 'compile')
-                    }
-
-                    def scm = root.appendNode('scm')
-                    scm.appendNode('url', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
-                    scm.appendNode('connection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
-                    scm.appendNode('developerConnection', 'scm:git@github.com:Swrve/swrve-android-sdk.git')
-
-                    def license = root.appendNode('licenses').appendNode('license')
-                    license.appendNode('name', 'The Apache Software License, Version 2.0')
-                    license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-
-                    def developer = root.appendNode('developers').appendNode('developer')
-                    developer.appendNode('id', 'sdkdev')
-                    developer.appendNode('name', 'Swrve SDK Developer')
-                }
+                def developer = root.appendNode('developers').appendNode('developer')
+                developer.appendNode('id', 'sdkdev')
+                developer.appendNode('name', 'Swrve SDK Developer')
             }
         }
     }
 
-    String isSignAndroidRelease = System.getenv('SIGN_ANDROID_RELEASE')
-    if (isSignAndroidRelease != null && isSignAndroidRelease.toBoolean()) {
-        project.logger.lifecycle('Swrve: Setting sign publishing.publications')
-        signing {
-            sign publishing.publications
+    repositories {
+        maven {
+            url = layout.buildDirectory.dir("../publish").get().asFile.toURI()
         }
-    } else {
-        project.logger.lifecycle('Swrve: Not setting sign publishing.publications')
     }
+}
+
+String isSignAndroidRelease = System.getenv('SIGN_ANDROID_RELEASE')
+if (isSignAndroidRelease != null && isSignAndroidRelease.toBoolean()) {
+    project.ext['signing.keyId'] = System.getenv('GPG_KEY_ID')
+    project.ext['signing.password'] = System.getenv('GPG_KEY_PASSPHRASE')
+    project.ext['signing.secretKeyRingFile'] = System.getenv('GPG_KEYRING_FILE')
+    signing {
+        sign publishing.publications
+    }
+}
+
+mavenCentral {
+    authToken = System.getenv('SONATYPE_MAVEN_CENTRAL_TOKEN')
+    publishingType = 'AUTOMATIC'
+    maxWait = 300  //  300 = wait for 5 minutes
 }

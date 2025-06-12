@@ -38,10 +38,10 @@ class SwrveEventListener implements ISwrveEventListener {
 
         handleNotificationPermissionEvents(sdk.getActivityContext(), eventName);
 
+        sdk.lastEventPayloadUsed = payload; // Save the last used payload for personalization
         SwrveOrientation deviceOrientation = SwrveOrientation.parse(sdk.getContext().getResources().getConfiguration().orientation);
         SwrveBaseMessage message = sdk.getBaseMessageForEvent(eventName, payload, deviceOrientation);
         if (message != null) {
-            sdk.lastEventPayloadUsed = payload; // Save the last used payload for personalization
             if (message instanceof SwrveMessage) {
                 if (sdk.canDisplaySwrveMessage((SwrveMessage) message, null)) {
                     if (message.isControl()) {
@@ -53,7 +53,8 @@ class SwrveEventListener implements ISwrveEventListener {
             } else if (message instanceof SwrveEmbeddedMessage) {
                 Map<String, String> personalizationProperties = sdk.retrievePersonalizationProperties(payload, null);
                 if (embeddedListener != null) {
-                    embeddedListener.onMessage(sdk.getContext(), (SwrveEmbeddedMessage) message, personalizationProperties, message.isControl());
+                    SwrveEmbeddedMessage embeddedMessage = (SwrveEmbeddedMessage) message;
+                    embeddedListener.onMessage(sdk.getContext(), embeddedMessage, personalizationProperties, message.isControl());
                 } else {
                     if (message.isControl()) {
                         handleControlCampaign(message, "true");

@@ -55,7 +55,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
@@ -148,7 +147,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             eventListener = new SwrveEventListener(this, embeddedListener); // init event listener before any events such as session start are queued
 
-            sessionStart(); // this should be sent immediately and then refresh campaigns executes
+            sessionStart(); // this should be sent immediately and then refresh content executes
             generateNewSessionInterval();
 
             initUserJoinedTimeAndFirstSession();
@@ -777,18 +776,13 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return ActivityCompat.shouldShowRequestPermissionRationale(activity, permission);
     }
 
-    protected void _refreshCampaignsAndResources() {
-        // When campaigns need to be downloaded manually, enforce max. flush frequency
-        if (!config.isAutoDownloadCampaignsAndResources()) {
-            Date now = getNow();
-            if (campaignsAndResourcesLastRefreshed != null) {
-                Date nextAllowedTime = new Date(campaignsAndResourcesLastRefreshed.getTime() + campaignsAndResourcesFlushFrequency);
-                if (now.compareTo(nextAllowedTime) < 0) {
-                    SwrveLogger.i("Request to retrieve campaign and user resource data was rate-limited");
-                    return;
-                }
+    protected void _refreshContent(SwrveRefreshContentListener listener) {
+        if (!shouldRefreshContent()) {
+            if (listener != null) {
+                String msg = "Request to refresh content was rate-limited.";
+                listener.onComplete(new SwrveRefreshContentListenerResult(SwrveRefreshContentListenerResult.ResultCode.ERROR, msg, 0));
             }
-            campaignsAndResourcesLastRefreshed = now;
+            return;
         }
 
         final String userId = getUserId(); // user can change so retrieve now as a final String for thread safeness
@@ -808,160 +802,175 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     restClient.get(config.getContentUrl() + USER_CONTENT_ACTION, params, new IRESTResponseListener() {
                         @Override
                         public void onResponse(RESTResponse response) {
-                            // Response received from server
-                            if (response.responseCode == HttpURLConnection.HTTP_OK) {
-                                SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
-                                SharedPreferences.Editor settingsEditor = settings.edit();
-
-                                String etagHeader = response.getHeaderValue("ETag");
-                                if (!SwrveHelper.isNullOrEmpty(etagHeader)) {
-                                    campaignsAndResourcesLastETag = etagHeader;
-                                    multiLayerLocalStorage.setCacheEntry(userId, CACHE_ETAG, etagHeader);
+                            SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
+                            String errorMessage = "";
+                            int httpResponseCode = response.responseCode;
+                            try {
+                                if (response.responseCode == HttpURLConnection.HTTP_OK) {
+                                    handleSuccessfulResponse(response);
+                                    resultCode = SwrveRefreshContentListenerResult.ResultCode.SUCCESS;
+                                } else {
+                                    resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR;
+                                    errorMessage = response.responseBody;
                                 }
-
-                                try {
-                                    JSONObject responseJson;
-                                    try {
-                                        responseJson = new JSONObject(response.responseBody);
-                                    } catch (JSONException e) {
-                                        SwrveLogger.e("SwrveSDK unable to decode user_content JSON : \"%s\".", response.responseBody);
-                                        throw e;
-                                    }
-
-                                    boolean loadPreviousCampaignState = true;
-                                    if (responseJson.toString().equals("{}")) { // if response is {} then etag hasn't changed.
-                                        SwrveLogger.d("SwrveSDK etag has not changed");
-                                    } else if (responseJson.has("qa")) {
-                                        SwrveLogger.i("SwrveSDK You are a QA user!");
-                                        JSONObject jsonQa = responseJson.getJSONObject("qa");
-                                        boolean wasPreviouslyResetDevice = QaUser.isResetDevice();
-                                        boolean resetDevice = jsonQa.optBoolean("reset_device_state", false);
-                                        if (!wasPreviouslyResetDevice && resetDevice) {
-                                            loadPreviousCampaignState = false;
-                                        }
-                                        updateQaUser(jsonQa.toString());
-                                        // The qauser push token is stored separately to regular users and requires an update for newly identified users who happen to be a qauser also.
-                                        deviceUpdate(profileManager.getUserId(), _getDeviceInfo());
-                                        sendQueuedEvents();
-                                    } else {
-                                        updateQaUser("");
-                                    }
-
-                                    if (responseJson.has("flush_frequency")) {
-                                        Integer flushFrequency = responseJson.getInt("flush_frequency");
-                                        campaignsAndResourcesFlushFrequency = flushFrequency;
-                                        settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_FREQ, campaignsAndResourcesFlushFrequency);
-                                    }
-
-                                    if (responseJson.has("flush_refresh_delay")) {
-                                        Integer flushDelay = responseJson.getInt("flush_refresh_delay");
-                                        campaignsAndResourcesFlushRefreshDelay = flushDelay;
-                                        settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_DELAY, campaignsAndResourcesFlushRefreshDelay);
-                                    }
-
-                                    if (responseJson.has("asset_download_limit")) {
-                                        Integer assetDownloadLimit = responseJson.getInt("asset_download_limit");
-                                        campaignsAndResourcesAssetDownloadLimit = assetDownloadLimit;
-                                        settingsEditor.putInt(SDK_PREFS_KEY_ADL, campaignsAndResourcesAssetDownloadLimit);
-                                    }
-
-                                    if (responseJson.has("identify_refresh_period")) {
-                                        int identifyRefreshPeriodNew = responseJson.getInt("identify_refresh_period");
-                                        if (identifyRefreshPeriodNew != identifyRefreshPeriod) {
-                                            identifyRefreshPeriod = identifyRefreshPeriodNew;
-                                            settingsEditor.putInt(SDK_PREFS_KEY_ID_REFRESH_PERIOD, identifyRefreshPeriod);
-                                            reIdentifyUser();
-                                        }
-                                    }
-
-                                    if (responseJson.has("real_time_user_properties")) {
-                                        JSONObject realTimeUserPropertiesJson = responseJson.getJSONObject("real_time_user_properties");
-                                        realTimeUserProperties = SwrveHelper.JSONToMap(realTimeUserPropertiesJson);
-                                        saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
-                                    }
-
-                                    if (responseJson.has("campaigns")) {
-                                        JSONObject campaignJson = responseJson.getJSONObject("campaigns");
-                                        saveCampaignsInCache(campaignJson);
-                                        loadCampaignsFromJSON(userId, campaignJson, campaignsState, loadPreviousCampaignState);
-                                        autoShowMessages();
-
-                                        if (resourceManager != null && campaignJson.has("ab_test_details")) {
-                                            JSONObject abTestDetailsJson = campaignJson.optJSONObject("ab_test_details");
-                                            if (abTestDetailsJson != null) {
-                                                resourceManager.setABTestDetailsFromJSON(abTestDetailsJson);
-                                            }
-                                        }
-                                    } else if (responseJson.has("real_time_user_properties")) {
-                                        // if campaigns are the same but properties have updated.
-                                        loadCampaignsFromCache(userId);
-                                    }
-
-                                    if (responseJson.has("push_inbox")) {
-                                        JSONArray pimJsonArray = responseJson.getJSONArray("push_inbox");
-                                        savePIMInCache(pimJsonArray);
-                                        loadPIMFromJSONArray(pimJsonArray, userId);
-                                    }
-
-                                    if (responseJson.has("push_inbox_hash")) {
-                                        String newPushInboxHash = responseJson.getString("push_inbox_hash");
-                                        if (!newPushInboxHash.equals(pushInboxHash)) {
-                                            invokePushInboxUpdateListener();
-                                            multiLayerLocalStorage.setCacheEntry(userId, CACHE_PUSH_INBOX_HASH, newPushInboxHash);
-                                            pushInboxHash = newPushInboxHash;
-                                        }
-                                    }
-
-                                    if (responseJson.has("user_resources")) {
-                                        // Update resource manager
-                                        JSONArray resourceJson = responseJson.getJSONArray("user_resources");
-                                        resourceManager.setResourcesFromJSON(resourceJson);
-                                        saveResourcesInCache(resourceJson);
-                                    }
-
-                                    if (responseJson.has("user_resources") || responseJson.has("real_time_user_properties")) {
-                                        // Call resource listener
-                                        if (campaignsAndResourcesInitialized) {
-                                            invokeResourceListener();
-                                        }
-                                    }
-
-                                } catch (JSONException e) {
-                                    SwrveLogger.e("Could not parse JSON for campaigns and resources", e);
+                            } catch (JSONException e) {
+                                SwrveLogger.e("Error processing response", e);
+                                resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
+                                errorMessage = e.getMessage();
+                            } finally {
+                                if (listener != null) {
+                                    listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, errorMessage, httpResponseCode));
                                 }
-
-                                settingsEditor.apply();
                             }
-
-                            this.firstRefreshFinished();
                         }
 
                         @Override
                         public void onException(Exception e) {
-                            this.firstRefreshFinished();
-                            SwrveLogger.e("Error downloading resources and campaigns", e);
+                            SwrveLogger.e("Error refreshing content", e);
+                            if (listener != null) {
+                                SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
+                                listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage(), 0));
+                            }
                         }
 
-                        public void firstRefreshFinished() {
-                            if (!campaignsAndResourcesInitialized) {
-                                campaignsAndResourcesInitialized = true;
+                        private void handleSuccessfulResponse(RESTResponse response) throws JSONException {
+                            SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
+                            SharedPreferences.Editor settingsEditor = settings.edit();
 
-                                // Only called first time API call returns - whether failed or successful, whether new campaigns were returned or not;
-                                // this ensures that if API call fails or there are no changes, we call autoShowMessages with cached campaigns
-                                autoShowMessages();
+                            String etagHeader = response.getHeaderValue("ETag");
+                            if (!SwrveHelper.isNullOrEmpty(etagHeader)) {
+                                campaignsAndResourcesLastETag = etagHeader;
+                                multiLayerLocalStorage.setCacheEntry(userId, CACHE_ETAG, etagHeader);
+                            }
 
-                                // Invoke listeners once to denote that the first attempt at downloading has finished
-                                // independent of whether the resources or campaigns have changed from cached values
-                                invokeResourceListener();
-                                invokePushInboxUpdateListener();
+                            try {
+                                JSONObject responseJson = new JSONObject(response.responseBody);
+
+                                boolean loadPreviousCampaignState = true;
+                                if (responseJson.toString().equals("{}")) { // if response is {} then etag hasn't changed.
+                                    SwrveLogger.d("SwrveSDK etag has not changed");
+                                } else if (responseJson.has("qa")) {
+                                    SwrveLogger.i("SwrveSDK You are a QA user!");
+                                    JSONObject jsonQa = responseJson.getJSONObject("qa");
+                                    boolean wasPreviouslyResetDevice = QaUser.isResetDevice();
+                                    boolean resetDevice = jsonQa.optBoolean("reset_device_state", false);
+                                    if (!wasPreviouslyResetDevice && resetDevice) {
+                                        loadPreviousCampaignState = false;
+                                    }
+                                    updateQaUser(jsonQa.toString());
+                                    // The qauser push token is stored separately to regular users and requires an update for newly identified users who happen to be a qauser also.
+                                    deviceUpdate(profileManager.getUserId(), _getDeviceInfo());
+                                    sendQueuedEvents();
+                                } else {
+                                    updateQaUser("");
+                                }
+
+                                if (responseJson.has("flush_frequency")) {
+                                    Integer flushFrequency = responseJson.getInt("flush_frequency");
+                                    campaignsAndResourcesFlushFrequency = flushFrequency;
+                                    settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_FREQ, campaignsAndResourcesFlushFrequency);
+                                }
+
+                                if (responseJson.has("flush_refresh_delay")) {
+                                    Integer flushDelay = responseJson.getInt("flush_refresh_delay");
+                                    campaignsAndResourcesFlushRefreshDelay = flushDelay;
+                                    settingsEditor.putInt(SDK_PREFS_KEY_FLUSH_DELAY, campaignsAndResourcesFlushRefreshDelay);
+                                }
+
+                                if (responseJson.has("asset_download_limit")) {
+                                    Integer assetDownloadLimit = responseJson.getInt("asset_download_limit");
+                                    campaignsAndResourcesAssetDownloadLimit = assetDownloadLimit;
+                                    settingsEditor.putInt(SDK_PREFS_KEY_ADL, campaignsAndResourcesAssetDownloadLimit);
+                                }
+
+                                if (responseJson.has("identify_refresh_period")) {
+                                    int identifyRefreshPeriodNew = responseJson.getInt("identify_refresh_period");
+                                    if (identifyRefreshPeriodNew != identifyRefreshPeriod) {
+                                        identifyRefreshPeriod = identifyRefreshPeriodNew;
+                                        settingsEditor.putInt(SDK_PREFS_KEY_ID_REFRESH_PERIOD, identifyRefreshPeriod);
+                                        reIdentifyUser();
+                                    }
+                                }
+
+                                if (responseJson.has("real_time_user_properties")) {
+                                    JSONObject realTimeUserPropertiesJson = responseJson.getJSONObject("real_time_user_properties");
+                                    realTimeUserProperties = SwrveHelper.JSONToMap(realTimeUserPropertiesJson);
+                                    saveRealTimeUserPropertiesInCache(realTimeUserPropertiesJson);
+                                }
+
+                                if (responseJson.has("campaigns")) {
+                                    JSONObject campaignJson = responseJson.getJSONObject("campaigns");
+                                    saveCampaignsInCache(campaignJson);
+                                    loadCampaignsFromJSON(userId, campaignJson, campaignsState, loadPreviousCampaignState);
+                                    autoShowMessages();
+
+                                    if (resourceManager != null && campaignJson.has("ab_test_details")) {
+                                        JSONObject abTestDetailsJson = campaignJson.optJSONObject("ab_test_details");
+                                        if (abTestDetailsJson != null) {
+                                            resourceManager.setABTestDetailsFromJSON(abTestDetailsJson);
+                                        }
+                                    }
+                                } else if (responseJson.has("real_time_user_properties")) {
+                                    // if campaigns are the same but properties have updated.
+                                    loadCampaignsFromCache(userId);
+                                }
+
+                                if (responseJson.has("push_inbox")) {
+                                    JSONArray pimJsonArray = responseJson.getJSONArray("push_inbox");
+                                    savePIMInCache(pimJsonArray);
+                                    loadPIMFromJSONArray(pimJsonArray, userId);
+                                }
+
+                                if (responseJson.has("push_inbox_hash")) {
+                                    String newPushInboxHash = responseJson.getString("push_inbox_hash");
+                                    if (!newPushInboxHash.equals(pushInboxHash)) {
+                                        invokePushInboxUpdateListener();
+                                        multiLayerLocalStorage.setCacheEntry(userId, CACHE_PUSH_INBOX_HASH, newPushInboxHash);
+                                        pushInboxHash = newPushInboxHash;
+                                    }
+                                }
+
+                                if (responseJson.has("user_resources")) {
+                                    JSONArray resourceJson = responseJson.getJSONArray("user_resources");
+                                    resourceManager.setResourcesFromJSON(resourceJson);
+                                    saveResourcesInCache(resourceJson); // Update resource manager
+                                }
+
+                                if (responseJson.has("user_resources") || responseJson.has("real_time_user_properties")) {
+                                    if (campaignsAndResourcesInitialized) {
+                                        invokeResourceListener(); // Call resource listener
+                                    }
+                                }
+                            } finally {
+                                settingsEditor.apply();
                             }
                         }
                     });
-                } catch (UnsupportedEncodingException e) {
-                    SwrveLogger.e("Could not update resources and campaigns, invalid parameters", e);
+                } catch (Exception e) {
+                    SwrveLogger.e("Could not refresh content", e);
+                    if (listener != null) {
+                        SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
+                        listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage(), 0));
+                    }
                 }
             }
         });
+    }
+
+    private boolean shouldRefreshContent() {
+        boolean shouldRefreshContent = true;
+        if (!config.isAutoDownloadCampaignsAndResources()) { // When campaigns need to be downloaded manually, enforce max. flush frequency
+            Date now = getNow();
+            if (campaignsAndResourcesLastRefreshed != null) {
+                Date nextAllowedTime = new Date(campaignsAndResourcesLastRefreshed.getTime() + campaignsAndResourcesFlushFrequency);
+                if (now.compareTo(nextAllowedTime) < 0) {
+                    SwrveLogger.i("Request to refresh content data was rate-limited");
+                    return false;
+                }
+            }
+            campaignsAndResourcesLastRefreshed = now;
+        }
+        return shouldRefreshContent;
     }
 
     protected SwrveMessage _getMessageForId(int messageId) {
@@ -1598,13 +1607,24 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public void refreshCampaignsAndResources() {
-        if (!isSdkReady()) return;
-
+    public void refreshContent(SwrveRefreshContentListener listener) {
+        if (!isSdkReady()) {
+            if (listener != null) {
+                SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR;
+                listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, "SDK is not ready", 0));
+            }
+            return;
+        }
         try {
-            _refreshCampaignsAndResources();
+            _refreshContent(listener);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
+            if (listener != null) {
+                if (listener != null) {
+                    SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
+                    listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage(), 0));
+                }
+            }
         }
     }
 
@@ -1852,21 +1872,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     private List<SwrveBaseCampaign> _getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties, int campaignId) {
-        try {
-            return getMessageCenterCampaigns(orientation, properties, campaignId);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception thrown in Swrve SDK", e);
-        }
-        return new ArrayList<>();
-    }
-
-    private List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties, int campaignId) {
         List<SwrveBaseCampaign> result = new ArrayList<>();
-        if (!isSdkReady()) return result;
+        if (!isSdkReady() || campaigns == null) {
+            return result;
+        }
 
-        Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
+        try {
+            Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
 
-        if (campaigns != null) {
             synchronized (campaigns) {
                 for (int i = 0; i < campaigns.size(); i++) {
                     SwrveBaseCampaign campaign = campaigns.get(i);
@@ -1888,12 +1901,14 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 campaign.setMessageCenterDetails(personalizedMessageCenterDetails);
                                 result.add(campaign);
                             }
-                        } else {
+                        } else if (campaign instanceof SwrveEmbeddedCampaign) {
                             result.add(campaign);
                         }
                     }
                 }
             }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return result;
     }
@@ -1917,6 +1932,53 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     @Override
     public List<SwrveBaseCampaign> getMessageCenterCampaigns(Map<String, String> properties) {
         return _getMessageCenterCampaigns(getDeviceOrientation(), properties, -1);
+    }
+
+    @Override
+    public List<SwrveInAppCampaign> getInAppMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
+        List<SwrveInAppCampaign> inAppCampaigns = new ArrayList<>();
+        try {
+            List<SwrveBaseCampaign> allMessageCenterCampaigns = _getMessageCenterCampaigns(orientation, properties, -1);
+            for (SwrveBaseCampaign campaign : allMessageCenterCampaigns) {
+                if (campaign instanceof SwrveInAppCampaign) {
+                    inAppCampaigns.add((SwrveInAppCampaign) campaign);
+                }
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return inAppCampaigns;
+    }
+
+    @Override
+    public List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns() {
+        try {
+            return _getEmbeddedMessageCenterCampaigns();
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+        return Collections.emptyList();
+    }
+
+    private List<SwrveEmbeddedMessage> _getEmbeddedMessageCenterCampaigns() {
+        List<SwrveEmbeddedMessage> embeddedMessages = new ArrayList<>();
+        if (!isSdkReady() || campaigns == null) {
+            return embeddedMessages;
+        }
+
+        synchronized (campaigns) {
+            for (int i = 0; i < campaigns.size(); i++) {
+                SwrveBaseCampaign campaign = campaigns.get(i);
+                if (campaign instanceof SwrveEmbeddedCampaign == false) {
+                    continue;
+                }
+                if (campaign.isMessageCenter() && campaign.getStatus() != SwrveCampaignState.Status.Deleted && campaign.isActive(getNow())) {
+                    SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
+                    embeddedMessages.add(message);
+                }
+            }
+        }
+        return embeddedMessages;
     }
 
     @Override
@@ -1970,11 +2032,41 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
+    public void removeMessageCenterCampaign(int campaignId) {
+        if (!isSdkReady() || campaignId < 1 || campaigns == null) {
+            return;
+        }
+
+        for (int i = 0; i < campaigns.size(); i++) {
+            SwrveBaseCampaign campaign = campaigns.get(i);
+            if (campaign.getId() == campaignId) {
+                removeMessageCenterCampaign(campaign);
+                break;
+            }
+        }
+    }
+
+    @Override
     public void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign) {
         if (!isSdkReady() || campaign == null) return;
 
         campaign.setStatus(SwrveCampaignState.Status.Seen);
         saveCampaignsState(getUserId());
+    }
+
+    @Override
+    public void markMessageCenterCampaignAsSeen(int campaignId) {
+        if (!isSdkReady() || campaignId < 1 || campaigns == null) {
+            return;
+        }
+
+        for (int i = 0; i < campaigns.size(); i++) {
+            SwrveBaseCampaign campaign = campaigns.get(i);
+            if (campaign.getId() == campaignId) {
+                markMessageCenterCampaignAsSeen(campaign);
+                break;
+            }
+        }
     }
 
     protected Map<String, String> getContentRequestParams(String userId) {

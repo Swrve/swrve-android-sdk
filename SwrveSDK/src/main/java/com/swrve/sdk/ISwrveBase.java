@@ -6,6 +6,7 @@ import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -69,7 +70,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     JSONObject getDeviceInfo() throws JSONException;
 
-    void refreshCampaignsAndResources();
+    void refreshContent(SwrveRefreshContentListener listener);
 
     void embeddedMessageButtonWasPressed(SwrveEmbeddedMessage message, String buttonName);
 
@@ -95,6 +96,10 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     List<SwrveBaseCampaign> getMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties);
 
+    List<SwrveInAppCampaign> getInAppMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties);
+
+    List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns();
+
     SwrveBaseCampaign getMessageCenterCampaign(int campaignId, Map<String, String> properties);
 
     boolean showMessageCenterCampaign(SwrveBaseCampaign campaign);
@@ -104,6 +109,10 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
     void removeMessageCenterCampaign(SwrveBaseCampaign campaign);
 
     void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign);
+
+    void removeMessageCenterCampaign(int campaignId);
+
+    void markMessageCenterCampaignAsSeen(int campaignId);
 
     void handleDeferredDeeplink(Bundle bundle);
 

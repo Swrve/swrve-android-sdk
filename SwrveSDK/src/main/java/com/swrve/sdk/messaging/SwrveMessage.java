@@ -67,6 +67,10 @@ public class SwrveMessage implements SwrveBaseMessage {
         return id;
     }
 
+    public int getCampaignId() {
+        return campaign.getId();
+    }
+
     public String getName() {
         return name;
     }

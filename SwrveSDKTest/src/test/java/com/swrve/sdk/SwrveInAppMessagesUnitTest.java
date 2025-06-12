@@ -58,6 +58,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -430,6 +431,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_event.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
         assertEquals(0, swrveSpy.getMessageCenterCampaigns().size());
+        assertEquals(0, swrveSpy.getInAppMessageCenterCampaigns(SwrveOrientation.Both, null).size());
     }
 
     @Test
@@ -443,6 +445,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
         assertEquals(1, swrveSpy.getMessageCenterCampaigns().size());
         assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Both).size());
         assertEquals(1, swrveSpy.getMessageCenterCampaigns(SwrveOrientation.Landscape).size());
+        assertEquals(1, SwrveSDK.getInAppMessageCenterCampaigns(SwrveOrientation.Both, null).size());
 
         Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
 
@@ -591,6 +594,36 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testMarkMessageCenterCampaignAsSeen() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_center.json",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        List<SwrveInAppCampaign> campaigns =  SwrveSDK.getInAppMessageCenterCampaigns(SwrveOrientation.Both, null);
+        assertNotNull(campaigns);
+        assertEquals(1, campaigns.size());
+        SwrveInAppCampaign campaign = campaigns.get(0);
+        assertEquals(102, campaign.getId());
+        assertEquals(SwrveCampaignState.Status.Unseen, campaign.getStatus());
+        SwrveSDK.markMessageCenterCampaignAsSeen(campaign.getId());
+        assertEquals(SwrveCampaignState.Status.Seen, campaign.getStatus());
+    }
+
+    @Test
+    public void testRemoveMessageCenterCampaign() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_message_center.json",
+                "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e", "8d4f969706e6bf2aa344d6690496ecfdefc89f1f");
+        List<SwrveInAppCampaign> campaigns =  SwrveSDK.getInAppMessageCenterCampaigns(SwrveOrientation.Both, null);
+        assertNotNull(campaigns);
+        assertEquals(1, campaigns.size());
+        SwrveInAppCampaign campaign = campaigns.get(0);
+        assertEquals(102, campaign.getId());
+        assertNotNull(campaign);
+        SwrveSDK.removeMessageCenterCampaign(campaign.getId());
+        campaigns =  SwrveSDK.getInAppMessageCenterCampaigns(SwrveOrientation.Both, null);
+        assertNotNull(campaigns);
+        assertEquals(0, campaigns.size());
+    }
+
+    @Test
     public void testAutomaticDisplayEvents() throws Exception {
 
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_autoshow.json",
@@ -659,7 +692,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
     @Test
     public void testReloadCampaigns() throws Exception {
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign.json");
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
         // Same number of campaigns
         assertEquals(1, swrveSpy.campaigns.size());
     }

@@ -9,6 +9,7 @@ import android.os.Bundle;
 import com.swrve.sdk.config.SwrveConfigBase;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveInAppCampaign;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import org.json.JSONException;
@@ -232,7 +233,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void refreshCampaignsAndResources() {
+    public void refreshContent(SwrveRefreshContentListener listener) {
     }
 
     @Override
@@ -298,6 +299,16 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public List<SwrveInAppCampaign> getInAppMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties) {
+        return null;
+    }
+
+    @Override
+    public List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns() {
+        return new ArrayList<>();
+    }
+
+    @Override
     public boolean showMessageCenterCampaign(SwrveBaseCampaign campaign) {
         return false;
     }
@@ -312,7 +323,15 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void removeMessageCenterCampaign(int campaignId) {
+    }
+
+    @Override
     public void markMessageCenterCampaignAsSeen(SwrveBaseCampaign campaign) {
+    }
+
+    @Override
+    public void markMessageCenterCampaignAsSeen(int campaignId) {
     }
 
     @Override

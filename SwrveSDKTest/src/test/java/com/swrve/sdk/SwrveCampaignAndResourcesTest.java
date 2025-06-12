@@ -4,6 +4,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
@@ -64,7 +65,7 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
         ArgumentCaptor<Boolean> sessionStartCaptor = ArgumentCaptor.forClass(Boolean.class);
         Mockito.verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(sessionStartCaptor.capture());
         assertEquals(true, sessionStartCaptor.getValue());
-        Mockito.verify(swrveSpy, atLeastOnce()).refreshCampaignsAndResources();
+        Mockito.verify(swrveSpy, atLeastOnce()).refreshContent(any());
 
         assertEquals(true, swrveSpy.eventsWereSent);
     }
@@ -88,7 +89,7 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
         ArgumentCaptor<Boolean> sessionStartCaptor = ArgumentCaptor.forClass(Boolean.class);
         Mockito.verify(swrveSpy, atLeastOnce()).startCampaignsAndResourcesTimer(sessionStartCaptor.capture());
         assertEquals(false, sessionStartCaptor.getValue());
-        Mockito.verify(swrveSpy, atMost(1)).refreshCampaignsAndResources(); // campaigns don't need to be refreshed
+        Mockito.verify(swrveSpy, atMost(1)).refreshContent(any());; // campaigns don't need to be refreshed
 
         assertEquals(true, swrveSpy.eventsWereSent);
     }
@@ -268,15 +269,15 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
 
         verify(swrveSpy, times(1)).invokePushInboxUpdateListener(); // verify that the listener is invoked only once
 
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);;
         verify(swrveSpy, times(1)).invokePushInboxUpdateListener(); // even after refresh, the listener is not invoked again
 
         String campaignsResponseJson2  = "{\"push_inbox_hash\": \"test_hash_2\"}";
         SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson2);
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);;
         verify(swrveSpy, times(2)).invokePushInboxUpdateListener(); // new hash so the listener is invoked again
 
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);;
         verify(swrveSpy, times(2)).invokePushInboxUpdateListener(); // even after refresh, the listener is not invoked again
     }
 
@@ -305,6 +306,6 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
             SwrveLogger.d("refreshCampaignsAndResources method is mocked to do nothing.");
             refreshCampaignsAndResourcesCalled = true;
             return null;
-        }).when(swrveSpy).refreshCampaignsAndResources();
+        }).when(swrveSpy).refreshContent(any());
     }
 }

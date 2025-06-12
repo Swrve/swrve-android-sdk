@@ -29,6 +29,7 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -82,9 +83,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Internal base class implementation of the Swrve SDK.
  */
-abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks {
+abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks, SwrveRefreshContentListener {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "11.4.1";
+    protected static String version = "11.5.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 10;
     protected static final int PUSH_INBOX_VERSION = 1;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 4;
@@ -1255,7 +1256,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             final ScheduledExecutorService timedService = Executors.newSingleThreadScheduledExecutor();
             timedService.schedule(() -> {
                 try {
-                    swrve.refreshCampaignsAndResources();
+                    swrve.refreshContent(this);
                 } finally {
                     timedService.shutdownNow();
                 }
@@ -1280,7 +1281,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         if (sessionStart) {
             SwrveLogger.d("SwrveSDK sessionstart is true so executing an immediate refresh of campaigns before starting a delayed timer for refreshing campaigns.");
             final SwrveBase<T, C> swrve = (SwrveBase<T, C>) this;
-            swrve.refreshCampaignsAndResources();
+            swrve.refreshContent(this);
             eventsWereSent = true; // this will force a refresh when the delayed campaignsAndResourcesExecutor executes.
         }
 
@@ -1337,5 +1338,25 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }
 
         return result;
+    }
+
+    @Override
+    public void onComplete(@NonNull SwrveRefreshContentListenerResult result) {
+        firstRefreshFinished(); // called regardless of result
+    }
+
+    private void firstRefreshFinished() {
+        if (!campaignsAndResourcesInitialized) {
+            campaignsAndResourcesInitialized = true;
+
+            // Only called first time API call returns - whether failed or successful, whether new campaigns were returned or not;
+            // this ensures that if API call fails or there are no changes, we call autoShowMessages with cached campaigns
+            autoShowMessages();
+
+            // Invoke listeners once to denote that the first attempt at downloading has finished
+            // independent of whether the resources or campaigns have changed from cached values
+            invokeResourceListener();
+            invokePushInboxUpdateListener();
+        }
     }
 }

@@ -149,7 +149,7 @@ public class StopTrackingAndPublicApisTest extends SwrveBaseTest {
         assertNotNull(deviceInfo);
 
         SwrveSDK.refreshCampaignsAndResources();
-        verify(swrveSpy, never())._refreshCampaignsAndResources();
+        verify(swrveSpy, never())._refreshContent(any());
 
         File cacheDir = SwrveSDK.getCacheDir();
         assertNotNull(cacheDir);

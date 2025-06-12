@@ -1,13 +1,11 @@
 package com.swrve.sdk;
 
-import static com.swrve.sdk.ISwrveCommon.EVENT_FIRST_SESSION;
 import static com.swrve.sdk.SwrveTrackingState.STARTED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
 
 import android.content.Intent;
 import android.view.View;
@@ -239,7 +237,7 @@ public class SwrveInAppMessagesWithRetryUnitTest extends SwrveBaseTest {
         assertNotNull(sdkBeginNow + sdkFutureNow , message);
         assertEquals(165, message.getId());
 
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
 
         message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNotNull(message);
@@ -266,7 +264,7 @@ public class SwrveInAppMessagesWithRetryUnitTest extends SwrveBaseTest {
 
         Date later = new Date(swrveSpy.getNow().getTime() + 2000000);
         doReturn(later).when(swrveSpy).getNow();
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
 
         // Should still return no message!
         SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
@@ -299,14 +297,14 @@ public class SwrveInAppMessagesWithRetryUnitTest extends SwrveBaseTest {
         tearDown();
         setUp();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_none.json");
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
         assertEquals(0, swrveSpy.campaigns.size());
 
         tearDown();
         setUp();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_impressions.json",
                 "42e6e1cb07e0841aeae695be94f4355b67ee6cdb", "8721fd4e657980a5e12d498e73aed6e6a565dfca", "97c5df26c8e8fcff8dbda7e662d4272a6a94af7e");
-        swrveSpy.refreshCampaignsAndResources();
+        swrveSpy.refreshContent(null);
 
         // Same campaigns again, should still not be able to return the campaign
         assertEquals(1, swrveSpy.campaigns.size());

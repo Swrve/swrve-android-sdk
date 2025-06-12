@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -29,8 +30,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.robolectric.annotation.GraphicsMode.Mode.NATIVE;
 
 import android.app.Activity;
@@ -123,7 +126,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
     private void initSDK() throws Exception {
         Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey", config);
-        swrveSpy = Mockito.spy(swrveReal);
+        swrveSpy = spy(swrveReal);
         SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy); // disable token registration
         SwrveTestUtils.setSDKInstance(swrveSpy);
         SwrveTestUtils.disableAssetsManager(swrveSpy);
@@ -376,7 +379,14 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     public void testPersonalizedMessageDoesNotShow() throws Exception {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
-        swrveSpy.event("currency_given"); // deliberately wrong event
+
+        QaUser qaUserSpy = spy(QaUser.getInstance());
+        QaUser.instance = qaUserSpy;
+        qaUserSpy.loggingEnabled = true;
+        doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(anyLong());
+        doReturn(999L).when(qaUserSpy).getTime();
+
+        swrveSpy.event("show.personalized"); // correct event trigger but missing personalization
 
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
@@ -385,6 +395,12 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ViewGroup parentView = activity.findViewById(android.R.id.content);
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNull(view);
+
+        // no message should be shown but a qalog event should be queued with reason "Campaign [102] has unresolved personalization properties"
+        assertEquals(2, qaUserSpy.qaLogQueue.size());
+        String secondEvent = qaUserSpy.qaLogQueue.get(1);
+        String expectedQaLog = "{\"time\":999,\"type\":\"qa_log_event\",\"log_source\":\"sdk\",\"log_type\":\"campaign-triggered\",\"log_details\":{\"event_name\":\"show.personalized\",\"event_payload\":{},\"displayed\":false,\"reason\":\"The loaded campaigns returned no message\",\"campaigns\":[{\"id\":102,\"variant_id\":165,\"type\":\"iam\",\"displayed\":false,\"reason\":\"Campaign [102] has unresolved personalization properties\"}]}}";
+        assertEquals(expectedQaLog, secondEvent);
     }
 
     @Test

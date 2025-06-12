@@ -110,7 +110,7 @@ class UnsupportedTest : SwrveBaseTest() {
         val deviceInfo = sdk.deviceInfo
         Assert.assertNotNull(deviceInfo)
 
-        sdk.refreshCampaignsAndResources()
+        sdk.refreshContent(null)
 
         val cacheDir = sdk.cacheDir
         Assert.assertNotNull(cacheDir)
