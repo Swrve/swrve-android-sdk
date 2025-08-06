@@ -921,6 +921,7 @@ class TriggerTest : SwrveBaseTest() {
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
         TestCase.assertTrue(qaCampaignInfoMap[campaign.id]!!.displayed)
 
+        //first condition fails, second condition passes
         qaCampaignInfoMap = HashMap()
         payload = HashMap()
         payload["passengers2"] = "10"
@@ -936,6 +937,22 @@ class TriggerTest : SwrveBaseTest() {
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
         Assert.assertFalse(qaCampaignInfoMap[campaign.id]!!.displayed)
 
+        //first condition passes, second condition fails
+        qaCampaignInfoMap = HashMap()
+        payload = HashMap()
+        payload["passenger1"] = "10"
+        Assert.assertNull(
+            campaign.getMessageForEvent(
+                "flight_search6",
+                payload,
+                Date(),
+                qaCampaignInfoMap,
+                null
+            )
+        )
+        Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
+        Assert.assertFalse(qaCampaignInfoMap[campaign.id]!!.displayed)
+        
         qaCampaignInfoMap = HashMap()
         payload = HashMap()
         payload["passenger"] = "15"
@@ -980,5 +997,39 @@ class TriggerTest : SwrveBaseTest() {
         )
         Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
         TestCase.assertTrue(qaCampaignInfoMap[campaign.id]!!.displayed)
+
+        //first condition passes, second condition fails
+        qaCampaignInfoMap = HashMap()
+        payload = HashMap()
+        payload["passengers1"] = "8"
+        payload["passengers2"] = "8"
+        Assert.assertNull(
+            campaign.getMessageForEvent(
+                "flight_search8",
+                payload,
+                Date(),
+                qaCampaignInfoMap,
+                null
+            )
+        )
+        Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
+        TestCase.assertFalse(qaCampaignInfoMap[campaign.id]!!.displayed)
+
+        //first condition passes, second condition fails
+        qaCampaignInfoMap = HashMap()
+        payload = HashMap()
+        payload["passengers1"] = "21"
+        payload["passengers2"] = "10"
+        Assert.assertNull(
+            campaign.getMessageForEvent(
+                "flight_search9",
+                payload,
+                Date(),
+                qaCampaignInfoMap,
+                null
+            )
+        )
+        Assert.assertEquals(1, qaCampaignInfoMap.size.toLong())
+        TestCase.assertFalse(qaCampaignInfoMap[campaign.id]!!.displayed)
     }
 }

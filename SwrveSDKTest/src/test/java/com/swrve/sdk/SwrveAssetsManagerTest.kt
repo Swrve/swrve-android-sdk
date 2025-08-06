@@ -149,6 +149,9 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
                 } else if (request.path!!.contains("externalAsset5")) {
                     return MockResponse().setResponseCode(200).setBody("externalAsset5")
                         .setHeader("Content-Type", "image/bmp")
+                } else if (request.path!!.contains("externalAsset6")) {
+                    return MockResponse().setResponseCode(200).setBody("externalAsset6")
+                        .setHeader("Content-Type", "image/jpg")
                 }
                 return MockResponse().setResponseCode(404)
             }
@@ -167,6 +170,7 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
         val externalAsset3Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset3").toByteArray())
         val externalAsset4Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset4").toByteArray())
         val externalAsset5Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset5").toByteArray())
+        val externalAsset6Sha1 = SwrveHelper.sha1((cdnPath + "externalAsset6").toByteArray())
 
         val assetsManager = SwrveAssetsManagerImp(mActivity)
         assetsManager.setCdnImages(cdnPath)
@@ -191,6 +195,8 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
             SwrveAssetsQueueItem(1, externalAsset4Sha1, (cdnPath + "externalAsset4"), true, true)
         val item9 =
             SwrveAssetsQueueItem(1, externalAsset5Sha1, (cdnPath + "externalAsset5"), true, true)
+        val item10 =
+            SwrveAssetsQueueItem(1, externalAsset6Sha1, (cdnPath + "externalAsset6"), true, true)
 
         assetsQueue.add(item1)
         assetsQueue.add(item2)
@@ -201,6 +207,7 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
         assetsQueue.add(item7)
         assetsQueue.add(item8)
         assetsQueue.add(item9)
+        assetsQueue.add(item10)
 
         assertCacheFileExists("asset1")
         assertCacheFileDoesNotExist(digest2!!)
@@ -208,6 +215,7 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
         assertCacheFileDoesNotExist("$digest4.gif")
         assertCacheFileDoesNotExist(externalAsset1Sha1!!)
         assertCacheFileDoesNotExist("$externalAsset2Sha1.gif")
+        assertCacheFileDoesNotExist(externalAsset6Sha1!!)
 
         assetsManagerSpy.downloadAssets(assetsQueue, null) // null callback on purpose
 
@@ -216,7 +224,7 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
             .downloadAsset(assetPathCaptor.capture())
         Mockito.verify(assetsManagerSpy, Mockito.atLeastOnce())
             .downloadAssetFromExternalSource(assetPathCaptor.capture())
-        Assert.assertEquals(8, assetPathCaptor.allValues.size.toLong())
+        Assert.assertEquals(9, assetPathCaptor.allValues.size.toLong())
         Assert.assertTrue(
             "An attempt to download asset2 did not occur",
             assetPathCaptor.allValues.contains(item2)
@@ -249,6 +257,10 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
             "An attempt to download externalAsset5 did not occur",
             assetPathCaptor.allValues.contains(item9)
         )
+        Assert.assertTrue(
+            "An attempt to download externalAsset6 did not occur",
+            assetPathCaptor.allValues.contains(item10)
+        )
 
         assertCacheFileExists("asset1")
         assertCacheFileExists("asset2")
@@ -259,6 +271,7 @@ class SwrveAssetsManagerTest : SwrveBaseTest() {
         assertCacheFileExists(externalAsset3Sha1!!) // jpeg
         assertCacheFileExists(externalAsset4Sha1!!) // png
         assertCacheFileExists(externalAsset5Sha1!!) // bmp
+        assertCacheFileExists(externalAsset6Sha1!!) // jpg
     }
 
     @Test

@@ -113,6 +113,7 @@ class SwrveCampaignDisplayer {
                         if (arg.op == Arg.Op.EQ) {
                             if (payload != null && payload.containsKey(arg.key) && payload[arg.key].equals(arg.value as String, ignoreCase = true)) {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
+                                continue
                             } else {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, false, qaCampaignInfoMap, eventName, trigger, payload)
                                 break
@@ -120,6 +121,7 @@ class SwrveCampaignDisplayer {
                         } else if (arg.op == Arg.Op.CONTAINS) {
                             if (payload != null && payload.containsKey(arg.key) && payload[arg.key]!!.lowercase().contains(arg.value.toString().lowercase())) {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
+                                continue
                             } else {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, false, qaCampaignInfoMap, eventName, trigger, payload)
                                 break
@@ -129,7 +131,7 @@ class SwrveCampaignDisplayer {
                             val valueInteger = value.toInt()
                             if (payload != null && payload.containsKey(arg.key) && payload[arg.key]!!.toInt() > valueInteger) {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
-                                break
+                                continue
                             } else {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, false, qaCampaignInfoMap, eventName, trigger, payload)
                                 break
@@ -139,7 +141,7 @@ class SwrveCampaignDisplayer {
                             val valueInteger = value.toInt()
                             if (payload != null && payload.containsKey(arg.key) && payload[arg.key]!!.toInt() < valueInteger) {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
-                                break
+                                continue
                             } else {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, false, qaCampaignInfoMap, eventName, trigger, payload)
                                 break
@@ -149,7 +151,7 @@ class SwrveCampaignDisplayer {
                             val valueInteger = value.toInt()
                             if (payload != null && payload.containsKey(arg.key) && payload[arg.key]!!.toInt() == valueInteger) {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
-                                break
+                                continue
                             } else {
                                 conditionsMatchPayload = logAndAddReason(swrveCampaign, false, qaCampaignInfoMap, eventName, trigger, payload)
                                 break
@@ -163,7 +165,7 @@ class SwrveCampaignDisplayer {
 
                                 if (lower != null && upper != null && payloadValue != null && (payloadValue < lower || payloadValue > upper)) {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
-                                    break
+                                    continue
                                 } else {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, false, qaCampaignInfoMap, eventName, trigger, payload)
                                     break
@@ -181,7 +183,7 @@ class SwrveCampaignDisplayer {
 
                                 if (lower != null && upper != null && payloadValue != null && payloadValue > lower && payloadValue < upper) {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, true, qaCampaignInfoMap, eventName, trigger, payload)
-                                    break
+                                    continue
                                 } else {
                                     conditionsMatchPayload = logAndAddReason(swrveCampaign, false, qaCampaignInfoMap, eventName, trigger, payload)
                                     break

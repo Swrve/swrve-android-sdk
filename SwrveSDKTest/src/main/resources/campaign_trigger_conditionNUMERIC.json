@@ -83,9 +83,50 @@
             "value": {
                 "lower":  10,
                 "upper":  20
+                }
+            }
+        },{
+            "event_name": "flight_search8",
+            "conditions": {
+                "args": [
+                    {
+                        "key": "passengers1",
+                        "op": "number_not_between",
+                        "value": {
+                            "lower":  10,
+                            "upper":  20
+                        }
+                    },
+                    {
+                        "key": "passengers2",
+                        "op": "number_between",
+                        "value": {
+                            "lower":  10,
+                            "upper":  20
+                        }
+                    }
+                ],
+                "op": "and"
+            }
+        },{
+            "event_name": "flight_search9",
+            "conditions": {
+                "args": [
+                    {
+                        "key": "passengers1",
+                        "op": "number_gt",
+                        "value": 20
+                    },
+                    {
+                        "key": "passengers2",
+                        "op": "number_lt",
+                        "value": 10
+                    }
+                ],
+                "op": "and"
             }
         }
-    }],
+    ],
     "message_center": false,
     "message": {
         "id": 456,

@@ -13,6 +13,7 @@ public class SwrveAssetsTypes {
         MIMETYPES = new HashMap<String, String>() {
             {
                 put("image/jpeg", ".jpeg");
+                put("image/jpg", ".jpg");
                 put("image/png", ".png");
                 put("image/gif", ".gif");
                 put("image/bmp", ".bmp");
