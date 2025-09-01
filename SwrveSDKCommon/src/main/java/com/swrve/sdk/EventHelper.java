@@ -19,6 +19,7 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_MEDIA_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID;
@@ -62,6 +63,10 @@ final class EventHelper {
     }
 
     public static ArrayList<String> createGenericEvent(long time, String id, String campaignType, String actionType, String contextId, String campaignId, Map<String, ?> payload, int seqnum) throws JSONException {
+        return createGenericEvent(time, id, campaignType, actionType, contextId, campaignId, 0, payload, seqnum);
+    }
+
+    public static ArrayList<String> createGenericEvent(long time, String id, String campaignType, String actionType, String contextId, String campaignId, int mediaId, Map<String, ?> payload, int seqnum) throws JSONException {
         ArrayList<String> events = new ArrayList<>();
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(EVENT_ID_KEY, id);
@@ -72,6 +77,9 @@ final class EventHelper {
         }
         if (SwrveHelper.isNotNullOrEmpty(campaignId)) {
             parameters.put(GENERIC_EVENT_CAMPAIGN_ID_KEY, campaignId);
+        }
+        if (mediaId > 0) {
+            parameters.put(GENERIC_EVENT_MEDIA_ID_KEY, mediaId);
         }
         String eventAsJSON = EventHelper.eventAsJSON(EVENT_TYPE_GENERIC_CAMPAIGN, parameters, payload, seqnum, time);
         events.add(eventAsJSON);

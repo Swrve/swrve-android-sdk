@@ -6,15 +6,20 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.VisibleForTesting;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
 
 import com.swrve.sdk.QaUser;
+import com.swrve.sdk.R;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveImageScaler;
 import com.swrve.sdk.SwrveInAppMessageActivity;
@@ -49,6 +54,9 @@ public class SwrveMessageView extends RelativeLayout {
     private List<String> loadErrorReasons = new ArrayList<>();
 
     private WeakReference<GestureDetector> gestureDetector;
+    
+    // Store reference to video player for pause/play
+    private SwrveVideoPlayerView videoPlayerView;
 
     public SwrveMessageView(Context context, SwrveConfigBase config, SwrveMessage message, SwrveMessageFormat format, Map<String, String> inAppPersonalization, long pageId)
             throws SwrveMessageViewBuildException {
@@ -137,7 +145,9 @@ public class SwrveMessageView extends RelativeLayout {
                 }
             } else if (widget instanceof SwrveImage) {
                 SwrveImage image = (SwrveImage) widget;
-                if (image.isMultiLine()) {
+                if (image.getSwrveVideoSettings() != null) {
+                    addVideoView(image);
+                } else if (image.isMultiLine()) {
                     addMultilineView(image);
                 } else {
                     addImageView(image, screenWidth, screenHeight);
@@ -327,6 +337,103 @@ public class SwrveMessageView extends RelativeLayout {
         addView(buttonView);
     }
 
+    private void addVideoView(SwrveImage video) throws SwrveSDKTextTemplatingException {
+        String resolvedUrl = SwrveTextTemplating.apply(video.getDynamicImageUrl(), this.inAppPersonalization);
+        String asset = SwrveHelper.sha1(resolvedUrl.getBytes());
+        //Only support .mp4 video files
+        String filePath = message.getCacheDir().getAbsolutePath() + "/" + asset + ".mp4";
+        Uri videoUri = Uri.fromFile(new File(filePath));
+
+        SwrveVideoSettings swrveVideoSettings = video.getSwrveVideoSettings();
+
+        // if fillscreen, it zooms video, we will use texture view otherwise use surface view
+        // texture view will prevents video from bleeding through the edges of the screen to next page.
+        // see ref https://github.com/androidx/media/issues/1107
+        int layoutId = swrveVideoSettings.getFillScreen() ? R.layout.swrve_video_player_zoom : R.layout.swrve_video_player_fit;
+        videoPlayerView = (SwrveVideoPlayerView) LayoutInflater.from(getContext())
+                .inflate(layoutId, this, false);
+        videoPlayerView.setupPlayer(swrveVideoSettings, videoUri);
+
+
+        if (SwrveHelper.isNotNullOrEmpty(video.getAccessibilityText())) {
+            String personalizedAccessibilityText = SwrveTextTemplating.apply(video.getAccessibilityText(), this.inAppPersonalization);
+            videoPlayerView.setContentDescription(personalizedAccessibilityText);
+        }
+
+        if (swrveVideoSettings.getFillScreen()) {
+            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                           int oldLeft, int oldTop, int oldRight, int oldBottom) {
+
+                    // Parent’s measured, edge-to-edge size
+                    int w = right - left;
+                    int h = bottom - top;
+
+                    RelativeLayout.LayoutParams lp =
+                            (RelativeLayout.LayoutParams) videoPlayerView.getLayoutParams();
+                    lp.width = w;
+                    lp.height = h;
+                    lp.leftMargin = 0;
+                    lp.topMargin = 0;
+                    videoPlayerView.setLayoutParams(lp);
+
+                    // Only need to do this once
+                    SwrveMessageView.this.removeOnLayoutChangeListener(this);
+                }
+            });
+        } else {
+            int screenWidth = video.getSize().x;
+            int screenHeight = video.getSize().y;
+            RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(screenWidth, screenHeight);
+            lparams.leftMargin = video.getPosition().x;
+            lparams.topMargin = video.getPosition().y;
+            videoPlayerView.setLayoutParams(lparams);
+        }
+
+        videoPlayerView.setPlayerListener(new Player.Listener() {
+            boolean hasStarted = false;
+
+            @Override
+            public void onIsPlayingChanged(boolean isPlaying) {
+                if (isPlaying && !hasStarted) {
+                    hasStarted = true;
+                    SwrveInAppMessageActivity inAppMessageActivity = (SwrveInAppMessageActivity) getContext();
+                    inAppMessageActivity.sendVideoEvent(page.getPageId(), video.getMediaId(), "video_started");
+                }
+            }
+
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                //if looping is enabled, we wont get to ended state, so we track ended in onPositionDiscontinuity
+                if (state == Player.STATE_ENDED) {
+                    SwrveInAppMessageActivity inAppMessageActivity = (SwrveInAppMessageActivity) getContext();
+                    inAppMessageActivity.sendVideoEvent(page.getPageId(), video.getMediaId(), "video_ended");
+                }
+            }
+
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                SwrveLogger.e("ExoPlayer error: ", error);
+            }
+
+            @Override
+            public void onPositionDiscontinuity(
+                    Player.PositionInfo oldPosition,
+                    Player.PositionInfo newPosition,
+                    @Player.DiscontinuityReason int reason
+            ) {
+                // When looping, ExoPlayer jumps from end → start and triggers AUTO_TRANSITION
+                if (swrveVideoSettings.getAutoPlay() && reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                    SwrveInAppMessageActivity inAppMessageActivity = (SwrveInAppMessageActivity) getContext();
+                    inAppMessageActivity.sendVideoEvent(page.getPageId(), video.getMediaId(), "video_ended");
+                }
+            }
+        });
+
+        addView(videoPlayerView);
+    }
+
     private void dismiss() {
         Context ctx = getContext();
         if (ctx instanceof Activity) {
@@ -457,5 +564,23 @@ public class SwrveMessageView extends RelativeLayout {
     @VisibleForTesting
     public SwrveMessagePage getPage() {
         return page;
+    }
+
+    protected void autoPlayVideo() {
+        if (videoPlayerView != null && videoPlayerView.getVideoPlayerSettings().getAutoPlay()) {
+            videoPlayerView.play();
+        }
+    }
+
+    protected void stopVideo() {
+        if (videoPlayerView != null) {
+            videoPlayerView.stop();
+        }
+    }
+
+    protected void releaseVideo() {
+        if (videoPlayerView != null) {
+            videoPlayerView.release();
+        }
     }
 }

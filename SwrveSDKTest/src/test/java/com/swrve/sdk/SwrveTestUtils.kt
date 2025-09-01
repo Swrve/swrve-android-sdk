@@ -15,6 +15,7 @@ import com.google.gson.reflect.TypeToken
 import com.swrve.sdk.config.SwrveConfig
 import com.swrve.sdk.config.SwrveConfigBase
 import com.swrve.sdk.localstorage.LocalStorageTestUtils
+import com.swrve.sdk.messaging.SwrveInAppMessageFragment
 import com.swrve.sdk.messaging.SwrveMessageView
 import com.swrve.sdk.rest.IRESTClient
 import com.swrve.sdk.rest.IRESTResponseListener
@@ -580,5 +581,23 @@ object SwrveTestUtils {
         } catch (e: Exception) {
             SwrveLogger.e("Exception", e)
         }
+    }
+
+    @JvmStatic
+    fun getSwrveMessageView(activity: SwrveInAppMessageActivity): SwrveMessageView? {
+        val expectedPageId = activity.currentPageId
+
+        for (fragment in activity.supportFragmentManager.fragments) {
+            if (fragment is SwrveInAppMessageFragment &&
+                fragment.view is SwrveMessageView &&
+                fragment.arguments != null
+            ) {
+                val pageId = fragment.arguments!!.getLong("PAGE_ID", -1)
+                if (pageId == expectedPageId) {
+                    return fragment.view as SwrveMessageView
+                }
+            }
+        }
+        return null
     }
 }

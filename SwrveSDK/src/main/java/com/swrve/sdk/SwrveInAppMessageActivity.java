@@ -44,7 +44,7 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
     protected ViewPager2 viewPager2;
     protected ScreenSlidePagerAdapter adapter;
     protected boolean isSwipeable;
-    protected long currentPageIdNonSwipe;
+    protected long currentPageId;
     private SwrveInAppStoryView storyView;
     private SwrveInAppStoryView.SwrveInAppStorySegmentListener storyViewListener;
     protected GestureDetector storyGestureDetector;
@@ -92,8 +92,7 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         }
     }
 
-    // If swipeable and multiple pages, use a viewpager, hide fragment frame
-    // If not swipeable or is single page, hide viewpager and use fragment frame to show page(s)
+    // Use a viewpager for swipeable and muli-page flows.
     private void pageSetup() {
 
         long firstPageId = inAppMessageHandler.format.getFirstPageId();
@@ -103,6 +102,9 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         if (pages.size() == 1 || page.getSwipeForward() == -1) {
             SwrveLogger.v("SwrveInAppMessageActivity: non swipe page flow");
             this.isSwipeable = false;
+            for (SwrveMessagePage p : pages.values()) {
+                trunk.add(p.getPageId());
+            }
         } else {
             SwrveLogger.v("SwrveInAppMessageActivity: swipeable multi page flow. Traversing tree to get trunk and check for circular flows");
             this.isSwipeable = true;
@@ -120,22 +122,14 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
 
         addStoryView();
 
-        if (isSwipeable) {
-            View singlePageFragment = findViewById(R.id.swrve_iam_frag_container);
-            singlePageFragment.setVisibility(View.GONE);
-            View multiPageFragment = findViewById(R.id.swrve_iam_pager);
-            multiPageFragment.setVisibility(View.VISIBLE);
+        View multiPageFragment = findViewById(R.id.swrve_iam_pager);
+        multiPageFragment.setVisibility(View.VISIBLE);
 
-            viewPager2 = findViewById(R.id.swrve_iam_pager);
-            viewPager2.setOffscreenPageLimit(pages.size()); // Page limit of 10 on the UI.
-            adapter = new ScreenSlidePagerAdapter(this, trunk);
-            viewPager2.setAdapter(adapter);
-        } else {
-            View singlePageFragment = findViewById(R.id.swrve_iam_frag_container);
-            singlePageFragment.setVisibility(View.VISIBLE);
-            View multiPageFragment = findViewById(R.id.swrve_iam_pager);
-            multiPageFragment.setVisibility(View.GONE);
-        }
+        viewPager2 = findViewById(R.id.swrve_iam_pager);
+        viewPager2.setOffscreenPageLimit(pages.size()); // Page limit of 10 on the UI.
+        adapter = new ScreenSlidePagerAdapter(this, trunk);
+        viewPager2.setAdapter(adapter);
+        viewPager2.setUserInputEnabled(isSwipeable); // prevent swipes if not allowed
 
         // The firstPageId is the first in the flow. The startingPageId could be different if the device has been rotated.
         long startingPageId = inAppMessageHandler.getStartingPageId();
@@ -174,19 +168,15 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
     @Override
     protected void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
-        long currentPageId = isSwipeable ? adapter.trunk.get(viewPager2.getCurrentItem()) : currentPageIdNonSwipe;
+        long currentPageId = adapter.trunk.get(viewPager2.getCurrentItem());
         inAppMessageHandler.saveInstanceState(bundle, currentPageId);
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        if (isSwipeable) {
-            long currentPageId = adapter.trunk.get(viewPager2.getCurrentItem());
-            inAppMessageHandler.backButtonClicked(currentPageId);
-        } else {
-            inAppMessageHandler.backButtonClicked(currentPageIdNonSwipe);
-        }
+        long currentPageId = adapter.trunk.get(viewPager2.getCurrentItem());
+        inAppMessageHandler.backButtonClicked(currentPageId);
     }
 
     @Override
@@ -215,33 +205,25 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
     }
 
     private void showPage(long pageId) {
-        if (isSwipeable) {
-            int index = adapter.trunk.indexOf(pageId);
-            if (index == -1) {
-                SwrveLogger.e("SwrveInAppMessageActivity: cannot show %s because it is not on the main swipeable trunk.", pageId);
-                finish();
-            } else {
-                viewPager2.setCurrentItem(index, false); // false will remove animation and fragment will appear instantly.
-            }
+        currentPageId = pageId;
+        int index = adapter.trunk.indexOf(pageId);
+        if (index == -1) {
+            SwrveLogger.e("SwrveInAppMessageActivity: cannot show %s because it is not on the main swipeable trunk.", pageId);
+            finish();
         } else {
-            SwrveInAppMessageFragment fragment = SwrveInAppMessageFragment.newInstance(pageId);
-            if (storyGestureDetector != null) {
-                fragment.addGestureDetection(storyGestureDetector);
-            }
-            if (!isFinishing() && !isDestroyed()) { // Activity could be finishing/destroyed if user presses back button and same time next page is supposed to be shown
-                getSupportFragmentManager().beginTransaction().replace(R.id.swrve_iam_frag_container, fragment).commit();
-                currentPageIdNonSwipe = pageId;
-                if (storyView != null) {
-                    storyView.startSegmentAtIndex(getSwrveMessageFormat().getIndexForPageId(currentPageIdNonSwipe));
-                }
-            } else {
-                SwrveLogger.w("SwrveInAppMessageActivity: cannot show page %s because activity is finishing or destroyed.", pageId);
-            }
+            viewPager2.setCurrentItem(index, false); // false will remove animation and fragment will appear instantly.
+        }
+        if (storyView != null) {
+            storyView.startSegmentAtIndex(getSwrveMessageFormat().getIndexForPageId(pageId));
         }
     }
 
     public void sendPageViewEvent(long pageId) {
         inAppMessageHandler.sendPageViewEvent(pageId);
+    }
+
+    public void sendVideoEvent(long pageId, int mediaId, String action) {
+        inAppMessageHandler.sendVideoEvent(pageId, mediaId, action);
     }
 
     public void buttonClicked(SwrveButton button, String resolvedAction, String resolvedText, long pageId, String pageName) {
@@ -312,7 +294,7 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
 
     private void dismissStory() {
         SwrveStoryDismissButton button = getSwrveMessageFormat().getStorySettings().getDismissButton();
-        inAppMessageHandler.dismissMessage(currentPageIdNonSwipe, button.getButtonId(), button.getName());
+        inAppMessageHandler.dismissMessage(currentPageId, button.getButtonId(), button.getName());
         storyView.close();
         finish();
     }
@@ -344,7 +326,7 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
     private void handleLastPageProgression(SwrveStorySettings storySettings) {
         if (storySettings.getLastPageProgression() == SwrveStorySettings.LastPageProgression.DISMISS) {
             SwrveLogger.d("Last page progression is dismiss, so dismissing");
-            inAppMessageHandler.dismissMessage(currentPageIdNonSwipe,
+            inAppMessageHandler.dismissMessage(currentPageId,
                     storySettings.getLastPageDismissId(),
                     storySettings.getLastPageDismissName());
             finish();
@@ -368,7 +350,11 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
         @Override
         public Fragment createFragment(int position) {
             long pageId = trunk.get(position);
-            return SwrveInAppMessageFragment.newInstance(pageId);
+            SwrveInAppMessageFragment fragment = SwrveInAppMessageFragment.newInstance(pageId);
+            if (storyGestureDetector != null) {
+                fragment.addGestureDetection(storyGestureDetector);
+            }
+            return fragment;
         }
 
         @Override

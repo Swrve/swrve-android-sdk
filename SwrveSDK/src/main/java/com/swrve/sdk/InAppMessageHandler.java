@@ -3,6 +3,8 @@ package com.swrve.sdk;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DISMISS;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_NAVIGATION;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_VIDEO_ENDED;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_VIDEO_STARTED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_IAM;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_NAME;
@@ -55,6 +57,8 @@ class InAppMessageHandler {
     private static final String SAVE_INSTANCE_STATE_SENT_NAVIGATION_EVENTS = "SENT_NAVIGATION_EVENTS";
     private static final String SAVE_INSTANCE_STATE_SENT_PAGEVIEW_EVENTS = "SENT_PAGEVIEW_EVENTS";
     private static final String BACK_BUTTON_NAME = "os_back_button";
+    private static final String SAVE_INSTANCE_STATE_SENT_VIDEO_STARTED_EVENTS = "SENT_VIDEO_STARTED_EVENTS";
+    private static final String SAVE_INSTANCE_STATE_SENT_VIDEO_ENDED_EVENTS = "SENT_VIDEO_ENDED_EVENTS";
 
     private final SwrveBase sdk;
     private final Context context;
@@ -64,6 +68,8 @@ class InAppMessageHandler {
     protected SwrveMessageFormat format;
     private final List<Long> sentNavigationEvents; // buttonIds
     private final List<Long> sentPageViewEvents; // pageIds
+    private final List<Long> sentVideoStartedEvents;
+    private final List<Long> sentVideoEndedEvents;
     protected int customEventDelayQueueSeconds = 2;
 
     InAppMessageHandler(Context context, Intent intent, Bundle savedInstanceState) {
@@ -73,6 +79,8 @@ class InAppMessageHandler {
 
         this.sentNavigationEvents = new ArrayList<>();
         this.sentPageViewEvents = new ArrayList<>();
+        this.sentVideoStartedEvents = new ArrayList<>();
+        this.sentVideoEndedEvents = new ArrayList<>();
         restoreInstanceState();
 
         if (intent == null || intent.getExtras() == null) {
@@ -388,6 +396,45 @@ class InAppMessageHandler {
         }
     }
 
+    protected void sendVideoEvent(long pageId, int mediaId, String action) {
+        if (GENERIC_EVENT_ACTION_TYPE_VIDEO_STARTED.equals(action) && sentVideoStartedEvents.contains(pageId)) {
+            SwrveLogger.v("SwrveSDK: Video started event for page_id %s already sent", pageId);
+            return;
+        }
+        if (GENERIC_EVENT_ACTION_TYPE_VIDEO_ENDED.equals(action) && sentVideoEndedEvents.contains(pageId)) {
+            SwrveLogger.v("SwrveSDK: Video ended event for page_id %s already sent", pageId);
+            return;
+        }
+        try {
+            long time = System.currentTimeMillis();
+            String id = String.valueOf(message.getId());
+            String campaignType = GENERIC_EVENT_CAMPAIGN_TYPE_IAM;
+            String actionType = action;
+            String contextId = String.valueOf(pageId);
+            String campaignId = "";
+
+            Map<String, Object> payload = new HashMap<>();
+            String pageName = format.getPages().get(pageId).getPageName();
+            if (SwrveHelper.isNotNullOrEmpty(pageName)) {
+                payload.put(GENERIC_EVENT_PAYLOAD_PAGE_NAME, pageName);
+            }
+            payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, SwrveHelper.getPlatformOS(context, FLAVOUR));
+            payload.put(GENERIC_EVENT_PAYLOAD_DEVICE_TYPE, SwrveHelper.getPlatformDeviceType(context));
+
+            int seqNum = sdk.getNextSequenceNumber();
+            ArrayList<String> events = EventHelper.createGenericEvent(time, id, campaignType, actionType, contextId, campaignId, mediaId, payload, seqNum);
+            sdk.sendEventsInBackground(context, sdk.getUserId(), events);
+
+            if (action.equals(GENERIC_EVENT_ACTION_TYPE_VIDEO_STARTED)) {
+                sentVideoStartedEvents.add(pageId);
+            } else if (action.equals(GENERIC_EVENT_ACTION_TYPE_VIDEO_ENDED)) {
+                sentVideoEndedEvents.add(pageId);
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK: Could not send video event for id:%s", e, String.valueOf(message.getId()));
+        }
+    }
+
     private void qaUserCampaignButtonClicked(String action, SwrveActionType swrveActionType, String buttonName) {
         if (!QaUser.isLoggingEnabled()) {
             return;
@@ -433,6 +480,20 @@ class InAppMessageHandler {
             sentPageViewEventsArray[i] = sentPageViewEvents.get(i);
         }
         bundle.putLongArray(SAVE_INSTANCE_STATE_SENT_PAGEVIEW_EVENTS, sentPageViewEventsArray);
+
+        // save list of sent video started events
+        long[] sentVideoStartedEventsArray = new long[sentVideoStartedEvents.size()];
+        for (int i = 0; i < sentVideoStartedEvents.size(); i++) {
+            sentVideoStartedEventsArray[i] = sentVideoStartedEvents.get(i);
+        }
+        bundle.putLongArray(SAVE_INSTANCE_STATE_SENT_VIDEO_STARTED_EVENTS, sentVideoStartedEventsArray);
+
+        // save list of sent video started events
+        long[] sentVideoEndedEventsArray = new long[sentVideoEndedEvents.size()];
+        for (int i = 0; i < sentVideoEndedEvents.size(); i++) {
+            sentVideoEndedEventsArray[i] = sentVideoEndedEvents.get(i);
+        }
+        bundle.putLongArray(SAVE_INSTANCE_STATE_SENT_VIDEO_ENDED_EVENTS, sentVideoEndedEventsArray);
     }
 
     private void restoreInstanceState() {
@@ -447,6 +508,20 @@ class InAppMessageHandler {
             long[] sentPageViewEventsArray = savedInstanceState.getLongArray(SAVE_INSTANCE_STATE_SENT_PAGEVIEW_EVENTS);
             for (long pageId : sentPageViewEventsArray) {
                 sentPageViewEvents.add(pageId);
+            }
+        }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(SAVE_INSTANCE_STATE_SENT_VIDEO_STARTED_EVENTS)) {
+            long[] sentVideoStartedEventsArray = savedInstanceState.getLongArray(SAVE_INSTANCE_STATE_SENT_VIDEO_STARTED_EVENTS);
+            for (long pageId : sentVideoStartedEventsArray) {
+                sentVideoStartedEvents.add(pageId);
+            }
+        }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(SAVE_INSTANCE_STATE_SENT_VIDEO_ENDED_EVENTS)) {
+            long[] sentVideoEndedEventsArray = savedInstanceState.getLongArray(SAVE_INSTANCE_STATE_SENT_VIDEO_ENDED_EVENTS);
+            for (long pageId : sentVideoEndedEventsArray) {
+                sentVideoEndedEvents.add(pageId);
             }
         }
     }

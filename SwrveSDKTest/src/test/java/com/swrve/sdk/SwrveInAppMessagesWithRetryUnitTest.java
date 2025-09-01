@@ -8,14 +8,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
 import android.content.Intent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 import androidx.core.util.Pair;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButtonView;
@@ -171,7 +165,9 @@ public class SwrveInAppMessagesWithRetryUnitTest extends SwrveBaseTest {
         doReturn(later180).when(swrveSpy).getNow();
 
         // Dismiss
-        dismissInAppMessage(pair.second);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(pair.second);
+        SwrveButtonView buttonView = (SwrveButtonView) messageView.getChildAt(2);
+        buttonView.performClick();
 
         // Last message just closed - should not be able to display a new one
         SwrveMessage message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
@@ -183,34 +179,6 @@ public class SwrveInAppMessagesWithRetryUnitTest extends SwrveBaseTest {
         // Last message closed 180 seconds ago - should be able to display a new one
         message = (SwrveMessage) swrveSpy.getBaseMessageForEvent("Swrve.currency_given");
         assertNotNull(message);
-    }
-
-    private void dismissInAppMessage(SwrveInAppMessageActivity activity) {
-        ViewGroup parentView = activity.findViewById(android.R.id.content);
-        LinearLayout linearLayout = (LinearLayout)parentView.getChildAt(0);
-        FrameLayout swrveLayout = (FrameLayout)linearLayout.getChildAt(0);
-        FrameLayout frameLayout;
-        if (activity.isSwipeable) {
-            assertEquals(View.GONE, swrveLayout.getChildAt(1).getVisibility()); // index 1 is the second child which should be gone.
-            ViewPager2 viewPager2 = (ViewPager2) swrveLayout.getChildAt(0);
-            RecyclerView recyclerView = (RecyclerView) viewPager2.getChildAt(0);
-            frameLayout = (FrameLayout) recyclerView.getChildAt(0);
-        } else {
-            assertEquals(View.GONE, swrveLayout.getChildAt(0).getVisibility());
-            frameLayout = (FrameLayout) swrveLayout.getChildAt(1); // index 1 because its the second child. Viewpager is first, but gone.
-        }
-        SwrveMessageView view = (SwrveMessageView) frameLayout.getChildAt(0);
-        // Press install button
-        if (view != null) {
-            for (int i = 0; i < view.getChildCount(); i++) {
-                View childView = view.getChildAt(i);
-                if (childView instanceof SwrveButtonView) {
-                    SwrveButtonView btn = (SwrveButtonView) childView;
-                    btn.performClick();
-                    break;
-                }
-            }
-        }
     }
 
     @Ignore("Ignored for now. Failing regularly in CI but passing locally ok.")

@@ -17,6 +17,7 @@ public class SwrveAssetsTypes {
                 put("image/png", ".png");
                 put("image/gif", ".gif");
                 put("image/bmp", ".bmp");
+                put("video/mp4", ".mp4");
             }
         };
     }

@@ -352,6 +352,9 @@ class SwrveAssetsManagerImp implements SwrveAssetsManager {
         if (mimeType != null && mimeType.equalsIgnoreCase("image/gif")) {
             downloadedAssetName = downloadedAssetName + SwrveAssetsTypes.MIMETYPES.get(mimeType);
         }
+        if (mimeType != null && mimeType.equalsIgnoreCase("video/mp4")) {
+            downloadedAssetName = downloadedAssetName + SwrveAssetsTypes.MIMETYPES.get(mimeType);
+        }
         return downloadedAssetName;
     }
 }

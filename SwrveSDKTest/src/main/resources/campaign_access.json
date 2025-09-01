@@ -131,6 +131,74 @@
                 "font_color": "#ffd0d0d0",
                 "bg_color": "#7f7e7a7a"
               }
+            },
+            {
+              "name": "Video Fit Screen",
+              "iam_z_index": 0,
+              "x": {
+                "type": "number",
+                "value": 0
+              },
+              "y": {
+                "type": "number",
+                "value": 0
+              },
+              "w": {
+                "type": "number",
+                "value": 1352
+              },
+              "h": {
+                "type": "number",
+                "value": 2002
+              },
+              "color": {
+                "type": "color",
+                "value": "FFFFFF"
+              },
+              "accessibility_text": "This is a video of a bunny in fit screen",
+              "dynamic_image_url": "https://cdn.pika.art/v1/4c21df34-033d-4983-bc2e-fdf69884ff63/video.mp4",
+              "media_format": "video",
+              "media_id": 12345,
+              "video_settings": {
+                "auto_play": true,
+                "show_controls": true,
+                "loop": true,
+                "fill_screen": false
+              }
+            },
+            {
+              "name": "Video Fill Screen",
+              "iam_z_index": 0,
+              "x": {
+                "type": "number",
+                "value": 0
+              },
+              "y": {
+                "type": "number",
+                "value": 0
+              },
+              "w": {
+                "type": "number",
+                "value": 1352
+              },
+              "h": {
+                "type": "number",
+                "value": 2002
+              },
+              "color": {
+                "type": "color",
+                "value": "FFFFFF"
+              },
+              "accessibility_text": "This is a video of a bunny in fill screen",
+              "dynamic_image_url": "https://cdn.pika.art/v1/4c21df34-033d-4983-bc2e-fdf69884ff63/video.mp4",
+              "media_format": "video",
+              "media_id": 12345,
+              "video_settings": {
+                "auto_play": true,
+                "show_controls": true,
+                "loop": true,
+                "fill_screen": true
+              }
             }
           ],
           "buttons": [{

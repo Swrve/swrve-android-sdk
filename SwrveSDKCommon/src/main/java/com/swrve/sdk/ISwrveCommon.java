@@ -122,7 +122,10 @@ interface ISwrveCommon {
     String GENERIC_EVENT_ACTION_TYPE_PIM_READ       = "read";
     String GENERIC_EVENT_ACTION_TYPE_PIM_ENGAGED    = "engaged";
     String GENERIC_EVENT_ACTION_TYPE_PIM_DELETE     = "delete";
+    String GENERIC_EVENT_ACTION_TYPE_VIDEO_STARTED  = "video_started";
+    String GENERIC_EVENT_ACTION_TYPE_VIDEO_ENDED    = "video_ended";
     String GENERIC_EVENT_CONTEXT_ID_KEY             = "contextId";
+    String GENERIC_EVENT_MEDIA_ID_KEY               = "mediaId";
     String GENERIC_EVENT_CAMPAIGN_ID_KEY            = "campaignId";
     String GENERIC_EVENT_PAYLOAD_BUTTON_TEXT        = "buttonText";
     String GENERIC_EVENT_PAYLOAD_RUN_NUMBER         = "runNumber";

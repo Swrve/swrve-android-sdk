@@ -89,7 +89,7 @@ class SwrveMessageTextTemplatingChecks {
                     }
                 }
             }
-        } catch(SwrveSDKTextTemplatingException exp) {
+        } catch (SwrveSDKTextTemplatingException exp) {
             SwrveLogger.e("Not showing campaign, error with personalization", exp);
             return false;
         }
@@ -109,7 +109,7 @@ class SwrveMessageTextTemplatingChecks {
                         if (SwrveHelper.isNotNullOrEmpty(imageUrl) && SwrveHelper.isNullOrEmpty(image.getFile())) {
                             String personalizedText = SwrveTextTemplating.apply(imageUrl, properties);
                             if (SwrveHelper.isNullOrEmpty(personalizedText)) {
-                                SwrveLogger.i(" Dynamic image url text template could not be resolved: " + imageUrl + " in given properties.");
+                                SwrveLogger.i("Dynamic image url text template could not be resolved: " + imageUrl + " in given properties.");
                                 return false;
                             } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
                                 SwrveLogger.i("Not showing personalized image / without personalization info provided.");
@@ -134,7 +134,7 @@ class SwrveMessageTextTemplatingChecks {
                     }
                 }
             }
-        } catch(SwrveSDKTextTemplatingException exp) {
+        } catch (SwrveSDKTextTemplatingException exp) {
             SwrveLogger.e("Not showing campaign, error with personalization", exp);
             return false;
         }

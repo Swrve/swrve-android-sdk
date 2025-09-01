@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.swrve.sdk.messaging.SwrveVideoPlayerView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:surface_type="texture_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:resize_mode="zoom"/>
+    <!-- Hardcode resizemode as zoom because it cannot be set programmatically without UnsafeOptInUsageError annotation  -->
+    <!-- Use texture view to prevent bleeding of video to next screen -->

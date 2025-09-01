@@ -23,14 +23,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 import androidx.core.util.Pair;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
@@ -39,6 +33,7 @@ import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveButtonView;
 import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveInAppCampaign;
+import com.swrve.sdk.messaging.SwrveInAppMessageFragment;
 import com.swrve.sdk.messaging.SwrveMessage;
 import com.swrve.sdk.messaging.SwrveMessageView;
 import com.swrve.sdk.messaging.SwrveOrientation;
@@ -643,35 +638,9 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
 
                 // Should get an in-app message (and display it)
                 Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createIAMActivityFromIntent(nextIntent);
-                dismissInAppMessage(pair.second);
-            }
-        }
-    }
-
-    private void dismissInAppMessage(SwrveInAppMessageActivity activity) {
-        ViewGroup parentView = activity.findViewById(android.R.id.content);
-        LinearLayout linearLayout = (LinearLayout)parentView.getChildAt(0);
-        FrameLayout swrveLayout = (FrameLayout)linearLayout.getChildAt(0);
-        FrameLayout frameLayout;
-        if (activity.isSwipeable) {
-            assertEquals(View.GONE, swrveLayout.getChildAt(1).getVisibility()); // index 1 is the second child which should be gone.
-            ViewPager2 viewPager2 = (ViewPager2) swrveLayout.getChildAt(0);
-            RecyclerView recyclerView = (RecyclerView) viewPager2.getChildAt(0);
-            frameLayout = (FrameLayout) recyclerView.getChildAt(0);
-        } else {
-            assertEquals(View.GONE, swrveLayout.getChildAt(0).getVisibility());
-            frameLayout = (FrameLayout) swrveLayout.getChildAt(1); // index 1 because its the second child. Viewpager is first, but gone.
-        }
-        SwrveMessageView view = (SwrveMessageView) frameLayout.getChildAt(0);
-        // Press install button
-        if (view != null) {
-            for (int i = 0; i < view.getChildCount(); i++) {
-                View childView = view.getChildAt(i);
-                if (childView instanceof SwrveButtonView) {
-                    SwrveButtonView btn = (SwrveButtonView) childView;
-                    btn.performClick();
-                    break;
-                }
+                SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(pair.second);
+                SwrveButtonView buttonView = (SwrveButtonView) messageView.getChildAt(1);
+                buttonView.performClick();
             }
         }
     }

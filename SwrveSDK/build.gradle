@@ -73,6 +73,9 @@ dependencies {
     api 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
     api 'androidx.viewpager2:viewpager2:' + project.ANDROIDX_VIEWPAGER2_VERSION
     api 'com.github.bumptech.glide:glide:' + project.GLIDE_VERSION
+    api "androidx.media3:media3-exoplayer:" + project.MEDIA3_VERSION
+    api "androidx.media3:media3-ui:" + project.MEDIA3_VERSION
+
     annotationProcessor 'com.github.bumptech.glide:compiler:4.13.0'
     // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
     // version is used instead. If compiling amazon flavour from source you should delete the

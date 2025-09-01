@@ -31,9 +31,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ApplicationProvider;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
@@ -97,15 +95,15 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         ActivityController activityController = pair.first;
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
 
-        FrameLayout frameLayout = (FrameLayout)messageView.getParent().getParent();
+        FrameLayout frameLayout = (FrameLayout)messageView.getParent().getParent().getParent().getParent();
 
         //Container should have a 3rd child (the progressbar) & Dismiss
-        assertEquals(4, frameLayout.getChildCount());
+        assertEquals(3, frameLayout.getChildCount());
 
-        SwrveInAppStoryView storyView = (SwrveInAppStoryView) frameLayout.getChildAt(2);
+        SwrveInAppStoryView storyView = (SwrveInAppStoryView) frameLayout.getChildAt(1);
         //Number of segments on bar should match what's in story campaign json
         assertEquals(3,storyView.getNumberOfSegments());
 
@@ -150,7 +148,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
 
         assertEquals(0, messageView.getFormat().getIndexForPageId(messageView.getPage().getPageId()));
@@ -176,7 +174,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
 
         //Wait until progresses to last page
@@ -190,7 +188,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
                 .pollDelay(Duration.ofMillis(format.getStorySettings().getPageDuration() + 500))
                 .until(() -> {
                     Robolectric.flushForegroundThreadScheduler();
-                    return activity.currentPageIdNonSwipe == 3;
+                    return activity.currentPageId == 3;
                 });
 
         // Press button on last page which should go to page 2 but the page progression should continue
@@ -213,7 +211,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
 
         //Wait for the story to progress to the last page
@@ -224,7 +222,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
                 .pollDelay(Duration.ofMillis(format.getStorySettings().getPageDuration() + 500))
                 .until(() -> {
                     Robolectric.flushForegroundThreadScheduler();
-                    return activity.currentPageIdNonSwipe == 3;
+                    return activity.currentPageId == 3;
                 });
 
         //Confirm IAM window is dismissed/finishing
@@ -260,7 +258,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
         SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
 
         //Wait until progresses to last page
@@ -282,10 +280,10 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        FrameLayout frameLayout = (FrameLayout)messageView.getParent().getParent();
-        SwrveInAppStoryView storyView = (SwrveInAppStoryView) frameLayout.getChildAt(2);
+        FrameLayout frameLayout = (FrameLayout)messageView.getParent().getParent().getParent().getParent();
+        SwrveInAppStoryView storyView = (SwrveInAppStoryView) frameLayout.getChildAt(1);
 
         ViewGroup parentView = activity.findViewById(android.R.id.content);
         LinearLayout linearLayout = (LinearLayout) parentView.getChildAt(0);
@@ -338,10 +336,10 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        FrameLayout frameLayout = (FrameLayout)messageView.getParent().getParent();
-        SwrveInAppStoryView storyView = (SwrveInAppStoryView) frameLayout.getChildAt(2);
+        FrameLayout frameLayout = (FrameLayout)messageView.getParent().getParent().getParent().getParent();
+        SwrveInAppStoryView storyView = (SwrveInAppStoryView) frameLayout.getChildAt(1);
 
         ViewGroup parentView = activity.findViewById(android.R.id.content);
         LinearLayout linearLayout = (LinearLayout) parentView.getChildAt(0);
@@ -387,26 +385,26 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        FrameLayout storyContainer = (FrameLayout)messageView.getParent().getParent();
-        SwrveInAppStoryView storyView = (SwrveInAppStoryView) storyContainer.getChildAt(2);
-        //Should only be a 4th child (the dismiss button) if set in campaign json
-        assertTrue(storyContainer.getChildCount() == 3);
+        FrameLayout storyContainer = (FrameLayout)messageView.getParent().getParent().getParent().getParent();
+        SwrveInAppStoryView storyView = (SwrveInAppStoryView) storyContainer.getChildAt(1);
+        //Should only be a 3rd child (the dismiss button) if set in campaign json
+        assertTrue(storyContainer.getChildCount() == 2);
 
         //Test Story campaign with a dismiss button
         intent.putExtra(SwrveInAppMessageActivity.MESSAGE_ID_KEY, 165);
         pair = createActivityFromPeekIntent(intent);
         activity = pair.second;
         assertNotNull(activity);
-        messageView = getSwrveMessageView(activity);
+        messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        storyContainer = (FrameLayout)messageView.getParent().getParent();
-        storyView = (SwrveInAppStoryView) storyContainer.getChildAt(2);
+        storyContainer = (FrameLayout)messageView.getParent().getParent().getParent().getParent();
+        storyView = (SwrveInAppStoryView) storyContainer.getChildAt(1);
         assertNotNull(storyView);
 
         //Test the button appears/disappears if in settings json
-        SwrveInAppStoryButton dismissView = (SwrveInAppStoryButton) storyContainer.getChildAt(3);
+        SwrveInAppStoryButton dismissView = (SwrveInAppStoryButton) storyContainer.getChildAt(2);
         assertNotNull(dismissView);
         assertTrue(dismissView.getVisibility() == View.VISIBLE);
         assertTrue(dismissView.getWidth() == 50);
@@ -457,13 +455,13 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        FrameLayout storyContainer = (FrameLayout)messageView.getParent().getParent();
+        FrameLayout storyContainer = (FrameLayout)messageView.getParent().getParent().getParent().getParent();
 
         //Should be a dismiss button, because is requested in campaign json
-        assertTrue(storyContainer.getChildCount() == 4);
-        SwrveInAppStoryButton dismissButton = (SwrveInAppStoryButton) storyContainer.getChildAt(3);
+        assertTrue(storyContainer.getChildCount() == 3);
+        SwrveInAppStoryButton dismissButton = (SwrveInAppStoryButton) storyContainer.getChildAt(2);
         assertNotNull(dismissButton);
 
         //Confirm that the story dismiss button is using the custom button
@@ -483,10 +481,10 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createActivityFromPeekIntent(intent);
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
-        SwrveMessageView messageView = getSwrveMessageView(activity);
+        SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        FrameLayout storyContainer = (FrameLayout)messageView.getParent().getParent();
-        SwrveInAppStoryView storyView = (SwrveInAppStoryView) storyContainer.getChildAt(2);
+        FrameLayout storyContainer = (FrameLayout)messageView.getParent().getParent().getParent().getParent();
+        SwrveInAppStoryView storyView = (SwrveInAppStoryView) storyContainer.getChildAt(1);
 
         //Ensure on first at start
         assertEquals(0,storyView.getCurrentIndex());
@@ -534,9 +532,9 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
                 .atMost(Duration.ofSeconds(10))
                 .until(() -> {
                     Robolectric.flushForegroundThreadScheduler();
-                    return activity.currentPageIdNonSwipe == toPageId;
+                    return activity.currentPageId == toPageId;
                 });
-        return getSwrveMessageView(activity);
+        return SwrveTestUtils.getSwrveMessageView(activity);
     }
 
     private Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> createActivityFromPeekIntent(Intent intent) {
@@ -565,7 +563,7 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         SwrveButtonView swrveButton = findButton(view, actionType);
         swrveButton.performClick();
         Robolectric.flushForegroundThreadScheduler(); // allow tasks that added to ui thread to run (like activity.runOnUiThread)
-        return getSwrveMessageView(activity);
+        return SwrveTestUtils.getSwrveMessageView(activity);
     }
 
     private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
@@ -580,24 +578,5 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
         }
         Assert.fail("Could not find custom button");
         return null;
-    }
-
-    private SwrveMessageView getSwrveMessageView(SwrveInAppMessageActivity activity) {
-        ViewGroup parentView = activity.findViewById(android.R.id.content);
-        LinearLayout linearLayout = (LinearLayout) parentView.getChildAt(0);
-        FrameLayout swrveLayout = (FrameLayout)linearLayout.getChildAt(0);
-        // ViewPager2 and FrameLayout are both children linearlayout. But one of these is hidden depending on isSwipeable
-        FrameLayout frameLayout;
-        if (activity.isSwipeable) {
-            assertEquals(View.GONE, swrveLayout.getChildAt(1).getVisibility()); // index 1 is the second child which should be gone.
-            ViewPager2 viewPager2 = (ViewPager2) swrveLayout.getChildAt(0);
-            RecyclerView recyclerView = (RecyclerView) viewPager2.getChildAt(0);
-            frameLayout = (FrameLayout) recyclerView.getChildAt(0);
-        } else {
-            assertEquals(View.GONE, swrveLayout.getChildAt(0).getVisibility());
-            frameLayout = (FrameLayout) swrveLayout.getChildAt(1); // index 1 because its the second child. Viewpager is first, but gone.
-        }
-        SwrveMessageView view = (SwrveMessageView) frameLayout.getChildAt(0);
-        return view;
     }
 }

@@ -23,6 +23,8 @@ public class SwrveInAppMessageFragment extends Fragment {
 
     private GestureDetector gestureDetector;
 
+    private SwrveMessageView messageView;
+
     public static SwrveInAppMessageFragment newInstance(long pageId) {
         Bundle args = new Bundle();
         args.putLong(PAGE_ID, pageId);
@@ -33,7 +35,6 @@ public class SwrveInAppMessageFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        SwrveMessageView rootView = null;
         try {
             SwrveInAppMessageActivity inAppMessageActivity = (SwrveInAppMessageActivity) getActivity();
             SwrveConfigBase config = SwrveSDK.getInstance().getConfig();
@@ -42,17 +43,42 @@ public class SwrveInAppMessageFragment extends Fragment {
             Map<String, String> inAppPersonalization = inAppMessageActivity.getInAppPersonalization();
             pageId = getArguments().getLong(PAGE_ID);
 
-            rootView = new SwrveMessageView(getContext(), config, message, format, inAppPersonalization, pageId, gestureDetector);
+            messageView = new SwrveMessageView(getContext(), config, message, format, inAppPersonalization, pageId, gestureDetector);
         } catch (Exception e) {
             SwrveLogger.e("Error in SwrveInAppMessageFragment while creating the SwrveMessageView", e);
         }
-        return rootView;
+        return messageView;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         ((SwrveInAppMessageActivity) getActivity()).sendPageViewEvent(pageId);
+        // Resume video if this fragment is now visible and autoplay is enabled
+        if (messageView != null) {
+            messageView.autoPlayVideo();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (messageView != null) {
+            messageView.stopVideo();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (messageView != null) {
+            messageView.releaseVideo();
+        }
     }
 
     public void addGestureDetection(GestureDetector gestureDetector) {
