@@ -27,6 +27,7 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
     protected SwrveEmbeddedCampaign campaign;
     protected SwrveMessageCenterDetails messageCenterDetails;
     protected List<String> buttons;
+    protected String dataRaw;
     protected String data;
     protected EMBEDDED_CAMPAIGN_TYPE type;
     protected String name;
@@ -51,6 +52,7 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
 
         if (messageData.has("data")) {
             this.data = messageData.getString("data");
+            this.dataRaw = messageData.getString("data");
         }
 
         if (messageData.has("type")) {
@@ -131,11 +133,20 @@ public class SwrveEmbeddedMessage implements SwrveBaseMessage {
     }
 
     /**
-     * @return the raw embedded campaign data without personalization.
-     * Use SwrveSDK.getPersonalizedEmbeddedMessageData() to get the personalized data.
+     * Returns the current value of the data field. This may be personalized.
+     * If you need the original template (un-personalized) always use getDataRaw().
      */
     public String getData() {
         return data;
+    }
+
+    /**
+     * @return the original unmodified data payload as received from the backend.
+     */
+    public String getDataRaw() { return dataRaw; }
+
+    public void setData(String data) {
+        this.data = data;
     }
 
     /**

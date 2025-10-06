@@ -85,9 +85,8 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
         assertEquals(2, campaigns.size());
         SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign)campaigns.get(0)).getMessage();
         assertNotNull(message);
-        assertEquals("personalization: ${test_key}", message.getData());
-        String personalizationData = SwrveSDK.getPersonalizedText(message.getData(), properties);
-        assertEquals("personalization: WORKING", personalizationData);
+        assertEquals("personalization: ${test_key}", message.getDataRaw());
+        assertEquals("personalization: WORKING", message.getData());
         swrveSpy.showMessageCenterCampaign(campaigns.get(0)); // for embedded message center campaigns, its unlikely you will call "showMessageCenterCampaign"
         await().untilTrue(embeddedCallbackBool);
     }
@@ -97,20 +96,64 @@ public class SwrveEmbeddedMessageCallbackTest extends SwrveBaseTest {
         // Set the personalization provider and the value that is required for the campaign
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded_mc_personalization.json");
 
-        List<SwrveEmbeddedMessage> campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns();
+        Map<String, String> properties = new HashMap<>();
+        List<SwrveEmbeddedMessage> campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns(properties);
+        assertEquals(0, campaigns.size()); // invalid personalization causes no campaigns to be returned
+
+        properties.put("test_key", "WORKING");
+        campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns(properties);
         assertEquals(2, campaigns.size());
         SwrveEmbeddedMessage embeddedMessage = campaigns.get(0);
         assertNotNull(embeddedMessage);
-        assertEquals("personalization: ${test_key}", embeddedMessage.getData());
-        Map<String, String> properties = new HashMap<>();
-        properties.put("test_key", "WORKING");
-        String personalizationData = SwrveSDK.getPersonalizedText(embeddedMessage.getData(), properties);
-        assertEquals("personalization: WORKING", personalizationData);
+        assertEquals("personalization: ${test_key}", embeddedMessage.getDataRaw());
+        assertEquals("personalization: WORKING", embeddedMessage.getData());
         String resolvedData = SwrveSDK.getPersonalizedEmbeddedMessageData(embeddedMessage, properties);
         assertEquals("personalization: WORKING", resolvedData);
 
+        properties.put("test_key", "WORKING_UPDATED");
+        campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns(properties);
+        assertEquals(2, campaigns.size());
+        embeddedMessage = campaigns.get(0);
+        assertNotNull(embeddedMessage);
+        assertEquals("personalization: ${test_key}", embeddedMessage.getDataRaw()); // raw data does not change
+        assertEquals("personalization: WORKING_UPDATED", embeddedMessage.getData()); // data changes based on new personalization
+
         SwrveSDK.removeMessageCenterCampaign(embeddedMessage.getCampaignId());
-        campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns();
+        campaigns = SwrveSDK.getEmbeddedMessageCenterCampaigns(properties);
+        assertEquals(1, campaigns.size());
+    }
+
+    @Test
+    public void testGetMessageCenterCampaignsWithPersonalization() throws Exception {
+        // Set the personalization provider and the value that is required for the campaign
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded_mc_personalization.json");
+
+        Map<String, String> properties = new HashMap<>();
+        List<SwrveBaseCampaign> campaigns = SwrveSDK.getMessageCenterCampaigns(properties);
+        assertEquals(0, campaigns.size()); // invalid personalization causes no campaigns to be returned
+
+        properties.put("test_key", "WORKING");
+        campaigns = SwrveSDK.getMessageCenterCampaigns(properties);
+        assertEquals(2, campaigns.size());
+        SwrveBaseCampaign embeddedCampaign = campaigns.get(0);
+        assertNotNull(embeddedCampaign);
+        SwrveEmbeddedMessage embeddedMessage = ((SwrveEmbeddedCampaign)embeddedCampaign).getMessage();
+        assertEquals("personalization: ${test_key}", embeddedMessage.getDataRaw());
+        assertEquals("personalization: WORKING", embeddedMessage.getData());
+        String resolvedData = SwrveSDK.getPersonalizedEmbeddedMessageData(embeddedMessage, properties);
+        assertEquals("personalization: WORKING", resolvedData);
+
+        properties.put("test_key", "WORKING_UPDATED");
+        campaigns = SwrveSDK.getMessageCenterCampaigns(properties);
+        assertEquals(2, campaigns.size());
+        embeddedCampaign = campaigns.get(0);
+        assertNotNull(embeddedCampaign);
+        embeddedMessage = ((SwrveEmbeddedCampaign)embeddedCampaign).getMessage();
+        assertEquals("personalization: ${test_key}", embeddedMessage.getDataRaw()); // raw data does not change
+        assertEquals("personalization: WORKING_UPDATED", embeddedMessage.getData());  // data changes based on new personalization
+
+        SwrveSDK.removeMessageCenterCampaign(embeddedMessage.getCampaignId());
+        campaigns = SwrveSDK.getMessageCenterCampaigns(properties);
         assertEquals(1, campaigns.size());
     }
 

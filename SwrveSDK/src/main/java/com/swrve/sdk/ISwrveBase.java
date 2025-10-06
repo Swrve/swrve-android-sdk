@@ -98,7 +98,7 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     List<SwrveInAppCampaign> getInAppMessageCenterCampaigns(SwrveOrientation orientation, Map<String, String> properties);
 
-    List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns();
+    List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns(Map<String, String> properties);
 
     SwrveBaseCampaign getMessageCenterCampaign(int campaignId, Map<String, String> properties);
 

@@ -1234,9 +1234,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (message != null) {
             try {
                 if (message.getType() == SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON) {
-                    return SwrveTextTemplating.applytoJSON(message.getData(), personalizationProperties);
+                    return SwrveTextTemplating.applytoJSON(message.getDataRaw(), personalizationProperties);
                 } else {
-                    return SwrveTextTemplating.apply(message.getData(), personalizationProperties);
+                    return SwrveTextTemplating.apply(message.getDataRaw(), personalizationProperties);
                 }
 
             } catch (SwrveSDKTextTemplatingException exception) {
@@ -1902,7 +1902,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 result.add(campaign);
                             }
                         } else if (campaign instanceof SwrveEmbeddedCampaign) {
-                            result.add(campaign);
+                            SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
+                            String personalizedEmbeddedMessageData = getPersonalizedEmbeddedMessageData(message, personalizedProperties);
+                            if (personalizedEmbeddedMessageData != null) {
+                                message.setData(personalizedEmbeddedMessageData);
+                                result.add(campaign);
+                            }
                         }
                     }
                 }
@@ -1951,22 +1956,23 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     @Override
-    public List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns() {
+    public List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns(Map<String, String> properties) {
         try {
-            return _getEmbeddedMessageCenterCampaigns();
+            return _getEmbeddedMessageCenterCampaigns(properties);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
         return Collections.emptyList();
     }
 
-    private List<SwrveEmbeddedMessage> _getEmbeddedMessageCenterCampaigns() {
+    private List<SwrveEmbeddedMessage> _getEmbeddedMessageCenterCampaigns(Map<String, String> properties) {
         List<SwrveEmbeddedMessage> embeddedMessages = new ArrayList<>();
         if (!isSdkReady() || campaigns == null) {
             return embeddedMessages;
         }
 
         synchronized (campaigns) {
+            Map<String, String> personalizedProperties = retrievePersonalizationProperties(null, properties);
             for (int i = 0; i < campaigns.size(); i++) {
                 SwrveBaseCampaign campaign = campaigns.get(i);
                 if (campaign instanceof SwrveEmbeddedCampaign == false) {
@@ -1974,7 +1980,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                 }
                 if (campaign.isMessageCenter() && campaign.getStatus() != SwrveCampaignState.Status.Deleted && campaign.isActive(getNow())) {
                     SwrveEmbeddedMessage message = ((SwrveEmbeddedCampaign) campaign).getMessage();
-                    embeddedMessages.add(message);
+                    String personalizedEmbeddedMessageData = getPersonalizedEmbeddedMessageData(message, personalizedProperties);
+                    if (personalizedEmbeddedMessageData != null) {
+                        message.setData(personalizedEmbeddedMessageData);
+                        embeddedMessages.add(message);
+                    }
                 }
             }
         }

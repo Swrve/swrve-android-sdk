@@ -304,7 +304,7 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns() {
+    public List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns(Map<String, String> properties) {
         return new ArrayList<>();
     }
 

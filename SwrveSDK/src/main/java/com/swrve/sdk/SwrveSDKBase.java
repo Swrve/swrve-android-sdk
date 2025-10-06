@@ -556,20 +556,31 @@ public abstract class SwrveSDKBase {
     }
 
     /**
-     * Gets active Embedded Message Center campaigns, excluding deleted ones. The embedded message data is not personalized.
+     * Gets active Embedded Message Center campaigns, excluding deleted ones. The embedded message data is personalized.
      *
      * @return List of active {@link SwrveEmbeddedMessage} (empty if none).
      */
     public static List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns() {
         checkInstanceCreated();
-        return instance.getEmbeddedMessageCenterCampaigns();
+        return instance.getEmbeddedMessageCenterCampaigns(null);
+    }
+
+    /**
+     * Gets active Embedded Message Center campaigns, excluding deleted ones. The embedded message data is personalized.
+     *
+     * @param properties  Additional properties for personalization.
+     * @return List of active {@link SwrveEmbeddedMessage} (empty if none).
+     */
+    public static List<SwrveEmbeddedMessage> getEmbeddedMessageCenterCampaigns(Map<String, String> properties) {
+        checkInstanceCreated();
+        return instance.getEmbeddedMessageCenterCampaigns(properties);
     }
     
     /**
      * Get the active MessageCenter campaign targeted for this user. It will exclude campaigns that have been deleted with the
      * removeMessageCenterCampaign method and those that do not support the current orientation.
      * @param campaignId the id of the campaign to get
-     * @param properties additional properties which can be used for IAM personalization.
+     * @param properties additional properties which can be used for personalization.
      * @return The active MessageCenter campaign is returned if campaign id is valid. Returns null if the campaign id is invalid or campaign is not active.
      */
     public static SwrveBaseCampaign getMessageCenterCampaign(int campaignId, Map<String, String> properties) {
