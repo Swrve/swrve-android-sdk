@@ -1077,6 +1077,15 @@ class SwrveUnitTest : SwrveBaseTest() {
         verify(deeplinkListenerMock, times(1)).handleDeeplink(mActivity, uri, bundleMock)
     }
 
+    @Test
+    fun testCleanupOrphanedGifs() {
+        shutdownAndRemoveSwrveSDKSingletonInstance()
+        val swrveSpy = createSpyInstance(SwrveConfig())
+        runSingleThreaded(swrveSpy)
+        swrveSpy.init(mActivity)
+        verify(swrveSpy, times(1)).cleanupOrphanedGifs()
+    }
+
     companion object {
         private const val iso8601regex = "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2]\\d|3[0-1])T(?:[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d.\\d\\d\\d(Z|[+]\\d\\d:\\d\\d)"
     }

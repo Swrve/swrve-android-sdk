@@ -46,15 +46,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowNotification;
 import org.robolectric.shadows.ShadowPendingIntent;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -419,7 +415,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
                 "              \"fallback_sd\": \"https://video.com\"\n }," +
                 "\"expanded\": { \"title\": \"[expanded title]\",\n" +
                 "                \"body\": \"[expanded body]\",\n" +
-                "                \"icon_url\": \"https://valid-image.png\"} \n" +
+                "                \"icon_url\": \"https://valid-image.png\"},\n" +
+                " \"notification_id\": 123" +
                 "}\n";
 
         bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
@@ -433,6 +430,12 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
         doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
+        NotificationMediaManager mediaManagerSpy = Mockito.spy(new NotificationMediaManager(mActivity));
+        NotificationMediaManager.BigPictureFetchResult bigPictureFetchResult = new NotificationMediaManager.BigPictureFetchResult();
+        bigPictureFetchResult.bitmap = bmp;
+        doReturn(bigPictureFetchResult).when(mediaManagerSpy).downloadBigPictureImage("https://valid-image.png", 123);
+        doReturn(null).when(mediaManagerSpy).downloadBigPictureImage("https://fail-image.png", 123);
+        builderSpy.mediaManager = mediaManagerSpy;
 
         displayNotification(builderSpy, bundle);
 
@@ -449,6 +452,71 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNotNull(shadowNotification.getBigPicture());
     }
 
+    @Test
+    public void testAdvancedBigImagePushGif() throws Exception {
+
+        // Send a valid Rich Payload
+        Bundle bundle = new Bundle();
+        bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
+        bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
+        String json = "{\n" +
+                " \"title\": \"fallback title\",\n" +
+                " \"subtitle\": \"fallback subtitle\",\n" +
+                " \"icon_url\": \"\",\n" +
+                " \"version\": 1,\n" +
+                " \"media\": { \"title\": \"[rich title]\",\n" +
+                "              \"subtitle\": \"[rich subtitle]\",\n" +
+                "              \"body\": \"[rich body]\",\n" +
+                "              \"type\": \"image\",\n" +
+                "              \"url\": \"https://valid-image.gif\",\n" +
+                "              \"fallback_type\": \"image\",\n" +
+                "              \"fallback_url\": \"\",\n" +
+                "              \"fallback_sd\": \"\"\n }," +
+                "\"expanded\": { \"title\": \"[expanded title]\",\n" +
+                "                \"body\": \"[expanded body]\",\n" +
+                "                \"icon_url\": \"\"},\n" +
+                " \"notification_id\": 123" +
+                "}\n";
+
+        bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
+        bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
+        bundle.putString("customData", "some custom values");
+        bundle.putString("sound", "default");
+        int firstTimestamp = generateTimestampId();
+        bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
+
+        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
+        Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
+        doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
+        NotificationMediaManager mediaManagerSpy = Mockito.spy(new NotificationMediaManager(mActivity));
+        NotificationMediaManager.BigPictureFetchResult bigPictureFetchResult = new NotificationMediaManager.BigPictureFetchResult();
+        bigPictureFetchResult.mediaUri = Uri.parse("content://media/external/downloads/123");
+        doReturn(bigPictureFetchResult).when(mediaManagerSpy).downloadBigPictureImage("https://valid-image.gif", 123);
+        builderSpy.mediaManager = mediaManagerSpy;
+
+        displayNotification(builderSpy, bundle);
+
+        assertNotification("[rich body]", "content://settings/system/notification_sound", bundle);
+        assertNumberOfNotifications(1);
+
+        NotificationManager notificationManager = (NotificationManager) ApplicationProvider.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        List<Notification> notifications = shadowOf(notificationManager).getAllNotifications();
+        assertEquals(1, notifications.size());
+        Notification notification = notifications.get(0);
+        ShadowNotification shadowNotification = shadowOf(notification);
+        assertEquals("[rich body]", notification.tickerText);
+        assertEquals("[expanded title]", shadowNotification.getBigContentTitle());
+        assertNull(shadowNotification.getBigPicture()); // bitmap should be null....there's no icon api to check
+
+        SwrveNotificationDetails notificationDetails = builderSpy.getNotificationDetails();
+        assertEquals("[rich body]", notificationDetails.getBody());
+        assertEquals("[expanded body]", notificationDetails.getExpandedBody());
+        assertEquals("[expanded title]", notificationDetails.getExpandedTitle());
+        assertNull(notificationDetails.getMediaBitmap());
+        assertEquals("content://media/external/downloads/123", notificationDetails.getMediaContentUri());
+    }
+
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
     @Config(sdk = Build.VERSION_CODES.M)
     @Test
@@ -457,23 +525,28 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Bundle bundle = new Bundle();
         bundle.putString(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "1");
         bundle.putString(SwrveNotificationConstants.SWRVE_INFLUENCED_WINDOW_MINS_KEY, "720");
-        String json = "{\n" +
-                " \"title\": \"fallback title\",\n" +
-                " \"subtitle\": \"fallback subtitle\",\n" +
-                " \"icon_url\": \"https://valid-image.png\",\n" +
-                " \"version\": 1,\n" +
-                " \"media\": { \"title\": \"[rich title]\",\n" +
-                "              \"subtitle\": \"[rich subtitle]\",\n" +
-                "              \"body\": \"[rich body]\",\n" +
-                "              \"type\": \"image\",\n" +
-                "              \"url\": \"https://media.jpg\",\n" +
-                "              \"fallback_type\": \"image\",\n" +
-                "              \"fallback_url\": \"https://valid-image.png\",\n" +
-                "              \"fallback_sd\": \"https://fallback_sd\"\n }," +
-                "\"expanded\": { \"title\": \"[expanded title]\",\n" +
-                "                \"body\":  \"[expanded body]\",\n" +
-                "                \"icon_url\": \"https://valid-image.png\"} \n" +
-                "}\n";
+        String json = "{" +
+                "\"title\":\"fallback title\"," +
+                "\"subtitle\":\"fallback subtitle\"," +
+                "\"icon_url\":\"https://valid-image.png\"," +
+                "\"version\":1," +
+                "\"media\":{" +
+                    "\"title\":\"[rich title]\"," +
+                    "\"subtitle\":\"[rich subtitle]\"," +
+                    "\"body\":\"[rich body]\"," +
+                    "\"type\":\"image\"," +
+                    "\"url\":\"https://fail-image.png\"," +
+                    "\"fallback_type\":\"image\"," +
+                    "\"fallback_url\":\"https://valid-image.png\"," +
+                    "\"fallback_sd\":\"https://fallback_sd\"" +
+                "}," +
+                "\"expanded\":{" +
+                    "\"title\":\"[expanded title]\"," +
+                    "\"body\":\"[expanded body]\"," +
+                    "\"icon_url\":\"https://valid-image.png\"" +
+                "}," +
+                "\"notification_id\":123" +
+                "}";
 
         bundle.putString(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY, json);
         bundle.putString(SwrveNotificationConstants.TEXT_KEY, "should be rich");
@@ -488,6 +561,13 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         doReturn(null).when(builderSpy).getImageFromUrl(anyString());
         doReturn(null).when(builderSpy).getImageFromUrl("https://fail-image.png");
         doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
+        NotificationMediaManager mediaManagerSpy = Mockito.spy(new NotificationMediaManager(mActivity));
+        NotificationMediaManager.BigPictureFetchResult bigPictureFetchResult = new NotificationMediaManager.BigPictureFetchResult();
+        bigPictureFetchResult.bitmap = bmp;
+        doReturn(bigPictureFetchResult).when(mediaManagerSpy).downloadBigPictureImage("https://valid-image.png", 123);
+        doReturn(null).when(mediaManagerSpy).downloadBigPictureImage("https://media.jpg", 123);
+        doReturn(null).when(mediaManagerSpy).downloadBigPictureImage("https://fail-image.png", 123);
+        builderSpy.mediaManager = mediaManagerSpy;
 
         displayNotification(builderSpy, bundle);
 
@@ -716,6 +796,12 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
         doReturn(null).when(builderSpy).getImageFromUrl(anyString());
         doReturn(bmp).when(builderSpy).getImageFromUrl("https://valid-image.png");
+        NotificationMediaManager mediaManagerSpy = Mockito.spy(new NotificationMediaManager(mActivity));
+        NotificationMediaManager.BigPictureFetchResult bigPictureFetchResult = new NotificationMediaManager.BigPictureFetchResult();
+        bigPictureFetchResult.bitmap = bmp;
+        doReturn(bigPictureFetchResult).when(mediaManagerSpy).downloadBigPictureImage("https://valid-image.png", 222);
+        doReturn(null).when(mediaManagerSpy).downloadBigPictureImage("https://fail-image.png", 222);
+        builderSpy.mediaManager = mediaManagerSpy;
 
         displayNotification(builderSpy, bundle);
 
@@ -1126,41 +1212,6 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         NotificationChannel newChannel = notificationManager.getNotificationChannel(channelId);
         assertEquals("channel_name", newChannel.getName());
         assertEquals(NotificationManager.IMPORTANCE_HIGH, newChannel.getImportance());
-    }
-
-    @Test
-    public void testGetImageFromUrl() throws Exception {
-
-        String image1Url = "https://someimage.com/image_blah";
-        String image1FileName = "fc5d3fd9bc7b8bc9960d91851da9dc48";
-        File cacheDir = SwrveCommon.getInstance().getCacheDir(ApplicationProvider.getApplicationContext());
-
-        // save a file so bitmap is returned
-        File file = new File(cacheDir, image1FileName);
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        writer.write("");
-        writer.close();
-
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
-        doReturn(null).when(builderSpy).downloadBitmapImageFromUrl(anyString());
-
-        Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);
-
-        assertNotNull(bitmap);
-        verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
-    }
-
-    @Test
-    public void testGetImageFromUrl_notInCache() {
-
-        String image1Url = "https://someimage.com/image_blah";
-        SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfig));
-        doReturn(null).when(builderSpy).downloadBitmapImageFromUrl(anyString());
-
-        Bitmap bitmap = builderSpy.getImageFromUrl(image1Url);
-
-        assertNull(bitmap);
-        verify(builderSpy, Mockito.times(1)).getImageFromCache(image1Url);
     }
 
     @Test

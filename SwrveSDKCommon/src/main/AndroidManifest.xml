@@ -5,6 +5,9 @@
         <receiver
             android:name="com.swrve.sdk.SwrveNotificationEngageReceiver"
             android:exported="false" />
+        <receiver
+            android:name="com.swrve.sdk.SwrveNotificationDeleteReceiver"
+            android:exported="false" />
         <activity
             android:name="com.swrve.sdk.SwrveNotificationEngageActivity"
             android:theme="@style/Swrve.Theme.Transparent"

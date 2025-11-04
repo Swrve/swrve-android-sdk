@@ -99,6 +99,8 @@ class SwrveNotificationEngage {
         }
         EventHelper.sendEngagedEvent(context, campaignType, pushId, payload);
 
+        getNotificationMediaManager(context).deleteGifUri(intent); // If notification had a gif, delete it now
+
         String buttonText = extras.getString(SwrveNotificationConstants.BUTTON_TEXT_KEY);
         payload.put(GENERIC_EVENT_PAYLOAD_BUTTON_TEXT, buttonText);
         EventHelper.sendButtonClickEvent(context, campaignType, pushId, contextId, payload);
@@ -144,6 +146,8 @@ class SwrveNotificationEngage {
             payload.put(EVENT_PAYLOAD_DEEPLINK, deepLink);
         }
         EventHelper.sendEngagedEvent(context, campaignType, pushId, payload);
+
+        getNotificationMediaManager(context).deleteGifUri(intent); // If notification had a gif, delete it now
 
         if (extras.containsKey(DO_NOT_OPEN_INTENT) && extras.getBoolean(DO_NOT_OPEN_INTENT)) {
             return; // if not using the engagement proxy, or intent is not an external deeplink, then the target intent/activity will already be opened
@@ -263,5 +267,9 @@ class SwrveNotificationEngage {
             SwrveLogger.e("Exception getting activity class to start when notification is engaged.", e);
         }
         return clazz;
+    }
+
+    protected NotificationMediaManager getNotificationMediaManager(Context context) {
+        return new NotificationMediaManager(context);
     }
 }

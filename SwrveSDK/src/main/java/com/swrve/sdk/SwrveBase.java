@@ -203,6 +203,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
             reIdentifyUser();
 
+            cleanupOrphanedGifs();
+
             SwrveLogger.i("Init finished");
         } catch (Exception exp) {
             SwrveLogger.e("Swrve init failed", exp);
@@ -2871,6 +2873,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
             deviceUpdate(profileManager.getUserId(), _getDeviceInfo());
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    protected void cleanupOrphanedGifs() {
+        if (Build.VERSION.SDK_INT >= NotificationMediaManager.NATIVE_GIF_SUPPORT_MIN_API) {
+            storageExecutorExecute(() -> {
+                int rowsDeleted = new NotificationMediaManager(getContext()).cleanupOrphanedGifs();
+                if (rowsDeleted > 0) {
+                    SwrveLogger.d("Orphaned GIF cleanup: Deleted all GIFs, Rows deleted: %d", rowsDeleted);
+                }
+            });
         }
     }
 }

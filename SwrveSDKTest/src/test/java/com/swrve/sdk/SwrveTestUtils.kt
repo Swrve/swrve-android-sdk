@@ -22,6 +22,8 @@ import com.swrve.sdk.rest.IRESTResponseListener
 import com.swrve.sdk.rest.RESTResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil.localhost
+import okio.Buffer
+import okio.source
 import org.awaitility.Awaitility
 import org.json.JSONObject
 import org.junit.Assert
@@ -29,6 +31,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.anySet
@@ -599,5 +602,22 @@ object SwrveTestUtils {
             }
         }
         return null
+    }
+
+    @JvmStatic
+    fun getAssetAsBuffer(assetPath: String): Buffer {
+        val buffer = Buffer()
+        try {
+            val resource = ApplicationProvider.getApplicationContext<Context>().classLoader.getResource(assetPath)
+            File(resource!!.getPath()).source().use { source ->
+                buffer.use { sink ->
+                    sink.writeAll(source)
+                }
+            }
+        } catch (ex: java.lang.Exception) {
+            SwrveLogger.e("Error getting asset as buffer: %s", ex, assetPath)
+            fail("Error getting asset as buffer: $assetPath")
+        }
+        return buffer
     }
 }

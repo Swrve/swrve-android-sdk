@@ -13,6 +13,7 @@ public class SwrveNotificationDetails {
     private String expandedBody;
     private String mediaUrl;
     private Bitmap mediaBitmap;
+    private String mediaContentUri;
 
     /**
      * Get the notification title
@@ -120,5 +121,23 @@ public class SwrveNotificationDetails {
      */
     public void setMediaBitmap(Bitmap mediaBitmap) {
         this.mediaBitmap = mediaBitmap;
+    }
+
+    /**
+     * Get the media content URI (string form). Preferred for animated GIFs/Icons stored in MediaStore.
+     *
+     * @return media content URI string or null.
+     */
+    public String getMediaContentUri() {
+        return mediaContentUri;
+    }
+
+    /**
+     * Set the media content URI (string form).
+     *
+     * @param mediaContentUri content URI string
+     */
+    public void setMediaContentUri(String mediaContentUri) {
+        this.mediaContentUri = mediaContentUri;
     }
 }

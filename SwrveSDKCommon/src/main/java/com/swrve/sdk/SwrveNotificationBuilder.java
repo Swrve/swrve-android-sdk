@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.NotificationMediaManager.EXTRA_GIF_URI;
+import static com.swrve.sdk.NotificationMediaManager.NATIVE_GIF_SUPPORT_MIN_API;
 import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
 
 import android.annotation.SuppressLint;
@@ -16,11 +18,13 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import com.swrve.sdk.notifications.model.SwrveNotification;
@@ -28,20 +32,12 @@ import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import com.swrve.sdk.notifications.model.SwrveNotificationChannel;
 import com.swrve.sdk.notifications.model.SwrveNotificationExpanded;
 import com.swrve.sdk.notifications.model.SwrveNotificationMedia;
-import com.swrve.sdk.rest.SwrveFilterInputStream;
 
-import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
-import java.util.zip.GZIPInputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
 
 public class SwrveNotificationBuilder {
 
@@ -63,6 +59,7 @@ public class SwrveNotificationBuilder {
     private int notificationId;
     private String iamCampaignId; // a campaign to show (eg: IAM) after engaging with push
     protected int requestCode;
+    protected NotificationMediaManager mediaManager;
     private SwrveNotificationDetails notificationDetails = new SwrveNotificationDetails();
 
     private static int deviceWidth = 0;
@@ -77,6 +74,7 @@ public class SwrveNotificationBuilder {
         this.accentColorHex = config.getAccentColorHex();
         this.notificationId = new Random().nextInt();
         this.requestCode = new Random().nextInt();
+        this.mediaManager = new NotificationMediaManager(context);
     }
 
     public NotificationCompat.Builder build(String msgText, Bundle msg, String campaignType, Bundle eventPayload) {
@@ -102,7 +100,7 @@ public class SwrveNotificationBuilder {
             }
         }
 
-        boolean materialDesignIcon = (getSDKVersion() >= android.os.Build.VERSION_CODES.LOLLIPOP);
+        boolean materialDesignIcon = (getSDKVersion() >= Build.VERSION_CODES.LOLLIPOP);
         int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
 
         String notificationChannelId = getNotificationChannelId();
@@ -154,6 +152,8 @@ public class SwrveNotificationBuilder {
 
         PendingIntent pendingIntent = createPendingIntent(msg, campaignType, eventPayload);
         mBuilder.setContentIntent(pendingIntent);
+
+        addDeletePendingIntent(mBuilder);
 
         return mBuilder;
     }
@@ -330,7 +330,7 @@ public class SwrveNotificationBuilder {
         SwrveNotificationMedia media = swrveNotification.getMedia();
         if (media != null && media.getType() != null) {
             // Media is present so apply a different template based on type
-            NotificationCompat.Style mediaStyle = buildNotificationStyle(media.getType(), false, swrveNotification);
+            NotificationCompat.Style mediaStyle = buildNotificationStyle(media.getType(), swrveNotification);
             if (mediaStyle != null) {
                 builder.setStyle(mediaStyle);
                 setMediaText(builder);
@@ -398,7 +398,7 @@ public class SwrveNotificationBuilder {
         }
     }
 
-    private NotificationCompat.Style buildNotificationStyle(SwrveNotificationMedia.MediaType type, Boolean fallback, SwrveNotification payload) {
+    private NotificationCompat.Style buildNotificationStyle(SwrveNotificationMedia.MediaType type, SwrveNotification payload) {
         NotificationCompat.Style responseStyle;
         SwrveNotificationMedia media = payload.getMedia();
         if (type == null) {
@@ -408,38 +408,9 @@ public class SwrveNotificationBuilder {
 
         switch (type) {
             case IMAGE:
-                NotificationCompat.BigPictureStyle bigPictureStyle = new NotificationCompat.BigPictureStyle();
-
-                if (!fallback) {
-                    // Main Big Picture
-                    if (SwrveHelper.isNotNullOrEmpty(media.getUrl())) {
-
-                        Bitmap bigImage = getImageFromUrl(media.getUrl());
-                        if (bigImage != null) {
-                            bigPictureStyle.bigPicture(bigImage);
-                            notificationDetails.setMediaUrl(media.getUrl());
-                            notificationDetails.setMediaBitmap(bigImage);
-                        } else {
-                            // If m_url failed to download, traverse the same switch with fallback type
-                            return buildNotificationStyle(media.getFallbackType(), true, payload);
-                        }
-                    } else {
-                        // Both have failed, return null.
-                        return null;
-                    }
-                } else {
-                    Bitmap fallbackImage = getImageFromUrl(media.getFallbackUrl());
-                    if (fallbackImage != null) {
-                        bigPictureStyle.bigPicture(fallbackImage);
-                    } else {
-                        // If m_fallback_url failed to download, revert to bigText
-                        return null;
-                    }
-
-                    if (media.getFallbackSd() != null) {
-                        // If there's a fallback deep link available and image bitmap is not null
-                        usingFallbackDeeplink = true;
-                    }
+                NotificationCompat.BigPictureStyle bigPictureStyle = buildBigPictureStyle(media);
+                if (bigPictureStyle == null) {
+                    return null; // Pictures have failed, return null so default style is used
                 }
 
                 SwrveNotificationExpanded expanded = payload.getExpanded();
@@ -468,6 +439,73 @@ public class SwrveNotificationBuilder {
                 break;
         }
         return responseStyle;
+    }
+
+    private NotificationCompat.BigPictureStyle buildBigPictureStyle(SwrveNotificationMedia media) {
+        if (!SwrveHelper.isNotNullOrEmpty(media.getUrl())) {
+            return null;
+        }
+
+        NotificationCompat.BigPictureStyle bigPictureStyle = null;
+        NotificationMediaManager.BigPictureFetchResult fetchResult = mediaManager.downloadBigPictureImage(media.getUrl(), notificationId);
+        bigPictureStyle = buildBigPictureStyle(fetchResult, media.getUrl());
+        if (bigPictureStyle == null) {
+            // Last resort - try fallback if available
+            fetchResult = mediaManager.downloadBigPictureImage(media.getFallbackUrl(), notificationId);
+            bigPictureStyle = buildBigPictureStyle(fetchResult, media.getFallbackUrl());
+            if (bigPictureStyle != null) {
+                usingFallbackDeeplink = true;
+            }
+        }
+        return bigPictureStyle;
+    }
+
+    private NotificationCompat.BigPictureStyle buildBigPictureStyle(NotificationMediaManager.BigPictureFetchResult fetchResult, String mediaUrl) {
+        NotificationCompat.BigPictureStyle bigPictureStyle = null;
+        if (fetchResult != null && fetchResult.mediaUri != null && Build.VERSION.SDK_INT >= NATIVE_GIF_SUPPORT_MIN_API) {
+            bigPictureStyle = buildBigPictureStyleGifIcon(mediaUrl, fetchResult.mediaUri);
+        } else if (fetchResult != null && fetchResult.bitmap != null) {
+            // Not a GIF, or device doesn't support animated icons, or some other issue -> try bitmap path
+            bigPictureStyle = buildBigPictureStyleBitmap(mediaUrl, fetchResult.bitmap);
+        }
+        return bigPictureStyle;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    private NotificationCompat.BigPictureStyle buildBigPictureStyleGifIcon(String url, Uri gifUri) {
+        if (gifUri == null) {
+            return null;
+        }
+        NotificationCompat.BigPictureStyle bigPictureStyle = null;
+        try {
+            Icon icon = Icon.createWithContentUri(gifUri.toString());
+            // At the time of implementation the app compat library in unity-sdk was version 1.2.0
+            // which doesn't support api bigPictureStyle.bigPicture(Icon). As a temp workaround, call
+            // the api using reflection. Remove reflection later when the app compat library is updated.
+            Method bigPictureMethod = NotificationCompat.BigPictureStyle.class.getMethod("bigPicture", Icon.class);
+            bigPictureStyle = new NotificationCompat.BigPictureStyle();
+            bigPictureMethod.invoke(bigPictureStyle, icon);
+            notificationDetails.setMediaUrl(url);
+            notificationDetails.setMediaContentUri(gifUri.toString());
+        } catch (Exception e) {
+            SwrveLogger.e("Exception creating GIF Icon for: %s", e, url);
+            bigPictureStyle = null;
+        }
+        return bigPictureStyle;
+    }
+
+    private NotificationCompat.BigPictureStyle buildBigPictureStyleBitmap(String url, Bitmap bitmap) {
+        if (SwrveHelper.isNullOrEmpty(url)) {
+            return null;
+        }
+        NotificationCompat.BigPictureStyle bigPictureStyle = null;
+        if (bitmap != null) {
+            bigPictureStyle = new NotificationCompat.BigPictureStyle();
+            bigPictureStyle.bigPicture(bitmap);
+            notificationDetails.setMediaUrl(url);
+            notificationDetails.setMediaBitmap(bitmap);
+        }
+        return bigPictureStyle;
     }
 
     private NotificationCompat.Style buildDefaultStyle(SwrveNotification payload) {
@@ -533,6 +571,9 @@ public class SwrveNotificationBuilder {
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_TYPE_KEY, actionType); // if actionType==OPEN_CAMPAIGN, then actionUrl will be the campaign id. Not actually supported yet.
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_URL_KEY, actionUrl);
         intent.putExtra(SwrveNotificationConstants.BUTTON_TEXT_KEY, buttonText);
+        if (SwrveHelper.isNotNullOrEmpty(notificationDetails.getMediaContentUri())) { // only add if we have a mediaContentUri to delete
+            intent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
+        }
 
         int flags = PendingIntent.FLAG_CANCEL_CURRENT;
         if (getSDKVersion() >= Build.VERSION_CODES.M) {
@@ -569,6 +610,9 @@ public class SwrveNotificationBuilder {
         intent.putExtra(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY, msg.getString(SwrveNotificationConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY));
         if (SwrveHelper.isNotNullOrEmpty(iamCampaignId)) {
             intent.putExtra(SwrveNotificationConstants.SWRVE_CAMPAIGN_KEY, iamCampaignId);
+        }
+        if (SwrveHelper.isNotNullOrEmpty(notificationDetails.getMediaContentUri())) { // only add if we have a mediaContentUri to delete
+            intent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
         }
 
         int flags = PendingIntent.FLAG_CANCEL_CURRENT;
@@ -641,6 +685,19 @@ public class SwrveNotificationBuilder {
         return pendingIntent;
     }
 
+    private void addDeletePendingIntent(NotificationCompat.Builder mBuilder) {
+        if (SwrveHelper.isNotNullOrEmpty(notificationDetails.getMediaContentUri())) { // only add if we have a mediaContentUri to delete
+            Intent deleteIntent = new Intent(context, SwrveNotificationDeleteReceiver.class);
+            deleteIntent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
+            int flags = PendingIntent.FLAG_CANCEL_CURRENT;
+            if (getSDKVersion() >= Build.VERSION_CODES.M) {
+                flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+            }
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, deleteIntent, flags);
+            mBuilder.setDeleteIntent(pendingIntent);
+        }
+    }
+
     protected Date getNow() {
         return new Date();
     }
@@ -662,75 +719,7 @@ public class SwrveNotificationBuilder {
     }
 
     protected Bitmap getImageFromUrl(final String url) {
-        Bitmap bitmap = getImageFromCache(url);
-        if (bitmap == null) {
-            bitmap = downloadBitmapImageFromUrl(url);
-        }
-        return bitmap;
-    }
-
-    protected Bitmap downloadBitmapImageFromUrl(final String mediaUrl) {
-        Bitmap bitmap = null;
-        InputStream inputStream = null;
-        try {
-            URL url = null;
-            if (SwrveHelper.isNotNullOrEmpty(mediaUrl)) {
-                url = new URL(mediaUrl);
-                url.toURI();
-                SwrveLogger.i("Downloading notification image from: %s", mediaUrl);
-            }
-
-            if (url != null) {
-                HttpsURLConnection httpsConnection = (HttpsURLConnection) url.openConnection();
-                if (SwrveCommon.getInstance().getSSLSocketFactoryConfig() != null) {
-                    SSLSocketFactory socketFactory = SwrveCommon.getInstance().getSSLSocketFactoryConfig().getFactory(url.getHost());
-                    if (socketFactory != null) {
-                        httpsConnection.setSSLSocketFactory(socketFactory);
-                    }
-                }
-                httpsConnection.setDoInput(true);
-                httpsConnection.setConnectTimeout(SwrveCommon.getInstance().getHttpTimeout());
-                httpsConnection.setRequestProperty("Accept-Encoding", "gzip");
-                httpsConnection.connect();
-
-                inputStream = new SwrveFilterInputStream(httpsConnection.getInputStream());
-
-                // Support gzip if possible
-                String encoding = httpsConnection.getContentEncoding();
-                if (encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip")) {
-                    inputStream = new GZIPInputStream(inputStream);
-                }
-                bitmap = SwrveImageScaler.decodeSampledBitmapFromStream(inputStream, deviceWidth, deviceHeight, minSampleSize, mediaUrl, context.getCacheDir());
-            }
-        } catch (Exception e) {
-            SwrveLogger.e("Exception downloading notification image:%s", e, mediaUrl);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (Exception e) {
-                    SwrveLogger.e("Exception closing stream for downloading notification image.", e);
-                }
-            }
-        }
-        return bitmap;
-    }
-
-    protected Bitmap getImageFromCache(final String url) {
-        Bitmap bitmap = null;
-        try {
-            ISwrveCommon swrveCommon = SwrveCommon.getInstance();
-            File cacheDir = swrveCommon.getCacheDir(context);
-            String hashedUrl = SwrveHelper.md5(url.toLowerCase(Locale.ENGLISH));
-            File file = new File(cacheDir, hashedUrl);
-            if (file.exists() && file.canRead()) {
-                bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-                SwrveLogger.v("Using cached notification image:%s", url);
-            }
-        } catch (Exception e) {
-            SwrveLogger.e("Exception trying to get notification image from cache.", e);
-        }
-        return bitmap;
+        return mediaManager.downloadBitmap(url);
     }
 
     protected int getSDKVersion() {

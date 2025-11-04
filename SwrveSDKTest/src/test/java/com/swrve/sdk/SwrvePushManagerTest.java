@@ -46,7 +46,6 @@ import com.swrve.sdk.test.MainActivity;
 
 import org.json.JSONObject;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -468,8 +467,12 @@ public class SwrvePushManagerTest extends SwrveBaseTest {
         Mockito.doReturn(notificationBuilderSpy).when(pushManagerSpy).getSwrveNotificationBuilder();
         Bitmap.Config conf = Bitmap.Config.ARGB_8888;
         Bitmap bmp = Bitmap.createBitmap(200, 300, conf);
-        Mockito.doReturn(bmp).when(notificationBuilderSpy).getImageFromUrl(anyString());
         doReturn(Mockito.mock(CampaignDeliveryManager.class)).when(pushManagerSpy).getCampaignDeliveryManager();
+        NotificationMediaManager mediaManagerSpy = Mockito.spy(new NotificationMediaManager(mActivity));
+        NotificationMediaManager.BigPictureFetchResult bigPictureFetchResult = new NotificationMediaManager.BigPictureFetchResult();
+        bigPictureFetchResult.bitmap = bmp;
+        Mockito.doReturn(bigPictureFetchResult).when(mediaManagerSpy).downloadBigPictureImage(anyString(), anyInt());
+        notificationBuilderSpy.mediaManager = mediaManagerSpy;
 
         pushManagerSpy.processMessage(bundle);
     }

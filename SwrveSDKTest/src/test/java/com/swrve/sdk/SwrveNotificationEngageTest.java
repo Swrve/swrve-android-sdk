@@ -105,7 +105,10 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         }
 
         SwrveNotificationEngage notificationEngageSpy = spy(new SwrveNotificationEngage(mActivity));
+        NotificationMediaManager notificationMediaManagerMock = mock(NotificationMediaManager.class);
+        doReturn(notificationMediaManagerMock).when(notificationEngageSpy).getNotificationMediaManager(mActivity);
         notificationEngageSpy.processIntent(intent);
+        verify(notificationMediaManagerMock, Mockito.atLeastOnce()).deleteGifUri(intent);
         return notificationEngageSpy;
     }
 
@@ -228,8 +231,12 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.CONTEXT_ID_KEY, "1");
         intent.putExtra(SwrveNotificationConstants.PUSH_ACTION_URL_KEY, "swrve://deeplink/campaigns");
 
-        SwrveNotificationEngage notificationEngage = new SwrveNotificationEngage(mActivity);
-        notificationEngage.processIntent(intent);
+        SwrveNotificationEngage notificationEngageSpy = spy(new SwrveNotificationEngage(mActivity));
+        NotificationMediaManager notificationMediaManagerMock = mock(NotificationMediaManager.class);
+        doReturn(notificationMediaManagerMock).when(notificationEngageSpy).getNotificationMediaManager(mActivity);
+        notificationEngageSpy.processIntent(intent);
+
+        verify(notificationMediaManagerMock, Mockito.atLeastOnce()).deleteGifUri(intent);
 
         Intent nextStartedActivity = mShadowActivity.getNextStartedActivity();
         assertNotNull(nextStartedActivity);

@@ -13,3 +13,8 @@
 }
 -keep,allowobfuscation,allowshrinking class com.google.gson.reflect.TypeToken
 -keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
+
+# Keep BigPictureStyle.bigPicture(Icon) overloads used via reflection so R8 doesn't strip/rename them. Temp workaround
+-keepclassmembers class androidx.core.app.NotificationCompat$BigPictureStyle {
+  public androidx.core.app.NotificationCompat$BigPictureStyle bigPicture(android.graphics.drawable.Icon);
+}
