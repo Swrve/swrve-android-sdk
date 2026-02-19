@@ -1,0 +1,11 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <!-- Small utility dims used in HomeFragment programmatic styling -->
+    <dimen name="_8dp">8dp</dimen>
+    <dimen name="_10dp">10dp</dimen>
+    <dimen name="_16dp">16dp</dimen>
+    <!-- Spacer to keep scrollable content clear of BottomNavigationView -->
+    <dimen name="bottom_nav_spacer">88dp</dimen>
+</resources>

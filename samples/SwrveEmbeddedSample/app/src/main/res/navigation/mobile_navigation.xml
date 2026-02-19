@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.swrve.sdk.sample.embedded.HomeFragment"
+        android:label="@string/title_home" />
+
+    <fragment
+        android:id="@+id/navigation_offers"
+        android:name="com.swrve.sdk.sample.embedded.PlaceholderFragment"
+        android:label="Offers">
+        <argument
+            android:name="arg_title"
+            android:defaultValue="Offers"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_search"
+        android:name="com.swrve.sdk.sample.embedded.PlaceholderFragment"
+        android:label="Search">
+        <argument
+            android:name="arg_title"
+            android:defaultValue="Search"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.swrve.sdk.sample.embedded.PlaceholderFragment"
+        android:label="Notifications">
+        <argument
+            android:name="arg_title"
+            android:defaultValue="Notifications"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_account"
+        android:name="com.swrve.sdk.sample.embedded.PlaceholderFragment"
+        android:label="Account">
+        <argument
+            android:name="arg_title"
+            android:defaultValue="Account"
+            app:argType="string" />
+    </fragment>
+
+</navigation>

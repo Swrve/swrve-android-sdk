@@ -85,7 +85,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks, SwrveRefreshContentListener {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "11.9.0";
+    protected static String version = "12.0.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 10;
     protected static final int PUSH_INBOX_VERSION = 1;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 4;
@@ -97,7 +97,6 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected static final String IDENTITY_ACTION = "/identify";
     protected static final String EMPTY_JSON_ARRAY = "[]";
     protected static final int SHUTDOWN_TIMEOUT_SECONDS = 5;
-    protected static final String REFERRER = "referrer";
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_FREQUENCY = 60000;
     protected static final int SWRVE_DEFAULT_CAMPAIGN_RESOURCES_FLUSH_REFRESH_DELAY = 5000;
     protected static final String SWRVE_AUTOSHOW_AT_SESSION_START_TRIGGER = "Swrve.Messages.showAtSessionStart";

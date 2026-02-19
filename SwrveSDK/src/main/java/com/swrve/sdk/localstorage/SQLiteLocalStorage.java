@@ -12,9 +12,6 @@ import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVE
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_JSON;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID;
@@ -333,83 +330,6 @@ public class SQLiteLocalStorage implements LocalStorage {
     }
 
     @Override
-    public void truncateNotificationsAuthenticated(int rows) {
-        if (database.isOpen()) {
-            database.beginTransaction();
-            try {
-                String whereQuery = "SELECT " + NOTIFICATIONS_AUTHENTICATED_COLUMN_ID
-                        + " FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME
-                        + " ORDER BY " + NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME
-                        + " DESC LIMIT -1 OFFSET " + rows;
-                String deleteQuery = "DELETE FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME
-                        + " WHERE " + NOTIFICATIONS_AUTHENTICATED_COLUMN_ID
-                        + " IN (" + whereQuery + ")";
-                database.execSQL(deleteQuery);
-                database.setTransactionSuccessful(); // Commit
-            } finally {
-                database.endTransaction();
-            }
-        }
-    }
-
-    @Override
-    public void saveNotificationAuthenticated(int notificationId, long time) {
-        if (database.isOpen()) {
-            database.beginTransaction();
-            try {
-                ContentValues values = new ContentValues();
-                values.put(NOTIFICATIONS_AUTHENTICATED_COLUMN_ID, notificationId);
-                values.put(NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME, time);
-                insertOrUpdate(NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, values, NOTIFICATIONS_AUTHENTICATED_COLUMN_ID + "= ?", new String[]{String.valueOf(notificationId)});
-
-                database.setTransactionSuccessful(); // Commit
-            } finally {
-                database.endTransaction();
-            }
-        }
-    }
-
-    @Override
-    public void deleteNotificationsAuthenticated() {
-        try {
-            if (database.isOpen()) {
-                database.delete(NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, null, null);
-            }
-        } catch (Exception e) {
-            SwrveLogger.e("Exception deleting current notifications.", e);
-        }
-    }
-
-    @Override
-    public List<Integer> getNotificationsAuthenticated() {
-        List<Integer> notifications = new ArrayList<>();
-        if (database.isOpen()) {
-            Cursor cursor = null;
-            try {
-                String table = NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
-                String[] columns = new String[]{NOTIFICATIONS_AUTHENTICATED_COLUMN_ID};
-                String whereClause = null;
-                String[] whereArgs = null;
-                String groupBy = null, having = null;
-                cursor = database.query(table, columns, whereClause, whereArgs, groupBy, having, NOTIFICATIONS_AUTHENTICATED_COLUMN_ID, null);
-                cursor.moveToFirst();
-                while (!cursor.isAfterLast()) {
-                    Integer notificationId = cursor.getInt(0);
-                    notifications.add(notificationId);
-                    cursor.moveToNext();
-                }
-            } catch (Exception ex) {
-                SwrveLogger.e("Error getting notifications from db", ex);
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-        }
-        return notifications;
-    }
-
-    @Override
     public void saveOfflineCampaign(String userId, String campaignId, String campaignData) {
         if (userId == null || campaignId == null || campaignData == null) {
             SwrveLogger.e("Cannot set null value in saveOfflineCampaign for userId:%s category:%s rawData:%s.", userId, campaignId, campaignData);
@@ -514,6 +434,51 @@ public class SQLiteLocalStorage implements LocalStorage {
             } finally {
                 database.endTransaction();
             }
+        }
+    }
+
+    @Override
+    public synchronized void deleteAllEventsForUserId(String userId) {
+        if (TextUtils.isEmpty(userId) || !database.isOpen()) {
+            return;
+        }
+
+        try {
+            database.delete(EVENTS_TABLE_NAME,
+                    EVENTS_COLUMN_USER_ID + " = ?",
+                    new String[]{userId});
+        } catch (Exception e) {
+            SwrveLogger.e("Failed deleting events for userId: %s", e, userId);
+        }
+    }
+
+    @Override
+    public synchronized void deleteAllCacheForUserId(String userId) {
+        if (TextUtils.isEmpty(userId) || !database.isOpen()) {
+            return;
+        }
+
+        SwrveLogger.i("SQLiteLocalStorage: Deleting cache for userId: %s", userId);
+
+        database.beginTransaction();
+        try {
+            database.delete(CACHE_TABLE_NAME,
+                    CACHE_COLUMN_USER_ID + " = ?",
+                    new String[]{userId});
+
+            database.delete(OFFLINE_CAMPAIGNS_TABLE_NAME,
+                    OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID + " = ?",
+                    new String[]{userId});
+
+            database.delete(USER_TABLE_NAME,
+                    USER_COLUMN_SWRVE_USER_ID + " = ?",
+                    new String[]{userId});
+
+            database.setTransactionSuccessful();
+        } catch (Exception e) {
+            SwrveLogger.e("Failed deleting cache for userId: %s", e, userId);
+        } finally {
+            database.endTransaction();
         }
     }
 }

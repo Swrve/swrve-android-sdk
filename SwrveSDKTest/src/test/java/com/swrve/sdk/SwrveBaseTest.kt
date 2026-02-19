@@ -27,9 +27,9 @@ import org.robolectric.shadows.ShadowLog
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
+@Config(sdk = [Build.VERSION_CODES.BAKLAVA])
 @TargetApi(
-    Build.VERSION_CODES.VANILLA_ICE_CREAM
+    Build.VERSION_CODES.BAKLAVA
 )
 abstract class SwrveBaseTest {
     @JvmField

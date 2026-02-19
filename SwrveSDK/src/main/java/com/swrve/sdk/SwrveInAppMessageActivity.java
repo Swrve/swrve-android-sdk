@@ -146,17 +146,11 @@ public class SwrveInAppMessageActivity extends FragmentActivity {
                     // https://github.com/Swrve/swrve-android-sdk/issues/271
                     // workaround is to not change orientation
                     SwrveLogger.w("SwrveInAppMessageActivity: Oreo bug with setRequestedOrientation so Message may appear in wrong orientation.");
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                } else {
                     if (format.getOrientation() == SwrveOrientation.Landscape) {
                         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
                     } else {
                         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
-                    }
-                } else {
-                    if (format.getOrientation() == SwrveOrientation.Landscape) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                    } else {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
                     }
                 }
             } catch (RuntimeException ex) {

@@ -38,11 +38,6 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
     protected static final String CACHE_COLUMN_CATEGORY = "category";
     protected static final String CACHE_COLUMN_RAW_DATA = "raw_data";
 
-    // Authenticated notifications table
-    protected static final String NOTIFICATIONS_AUTHENTICATED_TABLE_NAME = "notifications_authenticated";
-    protected static final String NOTIFICATIONS_AUTHENTICATED_COLUMN_ID = "notification_id";
-    protected static final String NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME = "time";
-
     // External Campaign table
     protected static final String OFFLINE_CAMPAIGNS_TABLE_NAME = "offline_campaigns";
     protected static final String OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID = "user_id";
@@ -101,13 +96,6 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
                 "PRIMARY KEY (" + USER_COLUMN_SWRVE_USER_ID + "," + USER_COLUMN_EXTERNAL_USER_ID + ")" +
                 ");");
 
-        db.execSQL("CREATE TABLE " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME + " (" +
-                NOTIFICATIONS_AUTHENTICATED_COLUMN_ID + " INTEGER NOT NULL, " +
-                NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME + " INTEGER NOT NULL, " +
-                "PRIMARY KEY (" + NOTIFICATIONS_AUTHENTICATED_COLUMN_ID + ")" +
-                ");");
-        db.execSQL("CREATE INDEX notifications_authenticated_time_idx ON " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME + "(" + NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME + ");");
-
         db.execSQL("CREATE TABLE " + OFFLINE_CAMPAIGNS_TABLE_NAME + " (" +
                 OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID + " TEXT NOT NULL, " +
                 OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID + " TEXT NOT NULL," +
@@ -159,13 +147,6 @@ final class SwrveSQLiteOpenHelper extends SQLiteOpenHelper {
                         "verified BOOL NOT NULL, " +
                         "PRIMARY KEY (swrve_user_id, external_user_id)" +
                         ");");
-
-                db.execSQL("CREATE TABLE notifications_authenticated (" +
-                        "notification_id INTEGER NOT NULL, " +
-                        "time INTEGER NOT NULL, " +
-                        "PRIMARY KEY (notification_id)" +
-                        ")");
-                db.execSQL("CREATE INDEX notifications_authenticated_time_idx ON notifications_authenticated(time)");
 
                 // Migrate campaigns_and_resources_etag from shared preferences to cache table
                 SharedPreferences settings = context.getSharedPreferences("swrve_prefs", 0);

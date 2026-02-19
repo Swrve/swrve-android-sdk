@@ -204,10 +204,7 @@ class SwrveNotificationEngage {
 
     protected void openActivity(Bundle msg) throws PendingIntent.CanceledException {
         Intent intent = getActivityIntent(context, msg);
-        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        }
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent pendingIntent = PendingIntent.getActivity(context, generateTimestampId(), intent, flags);
         pendingIntent.send();
     }

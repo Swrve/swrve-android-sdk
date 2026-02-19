@@ -1,8 +1,13 @@
 package com.swrve.sdk.sample;
 
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.swrve.sdk.SwrvePushServiceDefault;
+//import com.salesforce.marketingcloud.messages.push.PushMessageManager;
+import com.swrve.sdk.SwrveSDK;
 
 /**
  * Class that receives the FCM messages
@@ -10,17 +15,25 @@ import com.swrve.sdk.SwrvePushServiceDefault;
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
-    public void onNewToken(String token) {
+    public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
-        com.swrve.sdk.SwrveSDK.setRegistrationId(token);
+        SwrveSDK.setRegistrationId(token);
     }
 
     @Override
-    public void onMessageReceived(RemoteMessage remoteMessage) {
+    public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        // If the push is not a Swrve push and has to be processed by our other provider...
-        if (!SwrvePushServiceDefault.handle(this, remoteMessage.getData(), remoteMessage.getMessageId(), remoteMessage.getSentTime())) {
-            // Execute code for other push provider
+        if (SwrveSDK.isSwrvePush(remoteMessage.getData())) {
+            Log.v("MyFirebaseMessagingService", "Swrve SDK handled fcm push message");
+            boolean handled = SwrveSDK.handleSwrvePush(this, remoteMessage.getData(), remoteMessage.getMessageId(), remoteMessage.getSentTime());
+            if (!handled) {
+                Log.v("MyFirebaseMessagingService", "Swrve SDK did not handle fcm push message");
+            }
+//        } else if (PushMessageManager.isMarketingCloudPush(remoteMessage)) {
+//            Log.v("MyFirebaseMessagingService", "Marketing Cloud SDK handled fcm push message");
+//            // Execute code for Marketing Cloud SDK
+        } else {
+            // Check if message contains a data payload for other push provider and pass it along
         }
     }
 }

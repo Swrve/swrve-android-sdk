@@ -45,12 +45,16 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
         if (userId == null) { // double-checked lock
             String savedUserIdFromPrefs = getSavedUserIdFromPrefs();
             if (SwrveHelper.isNullOrEmpty(savedUserIdFromPrefs)) {
-                userId = UUID.randomUUID().toString(); // Create a random UUID
+                userId = generateSwrveUserId(); // Create a random UUID
             } else {
                 userId = savedUserIdFromPrefs;
             }
             SwrveLogger.i("SwrveSDK: userId is: %s", userId);
         }
+    }
+
+    String generateSwrveUserId() {
+        return UUID.randomUUID().toString(); // Create a random UUID
     }
 
     void persistUser() {

@@ -11,7 +11,6 @@ import static com.swrve.sdk.ISwrveCommon.OS_AMAZON_TV;
 import static com.swrve.sdk.ISwrveCommon.OS_ANDROID;
 import static com.swrve.sdk.ISwrveCommon.OS_ANDROID_TV;
 import static com.swrve.sdk.ISwrveCommon.OS_HUAWEI;
-import static com.swrve.sdk.SwrveFlavour.AMAZON;
 import static com.swrve.sdk.SwrveFlavour.HUAWEI;
 
 import android.app.UiModeManager;
@@ -35,6 +34,8 @@ import android.view.WindowManager;
 import android.view.WindowMetrics;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
+
+import androidx.annotation.NonNull;
 
 import com.swrve.sdk.ISwrveCommon.SupportedUIMode;
 
@@ -287,8 +288,8 @@ public final class SwrveHelper {
     }
 
     public static boolean sdkAvailable(List<String> modelBlackList) {
-        // Returns true if current SDK is higher or equal than 4.X (API 16)
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        // Returns true if current SDK is higher or equal than API 23
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // Ignore the Calypso
             if (modelBlackList == null || !modelBlackList.contains(buildModel)) {
                 return true;
@@ -296,15 +297,12 @@ public final class SwrveHelper {
                 SwrveLogger.i("Current device is part of the model blacklist");
             }
         } else {
-            SwrveLogger.i("SDK not initialised as it is under API 16");
+            SwrveLogger.i("SDK not initialised as it is under API 23");
         }
         return false;
     }
 
     public static boolean hasFileAccess(String filePath) {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-            return true;
-        }
         boolean hasFileAccess = false;
         File file = new File(filePath);
         if (file.canRead()) {
@@ -376,15 +374,7 @@ public final class SwrveHelper {
             }
         }
         // We can infer the OS based flavour
-        if (sdkFlavour == AMAZON) {
-            switch (SwrveHelper.getSupportedUIMode(context)) {
-                case TV:
-                    return OS_AMAZON_TV;
-                case MOBILE:
-                default:
-                    return OS_AMAZON;
-            }
-        } else if (sdkFlavour == HUAWEI) {
+        if (sdkFlavour == HUAWEI) {
             return OS_HUAWEI;
         } else {
             switch (SwrveHelper.getSupportedUIMode(context)) {
@@ -408,6 +398,14 @@ public final class SwrveHelper {
 
     public static boolean isMobile(Context context) {
         return getSupportedUIMode(context).equals(SupportedUIMode.MOBILE);
+    }
+
+    public static boolean isSwrvePush(@NonNull final Map<String, String> data) {
+        String pushId = data.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
+        if (SwrveHelper.isNullOrEmpty(pushId)) {
+            pushId = data.get(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
+        }
+        return SwrveHelper.isNotNullOrEmpty(pushId);
     }
 
     // Used by Unity
@@ -554,15 +552,10 @@ public final class SwrveHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
             intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        } else {
             intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
             intent.putExtra("app_package", context.getPackageName());
             intent.putExtra("app_uid", context.getApplicationInfo().uid);
-        } else {
-            // fallback to settings page
-            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            intent.addCategory(Intent.CATEGORY_DEFAULT);
-            intent.setData(Uri.parse("package:" + context.getPackageName()));
         }
         return intent;
     }

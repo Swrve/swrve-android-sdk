@@ -173,27 +173,6 @@ public class InMemoryLocalStorage implements LocalStorage {
     }
 
     @Override
-    public void truncateNotificationsAuthenticated(int rows) {
-        // not implemented. Go directly to SQLiteLocalStorage
-    }
-
-    @Override
-    public void saveNotificationAuthenticated(int notificationId, long time) {
-        // not implemented. Go directly to SQLiteLocalStorage
-    }
-
-    @Override
-    public List<Integer> getNotificationsAuthenticated() {
-        // not implemented. Go directly to SQLiteLocalStorage
-        return null;
-    }
-
-    @Override
-    public void deleteNotificationsAuthenticated() {
-        // not implemented. Go directly to SQLiteLocalStorage
-    }
-
-    @Override
     public void saveOfflineCampaign(String userId, String campaignId, String campaignData) {
         // not implemented. Go directly to SQLiteLocalStorage
     }
@@ -218,5 +197,19 @@ public class InMemoryLocalStorage implements LocalStorage {
     @Override
     public void truncateAssetLogs(int rows) {
         // not implemented. Go directly to SQLiteLocalStorage
+    }
+
+    @Override
+    public synchronized void deleteAllEventsForUserId(String swrveUserId) {
+        if (swrveUserId != null) {
+            eventsPerUserId.remove(swrveUserId);
+        }
+    }
+
+    @Override
+    public synchronized void deleteAllCacheForUserId(String swrveUserId) {
+        if (swrveUserId != null) {
+            cachePerUserId.remove(swrveUserId);
+        }
     }
 }

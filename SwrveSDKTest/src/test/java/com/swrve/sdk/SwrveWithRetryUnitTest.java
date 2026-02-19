@@ -1,8 +1,11 @@
 package com.swrve.sdk;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,9 +29,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
+import androidx.work.testing.WorkManagerTestInitHelper;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SwrveWithRetryUnitTest extends SwrveBaseTest {
@@ -141,6 +148,54 @@ public class SwrveWithRetryUnitTest extends SwrveBaseTest {
         parameters.put("attributes", deviceInfo);
         SwrveSDK.sendDeviceUpdate();
         SwrveTestUtils.assertQueueEvent(swrveSpy, "device_update", parameters, null);
+    }
+
+    @Test
+    public void testIsSwrvePush() {
+        // Empty map -> false
+        Map<String, String> data = new HashMap<>();
+        assertFalse(SwrveSDK.isSwrvePush(data));
+
+        // Irrelevant key -> false
+        data.put("foo", "bar");
+        assertFalse(SwrveSDK.isSwrvePush(data));
+
+        // Normal tracking key present -> true
+        data.clear();
+        data.put(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
+        assertTrue(SwrveSDK.isSwrvePush(data));
+
+        // Normal tracking key with empty value -> false
+        data.clear();
+        data.put(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "");
+        assertFalse(SwrveSDK.isSwrvePush(data));
+
+        // Silent tracking key present -> true
+        data.clear();
+        data.put(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY, "456");
+        assertTrue(SwrveSDK.isSwrvePush(data));
+    }
+
+    @Test
+    public void testHandleSwrvePush() throws Exception {
+        Context ctx = ApplicationProvider.getApplicationContext();
+        WorkManagerTestInitHelper.initializeTestWorkManager(ctx);
+
+        Map<String, String> data = new HashMap<>();
+        data.put(SwrveNotificationConstants.SWRVE_TRACKING_KEY, "123");
+
+        String messageId = "456";
+        boolean handled = SwrveSDK.handleSwrvePush(ctx, data, messageId, 2222L);
+        assertTrue(handled);
+
+        assertEquals("456", data.get(GENERIC_EVENT_PAYLOAD_MSG_ID));
+        assertEquals("2222", data.get(GENERIC_EVENT_PAYLOAD_SENT_TIME));
+
+        String uniqueWorkName = "SwrvePushWorkerHelper_" + messageId;
+        List<WorkInfo> infos = WorkManager.getInstance(ctx).getWorkInfosForUniqueWork(uniqueWorkName).get();
+        assertNotNull(infos);
+        assertFalse(infos.isEmpty());
+        assertEquals(WorkInfo.State.SUCCEEDED, infos.getFirst().getState());
     }
 
 }

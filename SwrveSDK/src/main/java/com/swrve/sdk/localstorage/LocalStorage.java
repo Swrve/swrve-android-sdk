@@ -3,9 +3,7 @@ package com.swrve.sdk.localstorage;
 import com.swrve.sdk.SwrveUser;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * Used internally to define a common storage for events and other persistent data.
@@ -28,10 +26,6 @@ public interface LocalStorage {
     void deleteUser(String swrveUserId);
     SwrveUser getUserByExternalUserId(String externalUserId);
     SwrveUser getUserBySwrveUserId(String swrveUserId);
-    void truncateNotificationsAuthenticated(int rows);
-    void saveNotificationAuthenticated(int notificationId, long time);
-    List<Integer> getNotificationsAuthenticated();
-    void deleteNotificationsAuthenticated();
 
     void saveOfflineCampaign(String userId, String campaignId, String campaignData);
     String getOfflineCampaign(String userId, String campaignId);
@@ -39,4 +33,6 @@ public interface LocalStorage {
     int getAssetDownloadCount(String assetName);
     void incrementAssetDownloadCount(String assetName, long time);
     void truncateAssetLogs(int rows);
+    void deleteAllEventsForUserId(String swrveUserId);
+    void deleteAllCacheForUserId(String swrveUserId);
 }

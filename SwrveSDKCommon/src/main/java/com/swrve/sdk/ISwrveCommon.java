@@ -20,7 +20,6 @@ interface ISwrveCommon {
     String SDK_PREFS_KEY_FLUSH_FREQ     = "swrve_cr_flush_frequency";
     String SDK_PREFS_KEY_FLUSH_DELAY    = "swrve_cr_flush_delay";
     String SDK_PREFS_KEY_ADL            = "swrve_cr_asset_download_limit";
-    String SDK_PREFS_REFERRER_ID        = "swrve.referrer_id";
 
     String SDK_PREFS_KEY_ID_REFRESH_PERIOD = "swrve_identity_refresh_period";
 
@@ -89,7 +88,6 @@ interface ISwrveCommon {
     String SWRVE_PUSH_INBOX_SUPPORTED                       = "swrve.support.push_inbox";
 
     // user Update
-    String SWRVE_REFERRER_ID                = "swrve.referrer_id";
 
     // batch event
     String BATCH_EVENT_KEY_USER                     = "user";
@@ -218,8 +216,6 @@ interface ISwrveCommon {
     String getLanguage();
 
     void setNotificationSwrveCampaignId(String swrveCampaignId);
-
-    void saveNotificationAuthenticated(int notificationId);
 
     int getFlushRefreshDelay();
 

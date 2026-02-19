@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 
 public class SwrveMultiLayerLocalStorageTest extends SwrveBaseTest {
     private LocalStorage primaryLocalStorage;
@@ -108,46 +107,77 @@ public class SwrveMultiLayerLocalStorageTest extends SwrveBaseTest {
     }
 
     @Test
-    public void testSaveNotificationAuthenticated() {
-        secondaryLocalStorage.saveNotificationAuthenticated(1, 100); // oldest
-        secondaryLocalStorage.saveNotificationAuthenticated(2, 200);
-        secondaryLocalStorage.saveNotificationAuthenticated(3, 300);
-        secondaryLocalStorage.saveNotificationAuthenticated(4, 400);
-        secondaryLocalStorage.saveNotificationAuthenticated(5, 500);
-        secondaryLocalStorage.saveNotificationAuthenticated(6, 600); // most recent
+    public void testDeleteAllDataForUserId_RemovesAllUserData() throws Exception {
+        String userId = "user1";
 
-        List<Integer> notifications = secondaryLocalStorage.getNotificationsAuthenticated();
-        assertEquals(6, notifications.size());
+        // ---- seed primary (memory)
+        primaryLocalStorage.addEvent(userId, "event1");
+        primaryLocalStorage.addEvent(userId, "event2");
+        primaryLocalStorage.setCacheEntry(userId, "cacheA", "valueA");
 
-        multiLayerLocalStorage.NOTIFICATIONS_AUTHENTICATED_MAX_ROWS = 6;
+        // ---- seed secondary (db)
+        secondaryLocalStorage.addEvent(userId, "event_db_1");
+        secondaryLocalStorage.setCacheEntry(userId, "cacheB", "valueB");
+        secondaryLocalStorage.saveOfflineCampaign(userId, "campaign1", "{}");
+        secondaryLocalStorage.saveUser(new com.swrve.sdk.SwrveUser(userId, "external1", true));
 
-        multiLayerLocalStorage.saveNotificationAuthenticated(7);
+        // sanity check
+        assertEquals(1, secondaryLocalStorage.getFirstNEvents(10, userId).size());
+        assertEquals("valueB", secondaryLocalStorage.getCacheItem(userId, "cacheB").rawData);
 
-        notifications = secondaryLocalStorage.getNotificationsAuthenticated();
-        assertEquals(6, notifications.size());
-        boolean foundId2 = false, foundId3 = false, foundId4 = false, foundId5 = false, foundId6 = false, foundId7 = false;;
-        for (Integer notificationId : notifications) {
-            if (notificationId == 1) {
-                Assert.fail("testSaveNotificationAuthenticated failed oldest notification did not get truncated.");
-            } else if (notificationId == 2) {
-                foundId2 = true;
-            } else if (notificationId == 3) {
-                foundId3 = true;
-            } else if (notificationId == 4) {
-                foundId4 = true;
-            } else if (notificationId == 5) {
-                foundId5 = true;
-            } else if (notificationId == 6) {
-                foundId6 = true;
-            } else if (notificationId == 7) {
-                foundId7 = true;
-            }
+        // ---- delete
+        multiLayerLocalStorage.deleteAllDataForUserId(userId);
+
+        // ---- verify events removed
+        assertEquals(0, primaryLocalStorage.getFirstNEvents(10, userId).size());
+        assertEquals(0, secondaryLocalStorage.getFirstNEvents(10, userId).size());
+
+        // ---- verify cache removed
+        Assert.assertNull(primaryLocalStorage.getCacheItem(userId, "cacheA"));
+        Assert.assertNull(secondaryLocalStorage.getCacheItem(userId, "cacheB"));
+
+        // ---- verify campaigns removed
+        Assert.assertNull(secondaryLocalStorage.getOfflineCampaign(userId, "campaign1"));
+
+        // ---- verify user removed
+        Assert.assertNull(secondaryLocalStorage.getUserBySwrveUserId(userId));
+    }
+
+    @Test
+    public void testDeleteAllDataForUserId_DoesNotAffectOtherUsers() throws Exception {
+        String user1 = "user1";
+        String user2 = "user2";
+
+        primaryLocalStorage.addEvent(user1, "event1");
+        primaryLocalStorage.addEvent(user2, "event2");
+
+        secondaryLocalStorage.addEvent(user1, "event_db_1");
+        secondaryLocalStorage.addEvent(user2, "event_db_2");
+
+        secondaryLocalStorage.setCacheEntry(user1, "cache", "u1");
+        secondaryLocalStorage.setCacheEntry(user2, "cache", "u2");
+
+        multiLayerLocalStorage.deleteAllDataForUserId(user1);
+
+        // user1 wiped
+        assertEquals(0, primaryLocalStorage.getFirstNEvents(10, user1).size());
+        assertEquals(0, secondaryLocalStorage.getFirstNEvents(10, user1).size());
+        Assert.assertNull(secondaryLocalStorage.getCacheItem(user1, "cache"));
+
+        // user2 untouched
+        assertEquals(1, primaryLocalStorage.getFirstNEvents(10, user2).size());
+        assertEquals(1, secondaryLocalStorage.getFirstNEvents(10, user2).size());
+        assertEquals("u2", secondaryLocalStorage.getCacheItem(user2, "cache").rawData);
+    }
+
+    @Test
+    public void testDeleteAllDataForUserId_NoData_NoCrash() {
+        String userId = "nonexistent_user";
+
+        try {
+            multiLayerLocalStorage.deleteAllDataForUserId(userId);
+        } catch (Exception e) {
+            fail("deleteAllDataForUserId should not throw when user has no data");
         }
-
-        if (!foundId2 || !foundId3 || !foundId4 || !foundId5 || !foundId6 || !foundId7) {
-            Assert.fail("testSaveNotificationAuthenticated failed because id's returned didn't match what was saved.");
-        }
-
-        multiLayerLocalStorage.deleteNotificationsAuthenticated();
     }
 }

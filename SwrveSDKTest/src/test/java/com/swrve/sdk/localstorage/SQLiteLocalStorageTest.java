@@ -2,8 +2,6 @@ package com.swrve.sdk.localstorage;
 
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_COLUMN_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.ASSET_LOGS_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -18,7 +16,6 @@ import androidx.test.core.app.ApplicationProvider;
 import com.swrve.sdk.SwrveUser;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -116,121 +113,6 @@ public class SQLiteLocalStorageTest extends BaseLocalStorage {
         sqLiteLocalStorage.deleteUser("swrveId2");
         assertNull(sqLiteLocalStorage.getUserBySwrveUserId("swrveId2"));
         assertNotNull(sqLiteLocalStorage.getUserBySwrveUserId("swrveId1"));
-    }
-
-    @Test
-    public void testSaveNotificationAuthenticated() {
-        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
-        sqLiteLocalStorage.saveNotificationAuthenticated(1, 123);
-        sqLiteLocalStorage.saveNotificationAuthenticated(2, 124);
-        // add following entry twice on purpose because a notification can be updated
-        sqLiteLocalStorage.saveNotificationAuthenticated(3, 125);
-        sqLiteLocalStorage.saveNotificationAuthenticated(3, 126);
-        SQLiteDatabase database = sqLiteLocalStorage.database;
-        try (Cursor cursor = database.rawQuery("SELECT * FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, null)) {
-            if (cursor.moveToFirst()) {
-                int row = 1;
-                while (cursor.isAfterLast() == false) {
-                    long notificationId = cursor.getLong(cursor.getColumnIndex(NOTIFICATIONS_AUTHENTICATED_COLUMN_ID));
-                    assertEquals(row, notificationId);
-                    row++;
-                    cursor.moveToNext();
-                }
-            } else {
-                fail("testSaveCurrentNotifications failed because cursor is empty and should contain entries.");
-            }
-        } finally {
-            sqLiteLocalStorage.deleteNotificationsAuthenticated(); // clean up
-        }
-    }
-
-    @Test
-    public void testGetNotificationsAuthenticated() {
-        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
-        sqLiteLocalStorage.saveNotificationAuthenticated(1, 123);
-        sqLiteLocalStorage.saveNotificationAuthenticated(2, 124);
-        // add following entry twice on purpose because a notification can be updated
-        sqLiteLocalStorage.saveNotificationAuthenticated(3, 125);
-        sqLiteLocalStorage.saveNotificationAuthenticated(3, 126);
-
-        List<Integer> notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
-        assertEquals(3, notifications.size());
-        boolean foundId1 = false, foundId2 = false, foundId3 = false;
-        for (Integer notificationId : notifications) {
-            if (notificationId == 1) {
-                foundId1 = true;
-            } else if (notificationId == 2) {
-                foundId2 = true;
-            } else if (notificationId == 3) {
-                foundId3 = true;
-            }
-        }
-        if (!foundId1 || !foundId2 || !foundId3) {
-            fail("testGetCurrentNotifications failed because id's returned didn't match what was saved.");
-        }
-    }
-
-    @Test
-    public void testDeleteNotificationsAuthenticated() {
-        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
-        sqLiteLocalStorage.saveNotificationAuthenticated(1, 123);
-        sqLiteLocalStorage.saveNotificationAuthenticated(2, 124);
-        sqLiteLocalStorage.saveNotificationAuthenticated(3, 125);
-
-        List<Integer> notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
-        assertEquals(3, notifications.size());
-
-        sqLiteLocalStorage.deleteNotificationsAuthenticated();
-        notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
-        assertEquals(0, notifications.size());
-    }
-
-    @Test
-    public void testTruncateNotificationsAuthenticated() {
-        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
-        sqLiteLocalStorage.saveNotificationAuthenticated(1, 100); // oldest
-        sqLiteLocalStorage.saveNotificationAuthenticated(2, 200);
-        sqLiteLocalStorage.saveNotificationAuthenticated(3, 300);
-        sqLiteLocalStorage.saveNotificationAuthenticated(4, 400);
-        sqLiteLocalStorage.saveNotificationAuthenticated(5, 500);
-        sqLiteLocalStorage.saveNotificationAuthenticated(6, 600); // most recent
-
-        List<Integer> notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
-        assertEquals(6, notifications.size());
-
-        sqLiteLocalStorage.truncateNotificationsAuthenticated(4);
-        notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
-        assertEquals(4, notifications.size());
-
-        boolean foundId3 = false, foundId4 = false, foundId5 = false, foundId6 = false;
-        for (Integer notificationId : notifications) {
-            if (notificationId == 1) {
-                Assert.fail("testTruncateNotificationsAuthenticated failed oldest notification did not get truncated.");
-            } else if (notificationId == 2) {
-                Assert.fail("testTruncateNotificationsAuthenticated failed oldest notification did not get truncated.");
-            } else if (notificationId == 3) {
-                foundId3 = true;
-            } else if (notificationId == 4) {
-                foundId4 = true;
-            } else if (notificationId == 5) {
-                foundId5 = true;
-            } else if (notificationId == 6) {
-                foundId6 = true;
-            }
-        }
-        if (!foundId3 || !foundId4 || !foundId5 || !foundId6) {
-            Assert.fail("testSaveNotificationAuthenticated failed because id's returned didn't match what was saved.");
-        }
-    }
-
-    @Test
-    public void testTruncateNotificationsAuthenticatedEmpty() {
-        SQLiteLocalStorage sqLiteLocalStorage = (SQLiteLocalStorage) localStorage;
-        List<Integer> notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
-        assertEquals(0, notifications.size());
-        sqLiteLocalStorage.truncateNotificationsAuthenticated(4);
-        notifications = sqLiteLocalStorage.getNotificationsAuthenticated();
-        assertEquals(0, notifications.size());
     }
 
     @Test

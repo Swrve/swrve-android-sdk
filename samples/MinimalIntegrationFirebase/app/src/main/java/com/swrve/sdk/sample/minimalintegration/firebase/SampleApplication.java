@@ -32,7 +32,7 @@ public class SampleApplication extends MultiDexApplication {
         }
         List<String> notificationEvents = new ArrayList<>();
         notificationEvents.add("notification_permission_request");
-        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo, R.drawable.swrve_s_transparent, channel)
+        SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.swrve_s_transparent, channel)
                 .activityClass(MainActivity.class)
                 .largeIconDrawableId(R.drawable.swrve_s_solid).accentColorHex("#3949AB")
                 .pushNotificationPermissionEvents(notificationEvents);

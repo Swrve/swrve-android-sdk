@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import java.util.Map;
 
+@Deprecated
 public class SwrvePushServiceDefault {
 
     /**
@@ -21,15 +22,16 @@ public class SwrvePushServiceDefault {
      * @param messageId For firebase this is the remoteMessage.getMessageId().
      * @param sentTime  For firebase this is the remoteMessage.getSentTime().
      * @return true if it was a swrve push, false if it was another push provider and should be handled by the caller.
+     * @deprecated Instead use SwrveSDK.handlePush(Context context, Map<String, String> data, String messageId, long sentTime)
      */
+    @Deprecated
     public static boolean handle(Context context, Map<String, String> data, String messageId, long sentTime) {
-        boolean handled = false;
-        if (data != null) {
-            data.put(GENERIC_EVENT_PAYLOAD_MSG_ID, messageId);
-            data.put(GENERIC_EVENT_PAYLOAD_SENT_TIME, String.valueOf(sentTime));
-            SwrvePushWorkerHelper workerHelper = new SwrvePushWorkerHelper(context, SwrvePushManagerWorker.class, data);
-            handled = workerHelper.handle();
+        if (data == null) {
+            return false;
         }
-        return handled;
+        data.put(GENERIC_EVENT_PAYLOAD_MSG_ID, messageId);
+        data.put(GENERIC_EVENT_PAYLOAD_SENT_TIME, String.valueOf(sentTime));
+        SwrvePushWorkerHelper workerHelper = new SwrvePushWorkerHelper(context, SwrvePushManagerWorker.class, data);
+        return workerHelper.handle();
     }
 }

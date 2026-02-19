@@ -1,5 +1,7 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,8 +11,6 @@ import android.os.Bundle;
 import androidx.core.app.NotificationCompat;
 
 import org.json.JSONObject;
-
-import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 
 class SwrvePushManagerImp extends SwrvePushManagerImpBase implements SwrvePushManager {
 
@@ -69,14 +69,14 @@ class SwrvePushManagerImp extends SwrvePushManagerImpBase implements SwrvePushMa
             } else {
                 saveCampaignInfluence(msg, pushId);
                 final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                if (isAuthenticatedNotification(msg)) {
+                    String authUser = msg.getString(SwrveNotificationInternalPayloadConstants.SWRVE_AUTH_USER_KEY);
+                    Bundle extras = notification.extras != null ? notification.extras : new Bundle();
+                    extras.putString(SwrveNotificationInternalPayloadConstants.SWRVE_AUTH_USER_KEY, authUser);
+                    notification.extras = extras;
+                }
                 notificationManager.notify(notificationId, notification);
                 SwrveLogger.d("SwrvePushManager: displayed notificationId: %s", notificationId);
-
-                // Save notification id so existing authenticated notifications can be dismissed later if different user identifies
-                if (isAuthenticatedNotification(msg)) {
-                    // Notification ids are persisted to db because NotificationManager.getActiveNotifications is only api 23 and current minVersion is below that
-                    swrveCommon.saveNotificationAuthenticated(notificationId);
-                }
             }
 
         } catch (Exception ex) {

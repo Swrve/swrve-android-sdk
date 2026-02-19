@@ -74,6 +74,7 @@ class NotificationMediaManager {
             }
         } catch (Exception e) {
             SwrveLogger.e("Exception downloading notification image:%s", e, urlString);
+            QaUser.assetFailedToDownload("notification_image", urlString, getShortExceptionMessage(e));
         } finally {
             try { if (inputStream != null) inputStream.close(); } catch (Exception ignored) {}
             if (connection != null) connection.disconnect();
@@ -94,6 +95,7 @@ class NotificationMediaManager {
             connection.connect();
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 SwrveLogger.e("Failed to download big picture image:%s (response=%d)", urlString, connection.getResponseCode());
+                QaUser.assetFailedToDownload("notification_id:" + notificationId, urlString, "HTTP response: " + connection.getResponseCode());
                 return null;
             }
 
@@ -117,6 +119,7 @@ class NotificationMediaManager {
             }
         } catch (Exception e) {
             SwrveLogger.e("Exception downloading media for notification:%s", e, urlString);
+            QaUser.assetFailedToDownload("notification_id:" + notificationId, urlString, getShortExceptionMessage(e));
         } finally {
             try { if (inputStream != null) inputStream.close(); } catch (Exception ignored) {}
             if (connection != null) connection.disconnect();
@@ -302,5 +305,14 @@ class NotificationMediaManager {
             SwrveLogger.e("Orphaned GIF cleanup: Exception while deleting all GIFs.", e);
         }
         return rowsDeleted;
+    }
+
+    private static String getShortExceptionMessage(Exception e) {
+        if (e == null) return "UnknownException";
+        String msg = e.getMessage();
+        if (msg != null && msg.length() > 100) { // 100 is arbitrary, just need a glimpse of the exception
+            msg = msg.substring(0, 100) + "...[truncated]";
+        }
+        return e.getClass().getSimpleName() + (msg != null ? ": " + msg : "");
     }
 }

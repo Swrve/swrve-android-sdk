@@ -125,19 +125,6 @@ public class SwrveSDK extends SwrveSDKBase {
     /**
      * Called to send the push engaged event to Swrve.
      *
-     * @param context android context
-     * @param pushId  The push id for engagement
-     * @deprecated Instead use sendPushEngagedEvent(Context context, String pushId, String trackingData, String platform)
-     */
-    @Deprecated
-    public static void sendPushEngagedEvent(Context context, String pushId) {
-        checkInstanceCreated();
-        EventHelper.sendEngagedEvent(context, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, pushId, null);
-    }
-
-    /**
-     * Called to send the push engaged event to Swrve.
-     *
      * @param context      android context
      * @param pushId       The push id for engagement (the _p value from the push payload)
      * @param trackingData Additional tracking data to be sent with the event (the _td value from the push payload)

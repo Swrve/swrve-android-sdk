@@ -1038,7 +1038,7 @@ class SwrveUnitTest : SwrveBaseTest() {
         val config = swrveSpy!!.getConfig()
         val notificationEvents: MutableList<String> = ArrayList()
         notificationEvents.add("test_request_notification_permission")
-        val notificationConfig = SwrveNotificationConfig.Builder(R.drawable.ic_launcher, R.drawable.ic_launcher, null).pushNotificationPermissionEvents(notificationEvents).build()
+        val notificationConfig = SwrveNotificationConfig.Builder(R.drawable.ic_launcher, null).pushNotificationPermissionEvents(notificationEvents).build()
         config.notificationConfig = notificationConfig
         SwrveSDK.event("regular_event")
         verify(eventListenerSpy, never()).requestNotificationPermission(any())

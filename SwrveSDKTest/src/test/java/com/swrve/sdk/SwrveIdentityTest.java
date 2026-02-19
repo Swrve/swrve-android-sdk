@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
 
 import androidx.core.app.NotificationCompat;
 import androidx.test.core.app.ApplicationProvider;
@@ -463,11 +464,9 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         assertNumberOfNotification(0);
 
         // fire 2 authenticated notifications and 1 regular non authenticated notification
-        fireNotification("authenticated notification", "personalized message 1", 123);
-        swrveCommon.saveNotificationAuthenticated(123);
-        fireNotification("authenticated notification", "personalized message 2", 456);
-        swrveCommon.saveNotificationAuthenticated(456);
-        fireNotification("Non authenticated notification", "generic broadcast all message", 789);
+        fireNotification("authenticated notification", "personalized message 1", 123, true);
+        fireNotification("authenticated notification", "personalized message 2", 456, true);
+        fireNotification("Non authenticated notification", "generic broadcast all message", 789, false);
 
         assertNumberOfNotification(3);
 
@@ -629,7 +628,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         assertEquals(numberOfNotifications, notifications.size());
     }
 
-    private void fireNotification(String title, String message, int notificationId) {
+    private void fireNotification(String title, String message, int notificationId, boolean isAuth) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel("456", "channel", NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager notificationManager = (NotificationManager) mActivity.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -642,6 +641,11 @@ public class SwrveIdentityTest extends SwrveBaseTest {
                 .setContentText(message)
                 .setContentIntent(pendingIntent);
         Notification notification = mBuilder.build();
+        if (isAuth) {
+            Bundle extras = notification.extras != null ? notification.extras : new Bundle();
+            extras.putString("_aui", "userId");
+            notification.extras = extras;
+        }
         NotificationManager notificationManager = (NotificationManager) mActivity.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(notificationId, notification);
     }

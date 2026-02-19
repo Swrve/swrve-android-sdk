@@ -27,10 +27,6 @@ android {
         core {
             flavorDimensions "swrve-sdk"
         }
-        amazon {
-            flavorDimensions "swrve-sdk"
-            consumerProguardFiles 'amazon-proguard-rules.pro'
-        }
         firebase {
             flavorDimensions "swrve-sdk"
         }
@@ -55,12 +51,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 }
 
@@ -77,11 +73,6 @@ dependencies {
     api "androidx.media3:media3-ui:" + project.MEDIA3_VERSION
 
     annotationProcessor 'com.github.bumptech.glide:compiler:4.13.0'
-    // The amazon-device-messaging jar is not distributed with Swrve source code and a stubbed out
-    // version is used instead. If compiling amazon flavour from source you should delete the
-    // stubbed version in providedLibs, and replace with official jar downloaded from the Amazon
-    // Developer portal (https://developer.amazon.com/device-messaging).
-    amazonCompileOnly fileTree(dir: "providedLibs", include: ['amazon-device-messaging*.jar'])
     firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
     huaweiApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
     huaweiApi 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION

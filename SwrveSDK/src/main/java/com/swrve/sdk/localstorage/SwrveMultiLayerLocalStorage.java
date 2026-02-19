@@ -1,27 +1,21 @@
 package com.swrve.sdk.localstorage;
 
+import static com.swrve.sdk.localstorage.LocalStorage.SIGNATURE_SUFFIX;
+
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveUser;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.swrve.sdk.localstorage.LocalStorage.SIGNATURE_SUFFIX;
-
-import android.database.SQLException;
 
 /**
  * Used internally to provide a multi-layer primary and secondary LocalStorage
  */
 public class SwrveMultiLayerLocalStorage {
-
-    protected int NOTIFICATIONS_AUTHENTICATED_MAX_ROWS = 100;
 
     private LocalStorage primaryStorage; // in-memory temporary and fast storage
     private LocalStorage secondaryStorage; // sql-ite database
@@ -239,28 +233,6 @@ public class SwrveMultiLayerLocalStorage {
         }
     }
 
-    public void saveNotificationAuthenticated(int notificationId) {
-        if (secondaryStorage != null) {
-            secondaryStorage.saveNotificationAuthenticated(notificationId, System.currentTimeMillis());
-            // After adding an entry truncate the table to remove the oldest.
-            secondaryStorage.truncateNotificationsAuthenticated(NOTIFICATIONS_AUTHENTICATED_MAX_ROWS);
-        }
-    }
-
-    public List<Integer> getNotificationsAuthenticated() {
-        List<Integer> notifications = new ArrayList<>();
-        if (secondaryStorage != null) {
-            notifications = secondaryStorage.getNotificationsAuthenticated();
-        }
-        return notifications;
-    }
-
-    public void deleteNotificationsAuthenticated() {
-        if (secondaryStorage != null) {
-            secondaryStorage.deleteNotificationsAuthenticated();
-        }
-    }
-
     public void saveOfflineCampaign(String userId, String campaignId, String campaignData) {
         if (secondaryStorage != null) {
             secondaryStorage.saveOfflineCampaign(userId, campaignId, campaignData);
@@ -295,4 +267,25 @@ public class SwrveMultiLayerLocalStorage {
         }
     }
 
+    public void deleteAllDataForUserId(String userId) {
+        if (userId == null) {
+            return;
+        }
+
+        // Events
+        synchronized (EVENT_LOCK) {
+            primaryStorage.deleteAllEventsForUserId(userId);
+            if (secondaryStorage != null) {
+                secondaryStorage.deleteAllEventsForUserId(userId);
+            }
+        }
+
+        // Cache + user data
+        synchronized (cacheLock) {
+            primaryStorage.deleteAllCacheForUserId(userId);
+            if (secondaryStorage != null) {
+                secondaryStorage.deleteAllCacheForUserId(userId);
+            }
+        }
+    }
 }

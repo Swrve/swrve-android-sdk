@@ -37,10 +37,8 @@ public class SwrveTextView extends AppCompatTextView {
         setScrollContainer(false);
         setFocusable(true);
         setIncludeFontPadding(true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE);
-            setBreakStrategy(LineBreaker.BREAK_STRATEGY_SIMPLE);
-        }
+        setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE);
+        setBreakStrategy(LineBreaker.BREAK_STRATEGY_SIMPLE);
 
         setPadding(textViewStyle.getLeftPadding(), textViewStyle.getTopPadding(), textViewStyle.getRightPadding(), textViewStyle.getBottomPadding());
         setText(text);

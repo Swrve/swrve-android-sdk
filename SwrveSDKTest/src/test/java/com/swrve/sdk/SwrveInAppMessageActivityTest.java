@@ -1743,11 +1743,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            assertEquals(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT, activity.getRequestedOrientation());
-        } else {
-            assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT, activity.getRequestedOrientation());
-        }
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT, activity.getRequestedOrientation());
     }
 
     @Test
@@ -1765,11 +1761,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveInAppMessageActivity activity = pair.second;
         assertNotNull(activity);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            assertEquals(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE, activity.getRequestedOrientation());
-        } else {
-            assertEquals(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, activity.getRequestedOrientation());
-        }
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE, activity.getRequestedOrientation());
     }
 
     @Test

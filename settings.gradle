@@ -8,3 +8,12 @@ project(":MessageCenter").projectDir = file("samples/MessageCenter")
 
 include ':CustomUserId'
 project(":CustomUserId").projectDir = file("samples/CustomUserId")
+
+// Note: Composite builds using "includeBuild" increase build time.
+// The below samples use remote swrvesdk instead of local source so open each sample
+// individually or uncomment
+//includeBuild('samples/MinimalIntegrationFirebase')
+//includeBuild('samples/MinimalIntegrationHuawei')
+//includeBuild('samples/GeoSample')
+//includeBuild('samples/GeoWithForegroundNotificationSample')
+//includeBuild('samples/SwrveEmbeddedSample')

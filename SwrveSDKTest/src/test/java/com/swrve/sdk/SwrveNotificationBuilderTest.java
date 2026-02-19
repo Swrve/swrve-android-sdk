@@ -61,7 +61,7 @@ import java.util.concurrent.Callable;
 public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
     private SwrvePushManagerImp pushServiceManagerSpy;
-    private SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+    private SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
             .activityClass(MainActivity.class)
             .build();
     private Swrve swrveSpy;
@@ -702,8 +702,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertNull(shadowNotification.getBigPicture());
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
-    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
+    @Config(sdk = Build.VERSION_CODES.M)
     @Test
     public void testAdvancedBigTextPushWith1Action() {
         // Send a valid Rich Payload
@@ -756,8 +756,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(221, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
-    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
+    @Config(sdk = Build.VERSION_CODES.M)
     @Test
     public void testAdvancedBigImagePushWith2Actions() {
         // Send a valid Rich Payload
@@ -839,8 +839,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(222, extras.getInt(SwrveNotificationConstants.PUSH_NOTIFICATION_ID));
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
-    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
+    @Config(sdk = Build.VERSION_CODES.M)
     @Test
     public void testAdvancedBigTextPushWith3Actions() {
         // Send a valid Rich Payload
@@ -953,8 +953,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         assertEquals(requestCodeStart + 4, builderSpy.requestCode); // final value of requestCode
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
-    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
+    @Config(sdk = Build.VERSION_CODES.M)
     @Test
     public void testButtonClickEvents() throws Exception {
         swrveSpy.init(mActivity);
@@ -1031,8 +1031,8 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         verify(swrveSpy, never()).sendEventsInBackground(any(Context.class), anyString(), any(ArrayList.class));
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.LOLLIPOP)
-    @Config(sdk = Build.VERSION_CODES.LOLLIPOP)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
+    @Config(sdk = Build.VERSION_CODES.M)
     @Test
     public void testEngagedEvents() throws Exception {
         swrveSpy.init(mActivity);
@@ -1106,7 +1106,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
         bundle.putString(SwrveNotificationConstants.TIMESTAMP_KEY, Integer.toString(firstTimestamp));
         intent.putExtras(bundle);
 
-        SwrveNotificationConfig notificationConfigWithChannel = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, channel)
+        SwrveNotificationConfig notificationConfigWithChannel = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, channel)
                 .activityClass(MainActivity.class)
                 .build();
         SwrveNotificationBuilder builderSpy = spy(new SwrveNotificationBuilder(ApplicationProvider.getApplicationContext(), notificationConfigWithChannel));
@@ -1341,8 +1341,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
     private Intent getNotificationButtonIntent(boolean useEngagementProxy, SwrveNotificationButton.ActionType actionType, String actionUrl, String pushId, SwrveNotificationIntentListener intentListener) {
 
-        SwrveNotificationConfig.Builder notificationConfigBuilder = new SwrveNotificationConfig.Builder(
-                com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        SwrveNotificationConfig.Builder notificationConfigBuilder = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
                 .useEngagementProxy(useEngagementProxy);
         if (intentListener != null) {
@@ -1438,8 +1437,7 @@ public class SwrveNotificationBuilderTest extends SwrveBaseTest {
 
     private Intent getNotificationMainIntent(boolean useEngagementProxy, String pushId, String iamCampaign, String deeplink, SwrveNotificationIntentListener intentListener) {
 
-        SwrveNotificationConfig.Builder notificationConfigBuilder = new SwrveNotificationConfig.Builder(
-                com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        SwrveNotificationConfig.Builder notificationConfigBuilder = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
                 .useEngagementProxy(useEngagementProxy);
         if (intentListener != null) {

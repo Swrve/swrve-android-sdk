@@ -126,6 +126,15 @@ class NotificationMediaManagerTest : SwrveBaseTest() {
     }
 
     private fun testGif(gifFile: String, mockResponse: MockResponse) {
+        val testUri = Uri.parse("content://media/external/downloads/456")
+        val mockResolver = mock(ContentResolver::class.java)
+        val mockOutputStream = java.io.ByteArrayOutputStream()
+        `when`(mockResolver.insert(any(), any())).thenReturn(testUri)
+        `when`(mockResolver.openOutputStream(any())).thenReturn(mockOutputStream)
+        `when`(mockResolver.delete(any(), any(), any())).thenReturn(1)
+        `when`(contextSpy.contentResolver).thenReturn(mockResolver)
+        mediaManager = NotificationMediaManager(contextSpy)
+
         server.enqueue(mockResponse)
 
         val url = server.url(gifFile)
@@ -138,6 +147,7 @@ class NotificationMediaManagerTest : SwrveBaseTest() {
         intent.putExtra(NotificationMediaManager.EXTRA_GIF_URI, result.mediaUri.toString())
         val rowsDeleted = mediaManager.deleteGifUri(intent)
         assertEquals(1, rowsDeleted)
+        verify(mockResolver, times(1)).delete(any(), any(), any())
     }
 
     @Test
@@ -189,8 +199,15 @@ class NotificationMediaManagerTest : SwrveBaseTest() {
         val uri = Uri.parse("content://media/external/downloads/123")
         val intent = Intent(Intent.ACTION_VIEW)
         intent.putExtra(NotificationMediaManager.EXTRA_GIF_URI, uri.toString())
+
+        val mockResolver = mock(ContentResolver::class.java)
+        `when`(mockResolver.delete(any(), any(), any())).thenReturn(1)
+        `when`(contextSpy.contentResolver).thenReturn(mockResolver)
+        mediaManager = NotificationMediaManager(contextSpy)
+
         val rowsDeleted = mediaManager.deleteGifUri(intent)
         assertEquals(1, rowsDeleted)
+        verify(mockResolver, times(1)).delete(Mockito.any(), Mockito.any(), Mockito.any())
     }
 
     @Test

@@ -377,10 +377,6 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
-    public void saveNotificationAuthenticated(int notificationId) {
-    }
-
-    @Override
     public String getExternalUserId() {
         return "";
     }

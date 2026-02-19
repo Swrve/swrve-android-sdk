@@ -1,7 +1,13 @@
 package com.swrve.sdk;
 
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_MSG_ID;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
+
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
@@ -774,5 +780,31 @@ public abstract class SwrveSDKBase {
     public static void sendDeviceUpdate() {
         checkInstanceCreated();
         instance.sendDeviceUpdate();
+    }
+
+    /**
+     * Returns whether the provided data payload represents a Swrve push.
+     *
+     * @param data key/value map received from the push provider. For firebase this is RemoteMessage.getData().
+     * @return true if one of the Swrve tracking keys is present; false otherwise.
+     */
+    public static boolean isSwrvePush(@NonNull Map<String, String> data) {
+        checkInstanceCreated();
+        return SwrveHelper.isSwrvePush(data);
+    }
+
+    /**
+     * This method should be used when multiple push providers are integrated and Swrve's default
+     * push implementation is not being used. See samples directory in the public repository on how to use it.
+     *
+     * @param context   Application or Service {@link android.content.Context} used to enqueue background work.
+     * @param data      Provider payload key/value map. For firebase this is RemoteMessage.getData().
+     * @param messageId Provider message identifier. For firebase this is RemoteMessage.getMessageId().
+     * @param sentTime  Provider message timestamp in milliseconds. For firebase this is RemoteMessage.getSentTime().
+     * @return true if Swrve handled the payload and scheduled processing; false otherwise.
+     */
+    public static boolean handleSwrvePush(Context context, Map<String, String> data, String messageId, long sentTime) {
+        checkInstanceCreated();
+        return SwrvePushServiceDefault.handle(context, data, messageId, sentTime);
     }
 }

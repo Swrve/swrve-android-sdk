@@ -4,7 +4,6 @@ import static com.swrve.sdk.NotificationMediaManager.EXTRA_GIF_URI;
 import static com.swrve.sdk.NotificationMediaManager.NATIVE_GIF_SUPPORT_MIN_API;
 import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -42,14 +41,13 @@ import java.util.Random;
 public class SwrveNotificationBuilder {
 
     private final Context context;
-    private int iconDrawableId;
-    private int iconMaterialDrawableId;
-    private NotificationChannel defaultNotificationChannel;
-    private int largeIconDrawableId;
-    private String accentColorHex;
-    private String notificationTitle;
-    private final int minSampleSize = 1;
+    private final int iconMaterialDrawableId;
+    private final NotificationChannel defaultNotificationChannel;
+    private final int largeIconDrawableId;
+    private final String accentColorHex;
+    private final SwrveNotificationDetails notificationDetails = new SwrveNotificationDetails();
 
+    private String notificationTitle;
     private boolean usingFallbackDeeplink = false;
     private SwrveNotification swrveNotification;
     private Bundle msg;
@@ -60,20 +58,18 @@ public class SwrveNotificationBuilder {
     private String iamCampaignId; // a campaign to show (eg: IAM) after engaging with push
     protected int requestCode;
     protected NotificationMediaManager mediaManager;
-    private SwrveNotificationDetails notificationDetails = new SwrveNotificationDetails();
 
     private static int deviceWidth = 0;
     private static int deviceHeight = 0;
 
     public SwrveNotificationBuilder(Context context, SwrveNotificationConfig config) {
         this.context = context;
-        this.iconDrawableId = config.getIconDrawableId();
         this.iconMaterialDrawableId = config.getIconMaterialDrawableId();
         this.defaultNotificationChannel = config.getDefaultNotificationChannel();
         this.largeIconDrawableId = config.getLargeIconDrawableId();
         this.accentColorHex = config.getAccentColorHex();
-        this.notificationId = new Random().nextInt();
-        this.requestCode = new Random().nextInt();
+        this.notificationId = Math.abs(new Random().nextInt());
+        this.requestCode = Math.abs(new Random().nextInt());
         this.mediaManager = new NotificationMediaManager(context);
     }
 
@@ -100,13 +96,10 @@ public class SwrveNotificationBuilder {
             }
         }
 
-        boolean materialDesignIcon = (getSDKVersion() >= Build.VERSION_CODES.LOLLIPOP);
-        int iconResource = (materialDesignIcon && iconMaterialDrawableId >= 0) ? iconMaterialDrawableId : iconDrawableId;
-
         String notificationChannelId = getNotificationChannelId();
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, notificationChannelId)
-                .setSmallIcon(iconResource)
+                .setSmallIcon(iconMaterialDrawableId)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(this.msgText))
                 .setTicker(this.msgText)
                 .setContentText(this.msgText)
@@ -366,34 +359,29 @@ public class SwrveNotificationBuilder {
         }
     }
 
-    @SuppressLint("WrongConstant")
     private void buildLockScreen(NotificationCompat.Builder builder, SwrveNotification pushPayload) {
-        if (getSDKVersion() >= Build.VERSION_CODES.LOLLIPOP) {
-            if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
-                // Use the notification builder to build a copy of the private notification with different lock screen message text
+        if (SwrveHelper.isNotNullOrEmpty(pushPayload.getLockScreenMsg())) {
+            // Use the notification builder to build a copy of the private notification with different lock screen message text
 
-                // Create a public visible notification version
-                builder.setTicker(pushPayload.getLockScreenMsg());
-                builder.setContentText(pushPayload.getLockScreenMsg());
-                Notification lockScreenNotification = builder.build();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    lockScreenNotification.visibility = NotificationCompat.VISIBILITY_PUBLIC;
-                }
-                builder.setPublicVersion(lockScreenNotification);
+            // Create a public visible notification version
+            builder.setTicker(pushPayload.getLockScreenMsg());
+            builder.setContentText(pushPayload.getLockScreenMsg());
+            Notification lockScreenNotification = builder.build();
+            lockScreenNotification.visibility = Notification.VISIBILITY_PUBLIC;
+            builder.setPublicVersion(lockScreenNotification);
 
-                // Reset changed values
-                builder.setTicker(msgText);
-                if (SwrveHelper.isNotNullOrEmpty(pushPayload.getTicker())) {
-                    builder.setTicker(pushPayload.getTicker());
-                }
-                setMediaText(builder);
-            } else {
-                // Ensure a push marked public will show the title,body,etc. on the lock screen,
-                // regardless of the user's channel lock screen setting
-                // (otherwise it could be treated as sensitive content and not shown)
-                if(pushPayload.getVisibility() == SwrveNotification.VisibilityType.PUBLIC) {
-                    builder.setPublicVersion(builder.build());
-                }
+            // Reset changed values
+            builder.setTicker(msgText);
+            if (SwrveHelper.isNotNullOrEmpty(pushPayload.getTicker())) {
+                builder.setTicker(pushPayload.getTicker());
+            }
+            setMediaText(builder);
+        } else {
+            // Ensure a push marked public will show the title,body,etc. on the lock screen,
+            // regardless of the user's channel lock screen setting
+            // (otherwise it could be treated as sensitive content and not shown)
+            if (pushPayload.getVisibility() == SwrveNotification.VisibilityType.PUBLIC) {
+                builder.setPublicVersion(builder.build());
             }
         }
     }
@@ -575,10 +563,7 @@ public class SwrveNotificationBuilder {
             intent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
         }
 
-        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
-        if (getSDKVersion() >= Build.VERSION_CODES.M) {
-            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        }
+        int flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent pendingIntentButton = getPendingIntent(intent, flags, isDismissAction);
         return new NotificationCompat.Action.Builder(icon, buttonText, pendingIntentButton).build();
     }
@@ -615,10 +600,7 @@ public class SwrveNotificationBuilder {
             intent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
         }
 
-        int flags = PendingIntent.FLAG_CANCEL_CURRENT;
-        if (getSDKVersion() >= Build.VERSION_CODES.M) {
-            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        }
+        int flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent pendingIntent = getPendingIntent(intent, flags, false);
         return pendingIntent;
     }
@@ -689,10 +671,7 @@ public class SwrveNotificationBuilder {
         if (SwrveHelper.isNotNullOrEmpty(notificationDetails.getMediaContentUri())) { // only add if we have a mediaContentUri to delete
             Intent deleteIntent = new Intent(context, SwrveNotificationDeleteReceiver.class);
             deleteIntent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
-            int flags = PendingIntent.FLAG_CANCEL_CURRENT;
-            if (getSDKVersion() >= Build.VERSION_CODES.M) {
-                flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-            }
+            int flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, deleteIntent, flags);
             mBuilder.setDeleteIntent(pendingIntent);
         }

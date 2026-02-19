@@ -3,6 +3,15 @@
     android:versionCode="2"
     android:versionName="2.8">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <application>
+        <service
+            android:name="com.swrve.sdk.SwrveFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter android:priority="-1"> <!-- Priority is a best-effort hint only; app-defined FCM service should always take precedence -->
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+    </application>
 
 </manifest>
+ 

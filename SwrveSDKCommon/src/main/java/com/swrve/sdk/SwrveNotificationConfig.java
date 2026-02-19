@@ -9,7 +9,6 @@ public class SwrveNotificationConfig {
     private final Class<?> activityClass;
     private final SwrveNotificationIntentListener notificationIntentListener;
     private final boolean useEngagementProxy;
-    private final int iconDrawableId;
     private final int iconMaterialDrawableId;
     private final NotificationChannel defaultNotificationChannel;
     private final int largeIconDrawableId;
@@ -21,7 +20,6 @@ public class SwrveNotificationConfig {
         this.activityClass = builder.activityClass;
         this.notificationIntentListener = builder.notificationIntentListener;
         this.useEngagementProxy = builder.useEngagementProxy;
-        this.iconDrawableId = builder.iconDrawableId;
         this.iconMaterialDrawableId = builder.iconMaterialDrawableId;
         this.defaultNotificationChannel = builder.defaultNotificationChannel;
         this.largeIconDrawableId = builder.largeIconDrawableId;
@@ -54,15 +52,6 @@ public class SwrveNotificationConfig {
      */
     public boolean useEngagementProxy() {
         return useEngagementProxy;
-    }
-
-    /**
-     * The notification icon drawable to be shown in the status bar for below api level 21
-     *
-     * @return The notification icon drawable id
-     */
-    public int getIconDrawableId() {
-        return iconDrawableId;
     }
 
     /**
@@ -124,7 +113,6 @@ public class SwrveNotificationConfig {
         private Class<?> activityClass;
         private SwrveNotificationIntentListener notificationIntentListener;
         private boolean useEngagementProxy = true; // default to true, but we might consider removing this and proxy in next major version
-        private final int iconDrawableId;
         private final int iconMaterialDrawableId;
         private final NotificationChannel defaultNotificationChannel;
         private int largeIconDrawableId;
@@ -135,13 +123,11 @@ public class SwrveNotificationConfig {
         /**
          * Builder constructor
          *
-         * @param iconDrawableId             the notification icon drawable to be shown in the status bar for below api level 21
-         * @param iconMaterialDrawableId     the notification icon drawable to be shown in the status bar for above api level 20
+         * @param iconMaterialDrawableId     the notification icon drawable to be shown in the status bar
          * @param defaultNotificationChannel Set the default notification (or fallback) channel used to display notifications if
          *                                   none is specified in the dashboard. If null, notifications will not be displayed.
          */
-        public Builder(int iconDrawableId, int iconMaterialDrawableId, NotificationChannel defaultNotificationChannel) {
-            this.iconDrawableId = iconDrawableId;
+        public Builder(int iconMaterialDrawableId, NotificationChannel defaultNotificationChannel) {
             this.iconMaterialDrawableId = iconMaterialDrawableId;
             this.defaultNotificationChannel = defaultNotificationChannel;
         }

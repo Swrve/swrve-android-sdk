@@ -26,7 +26,7 @@ public class Trigger {
             triggers = gson.fromJson(json, listType);
             triggers = validateTriggers(triggers, id);
         } catch (JsonParseException ex) {
-            SwrveLogger.e("Could not parse campaign[%s] trigger json:%s" + json, ex, id, json);
+            SwrveLogger.e("Could not parse campaign[%s] trigger json:%s", ex, id, json);
         }
         return triggers;
     }

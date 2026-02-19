@@ -198,9 +198,7 @@ public class SwrveThemedMaterialButton extends MaterialButton {
         setSingleLine();
         float calibratedTextSizePX = swrveTextUtils.getCalibratedTextSize(getTypeface(), theme.getFontSize(), calibration);
         float calibratedTextSizeDP = SwrveHelper.convertPixelsToDp(calibratedTextSizePX, getContext());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            setLetterSpacing(0f);
-        }
+        setLetterSpacing(0f);
         if (theme.isTruncate()) {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, calibratedTextSizeDP);
             setEllipsize(TextUtils.TruncateAt.END); // Note: some custom font do not support Ellipse

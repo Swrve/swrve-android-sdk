@@ -12,9 +12,6 @@ import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_EVE
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_COLUMN_USER_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.EVENTS_TABLE_NAME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_ID;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME;
-import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.NOTIFICATIONS_AUTHENTICATED_TABLE_NAME;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_CAMPAIGN_ID;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_JSON;
 import static com.swrve.sdk.localstorage.SwrveSQLiteOpenHelper.OFFLINE_CAMPAIGNS_COLUMN_SWRVE_USER_ID;
@@ -68,7 +65,7 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
         try (SQLiteDatabase database = sqLiteOpenHelper.getWritableDatabase()) {
 
             try (Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table'", null)) {
-                assertEquals("Should be 8 tables in database.", 8, cursor.getCount());
+                assertEquals("Should be 8 tables in database.", 7, cursor.getCount());
             }
             try (Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='android_metadata'", null)) {
                 assertEquals("Should be 1 table called android_metadata in database.", 1, cursor.getCount());
@@ -83,9 +80,6 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
                 assertEquals("Should be 1 table called sqlite_sequence in database.", 1, cursor.getCount());
             }
             try (Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + USER_TABLE_NAME + "'", null)) {
-                assertEquals("Should be 1 table called sqlite_sequence in database.", 1, cursor.getCount());
-            }
-            try (Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME + "'", null)) {
                 assertEquals("Should be 1 table called sqlite_sequence in database.", 1, cursor.getCount());
             }
             try (Cursor cursor = database.rawQuery("SELECT * FROM sqlite_master WHERE type='table' and name='" + OFFLINE_CAMPAIGNS_TABLE_NAME + "'", null)) {
@@ -161,26 +155,6 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
             fail("Exception thrown: " + ex.getMessage());
         } finally {
             ApplicationProvider.getApplicationContext().deleteDatabase("testNewDatabaseUserTable");
-        }
-    }
-
-    @Test
-    public void testNewDatabaseNotificationsAuthenticatedTable() {
-        // test brand new instance that table created ok
-        String dbName = "testNewDatabaseNotificationsAuthenticatedTable";
-        SwrveSQLiteOpenHelper sqLiteOpenHelper = SwrveSQLiteOpenHelper.getInstance(ApplicationProvider.getApplicationContext(), dbName, SWRVE_DB_VERSION);
-
-        try (SQLiteDatabase database = sqLiteOpenHelper.getWritableDatabase();
-             Cursor cursor = database.rawQuery("SELECT * FROM " + NOTIFICATIONS_AUTHENTICATED_TABLE_NAME, null);) {
-            String[] columnNames = cursor.getColumnNames();
-            assertEquals("Should only be 2 column 'notification_id', and 'time'", 2, columnNames.length);
-            assertTrue("onCreate of tables failed as there should be a notification_id column", Arrays.asList(columnNames).contains(NOTIFICATIONS_AUTHENTICATED_COLUMN_ID));
-            assertTrue("onCreate of tables failed as there should be a time column", Arrays.asList(columnNames).contains(NOTIFICATIONS_AUTHENTICATED_COLUMN_TIME));
-            assertEquals("Should be 0 rows.", 0, cursor.getCount());
-        } catch (Exception ex) {
-            fail("Exception thrown: " + ex.getMessage());
-        } finally {
-            ApplicationProvider.getApplicationContext().deleteDatabase(dbName);
         }
     }
 
@@ -395,31 +369,6 @@ public class SwrveSQLiteOpenHelperTest extends SwrveBaseTest {
              Cursor cursor = database.rawQuery("SELECT * FROM users", null)) {
             String[] columnNames = cursor.getColumnNames();
             assertEquals("Should only be 3 columns 'swrve_user_id', 'external_user_id', and 'verified'", 3, columnNames.length);
-        } catch (Exception ex) {
-            fail("Exception thrown: " + ex.getMessage());
-        } finally {
-            ApplicationProvider.getApplicationContext().deleteDatabase(dbName);
-        }
-    }
-
-    @Test
-    public void testOnUpgradeNotificationsAuthenticated_1_to_Latest() {
-
-        String dbName = "testOnUpgradeNotificationsAuthenticated_1_to_5";
-
-        try (SwrveSQLiteOpenHelper_v1 swrveSQLiteOpenHelper_v1 = new SwrveSQLiteOpenHelper_v1(ApplicationProvider.getApplicationContext(), dbName);
-             SQLiteDatabase database = swrveSQLiteOpenHelper_v1.getWritableDatabase()) {
-            // empty
-        } catch (Exception ex) {
-            fail("Exception thrown: " + ex.getMessage());
-        }
-
-        // increment db version to latest by using SwrveSQLiteOpenHelper
-        try (SwrveSQLiteOpenHelper sqLiteOpenHelper = new SwrveSQLiteOpenHelper(ApplicationProvider.getApplicationContext(), dbName, 5);
-             SQLiteDatabase database = sqLiteOpenHelper.getWritableDatabase();
-             Cursor cursor = database.rawQuery("SELECT * FROM notifications_authenticated", null)) {
-            String[] columnNames = cursor.getColumnNames();
-            assertEquals("Should only be 2 columns 'notification_id', and 'time'", 2, columnNames.length);
         } catch (Exception ex) {
             fail("Exception thrown: " + ex.getMessage());
         } finally {

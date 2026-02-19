@@ -1,6 +1,7 @@
 package com.swrve.sdk.config;
 
 import com.swrve.sdk.SwrveAppStore;
+import com.swrve.sdk.SwrveUserDisabledListener;
 import com.swrve.sdk.SwrveDeeplinkListener;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveInitMode;
@@ -56,6 +57,7 @@ public abstract class SwrveConfigBase {
     private SwrveSSLSocketFactoryConfig sslSocketFactoryConfig = null;
     private Class<?> splashActivity;
     private SwrveDeeplinkListener deeplinkListener;
+    private SwrveUserDisabledListener userDisabledListener;
 
     /**
      * Create an instance of the SDK advance preferences.
@@ -623,4 +625,20 @@ public abstract class SwrveConfigBase {
     public void setSwrveDeeplinkListener(SwrveDeeplinkListener deeplinkListener) {
         this.deeplinkListener = deeplinkListener;
     }
+    /**
+     * Returns the listener that will be notified when a user has been disabled.
+     * @return the configured SwrveUserDisabledListener
+     */
+//    public SwrveUserDisabledListener getUserDisabledListener() {
+//        return userDisabledListener;
+//    }
+
+    /**
+     * Sets a listener to be notified when a user has been disabled.
+     * @param userDisabledListener The listener to be notified when a user is
+     *                                disabled.
+     */
+//    public void setUserDisabledListener(SwrveUserDisabledListener userDisabledListener) {
+//        this.userDisabledListener = userDisabledListener;
+//    }
 }

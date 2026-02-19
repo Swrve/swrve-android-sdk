@@ -23,10 +23,6 @@ public class SwrvePermissionRequesterActivity extends Activity {
     private boolean shouldShowRequestPermissionRationaleStart = false;
 
     public static void requestPermission(Context context, String permission) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            SwrveLogger.v("SwrveSDK: Permissions requests are not required below API level 23.");
-            return;
-        }
         Intent intent = new Intent(context, SwrvePermissionRequesterActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRAS_KEY_PERMISSION, permission);
@@ -38,10 +34,7 @@ public class SwrvePermissionRequesterActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setFinishOnTouchOutside(false); // do not finish when touched outside its window's bounds
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(0);
-        }
+        getWindow().setStatusBarColor(0);
 
         Bundle extras = getIntent().getExtras();
         String permission = null;

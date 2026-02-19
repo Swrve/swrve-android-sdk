@@ -33,7 +33,7 @@ public class SampleApplication extends MultiDexApplication {
                     notificationManager.createNotificationChannel(channel);
                 }
             }
-            SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.logo, R.drawable.swrve_s_transparent, channel)
+            SwrveNotificationConfig.Builder notificationConfig = new SwrveNotificationConfig.Builder(R.drawable.swrve_s_transparent, channel)
                     .activityClass(MainActivity.class)
                     .largeIconDrawableId(R.drawable.swrve_s_solid)
                     .accentColorHex("#3949AB"); // Darkblue

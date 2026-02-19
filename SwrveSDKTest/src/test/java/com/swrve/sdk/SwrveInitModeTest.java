@@ -59,7 +59,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
     private Swrve swrveReal;
     private Swrve swrveSpy;
 
-    private SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+    private SwrveNotificationConfig notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
             .activityClass(MainActivity.class)
             .build();
 

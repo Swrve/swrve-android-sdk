@@ -52,7 +52,7 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
                 .build();
         SwrveConfig config = new SwrveConfig();
@@ -82,7 +82,7 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
     public void testOpenActivityNotCalledWithDisabledProxyActivity() throws Exception {
 
         // disable the proxy activity
-        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
                 .useEngagementProxy(false)
                 .build();
@@ -123,7 +123,7 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH);
 
         // override the default notification config in the setup
-        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .notificationIntentListener((pushBundle, deeplink) -> {
                     assertNull(deeplink);
                     assertEquals("validBundle", pushBundle.getString(SwrveNotificationConstants.TEXT_KEY));
@@ -160,7 +160,7 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
     public void testOpenDeeplinkNotCalledWithDisabledProxyActivity() {
 
         // disable the proxy activity
-        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .activityClass(MainActivity.class)
                 .useEngagementProxy(false)
                 .build();
@@ -197,7 +197,7 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, extras);
 
         // override the default notification config in the setup
-        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, com.swrve.sdk.test.R.drawable.ic_launcher, null)
+        notificationConfig = new SwrveNotificationConfig.Builder(com.swrve.sdk.test.R.drawable.ic_launcher, null)
                 .notificationIntentListener((pushBundle, deeplink) -> {
                     assertEquals("swrve://deeplink/campaigns", deeplink);
                     assertEquals("customdata_value", pushBundle.getString("customdata"));

@@ -19,6 +19,9 @@ public class SwrveNotification {
             gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
             Gson gson = gsonBuilder.create();
             payload = gson.fromJson(json, SwrveNotification.class);
+            if (payload.notificationId < 0) {
+                payload.notificationId = Math.abs(payload.notificationId);
+            }
         } catch (JsonParseException ex) {
             SwrveLogger.e("Could not parse Rich Push json: %s", ex, json);
         }
