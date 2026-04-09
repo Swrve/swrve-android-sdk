@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 public class SwrveEventsManagerImp implements SwrveEventsManager {
-
     private static final Object RESPONSE_LOG_LOCK = new Object();
     protected static final String PREF_EVENT_SEND_RESPONSE_LOG = "EVENT_SEND_RESPONSE_LOG";
     protected static boolean shouldSendResponseLogs = true; // static and true by default but set to false once logs are cleared.
@@ -36,8 +35,9 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
     private final String appVersion;
     private final String sessionToken;
     private final String deviceId;
+    private final SwrveProfileManager profileManager;
 
-    protected SwrveEventsManagerImp(Context context, SwrveConfigBase config, IRESTClient restClient, String userId, String appVersion, String sessionToken, String deviceId) {
+    protected SwrveEventsManagerImp(Context context, SwrveConfigBase config, IRESTClient restClient, String userId, String appVersion, String sessionToken, String deviceId, SwrveProfileManager profileManager) {
         this.context = context;
         this.config = config;
         this.restClient = restClient;
@@ -45,6 +45,7 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
         this.appVersion = appVersion;
         this.sessionToken = sessionToken;
         this.deviceId = deviceId;
+        this.profileManager = profileManager;
     }
 
     /*
@@ -104,16 +105,18 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
                 eventsToSend = events.size();
                 String data = EventHelper.eventsAsBatch(events, userId, appVersion, sessionToken, deviceId);
                 SwrveLogger.i("Sending %s events to Swrve", events.size());
-                postBatchRequest(storageForSendingResponseEvent, data, eventsToSend, new IPostBatchRequestListener() {
-                    public void onResponse(boolean shouldDelete) {
-                        if (shouldDelete) {
-                            // Remove events from where they came from
-                            for (LocalStorage storage : combinedEvents.keySet()) {
-                                storage.removeEvents(userId, combinedEvents.get(storage).keySet());
-                            }
-                        } else {
-                            SwrveLogger.e("Batch of events could not be sent, retrying");
+                postBatchRequest(storageForSendingResponseEvent, data, eventsToSend, (shouldDelete, response, userId) -> {
+                    if (shouldDelete) {
+                        // Remove events from where they came from
+                        for (LocalStorage storage : combinedEvents.keySet()) {
+                            storage.removeEvents(userId, combinedEvents.get(storage).keySet());
                         }
+                    } else {
+                        SwrveLogger.e("Batch of events could not be sent, retrying");
+                    }
+
+                    if (profileManager != null && response.responseCode == 401) {
+                        profileManager.handleDisabledUser(response.responseBody, userId);
                     }
                 });
             } catch (JSONException je) {
@@ -147,7 +150,7 @@ public class SwrveEventsManagerImp implements SwrveEventsManager {
                 }
 
                 // Resend if we got a server error (5XX)
-                listener.onResponse(deleteEvents);
+                listener.onResponse(deleteEvents, response, userId);
             }
 
             @Override

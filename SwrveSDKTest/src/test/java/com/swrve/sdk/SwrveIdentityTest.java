@@ -44,6 +44,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.localstorage.LocalStorage;
 import com.swrve.sdk.localstorage.SQLiteLocalStorage;
+import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 import com.swrve.sdk.rest.IRESTClient;
 import com.swrve.sdk.rest.IRESTResponseListener;
 import com.swrve.sdk.rest.RESTResponse;
@@ -342,7 +343,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
 
     @Test
     public void testIdentify_Body() throws Exception {
-        SwrveProfileManager profileManager = new SwrveProfileManager(mActivity, 1, "apiKey", new SwrveConfig(), null);
+        SwrveProfileManager profileManager = new SwrveProfileManager(mActivity, 1, "apiKey", new SwrveConfig(), null, null);
         String postString = profileManager.getIdentityBody("ExternalUserId", "SwrveUserId", "deviceId");
         JSONObject postObject = new JSONObject(postString);
         assertEquals(postObject.getString("swrve_id"), "SwrveUserId");
@@ -724,7 +725,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
         final String testUserId;
 
         protected SwrveProfileManagerIdentifySuccess(String userId, Context context, int appId, String apiKey, SwrveConfig config, IRESTClient restClient) {
-            super(context, appId, apiKey, config, restClient);
+            super(context, appId, apiKey, config, restClient, null);
             this.testUserId = userId;
         }
 
@@ -737,7 +738,7 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     private class SwrveProfileManagerIdentifyError extends SwrveProfileManager<SwrveConfig> {
 
         protected SwrveProfileManagerIdentifyError(Context context, int appId, String apiKey, SwrveConfig config, IRESTClient restClient) {
-            super(context, appId, apiKey, config, restClient);
+            super(context, appId, apiKey, config, restClient, null);
         }
 
         @Override

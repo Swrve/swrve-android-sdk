@@ -93,6 +93,6 @@ public class SwrveBackgroundEventSender {
     private SwrveEventsManager getSendEventsManager(SwrveBase swrve, String userId, SwrveMultiLayerLocalStorage multiLayerLocalStorage) {
         String deviceId = SwrveLocalStorageUtil.getDeviceId(multiLayerLocalStorage);
         String sessionToken = SwrveHelper.generateSessionToken(swrve.apiKey, swrve.appId, userId);
-        return new SwrveEventsManagerImp(context, swrve.config, swrve.restClient, userId, swrve.appVersion, sessionToken, deviceId);
+        return new SwrveEventsManagerImp(context, swrve.config, swrve.restClient, userId, swrve.appVersion, sessionToken, deviceId, swrve.profileManager);
     }
 }

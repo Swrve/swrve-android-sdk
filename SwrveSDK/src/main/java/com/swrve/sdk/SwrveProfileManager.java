@@ -15,11 +15,15 @@ import com.swrve.sdk.rest.RESTResponse;
 import org.json.JSONObject;
 
 import java.net.HttpURLConnection;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
 
 class SwrveProfileManager<C extends SwrveConfigBase> {
 
@@ -31,13 +35,17 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
     private String userId;
     private String sessionToken;
     private SwrveTrackingState trackingState;
+    private final Set<String> disabledUserIds = new HashSet<>();
 
-    protected SwrveProfileManager(Context context, int appId, String apiKey, C config, IRESTClient restClient) {
+    private final SwrveMultiLayerLocalStorage multiLayerLocalStorage;
+
+    protected SwrveProfileManager(Context context, int appId, String apiKey, C config, IRESTClient restClient, SwrveMultiLayerLocalStorage multiLayerLocalStorage) {
         this.context = context;
         this.appId = appId;
         this.apiKey = apiKey;
         this.config = config;
         this.restclient = restClient;
+        this.multiLayerLocalStorage = multiLayerLocalStorage;
     }
 
     // This method will not persist the userId to enable control of when tracking the anonymous userId begins in MANAGED mode
@@ -75,6 +83,26 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
         this.userId = userId;
         persistUser();
         SwrveLogger.i("SwrveSDK: userId is set to: %s", userId);
+    }
+
+    synchronized boolean addNewDisabledUserId(String userId) {
+        if (disabledUserIds.contains(userId)) {
+            SwrveLogger.i("SwrveSDK: ignoring duplicate disabled user for userId:%s", userId);
+            return false;
+        }
+        disabledUserIds.add(userId);
+        return true;
+    }
+
+    synchronized boolean isCurrentUserDisabled() {
+        return this.userId != null && disabledUserIds.contains(this.userId);
+    }
+
+    String generateNewUser() {
+        String newUserId = generateSwrveUserId();
+        setUserId(newUserId);
+        updateSessionToken();
+        return newUserId;
     }
 
     String getSavedUserIdFromPrefs() {
@@ -139,6 +167,46 @@ class SwrveProfileManager<C extends SwrveConfigBase> {
             executorService.execute(SwrveRunnables.withoutExceptions(runnable));
         } finally {
             executorService.shutdown();
+        }
+    }
+
+    protected void handleDisabledUser(String responseBody, String disabledUserId) {
+        if (SwrveHelper.isNullOrEmpty(responseBody) || SwrveHelper.isNullOrEmpty(disabledUserId)) {
+            return;
+        }
+
+        try {
+            JSONObject responseJson = new JSONObject(responseBody);
+            String message = responseJson.optString("message", null);
+            if (!"User access has been disabled".equals(message)) {
+                return;
+            }
+
+            // If already disabled and we receive another 401 for the same user, ignore it as the user is already disabled
+            // and we don't want to trigger the listener twice for the same user.
+            if (!addNewDisabledUserId(disabledUserId)) {
+                return;
+            }
+
+            // Before deleting all user data, get external Id to use in the listener onUserDisabled,
+            SwrveUser disabledUser = multiLayerLocalStorage.getUserBySwrveUserId(disabledUserId);
+            String externalUserId = disabledUser == null || disabledUser.getExternalUserId() == null ? "" : disabledUser.getExternalUserId();
+            multiLayerLocalStorage.deleteAllDataForUserId(disabledUserId);
+            multiLayerLocalStorage.deleteUser(disabledUserId);
+
+            // Ensure the user has not changed to another user before calling stopTracking
+            if (isCurrentUserDisabled()) {
+                SwrveLogger.w("User access has been disabled, SDK will stop tracking.");
+                SwrveSDK.stopTracking();
+                generateNewUser();
+            }
+
+            if (config.getUserDisabledListener() != null) {
+                config.getUserDisabledListener().onUserDisabled(context, disabledUserId, externalUserId);
+            }
+
+        } catch (Exception e) {
+            SwrveLogger.e("Error parsing 401 response body while handling potential disabled user. Response body: " + responseBody, e);
         }
     }
 

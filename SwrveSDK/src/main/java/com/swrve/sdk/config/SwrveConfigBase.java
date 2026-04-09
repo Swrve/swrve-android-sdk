@@ -629,16 +629,16 @@ public abstract class SwrveConfigBase {
      * Returns the listener that will be notified when a user has been disabled.
      * @return the configured SwrveUserDisabledListener
      */
-//    public SwrveUserDisabledListener getUserDisabledListener() {
-//        return userDisabledListener;
-//    }
+   public SwrveUserDisabledListener getUserDisabledListener() {
+       return userDisabledListener;
+   }
 
     /**
      * Sets a listener to be notified when a user has been disabled.
      * @param userDisabledListener The listener to be notified when a user is
      *                                disabled.
      */
-//    public void setUserDisabledListener(SwrveUserDisabledListener userDisabledListener) {
-//        this.userDisabledListener = userDisabledListener;
-//    }
+   public void setUserDisabledListener(SwrveUserDisabledListener userDisabledListener) {
+       this.userDisabledListener = userDisabledListener;
+   }
 }

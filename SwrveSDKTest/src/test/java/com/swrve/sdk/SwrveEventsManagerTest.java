@@ -209,7 +209,7 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
 
         // create swrveEventsManager spy
         IRESTClient restClient = createFakeRestClient(200);
-        SwrveEventsManagerImp swrveEventsManagerSpy = spy(new SwrveEventsManagerImp(mActivity, new SwrveConfig(), restClient, userId, "1", "sessionToken", UUID.randomUUID().toString()));
+        SwrveEventsManagerImp swrveEventsManagerSpy = spy(new SwrveEventsManagerImp(mActivity, new SwrveConfig(), restClient, userId, "1", "sessionToken", UUID.randomUUID().toString(), null));
         Mockito.doReturn(9876).when(swrveEventsManagerSpy).getNextSequenceNumber();
         Mockito.doReturn(1565691809624l).when(swrveEventsManagerSpy).getTime();
 
@@ -285,14 +285,14 @@ public class SwrveEventsManagerTest extends SwrveBaseTest {
     private void storeAndSendEvents(int responseCode, ArrayList<String> events) throws Exception {
         IRESTClient restClient = createFakeRestClient(responseCode);
         String deviceId = UUID.randomUUID().toString();
-        SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(mActivity, new SwrveConfig(), restClient, userId, "1", "sessionToken", deviceId);
+        SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(mActivity, new SwrveConfig(), restClient, userId, "1", "sessionToken", deviceId, null);
         swrveEventsManager.storeAndSendEvents(events, secondaryStorage);
     }
 
     private void sendStoredEvents(int responseCode) {
         IRESTClient restClient = createFakeRestClient(responseCode);
         String deviceId = UUID.randomUUID().toString();
-        SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(mActivity, new SwrveConfig(), restClient, userId, "1", "sessionToken", deviceId);
+        SwrveEventsManager swrveEventsManager = new SwrveEventsManagerImp(mActivity, new SwrveConfig(), restClient, userId, "1", "sessionToken", deviceId, null);
         swrveEventsManager.sendStoredEvents(multiLayerLocalStorage);
     }
 }

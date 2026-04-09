@@ -594,10 +594,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _stopTracking() {
-
         started = false;
         profileManager.setTrackingState(STOPPED);
-        queueDeviceUpdateNow(profileManager.getUserId(), profileManager.getSessionToken(), true);
+
+        if (!profileManager.isCurrentUserDisabled()) {
+            queueDeviceUpdateNow(profileManager.getUserId(), profileManager.getSessionToken(), true);
+        }
 
         shutdownCampaignsAndResourcesTimer();
 
@@ -803,13 +805,9 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 if (response.responseCode == HttpURLConnection.HTTP_OK) {
                                     handleSuccessfulResponse(response);
                                     resultCode = SwrveRefreshContentListenerResult.ResultCode.SUCCESS;
-                                }
-                                //will add back this logic when backend ready
-//                                else if (response.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-//                                    handle401(response);
-//                                    resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR;
-//                                }
-                                else {
+                                } else if (response.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                                    resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR;
+                                } else {
                                     resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR;
                                     errorMessage = response.responseBody;
                                 }
@@ -832,42 +830,6 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage(), 0));
                             }
                         }
-                          // will add back this logic when backend ready.
-//                        private void handle401(RESTResponse response) {
-//                            try {
-//                                JSONObject responseJson = new JSONObject(response.responseBody);
-//                                String message = responseJson.optString("message", null);
-//
-//                                if ("User access has been disabled".equals(message)) {
-//                                    SwrveLogger.w("User access has been disabled, SDK will stop tracking.");
-//
-//                                    String disabledUserId = getUserId();
-//                                    String externalUserId = getExternalUserId();
-//
-//                                    // Delete all local data for this user
-//                                    multiLayerLocalStorage.deleteAllDataForUserId(disabledUserId);
-//                                    stopTracking();
-//
-//                                    // Create and switch to a new anonymous user
-//                                    String newUserId = profileManager.generateSwrveUserId();
-//                                    profileManager.setUserId(newUserId);
-//
-//                                    SwrveUserDisabledListener userDisabledListener =
-//                                            config.getUserDisabledListener();
-//
-//                                    if (userDisabledListener != null) {
-//                                        userDisabledListener.onUserDisabled(
-//                                                getContext(),
-//                                                disabledUserId,
-//                                                externalUserId != null ? externalUserId : ""
-//                                        );
-//                                    }
-//                                }
-//                            } catch (Exception e) {
-//                                SwrveLogger.e("Error parsing 401 response body while handling potential disabled user. Response body: " + response.responseBody, e);
-//                            }
-//                        }
-
                         private void handleSuccessfulResponse(RESTResponse response) throws JSONException {
                             SharedPreferences settings = context.get().getSharedPreferences(SDK_PREFS_NAME, 0);
                             SharedPreferences.Editor settingsEditor = settings.edit();
@@ -2824,7 +2786,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected SwrveEventsManager getSwrveEventsManager(String userId, String deviceId, String sessionToken) {
-        return new SwrveEventsManagerImp(context.get(), config, restClient, userId, appVersion, sessionToken, deviceId);
+        return new SwrveEventsManagerImp(context.get(), config, restClient, userId, appVersion, sessionToken, deviceId, profileManager);
     }
 
     @Override
