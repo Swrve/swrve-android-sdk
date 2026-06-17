@@ -20,6 +20,7 @@ import androidx.media3.common.Player;
 
 import com.swrve.sdk.QaUser;
 import com.swrve.sdk.R;
+import com.swrve.sdk.SwrveFreemarkerEvaluator;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveImageScaler;
 import com.swrve.sdk.SwrveInAppMessageActivity;
@@ -51,6 +52,8 @@ public class SwrveMessageView extends RelativeLayout {
     private int minSampleSize = 1; // Minimum sample size to use when loading images
     private SwrveInAppMessageConfig inAppConfig;
     private Map<String, String> inAppPersonalization;
+    private boolean freemarkerEnabled;
+    private boolean useLocalTimezone;
     private List<String> loadErrorReasons = new ArrayList<>();
 
     private WeakReference<GestureDetector> gestureDetector;
@@ -69,6 +72,8 @@ public class SwrveMessageView extends RelativeLayout {
         this.message = message;
         this.format = format;
         this.inAppPersonalization = inAppPersonalization;
+        this.freemarkerEnabled = message.getCampaign().isFreemarkerEnabled();
+        this.useLocalTimezone = message.getCampaign().useLocalTimezone();
         if (format.getPages() != null && !format.getPages().containsKey(pageId)) {
             dismiss();
             return;
@@ -109,7 +114,7 @@ public class SwrveMessageView extends RelativeLayout {
         }
     }
 
-    // Personalization is guarded by SwrveMessageTextTemplatingChecks
+    // Personalization and visible_if expressions are pre-validated by SwrveMessageTextTemplatingChecks before display.
     protected void initializeLayout() throws SwrveSDKTextTemplatingException {
 
         // Get device screen metrics
@@ -136,6 +141,9 @@ public class SwrveMessageView extends RelativeLayout {
 
         List<SwrveWidget> pageElements = getPageElements();
         for (final SwrveWidget widget : pageElements) {
+            if (!shouldRenderElement(widget)) {
+                continue;
+            }
             if (widget instanceof SwrveButton) {
                 SwrveButton button = (SwrveButton) widget;
                 if (button.getTheme() != null) {
@@ -156,6 +164,20 @@ public class SwrveMessageView extends RelativeLayout {
             if (loadErrorReasons.size() > 0) {
                 break;
             }
+        }
+    }
+
+    private boolean shouldRenderElement(SwrveWidget widget) throws SwrveSDKTextTemplatingException {
+        String visibleIf = widget.getVisibleIf();
+        if (visibleIf.isEmpty()) {
+            return true;
+        }
+        try {
+            String template = "<#if " + visibleIf + ">true<#else>false</#if>";
+            String result = SwrveFreemarkerEvaluator.evaluate(template, inAppPersonalization != null ? inAppPersonalization : Collections.emptyMap(), this.useLocalTimezone);
+            return "true".equals(result);
+        } catch (Throwable e) {
+            throw new SwrveSDKTextTemplatingException("visible_if evaluation failed for '" + visibleIf + "': " + e.getMessage(), e);
         }
     }
 
@@ -205,7 +227,7 @@ public class SwrveMessageView extends RelativeLayout {
         }
 
         // Still need to personalize text
-        String personalizedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalization);
+        String personalizedText = SwrveTextTemplating.apply(imageText, this.inAppPersonalization, this.freemarkerEnabled, this.useLocalTimezone);
         personalizedText = personalizedText.replaceAll("\\n", "\n");
 
         String fontNativeStyle = image.getFontNativeStyle() == null ? null : image.getFontNativeStyle().toString();
@@ -233,7 +255,7 @@ public class SwrveMessageView extends RelativeLayout {
         SwrveTextView textView = new SwrveTextView(getContext(), personalizedText, textViewStyle, format.getCalibration());
 
         if (SwrveHelper.isNotNullOrEmpty(image.getAccessibilityText())) {
-            String personalizedAccessibilityText = SwrveTextTemplating.apply(image.getAccessibilityText(), this.inAppPersonalization);
+            String personalizedAccessibilityText = SwrveTextTemplating.apply(image.getAccessibilityText(), this.inAppPersonalization, this.freemarkerEnabled, this.useLocalTimezone);
             textView.setContentDescription(personalizedAccessibilityText);
         } else if (SwrveHelper.isNotNullOrEmpty(personalizedText)) {
             textView.setContentDescription(personalizedText);
@@ -263,9 +285,9 @@ public class SwrveMessageView extends RelativeLayout {
         final ImageView imageView;
         String imageText = image.getText();
         if (SwrveHelper.isNullOrEmpty(imageText)) {
-            imageView = new SwrveImageView(getContext(), image, inAppPersonalization, imageFileInfo);
+            imageView = new SwrveImageView(getContext(), image, inAppPersonalization, imageFileInfo, freemarkerEnabled, useLocalTimezone);
         } else {
-            imageView = new SwrveTextImageView(getContext(), image, inAppPersonalization, inAppConfig, imageFileInfo.image.getWidth(), imageFileInfo.image.getHeight());
+            imageView = new SwrveTextImageView(getContext(), image, inAppPersonalization, inAppConfig, imageFileInfo.image.getWidth(), imageFileInfo.image.getHeight(), freemarkerEnabled, useLocalTimezone);
         }
         // Position and size
         RelativeLayout.LayoutParams lparams = getLayoutParams(image, imageFileInfo);
@@ -290,12 +312,12 @@ public class SwrveMessageView extends RelativeLayout {
         final String resolvedButtonAction;
         final String resolvedButtonText;
         if (SwrveHelper.isNullOrEmpty(button.getText())) {
-            SwrveButtonView swrveButtonView = new SwrveButtonView(getContext(), button, inAppPersonalization, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor(), imageFileInfo);
+            SwrveButtonView swrveButtonView = new SwrveButtonView(getContext(), button, inAppPersonalization, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor(), imageFileInfo, freemarkerEnabled, useLocalTimezone);
             buttonView = swrveButtonView;
             resolvedButtonAction = swrveButtonView.getAction();
             resolvedButtonText = button.getText();
         } else {
-            SwrveButtonTextImageView swrveButtonTextImageView = new SwrveButtonTextImageView(getContext(), button, inAppPersonalization, inAppConfig, imageFileInfo.image.getWidth(), imageFileInfo.image.getHeight());
+            SwrveButtonTextImageView swrveButtonTextImageView = new SwrveButtonTextImageView(getContext(), button, inAppPersonalization, inAppConfig, imageFileInfo.image.getWidth(), imageFileInfo.image.getHeight(), freemarkerEnabled, useLocalTimezone);
             buttonView = swrveButtonTextImageView;
             resolvedButtonAction = swrveButtonTextImageView.getAction();
             resolvedButtonText = swrveButtonTextImageView.getText();
@@ -320,7 +342,7 @@ public class SwrveMessageView extends RelativeLayout {
 
     private void addThemedButton(SwrveButton button) throws SwrveSDKTextTemplatingException {
         SwrveThemedMaterialButton buttonView = new SwrveThemedMaterialButton(getContext(), com.google.android.material.R.attr.materialButtonOutlinedStyle,
-                button, inAppPersonalization, inAppConfig.getMessageFocusListener(), format.getCalibration(), message.getCacheDir().getAbsolutePath());
+                button, inAppPersonalization, inAppConfig.getMessageFocusListener(), format.getCalibration(), message.getCacheDir().getAbsolutePath(), freemarkerEnabled, useLocalTimezone);
         // Position
         RelativeLayout.LayoutParams lparams = new RelativeLayout.LayoutParams(button.getSize().x, button.getSize().y);
         lparams.leftMargin = button.getPosition().x;
@@ -338,7 +360,7 @@ public class SwrveMessageView extends RelativeLayout {
     }
 
     private void addVideoView(SwrveImage video) throws SwrveSDKTextTemplatingException {
-        String resolvedUrl = SwrveTextTemplating.apply(video.getDynamicImageUrl(), this.inAppPersonalization);
+        String resolvedUrl = SwrveTextTemplating.apply(video.getDynamicImageUrl(), this.inAppPersonalization, this.freemarkerEnabled, this.useLocalTimezone);
         String asset = SwrveHelper.sha1(resolvedUrl.getBytes());
         //Only support .mp4 video files
         String filePath = message.getCacheDir().getAbsolutePath() + "/" + asset + ".mp4";
@@ -356,7 +378,7 @@ public class SwrveMessageView extends RelativeLayout {
 
 
         if (SwrveHelper.isNotNullOrEmpty(video.getAccessibilityText())) {
-            String personalizedAccessibilityText = SwrveTextTemplating.apply(video.getAccessibilityText(), this.inAppPersonalization);
+            String personalizedAccessibilityText = SwrveTextTemplating.apply(video.getAccessibilityText(), this.inAppPersonalization, this.freemarkerEnabled, this.useLocalTimezone);
             videoPlayerView.setContentDescription(personalizedAccessibilityText);
         }
 
@@ -483,7 +505,7 @@ public class SwrveMessageView extends RelativeLayout {
         }
 
         try {
-            String personalizedUrl = SwrveTextTemplating.apply(url, this.inAppPersonalization);
+            String personalizedUrl = SwrveTextTemplating.apply(url, this.inAppPersonalization, this.freemarkerEnabled, this.useLocalTimezone);
             if (SwrveHelper.isNotNullOrEmpty(personalizedUrl)) {
                 // then there might be an asset saved, get the sha1 and check
                 String candidateAsset = SwrveHelper.sha1(personalizedUrl.getBytes());

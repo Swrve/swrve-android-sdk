@@ -44,9 +44,10 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
         if (swrveMessageCenterDetails == null) {
             return;
         }
+        boolean freemarkerEnabled = isFreemarkerEnabled();
         if (SwrveHelper.isNotNullOrEmpty(swrveMessageCenterDetails.getImageURL())) {
             try {
-                String resolvedUrl = SwrveTextTemplating.apply(swrveMessageCenterDetails.getImageURL(), properties);
+                String resolvedUrl = SwrveTextTemplating.apply(swrveMessageCenterDetails.getImageURL(), properties, freemarkerEnabled, useLocalTimezone());
                 assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
             } catch (SwrveSDKTextTemplatingException exception) {
                 SwrveLogger.w("Campaign id:%s text templating could not be resolved for message center image url. %s", getId(), exception.getMessage());
@@ -64,6 +65,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
             return; // exit quickly
         }
 
+        boolean freemarkerEnabled = isFreemarkerEnabled();
         for (SwrveMessageFormat format : formats) {
 
             for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
@@ -76,7 +78,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
                     if (!SwrveHelper.isNullOrEmpty(button.getDynamicImageUrl())) {
                         try {
-                            String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
+                            String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties, freemarkerEnabled, useLocalTimezone());
                             assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
                         } catch (SwrveSDKTextTemplatingException exception) {
                             SwrveLogger.w("Campaign id:%s text templating could not be resolved for button dynamic image url. %s", getId(), exception.getMessage());
@@ -115,7 +117,7 @@ public class SwrveInAppCampaign extends SwrveBaseCampaign {
 
                     if (!SwrveHelper.isNullOrEmpty(image.getDynamicImageUrl())) {
                         try {
-                            String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
+                            String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties, freemarkerEnabled, useLocalTimezone());
                             assetsQueue.add(new SwrveAssetsQueueItem(getId(), SwrveHelper.sha1(resolvedUrl.getBytes()), resolvedUrl, true, true));
                         } catch (SwrveSDKTextTemplatingException exception) {
                             SwrveLogger.w("Campaign id:%s text templating could not be resolved for image dynamic image url. %s", getId(), exception.getMessage());

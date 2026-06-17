@@ -956,6 +956,7 @@ class SwrveUnitTest : SwrveBaseTest() {
 
         var expectedProperties: MutableMap<String?, String?> = HashMap()
         expectedProperties["user.key1"] = "value1"
+        expectedProperties["Recipient.key1"] = "value1"
 
         // verify with no callback, just real time user properties
         resultProperties = swrveSpy!!.retrievePersonalizationProperties(null, null)
@@ -973,6 +974,7 @@ class SwrveUnitTest : SwrveBaseTest() {
 
         expectedProperties = HashMap()
         expectedProperties["user.key1"] = "value1"
+        expectedProperties["Recipient.key1"] = "value1"
         expectedProperties["key2"] = "value2"
 
         resultProperties = swrveSpy!!.retrievePersonalizationProperties(null, null)
@@ -989,6 +991,7 @@ class SwrveUnitTest : SwrveBaseTest() {
         // verify from message center (directly passing in properties)
         expectedProperties = HashMap()
         expectedProperties["user.key1"] = "value1"
+        expectedProperties["Recipient.key1"] = "value1"
         expectedProperties["key3"] = "value3"
 
         resultProperties = swrveSpy!!.retrievePersonalizationProperties(null, messageCenterResponse)

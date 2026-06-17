@@ -45,6 +45,7 @@ abstract class SwrveWidget {
     protected String foregroundColor;
     protected String backgroundColor;
     private int iamZIndex;
+    private String visibleIf = "";
 
     public SwrveWidget() {
     }
@@ -109,6 +110,10 @@ abstract class SwrveWidget {
 
         if (data.has("iam_z_index")) {
             this.iamZIndex = data.getInt("iam_z_index");
+        }
+
+        if (data.has("visible_if")) {
+            this.visibleIf = data.getString("visible_if");
         }
     }
 
@@ -238,5 +243,9 @@ abstract class SwrveWidget {
 
     public int getIamZIndex() {
         return iamZIndex;
+    }
+
+    public String getVisibleIf() {
+        return visibleIf;
     }
 }

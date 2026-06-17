@@ -1,5 +1,6 @@
 package com.swrve.sdk
 
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException
 import com.swrve.sdk.messaging.SwrveBaseCampaign
 import com.swrve.sdk.messaging.SwrveBaseCampaign.SwrveTimezoneType
 import com.swrve.sdk.messaging.SwrveInAppCampaign
@@ -538,11 +539,13 @@ class SwrveCampaignDisplayer {
     }
 
     fun checkPersonalizationProperties(campaign: SwrveInAppCampaign, personalization: Map<String, String>?, qaCampaignInfoMap: MutableMap<Int, QaCampaignInfo>): Boolean {
-        if (SwrveMessageTextTemplatingChecks.checkTextTemplating(campaign.message, personalization)) {
+        try {
+            SwrveMessageTextTemplatingChecks.checkTextTemplatingOrThrow(campaign.message, personalization)
             return true
+        } catch (exp: SwrveSDKTextTemplatingException) {
+            val text = "Campaign ${campaign.id} has unresolved personalization properties: ${exp.message}"
+            logAndAddReason(campaign, text, false, qaCampaignInfoMap)
+            return false
         }
-        val text = "Campaign [" + campaign.id + "] has unresolved personalization properties"
-        logAndAddReason(campaign, text, false, qaCampaignInfoMap)
-        return false
     }
 }

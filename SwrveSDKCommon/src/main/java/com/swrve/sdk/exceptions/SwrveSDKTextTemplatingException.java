@@ -7,4 +7,8 @@ public class SwrveSDKTextTemplatingException extends Exception {
     public SwrveSDKTextTemplatingException(String detailMessage) {
         super(detailMessage);
     }
+
+    public SwrveSDKTextTemplatingException(String detailMessage, Throwable cause) {
+        super(detailMessage, cause);
+    }
 }

@@ -379,6 +379,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         initSDK();
         SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_personalization.json", "1111111111111111111111111");
 
+        QaUser.instance = null;
         QaUser qaUserSpy = spy(QaUser.getInstance());
         QaUser.instance = qaUserSpy;
         qaUserSpy.loggingEnabled = true;
@@ -395,11 +396,39 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
         assertNull(view);
 
-        // no message should be shown but a qalog event should be queued with reason "Campaign [102] has unresolved personalization properties"
+        // no message should be shown but a qalog event should be queued with the missing key identified
         assertEquals(2, qaUserSpy.qaLogQueue.size());
         String secondEvent = qaUserSpy.qaLogQueue.get(1);
-        String expectedQaLog = "{\"time\":999,\"type\":\"qa_log_event\",\"log_source\":\"sdk\",\"log_type\":\"campaign-triggered\",\"log_details\":{\"event_name\":\"show.personalized\",\"event_payload\":{},\"displayed\":false,\"reason\":\"The loaded campaigns returned no message\",\"campaigns\":[{\"id\":102,\"variant_id\":165,\"type\":\"iam\",\"displayed\":false,\"reason\":\"Campaign [102] has unresolved personalization properties\"}]}}";
+        String expectedQaLog = "{\"time\":999,\"type\":\"qa_log_event\",\"log_source\":\"sdk\",\"log_type\":\"campaign-triggered\",\"log_details\":{\"event_name\":\"show.personalized\",\"event_payload\":{},\"displayed\":false,\"reason\":\"The loaded campaigns returned no message\",\"campaigns\":[{\"id\":102,\"variant_id\":165,\"type\":\"iam\",\"displayed\":false,\"reason\":\"Campaign 102 has unresolved personalization properties: TextTemplating: Missing property value for key: test_cp\"}]}}";
         assertEquals(expectedQaLog, secondEvent);
+    }
+
+    @Test
+    public void testVisibleIfMalformedConditionDoesNotShowCampaign() throws Exception {
+        initSDK();
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_visible_if.json", "1111111111111111111111111");
+
+        QaUser.instance = null;
+        QaUser qaUserSpy = spy(QaUser.getInstance());
+        QaUser.instance = qaUserSpy;
+        qaUserSpy.loggingEnabled = true;
+        doNothing().when(qaUserSpy).scheduleRepeatingQueueFlush(anyLong());
+        doReturn(999L).when(qaUserSpy).getTime();
+
+        swrveSpy.event("visible_if_malformed_event");
+
+        ActivityController<SwrveInAppMessageActivity> activityController = Robolectric.buildActivity(SwrveInAppMessageActivity.class, mShadowActivity.peekNextStartedActivity());
+        SwrveInAppMessageActivity activity = activityController.create().start().visible().get();
+        assertNotNull(activity);
+
+        ViewGroup parentView = activity.findViewById(android.R.id.content);
+        SwrveMessageView view = (SwrveMessageView) parentView.getChildAt(0);
+        assertNull(view);
+
+        String secondEvent = qaUserSpy.qaLogQueue.get(qaUserSpy.qaLogQueue.size() - 1);
+        assertTrue(secondEvent.contains("\"event_name\":\"visible_if_malformed_event\""));
+        assertTrue(secondEvent.contains("\"id\":201"));
+        assertTrue(secondEvent.contains("\"reason\":\"Campaign 201 has unresolved personalization properties: visible_if condition could not be evaluated\""));
     }
 
     @Test

@@ -40,6 +40,8 @@ public class SwrveThemedMaterialButton extends MaterialButton {
     protected SwrveCalibration calibration;
     private String cachePath;
     private String action;
+    private boolean freemarkerEnabled;
+    private boolean useLocalTimezone;
     protected SwrveTextUtils swrveTextUtils = new SwrveTextUtils();
 
     // exposed for testing
@@ -48,7 +50,7 @@ public class SwrveThemedMaterialButton extends MaterialButton {
     }
 
     public SwrveThemedMaterialButton(Context context, int defStyleAttr, SwrveButton button, Map<String, String> inAppPersonalization,
-                                     SwrveMessageFocusListener messageFocusListener, SwrveCalibration calibration, String cachePath) throws SwrveSDKTextTemplatingException {
+                                     SwrveMessageFocusListener messageFocusListener, SwrveCalibration calibration, String cachePath, boolean freemarkerEnabled, boolean useLocalTimezone) throws SwrveSDKTextTemplatingException {
         super(context, null, defStyleAttr);
 
         this.button = button;
@@ -56,13 +58,15 @@ public class SwrveThemedMaterialButton extends MaterialButton {
         this.messageFocusListener = messageFocusListener;
         this.calibration = calibration;
         this.cachePath = cachePath;
+        this.freemarkerEnabled = freemarkerEnabled;
+        this.useLocalTimezone = useLocalTimezone;
 
         init(button.getText(), inAppPersonalization);
     }
 
     protected void init(String text, Map<String, String> inAppPersonalization) throws SwrveSDKTextTemplatingException {
 
-        text = SwrveTextTemplating.apply(text, inAppPersonalization);
+        text = SwrveTextTemplating.apply(text, inAppPersonalization, freemarkerEnabled, useLocalTimezone);
         setText(text);
         setCornerRadius(theme.getCornerRadius());
 
@@ -231,7 +235,7 @@ public class SwrveThemedMaterialButton extends MaterialButton {
         }
         String accessibilityText = button.getAccessibilityText();
         if (SwrveHelper.isNotNullOrEmpty(accessibilityText)) {
-            String personalizedAccessibilityText = SwrveTextTemplating.apply(accessibilityText, inAppPersonalization);
+            String personalizedAccessibilityText = SwrveTextTemplating.apply(accessibilityText, inAppPersonalization, freemarkerEnabled, useLocalTimezone);
             setContentDescription(personalizedAccessibilityText);
         } else if (SwrveHelper.isNotNullOrEmpty(text)) {
             setContentDescription(text);
@@ -254,7 +258,7 @@ public class SwrveThemedMaterialButton extends MaterialButton {
             return;
         }
         if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(button.getAction())) {
-            this.action = SwrveTextTemplating.apply(button.getAction(), inAppPersonalization);
+            this.action = SwrveTextTemplating.apply(button.getAction(), inAppPersonalization, freemarkerEnabled, useLocalTimezone);
         } else {
             this.action = button.getAction();
         }

@@ -1,10 +1,9 @@
 package com.swrve.sdk.sample.minimalintegration.firebase;
 
+import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-
-import androidx.multidex.MultiDexApplication;
 
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrveSDK;
@@ -13,7 +12,7 @@ import com.swrve.sdk.config.SwrveConfig;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SampleApplication extends MultiDexApplication {
+public class SampleApplication extends Application {
 
     private static final int YOUR_APP_ID = 0;
     private static final String YOUR_API_KEY = "YOUR_API_KEY";

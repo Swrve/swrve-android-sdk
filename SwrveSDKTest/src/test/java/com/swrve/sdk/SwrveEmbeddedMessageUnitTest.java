@@ -7,10 +7,12 @@ import static org.junit.Assert.assertTrue;
 import com.swrve.sdk.messaging.SwrveBaseMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.Map;
 
 
 public class SwrveEmbeddedMessageUnitTest extends SwrveBaseTest {
@@ -77,5 +79,71 @@ public class SwrveEmbeddedMessageUnitTest extends SwrveBaseTest {
         assertEquals("Button 2", message.getButtons().get(1));
         assertEquals("Button 3", message.getButtons().get(2));
         assertEquals(SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON, message.getType());
+    }
+
+    @Test
+    public void testGetPersonalizedEmbeddedMessageDataFreemarkerOtherType() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
+        SwrveBaseMessage baseMessage = swrveSpy.getBaseMessageForEvent("embedded_freemarker_other");
+        assertNotNull(baseMessage);
+        assertTrue(baseMessage instanceof SwrveEmbeddedMessage);
+        SwrveEmbeddedMessage message = (SwrveEmbeddedMessage) baseMessage;
+        assertTrue(message.getCampaign().isFreemarkerEnabled());
+
+        Map<String, String> properties = new HashMap<>();
+        properties.put("user_name", "Alice");
+        String resolved = swrveSpy.getPersonalizedEmbeddedMessageData(message, properties);
+        assertEquals("Alice", resolved);
+    }
+
+    @Test
+    public void testGetPersonalizedEmbeddedMessageDataFreemarkerOtherTypeDefaultBranch() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
+        SwrveBaseMessage baseMessage = swrveSpy.getBaseMessageForEvent("embedded_freemarker_other");
+        assertNotNull(baseMessage);
+        SwrveEmbeddedMessage message = (SwrveEmbeddedMessage) baseMessage;
+
+        assertTrue(baseMessage instanceof SwrveEmbeddedMessage);
+        // No user_name property — FreeMarker <#else> branch resolves to "anonymous"
+        String resolved = swrveSpy.getPersonalizedEmbeddedMessageData(message, new HashMap<>());
+        assertEquals("anonymous", resolved);
+    }
+
+    @Test
+    public void testGetPersonalizedEmbeddedMessageDataFreemarkerOtherTypeStringLiteral() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
+        SwrveBaseMessage baseMessage = swrveSpy.getBaseMessageForEvent("embedded_freemarker_other_string_literal");
+        assertNotNull(baseMessage);
+        assertTrue(baseMessage instanceof SwrveEmbeddedMessage);
+        SwrveEmbeddedMessage message = (SwrveEmbeddedMessage) baseMessage;
+        assertTrue(message.getCampaign().isFreemarkerEnabled());
+        assertEquals(SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.OTHER, message.getType());
+
+        Map<String, String> goldProps = new HashMap<>();
+        goldProps.put("Recipient.tier", "gold");
+        String resolvedGold = swrveSpy.getPersonalizedEmbeddedMessageData(message, goldProps);
+        assertEquals("Gold Member", resolvedGold);
+
+        Map<String, String> bronzeProps = new HashMap<>();
+        bronzeProps.put("Recipient.tier", "bronze");
+        String resolvedBronze = swrveSpy.getPersonalizedEmbeddedMessageData(message, bronzeProps);
+        assertEquals("Standard Member", resolvedBronze);
+    }
+
+    @Test
+    public void testGetPersonalizedEmbeddedMessageDataFreemarkerJsonType() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_embedded.json");
+        SwrveBaseMessage baseMessage = swrveSpy.getBaseMessageForEvent("embedded_freemarker_json");
+        assertNotNull(baseMessage);
+        assertTrue(baseMessage instanceof SwrveEmbeddedMessage);
+        SwrveEmbeddedMessage message = (SwrveEmbeddedMessage) baseMessage;
+        assertTrue(message.getCampaign().isFreemarkerEnabled());
+        assertEquals(SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON, message.getType());
+
+        Map<String, String> properties = new HashMap<>();
+        properties.put("user_name", "Bob");
+        String resolved = swrveSpy.getPersonalizedEmbeddedMessageData(message, properties);
+        JSONObject resolvedJson = new org.json.JSONObject(resolved);
+        assertEquals("Bob", resolvedJson.getString("name"));
     }
 }

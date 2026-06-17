@@ -43,6 +43,24 @@ public class SwrveRealTimeUserPropertiesTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testProcessedRealTimeUserPropertiesContainsRecipientPrefix() {
+        String campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "real_time_user_properties_test.json");
+        SwrveTestUtils.runSingleThreaded(swrveSpy);
+        SwrveTestUtils.setRestClientWithGetResponse(swrveSpy, campaignsResponseJson);
+
+        swrveSpy.init(mActivity);
+
+        Map<String, String> personalization = swrveSpy.retrievePersonalizationProperties(null, null);
+        assertNotNull(personalization);
+        // Legacy user. prefix — for existing templating
+        assertTrue("user. prefix should be present", personalization.containsKey("user.test_id"));
+        assertEquals("test_value", personalization.get("user.test_id"));
+        // Recipient. prefix — for FreeMarker templating
+        assertTrue("Recipient. prefix should be present", personalization.containsKey("Recipient.test_id"));
+        assertEquals("test_value", personalization.get("Recipient.test_id"));
+    }
+
+    @Test
     public void testRealTimeUserPropertiesGetterFromCache() {
         String campaignsResponseJson = SwrveTestUtils.getAssetAsText(mActivity, "real_time_user_properties_test.json");
         SwrveTestUtils.runSingleThreaded(swrveSpy); // need to run it single threaded because setting the value is a multi-threaded procedure

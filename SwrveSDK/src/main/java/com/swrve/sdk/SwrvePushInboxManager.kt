@@ -102,7 +102,7 @@ class SwrvePushInboxManager(val context: Context,
     fun engageMessage(messageId: Long, listener: SwrvePushInboxListener) {
         val message: SwrvePushInboxMessage? = getPushInboxMessage(messageId)
         if (message != null) {
-            sendEvent(GENERIC_EVENT_ACTION_TYPE_PIM_ENGAGED, message.variantId, messageId, message.state)
+            sendEvent(GENERIC_EVENT_ACTION_TYPE_PIM_ENGAGED, message.variantId, messageId, message.state, message.trackingData)
         }
         readMessage(messageId, listener)
     }
@@ -150,9 +150,9 @@ class SwrvePushInboxManager(val context: Context,
             val jsonResponse = JSONObject(responseBody)
             if (jsonResponse.optString("state") == "modified") {
                 if (state == SwrvePushInboxMessageState.READ) {
-                    sendEvent(GENERIC_EVENT_ACTION_TYPE_PIM_READ, message.variantId, messageId, message.state)
+                    sendEvent(GENERIC_EVENT_ACTION_TYPE_PIM_READ, message.variantId, messageId, message.state, message.trackingData)
                 } else if (state == SwrvePushInboxMessageState.DELETED) {
-                    sendEvent(ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_PIM_DELETE, message.variantId, messageId, message.state)
+                    sendEvent(ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_PIM_DELETE, message.variantId, messageId, message.state, message.trackingData)
                 }
             }
         }
@@ -167,7 +167,7 @@ class SwrvePushInboxManager(val context: Context,
         }
     }
 
-    private fun sendEvent(actionType: String, variantId: Long, messageId: Long, state: SwrvePushInboxMessageState) {
+    private fun sendEvent(actionType: String, variantId: Long, messageId: Long, state: SwrvePushInboxMessageState, trackingData: String) {
         val time = System.currentTimeMillis()
         val id = variantId.toString()
         val campaignType = ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PIM
@@ -177,6 +177,9 @@ class SwrvePushInboxManager(val context: Context,
         if (actionType != GENERIC_EVENT_ACTION_TYPE_PIM_READ) {
             val stateString = if (state == SwrvePushInboxMessageState.READ) "read" else "unread"
             payload[ISwrveCommon.GENERIC_EVENT_PAYLOAD_PIM_STATE] = stateString
+        }
+        if (trackingData.isNotEmpty()) {
+            payload[ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA] = trackingData
         }
         val swrveCommon = SwrveCommon.getInstance()
         val seqNum: Int = swrveCommon.getNextSequenceNumber()

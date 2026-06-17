@@ -1,0 +1,188 @@
+{
+  "cdn_root": "http://www.sonecdn.com/",
+  "game_data": {},
+  "rules": {
+    "min_delay_between_messages": 0,
+    "max_messages_per_session": 9999,
+    "delay_first_message": 0
+  },
+  "version": 2,
+  "campaigns": [
+    {
+      "id": 200,
+      "end_date_iso": "2044-12-05T16:41:40Z",
+      "rules": {"dismiss_after_views": 9999, "delay_first_message": 0, "min_delay_between_messages": 0},
+      "triggers": [
+        {
+          "event_name": "visible_if_test_event",
+          "conditions": {}
+        }
+      ],
+      "start_date_iso": "2013-03-07T15:55:00Z",
+      "timezone_type": "global",
+      "message": {
+        "id": 200,
+        "name": "VisibleIfTest",
+        "rules": {},
+        "template": {
+          "template_id": "200",
+          "formats": [
+            {
+              "orientation": "landscape",
+              "name": "Kindle (English (US))",
+              "language": "en-US",
+              "size": {
+                "w": { "type": "number", "value": 320 },
+                "h": { "type": "number", "value": 240 }
+              },
+              "images": [
+                {
+                  "name": "Background",
+                  "color": { "type": "color", "value": "FFFFFF" },
+                  "image": { "type": "asset", "value": "1111111111111111111111111" },
+                  "x": { "type": "number", "value": 0 },
+                  "y": { "type": "number", "value": 0 },
+                  "w": { "type": "number", "value": 900 },
+                  "h": { "type": "number", "value": 600 }
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "always_visible",
+                  "x": { "type": "number", "value": -200 },
+                  "y": { "type": "number", "value": 80 },
+                  "w": { "type": "number", "value": 229 },
+                  "h": { "type": "number", "value": 114 },
+                  "image_up": { "type": "asset", "value": "1111111111111111111111111" },
+                  "action": { "type": "text", "value": "" },
+                  "type": { "type": "text", "value": "DISMISS" }
+                },
+                {
+                  "name": "conditional",
+                  "visible_if": "Recipient.show_button?boolean",
+                  "x": { "type": "number", "value": 0 },
+                  "y": { "type": "number", "value": 80 },
+                  "w": { "type": "number", "value": 229 },
+                  "h": { "type": "number", "value": 114 },
+                  "image_up": { "type": "asset", "value": "1111111111111111111111111" },
+                  "action": { "type": "text", "value": "" },
+                  "type": { "type": "text", "value": "DISMISS" }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 202,
+      "end_date_iso": "2044-12-05T16:41:40Z",
+      "rules": {"dismiss_after_views": 9999, "delay_first_message": 0, "min_delay_between_messages": 0},
+      "triggers": [
+        {
+          "event_name": "visible_if_image_event",
+          "conditions": {}
+        }
+      ],
+      "start_date_iso": "2013-03-07T15:55:00Z",
+      "timezone_type": "global",
+      "message": {
+        "id": 202,
+        "name": "VisibleIfImageTest",
+        "rules": {},
+        "template": {
+          "template_id": "202",
+          "formats": [
+            {
+              "orientation": "landscape",
+              "name": "Kindle (English (US))",
+              "language": "en-US",
+              "size": {
+                "w": { "type": "number", "value": 320 },
+                "h": { "type": "number", "value": 240 }
+              },
+              "images": [
+                {
+                  "name": "background",
+                  "color": { "type": "color", "value": "FFFFFF" },
+                  "image": { "type": "asset", "value": "1111111111111111111111111" },
+                  "x": { "type": "number", "value": 0 },
+                  "y": { "type": "number", "value": 0 },
+                  "w": { "type": "number", "value": 900 },
+                  "h": { "type": "number", "value": 600 }
+                },
+                {
+                  "name": "conditional_image",
+                  "visible_if": "Recipient.show_image?boolean",
+                  "color": { "type": "color", "value": "FF0000" },
+                  "image": { "type": "asset", "value": "1111111111111111111111111" },
+                  "x": { "type": "number", "value": 100 },
+                  "y": { "type": "number", "value": 100 },
+                  "w": { "type": "number", "value": 200 },
+                  "h": { "type": "number", "value": 200 }
+                }
+              ],
+              "buttons": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 201,
+      "end_date_iso": "2044-12-05T16:41:40Z",
+      "rules": {"dismiss_after_views": 9999, "delay_first_message": 0, "min_delay_between_messages": 0},
+      "triggers": [
+        {
+          "event_name": "visible_if_malformed_event",
+          "conditions": {}
+        }
+      ],
+      "start_date_iso": "2013-03-07T15:55:00Z",
+      "timezone_type": "global",
+      "message": {
+        "id": 201,
+        "name": "VisibleIfMalformedTest",
+        "rules": {},
+        "template": {
+          "template_id": "201",
+          "formats": [
+            {
+              "orientation": "landscape",
+              "name": "Kindle (English (US))",
+              "language": "en-US",
+              "size": {
+                "w": { "type": "number", "value": 320 },
+                "h": { "type": "number", "value": 240 }
+              },
+              "images": [
+                {
+                  "name": "Background",
+                  "color": { "type": "color", "value": "FFFFFF" },
+                  "image": { "type": "asset", "value": "1111111111111111111111111" },
+                  "x": { "type": "number", "value": 0 },
+                  "y": { "type": "number", "value": 0 },
+                  "w": { "type": "number", "value": 900 },
+                  "h": { "type": "number", "value": 600 }
+                }
+              ],
+              "buttons": [
+                {
+                  "name": "malformed_condition",
+                  "visible_if": "[[[ INVALID FREEMARKER",
+                  "x": { "type": "number", "value": 0 },
+                  "y": { "type": "number", "value": 80 },
+                  "w": { "type": "number", "value": 229 },
+                  "h": { "type": "number", "value": 114 },
+                  "image_up": { "type": "asset", "value": "1111111111111111111111111" },
+                  "action": { "type": "text", "value": "" },
+                  "type": { "type": "text", "value": "DISMISS" }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

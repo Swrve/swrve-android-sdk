@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
     id 'maven-publish'
     id 'signing'
     id 'tech.yanand.maven-central-publish' version '1.3.0'
@@ -45,7 +44,7 @@ android {
         }
     }
 
-    lintOptions {
+    lint {
         abortOnError true
         baseline file("../lint/lint-baseline-swrvesdk-firebase.xml")
     }
@@ -53,10 +52,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = '11'
     }
 }
 
@@ -72,7 +67,7 @@ dependencies {
     api "androidx.media3:media3-exoplayer:" + project.MEDIA3_VERSION
     api "androidx.media3:media3-ui:" + project.MEDIA3_VERSION
 
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.13.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:' + project.GLIDE_VERSION
     firebaseApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
     huaweiApi 'com.google.firebase:firebase-messaging:' + project.FIREBASE_MESSAGING_VERSION
     huaweiApi 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION

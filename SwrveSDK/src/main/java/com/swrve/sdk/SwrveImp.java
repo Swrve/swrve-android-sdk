@@ -85,11 +85,11 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks, SwrveRefreshContentListener {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "12.1.0";
+    protected static String version = "12.2.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 10;
     protected static final int PUSH_INBOX_VERSION = 1;
-    protected static final int EMBEDDED_CAMPAIGN_VERSION = 4;
-    protected static final int IN_APP_CAMPAIGN_VERSION = 17;
+    protected static final int EMBEDDED_CAMPAIGN_VERSION = 5;
+    protected static final int IN_APP_CAMPAIGN_VERSION = 18;
     protected static final String CAMPAIGN_RESPONSE_VERSION = "2";
     protected static final String USER_CONTENT_ACTION = "/api/1/user_content";
     protected static final String USER_RESOURCES_DIFF_ACTION = "/api/1/user_resources_diff";
@@ -1334,6 +1334,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         Map<String, String> result = new HashMap<>();
         for (String key : rtups.keySet()) {
             result.put("user." + key, rtups.get(key));
+            result.put("Recipient." + key, rtups.get(key));
         }
 
         return result;

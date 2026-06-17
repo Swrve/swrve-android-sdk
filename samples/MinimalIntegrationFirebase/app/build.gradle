@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     namespace 'com.swrve.sdk.sample.minimalintegration.firebase'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.swrve.sdk.sample.minimalintegration.firebase"
@@ -15,7 +15,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     
@@ -24,7 +24,7 @@ android {
 dependencies {
     api 'com.google.android.material:material:1.0.0'
     api 'androidx.multidex:multidex:2.0.1'
-    api 'com.swrve.sdk.android:swrve-firebase:12.1.0'
+    api 'com.swrve.sdk.android:swrve-firebase:12.2.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

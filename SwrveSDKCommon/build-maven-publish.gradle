@@ -1,18 +1,12 @@
 task androidCommonJavadoc(type: Javadoc, dependsOn: "assembleRelease") {
     description "Generates Javadoc for release."
-    ext.androidJar = "${android.sdkDirectory}/platforms/android-${android.compileSdk}/android.jar"
-    classpath += files(ext.androidJar)
     failOnError true
     include 'com/swrve/**'
-
-    // Use the release variant classpath
-    android.libraryVariants.all { variant ->
-        if (variant.name == "release") {
-            source = variant.sourceSets.collect { it.java.sourceFiles }.inject { t, fc -> t + fc }
-            doFirst {
-                classpath += files(variant.javaCompileProvider.get().classpath.files)
-            }
-        }
+    
+    doFirst {
+        source = android.sourceSets.main.java.srcDirs
+        classpath += files(android.bootClasspath)
+        classpath += configurations.releaseCompileClasspath
     }
 }
 task androidCommonJavadocsJar(type: Jar, dependsOn: androidCommonJavadoc) {

@@ -809,12 +809,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                     resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR;
                                 } else {
                                     resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR;
-                                    errorMessage = response.responseBody;
+                                    errorMessage = response.responseBody != null ? response.responseBody : "";
                                 }
                             } catch (JSONException e) {
                                 SwrveLogger.e("Error processing response", e);
                                 resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
-                                errorMessage = e.getMessage();
+                                errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
                             } finally {
                                 if (listener != null) {
                                     listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, errorMessage, httpResponseCode));
@@ -827,7 +827,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             SwrveLogger.e("Error refreshing content", e);
                             if (listener != null) {
                                 SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
-                                listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage(), 0));
+                                listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), 0));
                             }
                         }
                         private void handleSuccessfulResponse(RESTResponse response) throws JSONException {
@@ -947,7 +947,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     SwrveLogger.e("Could not refresh content", e);
                     if (listener != null) {
                         SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
-                        listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage(), 0));
+                        listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), 0));
                     }
                 }
             }
@@ -1160,8 +1160,10 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                     String personalizedAction = messageButton.getAction();
                     try {
                         Map<String, String> properties = retrievePersonalizationProperties(lastEventPayloadUsed, null);
-                        personalizedText = SwrveTextTemplating.apply(personalizedText, properties);
-                        personalizedAction = SwrveTextTemplating.apply(personalizedAction, properties);
+                        boolean freemarkerEnabled = campaign != null && campaign.isFreemarkerEnabled();
+                        boolean useLocalTimezone = campaign != null && campaign.useLocalTimezone();
+                        personalizedText = SwrveTextTemplating.apply(personalizedText, properties, freemarkerEnabled, useLocalTimezone);
+                        personalizedAction = SwrveTextTemplating.apply(personalizedAction, properties, freemarkerEnabled, useLocalTimezone);
                     } catch (SwrveSDKTextTemplatingException e) {
                         SwrveLogger.e("Failed to resolve personalization in messageWasShownToUser");
                     }
@@ -1230,16 +1232,22 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     private String _getPersonalizedEmbeddedMessageData(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
         if (message != null) {
             try {
+                boolean freemarkerEnabled = message.getCampaign() != null && message.getCampaign().isFreemarkerEnabled();
+                boolean useLocalTimezone = message.getCampaign() != null && message.getCampaign().useLocalTimezone();
                 if (message.getType() == SwrveEmbeddedMessage.EMBEDDED_CAMPAIGN_TYPE.JSON) {
-                    return SwrveTextTemplating.applytoJSON(message.getDataRaw(), personalizationProperties);
+                    return SwrveTextTemplating.applytoJSON(message.getDataRaw(), personalizationProperties, freemarkerEnabled, useLocalTimezone);
                 } else {
-                    return SwrveTextTemplating.apply(message.getDataRaw(), personalizationProperties);
+                    return SwrveTextTemplating.apply(message.getDataRaw(), personalizationProperties, freemarkerEnabled, useLocalTimezone);
                 }
 
             } catch (SwrveSDKTextTemplatingException exception) {
                 SwrveEmbeddedCampaign campaign = message.getCampaign();
-                QaUser.embeddedPersonalizationFailed(campaign.getId(), message.getId(), message.getData(), "Failed to resolve personalization");
-                SwrveLogger.e("Campaign id:%s Could not resolve, error with personalization", exception, campaign.getId());
+                if (campaign != null) {
+                    QaUser.embeddedPersonalizationFailed(campaign.getId(), message.getId(), message.getData(), "Failed to resolve personalization");
+                    SwrveLogger.e("Campaign id:%s Could not resolve, error with personalization", exception, campaign.getId());
+                } else {
+                    SwrveLogger.e("Could not resolve embedded message personalization", exception);
+                }
             }
         }
         return null;
@@ -1248,7 +1256,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     protected String _getPersonalizedText(String text, Map<String, String> personalizationProperties) {
         if (text != null) {
             try {
-                return SwrveTextTemplating.apply(text, personalizationProperties);
+                return SwrveTextTemplating.apply(text, personalizationProperties, false);
             } catch (SwrveSDKTextTemplatingException exception) {
                 SwrveLogger.e("Could not resolve, error with personalization", exception);
             }
@@ -1617,10 +1625,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
             if (listener != null) {
-                if (listener != null) {
-                    SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
-                    listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage(), 0));
-                }
+                SwrveRefreshContentListenerResult.ResultCode resultCode = SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN;
+                listener.onComplete(new SwrveRefreshContentListenerResult(resultCode, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), 0));
             }
         }
     }
@@ -1800,7 +1806,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         return null;
     }
 
-    private SwrveMessageCenterDetails personalizeMessageCenterDetails(SwrveMessageCenterDetails rawMessageCenterDetails, Map<String, String> personalization) {
+    private SwrveMessageCenterDetails personalizeMessageCenterDetails(SwrveMessageCenterDetails rawMessageCenterDetails, Map<String, String> personalization, boolean freemarkerEnabled, boolean useLocalTimezone) {
         if (rawMessageCenterDetails == null) {
             return null;
         }
@@ -1809,22 +1815,22 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         try {
             String subject = rawMessageCenterDetails.getSubject();
             if (subject != null) {
-                subject = SwrveTextTemplating.apply(subject, personalization);
+                subject = SwrveTextTemplating.apply(subject, personalization, freemarkerEnabled, useLocalTimezone);
             }
 
             String description = rawMessageCenterDetails.getDescription();
             if (description != null) {
-                description = SwrveTextTemplating.apply(description, personalization);
+                description = SwrveTextTemplating.apply(description, personalization, freemarkerEnabled, useLocalTimezone);
             }
 
             String imageURL = rawMessageCenterDetails.getImageURL();
             if (imageURL != null) {
-                imageURL = SwrveTextTemplating.apply(imageURL, personalization);
+                imageURL = SwrveTextTemplating.apply(imageURL, personalization, freemarkerEnabled, useLocalTimezone);
             }
 
             String imageAccessibilityText = rawMessageCenterDetails.getImageAccessibilityText();
             if (imageAccessibilityText != null) {
-                imageAccessibilityText = SwrveTextTemplating.apply(imageAccessibilityText, personalization);
+                imageAccessibilityText = SwrveTextTemplating.apply(imageAccessibilityText, personalization, freemarkerEnabled, useLocalTimezone);
             }
 
             String imageSha = rawMessageCenterDetails.getImageSha(); // imageSha is not personalized
@@ -1894,7 +1900,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                             if (filterRedundantCampaign(message)) {
                                 SwrveLogger.v("SwrveSDK filtering message center IAM as it requests a capability/permission that is already granted or redundant action.");
                             } else if (SwrveMessageTextTemplatingChecks.checkTextTemplating(message, personalizedProperties)) { // Check personalization for matching key/value pairs
-                                SwrveMessageCenterDetails personalizedMessageCenterDetails = personalizeMessageCenterDetails(message.getMessageCenterDetails(), personalizedProperties);
+                                SwrveMessageCenterDetails personalizedMessageCenterDetails = personalizeMessageCenterDetails(message.getMessageCenterDetails(), personalizedProperties, campaign.isFreemarkerEnabled(), campaign.useLocalTimezone());
                                 campaign.setMessageCenterDetails(personalizedMessageCenterDetails);
                                 result.add(campaign);
                             }

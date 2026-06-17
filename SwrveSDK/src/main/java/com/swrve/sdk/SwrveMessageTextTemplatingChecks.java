@@ -16,79 +16,7 @@ class SwrveMessageTextTemplatingChecks {
 
     public static boolean checkTextTemplating(SwrveMessage message, Map<String, String> properties) {
         try {
-
-            if (message.getMessageCenterDetails() != null) {
-                ArrayList<String> messageCenterDetails = new ArrayList<>();
-                messageCenterDetails.add(message.getMessageCenterDetails().getSubject());
-                messageCenterDetails.add(message.getMessageCenterDetails().getDescription());
-                messageCenterDetails.add(message.getMessageCenterDetails().getImageAccessibilityText());
-                messageCenterDetails.add(message.getMessageCenterDetails().getImageURL());
-                for (String textToPersonlise : messageCenterDetails) {
-                    if (!SwrveHelper.isNullOrEmpty(textToPersonlise)) {
-                        // Need to render dynamic text
-                        String personalizedText = SwrveTextTemplating.apply(textToPersonlise, properties);
-                        if (SwrveHelper.isNullOrEmpty(personalizedText)) {
-                            SwrveLogger.i("Text template could not be resolved: " + textToPersonlise + " in given properties.");
-                            return false;
-                        } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                            SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            for (final SwrveMessageFormat format : message.getFormats()) {
-
-                for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
-                    SwrveMessagePage page = entry.getValue();
-
-                    // check images
-                    for (final SwrveImage image : page.getImages()) {
-                        String imageText = image.getText();
-                        if (!SwrveHelper.isNullOrEmpty(imageText)) {
-                            // Need to render dynamic text
-                            String personalizedText = SwrveTextTemplating.apply(imageText, properties);
-                            if (SwrveHelper.isNullOrEmpty(personalizedText)) {
-                                SwrveLogger.i("Text template could not be resolved: " + imageText + " in given properties.");
-                                return false;
-                            } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                                SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
-                                return false;
-                            }
-                        }
-                    }
-
-                    // check buttons
-                    for (final SwrveButton button : page.getButtons()) {
-                        String buttonText = button.getText();
-                        if (!SwrveHelper.isNullOrEmpty(buttonText)) {
-                            // Need to render dynamic text
-                            String personalizedText = SwrveTextTemplating.apply(buttonText, properties);
-                            if (SwrveHelper.isNullOrEmpty(personalizedText)) {
-                                SwrveLogger.i("Text template could not be resolved: " + buttonText + " in given properties.");
-                                return false;
-                            } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                                SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
-                                return false;
-                            }
-                        }
-
-                        // Need to personalize action
-                        String personalizedButtonAction = button.getAction();
-                        if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(personalizedButtonAction)) {
-                            personalizedButtonAction = SwrveTextTemplating.apply(personalizedButtonAction, properties);
-                            if (SwrveHelper.isNullOrEmpty(personalizedButtonAction)) {
-                                SwrveLogger.i("Button action template could not be resolved: " + button.getAction() + " in given properties.");
-                                return false;
-                            } else if (SwrveTextTemplating.hasPatternMatch(personalizedButtonAction)) {
-                                SwrveLogger.i("Not showing campaign with personalization outside of Message Center / without personalization info provided.");
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
+            checkTextTemplatingOrThrow(message, properties);
         } catch (SwrveSDKTextTemplatingException exp) {
             SwrveLogger.e("Not showing campaign, error with personalization", exp);
             return false;
@@ -96,48 +24,73 @@ class SwrveMessageTextTemplatingChecks {
         return true;
     }
 
-    public static boolean checkImageUrlTemplating(SwrveMessage message, Map<String, String> properties) {
-        try {
-            for (final SwrveMessageFormat format : message.getFormats()) {
+    // Throws SwrveSDKTextTemplatingException with a descriptive reason for all failure cases so callers can surface it in QA logs.
+    static void checkTextTemplatingOrThrow(SwrveMessage message, Map<String, String> properties) throws SwrveSDKTextTemplatingException {
+        boolean freemarkerEnabled = message.getCampaign().isFreemarkerEnabled();
+        boolean useLocalTimezone = message.getCampaign().useLocalTimezone();
 
-                for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
-                    SwrveMessagePage page = entry.getValue();
+        if (message.getMessageCenterDetails() != null) {
+            ArrayList<String> messageCenterDetails = new ArrayList<>();
+            messageCenterDetails.add(message.getMessageCenterDetails().getSubject());
+            messageCenterDetails.add(message.getMessageCenterDetails().getDescription());
+            messageCenterDetails.add(message.getMessageCenterDetails().getImageAccessibilityText());
+            messageCenterDetails.add(message.getMessageCenterDetails().getImageURL());
+            for (String textToPersonalize : messageCenterDetails) {
+                if (!SwrveHelper.isNullOrEmpty(textToPersonalize)) {
+                    String personalizedText = SwrveTextTemplating.apply(textToPersonalize, properties, freemarkerEnabled, useLocalTimezone);
+                    if (freemarkerEnabled ? personalizedText == null : SwrveHelper.isNullOrEmpty(personalizedText)) {
+                        throw new SwrveSDKTextTemplatingException("Message center detail text template could not be resolved: " + textToPersonalize);
+                    } else if (!freemarkerEnabled && SwrveTextTemplating.hasPatternMatch(personalizedText)) {
+                        throw new SwrveSDKTextTemplatingException("Message center detail personalization info not provided for: " + textToPersonalize);
+                    }
+                }
+            }
+        }
 
-                    for (final SwrveImage image : page.getImages()) {
-                        String imageUrl = image.getDynamicImageUrl();
-                        // if we already have a fallback image to resolve so we don't need to check
-                        if (SwrveHelper.isNotNullOrEmpty(imageUrl) && SwrveHelper.isNullOrEmpty(image.getFile())) {
-                            String personalizedText = SwrveTextTemplating.apply(imageUrl, properties);
-                            if (SwrveHelper.isNullOrEmpty(personalizedText)) {
-                                SwrveLogger.i("Dynamic image url text template could not be resolved: " + imageUrl + " in given properties.");
-                                return false;
-                            } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                                SwrveLogger.i("Not showing personalized image / without personalization info provided.");
-                                return false;
-                            }
+        for (final SwrveMessageFormat format : message.getFormats()) {
+
+            for (Map.Entry<Long, SwrveMessagePage> entry : format.getPages().entrySet()) {
+                SwrveMessagePage page = entry.getValue();
+
+                // check images
+                for (final SwrveImage image : page.getImages()) {
+                    String imageText = image.getText();
+                    if (!SwrveHelper.isNullOrEmpty(imageText)) {
+                        String personalizedText = SwrveTextTemplating.apply(imageText, properties, freemarkerEnabled, useLocalTimezone);
+                        if (freemarkerEnabled ? personalizedText == null : SwrveHelper.isNullOrEmpty(personalizedText)) {
+                            throw new SwrveSDKTextTemplatingException("Image text template could not be resolved: " + imageText);
+                        } else if (!freemarkerEnabled && SwrveTextTemplating.hasPatternMatch(personalizedText)) {
+                            throw new SwrveSDKTextTemplatingException("Image personalization info not provided for: " + imageText);
+                        }
+                    }
+                }
+
+                // check buttons
+                for (final SwrveButton button : page.getButtons()) {
+                    String buttonText = button.getText();
+                    if (!SwrveHelper.isNullOrEmpty(buttonText)) {
+                        String personalizedText = SwrveTextTemplating.apply(buttonText, properties, freemarkerEnabled, useLocalTimezone);
+                        if (freemarkerEnabled ? personalizedText == null : SwrveHelper.isNullOrEmpty(personalizedText)) {
+                            throw new SwrveSDKTextTemplatingException("Button text template could not be resolved: " + buttonText);
+                        } else if (!freemarkerEnabled && SwrveTextTemplating.hasPatternMatch(personalizedText)) {
+                            throw new SwrveSDKTextTemplatingException("Button personalization info not provided for: " + buttonText);
                         }
                     }
 
-                    for (final SwrveButton button : page.getButtons()) {
-                        String buttonImageUrl = button.getDynamicImageUrl();
-                        // if we already have a fallback image to resolve so we don't need to check
-                        if (SwrveHelper.isNotNullOrEmpty(buttonImageUrl) && SwrveHelper.isNullOrEmpty(button.getImage())) {
-                            String personalizedText = SwrveTextTemplating.apply(buttonImageUrl, properties);
-                            if (SwrveHelper.isNullOrEmpty(personalizedText)) {
-                                SwrveLogger.i("Dynamic button image url text template could not be resolved: " + buttonImageUrl + " in given properties.");
-                                return false;
-                            } else if (SwrveTextTemplating.hasPatternMatch(personalizedText)) {
-                                SwrveLogger.i("Not showing personalized image / without personalization info provided.");
-                                return false;
-                            }
+                    // Need to personalize action
+                    String personalizedButtonAction = button.getAction();
+                    if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(personalizedButtonAction)) {
+                        personalizedButtonAction = SwrveTextTemplating.apply(personalizedButtonAction, properties, freemarkerEnabled, useLocalTimezone);
+                        if (freemarkerEnabled ? personalizedButtonAction == null : SwrveHelper.isNullOrEmpty(personalizedButtonAction)) {
+                            throw new SwrveSDKTextTemplatingException("Button action template could not be resolved: " + button.getAction());
+                        } else if (!freemarkerEnabled && SwrveTextTemplating.hasPatternMatch(personalizedButtonAction)) {
+                            throw new SwrveSDKTextTemplatingException("Button action personalization info not provided for: " + button.getAction());
                         }
                     }
                 }
             }
-        } catch (SwrveSDKTextTemplatingException exp) {
-            SwrveLogger.e("Not showing campaign, error with personalization", exp);
-            return false;
         }
-        return true;
+
+        message.validateVisibleIfExpressions(properties);
     }
 }

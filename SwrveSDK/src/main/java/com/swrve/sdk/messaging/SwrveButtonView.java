@@ -18,8 +18,8 @@ public class SwrveButtonView extends SwrveBaseImageView {
 
     public SwrveButtonView(Context context, SwrveButton swrveButton, Map<String, String> inAppPersonalization,
                            SwrveMessageFocusListener messageFocusListener, int inAppMessageClickColor,
-                           SwrveImageFileInfo imageFileInfo) throws SwrveSDKTextTemplatingException {
-        super(context, messageFocusListener, inAppMessageClickColor);
+                           SwrveImageFileInfo imageFileInfo, boolean freemarkerEnabled, boolean useLocalTimezone) throws SwrveSDKTextTemplatingException {
+        super(context, messageFocusListener, inAppMessageClickColor, freemarkerEnabled, useLocalTimezone);
         setFocusable(true);
         setAction(swrveButton, inAppPersonalization);
         this.type = swrveButton.getActionType();
@@ -45,7 +45,7 @@ public class SwrveButtonView extends SwrveBaseImageView {
 
     private void setAction(SwrveButton button, Map<String, String> inAppPersonalization) throws SwrveSDKTextTemplatingException {
         if ((button.getActionType() == SwrveActionType.Custom || button.getActionType() == SwrveActionType.CopyToClipboard) && !SwrveHelper.isNullOrEmpty(button.getAction())) {
-            this.action = SwrveTextTemplating.apply(button.getAction(), inAppPersonalization);
+            this.action = SwrveTextTemplating.apply(button.getAction(), inAppPersonalization, freemarkerEnabled, useLocalTimezone);
         } else {
             this.action = button.getAction();
         }

@@ -127,8 +127,8 @@ public class SwrveSDK extends SwrveSDKBase {
      *
      * @param context      android context
      * @param pushId       The push id for engagement (the _p value from the push payload)
-     * @param trackingData Additional tracking data to be sent with the event (the _td value from the push payload)
-     * @param platform     Platform of the push notification (the _smp value from the push payload)
+     * @param trackingData Tracking data from the push payload's _td field. If the push payload does not contain a _td field, pass empty string ("").
+     * @param platform     Platform from the push payload's _smp field. If the push payload does not contain a _smp field, pass empty string ("").
      */
     public static void sendPushEngagedEvent(Context context, String pushId, String trackingData, String platform) {
         sendPushEngagedEvent(context, pushId, trackingData, platform, null);
@@ -139,8 +139,8 @@ public class SwrveSDK extends SwrveSDKBase {
      *
      * @param context      android context
      * @param pushId       The push id for engagement (the _p value from the push payload)
-     * @param trackingData Additional tracking data to be sent with the event (the _td value from the push payload)
-     * @param platform     Platform of the push notification (the _smp value from the push payload)
+     * @param trackingData Tracking data from the push payload's _td field. If the push payload does not contain a _td field, pass empty string ("").
+     * @param platform     Platform from the push payload's _smp field. If the push payload does not contain a _smp field, pass empty string ("").
      * @param deeplink     Deeplink of the push notification
      */
     public static void sendPushEngagedEvent(Context context, String pushId, String trackingData, String platform, String deeplink) {

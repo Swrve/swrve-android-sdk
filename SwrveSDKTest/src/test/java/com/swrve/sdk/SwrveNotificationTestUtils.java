@@ -98,8 +98,7 @@ public class SwrveNotificationTestUtils {
         ShadowNotification shadowNotification = shadowOf(notification);
         // In the case of a rich push, we should expect the title to be set to something else
         if (!intentExtras.containsKey(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY)) {
-            if (shadowNotification.getContentTitle().equals("androidx.multidex.MultiDexApplication")
-                    || shadowNotification.getContentTitle().equals("com.swrve.sdk.test")) {
+            if (shadowNotification.getContentTitle().equals("com.swrve.sdk.test")) {
                 // passed
             } else {
                 fail();

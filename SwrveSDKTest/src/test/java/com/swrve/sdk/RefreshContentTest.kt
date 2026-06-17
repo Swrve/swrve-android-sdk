@@ -18,6 +18,7 @@ class RefreshContentTest : SwrveBaseTest() {
 
     lateinit var swrveSpy: Swrve
     val responseExceptionCode = -666
+    val responseExceptionCodeNullMessage = -667
 
     @Before
     override fun setUp() {
@@ -107,23 +108,41 @@ class RefreshContentTest : SwrveBaseTest() {
         await().untilTrue(listenerCalled)
     }
 
+    @Test
+    fun testRefreshContent_restFailureNullExceptionMessage() {
+        SwrveTestUtils.runSingleThreaded(swrveSpy)
+        swrveSpy.init(mActivity)
+        swrveSpy.restClient = dummyRestClient(responseExceptionCodeNullMessage, "")
+
+        val listenerCalled = AtomicBoolean(false)
+        val listener = object : SwrveRefreshContentListener {
+            override fun onComplete(result: SwrveRefreshContentListenerResult) {
+                assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN, result.resultCode)
+                assertEquals("Exception", result.errorMessage) // falls back to class simple name when message is null
+                assertEquals(0, result.httpResponseCode)
+                listenerCalled.set(true)
+            }
+        }
+
+        SwrveSDK.refreshContent(listener)
+        await().untilTrue(listenerCalled)
+    }
+
     private fun dummyRestClient(responseCode: Int, responseBody: String): IRESTClient {
         return object : IRESTClient {
             override fun get(url: String, listener: IRESTResponseListener) {
-                if (responseExceptionCode == responseCode) {
-                    listener.onException(Exception("Test Exception"))
-                    return
-                } else {
-                    listener.onResponse(RESTResponse(responseCode, responseBody, null))
+                when (responseCode) {
+                    responseExceptionCode -> listener.onException(Exception("Test Exception"))
+                    responseExceptionCodeNullMessage -> listener.onException(Exception()) // null message
+                    else -> listener.onResponse(RESTResponse(responseCode, responseBody, null))
                 }
             }
 
             override fun get(url: String, params: Map<String, String>, listener: IRESTResponseListener) {
-                if (responseExceptionCode == responseCode) {
-                    listener.onException(Exception("Test Exception"))
-                    return
-                } else {
-                    listener.onResponse(RESTResponse(responseCode, responseBody, null))
+                when (responseCode) {
+                    responseExceptionCode -> listener.onException(Exception("Test Exception"))
+                    responseExceptionCodeNullMessage -> listener.onException(Exception()) // null message
+                    else -> listener.onResponse(RESTResponse(responseCode, responseBody, null))
                 }
             }
 

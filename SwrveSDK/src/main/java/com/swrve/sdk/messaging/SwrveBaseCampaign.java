@@ -76,6 +76,7 @@ public abstract class SwrveBaseCampaign {
     private List<SwrveIntervalTime> intervalTimes;
     protected List<Trigger> triggers;
     protected boolean messageCenter;
+    protected boolean freemarkerEnabled;
     protected String subject; // subject of the campaign
     protected int priority;
     protected int maxImpressions;
@@ -95,6 +96,7 @@ public abstract class SwrveBaseCampaign {
         SwrveLogger.i("Parsing campaign %s", id);
 
         this.messageCenter = campaignData.optBoolean("message_center", false);
+        this.freemarkerEnabled = campaignData.optBoolean("freemarker_enabled", false);
         this.subject = campaignData.isNull("subject") ? "" : campaignData.getString("subject");
         this.saveableState = new SwrveCampaignState(null, campaignManager.getNow()); // Start with an empty state
 
@@ -178,6 +180,10 @@ public abstract class SwrveBaseCampaign {
      */
     public boolean isMessageCenter() {
         return messageCenter;
+    }
+
+    public boolean isFreemarkerEnabled() {
+        return freemarkerEnabled;
     }
 
     /**
@@ -357,6 +363,16 @@ public abstract class SwrveBaseCampaign {
     @Nullable
     public SwrveTimezoneType getTimezoneType() {
         return timezoneType;
+    }
+
+    /**
+     * Whether date built-ins in FreeMarker templates should be evaluated in the device's local
+     * timezone (LOCAL) rather than UTC (GLOBAL). Single source of truth for the GLOBAL/LOCAL
+     * mapping — mirrors how timezoneType drives campaign start/end/blackout date parsing. A null
+     * timezoneType (legacy campaigns) defaults to UTC.
+     */
+    public boolean useLocalTimezone() {
+        return timezoneType == SwrveTimezoneType.LOCAL;
     }
 
     @Nullable

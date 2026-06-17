@@ -25,15 +25,19 @@ public abstract class SwrveBaseImageView extends AppCompatImageView {
 
     public int clickColor;
     private SwrveMessageFocusListener messageFocusListener;
+    protected boolean freemarkerEnabled;
+    protected boolean useLocalTimezone;
 
     public SwrveBaseImageView(Context context) {
         super(context);
     }
 
-    public SwrveBaseImageView(Context context, SwrveMessageFocusListener messageFocusListener, int inAppMessageClickColor) {
+    public SwrveBaseImageView(Context context, SwrveMessageFocusListener messageFocusListener, int inAppMessageClickColor, boolean freemarkerEnabled, boolean useLocalTimezone) {
         super(context);
         this.messageFocusListener = messageFocusListener;
         this.clickColor = inAppMessageClickColor;
+        this.freemarkerEnabled = freemarkerEnabled;
+        this.useLocalTimezone = useLocalTimezone;
     }
 
     @Override
@@ -66,7 +70,7 @@ public abstract class SwrveBaseImageView extends AppCompatImageView {
 
     protected void setContentDescription(SwrveWidget swrveWidget, Map<String, String> inAppPersonalization, String text) throws SwrveSDKTextTemplatingException {
         if (SwrveHelper.isNotNullOrEmpty(swrveWidget.getAccessibilityText())) {
-            String personalizedAccessibilityText = SwrveTextTemplating.apply(swrveWidget.getAccessibilityText(), inAppPersonalization);
+            String personalizedAccessibilityText = SwrveTextTemplating.apply(swrveWidget.getAccessibilityText(), inAppPersonalization, freemarkerEnabled, useLocalTimezone);
             setContentDescription(personalizedAccessibilityText);
         } else if (SwrveHelper.isNotNullOrEmpty(text)) {
             setContentDescription(text);

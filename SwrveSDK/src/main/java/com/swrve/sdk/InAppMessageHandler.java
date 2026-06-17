@@ -206,8 +206,10 @@ class InAppMessageHandler {
                 String personalizedText = messageButton.getText();
                 String personalizedAction = messageButton.getAction();
                 try {
-                    personalizedText = SwrveTextTemplating.apply(personalizedText, inAppPersonalization);
-                    personalizedAction = SwrveTextTemplating.apply(personalizedAction, inAppPersonalization);
+                    boolean freemarkerEnabled = message.getCampaign() != null && message.getCampaign().isFreemarkerEnabled();
+                    boolean useLocalTimezone = message.getCampaign() != null && message.getCampaign().useLocalTimezone();
+                    personalizedText = SwrveTextTemplating.apply(personalizedText, inAppPersonalization, freemarkerEnabled, useLocalTimezone);
+                    personalizedAction = SwrveTextTemplating.apply(personalizedAction, inAppPersonalization, freemarkerEnabled, useLocalTimezone);
                 } catch (SwrveSDKTextTemplatingException e) {
                     SwrveLogger.e("Failed to resolve personalization in InAppMessageHandler: getMessageDetails");
                 }
@@ -591,7 +593,9 @@ class InAppMessageHandler {
         String value = payload.get("value");
         String personalizedText;
         try {
-            personalizedText = SwrveTextTemplating.apply(value, inAppPersonalization);
+            boolean freemarkerEnabled = message != null && message.getCampaign() != null && message.getCampaign().isFreemarkerEnabled();
+            boolean useLocalTimezone = message != null && message.getCampaign() != null && message.getCampaign().useLocalTimezone();
+            personalizedText = SwrveTextTemplating.apply(value, inAppPersonalization, freemarkerEnabled, useLocalTimezone);
             if (!SwrveHelper.isNullOrEmpty(key) && !SwrveHelper.isNullOrEmpty(personalizedText)) {
                 newPayload.put(key, personalizedText);
             }

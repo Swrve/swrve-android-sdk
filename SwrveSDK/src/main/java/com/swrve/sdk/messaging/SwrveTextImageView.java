@@ -20,8 +20,8 @@ public class SwrveTextImageView extends SwrveBaseImageView {
     protected String text;
 
     public SwrveTextImageView(Context context, SwrveWidget swrveWidget, Map<String, String> inAppPersonalization,
-                              SwrveInAppMessageConfig inAppConfig, int width, int height) throws SwrveSDKTextTemplatingException {
-        super(context, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor());
+                              SwrveInAppMessageConfig inAppConfig, int width, int height, boolean freemarkerEnabled, boolean useLocalTimezone) throws SwrveSDKTextTemplatingException {
+        super(context, inAppConfig.getMessageFocusListener(), inAppConfig.getClickColor(), freemarkerEnabled, useLocalTimezone);
         this.inAppConfig = inAppConfig;
         setText(swrveWidget, inAppPersonalization);
         setContentDescription(swrveWidget, inAppPersonalization, text); // the text must be personalized already
@@ -58,7 +58,7 @@ public class SwrveTextImageView extends SwrveBaseImageView {
     }
 
     private void setText(SwrveWidget swrveWidget, Map<String, String> inAppPersonalization) throws SwrveSDKTextTemplatingException {
-        this.text = SwrveTextTemplating.apply(swrveWidget.getText(), inAppPersonalization);
+        this.text = SwrveTextTemplating.apply(swrveWidget.getText(), inAppPersonalization, freemarkerEnabled, useLocalTimezone);
     }
 
     private void fitTextSizeToImage(String text, Paint paint, int maxWidth, int maxHeight) {

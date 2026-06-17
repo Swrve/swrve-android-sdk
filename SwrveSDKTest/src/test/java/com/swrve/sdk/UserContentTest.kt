@@ -36,9 +36,9 @@ class UserContentTest : SwrveBaseTest() {
                 if (hasCalledGET) {
                     Assert.assertEquals("apiKey", params["api_key"])
                     Assert.assertEquals(swrve.userId, params["user"])
-                    Assert.assertEquals("4", params["embedded_campaign_version"])
+                    Assert.assertEquals("5", params["embedded_campaign_version"])
                     Assert.assertEquals("10", params["version"])
-                    Assert.assertEquals("17", params["in_app_version"])
+                    Assert.assertEquals("18", params["in_app_version"])
                     Assert.assertEquals("1", params["push_inbox_version"])
                     Assert.assertNotNull(params["device_name"])
                     Assert.assertNotNull(params["os_version"])

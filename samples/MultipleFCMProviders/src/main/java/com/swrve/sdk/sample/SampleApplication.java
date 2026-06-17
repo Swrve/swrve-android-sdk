@@ -1,11 +1,10 @@
 package com.swrve.sdk.sample;
 
+import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.util.Log;
-
-import androidx.multidex.MultiDexApplication;
 
 import com.swrve.sdk.SwrveNotificationConfig;
 import com.swrve.sdk.SwrveSDK;
@@ -13,7 +12,7 @@ import com.swrve.sdk.config.SwrveConfig;
 
 import org.json.JSONException;
 
-public class SampleApplication extends MultiDexApplication {
+public class SampleApplication extends Application {
 
     private static final String LOG_TAG = "SwrveSample";
     private int YOUR_APP_ID = -1;

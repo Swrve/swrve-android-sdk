@@ -72,10 +72,17 @@ class PushInboxTest : SwrveBaseTest() {
                     "}"
         )
         assertEquals(messageJson.toString(), message0.customerJson.toString())
+        assertEquals("test-tracking-data", message0.trackingData)
 
-        // Check that the second message is READ
+        // Check that the second message is READ and has no tracking data
         val message1 = swrveSpy.pushInboxManager.getMessages()[1]
         assertEquals(SwrvePushInboxMessageState.READ, message1.state)
+        assertEquals("", message1.trackingData)
+
+        // Explicit JSON null should parse as an empty string
+        val jsonWithNullTracking = JSONObject("{\"message_id\":9,\"variant_id\":99,\"end_date\":1714655770,\"state\":\"U\",\"sent_date\":1714555770,\"mg_tracking_data\":null,\"customer_json\":{}}")
+        val messageWithNullTracking = SwrvePushInboxMessage(jsonWithNullTracking)
+        assertEquals("", messageWithNullTracking.trackingData)
     }
 
     @Test
@@ -395,6 +402,7 @@ class PushInboxTest : SwrveBaseTest() {
         val event = JSONObject(jsonString)
         val expectedPayload: MutableMap<String, Any?> = LinkedTreeMap()
         expectedPayload["messageId"] = "1"
+        expectedPayload["trackingData"] = "test-tracking-data"
 
         SwrveTestUtils.assertGenericEvent(event.toString(), null, GENERIC_EVENT_CAMPAIGN_TYPE_PIM, GENERIC_EVENT_ACTION_TYPE_PIM_READ, expectedPayload)
     }
@@ -440,13 +448,15 @@ class PushInboxTest : SwrveBaseTest() {
         val expectedPayload: MutableMap<String, Any?> = LinkedTreeMap()
         expectedPayload["state"] = "unread"
         expectedPayload["messageId"] = "1"
+        expectedPayload["trackingData"] = "test-tracking-data"
         SwrveTestUtils.assertGenericEvent(event.toString(), null, GENERIC_EVENT_CAMPAIGN_TYPE_PIM, GENERIC_EVENT_ACTION_TYPE_PIM_ENGAGED, expectedPayload)
 
         // read event should be sent second
         val jsonString2 = capturedEvents[1][0]
         val event2 = JSONObject(jsonString2)
-        expectedPayload.clear();
+        expectedPayload.clear()
         expectedPayload["messageId"] = "1"
+        expectedPayload["trackingData"] = "test-tracking-data"
         SwrveTestUtils.assertGenericEvent(event2.toString(), null, GENERIC_EVENT_CAMPAIGN_TYPE_PIM, GENERIC_EVENT_ACTION_TYPE_PIM_READ, expectedPayload)
     }
 
@@ -538,6 +548,7 @@ class PushInboxTest : SwrveBaseTest() {
         val expectedPayload: MutableMap<String, Any?> = LinkedTreeMap()
         expectedPayload["state"] = "unread"
         expectedPayload["messageId"] = "1"
+        expectedPayload["trackingData"] = "test-tracking-data"
         SwrveTestUtils.assertGenericEvent(event.toString(), null, GENERIC_EVENT_CAMPAIGN_TYPE_PIM, GENERIC_EVENT_ACTION_TYPE_PIM_ENGAGED, expectedPayload)
 
         // NO read event should be sent, which is verified by the number of times(1) the sendEventsInBackground is called previously
@@ -582,6 +593,7 @@ class PushInboxTest : SwrveBaseTest() {
         val expectedPayload: MutableMap<String, Any?> = LinkedTreeMap()
         expectedPayload["state"] = "unread"
         expectedPayload["messageId"] = "1"
+        expectedPayload["trackingData"] = "test-tracking-data"
 
         SwrveTestUtils.assertGenericEvent(event.toString(), null, GENERIC_EVENT_CAMPAIGN_TYPE_PIM, GENERIC_EVENT_ACTION_TYPE_PIM_DELETE, expectedPayload)
     }

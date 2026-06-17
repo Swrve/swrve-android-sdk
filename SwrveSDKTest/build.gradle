@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
 
 android {
     namespace 'com.swrve.sdk.test'
@@ -9,7 +8,6 @@ android {
         minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_TESTS)
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
         applicationId 'com.swrve.sdk.test'
-        multiDexEnabled true
     }
 
     buildTypes {
@@ -44,7 +42,7 @@ android {
         }
     }
 
-    lintOptions {
+    lint {
         abortOnError true
         baseline file("../lint/lint-baseline-swrvesdktest-firebase.xml")
     }
@@ -53,10 +51,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-
-    kotlinOptions {
-        jvmTarget = '11'
-    }
 }
 
 dependencies {
@@ -64,7 +58,6 @@ dependencies {
     api project(path: ':SwrveSDK')
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
-    api 'androidx.multidex:multidex:2.0.1'
     testImplementation 'androidx.test:runner:1.1.0'
     //implementation 'androidx.core:core-ktx:+'
 
@@ -90,6 +83,8 @@ dependencies {
 
     testImplementation 'org.awaitility:awaitility:4.2.2'
     testImplementation 'org.awaitility:awaitility-kotlin:4.2.2'
+
+    testImplementation 'org.freemarker:freemarker:2.3.23' // FreeMarker conformance testing - using same version as Accelerator
 }
 
 apply plugin: 'com.google.gms.google-services'

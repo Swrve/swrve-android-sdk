@@ -13,8 +13,12 @@ import java.util.Map;
 public class SwrveImageView extends SwrveBaseImageView {
 
     public SwrveImageView(Context context, SwrveImage image, Map<String, String> inAppPersonalization,
-                          SwrveImageFileInfo imageFileInfo) throws SwrveSDKTextTemplatingException {
+                          SwrveImageFileInfo imageFileInfo, boolean freemarkerEnabled, boolean useLocalTimezone) throws SwrveSDKTextTemplatingException {
         super(context);
+        // Thread the campaign flags so accessibility-text templating on no-text background images is
+        // consistent with the other widgets (previously this path always used freemarkerEnabled=false).
+        this.freemarkerEnabled = freemarkerEnabled;
+        this.useLocalTimezone = useLocalTimezone;
         setContentDescription(image, inAppPersonalization, null);
         setFocusable(false);
         if (imageFileInfo.usingDynamic) {

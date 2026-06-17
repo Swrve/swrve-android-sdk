@@ -14,6 +14,7 @@ import org.json.JSONObject
  * @property sentDate The date the push notification was sent.
  * @property customerJson The JSON object containing customer-specific data.
  * @property state The state of the message (READ or UNREAD).
+ * @property trackingData Optional tracking data from MG, forwarded in inbox events. Empty string if not present.
  */
 class SwrvePushInboxMessage(json: JSONObject) {
 
@@ -23,6 +24,7 @@ class SwrvePushInboxMessage(json: JSONObject) {
     val sentDate = json.getLong("sent_date")
     val customerJson: JSONObject = json.getJSONObject("customer_json")
     var state: SwrvePushInboxMessageState
+    val trackingData: String = if (json.isNull("mg_tracking_data")) "" else json.optString("mg_tracking_data", "")
 
     init {
         val value = json.getString("state")

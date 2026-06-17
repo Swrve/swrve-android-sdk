@@ -2,9 +2,11 @@ package com.swrve.sdk.messaging;
 
 import static com.swrve.sdk.SwrveAssetsTypes.MIMETYPES;
 
+import com.swrve.sdk.SwrveFreemarkerEvaluator;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrveTextTemplating;
+import com.swrve.sdk.exceptions.SwrveSDKTextTemplatingException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,6 +14,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -171,7 +174,7 @@ public class SwrveMessage implements SwrveBaseMessage {
 
                         if (!hasButtonImage && SwrveHelper.isNotNullOrEmpty(button.getDynamicImageUrl())) {
                             try {
-                                String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties);
+                                String resolvedUrl = SwrveTextTemplating.apply(button.getDynamicImageUrl(), properties, campaign.isFreemarkerEnabled(), campaign.useLocalTimezone());
                                 if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
                                     hasButtonImage = true;
                                 } else {
@@ -197,7 +200,7 @@ public class SwrveMessage implements SwrveBaseMessage {
 
                     if (!hasImage && SwrveHelper.isNotNullOrEmpty(image.getDynamicImageUrl())) {
                         try {
-                            String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties);
+                            String resolvedUrl = SwrveTextTemplating.apply(image.getDynamicImageUrl(), properties, campaign.isFreemarkerEnabled(), campaign.useLocalTimezone());
                             if (this.assetInCache(assetsOnDisk, SwrveHelper.sha1(resolvedUrl.getBytes()))) {
                                 hasImage = true;
                             } else {
@@ -260,5 +263,26 @@ public class SwrveMessage implements SwrveBaseMessage {
         }
 
         return true;
+    }
+
+    public void validateVisibleIfExpressions(Map<String, String> properties) throws SwrveSDKTextTemplatingException {
+        Map<String, String> props = properties != null ? properties : new HashMap<>();
+        for (SwrveMessageFormat format : getFormats()) {
+            for (SwrveMessagePage page : format.getPages().values()) {
+                List<SwrveWidget> allWidgets = new ArrayList<>();
+                allWidgets.addAll(page.getImages());
+                allWidgets.addAll(page.getButtons());
+                for (SwrveWidget widget : allWidgets) {
+                    String visibleIf = widget.getVisibleIf();
+                    if (SwrveHelper.isNullOrEmpty(visibleIf)) continue;
+                    try {
+                        // Validate syntax/resolvability only — result discarded; render-time evaluation in shouldRenderElement determines actual visibility.
+                        SwrveFreemarkerEvaluator.evaluate("<#if " + visibleIf + ">true<#else>false</#if>", props, campaign.useLocalTimezone());
+                    } catch (Throwable e) {
+                        throw new SwrveSDKTextTemplatingException("visible_if condition could not be evaluated", e);
+                    }
+                }
+            }
+        }
     }
 }

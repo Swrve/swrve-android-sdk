@@ -2,6 +2,7 @@ package com.swrve.sdk.messaging;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -103,5 +104,75 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
             }
         }
         return images;
+    }
+
+    // MARK: - visible_if element visibility
+
+    @Test
+    public void testVisibleIfConditionTrueShowsElement() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_visible_if.json", "1111111111111111111111111");
+        SwrveMessage message = swrveSpy.getMessageForId(200);
+        assertNotNull(message);
+
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("Recipient.show_button", "true");
+
+        SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message, message.getFormats().get(0), personalization, 0);
+        // image + always_visible button + conditional button (true) = 3
+        assertEquals(3, view.getChildCount());
+    }
+
+    @Test
+    public void testVisibleIfConditionFalseHidesElement() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_visible_if.json", "1111111111111111111111111");
+        SwrveMessage message = swrveSpy.getMessageForId(200);
+        assertNotNull(message);
+
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("Recipient.show_button", "false");
+
+        SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message, message.getFormats().get(0), personalization, 0);
+        // image + always_visible button = 2; conditional (false) = hidden
+        assertEquals(2, view.getChildCount());
+    }
+
+    @Test
+    public void testVisibleIfMalformedConditionFailsCampaign() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_visible_if.json", "1111111111111111111111111");
+        SwrveMessage message = swrveSpy.getMessageForId(201);
+        assertNotNull(message);
+
+        HashMap<String, String> personalization = new HashMap<>();
+
+        assertThrows(SwrveMessageViewBuildException.class, () ->
+                new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message, message.getFormats().get(0), personalization, 0));
+    }
+
+    @Test
+    public void testVisibleIfConditionTrueShowsImage() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_visible_if.json", "1111111111111111111111111");
+        SwrveMessage message = swrveSpy.getMessageForId(202);
+        assertNotNull(message);
+
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("Recipient.show_image", "true");
+
+        SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message, message.getFormats().get(0), personalization, 0);
+        // background image + conditional image (true) = 2
+        assertEquals(2, getImageCount(view));
+    }
+
+    @Test
+    public void testVisibleIfConditionFalseHidesImage() throws Exception {
+        SwrveTestUtils.loadCampaignsFromFile(mActivity, swrveSpy, "campaign_visible_if.json", "1111111111111111111111111");
+        SwrveMessage message = swrveSpy.getMessageForId(202);
+        assertNotNull(message);
+
+        HashMap<String, String> personalization = new HashMap<>();
+        personalization.put("Recipient.show_image", "false");
+
+        SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message, message.getFormats().get(0), personalization, 0);
+        // background image only; conditional image (false) = hidden
+        assertEquals(1, getImageCount(view));
     }
 }

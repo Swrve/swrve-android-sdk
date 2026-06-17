@@ -1,19 +1,13 @@
 task androidCoreJavadoc(type: Javadoc, dependsOn: "assembleCoreRelease") {
     description "Generates Javadoc for Core release."
-    destinationDir = reporting.file("${project.docsDir}/javadoc_core")
-    ext.androidJar = "${android.sdkDirectory}/platforms/android-${android.compileSdk}/android.jar"
-    classpath += files(ext.androidJar)
+    destinationDir = layout.buildDirectory.dir("docs/javadoc_core").get().asFile
     failOnError true
     include 'com/swrve/**'
-
-    // Use the release variant classpath
-    android.libraryVariants.all { variant ->
-        if (variant.name == "coreRelease") {
-            source = variant.sourceSets.collect { it.java.sourceFiles }.inject { t, fc -> t + fc }
-            doFirst {
-                classpath += files(variant.javaCompileProvider.get().classpath.files)
-            }
-        }
+    
+    doFirst {
+        source = android.sourceSets.main.java.srcDirs + android.sourceSets.core.java.srcDirs
+        classpath += files(android.bootClasspath)
+        classpath += configurations.coreReleaseCompileClasspath
     }
 }
 task androidCoreJavadocsJar(type: Jar) {
@@ -30,18 +24,14 @@ task androidCoreSourcesJar(type: Jar) {
 
 task androidFirebaseJavadoc(type: Javadoc, dependsOn: "assembleFirebaseRelease") {
     description "Generates Javadoc for Firebase release."
-    destinationDir = reporting.file("${project.docsDir}/javadoc_firebase")
-    ext.androidJar = "${android.sdkDirectory}/platforms/android-${android.compileSdk}/android.jar"
-    classpath += files(ext.androidJar)
+    destinationDir = layout.buildDirectory.dir("docs/javadoc_firebase").get().asFile
     failOnError true
     include 'com/swrve/**'
-
-    // Use the release variant classpath
-    android.libraryVariants.all { variant ->
-        if (variant.name == "firebaseRelease") {
-            source = variant.javaCompileProvider.get().source
-            classpath += files(variant.javaCompileProvider.get().classpath)
-        }
+    
+    doFirst {
+        source = android.sourceSets.main.java.srcDirs + android.sourceSets.firebase.java.srcDirs
+        classpath += files(android.bootClasspath)
+        classpath += configurations.firebaseReleaseCompileClasspath
     }
 }
 task androidFirebaseJavadocsJar(type: Jar) {
@@ -58,18 +48,14 @@ task androidFirebaseSourcesJar(type: Jar) {
 
 task androidHuaweiJavadoc(type: Javadoc, dependsOn: "assembleHuaweiRelease") {
     description "Generates Javadoc for Huawei release."
-    destinationDir = reporting.file("${project.docsDir}/javadoc_huawei")
-    ext.androidJar = "${android.sdkDirectory}/platforms/android-${android.compileSdk}/android.jar"
-    classpath += files(ext.androidJar)
+    destinationDir = layout.buildDirectory.dir("docs/javadoc_huawei").get().asFile
     failOnError true
     include 'com/swrve/**'
-
-    // Use the release variant classpath
-    android.libraryVariants.all { variant ->
-        if (variant.name == "huaweiRelease") {
-            source = variant.javaCompileProvider.get().source
-            classpath += files(variant.javaCompileProvider.get().classpath)
-        }
+    
+    doFirst {
+        source = android.sourceSets.main.java.srcDirs + android.sourceSets.huawei.java.srcDirs
+        classpath += files(android.bootClasspath)
+        classpath += configurations.huaweiReleaseCompileClasspath
     }
 }
 task androidHuaweiJavadocsJar(type: Jar) {
