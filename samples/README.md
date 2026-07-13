@@ -7,3 +7,4 @@ Swrve SDK Samples
 - [Custom User Id](CustomUserId/)
 - [Geo](GeoSample/)
 - [Geo With Foreground Notification](GeoWithForegroundNotificationSample/)
+- [Embedded Campaigns](SwrveEmbeddedSample/)

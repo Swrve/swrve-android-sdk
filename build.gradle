@@ -7,7 +7,9 @@ buildscript {
         maven { url 'https://developer.huawei.com/repo/' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.0.1'
+        classpath 'com.android.tools.build:gradle:8.13.1'
+        // Kotlin is declared per-module via the plugins DSL (see settings.gradle pluginManagement),
+        // not on the shared classpath — lets the SDK modules pin Kotlin 2.0.x independently.
         classpath 'com.google.gms:google-services:4.4.4'
         classpath 'com.huawei.agconnect:agcp:1.9.5.301'
     }
