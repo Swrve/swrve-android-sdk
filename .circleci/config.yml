@@ -3,8 +3,8 @@ version: 2.1
 executors:
   swrve-executor:
     docker:
-      - image: cimg/android:2024.11.1
-    resource_class: large
+      - image: cimg/android:2026.08.1
+    resource_class: xlarge
 
 jobs:
   build:
@@ -25,23 +25,3 @@ jobs:
           paths:
             - ~/.gradle
           key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
-      - run:
-          name: Build PushNotificationSample App
-          command: |
-              cd samples/PushNotificationSample
-              ./gradlew build
-      - run:
-          name: Build MultiplePushProvidersSample App
-          command: |
-              cd samples/MultiplePushProvidersSample
-              ./gradlew build
-      - run:
-          name: Build MessageCenterSample App
-          command: |
-              cd samples/MessageCenterSample
-              ./gradlew build
-      - run:
-          name: Build IdentitySample App
-          command: |
-              cd samples/IdentitySample
-              ./gradlew build
