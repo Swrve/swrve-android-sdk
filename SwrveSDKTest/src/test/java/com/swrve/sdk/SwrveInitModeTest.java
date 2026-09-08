@@ -281,7 +281,7 @@ public class SwrveInitModeTest extends SwrveBaseTest {
 
         assertNoEventsWereQueued();
 
-        assertNull(swrveSpy.getExternalUserId());
+        assertEquals("", swrveSpy.getExternalUserId());
     }
 
     private void assertProcessedEngagedIntent() throws PendingIntent.CanceledException {

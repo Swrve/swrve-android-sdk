@@ -85,7 +85,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks, SwrveRefreshContentListener {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "12.2.1";
+    protected static String version = "12.3.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 10;
     protected static final int PUSH_INBOX_VERSION = 1;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 5;
@@ -168,7 +168,8 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected Map<String, String> lastEventPayloadUsed;
     protected String foregroundActivity = "";
     protected SwrvePushInboxManager pushInboxManager;
-    protected SwrvePushInboxUpdateListener pushInboxUpdateListener;
+    protected WeakReference<SwrvePushInboxUpdateListener> pushInboxUpdateListener;
+    protected volatile WeakReference<SwrveCampaignsUpdateListener> campaignsUpdateListener; // Registered on the app's thread, dispatched from the asset and refresh threads; therefore volatile
     protected String pushInboxHash;
     protected Set<String> processedSids = new HashSet<>();
 
@@ -444,7 +445,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         return false;
     }
 
-    private void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue) {
+    private void downloadAssets(final Set<SwrveAssetsQueueItem> assetsQueue, final boolean notifyCampaignsUpdateListener) {
         if (downloadAssetsExecutor.isShutdown()) {
             SwrveLogger.i("Trying to handle a downloadAssets execution while shutdown");
         } else {
@@ -461,6 +462,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                     } catch (Exception ex) {
                         SwrveLogger.e("Exception queuing device update for failed sha1 verification.", ex);
                     }
+                }
+                if (notifyCampaignsUpdateListener) {
+                    invokeCampaignsUpdateListener();
                 }
             };
             downloadAssetsExecutor.execute(SwrveRunnables.withoutExceptions(() -> {
@@ -756,7 +760,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         }, config.getInAppMessageConfig().getAutoShowMessagesMaxDelay(), TimeUnit.MILLISECONDS);
     }
 
-    protected void loadCampaignsFromJSON(String userId, JSONObject json, Map<Integer, SwrveCampaignState> states, boolean loadPreviousCampaignState) {
+    protected void loadCampaignsFromJSON(String userId, JSONObject json, Map<Integer, SwrveCampaignState> states, boolean loadPreviousCampaignState, boolean notifyCampaignsUpdateListener) {
         if (json == null) {
             SwrveLogger.i("NULL JSON for campaigns, aborting load.");
             return;
@@ -765,6 +769,10 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         if (json.length() == 0) {
             SwrveLogger.i("Campaign JSON empty, no campaigns downloaded");
             campaigns.clear();
+            if (notifyCampaignsUpdateListener) {
+                // No assets to wait for, so notify here rather than from the asset callback.
+                invokeCampaignsUpdateListener();
+            }
             return;
         }
 
@@ -898,12 +906,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
             QaUser.campaignsDownloaded(qaCampaignInfoList);
 
-            // Launch load assets, then add to active campaigns
-            // Note that campaign is also added to campaigns list in this function
-            downloadAssets(assetsQueue);
-
-            // Update current list of campaigns with new ones
+            // Must stay above downloadAssets: its callback reaches autoShowMessages, which reads this.campaigns, and that callback can run before this method returns.
             this.campaigns = new ArrayList<>(newCampaigns);
+
+            // Download any assets we do not have yet
+            downloadAssets(assetsQueue, notifyCampaignsUpdateListener);
         } catch (JSONException exp) {
             SwrveLogger.e("Error parsing campaign JSON", exp);
         }
@@ -1113,11 +1120,11 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
         campaigns = new ArrayList<>();
         campaignDisplayer = new SwrveCampaignDisplayer();
         campaignsState = new HashMap<>();
-        loadCampaignsFromCache(userId);
+        loadCampaignsFromCache(userId, false); // startup notification is owned by firstRefreshFinished
     }
     
     // load or refresh campaigns with cache content
-    protected void loadCampaignsFromCache(String userId) {
+    protected void loadCampaignsFromCache(String userId, boolean notifyCampaignsUpdateListener) {
         try {
             String campaignsFromCache = multiLayerLocalStorage.getSecureCacheEntryForUser(userId, CACHE_CAMPAIGNS, getUniqueKey(userId));
             if (!SwrveHelper.isNullOrEmpty(campaignsFromCache)) {
@@ -1126,7 +1133,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
                 loadCampaignsStateFromCache();
                 // Update campaigns with the loaded JSON content
                 boolean loadPreviousCampaignState = !QaUser.isResetDevice();
-                loadCampaignsFromJSON(userId, campaignsJson, campaignsState, loadPreviousCampaignState);
+                loadCampaignsFromJSON(userId, campaignsJson, campaignsState, loadPreviousCampaignState, notifyCampaignsUpdateListener);
                 SwrveLogger.i("Loaded campaigns from cache.");
             } else {
                 invalidateETag(userId);
@@ -1205,26 +1212,67 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     }
 
     protected void invokePushInboxUpdateListener() {
-        if (pushInboxUpdateListener != null) {
-            Activity activity = getActivityContext();
-            if (activity != null) {
-                activity.runOnUiThread(() -> {
-                    if (pushInboxUpdateListener != null) { // requires another null check because it executes on another thread
-                        try {
-                            pushInboxUpdateListener.onMessagesUpdated();
-                        } catch (Exception e) {
-                            SwrveLogger.e("SwrveSDK exception trying to call SwrvePushInboxUpdateListener.onMessagesUpdated", e);
-                        }
-                    }
-                });
-            } else {
-                // If we do not have access to the activity context run on current thread
-                try {
-                    pushInboxUpdateListener.onMessagesUpdated();
-                } catch (Exception e) {
-                    SwrveLogger.e("SwrveSDK exception trying to call SwrvePushInboxUpdateListener.onMessagesUpdated", e);
+        SwrvePushInboxUpdateListener listener = getPushInboxUpdateListener();
+        if (listener == null) {
+            return;
+        }
+        Activity activity = getActivityContext();
+        if (activity != null) {
+            activity.runOnUiThread(() -> {
+                // Resolved again because this executes later, by which time it may have been collected.
+                SwrvePushInboxUpdateListener uiListener = getPushInboxUpdateListener();
+                if (uiListener != null) {
+                    notifyPushInboxUpdateListener(uiListener);
                 }
-            }
+            });
+        } else {
+            // If we do not have access to the activity context run on current thread
+            notifyPushInboxUpdateListener(listener);
+        }
+    }
+
+    private SwrvePushInboxUpdateListener getPushInboxUpdateListener() {
+        return pushInboxUpdateListener == null ? null : pushInboxUpdateListener.get();
+    }
+
+    protected void invokeCampaignsUpdateListener() {
+        SwrveCampaignsUpdateListener listener = getCampaignsUpdateListener();
+        if (listener == null) {
+            return;
+        }
+        Activity activity = getActivityContext();
+        if (activity != null) {
+            activity.runOnUiThread(() -> {
+                // Resolved again because this executes later, by which time it may have been collected.
+                SwrveCampaignsUpdateListener uiListener = getCampaignsUpdateListener();
+                if (uiListener != null) {
+                    notifyCampaignsUpdate(uiListener);
+                }
+            });
+        } else {
+            // If we do not have access to the activity context run on current thread
+            notifyCampaignsUpdate(listener);
+        }
+    }
+
+    private SwrveCampaignsUpdateListener getCampaignsUpdateListener() {
+        WeakReference<SwrveCampaignsUpdateListener> ref = campaignsUpdateListener; // one read, so a concurrent setter cannot null it between the check and the get
+        return ref == null ? null : ref.get();
+    }
+
+    private void notifyCampaignsUpdate(SwrveCampaignsUpdateListener listener) {
+        try {
+            listener.onCampaignsUpdated();
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK exception trying to call SwrveCampaignsUpdateListener.onCampaignsUpdated", e);
+        }
+    }
+
+    private void notifyPushInboxUpdateListener(SwrvePushInboxUpdateListener listener) {
+        try {
+            listener.onMessagesUpdated();
+        } catch (Exception e) {
+            SwrveLogger.e("SwrveSDK exception trying to call SwrvePushInboxUpdateListener.onMessagesUpdated", e);
         }
     }
 
@@ -1357,6 +1405,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             // independent of whether the resources or campaigns have changed from cached values
             invokeResourceListener();
             invokePushInboxUpdateListener();
+            invokeCampaignsUpdateListener();
         }
     }
 }

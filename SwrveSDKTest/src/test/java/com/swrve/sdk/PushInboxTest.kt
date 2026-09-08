@@ -46,6 +46,38 @@ class PushInboxTest : SwrveBaseTest() {
     }
 
     @Test
+    fun testPushInboxUpdateListenerHeldWeakly() {
+        // Deliberately an object expression rather than a lambda: a non-capturing lambda compiles to a singleton, so it would not model a listener the caller can stop referencing.
+        val listener = object : SwrvePushInboxUpdateListener {
+            override fun onMessagesUpdated() { /* no-op */ }
+        }
+        swrveSpy.setPushInboxUpdateListener(listener)
+
+        assertNotNull("listener should be wrapped in a weak reference", swrveSpy.pushInboxUpdateListener)
+        assertEquals("weak reference should resolve to the listener", listener, swrveSpy.pushInboxUpdateListener.get())
+    }
+
+    @Test
+    fun testPushInboxUpdateListenerClearedWithNull() {
+        swrveSpy.setPushInboxUpdateListener { /* no-op */ }
+        swrveSpy.setPushInboxUpdateListener(null)
+
+        assertNull("passing null should clear the listener", swrveSpy.pushInboxUpdateListener)
+    }
+
+    @Test
+    fun testInvokePushInboxUpdateListenerAfterCollection() {
+        var callCount = 0
+        swrveSpy.setPushInboxUpdateListener { callCount++ }
+
+        // Simulates the listener having been collected, which is what a caller keeping no strong reference would eventually see.
+        swrveSpy.pushInboxUpdateListener.clear()
+        swrveSpy.invokePushInboxUpdateListener()
+
+        assertEquals("a collected listener should not be called", 0, callCount)
+    }
+
+    @Test
     fun testPushInboxUserProperty() {
         val deviceInfo = swrveSpy._getDeviceInfo()
         assertEquals(deviceInfo.getBoolean("swrve.support.push_inbox"), true)
@@ -111,13 +143,11 @@ class PushInboxTest : SwrveBaseTest() {
         SwrveSDK.stopTracking() // stop the sdk in this test so the sdk is not ready
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("SDK is not ready", result.errorMessage)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("SDK is not ready", result.errorMessage)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.engagePushInboxMessage(1, listener)
@@ -137,13 +167,11 @@ class PushInboxTest : SwrveBaseTest() {
         SwrveSDK.stopTracking() // stop the sdk in this test so the sdk is not ready
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("SDK is not ready", result.errorMessage)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("SDK is not ready", result.errorMessage)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(1, listener)
@@ -163,13 +191,11 @@ class PushInboxTest : SwrveBaseTest() {
         SwrveSDK.stopTracking() // stop the sdk in this test so the sdk is not ready
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("SDK is not ready", result.errorMessage)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("SDK is not ready", result.errorMessage)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.deletePushInboxMessage(1, listener)
@@ -192,15 +218,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.UNREAD, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:500", result.errorMessage)
-                assertEquals(500, result.httpResponseCode)
-                assertEquals(SwrvePushInboxMessageState.UNREAD, message.state)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:500", result.errorMessage)
+            assertEquals(500, result.httpResponseCode)
+            assertEquals(SwrvePushInboxMessageState.UNREAD, message.state)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(1, listener)
@@ -223,15 +247,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.READ, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId: Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(2, messageId)
-                assertEquals(ResultCode.SUCCESS, result.resultCode)
-                assertEquals("", result.errorMessage)
-                assertEquals(200, result.httpResponseCode)
-                assertEquals(SwrvePushInboxMessageState.READ, message.state)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(2, messageId)
+            assertEquals(ResultCode.SUCCESS, result.resultCode)
+            assertEquals("", result.errorMessage)
+            assertEquals(200, result.httpResponseCode)
+            assertEquals(SwrvePushInboxMessageState.READ, message.state)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(2, listener)
@@ -253,16 +275,14 @@ class PushInboxTest : SwrveBaseTest() {
         assertNotNull(message)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("Push Inbox Message 1 failed to delete. Server response code:500", result.errorMessage)
-                assertEquals(500, result.httpResponseCode)
-                message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
-                assertNotNull(message) // message should not be deleted
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("Push Inbox Message 1 failed to delete. Server response code:500", result.errorMessage)
+            assertEquals(500, result.httpResponseCode)
+            message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
+            assertNotNull(message) // message should not be deleted
+            listenerCalled.set(true)
         }
 
         SwrveSDK.deletePushInboxMessage(1, listener)
@@ -285,15 +305,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.UNREAD, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:400", result.errorMessage)
-                assertEquals(400, result.httpResponseCode)
-                assertEquals("message should remain unread", SwrvePushInboxMessageState.UNREAD, message.state)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:400", result.errorMessage)
+            assertEquals(400, result.httpResponseCode)
+            assertEquals("message should remain unread", SwrvePushInboxMessageState.UNREAD, message.state)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(1, listener)
@@ -315,16 +333,14 @@ class PushInboxTest : SwrveBaseTest() {
         assertNotNull(message)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("Push Inbox Message 1 failed to delete. Server response code:400", result.errorMessage)
-                assertEquals(400, result.httpResponseCode)
-                message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
-                assertNotNull(message) // message should not be deleted
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("Push Inbox Message 1 failed to delete. Server response code:400", result.errorMessage)
+            assertEquals(400, result.httpResponseCode)
+            message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
+            assertNotNull(message) // message should not be deleted
+            listenerCalled.set(true)
         }
 
         SwrveSDK.deletePushInboxMessage(1, listener)
@@ -347,15 +363,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.UNREAD, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:429", result.errorMessage)
-                assertEquals(429, result.httpResponseCode)
-                assertEquals(SwrvePushInboxMessageState.UNREAD, message.state) // message should remain unread
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:429", result.errorMessage)
+            assertEquals(429, result.httpResponseCode)
+            assertEquals(SwrvePushInboxMessageState.UNREAD, message.state) // message should remain unread
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(1, listener)
@@ -378,15 +392,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.UNREAD, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.SUCCESS, result.resultCode)
-                assertEquals("", result.errorMessage)
-                assertEquals(200, result.httpResponseCode)
-                assertEquals(SwrvePushInboxMessageState.READ, message.state) // message should now be marked as read
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.SUCCESS, result.resultCode)
+            assertEquals("", result.errorMessage)
+            assertEquals(200, result.httpResponseCode)
+            assertEquals(SwrvePushInboxMessageState.READ, message.state) // message should now be marked as read
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(1, listener)
@@ -421,15 +433,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.UNREAD, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.SUCCESS, result.resultCode)
-                assertEquals("", result.errorMessage)
-                assertEquals(200, result.httpResponseCode)
-                assertEquals(SwrvePushInboxMessageState.READ, message.state) // message should now be marked as read
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.SUCCESS, result.resultCode)
+            assertEquals("", result.errorMessage)
+            assertEquals(200, result.httpResponseCode)
+            assertEquals(SwrvePushInboxMessageState.READ, message.state) // message should now be marked as read
+            listenerCalled.set(true)
         }
 
         SwrveSDK.engagePushInboxMessage(1, listener)
@@ -474,15 +484,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.READ, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(2, messageId)
-                assertEquals(ResultCode.SUCCESS, result.resultCode)
-                assertEquals("", result.errorMessage)
-                assertEquals(200, result.httpResponseCode)
-                assertEquals(SwrvePushInboxMessageState.READ, message.state) // message should now be marked as read
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(2, messageId)
+            assertEquals(ResultCode.SUCCESS, result.resultCode)
+            assertEquals("", result.errorMessage)
+            assertEquals(200, result.httpResponseCode)
+            assertEquals(SwrvePushInboxMessageState.READ, message.state) // message should now be marked as read
+            listenerCalled.set(true)
         }
 
         SwrveSDK.engagePushInboxMessage(2, listener)
@@ -521,15 +529,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.UNREAD, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:500", result.errorMessage)
-                assertEquals(500, result.httpResponseCode)
-                assertEquals(SwrvePushInboxMessageState.UNREAD, message.state)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals("Push Inbox Message 1 failed to mark as read. Server response code:500", result.errorMessage)
+            assertEquals(500, result.httpResponseCode)
+            assertEquals(SwrvePushInboxMessageState.UNREAD, message.state)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.engagePushInboxMessage(1, listener)
@@ -567,16 +573,14 @@ class PushInboxTest : SwrveBaseTest() {
         assertNotNull(message)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.SUCCESS, result.resultCode)
-                assertEquals("", result.errorMessage)
-                assertEquals(200, result.httpResponseCode)
-                message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
-                assertNull(message) // message should be deleted
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.SUCCESS, result.resultCode)
+            assertEquals("", result.errorMessage)
+            assertEquals(200, result.httpResponseCode)
+            message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
+            assertNull(message) // message should be deleted
+            listenerCalled.set(true)
         }
 
         SwrveSDK.deletePushInboxMessage(1, listener)
@@ -612,14 +616,12 @@ class PushInboxTest : SwrveBaseTest() {
         assertEquals(SwrvePushInboxMessageState.UNREAD, message!!.state)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR_UNKNOWN, result.resultCode)
-                assertEquals("Push Inbox Message error marking as Read:Test Exception", result.errorMessage)
-                assertEquals(SwrvePushInboxMessageState.UNREAD, message.state) // message should remain unread
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR_UNKNOWN, result.resultCode)
+            assertEquals("Push Inbox Message error marking as Read:Test Exception", result.errorMessage)
+            assertEquals(SwrvePushInboxMessageState.UNREAD, message.state) // message should remain unread
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(1, listener)
@@ -641,15 +643,13 @@ class PushInboxTest : SwrveBaseTest() {
         assertNotNull(message)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR_UNKNOWN, result.resultCode)
-                assertEquals("Push Inbox Message error deleting:Test Exception", result.errorMessage)
-                message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
-                assertNotNull(message) // message should not be deleted
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR_UNKNOWN, result.resultCode)
+            assertEquals("Push Inbox Message error deleting:Test Exception", result.errorMessage)
+            message = swrveSpy.pushInboxManager.getPushInboxMessage(1)
+            assertNotNull(message) // message should not be deleted
+            listenerCalled.set(true)
         }
 
         SwrveSDK.deletePushInboxMessage(1, listener)
@@ -671,13 +671,11 @@ class PushInboxTest : SwrveBaseTest() {
         swrveSpy.pushInboxManager.restClient = spy(restClient)
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrvePushInboxListener {
-            override fun onComplete(messageId:Long, result: SwrvePushInboxListenerResult) {
-                assertEquals(1, messageId)
-                assertEquals(ResultCode.ERROR, result.resultCode)
-                assertEquals(500, result.httpResponseCode)
-                listenerCalled.set(true)
-            }
+        val listener = SwrvePushInboxListener { messageId, result ->
+            assertEquals(1, messageId)
+            assertEquals(ResultCode.ERROR, result.resultCode)
+            assertEquals(500, result.httpResponseCode)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.readPushInboxMessage(1, listener)

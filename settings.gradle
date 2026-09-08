@@ -8,20 +8,9 @@ pluginManagement {
 
 include ':SwrveSDKCommon', ':SwrveSDK', ':SwrveSDKTest'
 
-include ':MultipleFCMProviders'
-project(":MultipleFCMProviders").projectDir = file("samples/MultipleFCMProviders")
 
-include ':MessageCenter'
-project(":MessageCenter").projectDir = file("samples/MessageCenter")
 
-include ':CustomUserId'
-project(":CustomUserId").projectDir = file("samples/CustomUserId")
-
-// Note: Composite builds using "includeBuild" increase build time.
-// The below samples use remote swrvesdk instead of local source so open each sample
-// individually or uncomment
-//includeBuild('samples/MinimalIntegrationFirebase')
-//includeBuild('samples/MinimalIntegrationHuawei')
-//includeBuild('samples/GeoSample')
-//includeBuild('samples/GeoWithForegroundNotificationSample')
-//includeBuild('samples/SwrveEmbeddedSample')
+// No samples are included here. Every sample under samples/ is a standalone project with its own
+// settings.gradle and Gradle wrapper, consuming the published Swrve SDK artifact — open each one
+// as its own project in Android Studio. To build a sample against local SDK source instead, see
+// the commented includeBuild block in that sample's own settings.gradle.

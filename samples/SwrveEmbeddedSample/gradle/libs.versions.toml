@@ -8,7 +8,8 @@ navigationFragmentKtx = "2.9.6"
 navigationUiKtx = "2.9.6"
 compose-bom = "2025.11.01"
 coilCompose = "2.7.0"
-swrveFirebase = "11.9.0"
+timber = "5.0.1"
+swrveSdkVersion = "12.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,7 +27,8 @@ compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
-swrve-firebase = { group = "com.swrve.sdk.android", name = "swrve-firebase", version.ref = "swrveFirebase" }
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+swrve-firebase = { group = "com.swrve.sdk.android", name = "swrve-firebase", version.ref = "swrveSdkVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

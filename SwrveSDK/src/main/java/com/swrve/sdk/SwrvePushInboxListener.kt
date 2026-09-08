@@ -3,7 +3,7 @@ package com.swrve.sdk
 /**
  * Defines a listener interface for handling push inbox message apis in Swrve.
  */
-interface SwrvePushInboxListener {
+fun interface SwrvePushInboxListener {
 
     /**
      * Called when an operation related to push inbox message is completed.

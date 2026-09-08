@@ -36,12 +36,10 @@ class RefreshContentTest : SwrveBaseTest() {
         SwrveSDK.stopTracking() // stop the sdk in this test so the sdk is not ready
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrveRefreshContentListener {
-            override fun onComplete(result: SwrveRefreshContentListenerResult) {
-                assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR, result.resultCode)
-                assertEquals("SDK is not ready", result.errorMessage)
-                listenerCalled.set(true)
-            }
+        val listener = SwrveRefreshContentListener { result ->
+            assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR, result.resultCode)
+            assertEquals("SDK is not ready", result.errorMessage)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.refreshContent(listener)
@@ -55,13 +53,11 @@ class RefreshContentTest : SwrveBaseTest() {
         swrveSpy.restClient = dummyRestClient(500, "Server error 500")
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrveRefreshContentListener {
-            override fun onComplete(result: SwrveRefreshContentListenerResult) {
-                assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR, result.resultCode)
-                assertEquals("Server error 500", result.errorMessage)
-                assertEquals(500, result.httpResponseCode)
-                listenerCalled.set(true)
-            }
+        val listener = SwrveRefreshContentListener { result ->
+            assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR, result.resultCode)
+            assertEquals("Server error 500", result.errorMessage)
+            assertEquals(500, result.httpResponseCode)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.refreshContent(listener)
@@ -75,13 +71,11 @@ class RefreshContentTest : SwrveBaseTest() {
         swrveSpy.restClient = dummyRestClient(200, "{}")
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrveRefreshContentListener {
-            override fun onComplete(result: SwrveRefreshContentListenerResult) {
-                assertEquals(SwrveRefreshContentListenerResult.ResultCode.SUCCESS, result.resultCode)
-                assertEquals("", result.errorMessage)
-                assertEquals(200, result.httpResponseCode)
-                listenerCalled.set(true)
-            }
+        val listener = SwrveRefreshContentListener { result ->
+            assertEquals(SwrveRefreshContentListenerResult.ResultCode.SUCCESS, result.resultCode)
+            assertEquals("", result.errorMessage)
+            assertEquals(200, result.httpResponseCode)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.refreshContent(listener)
@@ -95,13 +89,11 @@ class RefreshContentTest : SwrveBaseTest() {
         swrveSpy.restClient = dummyRestClient(responseExceptionCode, "") // use the special code to trigger an exception
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrveRefreshContentListener {
-            override fun onComplete(result: SwrveRefreshContentListenerResult) {
-                assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN, result.resultCode)
-                assertEquals("Test Exception", result.errorMessage)
-                assertEquals(0, result.httpResponseCode)
-                listenerCalled.set(true)
-            }
+        val listener = SwrveRefreshContentListener { result ->
+            assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN, result.resultCode)
+            assertEquals("Test Exception", result.errorMessage)
+            assertEquals(0, result.httpResponseCode)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.refreshContent(listener)
@@ -115,13 +107,11 @@ class RefreshContentTest : SwrveBaseTest() {
         swrveSpy.restClient = dummyRestClient(responseExceptionCodeNullMessage, "")
 
         val listenerCalled = AtomicBoolean(false)
-        val listener = object : SwrveRefreshContentListener {
-            override fun onComplete(result: SwrveRefreshContentListenerResult) {
-                assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN, result.resultCode)
-                assertEquals("Exception", result.errorMessage) // falls back to class simple name when message is null
-                assertEquals(0, result.httpResponseCode)
-                listenerCalled.set(true)
-            }
+        val listener = SwrveRefreshContentListener { result ->
+            assertEquals(SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN, result.resultCode)
+            assertEquals("Exception", result.errorMessage) // falls back to class simple name when message is null
+            assertEquals(0, result.httpResponseCode)
+            listenerCalled.set(true)
         }
 
         SwrveSDK.refreshContent(listener)

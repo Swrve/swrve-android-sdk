@@ -5,6 +5,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
@@ -19,6 +22,9 @@ import androidx.test.core.app.ApplicationProvider;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -82,7 +88,6 @@ public class SwrveCampaignAndResourcesTest extends SwrveBaseTest {
 
         swrveSpy._iap(1, "productId", 2, "currency",
                 new SwrveIAPRewards(), "receipt", "receiptSignature", "paymentProvider");
-
 
         assertNotNull(swrveSpy.campaignsAndResourcesExecutor);
 

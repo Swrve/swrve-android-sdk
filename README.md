@@ -9,23 +9,36 @@ Getting started
 ---------------
 Have a look at the quick integration guide at http://docs.swrve.com/developer-documentation/integration/android/
 
+Installation
+------------
+The SDK is published to Maven Central in three flavors. Add the one matching your push provider to your app's `build.gradle`:
+
+```groovy
+// Firebase Cloud Messaging
+implementation 'com.swrve.sdk.android:swrve-firebase:12.3.0'
+
+// Huawei Mobile Services
+implementation 'com.swrve.sdk.android:swrve-huawei:12.3.0'
+
+// No push support
+implementation 'com.swrve.sdk.android:swrve:12.3.0'
+```
+
 Requirements
 ------------
-### Android 21+
-The SDK supports Android API 21+ but will handle older versions with a dummy SDK.
-
-### Gradle (distributed with the SDK)
-Used to build the SDK and its dependencies.
+### Android 6.0 (API 23) or later
 
 Samples
 -------
-Have a look at the samples in the [samples folder.](samples/README.md)
+Have a look at the samples in the [samples folder](samples/README.md).
 
-How to build the SDK
+Building from source
 --------------------
-To build the Swrve AAR library, run the following command from the SwrveSDK folder:
+Most integrations should use the Maven Central artifacts above. To build the AAR yourself, run the following from the `SwrveSDK` folder:
+
 `../gradlew clean build assemble`
-This will generate the AAR library in the build/outputs/aar folder. Use the `google` AAR for push related campaigns.
+
+The AAR is generated in `build/outputs/aar`, one per flavor: `firebase` for FCM push, `huawei` for HMS push, and `core` for no push.
 
 Contributing
 ------------

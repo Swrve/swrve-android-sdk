@@ -7,6 +7,7 @@ packages/
 # Android Studio
 .idea
 .gradle
+.kotlin/
 build
 *.iml
 .settings/org.eclipse.jdt.core.prefs

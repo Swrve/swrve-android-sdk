@@ -114,6 +114,10 @@ public class SwrveBaseEmpty<T, C extends SwrveConfigBase> implements ISwrveBase<
     }
 
     @Override
+    public void setCampaignsUpdateListener(SwrveCampaignsUpdateListener campaignsUpdateListener) {
+    }
+
+    @Override
     public void getUserResources(SwrveUserResourcesListener listener) {
         if (listener != null) {
             listener.onUserResourcesSuccess(new HashMap<>(), null);

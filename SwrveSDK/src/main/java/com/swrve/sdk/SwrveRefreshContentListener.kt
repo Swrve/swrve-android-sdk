@@ -3,7 +3,7 @@ package com.swrve.sdk
 /**
  * Defines a listener interface for handling completion of refreshContent API in Swrve.
  */
-interface SwrveRefreshContentListener {
+fun interface SwrveRefreshContentListener {
 
     /**
      * Called when an operation related to refreshContent API is completed.

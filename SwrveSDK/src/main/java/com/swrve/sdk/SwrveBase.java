@@ -898,7 +898,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                 if (responseJson.has("campaigns")) {
                                     JSONObject campaignJson = responseJson.getJSONObject("campaigns");
                                     saveCampaignsInCache(campaignJson);
-                                    loadCampaignsFromJSON(userId, campaignJson, campaignsState, loadPreviousCampaignState);
+                                    loadCampaignsFromJSON(userId, campaignJson, campaignsState, loadPreviousCampaignState, true);
                                     autoShowMessages();
 
                                     if (resourceManager != null && campaignJson.has("ab_test_details")) {
@@ -908,8 +908,8 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
                                         }
                                     }
                                 } else if (responseJson.has("real_time_user_properties")) {
-                                    // if campaigns are the same but properties have updated.
-                                    loadCampaignsFromCache(userId);
+                                    // The campaign JSON is unchanged, but personalization feeds the APIs, so which campaigns are listable and how they render can both change.
+                                    loadCampaignsFromCache(userId, true);
                                 }
 
                                 if (responseJson.has("push_inbox")) {
@@ -1273,7 +1273,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void _setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener) {
-        this.pushInboxUpdateListener = pushInboxUpdateListener;
+        this.pushInboxUpdateListener = pushInboxUpdateListener == null ? null : new WeakReference<>(pushInboxUpdateListener);
+    }
+
+    protected void _setCampaignsUpdateListener(SwrveCampaignsUpdateListener campaignsUpdateListener) {
+        this.campaignsUpdateListener = campaignsUpdateListener == null ? null : new WeakReference<>(campaignsUpdateListener);
     }
 
     protected Date _getInitialisedTime() {
@@ -1771,6 +1775,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener) {
         try {
             _setPushInboxUpdateListener(pushInboxUpdateListener);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception thrown in Swrve SDK", e);
+        }
+    }
+
+    @Override
+    public void setCampaignsUpdateListener(SwrveCampaignsUpdateListener campaignsUpdateListener) {
+        try {
+            _setCampaignsUpdateListener(campaignsUpdateListener);
         } catch (Exception e) {
             SwrveLogger.e("Exception thrown in Swrve SDK", e);
         }
@@ -2648,8 +2661,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     @Override
     public String getExternalUserId() {
-        if (!isSdkReady()) return null;
-
+        openLocalStorageConnection(); // can be called before start, so ensure the storage connection is open.
         SwrveUser existingUser = multiLayerLocalStorage.getUserBySwrveUserId(getUserId());
         return (existingUser == null) ? "" : existingUser.getExternalUserId();
     }

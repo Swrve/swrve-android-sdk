@@ -1,0 +1,29 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+include ':app'
+
+// ---------------------------------------------------------------------------
+// To build against local SDK source instead of the published artifact, uncomment TWO things, then re-sync:
+//   1. the includeBuild block below
+//   2. missingDimensionStrategy in app/build.gradle
+//
+// The substitution is spelled out because ':SwrveSDK' publishes three coordinates (swrve, swrve-firebase, swrve-huawei), so Gradle cannot infer the mapping.
+//includeBuild('../../..') {
+//    dependencySubstitution {
+//        substitute module('com.swrve.sdk.android:swrve-firebase') using project(':SwrveSDK')
+//    }
+//}
+// ---------------------------------------------------------------------------

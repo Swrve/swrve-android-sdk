@@ -44,6 +44,8 @@ public interface ISwrveBase<T, C extends SwrveConfigBase> {
 
     void setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener);
 
+    void setCampaignsUpdateListener(SwrveCampaignsUpdateListener campaignsUpdateListener);
+
     void getUserResources(final SwrveUserResourcesListener listener);
 
     void getUserResourcesDiff(final SwrveUserResourcesDiffListener listener);

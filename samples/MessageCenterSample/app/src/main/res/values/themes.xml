@@ -1,0 +1,12 @@
+<resources>
+
+    <!--
+      Window theme only — the launch background and system bars. All in-app colours come
+      from Theme.kt (Compose). A platform parent is used deliberately so the sample needs
+      no appcompat or material dependency; values-night/ supplies the dark equivalent.
+    -->
+    <style name="Theme.MessageCenterSample" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+</resources>

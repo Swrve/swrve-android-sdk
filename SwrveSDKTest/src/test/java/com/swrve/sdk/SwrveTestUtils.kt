@@ -157,7 +157,7 @@ object SwrveTestUtils {
     fun loadCampaignsFromFile(context: Context, swrve: Swrve, campaignFileName: String, loadPreviousCampaignState: Boolean, saveToCache: Boolean, vararg assets: String?) {
         val json = getAssetAsText(context, campaignFileName)
         val jsonObject = JSONObject(json)
-        swrve.loadCampaignsFromJSON(swrve.userId, jsonObject, swrve.campaignsState, loadPreviousCampaignState)
+        swrve.loadCampaignsFromJSON(swrve.userId, jsonObject, swrve.campaignsState, loadPreviousCampaignState, false)
         assets?.let {
             if (assets.size > 0) {
                 val assetsOnDisk: MutableSet<String> = HashSet()

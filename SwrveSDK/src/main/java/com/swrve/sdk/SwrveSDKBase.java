@@ -28,6 +28,16 @@ public abstract class SwrveSDKBase {
     protected static ISwrveBase instance;
 
     /**
+     * The release version of this SDK.
+     *
+     * @return SDK version as a string, for example "12.2.1".
+     */
+    public static String getSdkVersion() {
+        checkInstanceCreated();
+        return SwrveBase.getVersion();
+    }
+
+    /**
      * Identify users such that they can be tracked and targeted safely across multiple devices, platforms and channels.
      * Throws RunTimeException if called in SwrveInitMode.MANAGED mode.
      * <pre>
@@ -669,7 +679,7 @@ public abstract class SwrveSDKBase {
     /**
      * Get the current external user id.
      *
-     * @return current external user id
+     * @return current external user id, or an empty string if there is none
      */
     public static String getExternalUserId() {
         checkInstanceCreated();
@@ -766,12 +776,39 @@ public abstract class SwrveSDKBase {
     /**
      * The pushInboxUpdateListener onMessagesUpdated() method is invoked when Push Inbox messages
      * have been initially loaded and each time messages are updated/changed.
+     * <p>
+     * Held with a weak reference, so keep a strong reference to the listener for as long as you want
+     * updates — an anonymous one with no other reference may be garbage collected, after which no
+     * callbacks arrive. Pass null to stop updates.
      *
      * @param pushInboxUpdateListener Called when the push inbox messages are initially loaded and each time messages are updated/changed.
      */
     public static void setPushInboxUpdateListener(SwrvePushInboxUpdateListener pushInboxUpdateListener) {
         checkInstanceCreated();
         instance.setPushInboxUpdateListener(pushInboxUpdateListener);
+    }
+
+    /**
+     * The SwrveCampaignsUpdateListener onCampaignsUpdated() method is invoked once after the initial content load attempt, whether or not it succeeded or anything changed, and again whenever
+     * content the SDK has fetched <i>may</i> have changed the campaigns. Invocations are independent and arrive in no guaranteed order. Campaigns are a snapshot, so re-read them on every invocation rather than holding the previous result. The SDK does not compare against what you last read, so let your own
+     * comparison decide whether to redraw. It covers every campaign surface, including Message Center and embedded.
+     * <p>
+     * Register where the SDK is created: the initial notification is sent once and never replayed, so a listener installed later may miss it.
+     * <p>
+     * SDK-driven changes only. {@link #markMessageCenterCampaignAsSeen(int)} and {@link #removeMessageCenterCampaign(int)} change what the getters return without invoking this, so re-read
+     * after your own calls.
+     * <p>
+     * One of the invocations follows the SDK's attempt to download campaign assets, which is when new campaigns normally become readable — a campaign is not listable until its assets are on
+     * disk, and individual downloads can fail, so it is not a promise that everything is present.
+     * <p>
+     * Held with a weak reference, so keep a strong reference to the listener for as long as you want updates — an anonymous one with no other reference may be garbage collected, after which no
+     * callbacks arrive. Pass null to stop updates.
+     *
+     * @param campaignsUpdateListener Called after the initial content load attempt and whenever fetched content may have changed the campaigns.
+     */
+    public static void setCampaignsUpdateListener(SwrveCampaignsUpdateListener campaignsUpdateListener) {
+        checkInstanceCreated();
+        instance.setCampaignsUpdateListener(campaignsUpdateListener);
     }
 
     /**

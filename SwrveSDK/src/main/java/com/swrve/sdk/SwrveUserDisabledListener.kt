@@ -5,7 +5,7 @@ import android.content.Context
  * Listener invoked when a user has been disabled and the SDK
  * has stopped tracking for that user.
  */
-interface SwrveUserDisabledListener {
+fun interface SwrveUserDisabledListener {
 
     /**
      * Called when a user has been disabled.

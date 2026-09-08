@@ -1,6 +1,4 @@
 <resources>
-    <string name="app_name">MG Sample App</string>
+    <string name="app_name">MG Embedded</string>
     <string name="title_home">Home</string>
-    <string name="title_pushinbox">Inbox</string>
-    <string name="title_messagecenter">Message Center</string>
 </resources>

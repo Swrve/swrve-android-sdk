@@ -22,7 +22,7 @@ public class SwrvePushServiceDefault {
      * @param messageId For firebase this is the remoteMessage.getMessageId().
      * @param sentTime  For firebase this is the remoteMessage.getSentTime().
      * @return true if it was a swrve push, false if it was another push provider and should be handled by the caller.
-     * @deprecated Instead use SwrveSDK.handlePush(Context context, Map<String, String> data, String messageId, long sentTime)
+     * @deprecated Instead use SwrveSDK.handleSwrvePush(Context context, Map<String, String> data, String messageId, long sentTime)
      */
     @Deprecated
     public static boolean handle(Context context, Map<String, String> data, String messageId, long sentTime) {

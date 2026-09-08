@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.swrve.sdk.SwrveSDK
 
 private val LOGO_WIDTH_FRACTION = 0.55f
 private val LOGO_TOP_PADDING = 24.dp
@@ -120,6 +121,13 @@ private fun LauncherScreen(
                 modifier = Modifier
                     .padding(top = LOGO_TOP_PADDING)
                     .fillMaxWidth(LOGO_WIDTH_FRACTION)
+            )
+
+            Text(
+                text = "Swrve SDK ${SwrveSDK.getSdkVersion()}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
 
             // Navigation buttons for embedded campaign examples

@@ -1,0 +1,11 @@
+<resources>
+
+    <!--
+      Dark equivalent of values/themes.xml. windowLightStatusBar is false here so the
+      status bar icons stay light against a dark background.
+    -->
+    <style name="Theme.IdentitySample" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+</resources>

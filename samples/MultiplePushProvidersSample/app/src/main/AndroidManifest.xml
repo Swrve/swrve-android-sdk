@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:name=".SampleApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.MultiplePushProvidersSample">
+
+        <!--
+          THIS is what makes this sample different.
+
+          Declaring your own FirebaseMessagingService takes ownership of the
+          com.google.firebase.MESSAGING_EVENT intent. Only one service can own it, so Swrve's
+          SwrveFirebaseMessagingService will not run — every message, Swrve's included, is
+          delivered here instead. See MyFirebaseMessagingService for the routing.
+
+          The SDK declares its own service at android:priority="-1" precisely so an
+          app-declared service like this one takes precedence. Do not also declare Swrve's.
+        -->
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleTask"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

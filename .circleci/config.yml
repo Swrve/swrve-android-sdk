@@ -26,21 +26,22 @@ jobs:
             - ~/.gradle
           key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
-          name: Build MinimalIntegrationFirebase App
+          name: Build PushNotificationSample App
           command: |
-              cd samples/MinimalIntegrationFirebase
+              cd samples/PushNotificationSample
               ./gradlew build
       - run:
-          name: Build MinimalIntegrationHuawei App
+          name: Build MultiplePushProvidersSample App
           command: |
-              cd samples/MinimalIntegrationHuawei
+              cd samples/MultiplePushProvidersSample
               ./gradlew build
       - run:
-          name: Build MultipleFCMProviders App
-          command: ./gradlew :MultipleFCMProviders:build
+          name: Build MessageCenterSample App
+          command: |
+              cd samples/MessageCenterSample
+              ./gradlew build
       - run:
-          name: Build MessageCenter App
-          command: ./gradlew :MessageCenter:build
-      - run:
-          name: Build CustomUserId App
-          command: ./gradlew :CustomUserId:build
+          name: Build IdentitySample App
+          command: |
+              cd samples/IdentitySample
+              ./gradlew build

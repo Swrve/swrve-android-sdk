@@ -9,14 +9,14 @@ This sample app demonstrates how to consume **Swrve Embedded Campaigns** and ren
 
 ---
 ## Why Embedded Campaigns?
-Embedded campaigns let you design & target content server‑side (in Swrve) while retaining **full client rendering control**. They are ideal when:
+Embedded campaigns let you design & target content server‑side while retaining **full client rendering control**. They are ideal when:
 * You already have bespoke UI components / design system.
 * You want AB‑testable content without shipping an app update.
 * You need a mixture of layouts (carousel, banners, contextual offers) powered by one remote feed.
 
 ---
 ## Setup Screen (Offline vs Live Mode)
-The sample ships with a built‑in offline data. This lets you explore UI components immediately **without** connecting to Swrve servers.
+The sample ships with bundled offline data, so you can explore the UI components immediately **without** connecting to Swrve servers.
 
 Open the Setup sheet ("Setup" button on the main menu) to switch between modes or provide credentials.
 
@@ -43,6 +43,8 @@ Credentials are stored using a lightweight sample store and `SharedPreferences` 
 6. Track impressions (`embeddedMessageWasShownToUser`) exactly once per message ID.
 7. Track CTA taps (`embeddedMessageButtonWasPressed`).
 
+This sample reloads each screen's campaigns when the screen is entered, which is enough for a demo. An app that keeps a screen open for long periods can instead register `SwrveSDK.setCampaignsUpdateListener` and re-read when it fires — it covers embedded campaigns as well as Message Center, and reports changes that arrive on the SDK's own schedule. See `MessageCenterSample` for a worked example.
+
 ---
 ## Campaign JSON Structure (inside `data` JSON)
 | Field | Type | Notes |
@@ -51,7 +53,7 @@ Credentials are stored using a lightweight sample store and `SharedPreferences` 
 | `version` | number (optional) | Schema version (default assumed 1). Payload ignored if `version` > `EMBEDDED_SCHEMA_VERSION` |
 | `display_order` | number (optional) | Ascending priority (lower value shown first). Missing => sorted last |
 | `title` | `{ text, color }` (optional) | Omitted for purely image layouts |
-| `body` | `{ text, color }` (optional) | Optional secondary text; never raw string anymore |
+| `body` | `{ text, color }` (optional) | Optional secondary text |
 | `image` | string URL (optional) | Required for carousel / most offers layouts; optional for some banners |
 | `background_color` | hex string (optional) | Applied to card / banner surface; fallback theme color if absent |
 | `layout` | string (optional) | Layout dispatch token (e.g. `tall_card`, `compact_card`, `left_aligned_banner`) |
@@ -74,18 +76,35 @@ Layouts: `tall_card` (image + reserved text band) or `image_only_card` (just ima
 Layouts: `tall_card` (image on top) or `compact_card` (square thumbnail + text column). CTA optional; card taps still possible.
 
 #### Banner (`type: banner`)
-Fields include `layout` variants: `left_aligned_banner`, `centered_banner`, `right_aligned_banner`. Uses `image` plus overlay text & CTA.
+Uses `image` plus overlay text & CTA. Alignment comes from `layout`, matched loosely — the sample checks whether the value *contains* `left` or `right` (e.g. `left_aligned_banner`), and anything else, including an absent `layout`, renders centred.
 
 #### Floating Banner (`type: floating_banner`)
 Adds:
 * `location`: `top` | `bottom` (determines screen position and slide animation direction)
 * `image`: optional image icon URL
-* `expanded_title`, `expanded_body`, `helper_text`: text fields for expanded state
-* Collapsed state shows `title` and `body`
-* CTA appears only in expanded state
+* Text lives in two **nested** objects rather than at the top level: `collapsed` (`title`, `body`) and `expanded` (`title`, `body`, `helper_text`, `cta`). The CTA appears only when expanded, and `layout` is ignored — the parser always sets it to `collapsed_to_expanded`.
+
+```json
+{
+  "type": "floating_banner",
+  "location": "top",
+  "image": "https://…",
+  "background_color": "#686669",
+  "collapsed": {
+    "title": { "text": "Hot Promo" },
+    "body":  { "text": "Free for 1 month. See offer." }
+  },
+  "expanded": {
+    "title":       { "text": "Hot Promo" },
+    "body":        { "text": "Enjoy 1 month free of our premium plan." },
+    "helper_text": { "text": "Tap again to collapse." },
+    "cta":         { "text": "Claim Offer", "url": "https://example.com" }
+  }
+}
+```
 
 ### Schema Versioning
-The sample defines a constant `EMBEDDED_SCHEMA_VERSION = 1` inside the models file. Incoming payloads include an optional `version` field. If omitted it is treated as `1`. Any payload whose `version` exceeds the client constant is **skipped silently** (future-proofing against incompatible server changes). Add logging if you need visibility into skipped future versions.
+The sample defines a constant `EMBEDDED_SCHEMA_VERSION = 1` in `EmbeddedViewModel.kt`. Incoming payloads include an optional `version` field. If omitted it is treated as `1`. Any payload whose `version` exceeds the client constant is **skipped silently** (future-proofing against incompatible server changes). Add logging if you need visibility into skipped future versions.
 
 ---
 ## Decoding Pattern
@@ -138,7 +157,7 @@ Steps:
 2. Sync Gradle dependencies.
 3. Build & run on emulator or device.
 4. Main menu opens with buttons to Carousel, Offers, Fixed Banner, Floating Banner, etc.
-5. Setup button allows to switch on live campaigns by entering credentials, otherwise offline mode loads off the shelf content.
+5. Setup lets you switch to live campaigns by entering credentials; otherwise offline mode loads the bundled content.
 6. Message center driven campaigns triggered via Carousel, Offers, Floating Banner buttons.
 7. Event driven (`event=banner`) campaign triggered via Fixed Banner button.
 

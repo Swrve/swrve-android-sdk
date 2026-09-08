@@ -459,6 +459,39 @@ public class SwrveIdentityTest extends SwrveBaseTest {
     }
 
     @Test
+    public void testGetExternalIdBeforeSdkInit() throws Exception {
+        // Cache an identified user, then throw the instance away and create a new one WITHOUT init, so
+        // this is a genuinely never-started sdk rather than a stopped one.
+        SwrveUser cachedUser = new SwrveUser(swrveSpy.getUserId(), testExternalId, true);
+        swrveSpy.multiLayerLocalStorage.getSecondaryStorage().saveUser(cachedUser);
+
+        SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
+
+        Swrve swrveReal = (Swrve) SwrveSDK.createInstance(ApplicationProvider.getApplicationContext(), 1, "apiKey");
+        swrveSpy = Mockito.spy(swrveReal);
+        SwrveTestUtils.disableBeforeSendDeviceInfo(swrveReal, swrveSpy);
+        SwrveTestUtils.setSDKInstance(swrveSpy);
+
+        // The sqlite layer is only attached by openLocalStorageConnection, which getExternalUserId has to
+        // call itself for this to work. Remove that call and this fails while the stopped-state test passes.
+        assertEquals(testExternalId, swrveSpy.getExternalUserId());
+    }
+
+    @Test
+    public void testGetExternalIdWhenStopped() {
+        String response = "{\"swrve_id\" : \"SwrveUser1\", \"status\" : \"new_external_id\"}";
+        mockRestResponse(200, response);
+        identifyAndWait("User1");
+        assertEquals("User1", SwrveSDK.getExternalUserId());
+
+        SwrveSDK.stopTracking();
+
+        // Reads cached state and never contacts the server, so being stopped does not change the answer.
+        // Before MG-25747 this returned null, which an integrator could not tell apart from "no external id".
+        assertEquals("User1", SwrveSDK.getExternalUserId());
+    }
+
+    @Test
     public void testSwitchUserClearAuthenticatedNotifications() {
 
         ISwrveCommon swrveCommon = SwrveCommon.getInstance();
