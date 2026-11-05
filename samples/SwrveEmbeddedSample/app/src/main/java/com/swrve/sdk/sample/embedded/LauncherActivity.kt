@@ -78,6 +78,12 @@ class LauncherActivity : ComponentActivity() {
                             Intent(this@LauncherActivity, MainActivity::class.java)
                                 .putExtra("display", "floating_banner")
                         )
+                    },
+                    onOpenForm = {
+                        startActivity(
+                            Intent(this@LauncherActivity, MainActivity::class.java)
+                                .putExtra("display", "form")
+                        )
                     }
                 )
             }
@@ -91,7 +97,8 @@ private fun LauncherScreen(
     onOpenCarousel: () -> Unit,
     onOpenOffers: () -> Unit,
     onOpenFixedBanner: () -> Unit,
-    onOpenFloatingBanner: () -> Unit
+    onOpenFloatingBanner: () -> Unit,
+    onOpenForm: () -> Unit
 ) {
     var showSetup by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -184,6 +191,18 @@ private fun LauncherScreen(
                     )
                 ) {
                     Text(text = "Floating Banner", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                }
+
+                Button(
+                    onClick = onOpenForm,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text(text = "Form", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
                 }
             }
         }

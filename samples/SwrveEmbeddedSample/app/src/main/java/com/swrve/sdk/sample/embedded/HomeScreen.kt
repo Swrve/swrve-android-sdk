@@ -36,16 +36,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun HomeScreen(embeddedViewModel: EmbeddedViewModel = viewModel(), display: String) {
-    // When showing the floating banner experience, we still render the normal
-    // home content but overlay the banner on top so the user can scroll
-    // underneath it.
-    val contentDisplay = if (display == "floating_banner") "none" else display
+    // When showing the floating banner or form experience, we still render the
+    // normal home content but overlay the banner/form on top so the user can
+    // scroll underneath it.
+    val contentDisplay = if (display == "floating_banner" || display == "form") "none" else display
 
     Box(modifier = Modifier.fillMaxSize()) {
         HomeContent(embeddedViewModel = embeddedViewModel, display = contentDisplay)
 
         if (display == "floating_banner") {
             FloatingBanner(viewModel = embeddedViewModel, modifier = Modifier.fillMaxSize())
+        }
+
+        if (display == "form") {
+            FormBanner(modifier = Modifier.fillMaxSize())
         }
     }
 }
