@@ -185,8 +185,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
-        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
-        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(1);
 
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
     }
@@ -217,13 +217,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(view);
 
         // Assert image has personalized text
-        assertTrue(view.getChildAt(1) instanceof SwrveTextImageView);
-        SwrveTextImageView imageView = (SwrveTextImageView) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveTextImageView);
+        SwrveTextImageView imageView = (SwrveTextImageView) view.getPageElementsLayout().getChildAt(1);
         assertEquals("Image test_coupon", imageView.getText());
 
         // Assert button has personalized text
-        assertTrue(view.getChildAt(2) instanceof SwrveTextImageView);
-        SwrveTextImageView swrveButtonView = (SwrveTextImageView) view.getChildAt(2);
+        assertTrue(view.getPageElementsLayout().getChildAt(2) instanceof SwrveTextImageView);
+        SwrveTextImageView swrveButtonView = (SwrveTextImageView) view.getPageElementsLayout().getChildAt(2);
         assertEquals("Button test_coupon", swrveButtonView.getText());
         assertEquals(Color.GREEN, swrveButtonView.clickColor);
         assertEquals(Color.RED, swrveButtonView.inAppConfig.getPersonalizedTextBackgroundColor());
@@ -231,14 +231,14 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull("Typeface should be set", swrveButtonView.inAppConfig.getPersonalizedTextTypeface());
 
         // Assert button to clipboard
-        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
-        SwrveButtonView swrveC2CButtonView = (SwrveButtonView) view.getChildAt(3);
+        assertTrue(view.getPageElementsLayout().getChildAt(3) instanceof SwrveButtonView);
+        SwrveButtonView swrveC2CButtonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(3);
         assertEquals(SwrveActionType.CopyToClipboard, swrveC2CButtonView.getType());
         assertEquals("hello", swrveC2CButtonView.getAction());
 
         // Assert custom button
-        assertTrue(view.getChildAt(4) instanceof SwrveButtonView);
-        SwrveButtonView swrveCustomButtonView = (SwrveButtonView) view.getChildAt(4);
+        assertTrue(view.getPageElementsLayout().getChildAt(4) instanceof SwrveButtonView);
+        SwrveButtonView swrveCustomButtonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(4);
         assertEquals(SwrveActionType.Custom, swrveCustomButtonView.getType());
         assertEquals("http://www.google.com?a=hello_other", swrveCustomButtonView.getAction());
     }
@@ -267,8 +267,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
-        assertTrue(view.getChildAt(4) instanceof SwrveButtonView);
-        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(4);
+        assertTrue(view.getPageElementsLayout().getChildAt(4) instanceof SwrveButtonView);
+        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(4);
 
         assertEquals("http://www.google.com?a=user-name", swrveButtonView.getAction());
     }
@@ -300,8 +300,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
-        assertTrue(view.getChildAt(4) instanceof SwrveButtonView);
-        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(4);
+        assertTrue(view.getPageElementsLayout().getChildAt(4) instanceof SwrveButtonView);
+        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(4);
 
         assertEquals("http://www.google.com?a=user-name", swrveButtonView.getAction());
     }
@@ -1302,8 +1302,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
 
         SwrveButtonView swrveButtonView;
-        for (int i = 0; i < view.getChildCount(); i++) {
-            View childView = view.getChildAt(i);
+        for (int i = 0; i < view.getPageElementsLayout().getChildCount(); i++) {
+            View childView = view.getPageElementsLayout().getChildAt(i);
             if (childView instanceof SwrveButtonView) {
                 swrveButtonView = (SwrveButtonView) childView;
                 assertTrue(swrveButtonView.isFocusable());
@@ -1329,7 +1329,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // Using ViewPager for all swipe/non swipe journeys, so it will have focus initially
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
-        SwrveButtonView button = (SwrveButtonView) view.getChildAt(1);
+        SwrveButtonView button = (SwrveButtonView) view.getPageElementsLayout().getChildAt(1);
         button.requestFocus();
 
         await().untilTrue(focusListenerExecuted);
@@ -1361,8 +1361,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
 
-        assertTrue(view.getChildAt(2) instanceof SwrveTextImageView);
-        SwrveTextImageView imageView = (SwrveTextImageView) view.getChildAt(2);
+        assertTrue(view.getPageElementsLayout().getChildAt(2) instanceof SwrveTextImageView);
+        SwrveTextImageView imageView = (SwrveTextImageView) view.getPageElementsLayout().getChildAt(2);
         assertEquals("Replaced payloadValue value", imageView.getText());
     }
 
@@ -1416,8 +1416,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
 
-        assertTrue(view.getChildAt(0) instanceof SwrveTextView);
-        SwrveTextView textView = (SwrveTextView) view.getChildAt(0);
+        assertTrue(view.getPageElementsLayout().getChildAt(0) instanceof SwrveTextView);
+        SwrveTextView textView = (SwrveTextView) view.getPageElementsLayout().getChildAt(0);
         assertEquals("triggered multiline Text \\n with a newline.", textView.getText().toString());
 
         assertEquals(textView.getCurrentTextColor(), Color.BLUE);
@@ -1447,8 +1447,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
 
-        assertTrue(view.getChildAt(0) instanceof SwrveTextView);
-        SwrveTextView textView = (SwrveTextView) view.getChildAt(0);
+        assertTrue(view.getPageElementsLayout().getChildAt(0) instanceof SwrveTextView);
+        SwrveTextView textView = (SwrveTextView) view.getPageElementsLayout().getChildAt(0);
         assertEquals("Multiline Text \\n with a newline.", textView.getText().toString());
 
         assertEquals(15, textView.getPaddingBottom());
@@ -1536,29 +1536,29 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Robolectric.flushForegroundThreadScheduler();
 
         // assert the drawable loaded by glide is a gif
-        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
-        SwrveImageView child0 = (SwrveImageView) view.getChildAt(0);
+        assertTrue(view.getPageElementsLayout().getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView child0 = (SwrveImageView) view.getPageElementsLayout().getChildAt(0);
         Drawable gifDrawable0 = child0.getDrawable();
         assertNotNull(gifDrawable0);
         assertTrue(gifDrawable0 instanceof GifDrawable);
 
         // assert the drawable loaded by glide is a gif
-        assertTrue(view.getChildAt(1) instanceof SwrveImageView);
-        SwrveImageView child1 = (SwrveImageView) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveImageView);
+        SwrveImageView child1 = (SwrveImageView) view.getPageElementsLayout().getChildAt(1);
         Drawable gifDrawable1 = child1.getDrawable();
         assertNotNull(gifDrawable1);
         assertTrue(gifDrawable1 instanceof GifDrawable);
 
         // assert the drawable loaded by glide is a gif
-        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
-        SwrveButtonView child2 = (SwrveButtonView) view.getChildAt(2);
+        assertTrue(view.getPageElementsLayout().getChildAt(2) instanceof SwrveButtonView);
+        SwrveButtonView child2 = (SwrveButtonView) view.getPageElementsLayout().getChildAt(2);
         Drawable gifDrawable2 = child2.getDrawable();
         assertNotNull(gifDrawable2);
         assertTrue(gifDrawable2 instanceof GifDrawable);
 
         // assert the drawable loaded by glide is a gif
-        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
-        SwrveButtonView child3 = (SwrveButtonView) view.getChildAt(3);
+        assertTrue(view.getPageElementsLayout().getChildAt(3) instanceof SwrveButtonView);
+        SwrveButtonView child3 = (SwrveButtonView) view.getPageElementsLayout().getChildAt(3);
         Drawable gifDrawable3 = child3.getDrawable();
         assertNotNull(gifDrawable3);
         assertTrue(gifDrawable3 instanceof GifDrawable);
@@ -1593,23 +1593,23 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(view);
 
         // ensure that it loaded the right dynamic views
-        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
-        SwrveImageView imageView = (SwrveImageView) view.getChildAt(0);
+        assertTrue(view.getPageElementsLayout().getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView imageView = (SwrveImageView) view.getPageElementsLayout().getChildAt(0);
         assertEquals(ImageView.ScaleType.FIT_CENTER, imageView.getScaleType());
         assertTrue("dynamic image url images should have adjustViewBounds Enabled", imageView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
-        SwrveButtonView buttonView = (SwrveButtonView) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(1);
         assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
         assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
-        buttonView = (SwrveButtonView) view.getChildAt(2);
+        assertTrue(view.getPageElementsLayout().getChildAt(2) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(2);
         assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
         assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
-        buttonView = (SwrveButtonView) view.getChildAt(3);
+        assertTrue(view.getPageElementsLayout().getChildAt(3) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(3);
         assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
         assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
     }
@@ -1641,23 +1641,23 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(view);
 
         // message still appears with fallback image as background
-        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
-        SwrveImageView imageView = (SwrveImageView) view.getChildAt(0);
+        assertTrue(view.getPageElementsLayout().getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView imageView = (SwrveImageView) view.getPageElementsLayout().getChildAt(0);
         assertEquals(ImageView.ScaleType.FIT_XY, imageView.getScaleType());
         assertFalse("regular images should have adjustViewBounds Disabled", imageView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
-        SwrveButtonView buttonView = (SwrveButtonView) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(1);
         assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
         assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
-        buttonView = (SwrveButtonView) view.getChildAt(2);
+        assertTrue(view.getPageElementsLayout().getChildAt(2) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(2);
         assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
         assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
-        buttonView = (SwrveButtonView) view.getChildAt(3);
+        assertTrue(view.getPageElementsLayout().getChildAt(3) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(3);
         assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
         assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
     }
@@ -1690,23 +1690,23 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(view);
 
         // message still appears with fallback image as background
-        assertTrue(view.getChildAt(0) instanceof SwrveImageView);
-        SwrveImageView imageView = (SwrveImageView) view.getChildAt(0);
+        assertTrue(view.getPageElementsLayout().getChildAt(0) instanceof SwrveImageView);
+        SwrveImageView imageView = (SwrveImageView) view.getPageElementsLayout().getChildAt(0);
         assertEquals(ImageView.ScaleType.FIT_XY, imageView.getScaleType());
         assertFalse("regular images should have adjustViewBounds Disabled", imageView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(1) instanceof SwrveButtonView);
-        SwrveButtonView buttonView = (SwrveButtonView) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveButtonView);
+        SwrveButtonView buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(1);
         assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
         assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(2) instanceof SwrveButtonView);
-        buttonView = (SwrveButtonView) view.getChildAt(2);
+        assertTrue(view.getPageElementsLayout().getChildAt(2) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(2);
         assertEquals(ImageView.ScaleType.FIT_CENTER, buttonView.getScaleType());
         assertTrue("dynamic image url images should have adjustViewBounds Enabled", buttonView.getAdjustViewBounds());
 
-        assertTrue(view.getChildAt(3) instanceof SwrveButtonView);
-        buttonView = (SwrveButtonView) view.getChildAt(3);
+        assertTrue(view.getPageElementsLayout().getChildAt(3) instanceof SwrveButtonView);
+        buttonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(3);
         assertEquals(ImageView.ScaleType.FIT_XY, buttonView.getScaleType());
         assertFalse("regular images should have adjustViewBounds Disabled", buttonView.getAdjustViewBounds());
     }
@@ -1840,40 +1840,40 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 //        SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
 //        assertNotNull(view);
 //
-//        SwrveImageView background = (SwrveImageView) view.getChildAt(0);
+//        SwrveImageView background = (SwrveImageView) view.getPageElementsLayout().getChildAt(0);
 //        //tests fallback
 //        assertEquals("Decorative Purple Background personalized", background.getContentDescription());
 //        assertTrue(background.isImportantForAccessibility());
 //
-//        SwrveTextView swrveTextView1 = (SwrveTextView) view.getChildAt(1);
+//        SwrveTextView swrveTextView1 = (SwrveTextView) view.getPageElementsLayout().getChildAt(1);
 //        assertEquals("This is a longer piece of text over several lines that will scroll up and down.", swrveTextView1.getContentDescription());
 //        assertTrue(swrveTextView1.isImportantForAccessibility());
 //
-//        SwrveTextView swrveTextView2 = (SwrveTextView) view.getChildAt(2);
+//        SwrveTextView swrveTextView2 = (SwrveTextView) view.getPageElementsLayout().getChildAt(2);
 //        assertEquals("Text that auto fits", swrveTextView2.getContentDescription());
 //        assertTrue(swrveTextView2.isImportantForAccessibility());
 //
-//        SwrveVideoPlayerView videoPlayerView = (SwrveVideoPlayerView) view.getChildAt(3);
+//        SwrveVideoPlayerView videoPlayerView = (SwrveVideoPlayerView) view.getPageElementsLayout().getChildAt(3);
 //        assertEquals("This is a video of a bunny in fit screen", videoPlayerView.getContentDescription());
 //        assertTrue(videoPlayerView.isImportantForAccessibility());
 //
-//        SwrveVideoPlayerView videoPlayerView2 = (SwrveVideoPlayerView) view.getChildAt(4);
+//        SwrveVideoPlayerView videoPlayerView2 = (SwrveVideoPlayerView) view.getPageElementsLayout().getChildAt(4);
 //        assertEquals("This is a video of a bunny in fill screen", videoPlayerView2.getContentDescription());
 //        assertTrue(videoPlayerView2.isImportantForAccessibility());
 //
-//        SwrveTextImageView swrveTextImageView = (SwrveTextImageView) view.getChildAt(5);
+//        SwrveTextImageView swrveTextImageView = (SwrveTextImageView) view.getPageElementsLayout().getChildAt(5);
 //        assertEquals("Copy code to clipboard 01234566789", swrveTextImageView.getContentDescription());
 //        assertTrue(swrveTextImageView.isImportantForAccessibility());
 //
-//        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getChildAt(6);
+//        SwrveButtonView swrveButtonView = (SwrveButtonView) view.getPageElementsLayout().getChildAt(6);
 //        assertEquals(swrveButtonView.getContentDescription(), "Dismiss Message Jose");
 //        assertTrue(swrveButtonView.isImportantForAccessibility());
 //
-//        SwrveTextImageView swrveTextImageView2 = (SwrveTextImageView) view.getChildAt(7);
+//        SwrveTextImageView swrveTextImageView2 = (SwrveTextImageView) view.getPageElementsLayout().getChildAt(7);
 //        assertEquals(swrveTextImageView2.getContentDescription(), "Launch google");
 //        assertTrue(swrveTextImageView2.isImportantForAccessibility());
 //
-//        SwrveTextImageView swrveTextImageView3 = (SwrveTextImageView) view.getChildAt(8);
+//        SwrveTextImageView swrveTextImageView3 = (SwrveTextImageView) view.getPageElementsLayout().getChildAt(8);
 //        assertEquals(swrveTextImageView3.getContentDescription(), "Text TEST123");
 //        assertTrue(swrveTextImageView3.isImportantForAccessibility());
 //    }
@@ -1900,8 +1900,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
 
         // 1st button
         ColorStateList background1 = getColorStateList("#FFFF0000", "#ffffd700", null);
-        assertTrue(view.getChildAt(0) instanceof SwrveThemedMaterialButton);
-        SwrveThemedMaterialButton buttonView = (SwrveThemedMaterialButton) view.getChildAt(0);
+        assertTrue(view.getPageElementsLayout().getChildAt(0) instanceof SwrveThemedMaterialButton);
+        SwrveThemedMaterialButton buttonView = (SwrveThemedMaterialButton) view.getPageElementsLayout().getChildAt(0);
         assertThemedButton(buttonView, "Text Button", "Text Button", 0,
                 91.4f, typeface, fontColor, background1, 0, null, LEFT | CENTER_VERTICAL);
 
@@ -1909,8 +1909,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         ColorStateList fontColor2 = getColorStateList("#FF000000", "#FFFF0000", "#ff4add00");
         ColorStateList background2 = getColorStateList("#FFFF0000", "#ffffd700", "#ffffff00");
         ColorStateList strokeColor2 = getColorStateList("#FF000000", "#FFFF0000", "#FF0040DD");
-        assertTrue(view.getChildAt(1) instanceof SwrveThemedMaterialButton);
-        buttonView = (SwrveThemedMaterialButton) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveThemedMaterialButton);
+        buttonView = (SwrveThemedMaterialButton) view.getPageElementsLayout().getChildAt(1);
         assertThemedButton(buttonView, "Text Button longer  text", "Custom accessibility text", 40,
                 43.5f, typeface, fontColor2, background2, 4, strokeColor2, CENTER);
 
@@ -1918,8 +1918,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         File fontFile = new File(SwrveSDK.getInstance().getCacheDir(), "535.1030.b60343e5f678c56d52e80b00e604104a73d256f2.ttf");
         Typeface typeface4 = Typeface.createFromFile(fontFile);
         ColorStateList background4 = getColorStateList("#667fd8ff", "#ffffd700", null);
-        assertTrue(view.getChildAt(2) instanceof SwrveThemedMaterialButton);
-        buttonView = (SwrveThemedMaterialButton) view.getChildAt(2);
+        assertTrue(view.getPageElementsLayout().getChildAt(2) instanceof SwrveThemedMaterialButton);
+        buttonView = (SwrveThemedMaterialButton) view.getPageElementsLayout().getChildAt(2);
         assertThemedButton(buttonView, "Comic 16", "Comic 16", 0,
                 69.7f, typeface4, fontColor, background4, 0, null, CENTER);
     }
@@ -1947,8 +1947,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         Typeface typeface = Typeface.defaultFromStyle(Typeface.NORMAL);
 
         // image button
-        assertTrue(view.getChildAt(1) instanceof SwrveThemedMaterialButton);
-        SwrveThemedMaterialButton buttonView = (SwrveThemedMaterialButton) view.getChildAt(1);
+        assertTrue(view.getPageElementsLayout().getChildAt(1) instanceof SwrveThemedMaterialButton);
+        SwrveThemedMaterialButton buttonView = (SwrveThemedMaterialButton) view.getPageElementsLayout().getChildAt(1);
         assertThemedButton(buttonView, "system 12", "system 12", 0,
                 52.2f, typeface, fontColor, null, 0, null, RIGHT | CENTER_VERTICAL);
     }
@@ -1965,13 +1965,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(activity);
         SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        assertEquals(4, messageView.getChildCount());
+        assertEquals(4, messageView.getPageElementsLayout().getChildCount());
 
         // test that the order of page elements is the same as defined by the iam_z_index in the json
-        assertEquals(SwrveButtonView.class, messageView.getChildAt(0).getClass());
-        assertEquals(SwrveThemedMaterialButton.class, messageView.getChildAt(1).getClass());
-        assertEquals(SwrveTextView.class, messageView.getChildAt(2).getClass());
-        assertEquals(SwrveImageView.class, messageView.getChildAt(3).getClass());
+        assertEquals(SwrveButtonView.class, messageView.getPageElementsLayout().getChildAt(0).getClass());
+        assertEquals(SwrveThemedMaterialButton.class, messageView.getPageElementsLayout().getChildAt(1).getClass());
+        assertEquals(SwrveTextView.class, messageView.getPageElementsLayout().getChildAt(2).getClass());
+        assertEquals(SwrveImageView.class, messageView.getPageElementsLayout().getChildAt(3).getClass());
     }
 
     @Test
@@ -1986,13 +1986,13 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         assertNotNull(activity);
         SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(messageView);
-        assertEquals(4, messageView.getChildCount());
+        assertEquals(4, messageView.getPageElementsLayout().getChildCount());
 
         // test that the order of page elements is the same as the order in the json array
-        assertEquals(SwrveTextView.class, messageView.getChildAt(0).getClass());
-        assertEquals(SwrveImageView.class, messageView.getChildAt(1).getClass());
-        assertEquals(SwrveButtonView.class, messageView.getChildAt(2).getClass());
-        assertEquals(SwrveThemedMaterialButton.class, messageView.getChildAt(3).getClass());
+        assertEquals(SwrveTextView.class, messageView.getPageElementsLayout().getChildAt(0).getClass());
+        assertEquals(SwrveImageView.class, messageView.getPageElementsLayout().getChildAt(1).getClass());
+        assertEquals(SwrveButtonView.class, messageView.getPageElementsLayout().getChildAt(2).getClass());
+        assertEquals(SwrveThemedMaterialButton.class, messageView.getPageElementsLayout().getChildAt(3).getClass());
     }
 
     @Test
@@ -2120,7 +2120,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
 
-        SwrveVideoPlayerView videoPlayerView = (SwrveVideoPlayerView) view.getChildAt(3);
+        SwrveVideoPlayerView videoPlayerView = (SwrveVideoPlayerView) view.getPageElementsLayout().getChildAt(3);
         assertNotNull(videoPlayerView);
 
         View firstChild = videoPlayerView.getChildAt(0);
@@ -2158,7 +2158,7 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
         SwrveMessageView view = SwrveTestUtils.getSwrveMessageView(activity);
         assertNotNull(view);
 
-        SwrveVideoPlayerView videoPlayerView = (SwrveVideoPlayerView) view.getChildAt(4);
+        SwrveVideoPlayerView videoPlayerView = (SwrveVideoPlayerView) view.getPageElementsLayout().getChildAt(4);
         assertNotNull(videoPlayerView);
 
         View firstChild = videoPlayerView.getChildAt(0);
@@ -2231,8 +2231,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
-        for (int i = 0; i < view.getChildCount(); i++) {
-            View childView = view.getChildAt(i);
+        for (int i = 0; i < view.getPageElementsLayout().getChildCount(); i++) {
+            View childView = view.getPageElementsLayout().getChildAt(i);
             if (childView instanceof SwrveButtonView) {
                 SwrveButtonView swrveButtonView = (SwrveButtonView) childView;
                 if (swrveButtonView.getType() == actionType) {
@@ -2245,8 +2245,8 @@ public class SwrveInAppMessageActivityTest extends SwrveBaseTest {
     }
 
     private SwrveButtonTextImageView findTextButton(SwrveMessageView view, SwrveActionType actionType) {
-        for (int i = 0; i < view.getChildCount(); i++) {
-            View childView = view.getChildAt(i);
+        for (int i = 0; i < view.getPageElementsLayout().getChildCount(); i++) {
+            View childView = view.getPageElementsLayout().getChildAt(i);
             if (childView instanceof SwrveButtonTextImageView) {
                 SwrveButtonTextImageView swrveButtonView = (SwrveButtonTextImageView) childView;
                 if (swrveButtonView.getType() == actionType) {

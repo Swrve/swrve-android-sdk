@@ -25,9 +25,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
-import android.util.DisplayMetrics;
-import android.view.Display;
-import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -85,7 +82,7 @@ import java.util.concurrent.TimeUnit;
  */
 abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignManager, Application.ActivityLifecycleCallbacks, SwrveRefreshContentListener {
     protected static final String PLATFORM = "Android ";
-    protected static String version = "12.3.0";
+    protected static String version = "12.4.0";
     protected static final int CAMPAIGN_ENDPOINT_VERSION = 10;
     protected static final int PUSH_INBOX_VERSION = 1;
     protected static final int EMBEDDED_CAMPAIGN_VERSION = 5;
@@ -150,11 +147,9 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
     protected boolean initialised = false;
     protected boolean started = false;
     protected Date initialisedTime;
-    protected int deviceWidth;
-    protected int deviceHeight;
-    protected float deviceDpi;
-    protected float androidDeviceXdpi;
-    protected float androidDeviceYdpi;
+    // Replaced whole, so the sizes and densities in a payload all come from the same screen
+    protected volatile SwrveLargestScreen screenInfo = new SwrveLargestScreen(0, 0, 0, 0, 0);
+    private final Object screenInfoLock = new Object();
     protected String simOperatorName;
     protected String simOperatorIsoCountryCode;
     protected String simOperatorCode;
@@ -531,29 +526,7 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
 
     protected void buildDeviceInfo(Context context) {
         try {
-            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            DisplayMetrics metrics = new DisplayMetrics();
-            int width = SwrveHelper.getDisplayWidth(context);
-            int height = SwrveHelper.getDisplayHeight(context);
-            display.getMetrics(metrics);
-            float xdpi = metrics.xdpi;
-            float ydpi = metrics.ydpi;
-            // Always use portrait dimensions (i.e. width < height)
-            if (width > height) {
-                int tmp = width;
-                width = height;
-                height = tmp;
-                float tmpdpi = xdpi;
-                xdpi = ydpi;
-                ydpi = tmpdpi;
-            }
-
-            // Set device info
-            this.deviceWidth = width;
-            this.deviceHeight = height;
-            this.deviceDpi = metrics.densityDpi;
-            this.androidDeviceXdpi = xdpi;
-            this.androidDeviceYdpi = ydpi;
+            updateScreenInfo(context);
 
             // Carrier details
             ITelephonyManager tmanager = getTelephonyManager(context);
@@ -567,6 +540,26 @@ abstract class SwrveImp<T, C extends SwrveConfigBase> implements ISwrveCampaignM
             }
         } catch (Exception exp) {
             SwrveLogger.e("Get device screen info failed", exp);
+        }
+    }
+
+    // Reports the largest screen seen rather than the current one, so in-app message images are big enough for any of the
+    // device's screens. Returns the screen to report. Locked so that screenInfo is replaced in the order it was updated
+    protected SwrveLargestScreen updateScreenInfo(Context context) {
+        synchronized (screenInfoLock) {
+            try {
+                SwrveLargestScreen measured = SwrveLargestScreen.measure(context);
+                if (measured != null && !measured.isLargerThan(screenInfo)) {
+                    return screenInfo; // storage is only needed when the screen may be larger than the one already reported
+                }
+                SwrveLargestScreen screen = SwrveLargestScreen.update(multiLayerLocalStorage, measured);
+                if (screen != null) {
+                    screenInfo = screen;
+                }
+            } catch (Exception exp) {
+                SwrveLogger.e("Get device screen info failed", exp);
+            }
+            return screenInfo;
         }
     }
 

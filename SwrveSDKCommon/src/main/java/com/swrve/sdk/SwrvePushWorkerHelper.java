@@ -24,6 +24,7 @@ public class SwrvePushWorkerHelper {
     private Bundle bundle;
     private OneTimeWorkRequest workRequest;
     private boolean isSwrvePush;
+    private boolean queueFailed;
 
     public SwrvePushWorkerHelper(Context context, Class<? extends ListenableWorker> workerClass, Map<String, String> mapData) {
         this.context = context;
@@ -65,9 +66,15 @@ public class SwrvePushWorkerHelper {
                 SwrveLogger.i("SwrveSDK: Swrve push worker queued with data via SwrvePushWorkerHelper.");
             }
         } catch (Exception ex) {
+            queueFailed = true;
             SwrveLogger.e("SwrveSDK: Error trying to queue SwrvePushWorkerHelper.", ex);
         }
         return handled;
+    }
+
+    // true when handle() couldn't queue the worker, as opposed to skipping a duplicate or non-swrve push
+    public boolean didFailToQueue() {
+        return queueFailed;
     }
 
     protected Data resolveData() {

@@ -7,10 +7,12 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Build;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -41,7 +43,7 @@ import java.util.Map;
 
 /**
  * Android view representing a Swrve message with a given format.
- * It layouts its children around its center and supports show and dismiss animations.
+ * The page's elements sit in a PageElementsLayout laid out around its centre, which is fitted to this view as one unit (see onLayout). It supports show and dismiss animations.
  */
 public class SwrveMessageView extends RelativeLayout {
 
@@ -57,7 +59,9 @@ public class SwrveMessageView extends RelativeLayout {
     private List<String> loadErrorReasons = new ArrayList<>();
 
     private WeakReference<GestureDetector> gestureDetector;
-    
+    // Holds the page's elements. The gesture overlay used by stories sits outside it, below it.
+    private PageElementsLayout pageElementsLayout;
+
     // Store reference to video player for pause/play
     private SwrveVideoPlayerView videoPlayerView;
 
@@ -138,6 +142,9 @@ public class SwrveMessageView extends RelativeLayout {
             // Add gesture interceptor to bottom of the view stack by adding it first before buttons and images
             addGestureInterceptor(screenWidth, screenHeight);
         }
+
+        pageElementsLayout = new PageElementsLayout(getContext());
+        addView(pageElementsLayout, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         List<SwrveWidget> pageElements = getPageElements();
         for (final SwrveWidget widget : pageElements) {
@@ -271,7 +278,7 @@ public class SwrveMessageView extends RelativeLayout {
             textView.setOnTouchListener(getGestureOnTouchListener());
         }
 
-        addView(textView);
+        pageElementsLayout.addView(textView);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -298,7 +305,7 @@ public class SwrveMessageView extends RelativeLayout {
         }
 
         // Add to parent
-        addView(imageView);
+        pageElementsLayout.addView(imageView);
     }
 
     private void addImageViewButton(SwrveButton button, int screenWidth, int screenHeight) throws SwrveSDKTextTemplatingException {
@@ -333,7 +340,7 @@ public class SwrveMessageView extends RelativeLayout {
         });
 
         // Add to parent
-        addView(buttonView);
+        pageElementsLayout.addView(buttonView);
         UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
             buttonView.requestFocus();
@@ -356,7 +363,7 @@ public class SwrveMessageView extends RelativeLayout {
             inAppMessageActivity.buttonClicked(button, buttonView.getAction(), buttonView.getText().toString(), page.getPageId(), getPage().getPageName());
         });
 
-        addView(buttonView);
+        pageElementsLayout.addView(buttonView);
     }
 
     private void addVideoView(SwrveImage video) throws SwrveSDKTextTemplatingException {
@@ -368,12 +375,9 @@ public class SwrveMessageView extends RelativeLayout {
 
         SwrveVideoSettings swrveVideoSettings = video.getSwrveVideoSettings();
 
-        // if fillscreen, it zooms video, we will use texture view otherwise use surface view
-        // texture view will prevents video from bleeding through the edges of the screen to next page.
-        // see ref https://github.com/androidx/media/issues/1107
-        int layoutId = swrveVideoSettings.getFillScreen() ? R.layout.swrve_video_player_zoom : R.layout.swrve_video_player_fit;
+        int layoutId = videoPlayerLayout(swrveVideoSettings.getFillScreen(), Build.VERSION.SDK_INT);
         videoPlayerView = (SwrveVideoPlayerView) LayoutInflater.from(getContext())
-                .inflate(layoutId, this, false);
+                .inflate(layoutId, pageElementsLayout, false);
         videoPlayerView.setupPlayer(swrveVideoSettings, videoUri);
 
 
@@ -383,27 +387,8 @@ public class SwrveMessageView extends RelativeLayout {
         }
 
         if (swrveVideoSettings.getFillScreen()) {
-            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom,
-                                           int oldLeft, int oldTop, int oldRight, int oldBottom) {
-
-                    // Parent’s measured, edge-to-edge size
-                    int w = right - left;
-                    int h = bottom - top;
-
-                    RelativeLayout.LayoutParams lp =
-                            (RelativeLayout.LayoutParams) videoPlayerView.getLayoutParams();
-                    lp.width = w;
-                    lp.height = h;
-                    lp.leftMargin = 0;
-                    lp.topMargin = 0;
-                    videoPlayerView.setLayoutParams(lp);
-
-                    // Only need to do this once
-                    SwrveMessageView.this.removeOnLayoutChangeListener(this);
-                }
-            });
+            // Fills the page elements layout, which once fitted covers this whole view
+            videoPlayerView.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         } else {
             int screenWidth = video.getSize().x;
             int screenHeight = video.getSize().y;
@@ -453,7 +438,18 @@ public class SwrveMessageView extends RelativeLayout {
             }
         });
 
-        addView(videoPlayerView);
+        pageElementsLayout.addView(videoPlayerView);
+    }
+
+    // If fillscreen, it zooms video and uses a texture view, which prevents the video bleeding through the edges of the
+    // screen to the next page (see https://github.com/androidx/media/issues/1107). Otherwise it uses a surface view, except
+    // before API 24: the message is scaled to fit the screen, and a surface view only follows its ancestors' scale from 24.
+    @VisibleForTesting
+    static int videoPlayerLayout(boolean fillScreen, int sdkInt) {
+        if (fillScreen) {
+            return R.layout.swrve_video_player_zoom;
+        }
+        return sdkInt < Build.VERSION_CODES.N ? R.layout.swrve_video_player_fit_texture : R.layout.swrve_video_player_fit;
     }
 
     private void dismiss() {
@@ -529,6 +525,12 @@ public class SwrveMessageView extends RelativeLayout {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        measurePageElementsLayout(getMeasuredWidth(), getMeasuredHeight());
+    }
+
+    @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         try {
             int count = getChildCount();
@@ -537,20 +539,117 @@ public class SwrveMessageView extends RelativeLayout {
 
             for (int i = 0; i < count; i++) {
                 View child = getChildAt(i);
-                if (child.getVisibility() != GONE) {
-                    RelativeLayout.LayoutParams st = (RelativeLayout.LayoutParams) child.getLayoutParams();
-                    int cCenterX = st.width / 2;
-                    int cCenterY = st.height / 2;
-
-                    if (scale != 1f) {
-                        child.layout((int) (scale * (st.leftMargin - cCenterX)) + centerx, (int) (scale * (st.topMargin - cCenterY)) + centery, (int) (scale * (st.leftMargin + cCenterX)) + centerx, (int) (scale * (st.topMargin + cCenterY)) + centery);
-                    } else {
-                        child.layout(st.leftMargin - cCenterX + centerx, st.topMargin - cCenterY + centery, st.leftMargin + cCenterX + centerx, st.topMargin + cCenterY + centery);
-                    }
+                if (child.getVisibility() == GONE) {
+                    continue;
+                }
+                if (child == pageElementsLayout) {
+                    // Laid out at this view's size divided by the fit and scaled by the fit about its centre, so it covers this view exactly, 
+                    // its elements' bleed still reaches the edges, and their own scale is left free for focus animations.
+                    measurePageElementsLayout(r - l, b - t); // a no-op after onMeasure; needed if layout runs without one
+                    int layoutWidth = pageElementsLayout.getMeasuredWidth();
+                    int layoutHeight = pageElementsLayout.getMeasuredHeight();
+                    int left = centerx - layoutWidth / 2;
+                    int top = centery - layoutHeight / 2;
+                    pageElementsLayout.layout(left, top, left + layoutWidth, top + layoutHeight);
+                    float fitScale = getFitScale(r - l, b - t);
+                    pageElementsLayout.setScaleX(fitScale);
+                    pageElementsLayout.setScaleY(fitScale);
+                } else {
+                    layoutAroundCentre(child, centerx, centery); // the gesture overlay
                 }
             }
         } catch (Exception e) {
             SwrveLogger.e("Error while onLayout in SwrveMessageView", e);
+        }
+    }
+
+    private void measurePageElementsLayout(int width, int height) {
+        if (pageElementsLayout == null) {
+            return;
+        }
+        float fitScale = getFitScale(width, height);
+        int layoutWidth = layoutSizeToCover(width, fitScale);
+        int layoutHeight = layoutSizeToCover(height, fitScale);
+        if (pageElementsLayout.getMeasuredWidth() != layoutWidth || pageElementsLayout.getMeasuredHeight() != layoutHeight) {
+            pageElementsLayout.measure(MeasureSpec.makeMeasureSpec(layoutWidth, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(layoutHeight, MeasureSpec.EXACTLY));
+        }
+    }
+
+    // The layout size that, scaled by the fit, covers a side of this view. Rounded up because layouts are whole pixels:
+    // a size even a fraction short, once scaled, stops inside the edge and leaves a line uncovered. Kept the same parity
+    // as the side because an odd difference can't be split evenly, so the layout would sit half a pixel off centre.
+    @VisibleForTesting
+    static int layoutSizeToCover(int viewSize, float fitScale) {
+        int size = (int) Math.ceil(viewSize / fitScale - 0.001f); // the tolerance stops float error adding a pixel to an exact fit
+        return (size - viewSize) % 2 == 0 ? size : size + 1;
+    }
+
+    // Lays a child out centred on the given point, offset by its margins, as the template positions elements
+    private void layoutAroundCentre(View child, int centerx, int centery) {
+        RelativeLayout.LayoutParams st = (RelativeLayout.LayoutParams) child.getLayoutParams();
+        int cCenterX = st.width / 2;
+        int cCenterY = st.height / 2;
+
+        if (scale != 1f) {
+            child.layout((int) (scale * (st.leftMargin - cCenterX)) + centerx, (int) (scale * (st.topMargin - cCenterY)) + centery, (int) (scale * (st.leftMargin + cCenterX)) + centerx, (int) (scale * (st.topMargin + cCenterY)) + centery);
+        } else {
+            child.layout(st.leftMargin - cCenterX + centerx, st.topMargin - cCenterY + centery, st.leftMargin + cCenterX + centerx, st.topMargin + cCenterY + centery);
+        }
+    }
+
+    /**
+     * The server sizes the format for the screen size reported at init, but the view can be a different size: a foldable
+     * that was folded or unfolded since, split screen, or a resizable window. Fit the format to the space actually
+     * available, the same as the iOS SDK does, so it touches two edges and is never cropped.
+     */
+    @VisibleForTesting
+    float getFitScale(int width, int height) {
+        int formatWidth = format.getSize().x;
+        int formatHeight = format.getSize().y;
+        if (width <= 0 || height <= 0 || formatWidth <= 0 || formatHeight <= 0) {
+            return 1f;
+        }
+        return Math.min((float) width / formatWidth, (float) height / formatHeight);
+    }
+
+    /**
+     * The view holding the page's elements (images, buttons, text, video), in z-order. The gesture overlay used by stories is outside it.
+     */
+    @VisibleForTesting
+    public ViewGroup getPageElementsLayout() {
+        return pageElementsLayout;
+    }
+
+    /**
+     * Holds the page's elements, each laid out around the centre as the template places them. SwrveMessageView fits it to the view as one unit.
+     */
+    private class PageElementsLayout extends RelativeLayout {
+
+        PageElementsLayout(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+            try {
+                int width = r - l;
+                int height = b - t;
+                for (int i = 0; i < getChildCount(); i++) {
+                    View child = getChildAt(i);
+                    if (child.getVisibility() == GONE) {
+                        continue;
+                    }
+                    LayoutParams st = (LayoutParams) child.getLayoutParams();
+                    if (st.width == LayoutParams.MATCH_PARENT && st.height == LayoutParams.MATCH_PARENT) {
+                        child.layout(0, 0, width, height); // a fill-screen video
+                    } else {
+                        layoutAroundCentre(child, width / 2, height / 2);
+                    }
+                }
+            } catch (Exception e) {
+                SwrveLogger.e("Error while onLayout in SwrveMessageView PageElementsLayout", e);
+            }
         }
     }
 

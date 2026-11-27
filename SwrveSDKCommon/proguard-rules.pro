@@ -18,3 +18,9 @@
 -keepclassmembers class androidx.core.app.NotificationCompat$BigPictureStyle {
   public androidx.core.app.NotificationCompat$BigPictureStyle bigPicture(android.graphics.drawable.Icon);
 }
+
+# WorkManager creates its Room database and its InputMerger by reflection, using their no-arg constructors.
+# R8's strict full mode (the default from Android Gradle Plugin 9) only keeps a constructor that a rule names,
+# and the rules shipped with WorkManager 2.9.1 and Room 2.5 don't name it.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep class * extends androidx.work.InputMerger { <init>(); }

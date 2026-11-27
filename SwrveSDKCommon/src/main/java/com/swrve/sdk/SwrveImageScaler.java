@@ -62,8 +62,9 @@ public class SwrveImageScaler {
     public static Bitmap decodeSampledBitmapFromStream(InputStream stream, int reqWidth, int reqHeight, int minSampleSize, String fileUrlForMessage, File cacheDir) {
         OutputStream outStream = null;
         Bitmap bitmap = null;
+        File targetFile = null;
         try {
-            File targetFile = File.createTempFile("notification-image", null, cacheDir);
+            targetFile = File.createTempFile("notification-image", null, cacheDir);
             outStream = new FileOutputStream(targetFile);
             byte[] buffer = new byte[2048];
             int bytesRead;
@@ -85,6 +86,10 @@ public class SwrveImageScaler {
                 } catch (Exception e) {
                     SwrveLogger.e("Exception closing stream for downloading notification image.", e);
                 }
+            }
+            // Delete target file, it is only needed to decode the bitmap which is held in memory by then.
+            if (targetFile != null && targetFile.exists() && !targetFile.delete()) {
+                SwrveLogger.w("Could not delete temp notification image:%s", targetFile);
             }
         }
 

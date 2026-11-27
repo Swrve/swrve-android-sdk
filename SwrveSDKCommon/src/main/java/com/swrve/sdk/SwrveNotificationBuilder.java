@@ -1,6 +1,7 @@
 package com.swrve.sdk;
 
 import static com.swrve.sdk.NotificationMediaManager.EXTRA_GIF_URI;
+import static com.swrve.sdk.NotificationMediaManager.EXTRA_GIF_URIS;
 import static com.swrve.sdk.NotificationMediaManager.NATIVE_GIF_SUPPORT_MIN_API;
 import static com.swrve.sdk.SwrveNotificationConstants.SOUND_DEFAULT;
 
@@ -26,6 +27,7 @@ import android.os.Bundle;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
+import com.swrve.sdk.notifications.model.SwrveCarouselItem;
 import com.swrve.sdk.notifications.model.SwrveNotification;
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import com.swrve.sdk.notifications.model.SwrveNotificationChannel;
@@ -58,6 +60,12 @@ public class SwrveNotificationBuilder {
     private String iamCampaignId; // a campaign to show (eg: IAM) after engaging with push
     protected int requestCode;
     protected NotificationMediaManager mediaManager;
+    private int carouselItemIndex = 0;
+    private boolean carouselNavigated = false;
+    private ArrayList<String> carouselGifUris = new ArrayList<>(); // published GIF per item, null for static images
+    private SwrveCarouselItem shownCarouselItem;
+    private ArrayList<Integer> carouselSentSlideViews = new ArrayList<>();
+    private float carouselImageHeightRatio = 0;
 
     private static int deviceWidth = 0;
     private static int deviceHeight = 0;
@@ -85,6 +93,7 @@ public class SwrveNotificationBuilder {
         this.swrveNotification = swrveNotification;
         this.campaignType = campaignType;
         this.eventPayload = eventPayload;
+        this.shownCarouselItem = null;
 
         if (deviceWidth == 0 && deviceHeight == 0) {
             deviceWidth = SwrveHelper.getDisplayWidth(context);
@@ -149,6 +158,21 @@ public class SwrveNotificationBuilder {
         addDeletePendingIntent(mBuilder);
 
         return mBuilder;
+    }
+
+    NotificationCompat.Builder buildCarouselItem(Bundle msg, String campaignType, Bundle eventPayload, int notificationId, int itemIndex) {
+        return buildCarouselItem(msg, campaignType, eventPayload, notificationId, itemIndex, new ArrayList<>(), new ArrayList<>(), 0);
+    }
+
+    NotificationCompat.Builder buildCarouselItem(Bundle msg, String campaignType, Bundle eventPayload, int notificationId, int itemIndex,
+                                                 ArrayList<String> gifUris, ArrayList<Integer> sentSlideViews, float imageHeightRatio) {
+        this.notificationId = notificationId;
+        this.carouselItemIndex = itemIndex;
+        this.carouselNavigated = true;
+        this.carouselGifUris = gifUris;
+        this.carouselSentSlideViews = sentSlideViews;
+        this.carouselImageHeightRatio = imageHeightRatio;
+        return build(msg.getString(SwrveNotificationConstants.TEXT_KEY), msg, campaignType, eventPayload);
     }
 
     protected void setMessage(Bundle message) {
@@ -248,6 +272,21 @@ public class SwrveNotificationBuilder {
             return builder;
         }
 
+        if (isCarousel(swrveNotification)) {
+            if (!carouselNavigated) {
+                mediaManager.downloadImage(swrveNotification.getIconUrl()); // first, as it's shown on the collapsed notification straight away
+                carouselGifUris = mediaManager.downloadImages(getCarouselItemImageUrls(), notificationId);
+                // the first item's slide_view is sent when the notification is posted, so navigation doesn't report it again
+                carouselSentSlideViews = new ArrayList<>();
+                carouselSentSlideViews.add(0);
+                carouselImageHeightRatio = getCarouselImageHeightRatio();
+            } else if (!(carouselImageHeightRatio > 0)) { // a Prev/Next intent without the shape, such as one from an older SDK
+                carouselImageHeightRatio = getCarouselImageHeightRatio();
+            }
+            setCarouselMedia();
+            builder.setOnlyAlertOnce(true); // navigation reposts the notification
+        }
+
         // Base Title
         if (SwrveHelper.isNotNullOrEmpty(swrveNotification.getTitle())) {
             notificationTitle = swrveNotification.getTitle();
@@ -298,6 +337,65 @@ public class SwrveNotificationBuilder {
         buildLockScreen(builder, swrveNotification);
 
         return builder;
+    }
+
+    private static boolean isCarousel(SwrveNotification payload) {
+        return payload.getCarousel() != null && !payload.getCarousel().isEmpty();
+    }
+
+    // whether the notification last built shows a carousel item (it isn't when the payload version is too new)
+    boolean isCarouselNotification() {
+        return shownCarouselItem != null;
+    }
+
+    private List<String> getCarouselItemImageUrls() {
+        List<String> urls = new ArrayList<>();
+        for (SwrveCarouselItem item : swrveNotification.getCarousel()) {
+            urls.add(item.getImageUrl());
+        }
+        return urls;
+    }
+
+    private float getCarouselImageHeightRatio() {
+        List<SwrveCarouselItem> items = swrveNotification.getCarousel();
+        for (int i = 0; i < items.size(); i++) {
+            String gifUri = i < carouselGifUris.size() ? carouselGifUris.get(i) : null;
+            float ratio = mediaManager.getImageHeightRatio(items.get(i).getImageUrl(), gifUri);
+            if (ratio > 0) {
+                return SwrveCarouselImages.imageHeightRatio(ratio);
+            }
+        }
+        return SwrveCarouselImages.imageHeightRatio(0);
+    }
+
+    private boolean hasCarouselGifs() {
+        for (String uri : carouselGifUris) {
+            if (SwrveHelper.isNotNullOrEmpty(uri)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void setCarouselMedia() {
+        List<SwrveCarouselItem> items = swrveNotification.getCarousel();
+        if (carouselItemIndex < 0 || carouselItemIndex >= items.size()) {
+            carouselItemIndex = 0;
+        }
+        SwrveCarouselItem item = items.get(carouselItemIndex);
+        shownCarouselItem = item;
+        SwrveNotificationMedia media = new SwrveNotificationMedia();
+        media.setType(SwrveNotificationMedia.MediaType.IMAGE);
+        media.setUrl(item.getImageUrl());
+        if (carouselNavigated) {
+            media.setTitle(item.getTitle());
+            media.setBody(item.getBody());
+        }
+        SwrveNotificationExpanded expanded = new SwrveNotificationExpanded();
+        expanded.setTitle(item.getTitle());
+        expanded.setBody(item.getBody());
+        swrveNotification.setMedia(media);
+        swrveNotification.setExpanded(expanded);
     }
 
     private void buildVisibility(NotificationCompat.Builder builder) {
@@ -430,13 +528,17 @@ public class SwrveNotificationBuilder {
     }
 
     private NotificationCompat.BigPictureStyle buildBigPictureStyle(SwrveNotificationMedia media) {
+        // Before the url check, so an item without an image url still gets the placeholder
+        if (isCarousel(swrveNotification)) {
+            return buildCarouselBigPictureStyle(media.getUrl());
+        }
+
         if (!SwrveHelper.isNotNullOrEmpty(media.getUrl())) {
             return null;
         }
 
-        NotificationCompat.BigPictureStyle bigPictureStyle = null;
         NotificationMediaManager.BigPictureFetchResult fetchResult = mediaManager.downloadBigPictureImage(media.getUrl(), notificationId);
-        bigPictureStyle = buildBigPictureStyle(fetchResult, media.getUrl());
+        NotificationCompat.BigPictureStyle bigPictureStyle = buildBigPictureStyle(fetchResult, media.getUrl());
         if (bigPictureStyle == null) {
             // Last resort - try fallback if available
             fetchResult = mediaManager.downloadBigPictureImage(media.getFallbackUrl(), notificationId);
@@ -446,6 +548,31 @@ public class SwrveNotificationBuilder {
             }
         }
         return bigPictureStyle;
+    }
+
+    private NotificationCompat.BigPictureStyle buildCarouselBigPictureStyle(String url) {
+        String gifUri = carouselItemIndex < carouselGifUris.size() ? carouselGifUris.get(carouselItemIndex) : null;
+        if (SwrveHelper.isNotNullOrEmpty(gifUri) && Build.VERSION.SDK_INT >= NATIVE_GIF_SUPPORT_MIN_API) {
+            // An animated GIF can't be cropped without re-encoding it, so it keeps its own shape.
+            // Stock SystemUI only starts the animation when the view is first shown, so after Prev/Next a GIF shows
+            // its first frame until the notification is re-expanded. OEM skins may differ.
+            NotificationCompat.BigPictureStyle gifStyle = buildBigPictureStyleGifIcon(url, Uri.parse(gifUri));
+            if (gifStyle != null) {
+                return gifStyle;
+            }
+        }
+        Bitmap image = mediaManager.getCachedImage(url);
+        if (image != null) {
+            return buildBigPictureStyleBitmap(url, SwrveCarouselImages.fill(image, carouselImageHeightRatio));
+        }
+        SwrveLogger.d("Carousel item %s image not available, showing a placeholder: %s", carouselItemIndex, url);
+        Bitmap placeholder = SwrveCarouselImages.placeholder(context, carouselImageHeightRatio);
+        NotificationCompat.BigPictureStyle placeholderStyle = new NotificationCompat.BigPictureStyle();
+        placeholderStyle.bigPicture(placeholder);
+        // So a custom filter rebuilding the notification from its details shows the placeholder too. No media url,
+        // as that image wasn't shown.
+        notificationDetails.setMediaBitmap(placeholder);
+        return placeholderStyle;
     }
 
     private NotificationCompat.BigPictureStyle buildBigPictureStyle(NotificationMediaManager.BigPictureFetchResult fetchResult, String mediaUrl) {
@@ -534,6 +661,9 @@ public class SwrveNotificationBuilder {
             return null;
         }
 
+        if (isCarousel(payload)) {
+            return getCarouselNavigationActions(payload);
+        }
         List<NotificationCompat.Action> actions = new ArrayList<>();
         List<SwrveNotificationButton> buttons = payload.getButtons();
         if(buttons != null && !buttons.isEmpty()){
@@ -545,6 +675,66 @@ public class SwrveNotificationBuilder {
             }
         }
         return actions;
+    }
+
+    private List<NotificationCompat.Action> getCarouselNavigationActions(SwrveNotification payload) {
+        List<NotificationCompat.Action> actions = new ArrayList<>();
+        int itemCount = payload.getCarousel().size();
+        if (itemCount < 2 || payload.getButtons() == null) {
+            return actions;
+        }
+        int previousItemIndex = (carouselItemIndex - 1 + itemCount) % itemCount;
+        int nextItemIndex = (carouselItemIndex + 1) % itemCount;
+        NotificationCompat.Action previousAction = null;
+        NotificationCompat.Action nextAction = null;
+        for (SwrveNotificationButton button : payload.getButtons()) {
+            if (button.getActionType() == SwrveNotificationButton.ActionType.PREVIOUS && previousAction == null) {
+                previousAction = createCarouselNavigationAction(button.getTitle(), previousItemIndex);
+            } else if (button.getActionType() == SwrveNotificationButton.ActionType.NEXT && nextAction == null) {
+                nextAction = createCarouselNavigationAction(button.getTitle(), nextItemIndex);
+            } else {
+                SwrveLogger.w("Carousel push button '%s' is not the first previous or next and will not be shown.", button.getTitle());
+            }
+        }
+        if (previousAction == null && nextAction == null) {
+            return actions;
+        }
+        // Previous, then the page indicator, then Next, whatever order the payload lists them in.
+        // Tapping the indicator goes to the next item.
+        if (previousAction != null) {
+            actions.add(previousAction);
+        }
+        actions.add(createCarouselNavigationAction(getCarouselIndicator(itemCount), nextItemIndex));
+        if (nextAction != null) {
+            actions.add(nextAction);
+        }
+        return actions;
+    }
+
+    private String getCarouselIndicator(int itemCount) {
+        StringBuilder indicator = new StringBuilder();
+        for (int i = 0; i < itemCount; i++) {
+            if (i > 0) {
+                indicator.append(' ');
+            }
+            indicator.append(i == carouselItemIndex ? '\u25CF' : '\u25CB');
+        }
+        return indicator.toString();
+    }
+
+    private NotificationCompat.Action createCarouselNavigationAction(String buttonText, int targetItemIndex) {
+        Intent intent = new Intent(context, SwrveNotificationCarouselReceiver.class);
+        intent.putExtra(SwrveNotificationConstants.PUSH_BUNDLE, msg);
+        intent.putExtra(SwrveNotificationConstants.PUSH_NOTIFICATION_ID, notificationId);
+        intent.putExtra(SwrveNotificationConstants.CAMPAIGN_TYPE, campaignType);
+        intent.putExtra(SwrveNotificationConstants.EVENT_PAYLOAD, eventPayload);
+        intent.putExtra(SwrveNotificationConstants.CAROUSEL_ITEM_INDEX_KEY, targetItemIndex);
+        intent.putStringArrayListExtra(EXTRA_GIF_URIS, carouselGifUris);
+        intent.putIntegerArrayListExtra(SwrveNotificationConstants.CAROUSEL_SENT_SLIDE_VIEWS_KEY, carouselSentSlideViews);
+        intent.putExtra(SwrveNotificationConstants.CAROUSEL_IMAGE_HEIGHT_RATIO_KEY, carouselImageHeightRatio);
+        int flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+        PendingIntent pendingIntent = getPendingIntent(intent, flags, true);
+        return new NotificationCompat.Action.Builder(SwrveNotificationConstants.NO_ACTION_ICON, buttonText, pendingIntent).build();
     }
 
     protected NotificationCompat.Action createNotificationAction(String buttonText, int icon, String actionKey, SwrveNotificationButton.ActionType actionType, String actionUrl) {
@@ -599,10 +789,22 @@ public class SwrveNotificationBuilder {
         if (SwrveHelper.isNotNullOrEmpty(notificationDetails.getMediaContentUri())) { // only add if we have a mediaContentUri to delete
             intent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
         }
+        if (hasCarouselGifs()) {
+            intent.putStringArrayListExtra(EXTRA_GIF_URIS, carouselGifUris);
+        }
+        if (shownCarouselItem != null) {
+            intent.putExtra(SwrveNotificationConstants.CAROUSEL_ITEM_INDEX_KEY, carouselItemIndex);
+            intent.putExtra(SwrveNotificationConstants.CAROUSEL_ITEM_ACTION_URL_KEY, getCarouselItemUrl());
+        }
 
         int flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent pendingIntent = getPendingIntent(intent, flags, false);
         return pendingIntent;
+    }
+
+    // A tap on a carousel push performs the shown item's action rather than the push deeplink
+    String getCarouselItemUrl() {
+        return shownCarouselItem == null ? null : shownCarouselItem.getDeeplink();
     }
 
     // createIntent is the main intent that will be launched when the notification is engaged with.
@@ -613,6 +815,9 @@ public class SwrveNotificationBuilder {
         SwrveNotificationConfig notificationConfig = SwrveCommon.getInstance().getNotificationConfig();
         if (notificationConfig == null || notificationConfig.useEngagementProxy()) {
             intent = getSwrveNotificationEngageIntent(false);
+        } else if (shownCarouselItem != null) {
+            String itemUrl = getCarouselItemUrl();
+            intent = itemUrl != null ? SwrveNotificationEngage.getDeeplinkIntent(msg, itemUrl) : SwrveNotificationEngage.getActivityIntent(context, msg);
         } else if (msg.containsKey(SwrveNotificationConstants.DEEPLINK_KEY)) {
             String deeplink = msg.getString(SwrveNotificationConstants.DEEPLINK_KEY);
             intent = SwrveNotificationEngage.getDeeplinkIntent(msg, deeplink);
@@ -657,10 +862,10 @@ public class SwrveNotificationBuilder {
         return intent;
     }
 
-    protected PendingIntent getPendingIntent(Intent intent, int flags, boolean isDismissAction) {
+    protected PendingIntent getPendingIntent(Intent intent, int flags, boolean useBroadcast) {
         PendingIntent pendingIntent;
-        if (isDismissAction) {
-            pendingIntent = PendingIntent.getBroadcast(context, requestCode++, intent, flags); // use broadcast PI for dismiss action to avoid UI
+        if (useBroadcast) {
+            pendingIntent = PendingIntent.getBroadcast(context, requestCode++, intent, flags); // broadcast PI for actions with no UI, eg: dismiss and carousel navigation
         } else {
             pendingIntent = PendingIntent.getActivity(context, requestCode++, intent, flags); // everything else should use activity PI
         }
@@ -668,9 +873,10 @@ public class SwrveNotificationBuilder {
     }
 
     private void addDeletePendingIntent(NotificationCompat.Builder mBuilder) {
-        if (SwrveHelper.isNotNullOrEmpty(notificationDetails.getMediaContentUri())) { // only add if we have a mediaContentUri to delete
+        if (SwrveHelper.isNotNullOrEmpty(notificationDetails.getMediaContentUri()) || hasCarouselGifs()) { // only add if there are GIFs to delete
             Intent deleteIntent = new Intent(context, SwrveNotificationDeleteReceiver.class);
             deleteIntent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
+            deleteIntent.putStringArrayListExtra(EXTRA_GIF_URIS, carouselGifUris);
             int flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, deleteIntent, flags);
             mBuilder.setDeleteIntent(pendingIntent);
@@ -698,6 +904,9 @@ public class SwrveNotificationBuilder {
     }
 
     protected Bitmap getImageFromUrl(final String url) {
+        if (swrveNotification != null && isCarousel(swrveNotification)) {
+            return mediaManager.getCachedImage(url);
+        }
         return mediaManager.downloadBitmap(url);
     }
 
@@ -711,5 +920,12 @@ public class SwrveNotificationBuilder {
 
     public SwrveNotificationDetails getNotificationDetails() {
         return notificationDetails;
+    }
+
+    void deletePublishedGifs() {
+        Intent intent = new Intent();
+        intent.putExtra(EXTRA_GIF_URI, notificationDetails.getMediaContentUri());
+        intent.putStringArrayListExtra(EXTRA_GIF_URIS, carouselGifUris);
+        mediaManager.deleteGifUri(intent);
     }
 }

@@ -9,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.swrve.sdk.SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance
+import com.swrve.sdk.shadows.ShadowGoogleApiAvailability
 import com.swrve.sdk.test.MainActivity
 import org.awaitility.Awaitility.await
 import org.junit.After
@@ -27,9 +28,12 @@ import org.robolectric.shadows.ShadowLog
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.BAKLAVA])
+@Config(
+    sdk = [Build.VERSION_CODES.CINNAMON_BUN],
+    shadows = [ShadowGoogleApiAvailability::class] // Replaces the retired org.robolectric:shadows-playservices shadow of the same name, keeping the previous default of "play services not available" for every test.
+)
 @TargetApi(
-    Build.VERSION_CODES.BAKLAVA
+    Build.VERSION_CODES.CINNAMON_BUN
 )
 abstract class SwrveBaseTest {
     @JvmField

@@ -37,7 +37,7 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
         SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message,  message.getFormats().get(0), null, 0);
         assertNotNull(view);
-        assertEquals(4, view.getChildCount());
+        assertEquals(4, view.getPageElementsLayout().getChildCount());
 
         assertEquals(3, getButtonCount(view));
         assertEquals(1, getImageCount(view));
@@ -56,7 +56,7 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
         SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message,  message.getFormats().get(0), personalization, 0);
         assertNotNull(view);
-        assertEquals(5, view.getChildCount());
+        assertEquals(5, view.getPageElementsLayout().getChildCount());
         assertEquals(2, getPersonalizedButtonCount(view)); // personalization gets counted as buttons
         assertEquals(1, getImageCount(view));
     }
@@ -76,8 +76,8 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
     private int getButtonCount(SwrveMessageView view) {
         int buttons = 0;
-        for (int i = 0; i < view.getChildCount(); i++) {
-            Class<?> viewClass = view.getChildAt(i).getClass();
+        for (int i = 0; i < view.getPageElementsLayout().getChildCount(); i++) {
+            Class<?> viewClass = view.getPageElementsLayout().getChildAt(i).getClass();
             if (viewClass == SwrveButtonView.class) {
                 buttons++;
             }
@@ -87,8 +87,8 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
     private int getPersonalizedButtonCount(SwrveMessageView view) {
         int buttons = 0;
-        for (int i = 0; i < view.getChildCount(); i++) {
-            if (view.getChildAt(i) instanceof SwrveTextImageView) {
+        for (int i = 0; i < view.getPageElementsLayout().getChildCount(); i++) {
+            if (view.getPageElementsLayout().getChildAt(i) instanceof SwrveTextImageView) {
                 buttons++;
             }
         }
@@ -97,8 +97,8 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
     private int getImageCount(SwrveMessageView view) {
         int images = 0;
-        for (int i = 0; i < view.getChildCount(); i++) {
-            Class<?> viewClass = view.getChildAt(i).getClass();
+        for (int i = 0; i < view.getPageElementsLayout().getChildCount(); i++) {
+            Class<?> viewClass = view.getPageElementsLayout().getChildAt(i).getClass();
             if (viewClass == SwrveImageView.class) {
                 images++;
             }
@@ -119,7 +119,7 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
         SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message, message.getFormats().get(0), personalization, 0);
         // image + always_visible button + conditional button (true) = 3
-        assertEquals(3, view.getChildCount());
+        assertEquals(3, view.getPageElementsLayout().getChildCount());
     }
 
     @Test
@@ -133,7 +133,7 @@ public class SwrveMessageViewTest extends SwrveBaseTest {
 
         SwrveMessageView view = new SwrveMessageView(ApplicationProvider.getApplicationContext(), new SwrveConfig(), message, message.getFormats().get(0), personalization, 0);
         // image + always_visible button = 2; conditional (false) = hidden
-        assertEquals(2, view.getChildCount());
+        assertEquals(2, view.getPageElementsLayout().getChildCount());
     }
 
     @Test

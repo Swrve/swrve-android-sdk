@@ -218,12 +218,13 @@ class NotificationMediaManagerTest : SwrveBaseTest() {
         val ctx = spy(realContext)
         `when`(ctx.contentResolver).thenReturn(mockResolver)
 
-        mediaManager = NotificationMediaManager(ctx)
+        mediaManager = spy(NotificationMediaManager(ctx))
+        Mockito.doReturn(1000L).`when`(mediaManager).getOrphanedGifCutoffSeconds()
 
-        // Expect a single bulk delete of all orphaned GIFs in our relative path. Stub the delete: return 2 rows deleted
+        // Expect a single bulk delete of orphaned GIFs in our relative path, skipping recent ones. Stub the delete: return 2 rows deleted
         val expectedRelativePath = Environment.DIRECTORY_DOWNLOADS + "/" + ctx.packageName + "/animated_gifs/"
-        val expectedSelection = MediaStore.MediaColumns.RELATIVE_PATH + " = ?"
-        val expectedArgs = arrayOf(expectedRelativePath)
+        val expectedSelection = MediaStore.MediaColumns.RELATIVE_PATH + " = ? AND " + MediaStore.MediaColumns.DATE_ADDED + " < ?"
+        val expectedArgs = arrayOf(expectedRelativePath, "1000")
         `when`(
             mockResolver.delete(
                 Mockito.eq(MediaStore.Downloads.EXTERNAL_CONTENT_URI),

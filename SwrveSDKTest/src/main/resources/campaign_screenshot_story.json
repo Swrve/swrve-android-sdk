@@ -1,0 +1,435 @@
+{
+  "game_data": {},
+  "campaigns": [
+    {
+      "id": 749307,
+      "timezone_type": "global",
+      "start_date_iso": "2026-11-03T17:34:27Z",
+      "end_date_iso": "2038-01-01T01:00:00Z",
+      "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": 0
+      },
+      "triggers": [
+        {
+          "event_name": "show_story_message",
+          "conditions": {}
+        }
+      ],
+      "message_center": true,
+      "blackout_dates": [],
+      "interval_times": [],
+      "message": {
+        "id": 754828,
+        "name": "Screenshot test (used in public SwrveSDKTest) - Story",
+        "rules": {
+          "orientations": "portrait"
+        },
+        "priority": 9999,
+        "template": {
+          "formats": [
+            {
+              "name": "[0.5882352941176471]phones-foldables-tablets-global-census-2026-10-15 - portrait",
+              "orientation": "portrait",
+              "language": "*",
+              "size": {
+                "w": {
+                  "type": "number",
+                  "value": 1080
+                },
+                "h": {
+                  "type": "number",
+                  "value": 1679
+                }
+              },
+              "calibration": {
+                "width": 2941,
+                "height": 294,
+                "text": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+                "base_font_size": 20
+              },
+              "pages": [
+                {
+                  "page_id": 485924,
+                  "page_name": "Page 1",
+                  "swipe_backward": -1,
+                  "swipe_forward": -1,
+                  "template_id": 87995,
+                  "images": [
+                    {
+                      "name": "Background",
+                      "iam_z_index": 0,
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 1620
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 2516
+                      },
+                      "image_width": 1620,
+                      "image_height": 2516,
+                      "image_filename": "story_page_1_2754x4278.png",
+                      "image": {
+                        "type": "asset",
+                        "value": "5445f43c4913c2a99d236574d78aad40c340d6b9"
+                      },
+                      "color": {
+                        "type": "color",
+                        "value": "FFFFFF"
+                      },
+                      "media_format": "image"
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "button_id": 531408,
+                      "name": "Button 1",
+                      "iam_z_index": 1,
+                      "x": {
+                        "type": "number",
+                        "value": 6
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 627
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 847
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 122
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "DISMISS"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": ""
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "text": {
+                        "type": "text",
+                        "value": "Solid"
+                      },
+                      "theme": {
+                        "font_size": 10,
+                        "truncate": true,
+                        "font_native_style": "Normal",
+                        "font_file": "_system_font_",
+                        "padding": {
+                          "top": 0,
+                          "bottom": 0,
+                          "left": 47,
+                          "right": 47
+                        },
+                        "font_color": "#FFFFFFFF",
+                        "bg_color": "#FF0040DD",
+                        "corner_radius": 35,
+                        "button_style_preset": {
+                          "id": "179",
+                          "version": 0
+                        },
+                        "pressed_state": {
+                          "font_color": "#FFFFFFFF",
+                          "bg_color": "#FF002787"
+                        },
+                        "h_align": "CENTER"
+                      }
+                    }
+                  ],
+                  "page_duration": 100
+                },
+                {
+                  "page_id": 917504,
+                  "page_name": "Page 2",
+                  "swipe_backward": -1,
+                  "swipe_forward": -1,
+                  "template_id": 87995,
+                  "images": [
+                    {
+                      "name": "Background",
+                      "iam_z_index": 0,
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 1620
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 2516
+                      },
+                      "image_width": 1620,
+                      "image_height": 2516,
+                      "image_filename": "story_page_2_2754x4278.png",
+                      "image": {
+                        "type": "asset",
+                        "value": "da8fc48b75d53687985bb347611110bd91ddb673"
+                      },
+                      "color": {
+                        "type": "color",
+                        "value": "FFFFFF"
+                      },
+                      "media_format": "image"
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "button_id": 531408,
+                      "name": "Button 1",
+                      "iam_z_index": 1,
+                      "x": {
+                        "type": "number",
+                        "value": 6
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 627
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 847
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 122
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "DISMISS"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": ""
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "text": {
+                        "type": "text",
+                        "value": "Button with custom font"
+                      },
+                      "theme": {
+                        "font_size": 10,
+                        "truncate": true,
+                        "font_postscript_name": "Pacifico-Regular",
+                        "font_family": "Pacifico",
+                        "font_style": "Regular",
+                        "font_file": "535.32032.3d0b9eb17e645ac34f83c49c3f988372b242173a.ttf",
+                        "font_digest": "3d0b9eb17e645ac34f83c49c3f988372b242173a",
+                        "padding": {
+                          "top": 0,
+                          "bottom": 0,
+                          "left": 47,
+                          "right": 47
+                        },
+                        "font_color": "#FFFFFFFF",
+                        "bg_color": "#FF0040DD",
+                        "corner_radius": 35,
+                        "button_style_preset": {
+                          "id": "181",
+                          "version": 0
+                        },
+                        "pressed_state": {
+                          "font_color": "#FFFFFFFF",
+                          "bg_color": "#FF002787"
+                        },
+                        "h_align": "CENTER"
+                      }
+                    }
+                  ],
+                  "page_duration": 10000
+                },
+                {
+                  "page_id": 244967,
+                  "page_name": "Page 3",
+                  "swipe_backward": -1,
+                  "swipe_forward": -1,
+                  "template_id": 87995,
+                  "images": [
+                    {
+                      "name": "Background",
+                      "iam_z_index": 0,
+                      "x": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 0
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 1620
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 2516
+                      },
+                      "image_width": 1620,
+                      "image_height": 2516,
+                      "image_filename": "story_page_3_2754x4278.png",
+                      "image": {
+                        "type": "asset",
+                        "value": "f6cf17c0f36c135ecf11fd00da2a9485402eedd8"
+                      },
+                      "color": {
+                        "type": "color",
+                        "value": "FFFFFF"
+                      },
+                      "media_format": "image"
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "button_id": 531408,
+                      "name": "Button 1",
+                      "iam_z_index": 1,
+                      "x": {
+                        "type": "number",
+                        "value": 6
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 627
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 847
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 122
+                      },
+                      "type": {
+                        "type": "text",
+                        "value": "DISMISS"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": ""
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "text": {
+                        "type": "text",
+                        "value": "Image background"
+                      },
+                      "theme": {
+                        "font_size": 10,
+                        "truncate": true,
+                        "font_native_style": "Normal",
+                        "font_file": "_system_font_",
+                        "padding": {
+                          "top": 0,
+                          "bottom": 0,
+                          "left": 47,
+                          "right": 47
+                        },
+                        "font_color": "#FFFFFFFF",
+                        "bg_image": {
+                          "type": "asset",
+                          "value": "ae22d321d98bf420693d766cc0d52aec70fdeff3"
+                        },
+                        "bg_image_width": 1440,
+                        "bg_image_height": 208,
+                        "bg_image_filename": "button_background_1440x208.png",
+                        "corner_radius": 0,
+                        "button_style_preset": {
+                          "id": "182",
+                          "version": 0
+                        },
+                        "pressed_state": {
+                          "font_color": "#FFFFFFFF",
+                          "bg_image": {
+                            "type": "asset",
+                            "value": "b9223ad2346bc79d5d73b2921a7a241907c1fadb"
+                          },
+                          "bg_image_width": 1440,
+                          "bg_image_height": 208,
+                          "bg_image_filename": "button_background_pressed_1440x208.png"
+                        },
+                        "h_align": "CENTER"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "story_settings": {
+                "page_duration": 2000,
+                "last_page_progression": "dismiss",
+                "last_page_dismiss_id": 960109,
+                "last_page_dismiss_name": "Auto dismiss",
+                "progress_bar": {
+                  "bar_color": "#0040DD",
+                  "bg_color": "#D0D7DC",
+                  "w": -1,
+                  "h": 12,
+                  "segment_gap": 14
+                },
+                "dismiss_button": {
+                  "id": 682262,
+                  "name": "Default dismiss",
+                  "color": "#0F2234",
+                  "pressed_color": "#0040DD",
+                  "focused_color": "#0040DD",
+                  "size": 82,
+                  "margin_top": 35,
+                  "accessibility_text": "Dismiss"
+                },
+                "padding": {
+                  "top": 35,
+                  "right": 35,
+                  "bottom": 35,
+                  "left": 35
+                },
+                "gestures_enabled": true
+              },
+              "scaled_by": 0.5882352941176471,
+              "scaled_from": "phones-foldables-tablets-global-census-2026-10-15 - portrait",
+              "scale": 1
+            }
+          ]
+        }
+      },
+      "subject": "",
+      "in_app_version": 15
+    }
+  ],
+  "rules": {
+    "max_messages_per_session": 99999,
+    "delay_first_message": 0,
+    "min_delay_between_messages": 0
+  },
+  "cdn_paths": {
+    "message_images": "https://campaign-content.swrve.com/messaging/message_image/",
+    "message_fonts": "https://campaign-content.swrve.com/messaging/fonts/"
+  },
+  "version": 2
+}

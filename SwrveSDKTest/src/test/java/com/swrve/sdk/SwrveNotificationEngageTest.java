@@ -501,4 +501,54 @@ public class SwrveNotificationEngageTest extends SwrveBaseTest {
         verify(swrveSpy, Mockito.times(1)).getNotificationEngage(); // the synchronized block ensures its called only once
         verify(notificationEngageMock, Mockito.times(1)).processIntent(any(Intent.class));
     }
+
+    @Test
+    public void testHandlePushEngagementNullSidIsNotDeDuplicated() {
+
+        // A push without _sid still carries the key on the intent with a null value. Caching that null would
+        // mean only the first tap of the process is ever engaged.
+        SwrveNotificationEngage notificationEngageMock = mock(SwrveNotificationEngage.class);
+        doReturn(notificationEngageMock).when(swrveSpy).getNotificationEngage();
+
+        swrveSpy.handlePushEngagement(intentWithSid(null));
+        swrveSpy.handlePushEngagement(intentWithSid(null));
+
+        verify(notificationEngageMock, Mockito.times(2)).processIntent(any(Intent.class));
+        assertTrue("a null sid must not be cached as processed", swrveSpy.processedSids.isEmpty());
+    }
+
+    @Test
+    public void testHandlePushEngagementEmptySidIsNotDeDuplicated() {
+
+        SwrveNotificationEngage notificationEngageMock = mock(SwrveNotificationEngage.class);
+        doReturn(notificationEngageMock).when(swrveSpy).getNotificationEngage();
+
+        swrveSpy.handlePushEngagement(intentWithSid(""));
+        swrveSpy.handlePushEngagement(intentWithSid(""));
+
+        verify(notificationEngageMock, Mockito.times(2)).processIntent(any(Intent.class));
+        assertTrue(swrveSpy.processedSids.isEmpty());
+    }
+
+    @Test
+    public void testHandlePushEngagementMissingSidKeyIsIgnored() {
+
+        SwrveNotificationEngage notificationEngageMock = mock(SwrveNotificationEngage.class);
+        doReturn(notificationEngageMock).when(swrveSpy).getNotificationEngage();
+
+        Intent intent = new Intent();
+        intent.putExtras(new Bundle());
+        swrveSpy.handlePushEngagement(intent);
+
+        verify(notificationEngageMock, Mockito.times(0)).processIntent(any(Intent.class));
+        assertTrue(swrveSpy.processedSids.isEmpty());
+    }
+
+    private Intent intentWithSid(String sid) {
+        Intent intent = new Intent();
+        Bundle bundle = new Bundle();
+        bundle.putString(ISwrveCommon.GENERIC_EVENT_PAYLOAD_SID, sid); // a null value still leaves the key present
+        intent.putExtras(bundle);
+        return intent;
+    }
 }

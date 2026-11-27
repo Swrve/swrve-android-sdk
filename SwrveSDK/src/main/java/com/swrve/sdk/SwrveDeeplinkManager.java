@@ -47,7 +47,7 @@ class SwrveDeeplinkManager {
     private static final String SWRVE_FB_TARGET_URL = "target_url";
     private static final String SWRVE_NOTIFICATION_TO_CAMPAIGN = "notification_to_campaign";
 
-    private Map<String, String> standardParams;
+    private volatile Map<String, String> standardParams;
     private IRESTClient restClient;
     private Context context;
     private SwrveConfig config;
@@ -71,6 +71,10 @@ class SwrveDeeplinkManager {
 
     public void setRestClient(IRESTClient restClient) {
         this.restClient = restClient;
+    }
+
+    public void setStandardParams(Map<String, String> standardParams) {
+        this.standardParams = standardParams;
     }
 
     public SwrveDeeplinkManager(Map<String, String> standardParams, final SwrveConfig config, final Context context, SwrveAssetsManager swrveAssetsManager, IRESTClient restClient) {
@@ -150,13 +154,15 @@ class SwrveDeeplinkManager {
 
     protected void loadCampaign(final String campaignId, final String actionType) {
 
-        standardParams.put("in_app_campaign_id", campaignId);
+        // A copy for this request, as the standard params can be replaced or used by another request meanwhile
+        final Map<String, String> params = new HashMap<>(standardParams);
+        params.put("in_app_campaign_id", campaignId);
 
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             Runnable runnable = () -> {
                 try {
-                    restClient.get(config.getContentUrl() + SWRVE_AD_CAMPAIGN_URL, standardParams, new IRESTResponseListener() {
+                    restClient.get(config.getContentUrl() + SWRVE_AD_CAMPAIGN_URL, params, new IRESTResponseListener() {
                         @Override
                         public void onResponse(RESTResponse response) {
                             try {
@@ -346,8 +352,9 @@ class SwrveDeeplinkManager {
         for (long campaignId : campaignIds) {
             String endPoint = config.getContentUrl() + SWRVE_AD_CAMPAIGN_URL;
             IRESTResponseListener responseListener = getOfflineRestResponseListener(campaignId);
-            standardParams.put("in_app_campaign_id", String.valueOf(campaignId));
-            getRestClient().get(endPoint, standardParams, responseListener);
+            Map<String, String> params = new HashMap<>(standardParams); // a copy for each request, with its own campaign id
+            params.put("in_app_campaign_id", String.valueOf(campaignId));
+            getRestClient().get(endPoint, params, responseListener);
         }
     }
 

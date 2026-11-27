@@ -12,7 +12,12 @@ public class SwrveNotificationButton {
         @SerializedName("open_campaign")
         OPEN_CAMPAIGN,
         @SerializedName("dismiss")
-        DISMISS
+        DISMISS,
+        // Carousel navigation. Sent by the server on a carousel push with a localised title.
+        @SerializedName("previous")
+        PREVIOUS,
+        @SerializedName("next")
+        NEXT
     }
 
     private String title;

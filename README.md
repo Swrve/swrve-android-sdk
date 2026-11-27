@@ -15,13 +15,13 @@ The SDK is published to Maven Central in three flavors. Add the one matching you
 
 ```groovy
 // Firebase Cloud Messaging
-implementation 'com.swrve.sdk.android:swrve-firebase:12.3.0'
+implementation 'com.swrve.sdk.android:swrve-firebase:12.4.0'
 
 // Huawei Mobile Services
-implementation 'com.swrve.sdk.android:swrve-huawei:12.3.0'
+implementation 'com.swrve.sdk.android:swrve-huawei:12.4.0'
 
 // No push support
-implementation 'com.swrve.sdk.android:swrve:12.3.0'
+implementation 'com.swrve.sdk.android:swrve:12.4.0'
 ```
 
 Requirements

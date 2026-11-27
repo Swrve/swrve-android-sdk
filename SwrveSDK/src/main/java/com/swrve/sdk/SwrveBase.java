@@ -629,6 +629,7 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected JSONObject _getDeviceInfo() throws JSONException {
+        openLocalStorageConnection(); // can be called before init, so ensure the storage connection is open for the largest screen
         JSONObject deviceInfo = new JSONObject();
 
         deviceInfo.put(SWRVE_DEVICE_NAME, getDeviceName());
@@ -639,11 +640,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         if (contextRef != null) {
             try {
                 deviceInfo.put(SWRVE_APP_TARGET_VERSION, SwrveHelper.getTargetSdkVersion(contextRef));
-                deviceInfo.put(SWRVE_DEVICE_WIDTH, deviceWidth);
-                deviceInfo.put(SWRVE_DEVICE_HEIGHT, deviceHeight);
-                deviceInfo.put(SWRVE_DEVICE_DPI, deviceDpi);
-                deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, androidDeviceXdpi);
-                deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, androidDeviceYdpi);
+                SwrveLargestScreen screen = updateScreenInfo(contextRef);
+                deviceInfo.put(SWRVE_DEVICE_WIDTH, screen.getWidth());
+                deviceInfo.put(SWRVE_DEVICE_HEIGHT, screen.getHeight());
+                deviceInfo.put(SWRVE_DEVICE_DPI, screen.getDpi());
+                deviceInfo.put(SWRVE_ANDROID_DEVICE_XDPI, screen.getXdpi());
+                deviceInfo.put(SWRVE_ANDROID_DEVICE_YDPI, screen.getYdpi());
                 // Carrier info
                 if (!SwrveHelper.isNullOrEmpty(simOperatorName)) {
                     deviceInfo.put(SWRVE_SIM_OPERATOR_NAME, simOperatorName);
@@ -2097,6 +2099,11 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
 
     protected Map<String, String> getContentRequestParams(String userId) {
 
+        openLocalStorageConnection(); // can be called before init, such as for Geo campaigns, so ensure the storage connection is open
+        Context contextRef = context.get();
+        // The screen may have changed since the last request, such as on a fold
+        SwrveLargestScreen screen = (contextRef != null) ? updateScreenInfo(contextRef) : screenInfo;
+
         String userJoinedTime = multiLayerLocalStorage.getCacheEntry(userId, CACHE_USER_JOINED_TIME);
         Map<String, String> params = new HashMap<>();
 
@@ -2116,16 +2123,15 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
         params.put("push_inbox_version", String.valueOf(PUSH_INBOX_VERSION));
 
         // Device info
-        params.put("device_width", String.valueOf(deviceWidth));
-        params.put("device_height", String.valueOf(deviceHeight));
-        params.put("device_dpi", String.valueOf(deviceDpi));
-        params.put("android_device_xdpi", String.valueOf(androidDeviceXdpi));
-        params.put("android_device_ydpi", String.valueOf(androidDeviceYdpi));
+        params.put("device_width", String.valueOf(screen.getWidth()));
+        params.put("device_height", String.valueOf(screen.getHeight()));
+        params.put("device_dpi", String.valueOf(screen.getDpi()));
+        params.put("android_device_xdpi", String.valueOf(screen.getXdpi()));
+        params.put("android_device_ydpi", String.valueOf(screen.getYdpi()));
         params.put("orientation", config.getOrientation().toString().toLowerCase(Locale.US));
         params.put("device_name", getDeviceName());
         params.put("os_version", Build.VERSION.RELEASE);
 
-        Context contextRef = context.get();
         if (contextRef != null) {
             params.put("os", this.getPlatformOS(contextRef));
             params.put("device_type", SwrveHelper.getPlatformDeviceType(contextRef));
@@ -2135,10 +2141,12 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     }
 
     protected void initSwrveDeepLinkManager() {
+        final String userId = profileManager.getUserId();
+        Map<String, String> params = getContentRequestParams(userId);
         if (this.swrveDeeplinkManager == null) {
-            final String userId = profileManager.getUserId();
-            Map<String, String> params = getContentRequestParams(userId);
             this.swrveDeeplinkManager = new SwrveDeeplinkManager(params, (SwrveConfig) this.getConfig(), this.getContext(), this.swrveAssetsManager, this.restClient);
+        } else {
+            this.swrveDeeplinkManager.setStandardParams(params); // fresh for each request, as the largest screen may have changed
         }
     }
 
@@ -2396,10 +2404,17 @@ public abstract class SwrveBase<T, C extends SwrveConfigBase> extends SwrveImp<T
     public void handlePushEngagement(Intent intent) {
         Bundle bundle = intent.getExtras();
         if (bundle == null || !bundle.containsKey(GENERIC_EVENT_PAYLOAD_SID)) {
+            SwrveLogger.d("SwrveSDK: no %s in intent, not processing push engagement.", GENERIC_EVENT_PAYLOAD_SID);
             return;
         }
         String sid = bundle.getString(GENERIC_EVENT_PAYLOAD_SID);
+        if (SwrveHelper.isNullOrEmpty(sid)) {
+            SwrveLogger.d("SwrveSDK: push has no %s, processing engagement without de-duplication.", GENERIC_EVENT_PAYLOAD_SID);
+            getNotificationEngage().processIntent(intent);
+            return;
+        }
         if (processedSids.contains(sid)) { // "double-checked locking" as a performance optimization
+            SwrveLogger.d("SwrveSDK: push engagement for %s already processed, ignoring.", sid);
             return;
         }
         synchronized (processedSids) { // handlePushEngagement is called multiple times and we need to ensure that we only process the engagement once

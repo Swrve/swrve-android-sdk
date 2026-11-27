@@ -15,7 +15,22 @@ jobs:
           key: jars-{{ checksum "gradle.properties" }}-{{ checksum "build.gradle" }}-{{ checksum "SwrveSDK/build.gradle" }}-{{ checksum "SwrveSDKCommon/build.gradle" }}-{{ checksum "SwrveSDKTest/build.gradle" }}
       - run:
           name: Build and Test SwrveSDKTest Firebase flavour
-          command: ./gradlew :SwrveSDKTest:testFirebaseDebug
+          command: ./gradlew :SwrveSDKTest:testFirebaseDebug -Proborazzi.test.verify=true
+      - run:
+          name: Gather the screenshot test report with its images
+          when: always
+          command: |
+            mkdir -p /tmp/screenshot-report/build/reports /tmp/screenshot-report/build/outputs /tmp/screenshot-report/src/test
+            # The report links its images relative to itself, so it keeps its place in the layout, and index.html at the top opens it
+            if [ -d SwrveSDKTest/build/reports/roborazzi ]; then
+              mv SwrveSDKTest/build/reports/roborazzi /tmp/screenshot-report/build/reports/
+              echo '<meta http-equiv="refresh" content="0; url=build/reports/roborazzi/firebaseDebug/index.html">' > /tmp/screenshot-report/index.html
+            fi
+            if [ -d SwrveSDKTest/build/outputs/roborazzi ]; then cp -R SwrveSDKTest/build/outputs/roborazzi /tmp/screenshot-report/build/outputs/; fi
+            cp -R SwrveSDKTest/src/test/screenshots /tmp/screenshot-report/src/test/
+      - store_artifacts:
+          path: /tmp/screenshot-report
+          destination: screenshots
       - store_artifacts:
           path: SwrveSDKTest/build/reports/
           destination: reports

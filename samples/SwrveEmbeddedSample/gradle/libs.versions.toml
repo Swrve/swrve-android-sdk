@@ -9,7 +9,7 @@ navigationUiKtx = "2.9.6"
 compose-bom = "2025.11.01"
 coilCompose = "2.7.0"
 timber = "5.0.1"
-swrveSdkVersion = "12.3.0"
+swrveSdkVersion = "12.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

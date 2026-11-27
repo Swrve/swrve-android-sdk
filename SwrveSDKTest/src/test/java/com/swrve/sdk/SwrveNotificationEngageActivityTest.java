@@ -3,6 +3,7 @@ package com.swrve.sdk;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -47,5 +48,19 @@ public class SwrveNotificationEngageActivityTest extends SwrveBaseTest {
         Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveNotificationEngageActivity.class);
         Robolectric.buildActivity(SwrveNotificationEngageActivity.class, intent).create().visible().get();
         verify(swrveCommon, times(1)).handlePushEngagement(intent);
+    }
+
+    @Test
+    public void testEngageFinishesWhenEngagementThrows() {
+        // finish() is in a finally block, so a thrown engagement must not leave the activity alive. If it did,
+        // this singleInstance activity would swallow every later notification tap.
+        ISwrveCommon swrveCommon = mock(ISwrveCommon.class);
+        doThrow(new RuntimeException("engagement blew up")).when(swrveCommon).handlePushEngagement(Mockito.any(Intent.class));
+        SwrveCommon.setSwrveCommon(swrveCommon);
+
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(), SwrveNotificationEngageActivity.class);
+        SwrveNotificationEngageActivity activity = Robolectric.buildActivity(SwrveNotificationEngageActivity.class, intent).create().get();
+
+        assertTrue("activity must finish even when engagement throws", activity.isFinishing());
     }
 }

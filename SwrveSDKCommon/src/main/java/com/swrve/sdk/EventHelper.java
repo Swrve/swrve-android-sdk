@@ -7,6 +7,7 @@ import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_UNIQUE_DEVICE_ID;
 import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_USER;
 import static com.swrve.sdk.ISwrveCommon.BATCH_EVENT_KEY_VERSION;
 import static com.swrve.sdk.ISwrveCommon.EVENT_ID_KEY;
+import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_DEEPLINK;
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_KEY;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_GENERIC_CAMPAIGN;
 import static com.swrve.sdk.ISwrveCommon.EVENT_TYPE_KEY;
@@ -14,6 +15,8 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_BUTTON_CLICK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_DELIVERED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_ENGAGED;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_KEY;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_SLIDE_CLICK;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_ACTION_TYPE_SLIDE_VIEW;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_GEO;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_KEY;
@@ -21,6 +24,7 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CAMPAIGN_TYPE_PUSH;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_CONTEXT_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_MEDIA_ID_KEY;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_ADDITIONAL_INFO;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CAROUSEL;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CHANNEL_PARENT_ID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_DISPLAYED;
@@ -31,6 +35,7 @@ import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SENT_TIME;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_REASON;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SID;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SILENT;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SLIDE;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
 import static com.swrve.sdk.SwrveNotificationInternalPayloadConstants.SWRVE_UNIQUE_MESSAGE_ID_KEY;
@@ -185,7 +190,7 @@ final class EventHelper {
         return "";
     }
 
-    protected static void sendEngagedEvent(Context context, String campaignType, String id, Map<String, String> payload) {
+    protected static void sendEngagedEvent(Context context, String campaignType, String id, Map<String, ?> payload) {
         try {
             ISwrveCommon swrve = SwrveCommon.getInstance();
             ArrayList<String> events = new ArrayList<>();
@@ -194,7 +199,7 @@ final class EventHelper {
                 SwrveLogger.d("Sending generic engaged event.");
                 String contextId = "";
                 String campaignId = "";
-                events = EventHelper.createGenericEvent(id, GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, contextId, campaignId, payload, seqNum);
+                events = EventHelper.createGenericEvent(System.currentTimeMillis(), id, GENERIC_EVENT_CAMPAIGN_TYPE_GEO, GENERIC_EVENT_ACTION_TYPE_ENGAGED, contextId, campaignId, payload, seqNum);
             } else if (GENERIC_EVENT_CAMPAIGN_TYPE_PUSH.equalsIgnoreCase(campaignType)) {
                 String eventName = "Swrve.Messages.Push-" + id + ".engaged";
                 SwrveLogger.d("Sending engaged event: %s", eventName);
@@ -206,6 +211,45 @@ final class EventHelper {
             swrve.sendEventsInBackground(context, swrve.getUserId(), events);
         } catch (Exception e) {
             SwrveLogger.e("Exception trying to send engaged event.", e);
+        }
+    }
+
+    /**
+     * @param deeplink the item's own deeplink, never the push's, so null for an open_app item
+     */
+    protected static void sendCarouselViewEvent(Context context, Bundle msg, int itemIndex, String deeplink) {
+        sendCarouselEvent(context, msg, itemIndex, deeplink, GENERIC_EVENT_ACTION_TYPE_SLIDE_VIEW);
+    }
+
+    /**
+     * @param deeplink the item's own deeplink, never the push's, so null for an open_app item
+     */
+    protected static void sendCarouselClickEvent(Context context, Bundle msg, int itemIndex, String deeplink) {
+        sendCarouselEvent(context, msg, itemIndex, deeplink, GENERIC_EVENT_ACTION_TYPE_SLIDE_CLICK);
+    }
+
+    private static void sendCarouselEvent(Context context, Bundle msg, int itemIndex, String deeplink, String actionType) {
+        try {
+            ISwrveCommon swrve = SwrveCommon.getInstance();
+            String id = SwrveHelper.getRemotePushId(msg);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put(GENERIC_EVENT_PAYLOAD_CAROUSEL, true);
+            payload.put(GENERIC_EVENT_PAYLOAD_SLIDE, itemIndex);
+            if (msg.containsKey(SwrveNotificationConstants.TRACKING_DATA_KEY)) {
+                payload.put(GENERIC_EVENT_PAYLOAD_TRACKING_DATA, msg.getString(SwrveNotificationConstants.TRACKING_DATA_KEY));
+            }
+            if (msg.containsKey(SwrveNotificationConstants.PLATFORM_KEY)) {
+                payload.put(GENERIC_EVENT_PAYLOAD_PLATFORM, msg.getString(SwrveNotificationConstants.PLATFORM_KEY));
+            }
+            if (SwrveHelper.isNotNullOrEmpty(deeplink)) {
+                payload.put(EVENT_PAYLOAD_DEEPLINK, deeplink);
+            }
+            ArrayList<String> events = createGenericEvent(System.currentTimeMillis(), id, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, actionType,
+                    String.valueOf(itemIndex), null, payload, swrve.getNextSequenceNumber());
+            SwrveLogger.d("Sending %s for push id:%s item:%s", actionType, id, itemIndex);
+            swrve.sendEventsInBackground(context, swrve.getUserId(), events);
+        } catch (Exception e) {
+            SwrveLogger.e("Exception trying to send carousel " + actionType + " event.", e);
         }
     }
 

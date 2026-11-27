@@ -53,6 +53,7 @@ public class SwrveNotification {
     private String channelId;
     private SwrveNotificationChannel channel;
     private SwrveNotificationCampaign campaign;
+    private List<SwrveCarouselItem> carousel;
 
     public int getVersion() {
         return version;
@@ -178,4 +179,12 @@ public class SwrveNotification {
     public SwrveNotificationCampaign getCampaign() {  return campaign; }
 
     public void setCampaign(SwrveNotificationCampaign campaign) { this.campaign = campaign; }
+
+    public List<SwrveCarouselItem> getCarousel() {
+        return carousel;
+    }
+
+    public void setCarousel(List<SwrveCarouselItem> carousel) {
+        this.carousel = carousel;
+    }
 }

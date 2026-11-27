@@ -567,8 +567,8 @@ public class SwrveInAppStoryActivityTest extends SwrveBaseTest{
     }
 
     private SwrveButtonView findButton(SwrveMessageView view, SwrveActionType actionType) {
-        for (int i = 0; i < view.getChildCount(); i++) {
-            View childView = view.getChildAt(i);
+        for (int i = 0; i < view.getPageElementsLayout().getChildCount(); i++) {
+            View childView = view.getPageElementsLayout().getChildAt(i);
             if (childView instanceof SwrveButtonView) {
                 SwrveButtonView swrveButtonView = (SwrveButtonView) childView;
                 if (swrveButtonView.getType() == actionType) {

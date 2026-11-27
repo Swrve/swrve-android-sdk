@@ -17,16 +17,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.shadows.gms.Shadows.shadowOf;
 
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.huawei.hms.aaid.HmsInstanceId;
 import com.swrve.sdk.localstorage.SwrveMultiLayerLocalStorage;
+import com.swrve.sdk.shadows.ShadowGoogleApiAvailability;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,7 +35,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.robolectric.shadows.gms.common.ShadowGoogleApiAvailability;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,9 +75,7 @@ public class SwrveHuaweiUnitTest extends SwrveBaseTest {
         assertTrue(swrveSpy.platformUtil instanceof SwrveHuaweiUtil);
 
         // Mock GoogleApiAvailability to return google IS available and recreate swrve instance
-        final ShadowGoogleApiAvailability shadowGoogleApiAvailability = shadowOf(GoogleApiAvailability.getInstance());
-        final int expectedCode = ConnectionResult.SUCCESS;
-        shadowGoogleApiAvailability.setIsGooglePlayServicesAvailable(expectedCode);
+        ShadowGoogleApiAvailability.setIsGooglePlayServicesAvailable(ConnectionResult.SUCCESS);
 
         SwrveTestUtils.shutdownAndRemoveSwrveSDKSingletonInstance();
         swrveSpy = SwrveTestUtils.createSpyInstance();

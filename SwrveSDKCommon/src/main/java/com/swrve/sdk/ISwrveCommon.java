@@ -25,6 +25,7 @@ interface ISwrveCommon {
 
     // cache constants
     String CACHE_DEVICE_ID = "device_id";
+    String CACHE_LARGEST_SCREEN = "largest_screen";
     String CACHE_CAMPAIGNS = "CMCC2";
     String CACHE_PIM = "PIM";
     String CACHE_RESOURCES = "srcngt2";
@@ -117,6 +118,8 @@ interface ISwrveCommon {
     String GENERIC_EVENT_ACTION_TYPE_DISMISS        = "dismiss";
     String GENERIC_EVENT_ACTION_TYPE_NAVIGATION     = "navigation";
     String GENERIC_EVENT_ACTION_TYPE_PAGE_VIEW      = "page_view";
+    String GENERIC_EVENT_ACTION_TYPE_SLIDE_VIEW     = "slide_view";
+    String GENERIC_EVENT_ACTION_TYPE_SLIDE_CLICK    = "slide_click";
     String GENERIC_EVENT_ACTION_TYPE_PIM_READ       = "read";
     String GENERIC_EVENT_ACTION_TYPE_PIM_ENGAGED    = "engaged";
     String GENERIC_EVENT_ACTION_TYPE_PIM_DELETE     = "delete";
@@ -145,6 +148,8 @@ interface ISwrveCommon {
     String GENERIC_EVENT_PAYLOAD_BUTTON_NAME        = "buttonName";
     String GENERIC_EVENT_PAYLOAD_TRACKING_DATA      = "trackingData";
     String GENERIC_EVENT_PAYLOAD_PLATFORM           = "platform";
+    String GENERIC_EVENT_PAYLOAD_CAROUSEL           = "carousel";
+    String GENERIC_EVENT_PAYLOAD_SLIDE              = "slide";
     String GENERIC_EVENT_PAYLOAD_PIM_STATE          = "state";
     String GENERIC_EVENT_PAYLOAD_PIM_MESSAGE_ID     = "messageId";
     String GENERIC_EVENT_PAYLOAD_DEVICE_TYPE        = "deviceType";

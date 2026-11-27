@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android' version '2.2.10'
+    id 'io.github.takahirom.roborazzi' version '1.76.0'
 }
 
 android {
@@ -27,6 +28,11 @@ android {
         }
         unitTests.all {
             maxHeapSize = "2048m"
+            // Robolectric's FileDescriptorInterceptor reaches into JDK internals when setting up
+            // the application sandbox (jdk.internal.access.SharedSecrets, and the private
+            // FileDescriptor.fd field). JDK 17+ module encapsulation blocks both without these.
+            jvmArgs '--add-opens=java.base/jdk.internal.access=ALL-UNNAMED',
+                    '--add-opens=java.base/java.io=ALL-UNNAMED'
         }
     }
 
@@ -65,7 +71,7 @@ dependencies {
     api project(path: ':SwrveSDK')
     implementation 'com.google.code.gson:gson:' + project.GSON_VERSION
     implementation 'androidx.work:work-runtime:' + project.ANDROIDX_WORK_RUNTIME_VERSION
-    testImplementation 'androidx.test:runner:1.1.0'
+    testImplementation 'androidx.test:runner:1.7.0'
     //implementation 'androidx.core:core-ktx:+'
 
     huaweiImplementation 'com.huawei.hms:push:' + project.HMS_PUSH_KIT_VERSION
@@ -84,14 +90,20 @@ dependencies {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'org.apache.httpcomponents', module: 'httpclient'
     }
-    testImplementation 'org.robolectric:shadows-playservices:4.11'
-    testImplementation 'com.google.android.gms:play-services-auth:20.7.0' // required for tests using ShadowGoogleApiAvailability and org.robolectric:shadows-playservices
+    testImplementation 'com.google.android.gms:play-services-auth:20.7.0' // required for tests using com.swrve.sdk.shadows.ShadowGoogleApiAvailability
     testImplementation 'androidx.test:core:1.7.0'
+
+    testImplementation 'io.github.takahirom.roborazzi:roborazzi:1.76.0'
+    testImplementation 'androidx.test.espresso:espresso-core:3.7.0' // Roborazzi's 3.5.1 fails on our Robolectric sdk: it calls InputManager.getInstance()
 
     testImplementation 'org.awaitility:awaitility:4.2.2'
     testImplementation 'org.awaitility:awaitility-kotlin:4.2.2'
 
     testImplementation 'org.freemarker:freemarker:2.3.23' // FreeMarker conformance testing - using same version as Accelerator
+}
+
+roborazzi {
+    outputDir = file("src/test/screenshots")
 }
 
 apply plugin: 'com.google.gms.google-services'

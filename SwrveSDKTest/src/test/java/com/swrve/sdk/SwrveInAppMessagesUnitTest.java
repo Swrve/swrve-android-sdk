@@ -639,7 +639,7 @@ public class SwrveInAppMessagesUnitTest extends SwrveBaseTest {
                 // Should get an in-app message (and display it)
                 Pair<ActivityController<SwrveInAppMessageActivity>, SwrveInAppMessageActivity> pair = createIAMActivityFromIntent(nextIntent);
                 SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(pair.second);
-                SwrveButtonView buttonView = (SwrveButtonView) messageView.getChildAt(1);
+                SwrveButtonView buttonView = (SwrveButtonView) messageView.getPageElementsLayout().getChildAt(1);
                 buttonView.performClick();
             }
         }

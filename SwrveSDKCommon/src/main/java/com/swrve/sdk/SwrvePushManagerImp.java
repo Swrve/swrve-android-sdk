@@ -53,9 +53,11 @@ class SwrvePushManagerImp extends SwrvePushManagerImpBase implements SwrvePushMa
     @Override
     public void processNotification(final Bundle msg, String pushId) {
 
+        SwrveNotificationBuilder swrveNotificationBuilder = null;
+        boolean posted = false;
         try {
             String msgText = msg.getString(SwrveNotificationConstants.TEXT_KEY);
-            SwrveNotificationBuilder swrveNotificationBuilder = getSwrveNotificationBuilder();
+            swrveNotificationBuilder = getSwrveNotificationBuilder();
             NotificationCompat.Builder notificationCompatBuilder = swrveNotificationBuilder.build(msgText, msg, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
 
             PendingIntent contentIntent = swrveNotificationBuilder.createPendingIntent(msg, GENERIC_EVENT_CAMPAIGN_TYPE_PUSH, null);
@@ -76,11 +78,19 @@ class SwrvePushManagerImp extends SwrvePushManagerImpBase implements SwrvePushMa
                     notification.extras = extras;
                 }
                 notificationManager.notify(notificationId, notification);
+                posted = true;
                 SwrveLogger.d("SwrvePushManager: displayed notificationId: %s", notificationId);
+                if (swrveNotificationBuilder.isCarouselNotification()) {
+                    // the first item is reported on arrival, as Android can't tell when the user expands the notification
+                    EventHelper.sendCarouselViewEvent(context, msg, 0, swrveNotificationBuilder.getCarouselItemUrl());
+                }
             }
 
         } catch (Exception ex) {
             SwrveLogger.e("Error processing push.", ex);
+        }
+        if (!posted && swrveNotificationBuilder != null) {
+            swrveNotificationBuilder.deletePublishedGifs(); // nothing was posted to delete them on engage/dismiss
         }
     }
 

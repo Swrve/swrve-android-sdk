@@ -166,7 +166,7 @@ public class SwrveInAppMessagesWithRetryUnitTest extends SwrveBaseTest {
 
         // Dismiss
         SwrveMessageView messageView = SwrveTestUtils.getSwrveMessageView(pair.second);
-        SwrveButtonView buttonView = (SwrveButtonView) messageView.getChildAt(2);
+        SwrveButtonView buttonView = (SwrveButtonView) messageView.getPageElementsLayout().getChildAt(2);
         buttonView.performClick();
 
         // Last message just closed - should not be able to display a new one

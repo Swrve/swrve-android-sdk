@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -18,14 +19,25 @@ import com.swrve.sdk.rest.SwrveFilterInputStream;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -34,7 +46,11 @@ import javax.net.ssl.SSLSocketFactory;
 class NotificationMediaManager {
 
     public static final String EXTRA_GIF_URI = "com.swrve.sdk.extra.GIF_URI";
+    public static final String EXTRA_GIF_URIS = "com.swrve.sdk.extra.GIF_URIS"; // one per image, null where it is a static image
     public static final int NATIVE_GIF_SUPPORT_MIN_API = Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+    private static final String IMAGE_CACHE_DIR = "swrve_notification_images";
+    private static final long ORPHANED_GIF_MIN_AGE_MILLIS = 10 * 60 * 1000;
+    private static final long DOWNLOAD_IMAGES_TIMEOUT_MILLIS = 60000; // runs in the push worker, which allows ~10 minutes
     private final Context context;
     private final ISwrveCommon swrveCommon;
 
@@ -127,6 +143,147 @@ class NotificationMediaManager {
         return fetchResult;
     }
 
+    // Downloads a static image to the cache, if not already cached
+    void downloadImage(String url) {
+        if (SwrveHelper.isNullOrEmpty(url) || !ensureImageCacheDir() || getCachedImageFile(url).exists()) {
+            return;
+        }
+        Bitmap bitmap = downloadBitmap(url);
+        if (bitmap != null) {
+            saveCachedImage(bitmap, getCachedImageFile(url));
+        }
+    }
+
+    // Downloads images that may be GIFs. Static images are cached; GIFs are published to MediaStore.
+    // Returns the published GIF uri for each url, in the same order, or null where it is a static image
+    ArrayList<String> downloadImages(List<String> urls, int notificationId) {
+        ArrayList<String> gifUris = new ArrayList<>(Collections.nCopies(urls.size(), (String) null));
+        if (!ensureImageCacheDir()) {
+            return gifUris;
+        }
+        Map<String, String> publishedGifs = new ConcurrentHashMap<>();
+        List<Callable<Void>> downloads = new ArrayList<>();
+        for (String url : new LinkedHashSet<>(urls)) {
+            if (SwrveHelper.isNullOrEmpty(url) || getCachedImageFile(url).exists()) {
+                continue;
+            }
+            downloads.add(() -> {
+                BigPictureFetchResult result = downloadBigPictureImage(url, notificationId);
+                if (result != null && result.mediaUri != null) {
+                    publishedGifs.put(url, result.mediaUri.toString());
+                } else if (result != null && result.bitmap != null) {
+                    saveCachedImage(result.bitmap, getCachedImageFile(url));
+                }
+                return null;
+            });
+        }
+        if (downloads.isEmpty()) {
+            return gifUris;
+        }
+        // One download at a time, so only one decoded bitmap is in memory, with an overall deadline so a very slow
+        // network can't hold the push worker indefinitely. Images not ready by then show a placeholder. A GIF that
+        // lands after the deadline isn't referenced, so it's left for cleanupOrphanedGifs.
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            executor.invokeAll(downloads, getDownloadImagesTimeoutMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            executor.shutdownNow();
+        }
+        for (int i = 0; i < urls.size(); i++) {
+            String url = urls.get(i);
+            if (url != null) {
+                gifUris.set(i, publishedGifs.get(url));
+            }
+        }
+        return gifUris;
+    }
+
+    long getDownloadImagesTimeoutMillis() {
+        return DOWNLOAD_IMAGES_TIMEOUT_MILLIS;
+    }
+
+    private boolean ensureImageCacheDir() {
+        File cacheDir = getImageCacheDir();
+        if (!cacheDir.mkdirs() && !cacheDir.isDirectory()) { // another push worker may have just created it
+            SwrveLogger.e("Could not create image cache dir: %s", cacheDir);
+            return false;
+        }
+        return true;
+    }
+
+    Bitmap getCachedImage(String url) {
+        if (SwrveHelper.isNullOrEmpty(url)) {
+            return null;
+        }
+        File file = getCachedImageFile(url);
+        if (!file.exists()) {
+            return null;
+        }
+        // already scaled to the screen when downloaded, so no scaling here: display size isn't reliable from a broadcast receiver
+        try {
+            return BitmapFactory.decodeFile(file.getAbsolutePath());
+        } catch (OutOfMemoryError e) {
+            SwrveLogger.e("Out of memory decoding cached image:%s", e, file);
+            return null;
+        }
+    }
+
+    // Reads only the file's header, so nothing is decoded. 0 when there's no file. Cached images are stored as they're
+    // shown, so this is the shape shown.
+    float getImageHeightRatio(String url, String gifUri) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        try {
+            if (SwrveHelper.isNotNullOrEmpty(gifUri)) {
+                try (InputStream inputStream = context.getContentResolver().openInputStream(Uri.parse(gifUri))) {
+                    BitmapFactory.decodeStream(inputStream, null, options);
+                }
+            } else if (SwrveHelper.isNotNullOrEmpty(url)) {
+                File cachedFile = getCachedImageFile(url);
+                if (cachedFile.exists()) {
+                    BitmapFactory.decodeFile(cachedFile.getAbsolutePath(), options);
+                }
+            }
+        } catch (Exception e) {
+            SwrveLogger.e("Exception reading the size of notification image:%s", e, url);
+            return 0;
+        }
+        if (options.outWidth <= 0 || options.outHeight <= 0) {
+            return 0;
+        }
+        return (float) options.outHeight / options.outWidth;
+    }
+
+    private void saveCachedImage(Bitmap bitmap, File file) {
+        File tempFile = null;
+        boolean saved = false;
+        try {
+            tempFile = File.createTempFile(file.getName(), ".tmp", file.getParentFile()); // unique, as another push may be saving the same image
+            try (OutputStream outputStream = new FileOutputStream(tempFile)) {
+                saved = bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+            }
+        } catch (Exception e) {
+            saved = false;
+            SwrveLogger.e("Exception saving cached image:%s", e, file);
+        }
+        if (!saved || !tempFile.renameTo(file)) {
+            SwrveLogger.e("Could not save cached image:%s", file);
+            if (tempFile != null) {
+                tempFile.delete();
+            }
+        }
+    }
+
+    File getCachedImageFile(String url) {
+        return new File(getImageCacheDir(), SwrveHelper.sha1(url.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private File getImageCacheDir() {
+        return new File(swrveCommon.getCacheDir(context), IMAGE_CACHE_DIR);
+    }
+
     private HttpURLConnection openConnection(String urlString) throws Exception {
         URL url = new URL(urlString);
         HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
@@ -141,6 +298,8 @@ class NotificationMediaManager {
         httpConnection.setRequestMethod("GET");
         httpConnection.setRequestProperty("Accept-Encoding", "gzip");
         httpConnection.setConnectTimeout(swrveCommon.getHttpTimeout());
+        // without a read timeout a stalled response blocks forever
+        httpConnection.setReadTimeout(swrveCommon.getHttpTimeout());
         return httpConnection;
     }
 
@@ -239,21 +398,33 @@ class NotificationMediaManager {
     }
 
     protected int deleteGifUri(Intent intent) {
-        if (context == null || intent == null || SwrveHelper.isNullOrEmpty(intent.getStringExtra(EXTRA_GIF_URI))) {
+        if (context == null || intent == null) {
             return 0;
         }
+        Set<String> uris = new LinkedHashSet<>();
+        if (SwrveHelper.isNotNullOrEmpty(intent.getStringExtra(EXTRA_GIF_URI))) {
+            uris.add(intent.getStringExtra(EXTRA_GIF_URI));
+        }
+        ArrayList<String> gifUris = intent.getStringArrayListExtra(EXTRA_GIF_URIS);
+        if (gifUris != null) {
+            for (String uri : gifUris) {
+                if (SwrveHelper.isNotNullOrEmpty(uri)) {
+                    uris.add(uri);
+                }
+            }
+        }
         int rowsDeleted = 0;
-        String uriStr = intent.getStringExtra(EXTRA_GIF_URI);
-        try {
-            Uri uri = Uri.parse(uriStr);
-            rowsDeleted = deleteGifUri(uri);
-        } catch (Exception e) {
-            SwrveLogger.e("Exception deleting MediaStore URI:%s", e, uriStr);
+        for (String uriStr : uris) {
+            try {
+                rowsDeleted += deleteGifUri(Uri.parse(uriStr));
+            } catch (Exception e) {
+                SwrveLogger.e("Exception deleting MediaStore URI:%s", e, uriStr);
+            }
         }
         return rowsDeleted;
     }
 
-    private int deleteGifUri(Uri uri) {
+    int deleteGifUri(Uri uri) {
         if (context == null || uri == null) {
             return 0;
         }
@@ -297,14 +468,19 @@ class NotificationMediaManager {
         int rowsDeleted = 0;
         ContentResolver resolver = context.getContentResolver();
         String relativePath = getGifRelativePath();
-        String selection = MediaStore.MediaColumns.RELATIVE_PATH + " = ?";
-        String[] selectionArgs = {relativePath};
+        // Skip recent GIFs: a push worker may have published them for a notification it hasn't posted yet
+        String selection = MediaStore.MediaColumns.RELATIVE_PATH + " = ? AND " + MediaStore.MediaColumns.DATE_ADDED + " < ?";
+        String[] selectionArgs = {relativePath, String.valueOf(getOrphanedGifCutoffSeconds())};
         try {
             rowsDeleted = resolver.delete(MediaStore.Downloads.EXTERNAL_CONTENT_URI, selection, selectionArgs);
         } catch (Exception e) {
             SwrveLogger.e("Orphaned GIF cleanup: Exception while deleting all GIFs.", e);
         }
         return rowsDeleted;
+    }
+
+    long getOrphanedGifCutoffSeconds() {
+        return (System.currentTimeMillis() - ORPHANED_GIF_MIN_AGE_MILLIS) / 1000; // DATE_ADDED is in seconds
     }
 
     private static String getShortExceptionMessage(Exception e) {

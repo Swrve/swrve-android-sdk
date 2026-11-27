@@ -13,9 +13,10 @@ public class SwrveNotificationEngageActivity extends Activity {
             overridePendingTransition(0, 0); // disable transition animation
             Intent intent = getIntent();
             SwrveCommon.getInstance().handlePushEngagement(intent);
-            finish();
         } catch (Exception e) {
             SwrveLogger.e("SwrveNotificationEngageActivity engage.processIntent", e);
+        } finally {
+            finish();
         }
     }
 

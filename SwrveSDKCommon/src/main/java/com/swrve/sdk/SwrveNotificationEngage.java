@@ -2,7 +2,9 @@ package com.swrve.sdk;
 
 import static com.swrve.sdk.ISwrveCommon.EVENT_PAYLOAD_DEEPLINK;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_BUTTON_TEXT;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_CAROUSEL;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_PLATFORM;
+import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_SLIDE;
 import static com.swrve.sdk.ISwrveCommon.GENERIC_EVENT_PAYLOAD_TRACKING_DATA;
 
 import android.app.NotificationManager;
@@ -11,7 +13,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.os.Build;
 import android.os.Bundle;
 
 import com.swrve.sdk.notifications.model.SwrveNotificationButton;
@@ -19,6 +20,7 @@ import com.swrve.sdk.notifications.model.SwrveNotificationButton;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 class SwrveNotificationEngage {
@@ -39,6 +41,7 @@ class SwrveNotificationEngage {
     void processIntent(Intent intent) {
 
         if (intent == null || intent.getExtras() == null || intent.getExtras().isEmpty()) {
+            SwrveLogger.w("SwrveNotificationEngage: no intent extras, nothing to engage.");
             return;
         }
 
@@ -47,13 +50,16 @@ class SwrveNotificationEngage {
             extras = intent.getExtras();
             pushBundle = extras.getBundle(SwrveNotificationConstants.PUSH_BUNDLE);
             if (pushBundle == null) {
+                SwrveLogger.w("SwrveNotificationEngage: no push bundle in intent extras, nothing to engage.");
                 return;
             }
             Object rawId = pushBundle.get(SwrveNotificationConstants.SWRVE_TRACKING_KEY);
             pushId = (rawId != null) ? rawId.toString() : null;
             if (SwrveHelper.isNullOrEmpty(pushId)) {
+                SwrveLogger.w("SwrveNotificationEngage: no push id (%s) in push bundle, nothing to engage.", SwrveNotificationConstants.SWRVE_TRACKING_KEY);
                 return;
             }
+            SwrveLogger.d("SwrveNotificationEngage: processing engagement for pushId: %s", pushId);
 
             new SwrveCampaignInfluence().removeInfluenceCampaign(context, pushId); // Clear the influence data for this push
 
@@ -142,10 +148,23 @@ class SwrveNotificationEngage {
         setNotificationSwrveCampaignId(campaignId);
 
         String deepLink = pushBundle.getString(SwrveNotificationConstants.DEEPLINK_KEY);
+        boolean isCarouselItemTap = extras.containsKey(SwrveNotificationConstants.CAROUSEL_ITEM_INDEX_KEY);
+        if (isCarouselItemTap) {
+            deepLink = extras.getString(SwrveNotificationConstants.CAROUSEL_ITEM_ACTION_URL_KEY); // null for open_app
+        }
         if (SwrveHelper.isNotNullOrEmpty(deepLink)) {
             payload.put(EVENT_PAYLOAD_DEEPLINK, deepLink);
         }
-        EventHelper.sendEngagedEvent(context, campaignType, pushId, payload);
+        if (isCarouselItemTap) {
+            int itemIndex = extras.getInt(SwrveNotificationConstants.CAROUSEL_ITEM_INDEX_KEY);
+            Map<String, Object> carouselPayload = new HashMap<>(payload);
+            carouselPayload.put(GENERIC_EVENT_PAYLOAD_CAROUSEL, true);
+            carouselPayload.put(GENERIC_EVENT_PAYLOAD_SLIDE, itemIndex);
+            EventHelper.sendEngagedEvent(context, campaignType, pushId, carouselPayload);
+            EventHelper.sendCarouselClickEvent(context, pushBundle, itemIndex, deepLink);
+        } else {
+            EventHelper.sendEngagedEvent(context, campaignType, pushId, payload);
+        }
 
         getNotificationMediaManager(context).deleteGifUri(intent); // If notification had a gif, delete it now
 

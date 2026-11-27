@@ -38,6 +38,7 @@ import android.view.animation.ScaleAnimation;
 import androidx.annotation.NonNull;
 
 import com.swrve.sdk.ISwrveCommon.SupportedUIMode;
+import com.swrve.sdk.notifications.model.SwrveNotification;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -406,6 +407,15 @@ public final class SwrveHelper {
             pushId = data.get(SwrveNotificationConstants.SWRVE_SILENT_TRACKING_KEY);
         }
         return SwrveHelper.isNotNullOrEmpty(pushId);
+    }
+
+    public static boolean isCarouselPush(@NonNull final Map<String, String> data) {
+        String payload = data.get(SwrveNotificationConstants.SWRVE_PAYLOAD_KEY);
+        if (SwrveHelper.isNullOrEmpty(payload)) {
+            return false;
+        }
+        SwrveNotification notification = SwrveNotification.fromJson(payload);
+        return notification != null && notification.getCarousel() != null && !notification.getCarousel().isEmpty();
     }
 
     // Used by Unity

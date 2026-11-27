@@ -6,7 +6,7 @@ activityCompose = "1.9.3"
 compose-bom = "2025.11.01"
 googleServices = "4.4.4"
 firebaseMessaging = "25.0.1"
-swrveSdkVersion = "12.3.0"
+swrveSdkVersion = "12.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

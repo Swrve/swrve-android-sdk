@@ -14,6 +14,10 @@ public class SwrveNotificationConstants extends SwrveNotificationInternalPayload
     public static final String PUSH_ACTION_URL_KEY = "action_url";
     public static final String BUTTON_TEXT_KEY = "button_text";
     public static final String PUSH_NOTIFICATION_ID = "notification_id";
+    public static final String CAROUSEL_ITEM_INDEX_KEY = "carousel_item_index";
+    public static final String CAROUSEL_ITEM_ACTION_URL_KEY = "carousel_item_action_url";
+    public static final String CAROUSEL_SENT_SLIDE_VIEWS_KEY = "carousel_sent_slide_views";
+    public static final String CAROUSEL_IMAGE_HEIGHT_RATIO_KEY = "carousel_image_height_ratio";
     public static final int NO_ACTION_ICON = 0;
     public static final int SWRVE_PUSH_VERSION = 1;
     public static final String RULES_KEY = "rules";
